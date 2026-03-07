@@ -1,0 +1,63 @@
+name: Unit Tests
+on:
+  push:
+    branches: [master, develop]
+  pull_request:
+env:
+  LANG: en_US.UTF-8
+  LC_ALL: en_US.UTF-8
+jobs:
+  test:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v5
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Install Playwright browsers
+        run: bun x playwright install --with-deps chromium
+
+      - name: Run tests and generate coverage report
+        run: bun run test:unit:coverage
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: packages/ui/coverage
+
+      - name: Vitest Coverage Report
+        uses: davelosert/vitest-coverage-report-action@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          working-directory: packages/ui
+
+      - name: Notify Slack on Success
+        if: success() && github.ref == 'refs/heads/master'
+        uses: slackapi/slack-github-action@v1.27.1
+        with:
+          channel-id: '${{ secrets.SLACK_CHANNEL_ID }}'
+          slack-message: |
+            ✅ Unit Tests passed on master branch with coverage report
+            <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+
+      - name: Notify Slack on Failure
+        if: failure() && github.ref == 'refs/heads/master'
+        uses: slackapi/slack-github-action@v1.27.1
+        with:
+          channel-id: '${{ secrets.SLACK_CHANNEL_ID }}'
+          slack-message: |
+            ❌ Unit Tests failed on master branch
+            <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
