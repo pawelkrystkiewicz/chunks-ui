@@ -15,7 +15,6 @@ export type ButtonProps = ComponentProps<typeof BaseButton> &
 export function Button({
   variant,
   color,
-  size,
   loading = false,
   disabled,
   startIcon,
@@ -28,10 +27,10 @@ export function Button({
     <BaseButton
       disabled={disabled || loading}
       focusableWhenDisabled={loading}
-      className={cn(buttonVariants({ variant, color, size }), className)}
+      className={cn(buttonVariants({ variant, color }), className)}
       {...props}
     >
-      {loading ? <Loader size="sm" /> : startIcon}
+      {loading ? <Loader /> : startIcon}
       {children}
       {!loading && endIcon}
     </BaseButton>

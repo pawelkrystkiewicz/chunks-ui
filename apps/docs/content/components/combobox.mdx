@@ -1,0 +1,242 @@
+import { Container, ComboboxBasicDemo, ComboboxClearDemo, ComboboxGroupedDemo, ComboboxMultiDemo } from '@/components'
+
+# Combobox
+
+A styled autocomplete/combobox built on Base UI's `Combobox` primitive. Includes text input with built-in filtering, popup with items, grouped options, multi-select with chips, and built-in Floating UI positioning.
+
+## Import
+
+```tsx
+import { Combobox } from "chunks-ui";
+```
+
+## Basic Usage
+
+```tsx
+const fruits = [
+  { value: "apple", label: "Apple" },
+  { value: "banana", label: "Banana" },
+  { value: "cherry", label: "Cherry" },
+];
+
+<Combobox.Root items={fruits}>
+  <div className="relative">
+    <Combobox.Input placeholder="Search a fruit..." />
+    <Combobox.Trigger />
+  </div>
+  <Combobox.Portal>
+    <Combobox.Positioner>
+      <Combobox.Popup>
+        <Combobox.List>
+          {(item) => (
+            <Combobox.Item key={item.value} value={item.value}>
+              {item.label}
+              <Combobox.ItemIndicator />
+            </Combobox.Item>
+          )}
+        </Combobox.List>
+        <Combobox.Empty>No results found.</Combobox.Empty>
+      </Combobox.Popup>
+    </Combobox.Positioner>
+  </Combobox.Portal>
+</Combobox.Root>
+```
+
+<Container>
+  <ComboboxBasicDemo />
+</Container>
+
+## With Clear Button
+
+```tsx
+<Combobox.Root items={fruits}>
+  <div className="relative">
+    <Combobox.Input placeholder="Search a fruit..." />
+    <Combobox.Clear />
+    <Combobox.Trigger />
+  </div>
+  <Combobox.Portal>
+    <Combobox.Positioner>
+      <Combobox.Popup>
+        <Combobox.List>
+          {(item) => (
+            <Combobox.Item key={item.value} value={item.value}>
+              {item.label}
+              <Combobox.ItemIndicator />
+            </Combobox.Item>
+          )}
+        </Combobox.List>
+        <Combobox.Empty>No results found.</Combobox.Empty>
+      </Combobox.Popup>
+    </Combobox.Positioner>
+  </Combobox.Portal>
+</Combobox.Root>
+```
+
+<Container>
+  <ComboboxClearDemo />
+</Container>
+
+## Grouped Options
+
+```tsx
+<Combobox.Root items={colors}>
+  <div className="relative">
+    <Combobox.Input placeholder="Pick a color..." />
+    <Combobox.Trigger />
+  </div>
+  <Combobox.Portal>
+    <Combobox.Positioner>
+      <Combobox.Popup>
+        <Combobox.Group>
+          <Combobox.GroupLabel>Warm</Combobox.GroupLabel>
+          <Combobox.List>
+            {(item) => (
+              <Combobox.Item key={item.value} value={item.value}>
+                {item.label}
+                <Combobox.ItemIndicator />
+              </Combobox.Item>
+            )}
+          </Combobox.List>
+        </Combobox.Group>
+        <Combobox.Empty>No results found.</Combobox.Empty>
+      </Combobox.Popup>
+    </Combobox.Positioner>
+  </Combobox.Portal>
+</Combobox.Root>
+```
+
+<Container>
+  <ComboboxGroupedDemo />
+</Container>
+
+## Multi-Select with Chips
+
+```tsx
+function MultiSelectCombobox() {
+  const [value, setValue] = useState<string[]>([]);
+
+  return (
+    <Combobox.Root multiple items={frameworks} value={value} onValueChange={setValue}>
+      <div className="relative flex flex-wrap items-center gap-1">
+        <Combobox.Chips>
+          {value.map((v) => {
+            const item = frameworks.find((f) => f.value === v);
+            return (
+              <Combobox.Chip key={v}>
+                {item?.label ?? v}
+                <Combobox.ChipRemove />
+              </Combobox.Chip>
+            );
+          })}
+        </Combobox.Chips>
+        <Combobox.Input placeholder="Select frameworks..." />
+        <Combobox.Clear />
+        <Combobox.Trigger />
+      </div>
+      <Combobox.Portal>
+        <Combobox.Positioner>
+          <Combobox.Popup>
+            <Combobox.List>
+              {(item) => (
+                <Combobox.Item key={item.value} value={item.value}>
+                  {item.label}
+                  <Combobox.ItemIndicator />
+                </Combobox.Item>
+              )}
+            </Combobox.List>
+            <Combobox.Empty>No results found.</Combobox.Empty>
+          </Combobox.Popup>
+        </Combobox.Positioner>
+      </Combobox.Portal>
+    </Combobox.Root>
+  );
+}
+```
+
+<Container>
+  <ComboboxMultiDemo />
+</Container>
+
+## Controlled
+
+```tsx
+function ControlledCombobox() {
+  const [value, setValue] = useState(null);
+
+  const items = [
+    { value: "active", label: "Active" },
+    { value: "inactive", label: "Inactive" },
+    { value: "pending", label: "Pending" },
+  ];
+
+  return (
+    <Combobox.Root items={items} value={value} onValueChange={setValue}>
+      <div className="relative">
+        <Combobox.Input placeholder="Select status..." />
+        <Combobox.Clear />
+        <Combobox.Trigger />
+      </div>
+      <Combobox.Portal>
+        <Combobox.Positioner>
+          <Combobox.Popup>
+            <Combobox.List>
+              {(item) => (
+                <Combobox.Item key={item.value} value={item.value}>
+                  {item.label}
+                  <Combobox.ItemIndicator />
+                </Combobox.Item>
+              )}
+            </Combobox.List>
+            <Combobox.Empty>No results found.</Combobox.Empty>
+          </Combobox.Popup>
+        </Combobox.Positioner>
+      </Combobox.Portal>
+    </Combobox.Root>
+  );
+}
+```
+
+## Compound Parts
+
+| Part | Description |
+|---|---|
+| `Combobox.Root` | State container. Manages open/close, filtering, and selected value(s). |
+| `Combobox.Input` | Text input with built-in filtering. |
+| `Combobox.Trigger` | Button that toggles the popup. Renders a default chevron icon. |
+| `Combobox.Icon` | Chevron icon, usable standalone outside the trigger. |
+| `Combobox.Portal` | Renders the popup in a portal. |
+| `Combobox.Positioner` | Handles Floating UI positioning. |
+| `Combobox.Popup` | The dropdown panel containing items. |
+| `Combobox.List` | List container. Uses render-prop children. |
+| `Combobox.Item` | An individual selectable option. |
+| `Combobox.ItemIndicator` | Checkmark shown for the selected item. |
+| `Combobox.Empty` | Message displayed when no items match the filter. |
+| `Combobox.Clear` | Button that clears the current value. Renders a default X icon. |
+| `Combobox.Group` | Groups related items together. |
+| `Combobox.GroupLabel` | Label for a group of items. |
+| `Combobox.Chips` | Container for selected chips in multi-select mode. Uses render-prop children. |
+| `Combobox.Chip` | A styled chip representing a selected value. |
+| `Combobox.ChipRemove` | Button to remove a chip. Renders a default X icon. |
+| `Combobox.Value` | Displays the selected value. |
+| `Combobox.Status` | Accessible status announcements for screen readers. |
+
+## Combobox.Root Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `items` | `Array<{ value: string; label: string }>` | -- | The items to display in the list |
+| `value` | `string \| string[]` | -- | Controlled selected value |
+| `defaultValue` | `string \| string[]` | -- | Initial value (uncontrolled) |
+| `onValueChange` | `(value: string \| string[]) => void` | -- | Called when selection changes |
+| `multiple` | `boolean` | `false` | Enable multi-select mode |
+| `open` | `boolean` | -- | Controlled open state |
+| `onOpenChange` | `(open: boolean) => void` | -- | Called when open state changes |
+
+## Combobox.Input Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `placeholder` | `string` | -- | Placeholder text |
+| `disabled` | `boolean` | `false` | Disable the input |
+| `className` | `string` | -- | Additional CSS classes |

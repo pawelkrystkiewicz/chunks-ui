@@ -17,6 +17,25 @@ export { Checkbox } from "./components/checkbox";
 export { Chip, type ChipProps, chipVariants } from "./components/chip";
 export { ClearButton, type ClearButtonProps } from "./components/clear-button";
 export type {
+  ComboboxChipProps,
+  ComboboxChipRemoveProps,
+  ComboboxChipsProps,
+  ComboboxClearProps,
+  ComboboxEmptyProps,
+  ComboboxGroupLabelProps,
+  ComboboxGroupProps,
+  ComboboxIconProps,
+  ComboboxInputProps,
+  ComboboxItemIndicatorProps,
+  ComboboxItemProps,
+  ComboboxListProps,
+  ComboboxPopupProps,
+  ComboboxPositionerProps,
+  ComboboxRootProps,
+  ComboboxTriggerProps,
+} from "./components/combobox";
+export { Combobox } from "./components/combobox";
+export type {
   DialogBackdropProps,
   DialogCloseProps,
   DialogDescriptionProps,

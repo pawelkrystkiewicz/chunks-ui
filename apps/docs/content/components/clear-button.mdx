@@ -1,3 +1,6 @@
+import { ClearButton } from 'chunks-ui'
+import { Container } from '@/components'
+
 # ClearButton
 
 A small circular icon button for clearing or dismissing values. Used internally by `Input` (via `onClear`) and `Chip` (via `onRemove`), but also exported for direct use.
@@ -14,6 +17,10 @@ import { ClearButton } from "chunks-ui";
 <ClearButton onClick={() => console.log("Cleared")} />
 ```
 
+<Container>
+  <ClearButton />
+</Container>
+
 ## Custom Label
 
 The `label` prop sets the `aria-label` for accessibility:
@@ -22,6 +29,11 @@ The `label` prop sets the `aria-label` for accessibility:
 <ClearButton label="Remove tag" onClick={handleRemove} />
 <ClearButton label="Dismiss" onClick={handleDismiss} />
 ```
+
+<Container>
+  <ClearButton label="Remove tag" />
+  <ClearButton label="Dismiss" />
+</Container>
 
 Default label is `"Clear"`.
 

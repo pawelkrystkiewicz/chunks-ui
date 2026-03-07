@@ -2,4 +2,4 @@
 @import "chunks-ui/theme.css";
 
 @source "./";
-@source "../../../packages/ui";
+@source "../../packages/ui";

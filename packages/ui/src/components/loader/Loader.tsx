@@ -5,13 +5,13 @@ import { loaderVariants } from "./Loader.Variants";
 
 export type LoaderProps = ComponentProps<"svg"> & VariantProps<typeof loaderVariants>;
 
-export function Loader({ size, color, className, ...props }: LoaderProps) {
+export function Loader({ color, className, ...props }: LoaderProps) {
   return (
     <svg
       viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className={cn(loaderVariants({ size, color }), className)}
+      className={cn(loaderVariants({ color }), className)}
       aria-hidden="true"
       {...props}
     >

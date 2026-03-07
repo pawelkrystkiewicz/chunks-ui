@@ -1,3 +1,6 @@
+import { Separator } from 'chunks-ui'
+import { Container } from '@/components'
+
 # Separator
 
 A visual divider built on Base UI's `Separator` primitive. Supports horizontal and vertical orientations.
@@ -20,6 +23,14 @@ Horizontal separator (default):
 </div>
 ```
 
+<Container>
+  <div>
+    <p>Content above</p>
+    <Separator />
+    <p>Content below</p>
+  </div>
+</Container>
+
 ## Vertical
 
 ```tsx
@@ -29,6 +40,14 @@ Horizontal separator (default):
   <span>Right</span>
 </div>
 ```
+
+<Container>
+  <div className="flex h-8 items-center gap-4">
+    <span>Left</span>
+    <Separator orientation="vertical" />
+    <span>Right</span>
+  </div>
+</Container>
 
 ## In a List
 
@@ -41,6 +60,16 @@ Horizontal separator (default):
   <div className="py-2">Item 3</div>
 </div>
 ```
+
+<Container>
+  <div className="flex flex-col">
+    <div className="py-2">Item 1</div>
+    <Separator />
+    <div className="py-2">Item 2</div>
+    <Separator />
+    <div className="py-2">Item 3</div>
+  </div>
+</Container>
 
 ## Props
 

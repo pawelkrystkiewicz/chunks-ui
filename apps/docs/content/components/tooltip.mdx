@@ -1,3 +1,6 @@
+import { Tooltip } from 'chunks-ui'
+import { Container } from '@/components'
+
 # Tooltip
 
 A hover/focus tooltip built on Base UI's `Tooltip` primitive. Automatically positioned via Floating UI with a scale/fade transition.
@@ -23,6 +26,19 @@ import { Tooltip } from "chunks-ui";
 </Tooltip.Root>
 ```
 
+<Container>
+  <Tooltip.Root>
+    <Tooltip.Trigger>
+      <button>Hover me</button>
+    </Tooltip.Trigger>
+    <Tooltip.Portal>
+      <Tooltip.Positioner>
+        <Tooltip.Popup>Helpful tip</Tooltip.Popup>
+      </Tooltip.Positioner>
+    </Tooltip.Portal>
+  </Tooltip.Root>
+</Container>
+
 ## With Arrow
 
 ```tsx
@@ -40,6 +56,22 @@ import { Tooltip } from "chunks-ui";
   </Tooltip.Portal>
 </Tooltip.Root>
 ```
+
+<Container>
+  <Tooltip.Root>
+    <Tooltip.Trigger>
+      <button>Info</button>
+    </Tooltip.Trigger>
+    <Tooltip.Portal>
+      <Tooltip.Positioner>
+        <Tooltip.Popup>
+          <Tooltip.Arrow />
+          This is a tooltip with an arrow.
+        </Tooltip.Popup>
+      </Tooltip.Positioner>
+    </Tooltip.Portal>
+  </Tooltip.Root>
+</Container>
 
 ## Tooltip Provider
 
@@ -66,6 +98,28 @@ Use `Tooltip.Provider` to share delay settings across multiple tooltips. This av
   </Tooltip.Root>
 </Tooltip.Provider>
 ```
+
+<Container>
+  <Tooltip.Provider delay={200} closeDelay={0}>
+    <Tooltip.Root>
+      <Tooltip.Trigger><button>A</button></Tooltip.Trigger>
+      <Tooltip.Portal>
+        <Tooltip.Positioner>
+          <Tooltip.Popup>Tooltip A</Tooltip.Popup>
+        </Tooltip.Positioner>
+      </Tooltip.Portal>
+    </Tooltip.Root>
+
+    <Tooltip.Root>
+      <Tooltip.Trigger><button>B</button></Tooltip.Trigger>
+      <Tooltip.Portal>
+        <Tooltip.Positioner>
+          <Tooltip.Popup>Tooltip B</Tooltip.Popup>
+        </Tooltip.Positioner>
+      </Tooltip.Portal>
+    </Tooltip.Root>
+  </Tooltip.Provider>
+</Container>
 
 ## Positioning
 

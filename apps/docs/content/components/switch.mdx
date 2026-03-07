@@ -1,3 +1,6 @@
+import { Switch, Field } from 'chunks-ui'
+import { Container } from '@/components'
+
 # Switch
 
 A toggle switch built on Base UI's `Switch` primitive. Provides an accessible on/off control with a sliding thumb animation.
@@ -16,6 +19,12 @@ import { Switch } from "chunks-ui";
 </Switch.Root>
 ```
 
+<Container>
+  <Switch.Root>
+    <Switch.Thumb />
+  </Switch.Root>
+</Container>
+
 ## With Label
 
 ```tsx
@@ -28,6 +37,17 @@ import { Switch } from "chunks-ui";
   </div>
 </Field.Root>
 ```
+
+<Container>
+  <Field.Root>
+    <div className="flex items-center gap-2">
+      <Switch.Root>
+        <Switch.Thumb />
+      </Switch.Root>
+      <Field.Label>Enable notifications</Field.Label>
+    </div>
+  </Field.Root>
+</Container>
 
 ## Controlled
 
@@ -50,6 +70,12 @@ function ControlledSwitch() {
   <Switch.Thumb />
 </Switch.Root>
 ```
+
+<Container>
+  <Switch.Root disabled>
+    <Switch.Thumb />
+  </Switch.Root>
+</Container>
 
 ## Compound Parts
 

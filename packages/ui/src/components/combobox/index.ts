@@ -1,0 +1,19 @@
+export type {
+  ComboboxChipProps,
+  ComboboxChipRemoveProps,
+  ComboboxChipsProps,
+  ComboboxClearProps,
+  ComboboxEmptyProps,
+  ComboboxGroupLabelProps,
+  ComboboxGroupProps,
+  ComboboxIconProps,
+  ComboboxInputProps,
+  ComboboxItemIndicatorProps,
+  ComboboxItemProps,
+  ComboboxListProps,
+  ComboboxPopupProps,
+  ComboboxPositionerProps,
+  ComboboxRootProps,
+  ComboboxTriggerProps,
+} from "./Combobox";
+export { Combobox } from "./Combobox";

@@ -1,3 +1,6 @@
+import { Chip } from 'chunks-ui'
+import { Container } from '@/components'
+
 # Chip
 
 A small label/tag component with optional remove functionality. Uses the `ClearButton` component internally for the dismiss action.
@@ -14,6 +17,10 @@ import { Chip } from "chunks-ui";
 <Chip>Default</Chip>
 ```
 
+<Container>
+  <Chip>Default</Chip>
+</Container>
+
 ## Colors
 
 ```tsx
@@ -23,6 +30,14 @@ import { Chip } from "chunks-ui";
 <Chip color="warning">Warning</Chip>
 <Chip color="secondary">Secondary</Chip>
 ```
+
+<Container>
+  <Chip color="primary">Primary</Chip>
+  <Chip color="destructive">Destructive</Chip>
+  <Chip color="success">Success</Chip>
+  <Chip color="warning">Warning</Chip>
+  <Chip color="secondary">Secondary</Chip>
+</Container>
 
 Each color applies a light tinted background with matching text and border (e.g. `bg-primary/10 text-primary border-primary/30`).
 

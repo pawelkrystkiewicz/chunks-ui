@@ -1,6 +1,10 @@
+import { Input, Field } from 'chunks-ui'
+import { SearchIcon } from 'lucide-react'
+import { Container } from '@/components'
+
 # Input
 
-A styled text input built on Base UI's `Input` primitive. Supports start/end adornments, a clear button, size variants, and error states via `data-[invalid]`.
+A styled text input built on Base UI's `Input` primitive. Supports start/end adornments, a clear button, and error states via `data-[invalid]`.
 
 ## Import
 
@@ -14,13 +18,9 @@ import { Input } from "chunks-ui";
 <Input placeholder="Enter your name" />
 ```
 
-## Sizes
-
-```tsx
-<Input size="sm" placeholder="Small" />
-<Input size="md" placeholder="Medium" />
-<Input size="lg" placeholder="Large" />
-```
+<Container>
+  <Input placeholder="Enter your name" />
+</Container>
 
 ## Adornments
 
@@ -33,12 +33,26 @@ Use `startAdornment` and `endAdornment` to place icons or text at the edges of t
 />
 ```
 
+<Container>
+  <Input
+    startAdornment={<SearchIcon className="size-4" />}
+    placeholder="Search..."
+  />
+</Container>
+
 ```tsx
 <Input
   endAdornment={<span className="text-xs text-muted-foreground">USD</span>}
   placeholder="0.00"
 />
 ```
+
+<Container>
+  <Input
+    endAdornment={<span className="text-xs text-muted-foreground">USD</span>}
+    placeholder="0.00"
+  />
+</Container>
 
 ## Clear Button
 
@@ -71,6 +85,14 @@ The input styles change when the `data-invalid` attribute is present (set automa
 </Field.Root>
 ```
 
+<Container>
+  <Field.Root invalid>
+    <Field.Label>Email</Field.Label>
+    <Input placeholder="user@example.com" />
+    <Field.Error>Invalid email address</Field.Error>
+  </Field.Root>
+</Container>
+
 ## With Field
 
 Wrap `Input` in a `Field` for labels, descriptions, and validation:
@@ -83,11 +105,18 @@ Wrap `Input` in a `Field` for labels, descriptions, and validation:
 </Field.Root>
 ```
 
+<Container>
+  <Field.Root>
+    <Field.Label>Username</Field.Label>
+    <Field.Description>Choose a unique username</Field.Description>
+    <Input placeholder="johndoe" />
+  </Field.Root>
+</Container>
+
 ## Props
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
-| `size` | `"sm" \| "md" \| "lg"` | `"md"` | Input height and text size |
 | `startAdornment` | `ReactNode` | -- | Element before the input text |
 | `endAdornment` | `ReactNode` | -- | Element after the input text |
 | `onClear` | `() => void` | -- | Show clear button; called on click |

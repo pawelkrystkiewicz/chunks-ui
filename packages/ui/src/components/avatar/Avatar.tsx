@@ -1,20 +1,31 @@
-import type { ComponentProps } from "react";
+import { type ComponentProps, useMemo } from "react";
 import { cn } from "../../lib/cn";
+import { type AvatarStyles, avatarStyles } from "./Avatar.Variants";
 
 export type AvatarProps = ComponentProps<"span"> & {
   src?: string;
   alt?: string;
   fallback?: string;
-  size?: "sm" | "md" | "lg";
+  size?: number;
+  shape?: AvatarStyles["shape"];
 };
 
-const sizeClasses = {
-  sm: "size-8 text-xs",
-  md: "size-10 text-sm",
-  lg: "size-12 text-base",
+const shapeClasses = {
+  circle: "rounded-full",
+  rounded: "rounded-md",
+  square: "rounded-none",
 };
 
-export function Avatar({ src, alt, fallback, size = "md", className, ...props }: AvatarProps) {
+export function Avatar({
+  src,
+  alt,
+  fallback,
+  size = 40,
+  shape = "circle",
+  className,
+  style,
+  ...props
+}: AvatarProps) {
   const initials =
     fallback ??
     alt
@@ -24,15 +35,10 @@ export function Avatar({ src, alt, fallback, size = "md", className, ...props }:
       .slice(0, 2)
       .toUpperCase();
 
+  const sizeStyle = useMemo(() => ({ width: size, height: size, ...style }), [size, style]);
+
   return (
-    <span
-      className={cn(
-        "relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted font-medium text-muted-foreground",
-        sizeClasses[size],
-        className,
-      )}
-      {...props}
-    >
+    <span className={cn(avatarStyles({ shape }), className)} style={sizeStyle} {...props}>
       {src ? (
         <img src={src} alt={alt ?? ""} className="size-full object-cover" />
       ) : (

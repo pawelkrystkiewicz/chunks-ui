@@ -3,17 +3,19 @@ import { cva } from "class-variance-authority";
 export const buttonVariants = cva(
   [
     "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg",
-    "text-sm font-medium transition-colors",
+    "h-ui-height px-4 text-sm font-medium transition-colors",
     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
     "disabled:pointer-events-none disabled:opacity-50",
     "[&_svg]:pointer-events-none [&_svg]:shrink-0",
+
+    "micro-interactions",
   ],
   {
     variants: {
       variant: {
-        contained: "",
-        outlined: "border bg-transparent",
-        ghost: "bg-transparent",
+        contained: ["active:scale-95"],
+        outlined: ["border bg-transparent", "active:scale-95"],
+        ghost: ["bg-transparent", "active:scale-95"],
         link: "bg-transparent underline-offset-4 hover:underline",
       },
       color: {
@@ -22,12 +24,6 @@ export const buttonVariants = cva(
         success: "",
         warning: "",
         secondary: "",
-      },
-      size: {
-        sm: "h-8 px-3 text-xs rounded-md",
-        md: "h-9 px-4",
-        lg: "h-10 px-6 text-base",
-        icon: "size-9",
       },
     },
     compoundVariants: [
@@ -139,7 +135,6 @@ export const buttonVariants = cva(
     defaultVariants: {
       variant: "contained",
       color: "primary",
-      size: "md",
     },
   },
 );

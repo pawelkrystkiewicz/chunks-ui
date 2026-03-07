@@ -1,3 +1,6 @@
+import { Loader } from 'chunks-ui'
+import { Container } from '@/components'
+
 # Loader
 
 An animated SVG spinner for loading states. Used internally by `Button` during its loading state, and available for standalone use.
@@ -14,19 +17,9 @@ import { Loader } from "chunks-ui";
 <Loader />
 ```
 
-## Sizes
-
-```tsx
-<Loader size="sm" />
-<Loader size="md" />
-<Loader size="lg" />
-```
-
-| Size | Dimensions |
-|---|---|
-| `sm` | `16px` (`size-4`) |
-| `md` | `20px` (`size-5`) |
-| `lg` | `24px` (`size-6`) |
+<Container>
+  <Loader />
+</Container>
 
 ## Colors
 
@@ -35,6 +28,12 @@ import { Loader } from "chunks-ui";
 <Loader color="primary" />
 <Loader color="muted" />
 ```
+
+<Container>
+  <Loader color="current" />
+  <Loader color="primary" />
+  <Loader color="muted" />
+</Container>
 
 | Color | CSS Class | Use case |
 |---|---|---|
@@ -46,7 +45,7 @@ import { Loader } from "chunks-ui";
 
 ```tsx
 <div className="flex h-screen items-center justify-center">
-  <Loader size="lg" color="primary" />
+  <Loader color="primary" />
 </div>
 ```
 
@@ -54,16 +53,22 @@ import { Loader } from "chunks-ui";
 
 ```tsx
 <div className="flex items-center gap-2 text-muted-foreground">
-  <Loader size="sm" />
+  <Loader />
   <span>Loading data...</span>
 </div>
 ```
+
+<Container>
+  <div className="flex items-center gap-2 text-muted-foreground">
+    <Loader />
+    <span>Loading data...</span>
+  </div>
+</Container>
 
 ## Props
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
-| `size` | `"sm" \| "md" \| "lg"` | `"md"` | Spinner dimensions |
 | `color` | `"current" \| "primary" \| "muted"` | `"current"` | Spinner color |
 | `className` | `string` | -- | Additional CSS classes |
 

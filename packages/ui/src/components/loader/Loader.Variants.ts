@@ -1,12 +1,7 @@
 import { cva } from "class-variance-authority";
 
-export const loaderVariants = cva("animate-spin", {
+export const loaderVariants = cva("animate-spin size-ui-icon-height", {
   variants: {
-    size: {
-      sm: "size-4",
-      md: "size-5",
-      lg: "size-6",
-    },
     color: {
       current: "text-current",
       primary: "text-primary",
@@ -14,7 +9,6 @@ export const loaderVariants = cva("animate-spin", {
     },
   },
   defaultVariants: {
-    size: "md",
     color: "current",
   },
 });

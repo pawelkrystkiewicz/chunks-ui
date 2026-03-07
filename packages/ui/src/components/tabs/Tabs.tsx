@@ -32,7 +32,7 @@ function TabsTab({ className, ...props }: TabsTabProps) {
         "inline-flex items-center justify-center px-4 py-2 text-sm font-medium",
         "text-muted-foreground transition-colors",
         "hover:text-foreground",
-        "data-[active]:text-foreground",
+        "data-active:text-foreground",
         "focus-visible:outline-2 focus-visible:outline-ring",
         "disabled:pointer-events-none disabled:opacity-50",
         className,

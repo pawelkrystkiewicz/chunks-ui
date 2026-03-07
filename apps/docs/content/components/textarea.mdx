@@ -1,3 +1,6 @@
+import { Textarea, Field } from 'chunks-ui'
+import { Container } from '@/components'
+
 # Textarea
 
 A multi-line text input with optional auto-resize behavior using the CSS `field-sizing: content` property.
@@ -14,6 +17,10 @@ import { Textarea } from "chunks-ui";
 <Textarea placeholder="Write your message..." />
 ```
 
+<Container centered={false}>
+  <Textarea placeholder="Write your message..." />
+</Container>
+
 ## Auto-Resize
 
 When `autoResize` is `true`, the textarea grows vertically to fit its content using the native CSS `field-sizing: content` property:
@@ -21,6 +28,10 @@ When `autoResize` is `true`, the textarea grows vertically to fit its content us
 ```tsx
 <Textarea autoResize placeholder="Start typing..." />
 ```
+
+<Container centered={false}>
+  <Textarea autoResize placeholder="Start typing..." />
+</Container>
 
 The textarea has a `min-h-20` minimum height by default.
 
@@ -34,11 +45,23 @@ The textarea has a `min-h-20` minimum height by default.
 </Field.Root>
 ```
 
+<Container centered={false}>
+  <Field.Root>
+    <Field.Label>Bio</Field.Label>
+    <Field.Description>Write a short bio (max 280 characters)</Field.Description>
+    <Textarea autoResize placeholder="Tell us about yourself..." maxLength={280} />
+  </Field.Root>
+</Container>
+
 ## Disabled
 
 ```tsx
 <Textarea disabled placeholder="This field is disabled" />
 ```
+
+<Container centered={false}>
+  <Textarea disabled placeholder="This field is disabled" />
+</Container>
 
 ## Props
 

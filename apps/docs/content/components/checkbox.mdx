@@ -1,3 +1,6 @@
+import { Checkbox, Field } from 'chunks-ui'
+import { Container } from '@/components'
+
 # Checkbox
 
 A styled checkbox built on Base UI's `Checkbox` primitive. Supports checked, unchecked, and indeterminate states with a compound component pattern.
@@ -16,6 +19,12 @@ import { Checkbox } from "chunks-ui";
 </Checkbox.Root>
 ```
 
+<Container>
+  <Checkbox.Root>
+    <Checkbox.Indicator />
+  </Checkbox.Root>
+</Container>
+
 ## With Label
 
 Use the `Field` component to associate a label:
@@ -30,6 +39,17 @@ Use the `Field` component to associate a label:
   </div>
 </Field.Root>
 ```
+
+<Container>
+  <Field.Root>
+    <div className="flex items-center gap-2">
+      <Checkbox.Root>
+        <Checkbox.Indicator />
+      </Checkbox.Root>
+      <Field.Label>Accept terms and conditions</Field.Label>
+    </div>
+  </Field.Root>
+</Container>
 
 ## Controlled
 
@@ -55,6 +75,12 @@ The indeterminate state is used for "select all" patterns where some items are c
 </Checkbox.Root>
 ```
 
+<Container>
+  <Checkbox.Root checked="indeterminate">
+    <Checkbox.Indicator />
+  </Checkbox.Root>
+</Container>
+
 ## Disabled
 
 ```tsx
@@ -62,6 +88,12 @@ The indeterminate state is used for "select all" patterns where some items are c
   <Checkbox.Indicator />
 </Checkbox.Root>
 ```
+
+<Container>
+  <Checkbox.Root disabled>
+    <Checkbox.Indicator />
+  </Checkbox.Root>
+</Container>
 
 ## Compound Parts
 

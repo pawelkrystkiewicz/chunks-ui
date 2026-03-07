@@ -1,3 +1,6 @@
+import { Drawer } from 'chunks-ui'
+import { Container } from '@/components'
+
 # Drawer
 
 A side or bottom sheet overlay built on Base UI's `Dialog` primitive. Slides in from the left, right, or bottom edge with a snappy easing transition.
@@ -27,6 +30,24 @@ import { Drawer } from "chunks-ui";
   </Drawer.Portal>
 </Drawer.Root>
 ```
+
+<Container>
+  <Drawer.Root>
+    <Drawer.Trigger>Open Drawer</Drawer.Trigger>
+    <Drawer.Portal>
+      <Drawer.Backdrop />
+      <Drawer.Popup>
+        <Drawer.Title>Navigation</Drawer.Title>
+        <Drawer.Description>Browse the app sections.</Drawer.Description>
+        <nav className="mt-4 flex flex-col gap-2">
+          <a href="/">Home</a>
+          <a href="/settings">Settings</a>
+        </nav>
+        <Drawer.Close>Close</Drawer.Close>
+      </Drawer.Popup>
+    </Drawer.Portal>
+  </Drawer.Root>
+</Container>
 
 ## Side Variants
 

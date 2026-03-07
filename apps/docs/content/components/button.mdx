@@ -4,7 +4,7 @@ import { Container } from '@/components'
 
 # Button
 
-A styled button component built on Base UI's `Button` primitive. Supports multiple visual variants, semantic colors, sizes, loading state, and start/end icons.
+A styled button component built on Base UI's `Button` primitive. Supports multiple visual variants, semantic colors, loading state, and start/end icons.
 
 ## Import
 
@@ -76,26 +76,6 @@ Colors work with all variants:
   </Button>
 </Container>
 
-## Sizes
-
-```tsx
-<Button size="sm">Small</Button>
-<Button size="md">Medium</Button>
-<Button size="lg">Large</Button>
-<Button size="icon">
-  <SearchIcon />
-</Button>
-```
-
-<Container>
-  <Button size="sm">Small</Button>
-  <Button size="md">Medium</Button>
-  <Button size="lg">Large</Button>
-  <Button size="icon">
-    <SearchIcon />
-  </Button>
-</Container>
-
 ## Loading State
 
 When `loading` is `true`, the button shows a `Loader` spinner in place of the `startIcon` and becomes disabled:
@@ -128,7 +108,6 @@ Icons are hidden during loading state. The `startIcon` slot is replaced by the `
 | ----------- | --------------------------------------------------------------------- | ------------- | ------------------------------------ |
 | `variant`   | `"contained" \| "outlined" \| "ghost" \| "link"`                      | `"contained"` | Visual style                         |
 | `color`     | `"primary" \| "destructive" \| "success" \| "warning" \| "secondary"` | `"primary"`   | Semantic color                       |
-| `size`      | `"sm" \| "md" \| "lg" \| "icon"`                                      | `"md"`        | Button size                          |
 | `loading`   | `boolean`                                                             | `false`       | Show spinner and disable interaction |
 | `startIcon` | `ReactNode`                                                           | --            | Icon before children                 |
 | `endIcon`   | `ReactNode`                                                           | --            | Icon after children                  |

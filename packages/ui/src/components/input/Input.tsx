@@ -12,18 +12,11 @@ export type InputProps = ComponentProps<typeof BaseInput> &
     onClear?: () => void;
   };
 
-export function Input({
-  size,
-  startAdornment,
-  endAdornment,
-  onClear,
-  className,
-  ...props
-}: InputProps) {
+export function Input({ startAdornment, endAdornment, onClear, className, ...props }: InputProps) {
   const hasAdornments = startAdornment || endAdornment || onClear;
 
   if (!hasAdornments) {
-    return <BaseInput className={cn(inputVariants({ size }), className)} {...props} />;
+    return <BaseInput className={cn(inputVariants(), className)} {...props} />;
   }
 
   return (
@@ -35,7 +28,7 @@ export function Input({
       )}
       <BaseInput
         className={cn(
-          inputVariants({ size }),
+          inputVariants(),
           startAdornment && "pl-9",
           (endAdornment || onClear) && "pr-9",
           className,

@@ -2,7 +2,7 @@ import { Head } from "nextra/components";
 import { getPageMap } from "nextra/page-map";
 import { Footer, Layout, Navbar } from "nextra-theme-docs";
 import "nextra-theme-docs/style.css";
-import "./globals.css";
+import "../globals.css";
 import Image from "next/image";
 
 export const metadata = {

@@ -1,3 +1,6 @@
+import { Field, Input, Textarea } from 'chunks-ui'
+import { Container } from '@/components'
+
 # Field
 
 A form field wrapper built on Base UI's `Field` primitive. Provides label, description, error message, and validation state management for form controls like `Input`, `Textarea`, `Checkbox`, etc.
@@ -17,6 +20,13 @@ import { Field } from "chunks-ui";
 </Field.Root>
 ```
 
+<Container>
+  <Field.Root>
+    <Field.Label>Email</Field.Label>
+    <Input type="email" placeholder="you@example.com" />
+  </Field.Root>
+</Container>
+
 ## With Description
 
 ```tsx
@@ -26,6 +36,14 @@ import { Field } from "chunks-ui";
   <Input type="password" />
 </Field.Root>
 ```
+
+<Container>
+  <Field.Root>
+    <Field.Label>Password</Field.Label>
+    <Field.Description>Must be at least 8 characters.</Field.Description>
+    <Input type="password" />
+  </Field.Root>
+</Container>
 
 ## Validation Error
 
@@ -39,6 +57,14 @@ Set `invalid` on `Field.Root` to activate error styling. The `Field.Error` messa
 </Field.Root>
 ```
 
+<Container>
+  <Field.Root invalid>
+    <Field.Label>Email</Field.Label>
+    <Input type="email" placeholder="you@example.com" />
+    <Field.Error>Please enter a valid email address.</Field.Error>
+  </Field.Root>
+</Container>
+
 ## With Textarea
 
 ```tsx
@@ -48,6 +74,14 @@ Set `invalid` on `Field.Root` to activate error styling. The `Field.Error` messa
   <Textarea autoResize placeholder="Type here..." />
 </Field.Root>
 ```
+
+<Container>
+  <Field.Root>
+    <Field.Label>Message</Field.Label>
+    <Field.Description>Describe your issue in detail.</Field.Description>
+    <Textarea autoResize placeholder="Type here..." />
+  </Field.Root>
+</Container>
 
 ## Native Validation
 
@@ -83,6 +117,13 @@ Labels dim to 50% opacity when the field is disabled:
   <Input disabled value="Cannot edit" />
 </Field.Root>
 ```
+
+<Container>
+  <Field.Root disabled>
+    <Field.Label>Locked Field</Field.Label>
+    <Input disabled value="Cannot edit" />
+  </Field.Root>
+</Container>
 
 ## Compound Parts
 

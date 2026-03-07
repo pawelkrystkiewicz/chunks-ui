@@ -1,11 +1,14 @@
+import { Avatar } from 'chunks-ui'
+import { Container } from '@/components'
+
 # Avatar
 
-Displays a user avatar image with automatic fallback to initials. Supports three sizes.
+Displays a user avatar image with automatic fallback to initials. Supports numeric sizing and multiple shapes.
 
 ## Import
 
 ```tsx
-import { Avatar } from "chunks-ui";
+import { Avatar } from 'chunks-ui'
 ```
 
 ## Basic Usage
@@ -22,6 +25,10 @@ Without an image (shows initials derived from `alt`):
 <Avatar alt="Jane Doe" />
 ```
 
+<Container>
+  <Avatar alt="Jane Doe" />
+</Container>
+
 This renders "JD" as fallback initials.
 
 ## Custom Fallback
@@ -30,22 +37,42 @@ Override the auto-generated initials with the `fallback` prop:
 
 ```tsx
 <Avatar fallback="?" />
-<Avatar alt="Jane Doe" fallback="J" />
+<Avatar alt="John Doe" fallback="J" />
+<Avatar alt="John Doe" fallback="J" src={'/bro2.jpeg'}/>
 ```
+
+<Container>
+  <Avatar fallback="?" />
+  <Avatar alt="Jane Doe" fallback="J" />
+  <Avatar alt="John Doe" fallback="J" src={'/bro2.jpeg'} />
+</Container>
 
 ## Sizes
 
+The `size` prop accepts a numeric value in pixels:
+
+<div className="flex items-center justify-between max-w-lg mx-auto">
+  {[10, 20, 30, 40, 50, 60, 100].map(size => (
+    <div className="grid grid-rows-2 gap-x-10 gap-y-5 items-center h-[200px]" key={size}>
+      <p className="mx-auto">{size}px</p>
+      <Avatar src={'/jane.jpeg'} size={size} className="self-center" />
+    </div>
+  ))}
+</div>
+
+## Shapes
+
 ```tsx
-<Avatar src="/avatar.jpg" alt="User" size="sm" />
-<Avatar src="/avatar.jpg" alt="User" size="md" />
-<Avatar src="/avatar.jpg" alt="User" size="lg" />
+<Avatar alt="User" shape="circle" size={50}/>
+<Avatar alt="User" shape="rounded" size={50}/>
+<Avatar alt="User" shape="square" size={50}/>
 ```
 
-| Size | Dimensions | Text size |
-|---|---|---|
-| `sm` | `32px` (`size-8`) | `text-xs` |
-| `md` | `40px` (`size-10`) | `text-sm` |
-| `lg` | `48px` (`size-12`) | `text-base` |
+<Container>
+  <Avatar alt="User" shape="circle" src={'/bro.jpeg'} size={50} />
+  <Avatar alt="User" shape="rounded" src={'/bro.jpeg'} size={50} />
+  <Avatar alt="User" shape="square" src={'/bro.jpeg'} size={50} />
+</Container>
 
 ## Initials Generation
 
@@ -57,12 +84,13 @@ When no `src` is provided and no `fallback` is set, initials are automatically g
 
 ## Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `src` | `string` | -- | Image URL. Shows image when provided, initials otherwise. |
-| `alt` | `string` | -- | Alt text for the image. Used to generate initials as fallback. |
-| `fallback` | `string` | -- | Explicit fallback text (overrides auto-generated initials). |
-| `size` | `"sm" \| "md" \| "lg"` | `"md"` | Avatar dimensions. |
-| `className` | `string` | -- | Additional CSS classes. |
+| Prop        | Type                                | Default    | Description                                                    |
+| ----------- | ----------------------------------- | ---------- | -------------------------------------------------------------- |
+| `src`       | `string`                            | --         | Image URL. Shows image when provided, initials otherwise.      |
+| `alt`       | `string`                            | --         | Alt text for the image. Used to generate initials as fallback. |
+| `fallback`  | `string`                            | --         | Explicit fallback text (overrides auto-generated initials).    |
+| `size`      | `number`                            | `40`       | Avatar dimensions in pixels.                                   |
+| `shape`     | `"circle" \| "rounded" \| "square"` | `"circle"` | Avatar shape.                                                  |
+| `className` | `string`                            | --         | Additional CSS classes.                                        |
 
 All other props are forwarded to the root `<span>` element.
