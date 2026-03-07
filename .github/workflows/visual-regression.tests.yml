@@ -2,7 +2,7 @@ name: Visual Regression Tests
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
 env:
   LANG: en_US.UTF-8
@@ -30,23 +30,23 @@ jobs:
         run: bun run test:visual
 
       - name: Notify Slack on Success
-        if: success() && github.ref == 'refs/heads/master'
+        if: success() && github.ref == 'refs/heads/main'
         uses: slackapi/slack-github-action@v1.27.1
         with:
           channel-id: '${{ secrets.SLACK_CHANNEL_ID }}'
           slack-message: |
-            ✅ Visual Regression Tests passed on master branch
+            Visual Regression Tests passed on main branch
             <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
 
       - name: Notify Slack on Failure
-        if: failure() && github.ref == 'refs/heads/master'
+        if: failure() && github.ref == 'refs/heads/main'
         uses: slackapi/slack-github-action@v1.27.1
         with:
           channel-id: '${{ secrets.SLACK_CHANNEL_ID }}'
           slack-message: |
-            ❌ Visual Regression Tests failed on master branch
+            Visual Regression Tests failed on main branch
             <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}

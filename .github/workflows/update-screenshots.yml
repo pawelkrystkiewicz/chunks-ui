@@ -1,51 +1,40 @@
 name: Update Visual Regression Screenshots
 
 on:
-  workflow_dispatch: # manual trigger only
+  workflow_dispatch:
 
 env:
   LANG: en_US.UTF-8
   LC_ALL: en_US.UTF-8
   AUTHOR_NAME: 'github-actions[bot]'
   AUTHOR_EMAIL: '41898282+github-actions[bot]@users.noreply.github.com'
-  COMMIT_MESSAGE: |
-    test: update visual regression screenshots
-
-    Co-authored-by: ${{ github.actor }} <${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com>
 
 jobs:
   update-screenshots:
     runs-on: ubuntu-24.04
 
-    # safety first: don't run on main
     if: github.ref_name != github.event.repository.default_branch
 
-    # one at a time per branch
     concurrency:
       group: visual-regression-screenshots@${{ github.ref_name }}
       cancel-in-progress: true
 
     permissions:
-      contents: write # needs to push changes
+      contents: write
 
     steps:
       - name: Checkout selected branch
         uses: actions/checkout@v5
         with:
           ref: ${{ github.ref_name }}
-          # use PAT if triggering other workflows
-          # token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure Git
         run: |
-          git config --global user.name "${{ env.AUTHOR_NAME }}"
-          git config --global user.email "${{ env.AUTHOR_EMAIL }}"
-
-      # your setup steps here (node, pnpm, whatever)
-      - name: Setup Node.js
-        uses: actions/setup-node@v5
-        with:
-          node-version: 24.13.0
+          git config --global user.name "$AUTHOR_NAME"
+          git config --global user.email "$AUTHOR_EMAIL"
+        env:
+          AUTHOR_NAME: ${{ env.AUTHOR_NAME }}
+          AUTHOR_EMAIL: ${{ env.AUTHOR_EMAIL }}
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -56,13 +45,11 @@ jobs:
         run: bun install
 
       - name: Install Playwright Browsers
-        run: bun x playwright install --with-deps --only-shell
+        run: bun x playwright install --with-deps chromium
 
-      # the magic happens below 🪄
       - name: Update Visual Regression Screenshots
         run: cd packages/ui && bun run test:visual -- --update
 
-      # check what changed
       - name: Check for changes
         id: check_changes
         run: |
@@ -71,7 +58,6 @@ jobs:
             echo "changes=true" >> $GITHUB_OUTPUT
             echo "Changes detected"
 
-            # save the list for the summary
             echo "changed_files<<EOF" >> $GITHUB_OUTPUT
             echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
@@ -81,35 +67,30 @@ jobs:
             echo "No changes detected"
           fi
 
-      # commit if there are changes
       - name: Commit changes
         if: steps.check_changes.outputs.changes == 'true'
         run: |
           git add -A
-          git commit -m "${{ env.COMMIT_MESSAGE }}"
+          ACTOR="${{ github.actor }}"
+          ACTOR_ID="${{ github.actor_id }}"
+          git commit -m "test: update visual regression screenshots" -m "Co-authored-by: ${ACTOR} <${ACTOR_ID}+${ACTOR}@users.noreply.github.com>"
 
       - name: Push changes
         if: steps.check_changes.outputs.changes == 'true'
         run: git push origin ${{ github.ref_name }}
 
-      # pretty summary for humans
       - name: Summary
+        if: always()
         run: |
-          if [[ "${{ steps.check_changes.outputs.changes }}" == "true" ]]; then
-            echo "### 📸 Visual Regression Screenshots Updated" >> $GITHUB_STEP_SUMMARY
+          CHANGES="${{ steps.check_changes.outputs.changes }}"
+          if [[ "$CHANGES" == "true" ]]; then
+            CHANGED_COUNT="${{ steps.check_changes.outputs.changed_count }}"
+            BRANCH="${{ github.ref_name }}"
+            echo "### Visual Regression Screenshots Updated" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Successfully updated **${{ steps.check_changes.outputs.changed_count }}** screenshot(s) on \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "#### Changed Files:" >> $GITHUB_STEP_SUMMARY
-            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-            echo "${{ steps.check_changes.outputs.changed_files }}" >> $GITHUB_STEP_SUMMARY
-            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "✅ The updated screenshots have been committed and pushed. Your visual regression baseline is now up to date!" >> $GITHUB_STEP_SUMMARY
+            echo "Updated **${CHANGED_COUNT}** screenshot(s) on \`${BRANCH}\`" >> $GITHUB_STEP_SUMMARY
           else
-            echo "### ℹ️ No Screenshot Updates Required" >> $GITHUB_STEP_SUMMARY
+            echo "### No Screenshot Updates Required" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "The visual regression test command ran successfully but no screenshots needed updating." >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "All screenshots are already up to date! 🎉" >> $GITHUB_STEP_SUMMARY
+            echo "All screenshots are already up to date." >> $GITHUB_STEP_SUMMARY
           fi
