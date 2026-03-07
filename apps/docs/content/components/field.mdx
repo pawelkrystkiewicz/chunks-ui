@@ -1,0 +1,104 @@
+# Field
+
+A form field wrapper built on Base UI's `Field` primitive. Provides label, description, error message, and validation state management for form controls like `Input`, `Textarea`, `Checkbox`, etc.
+
+## Import
+
+```tsx
+import { Field } from "chunks-ui";
+```
+
+## Basic Usage
+
+```tsx
+<Field.Root>
+  <Field.Label>Email</Field.Label>
+  <Input type="email" placeholder="you@example.com" />
+</Field.Root>
+```
+
+## With Description
+
+```tsx
+<Field.Root>
+  <Field.Label>Password</Field.Label>
+  <Field.Description>Must be at least 8 characters.</Field.Description>
+  <Input type="password" />
+</Field.Root>
+```
+
+## Validation Error
+
+Set `invalid` on `Field.Root` to activate error styling. The `Field.Error` message appears and the input receives `data-[invalid]` for red border styling:
+
+```tsx
+<Field.Root invalid>
+  <Field.Label>Email</Field.Label>
+  <Input type="email" placeholder="you@example.com" />
+  <Field.Error>Please enter a valid email address.</Field.Error>
+</Field.Root>
+```
+
+## With Textarea
+
+```tsx
+<Field.Root>
+  <Field.Label>Message</Field.Label>
+  <Field.Description>Describe your issue in detail.</Field.Description>
+  <Textarea autoResize placeholder="Type here..." />
+</Field.Root>
+```
+
+## Native Validation
+
+Use `Field.Validity` for native constraint validation:
+
+```tsx
+<Field.Root>
+  <Field.Label>Username</Field.Label>
+  <Field.Control
+    render={<Input />}
+    required
+    minLength={3}
+  />
+  <Field.Validity>
+    {(state) =>
+      state.validity.valueMissing ? (
+        <Field.Error>Username is required.</Field.Error>
+      ) : state.validity.tooShort ? (
+        <Field.Error>Must be at least 3 characters.</Field.Error>
+      ) : null
+    }
+  </Field.Validity>
+</Field.Root>
+```
+
+## Disabled State
+
+Labels dim to 50% opacity when the field is disabled:
+
+```tsx
+<Field.Root disabled>
+  <Field.Label>Locked Field</Field.Label>
+  <Input disabled value="Cannot edit" />
+</Field.Root>
+```
+
+## Compound Parts
+
+| Part | Description |
+|---|---|
+| `Field.Root` | Wrapper element. Vertical flex with `gap-1`. Manages `invalid` and `disabled` state. |
+| `Field.Label` | Form label. `text-sm font-medium`. Dims when disabled. |
+| `Field.Description` | Help text below the label. `text-xs text-muted-foreground`. |
+| `Field.Error` | Error message. `text-xs text-destructive`. Only visible when `invalid`. |
+| `Field.Control` | Connects a form control to the field (for native validation). Uses `render` prop. |
+| `Field.Validity` | Render prop for accessing native validity state. |
+
+## Field.Root Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `invalid` | `boolean` | `false` | Marks the field as invalid, showing error styles |
+| `disabled` | `boolean` | `false` | Disables the field and dims the label |
+| `className` | `string` | -- | Additional CSS classes |

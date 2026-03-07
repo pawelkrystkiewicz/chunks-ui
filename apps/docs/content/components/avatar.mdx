@@ -1,0 +1,68 @@
+# Avatar
+
+Displays a user avatar image with automatic fallback to initials. Supports three sizes.
+
+## Import
+
+```tsx
+import { Avatar } from "chunks-ui";
+```
+
+## Basic Usage
+
+With an image:
+
+```tsx
+<Avatar src="/avatars/jane.jpg" alt="Jane Doe" />
+```
+
+Without an image (shows initials derived from `alt`):
+
+```tsx
+<Avatar alt="Jane Doe" />
+```
+
+This renders "JD" as fallback initials.
+
+## Custom Fallback
+
+Override the auto-generated initials with the `fallback` prop:
+
+```tsx
+<Avatar fallback="?" />
+<Avatar alt="Jane Doe" fallback="J" />
+```
+
+## Sizes
+
+```tsx
+<Avatar src="/avatar.jpg" alt="User" size="sm" />
+<Avatar src="/avatar.jpg" alt="User" size="md" />
+<Avatar src="/avatar.jpg" alt="User" size="lg" />
+```
+
+| Size | Dimensions | Text size |
+|---|---|---|
+| `sm` | `32px` (`size-8`) | `text-xs` |
+| `md` | `40px` (`size-10`) | `text-sm` |
+| `lg` | `48px` (`size-12`) | `text-base` |
+
+## Initials Generation
+
+When no `src` is provided and no `fallback` is set, initials are automatically generated from the `alt` text:
+
+- `"Jane Doe"` produces `"JD"`
+- `"Alice B. Charlie"` produces `"AB"` (first two initials)
+- Single word `"Admin"` produces `"A"`
+
+## Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `src` | `string` | -- | Image URL. Shows image when provided, initials otherwise. |
+| `alt` | `string` | -- | Alt text for the image. Used to generate initials as fallback. |
+| `fallback` | `string` | -- | Explicit fallback text (overrides auto-generated initials). |
+| `size` | `"sm" \| "md" \| "lg"` | `"md"` | Avatar dimensions. |
+| `className` | `string` | -- | Additional CSS classes. |
+
+All other props are forwarded to the root `<span>` element.

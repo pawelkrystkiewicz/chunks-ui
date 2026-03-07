@@ -1,0 +1,50 @@
+# Textarea
+
+A multi-line text input with optional auto-resize behavior using the CSS `field-sizing: content` property.
+
+## Import
+
+```tsx
+import { Textarea } from "chunks-ui";
+```
+
+## Basic Usage
+
+```tsx
+<Textarea placeholder="Write your message..." />
+```
+
+## Auto-Resize
+
+When `autoResize` is `true`, the textarea grows vertically to fit its content using the native CSS `field-sizing: content` property:
+
+```tsx
+<Textarea autoResize placeholder="Start typing..." />
+```
+
+The textarea has a `min-h-20` minimum height by default.
+
+## With Field
+
+```tsx
+<Field.Root>
+  <Field.Label>Bio</Field.Label>
+  <Field.Description>Write a short bio (max 280 characters)</Field.Description>
+  <Textarea autoResize placeholder="Tell us about yourself..." maxLength={280} />
+</Field.Root>
+```
+
+## Disabled
+
+```tsx
+<Textarea disabled placeholder="This field is disabled" />
+```
+
+## Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `autoResize` | `boolean` | `false` | Enable auto-resize via `field-sizing: content` |
+| `className` | `string` | -- | Additional CSS classes |
+
+All standard `<textarea>` props are supported (`value`, `onChange`, `placeholder`, `disabled`, `rows`, `maxLength`, etc.).

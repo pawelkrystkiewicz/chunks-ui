@@ -1,0 +1,171 @@
+# Theme
+
+Chunks UI uses a CSS variable-based design token system following the [shadcn/ui](https://ui.shadcn.com) naming convention. All colors are defined in the OKLCH color space for perceptual uniformity.
+
+## Setup
+
+Import the theme CSS in your app entry point:
+
+```tsx
+import "chunks-ui/theme.css";
+```
+
+This single file provides all CSS variables for light mode, dark mode, and Tailwind v4 `@theme inline` tokens.
+
+## Color System
+
+### Semantic Colors (OKLCH)
+
+| Token | Light Value | Purpose |
+|---|---|---|
+| `--primary` | `oklch(60.48% 0.2165 257.21)` | Brand blue |
+| `--primary-foreground` | `oklch(0.985 0 0)` | Text on primary |
+| `--success` | `oklch(75.14% 0.1514 166.5)` | Positive actions |
+| `--success-foreground` | `oklch(0.985 0 0)` | Text on success |
+| `--warning` | `oklch(77.97% 0.1665 72.45)` | Caution states |
+| `--warning-foreground` | `oklch(0.145 0 0)` | Text on warning |
+| `--destructive` | `oklch(66.16% 0.2249 25.88)` | Errors, deletions |
+| `--destructive-foreground` | `oklch(0.985 0 0)` | Text on destructive |
+
+### Surface Colors
+
+| Token | Light | Dark |
+|---|---|---|
+| `--background` | `oklch(1 0 0)` | `oklch(0.145 0 0)` |
+| `--foreground` | `oklch(0.145 0 0)` | `oklch(0.985 0 0)` |
+| `--card` | `oklch(1 0 0)` | `oklch(0.145 0 0)` |
+| `--card-foreground` | `oklch(0.145 0 0)` | `oklch(0.985 0 0)` |
+| `--popover` | `oklch(1 0 0)` | `oklch(0.145 0 0)` |
+| `--popover-foreground` | `oklch(0.145 0 0)` | `oklch(0.985 0 0)` |
+
+### Neutral Palette
+
+| Token | Light | Dark |
+|---|---|---|
+| `--secondary` | `oklch(0.97 0 0)` | `oklch(0.269 0 0)` |
+| `--secondary-foreground` | `oklch(0.205 0 0)` | `oklch(0.985 0 0)` |
+| `--muted` | `oklch(0.97 0 0)` | `oklch(0.269 0 0)` |
+| `--muted-foreground` | `oklch(0.556 0 0)` | `oklch(0.708 0 0)` |
+| `--accent` | `oklch(0.97 0 0)` | `oklch(0.269 0 0)` |
+| `--accent-foreground` | `oklch(0.205 0 0)` | `oklch(0.985 0 0)` |
+
+### Utility Tokens
+
+| Token | Light | Dark |
+|---|---|---|
+| `--border` | `oklch(0.922 0 0)` | `oklch(0.269 0 0)` |
+| `--input` | `oklch(0.922 0 0)` | `oklch(0.269 0 0)` |
+| `--ring` | `oklch(0.708 0 0)` | `oklch(0.556 0 0)` |
+| `--radius` | `0.625rem` | `0.625rem` |
+
+## Tailwind Usage
+
+Variables are mapped to Tailwind utilities via `@theme inline`:
+
+```css
+@theme inline {
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-success: var(--success);
+  --color-destructive: var(--destructive);
+  /* ... */
+}
+```
+
+This means you can use them directly in Tailwind classes:
+
+```tsx
+<div className="bg-primary text-primary-foreground" />
+<div className="bg-destructive text-destructive-foreground" />
+<div className="border-border text-muted-foreground" />
+```
+
+## Dark Mode
+
+Dark mode is toggled by adding the `.dark` class to the `<html>` element (same convention as shadcn/ui). The same variable names are redefined with dark values:
+
+```css
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --primary: oklch(60.48% 0.2165 257.21);
+  /* ... */
+}
+```
+
+Components automatically adapt -- no extra props needed.
+
+## Typography
+
+| Token | Value |
+|---|---|
+| `--font-sans` | `"Manrope", sans-serif` |
+| `--font-mono` | `"Fira Code", monospace` |
+
+Use in Tailwind: `font-sans`, `font-mono`.
+
+## Easing Curves
+
+| Token | Value | Use case |
+|---|---|---|
+| `--ease-fluid` | `cubic-bezier(0.3, 0, 0, 1)` | General transitions |
+| `--ease-snappy` | `cubic-bezier(0.2, 0, 0, 1)` | Quick, responsive motion |
+
+Use in Tailwind: `ease-fluid`, `ease-snappy`.
+
+## Component Sizing
+
+| Token | Value |
+|---|---|
+| `--spacing-ui-height` | `35px` |
+| `--spacing-ui-icon-height` | `calc(var(--spacing-ui-height) * 0.5)` |
+
+## Z-Index Layers
+
+The z-index system provides ordered layers to prevent stacking conflicts:
+
+| Token | Value | Use case |
+|---|---|---|
+| `--z-base` | `0` | Default content |
+| `--z-dropdowns` | `200` | Select popups, menus |
+| `--z-tooltips` | `400` | Tooltip overlays |
+| `--z-overlays` | `500` | General overlays |
+| `--z-drawers` | `600` | Side/bottom drawers |
+| `--z-modals` | `700` | Modal dialogs |
+| `--z-notifications` | `800` | Toast notifications |
+
+## Border Radius
+
+| Token | Value |
+|---|---|
+| `--radius-sm` | `calc(var(--radius) - 4px)` |
+| `--radius-md` | `calc(var(--radius) - 2px)` |
+| `--radius-lg` | `var(--radius)` (0.625rem) |
+| `--radius-xl` | `calc(var(--radius) + 4px)` |
+
+## Chart Colors
+
+Five chart colors are provided for data visualization, compatible with shadcn/ui charting:
+
+```css
+--chart-1: oklch(0.646 0.222 41.116);
+--chart-2: oklch(0.6 0.118 184.704);
+--chart-3: oklch(0.398 0.07 227.392);
+--chart-4: oklch(0.828 0.189 84.429);
+--chart-5: oklch(0.769 0.188 70.08);
+```
+
+## Customization
+
+To override tokens, redefine the CSS variables after importing the theme:
+
+```css
+@import "chunks-ui/theme.css";
+
+:root {
+  --primary: oklch(70% 0.2 150);
+  --radius: 0.5rem;
+}
+```
+
+All components will pick up the new values automatically.

@@ -1,0 +1,100 @@
+# Tooltip
+
+A hover/focus tooltip built on Base UI's `Tooltip` primitive. Automatically positioned via Floating UI with a scale/fade transition.
+
+## Import
+
+```tsx
+import { Tooltip } from "chunks-ui";
+```
+
+## Basic Usage
+
+```tsx
+<Tooltip.Root>
+  <Tooltip.Trigger>
+    <button>Hover me</button>
+  </Tooltip.Trigger>
+  <Tooltip.Portal>
+    <Tooltip.Positioner>
+      <Tooltip.Popup>Helpful tip</Tooltip.Popup>
+    </Tooltip.Positioner>
+  </Tooltip.Portal>
+</Tooltip.Root>
+```
+
+## With Arrow
+
+```tsx
+<Tooltip.Root>
+  <Tooltip.Trigger>
+    <button>Info</button>
+  </Tooltip.Trigger>
+  <Tooltip.Portal>
+    <Tooltip.Positioner>
+      <Tooltip.Popup>
+        <Tooltip.Arrow />
+        This is a tooltip with an arrow.
+      </Tooltip.Popup>
+    </Tooltip.Positioner>
+  </Tooltip.Portal>
+</Tooltip.Root>
+```
+
+## Tooltip Provider
+
+Use `Tooltip.Provider` to share delay settings across multiple tooltips. This avoids delays when moving between nearby tooltips:
+
+```tsx
+<Tooltip.Provider delay={200} closeDelay={0}>
+  <Tooltip.Root>
+    <Tooltip.Trigger><button>A</button></Tooltip.Trigger>
+    <Tooltip.Portal>
+      <Tooltip.Positioner>
+        <Tooltip.Popup>Tooltip A</Tooltip.Popup>
+      </Tooltip.Positioner>
+    </Tooltip.Portal>
+  </Tooltip.Root>
+
+  <Tooltip.Root>
+    <Tooltip.Trigger><button>B</button></Tooltip.Trigger>
+    <Tooltip.Portal>
+      <Tooltip.Positioner>
+        <Tooltip.Popup>Tooltip B</Tooltip.Popup>
+      </Tooltip.Positioner>
+    </Tooltip.Portal>
+  </Tooltip.Root>
+</Tooltip.Provider>
+```
+
+## Positioning
+
+The positioner has a default `sideOffset` of `6px`. Override placement with `side` and `align`:
+
+```tsx
+<Tooltip.Positioner side="right" align="center">
+  <Tooltip.Popup>Right-aligned tooltip</Tooltip.Popup>
+</Tooltip.Positioner>
+```
+
+## Compound Parts
+
+| Part | Description |
+|---|---|
+| `Tooltip.Root` | State container. Manages hover/focus open state. |
+| `Tooltip.Trigger` | The element that activates the tooltip on hover/focus. |
+| `Tooltip.Portal` | Renders children in a portal. |
+| `Tooltip.Positioner` | Floating UI positioner. Default `sideOffset={6}`. |
+| `Tooltip.Popup` | The tooltip content. Dark background (`bg-foreground`), light text (`text-background`). `z-tooltips` (400). |
+| `Tooltip.Arrow` | SVG arrow filled with `--foreground` color. |
+| `Tooltip.Provider` | Shared delay configuration for grouped tooltips. |
+
+## Tooltip.Root Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `open` | `boolean` | -- | Controlled open state |
+| `defaultOpen` | `boolean` | `false` | Initial open state (uncontrolled) |
+| `onOpenChange` | `(open: boolean) => void` | -- | Called when open state changes |
+| `delay` | `number` | `600` | Milliseconds before showing |
+| `closeDelay` | `number` | `0` | Milliseconds before hiding |

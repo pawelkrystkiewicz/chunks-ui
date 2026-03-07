@@ -1,0 +1,57 @@
+# ClearButton
+
+A small circular icon button for clearing or dismissing values. Used internally by `Input` (via `onClear`) and `Chip` (via `onRemove`), but also exported for direct use.
+
+## Import
+
+```tsx
+import { ClearButton } from "chunks-ui";
+```
+
+## Basic Usage
+
+```tsx
+<ClearButton onClick={() => console.log("Cleared")} />
+```
+
+## Custom Label
+
+The `label` prop sets the `aria-label` for accessibility:
+
+```tsx
+<ClearButton label="Remove tag" onClick={handleRemove} />
+<ClearButton label="Dismiss" onClick={handleDismiss} />
+```
+
+Default label is `"Clear"`.
+
+## In Context
+
+The ClearButton is commonly composed inside other components:
+
+```tsx
+{/* Inside a custom search input */}
+<div className="relative flex items-center">
+  <input className="pr-8" value={query} onChange={handleChange} />
+  {query && (
+    <span className="absolute right-2">
+      <ClearButton onClick={() => setQuery("")} />
+    </span>
+  )}
+</div>
+```
+
+## Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `label` | `string` | `"Clear"` | Accessible `aria-label` |
+| `className` | `string` | -- | Additional CSS classes |
+| `onClick` | `() => void` | -- | Click handler |
+| `disabled` | `boolean` | `false` | Disable the button |
+
+All other props are forwarded to the underlying `<button>` element.
+
+## Styling
+
+The button renders at `size-5` (20px) with a rounded-full shape. It shows `text-muted-foreground` by default and transitions to `text-foreground` with a `bg-accent` background on hover.

@@ -2,11 +2,15 @@ import { Head } from "nextra/components";
 import { getPageMap } from "nextra/page-map";
 import { Footer, Layout, Navbar } from "nextra-theme-docs";
 import "nextra-theme-docs/style.css";
+import "./globals.css";
+import Image from "next/image";
 
 export const metadata = {
-  title: "Chunks UI",
-  description: "Component library documentation",
+  title: "Chunks",
+  description: "UI library",
 };
+
+const LOGO_SIZE = 30;
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -14,7 +18,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <Head />
       <body>
         <Layout
-          navbar={<Navbar logo={<b>Chunks UI</b>} />}
+          navbar={
+            <Navbar
+              logo={
+                <div className="flex items-center gap-2 flex-nowrap">
+                  <Image src="/logo.svg" alt="Chunks" width={LOGO_SIZE} height={LOGO_SIZE} />
+                  <b>Chunks</b>
+                </div>
+              }
+            />
+          }
           pageMap={await getPageMap()}
           footer={<Footer />}
         >

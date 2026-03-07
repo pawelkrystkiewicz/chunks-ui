@@ -1,0 +1,96 @@
+# Input
+
+A styled text input built on Base UI's `Input` primitive. Supports start/end adornments, a clear button, size variants, and error states via `data-[invalid]`.
+
+## Import
+
+```tsx
+import { Input } from "chunks-ui";
+```
+
+## Basic Usage
+
+```tsx
+<Input placeholder="Enter your name" />
+```
+
+## Sizes
+
+```tsx
+<Input size="sm" placeholder="Small" />
+<Input size="md" placeholder="Medium" />
+<Input size="lg" placeholder="Large" />
+```
+
+## Adornments
+
+Use `startAdornment` and `endAdornment` to place icons or text at the edges of the input:
+
+```tsx
+<Input
+  startAdornment={<SearchIcon className="size-4" />}
+  placeholder="Search..."
+/>
+```
+
+```tsx
+<Input
+  endAdornment={<span className="text-xs text-muted-foreground">USD</span>}
+  placeholder="0.00"
+/>
+```
+
+## Clear Button
+
+Pass an `onClear` callback to show a built-in clear button (uses the `ClearButton` component internally):
+
+```tsx
+function SearchInput() {
+  const [value, setValue] = useState("");
+
+  return (
+    <Input
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      onClear={() => setValue("")}
+      placeholder="Search..."
+    />
+  );
+}
+```
+
+## Error State
+
+The input styles change when the `data-invalid` attribute is present (set automatically by `Field.Root` with `invalid` prop, or manually):
+
+```tsx
+<Field.Root invalid>
+  <Field.Label>Email</Field.Label>
+  <Input placeholder="user@example.com" />
+  <Field.Error>Invalid email address</Field.Error>
+</Field.Root>
+```
+
+## With Field
+
+Wrap `Input` in a `Field` for labels, descriptions, and validation:
+
+```tsx
+<Field.Root>
+  <Field.Label>Username</Field.Label>
+  <Field.Description>Choose a unique username</Field.Description>
+  <Input placeholder="johndoe" />
+</Field.Root>
+```
+
+## Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `size` | `"sm" \| "md" \| "lg"` | `"md"` | Input height and text size |
+| `startAdornment` | `ReactNode` | -- | Element before the input text |
+| `endAdornment` | `ReactNode` | -- | Element after the input text |
+| `onClear` | `() => void` | -- | Show clear button; called on click |
+| `className` | `string` | -- | Additional CSS classes |
+
+All other props are forwarded to the underlying Base UI `Input` (supports `value`, `onChange`, `placeholder`, `disabled`, etc.).

@@ -1,0 +1,70 @@
+# Loader
+
+An animated SVG spinner for loading states. Used internally by `Button` during its loading state, and available for standalone use.
+
+## Import
+
+```tsx
+import { Loader } from "chunks-ui";
+```
+
+## Basic Usage
+
+```tsx
+<Loader />
+```
+
+## Sizes
+
+```tsx
+<Loader size="sm" />
+<Loader size="md" />
+<Loader size="lg" />
+```
+
+| Size | Dimensions |
+|---|---|
+| `sm` | `16px` (`size-4`) |
+| `md` | `20px` (`size-5`) |
+| `lg` | `24px` (`size-6`) |
+
+## Colors
+
+```tsx
+<Loader color="current" />
+<Loader color="primary" />
+<Loader color="muted" />
+```
+
+| Color | CSS Class | Use case |
+|---|---|---|
+| `current` | `text-current` | Inherits parent text color (default) |
+| `primary` | `text-primary` | Brand blue spinner |
+| `muted` | `text-muted-foreground` | Subtle background loading |
+
+## Full-Page Loading
+
+```tsx
+<div className="flex h-screen items-center justify-center">
+  <Loader size="lg" color="primary" />
+</div>
+```
+
+## Inline with Text
+
+```tsx
+<div className="flex items-center gap-2 text-muted-foreground">
+  <Loader size="sm" />
+  <span>Loading data...</span>
+</div>
+```
+
+## Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `size` | `"sm" \| "md" \| "lg"` | `"md"` | Spinner dimensions |
+| `color` | `"current" \| "primary" \| "muted"` | `"current"` | Spinner color |
+| `className` | `string` | -- | Additional CSS classes |
+
+All other props are forwarded to the root `<svg>` element. The spinner uses `animate-spin` for rotation and is marked `aria-hidden="true"`.

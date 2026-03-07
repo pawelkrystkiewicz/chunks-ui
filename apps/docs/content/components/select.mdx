@@ -1,0 +1,142 @@
+# Select
+
+A styled single-select dropdown built on Base UI's `Select` primitive. Includes trigger, popup, items, grouped options, and built-in Floating UI positioning.
+
+## Import
+
+```tsx
+import { Select } from "chunks-ui";
+```
+
+## Basic Usage
+
+```tsx
+<Select.Root>
+  <Select.Trigger>
+    <Select.Value placeholder="Choose a fruit" />
+    <Select.Icon />
+  </Select.Trigger>
+  <Select.Portal>
+    <Select.Positioner>
+      <Select.Popup>
+        <Select.Item value="apple">
+          <Select.ItemText>Apple</Select.ItemText>
+          <Select.ItemIndicator />
+        </Select.Item>
+        <Select.Item value="banana">
+          <Select.ItemText>Banana</Select.ItemText>
+          <Select.ItemIndicator />
+        </Select.Item>
+        <Select.Item value="cherry">
+          <Select.ItemText>Cherry</Select.ItemText>
+          <Select.ItemIndicator />
+        </Select.Item>
+      </Select.Popup>
+    </Select.Positioner>
+  </Select.Portal>
+</Select.Root>
+```
+
+## Grouped Options
+
+```tsx
+<Select.Root>
+  <Select.Trigger>
+    <Select.Value placeholder="Pick a color" />
+    <Select.Icon />
+  </Select.Trigger>
+  <Select.Portal>
+    <Select.Positioner>
+      <Select.Popup>
+        <Select.Group>
+          <Select.GroupLabel>Warm</Select.GroupLabel>
+          <Select.Item value="red">
+            <Select.ItemText>Red</Select.ItemText>
+            <Select.ItemIndicator />
+          </Select.Item>
+          <Select.Item value="orange">
+            <Select.ItemText>Orange</Select.ItemText>
+            <Select.ItemIndicator />
+          </Select.Item>
+        </Select.Group>
+        <Select.Group>
+          <Select.GroupLabel>Cool</Select.GroupLabel>
+          <Select.Item value="blue">
+            <Select.ItemText>Blue</Select.ItemText>
+            <Select.ItemIndicator />
+          </Select.Item>
+          <Select.Item value="green">
+            <Select.ItemText>Green</Select.ItemText>
+            <Select.ItemIndicator />
+          </Select.Item>
+        </Select.Group>
+      </Select.Popup>
+    </Select.Positioner>
+  </Select.Portal>
+</Select.Root>
+```
+
+## Controlled
+
+```tsx
+function ControlledSelect() {
+  const [value, setValue] = useState("");
+
+  return (
+    <Select.Root value={value} onValueChange={setValue}>
+      <Select.Trigger>
+        <Select.Value placeholder="Select status" />
+        <Select.Icon />
+      </Select.Trigger>
+      <Select.Portal>
+        <Select.Positioner>
+          <Select.Popup>
+            <Select.Item value="active">
+              <Select.ItemText>Active</Select.ItemText>
+              <Select.ItemIndicator />
+            </Select.Item>
+            <Select.Item value="inactive">
+              <Select.ItemText>Inactive</Select.ItemText>
+              <Select.ItemIndicator />
+            </Select.Item>
+          </Select.Popup>
+        </Select.Positioner>
+      </Select.Portal>
+    </Select.Root>
+  );
+}
+```
+
+## Compound Parts
+
+| Part | Description |
+|---|---|
+| `Select.Root` | State container. Manages open/close and selected value. |
+| `Select.Trigger` | The button that opens the dropdown. Styled like an input. |
+| `Select.Value` | Displays the selected value or placeholder text. |
+| `Select.Icon` | Chevron icon inside the trigger. |
+| `Select.Portal` | Renders the popup in a portal. |
+| `Select.Positioner` | Handles Floating UI positioning. |
+| `Select.Popup` | The dropdown panel containing items. |
+| `Select.Item` | An individual selectable option. |
+| `Select.ItemText` | The text content of an item. |
+| `Select.ItemIndicator` | Checkmark shown for the selected item. |
+| `Select.Group` | Groups related items together. |
+| `Select.GroupLabel` | Label for a group of items. |
+
+## Select.Root Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `value` | `string` | -- | Controlled selected value |
+| `defaultValue` | `string` | -- | Initial value (uncontrolled) |
+| `onValueChange` | `(value: string) => void` | -- | Called when selection changes |
+| `open` | `boolean` | -- | Controlled open state |
+| `onOpenChange` | `(open: boolean) => void` | -- | Called when open state changes |
+
+## Select.Trigger Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `disabled` | `boolean` | `false` | Disable the trigger |
+| `className` | `string` | -- | Additional CSS classes |

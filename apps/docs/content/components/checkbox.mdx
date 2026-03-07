@@ -1,0 +1,87 @@
+# Checkbox
+
+A styled checkbox built on Base UI's `Checkbox` primitive. Supports checked, unchecked, and indeterminate states with a compound component pattern.
+
+## Import
+
+```tsx
+import { Checkbox } from "chunks-ui";
+```
+
+## Basic Usage
+
+```tsx
+<Checkbox.Root>
+  <Checkbox.Indicator />
+</Checkbox.Root>
+```
+
+## With Label
+
+Use the `Field` component to associate a label:
+
+```tsx
+<Field.Root>
+  <div className="flex items-center gap-2">
+    <Checkbox.Root>
+      <Checkbox.Indicator />
+    </Checkbox.Root>
+    <Field.Label>Accept terms and conditions</Field.Label>
+  </div>
+</Field.Root>
+```
+
+## Controlled
+
+```tsx
+function ControlledCheckbox() {
+  const [checked, setChecked] = useState(false);
+
+  return (
+    <Checkbox.Root checked={checked} onCheckedChange={setChecked}>
+      <Checkbox.Indicator />
+    </Checkbox.Root>
+  );
+}
+```
+
+## Indeterminate State
+
+The indeterminate state is used for "select all" patterns where some items are checked:
+
+```tsx
+<Checkbox.Root checked="indeterminate">
+  <Checkbox.Indicator />
+</Checkbox.Root>
+```
+
+## Disabled
+
+```tsx
+<Checkbox.Root disabled>
+  <Checkbox.Indicator />
+</Checkbox.Root>
+```
+
+## Compound Parts
+
+| Part | Description |
+|---|---|
+| `Checkbox.Root` | The checkbox control. Handles checked state and keyboard interaction. |
+| `Checkbox.Indicator` | Renders the check/indeterminate icon inside the root. |
+
+## Checkbox.Root Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `checked` | `boolean \| "indeterminate"` | -- | Controlled checked state |
+| `defaultChecked` | `boolean` | `false` | Initial checked state (uncontrolled) |
+| `onCheckedChange` | `(checked: boolean) => void` | -- | Called when checked state changes |
+| `disabled` | `boolean` | `false` | Disable the checkbox |
+| `className` | `string` | -- | Additional CSS classes |
+
+## Checkbox.Indicator Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `className` | `string` | -- | Additional CSS classes |

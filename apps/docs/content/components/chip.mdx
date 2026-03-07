@@ -1,0 +1,61 @@
+# Chip
+
+A small label/tag component with optional remove functionality. Uses the `ClearButton` component internally for the dismiss action.
+
+## Import
+
+```tsx
+import { Chip } from "chunks-ui";
+```
+
+## Basic Usage
+
+```tsx
+<Chip>Default</Chip>
+```
+
+## Colors
+
+```tsx
+<Chip color="primary">Primary</Chip>
+<Chip color="destructive">Destructive</Chip>
+<Chip color="success">Success</Chip>
+<Chip color="warning">Warning</Chip>
+<Chip color="secondary">Secondary</Chip>
+```
+
+Each color applies a light tinted background with matching text and border (e.g. `bg-primary/10 text-primary border-primary/30`).
+
+## Removable Chip
+
+Pass an `onRemove` callback to show a close button:
+
+```tsx
+function TagList() {
+  const [tags, setTags] = useState(["React", "TypeScript", "Tailwind"]);
+
+  return (
+    <div className="flex gap-2">
+      {tags.map((tag) => (
+        <Chip
+          key={tag}
+          onRemove={() => setTags((prev) => prev.filter((t) => t !== tag))}
+        >
+          {tag}
+        </Chip>
+      ))}
+    </div>
+  );
+}
+```
+
+## Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `color` | `"primary" \| "destructive" \| "success" \| "warning" \| "secondary"` | `"secondary"` | Semantic color variant |
+| `onRemove` | `() => void` | -- | Show remove button; called on click |
+| `className` | `string` | -- | Additional CSS classes |
+| `children` | `ReactNode` | -- | Chip label content |
+
+All other props are forwarded to the root `<span>` element.

@@ -1,3 +1,72 @@
 # Chunks UI
 
-Component library documentation.
+A personal React 19+ component library built on [Base UI](https://base-ui.com), [Tailwind CSS v4](https://tailwindcss.com), and [Motion](https://motion.dev). Single npm package replacing `@creation-ui/react`.
+
+## Installation
+
+```bash
+bun add chunks-ui motion
+```
+
+`motion` is an optional peer dependency. Components work without it, but animations require it.
+
+## Setup
+
+Import the theme CSS in your app entry point (e.g. `app/layout.tsx`):
+
+```tsx
+import "chunks-ui/theme.css";
+```
+
+Then import components as needed:
+
+```tsx
+import { Button, Input, Tabs } from "chunks-ui";
+```
+
+The theme CSS exposes OKLCH color tokens as CSS variables. Your Tailwind CSS v4 config picks them up automatically -- no plugin needed.
+
+## Components
+
+### Form Controls
+
+- [Button](/components/button) -- Contained, outlined, ghost, link variants with loading state
+- [Input](/components/input) -- Text input with adornments and clear button
+- [Textarea](/components/textarea) -- Multi-line input with auto-resize
+- [Checkbox](/components/checkbox) -- Checkbox with indeterminate state
+- [Radio](/components/radio) -- Radio buttons with group wrapper
+- [Switch](/components/switch) -- Toggle switch
+- [Select](/components/select) -- Single select with grouped options
+- [Field](/components/field) -- Label, description, and error wrapper for form controls
+
+### Overlay & Popups
+
+- [Dialog](/components/dialog) -- Modal dialog with backdrop
+- [Drawer](/components/drawer) -- Side/bottom sheet
+- [Popover](/components/popover) -- Positioned popup with arrow
+- [Tooltip](/components/tooltip) -- Hover tooltip with positioning
+
+### Navigation
+
+- [Tabs](/components/tabs) -- Tabbed navigation with animated indicator
+
+### Data Display
+
+- [Card](/components/card) -- Compound card layout
+- [Avatar](/components/avatar) -- Image with fallback initials
+- [Chip](/components/chip) -- Removable tag/badge
+- [Separator](/components/separator) -- Horizontal or vertical divider
+
+### Utility
+
+- [ClearButton](/components/clear-button) -- Small icon button for clearing values
+- [Loader](/components/loader) -- Animated SVG spinner
+
+## Architecture
+
+- **Headless layer:** `@base-ui/react` v1.2+ (includes Floating UI for positioning)
+- **Styling:** Tailwind CSS v4 + CVA + `clsx` + `tailwind-merge`
+- **Animation:** Motion v12+ (optional peer dependency)
+- **Build:** tsup (ESM + CJS + `.d.ts`)
+- **Compound pattern:** Components use `<X.Root>`, `<X.Trigger>`, `<X.Content>` patterns
+- **Composition:** Base UI `render` prop, not `asChild`

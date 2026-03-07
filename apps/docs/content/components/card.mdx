@@ -1,0 +1,86 @@
+# Card
+
+A compound layout component for displaying grouped content. Built with plain HTML elements (no Base UI dependency). Follows the compound pattern: `Card.Root`, `Card.Header`, `Card.Title`, `Card.Description`, `Card.Content`, `Card.Footer`.
+
+## Import
+
+```tsx
+import { Card } from "chunks-ui";
+```
+
+## Basic Usage
+
+```tsx
+<Card.Root>
+  <Card.Header>
+    <Card.Title>Project Alpha</Card.Title>
+    <Card.Description>A brief description of the project.</Card.Description>
+  </Card.Header>
+  <Card.Content>
+    <p>Main content goes here.</p>
+  </Card.Content>
+  <Card.Footer>
+    <Button variant="outlined" color="secondary">Cancel</Button>
+    <Button>Save</Button>
+  </Card.Footer>
+</Card.Root>
+```
+
+## Minimal Card
+
+You can use any subset of compound parts:
+
+```tsx
+<Card.Root>
+  <Card.Content>
+    <p>Simple card with content only.</p>
+  </Card.Content>
+</Card.Root>
+```
+
+## With Custom Content
+
+```tsx
+<Card.Root className="max-w-sm">
+  <Card.Header>
+    <Card.Title>Team Members</Card.Title>
+    <Card.Description>Manage your team members and roles.</Card.Description>
+  </Card.Header>
+  <Card.Content>
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-3">
+        <Avatar src="/avatars/alice.jpg" alt="Alice" size="sm" />
+        <div>
+          <p className="text-sm font-medium">Alice Johnson</p>
+          <p className="text-xs text-muted-foreground">Admin</p>
+        </div>
+      </div>
+      <div className="flex items-center gap-3">
+        <Avatar alt="Bob Smith" size="sm" />
+        <div>
+          <p className="text-sm font-medium">Bob Smith</p>
+          <p className="text-xs text-muted-foreground">Member</p>
+        </div>
+      </div>
+    </div>
+  </Card.Content>
+  <Card.Footer>
+    <Button size="sm">Invite Member</Button>
+  </Card.Footer>
+</Card.Root>
+```
+
+## Compound Parts
+
+| Part | Description |
+|---|---|
+| `Card.Root` | Outer container. Rounded border, background, and shadow. |
+| `Card.Header` | Top section with vertical flex layout and padding (`p-6`). |
+| `Card.Title` | Heading rendered as `<h3>`. Semibold, tight tracking. |
+| `Card.Description` | Subtext below the title. `text-muted-foreground`. |
+| `Card.Content` | Main body area. Padding `p-6 pt-0`. |
+| `Card.Footer` | Bottom section. Horizontal flex with `p-6 pt-0`. |
+
+## Props
+
+All compound parts accept standard HTML `div` props (or `h3`/`p` for Title/Description) plus `className` for additional styling. There are no component-specific variant props.

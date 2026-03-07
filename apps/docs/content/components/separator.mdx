@@ -1,0 +1,57 @@
+# Separator
+
+A visual divider built on Base UI's `Separator` primitive. Supports horizontal and vertical orientations.
+
+## Import
+
+```tsx
+import { Separator } from "chunks-ui";
+```
+
+## Basic Usage
+
+Horizontal separator (default):
+
+```tsx
+<div>
+  <p>Content above</p>
+  <Separator />
+  <p>Content below</p>
+</div>
+```
+
+## Vertical
+
+```tsx
+<div className="flex h-8 items-center gap-4">
+  <span>Left</span>
+  <Separator orientation="vertical" />
+  <span>Right</span>
+</div>
+```
+
+## In a List
+
+```tsx
+<div className="flex flex-col">
+  <div className="py-2">Item 1</div>
+  <Separator />
+  <div className="py-2">Item 2</div>
+  <Separator />
+  <div className="py-2">Item 3</div>
+</div>
+```
+
+## Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `orientation` | `"horizontal" \| "vertical"` | `"horizontal"` | Divider direction |
+| `className` | `string` | -- | Additional CSS classes |
+
+All other props are forwarded to the underlying Base UI `Separator`.
+
+## Styling
+
+- Horizontal: `h-px w-full` with `bg-border`
+- Vertical: `w-px h-full` with `bg-border`

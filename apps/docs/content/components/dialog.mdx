@@ -1,0 +1,98 @@
+# Dialog
+
+A modal dialog built on Base UI's `Dialog` primitive. Includes a backdrop overlay, centered popup with scale/fade animation, title, and description.
+
+## Import
+
+```tsx
+import { Dialog } from "chunks-ui";
+```
+
+## Basic Usage
+
+```tsx
+<Dialog.Root>
+  <Dialog.Trigger>Open Dialog</Dialog.Trigger>
+  <Dialog.Portal>
+    <Dialog.Backdrop />
+    <Dialog.Popup>
+      <Dialog.Title>Are you sure?</Dialog.Title>
+      <Dialog.Description>
+        This action cannot be undone.
+      </Dialog.Description>
+      <div className="mt-4 flex justify-end gap-2">
+        <Dialog.Close>Cancel</Dialog.Close>
+        <Button color="destructive">Delete</Button>
+      </div>
+    </Dialog.Popup>
+  </Dialog.Portal>
+</Dialog.Root>
+```
+
+## With Backdrop
+
+The `Dialog.Backdrop` renders a semi-transparent black overlay (`bg-black/50`) with a fade transition. It uses the `z-overlays` z-index layer:
+
+```tsx
+<Dialog.Root>
+  <Dialog.Trigger>Show</Dialog.Trigger>
+  <Dialog.Portal>
+    <Dialog.Backdrop />
+    <Dialog.Popup>
+      <Dialog.Title>Dialog with backdrop</Dialog.Title>
+      <Dialog.Description>
+        The backdrop dims the content behind the dialog.
+      </Dialog.Description>
+      <Dialog.Close>Close</Dialog.Close>
+    </Dialog.Popup>
+  </Dialog.Portal>
+</Dialog.Root>
+```
+
+## Controlled
+
+```tsx
+function ControlledDialog() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Dialog.Root open={open} onOpenChange={setOpen}>
+      <Dialog.Trigger>Open</Dialog.Trigger>
+      <Dialog.Portal>
+        <Dialog.Backdrop />
+        <Dialog.Popup>
+          <Dialog.Title>Controlled Dialog</Dialog.Title>
+          <Dialog.Description>You can control the open state.</Dialog.Description>
+          <Dialog.Close>Done</Dialog.Close>
+        </Dialog.Popup>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+}
+```
+
+## Animation
+
+The popup enters with a scale-up + fade transition (`scale-95` to `scale-100`, `opacity-0` to `opacity-1`) over 200ms. The backdrop fades in/out independently.
+
+## Compound Parts
+
+| Part | Description |
+|---|---|
+| `Dialog.Root` | State container. Manages open/close. |
+| `Dialog.Trigger` | Button that opens the dialog. |
+| `Dialog.Portal` | Renders children in a portal outside the DOM tree. |
+| `Dialog.Backdrop` | Semi-transparent overlay behind the dialog. `z-overlays` (500). |
+| `Dialog.Popup` | Centered content panel. `z-modals` (700). Max width `max-w-md`. |
+| `Dialog.Title` | Dialog heading. Rendered as a semibold `text-lg`. |
+| `Dialog.Description` | Supporting text below the title. Rendered in `text-muted-foreground`. |
+| `Dialog.Close` | Button that closes the dialog. |
+
+## Dialog.Root Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `open` | `boolean` | -- | Controlled open state |
+| `defaultOpen` | `boolean` | `false` | Initial open state (uncontrolled) |
+| `onOpenChange` | `(open: boolean) => void` | -- | Called when open state changes |
+| `modal` | `boolean` | `true` | Whether the dialog is modal |

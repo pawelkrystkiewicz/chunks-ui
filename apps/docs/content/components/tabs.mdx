@@ -1,0 +1,101 @@
+# Tabs
+
+A tabbed navigation component built on Base UI's `Tabs` primitive. Features an animated indicator that slides between active tabs using CSS transitions with the `ease-snappy` easing curve.
+
+## Import
+
+```tsx
+import { Tabs } from "chunks-ui";
+```
+
+## Basic Usage
+
+```tsx
+<Tabs.Root defaultValue="tab-1">
+  <Tabs.List>
+    <Tabs.Tab value="tab-1">Account</Tabs.Tab>
+    <Tabs.Tab value="tab-2">Security</Tabs.Tab>
+    <Tabs.Tab value="tab-3">Notifications</Tabs.Tab>
+    <Tabs.Indicator />
+  </Tabs.List>
+  <Tabs.Panel value="tab-1">
+    <p>Account settings content.</p>
+  </Tabs.Panel>
+  <Tabs.Panel value="tab-2">
+    <p>Security settings content.</p>
+  </Tabs.Panel>
+  <Tabs.Panel value="tab-3">
+    <p>Notification preferences.</p>
+  </Tabs.Panel>
+</Tabs.Root>
+```
+
+## Controlled
+
+```tsx
+function ControlledTabs() {
+  const [tab, setTab] = useState("overview");
+
+  return (
+    <Tabs.Root value={tab} onValueChange={setTab}>
+      <Tabs.List>
+        <Tabs.Tab value="overview">Overview</Tabs.Tab>
+        <Tabs.Tab value="details">Details</Tabs.Tab>
+        <Tabs.Indicator />
+      </Tabs.List>
+      <Tabs.Panel value="overview">Overview content</Tabs.Panel>
+      <Tabs.Panel value="details">Details content</Tabs.Panel>
+    </Tabs.Root>
+  );
+}
+```
+
+## Vertical Orientation
+
+Set `orientation="vertical"` on the root. The list switches to a vertical flex column with a right border:
+
+```tsx
+<Tabs.Root defaultValue="tab-1" orientation="vertical">
+  <Tabs.List>
+    <Tabs.Tab value="tab-1">General</Tabs.Tab>
+    <Tabs.Tab value="tab-2">Advanced</Tabs.Tab>
+    <Tabs.Indicator />
+  </Tabs.List>
+  <Tabs.Panel value="tab-1">General settings</Tabs.Panel>
+  <Tabs.Panel value="tab-2">Advanced settings</Tabs.Panel>
+</Tabs.Root>
+```
+
+## Animated Indicator
+
+The `Tabs.Indicator` component renders an absolutely-positioned bar at the bottom of the active tab. It uses Base UI's built-in CSS variables (`--active-tab-left`, `--active-tab-width`) and transitions with `ease-snappy` for smooth sliding between tabs.
+
+The indicator works without JavaScript animation -- it relies purely on CSS transitions.
+
+## Compound Parts
+
+| Part | Description |
+|---|---|
+| `Tabs.Root` | State container. Manages active tab value. |
+| `Tabs.List` | Horizontal (or vertical) container for tab triggers. Renders a border at the bottom. |
+| `Tabs.Tab` | Individual tab trigger button. Shows muted text by default, foreground text when active. |
+| `Tabs.Panel` | Content panel associated with a tab value. Shown when its tab is active. |
+| `Tabs.Indicator` | Animated bar that slides to the active tab position. |
+
+## Tabs.Root Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `value` | `string` | -- | Controlled active tab |
+| `defaultValue` | `string` | -- | Initial tab (uncontrolled) |
+| `onValueChange` | `(value: string) => void` | -- | Called when active tab changes |
+| `orientation` | `"horizontal" \| "vertical"` | `"horizontal"` | Layout direction |
+| `className` | `string` | -- | Additional CSS classes |
+
+## Tabs.Tab Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `value` | `string` | **required** | The value this tab represents |
+| `disabled` | `boolean` | `false` | Disable this tab |
+| `className` | `string` | -- | Additional CSS classes |

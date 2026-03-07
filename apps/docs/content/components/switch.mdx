@@ -1,0 +1,75 @@
+# Switch
+
+A toggle switch built on Base UI's `Switch` primitive. Provides an accessible on/off control with a sliding thumb animation.
+
+## Import
+
+```tsx
+import { Switch } from "chunks-ui";
+```
+
+## Basic Usage
+
+```tsx
+<Switch.Root>
+  <Switch.Thumb />
+</Switch.Root>
+```
+
+## With Label
+
+```tsx
+<Field.Root>
+  <div className="flex items-center gap-2">
+    <Switch.Root>
+      <Switch.Thumb />
+    </Switch.Root>
+    <Field.Label>Enable notifications</Field.Label>
+  </div>
+</Field.Root>
+```
+
+## Controlled
+
+```tsx
+function ControlledSwitch() {
+  const [enabled, setEnabled] = useState(false);
+
+  return (
+    <Switch.Root checked={enabled} onCheckedChange={setEnabled}>
+      <Switch.Thumb />
+    </Switch.Root>
+  );
+}
+```
+
+## Disabled
+
+```tsx
+<Switch.Root disabled>
+  <Switch.Thumb />
+</Switch.Root>
+```
+
+## Compound Parts
+
+| Part | Description |
+|---|---|
+| `Switch.Root` | The switch track. Manages checked state and keyboard interaction. Changes background color when checked. |
+| `Switch.Thumb` | The sliding circle that moves between unchecked (`translate-x-0`) and checked (`translate-x-4`) positions. |
+
+## Switch.Root Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `checked` | `boolean` | -- | Controlled checked state |
+| `defaultChecked` | `boolean` | `false` | Initial checked state (uncontrolled) |
+| `onCheckedChange` | `(checked: boolean) => void` | -- | Called when the switch is toggled |
+| `disabled` | `boolean` | `false` | Disable the switch |
+| `className` | `string` | -- | Additional CSS classes |
+
+## Switch.Thumb Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `className` | `string` | -- | Additional CSS classes |

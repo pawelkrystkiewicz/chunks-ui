@@ -1,0 +1,100 @@
+# Drawer
+
+A side or bottom sheet overlay built on Base UI's `Dialog` primitive. Slides in from the left, right, or bottom edge with a snappy easing transition.
+
+## Import
+
+```tsx
+import { Drawer } from "chunks-ui";
+```
+
+## Basic Usage
+
+```tsx
+<Drawer.Root>
+  <Drawer.Trigger>Open Drawer</Drawer.Trigger>
+  <Drawer.Portal>
+    <Drawer.Backdrop />
+    <Drawer.Popup>
+      <Drawer.Title>Navigation</Drawer.Title>
+      <Drawer.Description>Browse the app sections.</Drawer.Description>
+      <nav className="mt-4 flex flex-col gap-2">
+        <a href="/">Home</a>
+        <a href="/settings">Settings</a>
+      </nav>
+      <Drawer.Close>Close</Drawer.Close>
+    </Drawer.Popup>
+  </Drawer.Portal>
+</Drawer.Root>
+```
+
+## Side Variants
+
+The `side` prop on `Drawer.Popup` controls which edge the drawer slides from:
+
+```tsx
+{/* Right side (default) */}
+<Drawer.Popup side="right">...</Drawer.Popup>
+
+{/* Left side */}
+<Drawer.Popup side="left">...</Drawer.Popup>
+
+{/* Bottom sheet */}
+<Drawer.Popup side="bottom">...</Drawer.Popup>
+```
+
+- `left` and `right` drawers have a fixed width of `w-80`.
+- `bottom` drawer spans the full width with automatic height and rounded top corners.
+
+## Controlled
+
+```tsx
+function ControlledDrawer() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Drawer.Root open={open} onOpenChange={setOpen}>
+      <Drawer.Trigger>Menu</Drawer.Trigger>
+      <Drawer.Portal>
+        <Drawer.Backdrop />
+        <Drawer.Popup side="left">
+          <Drawer.Title>Menu</Drawer.Title>
+          <Drawer.Close>Close</Drawer.Close>
+        </Drawer.Popup>
+      </Drawer.Portal>
+    </Drawer.Root>
+  );
+}
+```
+
+## Animation
+
+The drawer slides in from its designated edge using `translate-x` (left/right) or `translate-y` (bottom) with the `ease-snappy` easing curve over 200ms. The backdrop fades in independently.
+
+## Compound Parts
+
+| Part | Description |
+|---|---|
+| `Drawer.Root` | State container. Manages open/close state. |
+| `Drawer.Trigger` | Button that opens the drawer. |
+| `Drawer.Portal` | Renders children in a portal. |
+| `Drawer.Backdrop` | Semi-transparent overlay. `z-drawers` (600). |
+| `Drawer.Popup` | The sliding panel. `z-drawers` (600). Accepts `side` prop. |
+| `Drawer.Title` | Drawer heading. |
+| `Drawer.Description` | Supporting description text. |
+| `Drawer.Close` | Button that closes the drawer. |
+
+## Drawer.Root Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `open` | `boolean` | -- | Controlled open state |
+| `defaultOpen` | `boolean` | `false` | Initial open state (uncontrolled) |
+| `onOpenChange` | `(open: boolean) => void` | -- | Called when open state changes |
+
+## Drawer.Popup Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `side` | `"left" \| "right" \| "bottom"` | `"right"` | Which edge the drawer slides from |
+| `className` | `string` | -- | Additional CSS classes |
