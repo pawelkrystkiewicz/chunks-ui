@@ -11,6 +11,8 @@
     "lint": "turbo run lint",
     "check-types": "turbo run check-types",
     "clean": "turbo run clean && rm -rf node_modules",
+    "test": "turbo run test",
+    "test:unit:coverage": "turbo run test:unit:coverage",
     "format": "biome format --write .",
     "lint:root": "biome check .",
     "changeset": "changeset",
