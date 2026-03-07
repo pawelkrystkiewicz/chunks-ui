@@ -1,5 +1,4 @@
-import { Checkbox, Field } from 'chunks-ui'
-import { Container } from '@/components'
+import { CheckboxBasicExample, CheckboxWithLabelExample, CheckboxIndeterminateExample, CheckboxDisabledExample } from '@/examples/Checkbox'
 
 # Checkbox
 
@@ -19,11 +18,7 @@ import { Checkbox } from "chunks-ui";
 </Checkbox.Root>
 ```
 
-<Container>
-  <Checkbox.Root>
-    <Checkbox.Indicator />
-  </Checkbox.Root>
-</Container>
+<CheckboxBasicExample />
 
 ## With Label
 
@@ -40,16 +35,7 @@ Use the `Field` component to associate a label:
 </Field.Root>
 ```
 
-<Container>
-  <Field.Root>
-    <div className="flex items-center gap-2">
-      <Checkbox.Root>
-        <Checkbox.Indicator />
-      </Checkbox.Root>
-      <Field.Label>Accept terms and conditions</Field.Label>
-    </div>
-  </Field.Root>
-</Container>
+<CheckboxWithLabelExample />
 
 ## Controlled
 
@@ -75,11 +61,7 @@ The indeterminate state is used for "select all" patterns where some items are c
 </Checkbox.Root>
 ```
 
-<Container>
-  <Checkbox.Root checked="indeterminate">
-    <Checkbox.Indicator />
-  </Checkbox.Root>
-</Container>
+<CheckboxIndeterminateExample />
 
 ## Disabled
 
@@ -89,11 +71,7 @@ The indeterminate state is used for "select all" patterns where some items are c
 </Checkbox.Root>
 ```
 
-<Container>
-  <Checkbox.Root disabled>
-    <Checkbox.Indicator />
-  </Checkbox.Root>
-</Container>
+<CheckboxDisabledExample />
 
 ## Compound Parts
 

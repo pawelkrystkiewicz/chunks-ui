@@ -15,9 +15,9 @@ function DialogBackdrop({ className, ...props }: DialogBackdropProps) {
     <BaseDialog.Backdrop
       className={cn(
         "fixed inset-0 z-overlays bg-black/50",
-        "data-[starting-style]:opacity-0",
-        "data-[ending-style]:opacity-0",
-        "transition-opacity duration-200",
+        "data-starting-style:opacity-0",
+        "data-ending-style:opacity-0",
+        "micro-interactions",
         className,
       )}
       {...props}
@@ -31,9 +31,9 @@ function DialogPopup({ className, ...props }: DialogPopupProps) {
       className={cn(
         "fixed top-1/2 left-1/2 z-modals w-full max-w-md -translate-x-1/2 -translate-y-1/2",
         "rounded-xl border border-border bg-background p-6 shadow-lg",
-        "data-[starting-style]:scale-95 data-[starting-style]:opacity-0",
-        "data-[ending-style]:scale-95 data-[ending-style]:opacity-0",
-        "transition-[transform,opacity] duration-200",
+        "data-starting-style:scale-95 data-starting-style:opacity-0",
+        "data-ending-style:scale-95 data-ending-style:opacity-0",
+        "micro-interactions",
         className,
       )}
       {...props}

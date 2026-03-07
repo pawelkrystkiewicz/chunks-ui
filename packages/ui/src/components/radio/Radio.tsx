@@ -16,7 +16,7 @@ function RadioRoot({ className, ...props }: RadioRootProps) {
     <BaseRadio.Root
       className={cn(
         "peer size-4 shrink-0 rounded-full border border-input",
-        "transition-colors",
+        "micro-interactions",
         "focus-visible:outline-2 focus-visible:outline-ring",
         "data-[checked]:border-primary",
         "data-[disabled]:opacity-50 data-[disabled]:pointer-events-none",

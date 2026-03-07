@@ -9,7 +9,7 @@ function CheckboxRoot({ className, ...props }: CheckboxRootProps) {
     <BaseCheckbox.Root
       className={cn(
         "peer size-4 shrink-0 rounded border border-input",
-        "transition-colors",
+        "micro-interactions",
         "focus-visible:outline-2 focus-visible:outline-ring",
         "data-[checked]:bg-primary data-[checked]:border-primary data-[checked]:text-primary-foreground",
         "data-[indeterminate]:bg-primary data-[indeterminate]:border-primary data-[indeterminate]:text-primary-foreground",

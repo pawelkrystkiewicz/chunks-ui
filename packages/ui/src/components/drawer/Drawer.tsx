@@ -20,7 +20,7 @@ function DrawerBackdrop({ className, ...props }: DrawerBackdropProps) {
         "fixed inset-0 z-drawers bg-black/50",
         "data-[starting-style]:opacity-0",
         "data-[ending-style]:opacity-0",
-        "transition-opacity duration-200",
+        "micro-interactions",
         className,
       )}
       {...props}

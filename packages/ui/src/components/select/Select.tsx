@@ -55,7 +55,7 @@ function SelectPopup({ className, ...props }: SelectPopupProps) {
         "z-dropdowns rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-md",
         "data-[starting-style]:opacity-0",
         "data-[ending-style]:opacity-0",
-        "transition-opacity duration-150",
+        "micro-interactions",
         className,
       )}
       {...props}

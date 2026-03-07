@@ -114,3 +114,4 @@ export { Tooltip } from "./components/tooltip";
 // Utilities
 export { cn } from "./lib/cn";
 export { springs } from "./lib/motion";
+export { useMotion, useReducedMotion } from "./lib/use-motion";

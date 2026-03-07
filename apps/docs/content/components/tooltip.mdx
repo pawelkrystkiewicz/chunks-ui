@@ -1,5 +1,4 @@
-import { Tooltip } from 'chunks-ui'
-import { Container } from '@/components'
+import { TooltipBasicExample, TooltipArrowExample, TooltipProviderExample } from '@/examples/Tooltip'
 
 # Tooltip
 
@@ -26,18 +25,7 @@ import { Tooltip } from "chunks-ui";
 </Tooltip.Root>
 ```
 
-<Container>
-  <Tooltip.Root>
-    <Tooltip.Trigger>
-      <button>Hover me</button>
-    </Tooltip.Trigger>
-    <Tooltip.Portal>
-      <Tooltip.Positioner>
-        <Tooltip.Popup>Helpful tip</Tooltip.Popup>
-      </Tooltip.Positioner>
-    </Tooltip.Portal>
-  </Tooltip.Root>
-</Container>
+<TooltipBasicExample />
 
 ## With Arrow
 
@@ -57,21 +45,7 @@ import { Tooltip } from "chunks-ui";
 </Tooltip.Root>
 ```
 
-<Container>
-  <Tooltip.Root>
-    <Tooltip.Trigger>
-      <button>Info</button>
-    </Tooltip.Trigger>
-    <Tooltip.Portal>
-      <Tooltip.Positioner>
-        <Tooltip.Popup>
-          <Tooltip.Arrow />
-          This is a tooltip with an arrow.
-        </Tooltip.Popup>
-      </Tooltip.Positioner>
-    </Tooltip.Portal>
-  </Tooltip.Root>
-</Container>
+<TooltipArrowExample />
 
 ## Tooltip Provider
 
@@ -99,27 +73,7 @@ Use `Tooltip.Provider` to share delay settings across multiple tooltips. This av
 </Tooltip.Provider>
 ```
 
-<Container>
-  <Tooltip.Provider delay={200} closeDelay={0}>
-    <Tooltip.Root>
-      <Tooltip.Trigger><button>A</button></Tooltip.Trigger>
-      <Tooltip.Portal>
-        <Tooltip.Positioner>
-          <Tooltip.Popup>Tooltip A</Tooltip.Popup>
-        </Tooltip.Positioner>
-      </Tooltip.Portal>
-    </Tooltip.Root>
-
-    <Tooltip.Root>
-      <Tooltip.Trigger><button>B</button></Tooltip.Trigger>
-      <Tooltip.Portal>
-        <Tooltip.Positioner>
-          <Tooltip.Popup>Tooltip B</Tooltip.Popup>
-        </Tooltip.Positioner>
-      </Tooltip.Portal>
-    </Tooltip.Root>
-  </Tooltip.Provider>
-</Container>
+<TooltipProviderExample />
 
 ## Positioning
 

@@ -1,3 +1,4 @@
+"use client";
 import { cn } from "chunks-ui";
 import type { ReactNode } from "react";
 

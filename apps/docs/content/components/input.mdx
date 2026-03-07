@@ -1,6 +1,7 @@
-import { Input, Field } from 'chunks-ui'
+import { Input } from 'chunks-ui'
 import { SearchIcon } from 'lucide-react'
 import { Container } from '@/components'
+import { InputErrorExample, InputWithFieldExample } from '@/examples/Input'
 
 # Input
 
@@ -85,13 +86,7 @@ The input styles change when the `data-invalid` attribute is present (set automa
 </Field.Root>
 ```
 
-<Container>
-  <Field.Root invalid>
-    <Field.Label>Email</Field.Label>
-    <Input placeholder="user@example.com" />
-    <Field.Error>Invalid email address</Field.Error>
-  </Field.Root>
-</Container>
+<InputErrorExample />
 
 ## With Field
 
@@ -105,13 +100,7 @@ Wrap `Input` in a `Field` for labels, descriptions, and validation:
 </Field.Root>
 ```
 
-<Container>
-  <Field.Root>
-    <Field.Label>Username</Field.Label>
-    <Field.Description>Choose a unique username</Field.Description>
-    <Input placeholder="johndoe" />
-  </Field.Root>
-</Container>
+<InputWithFieldExample />
 
 ## Props
 

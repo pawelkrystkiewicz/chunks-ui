@@ -110,7 +110,7 @@ function ComboboxPopup({ className, ...props }: ComboboxPopupProps) {
         "z-dropdowns rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-md",
         "data-[starting-style]:opacity-0",
         "data-[ending-style]:opacity-0",
-        "transition-opacity duration-150",
+        "micro-interactions",
         className,
       )}
       {...props}
@@ -170,7 +170,7 @@ function ComboboxClear({ className, ...props }: ComboboxClearProps) {
     <BaseCombobox.Clear
       className={cn(
         "absolute inset-y-0 right-7 flex items-center text-muted-foreground hover:text-foreground",
-        "transition-colors duration-150",
+        "micro-interactions",
         className,
       )}
       {...props}
@@ -218,7 +218,7 @@ function ComboboxChipRemove({ className, ...props }: ComboboxChipRemoveProps) {
   return (
     <BaseCombobox.ChipRemove
       className={cn(
-        "inline-flex items-center text-muted-foreground hover:text-foreground transition-colors duration-150",
+        "inline-flex items-center text-muted-foreground hover:text-foreground micro-interactions",
         className,
       )}
       {...props}

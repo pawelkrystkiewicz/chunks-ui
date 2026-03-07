@@ -1,6 +1,10 @@
+"use client";
+
 import { Tabs as BaseTabs } from "@base-ui/react/tabs";
 import type { ComponentProps } from "react";
 import { cn } from "../../lib/cn";
+import { springs } from "../../lib/motion";
+import { useMotion, useReducedMotion } from "../../lib/use-motion";
 
 export type TabsRootProps = ComponentProps<typeof BaseTabs.Root>;
 export type TabsListProps = ComponentProps<typeof BaseTabs.List>;
@@ -30,7 +34,7 @@ function TabsTab({ className, ...props }: TabsTabProps) {
     <BaseTabs.Tab
       className={cn(
         "inline-flex items-center justify-center px-4 py-2 text-sm font-medium",
-        "text-muted-foreground transition-colors",
+        "text-muted-foreground micro-interactions",
         "hover:text-foreground",
         "data-active:text-foreground",
         "focus-visible:outline-2 focus-visible:outline-ring",
@@ -52,11 +56,16 @@ function TabsPanel({ className, ...props }: TabsPanelProps) {
 }
 
 function TabsIndicator({ className, ...props }: TabsIndicatorProps) {
+  const m = useMotion();
+  const reduced = useReducedMotion();
+  const useSpring = !!m && !reduced;
+
   return (
     <BaseTabs.Indicator
+      render={useSpring ? <m.motion.span layout transition={springs.indicator} /> : undefined}
       className={cn(
         "absolute bottom-0 h-0.5 bg-primary",
-        "transition-all duration-200 ease-snappy",
+        !useSpring && "micro-interactions duration-200 ease-snappy",
         className,
       )}
       {...props}

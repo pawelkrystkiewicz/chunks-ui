@@ -1,5 +1,6 @@
-import { Textarea, Field } from 'chunks-ui'
+import { Textarea } from 'chunks-ui'
 import { Container } from '@/components'
+import { TextareaWithFieldExample } from '@/examples/Textarea'
 
 # Textarea
 
@@ -45,13 +46,7 @@ The textarea has a `min-h-20` minimum height by default.
 </Field.Root>
 ```
 
-<Container centered={false}>
-  <Field.Root>
-    <Field.Label>Bio</Field.Label>
-    <Field.Description>Write a short bio (max 280 characters)</Field.Description>
-    <Textarea autoResize placeholder="Tell us about yourself..." maxLength={280} />
-  </Field.Root>
-</Container>
+<TextareaWithFieldExample />
 
 ## Disabled
 

@@ -1,5 +1,4 @@
-import { Radio } from 'chunks-ui'
-import { Container } from '@/components'
+import { RadioBasicExample, RadioDisabledExample } from '@/examples/Radio'
 
 # Radio
 
@@ -36,28 +35,7 @@ import { Radio } from "chunks-ui";
 </Radio.Group>
 ```
 
-<Container>
-  <Radio.Group defaultValue="option-a">
-    <div className="flex items-center gap-2">
-      <Radio.Root value="option-a">
-        <Radio.Indicator />
-      </Radio.Root>
-      <label>Option A</label>
-    </div>
-    <div className="flex items-center gap-2">
-      <Radio.Root value="option-b">
-        <Radio.Indicator />
-      </Radio.Root>
-      <label>Option B</label>
-    </div>
-    <div className="flex items-center gap-2">
-      <Radio.Root value="option-c">
-        <Radio.Indicator />
-      </Radio.Root>
-      <label>Option C</label>
-    </div>
-  </Radio.Group>
-</Container>
+<RadioBasicExample />
 
 ## Controlled
 
@@ -99,16 +77,7 @@ Disable individual radio buttons or the entire group:
 </Radio.Group>
 ```
 
-<Container>
-  <Radio.Group disabled>
-    <div className="flex items-center gap-2">
-      <Radio.Root value="a">
-        <Radio.Indicator />
-      </Radio.Root>
-      <label>Disabled option</label>
-    </div>
-  </Radio.Group>
-</Container>
+<RadioDisabledExample />
 
 ## Compound Parts
 

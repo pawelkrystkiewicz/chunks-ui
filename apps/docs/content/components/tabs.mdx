@@ -1,5 +1,4 @@
-import { Tabs } from 'chunks-ui'
-import { Container } from '@/components'
+import { TabsBasicExample, TabsVerticalExample } from '@/examples/Tabs'
 
 # Tabs
 
@@ -33,25 +32,7 @@ import { Tabs } from "chunks-ui";
 </Tabs.Root>
 ```
 
-<Container>
-  <Tabs.Root defaultValue="tab-1">
-    <Tabs.List>
-      <Tabs.Tab value="tab-1">Account</Tabs.Tab>
-      <Tabs.Tab value="tab-2">Security</Tabs.Tab>
-      <Tabs.Tab value="tab-3">Notifications</Tabs.Tab>
-      <Tabs.Indicator />
-    </Tabs.List>
-    <Tabs.Panel value="tab-1">
-      <p>Account settings content.</p>
-    </Tabs.Panel>
-    <Tabs.Panel value="tab-2">
-      <p>Security settings content.</p>
-    </Tabs.Panel>
-    <Tabs.Panel value="tab-3">
-      <p>Notification preferences.</p>
-    </Tabs.Panel>
-  </Tabs.Root>
-</Container>
+<TabsBasicExample />
 
 ## Controlled
 
@@ -89,17 +70,7 @@ Set `orientation="vertical"` on the root. The list switches to a vertical flex c
 </Tabs.Root>
 ```
 
-<Container>
-  <Tabs.Root defaultValue="tab-1" orientation="vertical">
-    <Tabs.List>
-      <Tabs.Tab value="tab-1">General</Tabs.Tab>
-      <Tabs.Tab value="tab-2">Advanced</Tabs.Tab>
-      <Tabs.Indicator />
-    </Tabs.List>
-    <Tabs.Panel value="tab-1">General settings</Tabs.Panel>
-    <Tabs.Panel value="tab-2">Advanced settings</Tabs.Panel>
-  </Tabs.Root>
-</Container>
+<TabsVerticalExample />
 
 ## Animated Indicator
 
