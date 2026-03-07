@@ -3,6 +3,9 @@
   "include": ["."],
   "exclude": [".next", "node_modules"],
   "compilerOptions": {
-    "noUncheckedIndexedAccess": true
+    "noUncheckedIndexedAccess": true,
+    "paths": {
+      "@/*": ["./app/*"]
+    }
   }
 }

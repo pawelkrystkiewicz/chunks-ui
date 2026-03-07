@@ -1,3 +1,7 @@
+import { Button } from 'chunks-ui'
+import { SearchIcon, PlusIcon, ArrowRightIcon } from 'lucide-react'
+import { Container } from '@/components'
+
 # Button
 
 A styled button component built on Base UI's `Button` primitive. Supports multiple visual variants, semantic colors, sizes, loading state, and start/end icons.
@@ -5,7 +9,7 @@ A styled button component built on Base UI's `Button` primitive. Supports multip
 ## Import
 
 ```tsx
-import { Button } from "chunks-ui";
+import { Button } from 'chunks-ui'
 ```
 
 ## Basic Usage
@@ -13,6 +17,10 @@ import { Button } from "chunks-ui";
 ```tsx
 <Button>Click me</Button>
 ```
+
+<Container>
+  <Button>Click me</Button>
+</Container>
 
 ## Variants
 
@@ -24,10 +32,13 @@ The `variant` prop controls the visual style:
 <Button variant="ghost">Ghost</Button>
 <Button variant="link">Link</Button>
 ```
-<Button variant="contained">Contained</Button>
-<Button variant="outlined">Outlined</Button>
-<Button variant="ghost">Ghost</Button>
-<Button variant="link">Link</Button>
+
+<Container>
+  <Button variant="contained">Contained</Button>
+  <Button variant="outlined">Outlined</Button>
+  <Button variant="ghost">Ghost</Button>
+  <Button variant="link">Link</Button>
+</Container>
 
 ## Colors
 
@@ -41,12 +52,29 @@ The `color` prop sets the semantic color:
 <Button color="secondary">Secondary</Button>
 ```
 
+<Container>
+  <Button color="primary">Primary</Button>
+  <Button color="destructive">Destructive</Button>
+  <Button color="success">Success</Button>
+  <Button color="warning">Warning</Button>
+  <Button color="secondary">Secondary</Button>
+</Container>
+
 Colors work with all variants:
 
 ```tsx
 <Button variant="outlined" color="destructive">Delete</Button>
 <Button variant="ghost" color="success">Approve</Button>
 ```
+
+<Container>
+  <Button variant="outlined" color="destructive">
+    Delete
+  </Button>
+  <Button variant="ghost" color="success">
+    Approve
+  </Button>
+</Container>
 
 ## Sizes
 
@@ -59,6 +87,15 @@ Colors work with all variants:
 </Button>
 ```
 
+<Container>
+  <Button size="sm">Small</Button>
+  <Button size="md">Medium</Button>
+  <Button size="lg">Large</Button>
+  <Button size="icon">
+    <SearchIcon />
+  </Button>
+</Container>
+
 ## Loading State
 
 When `loading` is `true`, the button shows a `Loader` spinner in place of the `startIcon` and becomes disabled:
@@ -67,6 +104,9 @@ When `loading` is `true`, the button shows a `Loader` spinner in place of the `s
 <Button loading>Saving...</Button>
 ```
 
+<Container>
+  <Button loading>Saving...</Button>
+</Container>
 The button remains focusable while loading (for accessibility) but click events are suppressed.
 
 ## Icons
@@ -76,19 +116,23 @@ The button remains focusable while loading (for accessibility) but click events 
 <Button endIcon={<ArrowRightIcon />}>Next</Button>
 ```
 
+<Container>
+  <Button startIcon={<PlusIcon />}>Add Item</Button>
+  <Button endIcon={<ArrowRightIcon />}>Next</Button>
+</Container>
 Icons are hidden during loading state. The `startIcon` slot is replaced by the `Loader`.
 
 ## Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `variant` | `"contained" \| "outlined" \| "ghost" \| "link"` | `"contained"` | Visual style |
-| `color` | `"primary" \| "destructive" \| "success" \| "warning" \| "secondary"` | `"primary"` | Semantic color |
-| `size` | `"sm" \| "md" \| "lg" \| "icon"` | `"md"` | Button size |
-| `loading` | `boolean` | `false` | Show spinner and disable interaction |
-| `startIcon` | `ReactNode` | -- | Icon before children |
-| `endIcon` | `ReactNode` | -- | Icon after children |
-| `disabled` | `boolean` | `false` | Disable the button |
-| `className` | `string` | -- | Additional CSS classes |
+| Prop        | Type                                                                  | Default       | Description                          |
+| ----------- | --------------------------------------------------------------------- | ------------- | ------------------------------------ |
+| `variant`   | `"contained" \| "outlined" \| "ghost" \| "link"`                      | `"contained"` | Visual style                         |
+| `color`     | `"primary" \| "destructive" \| "success" \| "warning" \| "secondary"` | `"primary"`   | Semantic color                       |
+| `size`      | `"sm" \| "md" \| "lg" \| "icon"`                                      | `"md"`        | Button size                          |
+| `loading`   | `boolean`                                                             | `false`       | Show spinner and disable interaction |
+| `startIcon` | `ReactNode`                                                           | --            | Icon before children                 |
+| `endIcon`   | `ReactNode`                                                           | --            | Icon after children                  |
+| `disabled`  | `boolean`                                                             | `false`       | Disable the button                   |
+| `className` | `string`                                                              | --            | Additional CSS classes               |
 
 All other props are forwarded to the underlying Base UI `Button`.
