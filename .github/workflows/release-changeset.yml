@@ -20,14 +20,14 @@ jobs:
       NPM_CONFIG_PROVENANCE: true
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version: 24.14.0
           registry-url: 'https://registry.npmjs.org'
 
       - name: Setup Bun
@@ -50,7 +50,7 @@ jobs:
 
       - name: Notify Slack on Release Success
         if: steps.changesets.outputs.published == 'true'
-        uses: slackapi/slack-github-action@v1.27.1
+        uses: slackapi/slack-github-action@v2.1.1
         with:
           channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
           slack-message: |
@@ -61,7 +61,7 @@ jobs:
 
       - name: Notify Slack on Release PR Created
         if: steps.changesets.outputs.hasChangesets == 'true'
-        uses: slackapi/slack-github-action@v1.27.1
+        uses: slackapi/slack-github-action@v2.1.1
         with:
           channel-id: '${{ secrets.SLACK_CHANNEL_ID }}'
           slack-message: |
@@ -72,7 +72,7 @@ jobs:
 
       - name: Notify Slack on Release Failure
         if: failure()
-        uses: slackapi/slack-github-action@v1.27.1
+        uses: slackapi/slack-github-action@v2.1.1
         with:
           channel-id: '${{ secrets.SLACK_CHANNEL_ID }}'
           slack-message: |

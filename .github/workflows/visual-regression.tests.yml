@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -28,7 +28,7 @@ jobs:
 
       - name: Notify Slack on Success
         if: success() && github.ref == 'refs/heads/main'
-        uses: slackapi/slack-github-action@v1.27.1
+        uses: slackapi/slack-github-action@v2.1.1
         with:
           channel-id: '${{ secrets.SLACK_CHANNEL_ID }}'
           slack-message: |
@@ -39,7 +39,7 @@ jobs:
 
       - name: Notify Slack on Failure
         if: failure() && github.ref == 'refs/heads/main'
-        uses: slackapi/slack-github-action@v1.27.1
+        uses: slackapi/slack-github-action@v2.1.1
         with:
           channel-id: '${{ secrets.SLACK_CHANNEL_ID }}'
           slack-message: |
