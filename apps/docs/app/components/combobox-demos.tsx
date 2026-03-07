@@ -115,7 +115,7 @@ export function ComboboxMultiDemo() {
 
   return (
     <Combobox.Root multiple items={frameworks} value={value} onValueChange={setValue}>
-      <div className="relative flex flex-wrap items-center gap-1">
+      <Combobox.Control>
         <Combobox.Chips>
           {value.map((v) => {
             const item = frameworks.find((f) => f.value === v);
@@ -127,10 +127,13 @@ export function ComboboxMultiDemo() {
             );
           })}
         </Combobox.Chips>
-        <Combobox.Input placeholder="Select frameworks..." />
+        <Combobox.Input
+          className="h-7 min-w-20 flex-1 border-0 bg-transparent px-0 focus-visible:outline-none"
+          placeholder="Select frameworks..."
+        />
         <Combobox.Clear />
         <Combobox.Trigger />
-      </div>
+      </Combobox.Control>
       <Combobox.Portal>
         <Combobox.Positioner>
           <Combobox.Popup>

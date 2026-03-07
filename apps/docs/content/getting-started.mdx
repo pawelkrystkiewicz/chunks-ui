@@ -1,0 +1,34 @@
+# Getting Started
+
+## Installation
+
+```bash
+bun add chunks-ui motion
+```
+
+`motion` is an optional peer dependency. Components work without it, but animations require it.
+
+## Setup
+
+Import the theme CSS in your app entry point (e.g. `app/layout.tsx`):
+
+```tsx
+import "chunks-ui/theme.css";
+```
+
+Then import components as needed:
+
+```tsx
+import { Button, Input, Tabs } from "chunks-ui";
+```
+
+The theme CSS exposes OKLCH color tokens as CSS variables. Your Tailwind CSS v4 config picks them up automatically -- no plugin needed.
+
+## Architecture
+
+- **Headless layer:** `@base-ui/react` v1.2+ (includes Floating UI for positioning)
+- **Styling:** Tailwind CSS v4 + CVA + `clsx` + `tailwind-merge`
+- **Animation:** Motion v12+ (optional peer dependency)
+- **Build:** tsup (ESM + CJS + `.d.ts`)
+- **Compound pattern:** Components use `<X.Root>`, `<X.Trigger>`, `<X.Content>` patterns
+- **Composition:** Base UI `render` prop, not `asChild`

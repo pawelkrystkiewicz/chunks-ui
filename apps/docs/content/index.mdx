@@ -1,72 +1,72 @@
+import Link from "next/link"
+
+<div className="flex flex-col items-center justify-center px-6 py-24 text-center">
+
+<img src="/logo.svg" alt="Chunks UI" className="size-20 mb-8" />
+
 # Chunks UI
 
-A personal React 19+ component library built on [Base UI](https://base-ui.com), [Tailwind CSS v4](https://tailwindcss.com), and [Motion](https://motion.dev). Single npm package replacing `@creation-ui/react`.
-
-## Installation
+<p className="text-xl text-gray-500 dark:text-gray-400 max-w-lg mt-2 mb-8">
+A React 19+ component library built on Base UI, Tailwind CSS v4, and Motion.
+</p>
 
 ```bash
 bun add chunks-ui motion
 ```
 
-`motion` is an optional peer dependency. Components work without it, but animations require it.
+<div className="flex gap-3 mt-6">
+  <Link href="/getting-started" className="inline-flex items-center px-5 py-2.5 rounded-lg bg-black text-white dark:bg-white dark:text-black font-medium text-sm hover:opacity-90 transition-opacity no-underline">
+    Get Started
+  </Link>
+  <Link href="/components/button" className="inline-flex items-center px-5 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 font-medium text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline">
+    Components
+  </Link>
+</div>
 
-## Setup
+</div>
 
-Import the theme CSS in your app entry point (e.g. `app/layout.tsx`):
+<div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto px-6 pb-24">
 
-```tsx
-import "chunks-ui/theme.css";
-```
+<div className="rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+  <h3 className="font-semibold mb-1 text-base">Base UI</h3>
+  <p className="text-sm text-gray-500 dark:text-gray-400 m-0">Headless, accessible primitives with built-in Floating UI.</p>
+</div>
 
-Then import components as needed:
+<div className="rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+  <h3 className="font-semibold mb-1 text-base">Tailwind v4</h3>
+  <p className="text-sm text-gray-500 dark:text-gray-400 m-0">OKLCH color tokens via CSS variables. CVA-powered variants.</p>
+</div>
 
-```tsx
-import { Button, Input, Tabs } from "chunks-ui";
-```
+<div className="rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+  <h3 className="font-semibold mb-1 text-base">Motion</h3>
+  <p className="text-sm text-gray-500 dark:text-gray-400 m-0">Spring animations with CSS fallbacks. Works without Motion installed.</p>
+</div>
 
-The theme CSS exposes OKLCH color tokens as CSS variables. Your Tailwind CSS v4 config picks them up automatically -- no plugin needed.
+</div>
+
+<div className="max-w-3xl mx-auto px-6 pb-24">
 
 ## Components
 
-### Form Controls
+<div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">
+  <Link href="/components/button" className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline">Button</Link>
+  <Link href="/components/input" className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline">Input</Link>
+  <Link href="/components/textarea" className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline">Textarea</Link>
+  <Link href="/components/select" className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline">Select</Link>
+  <Link href="/components/checkbox" className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline">Checkbox</Link>
+  <Link href="/components/radio" className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline">Radio</Link>
+  <Link href="/components/switch" className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline">Switch</Link>
+  <Link href="/components/tabs" className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline">Tabs</Link>
+  <Link href="/components/dialog" className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline">Dialog</Link>
+  <Link href="/components/drawer" className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline">Drawer</Link>
+  <Link href="/components/popover" className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline">Popover</Link>
+  <Link href="/components/tooltip" className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline">Tooltip</Link>
+  <Link href="/components/card" className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline">Card</Link>
+  <Link href="/components/avatar" className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline">Avatar</Link>
+  <Link href="/components/chip" className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline">Chip</Link>
+  <Link href="/components/loader" className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline">Loader</Link>
+  <Link href="/components/separator" className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline">Separator</Link>
+  <Link href="/components/field" className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors no-underline">Field</Link>
+</div>
 
-- [Button](/components/button) -- Contained, outlined, ghost, link variants with loading state
-- [Input](/components/input) -- Text input with adornments and clear button
-- [Textarea](/components/textarea) -- Multi-line input with auto-resize
-- [Checkbox](/components/checkbox) -- Checkbox with indeterminate state
-- [Radio](/components/radio) -- Radio buttons with group wrapper
-- [Switch](/components/switch) -- Toggle switch
-- [Select](/components/select) -- Single select with grouped options
-- [Field](/components/field) -- Label, description, and error wrapper for form controls
-
-### Overlay & Popups
-
-- [Dialog](/components/dialog) -- Modal dialog with backdrop
-- [Drawer](/components/drawer) -- Side/bottom sheet
-- [Popover](/components/popover) -- Positioned popup with arrow
-- [Tooltip](/components/tooltip) -- Hover tooltip with positioning
-
-### Navigation
-
-- [Tabs](/components/tabs) -- Tabbed navigation with animated indicator
-
-### Data Display
-
-- [Card](/components/card) -- Compound card layout
-- [Avatar](/components/avatar) -- Image with fallback initials
-- [Chip](/components/chip) -- Removable tag/badge
-- [Separator](/components/separator) -- Horizontal or vertical divider
-
-### Utility
-
-- [ClearButton](/components/clear-button) -- Small icon button for clearing values
-- [Loader](/components/loader) -- Animated SVG spinner
-
-## Architecture
-
-- **Headless layer:** `@base-ui/react` v1.2+ (includes Floating UI for positioning)
-- **Styling:** Tailwind CSS v4 + CVA + `clsx` + `tailwind-merge`
-- **Animation:** Motion v12+ (optional peer dependency)
-- **Build:** tsup (ESM + CJS + `.d.ts`)
-- **Compound pattern:** Components use `<X.Root>`, `<X.Trigger>`, `<X.Content>` patterns
-- **Composition:** Base UI `render` prop, not `asChild`
+</div>

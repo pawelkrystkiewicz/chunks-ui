@@ -1,4 +1,5 @@
 import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
+import type React from "react";
 import type { ComponentProps } from "react";
 import { cn } from "../../lib/cn";
 
@@ -18,6 +19,21 @@ export type ComboboxListProps = ComponentProps<typeof BaseCombobox.List>;
 export type ComboboxChipsProps = ComponentProps<typeof BaseCombobox.Chips>;
 export type ComboboxChipProps = ComponentProps<typeof BaseCombobox.Chip>;
 export type ComboboxChipRemoveProps = ComponentProps<typeof BaseCombobox.ChipRemove>;
+export type ComboboxControlProps = React.ComponentProps<"div">;
+
+function ComboboxControl({ className, ...props }: ComboboxControlProps) {
+  return (
+    <div
+      className={cn(
+        "relative flex flex-wrap items-center gap-1 rounded-lg border border-input bg-background px-3 py-1.5",
+        "has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ring",
+        "has-[:disabled]:pointer-events-none has-[:disabled]:opacity-50",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
 
 function ComboboxInput({ className, ...props }: ComboboxInputProps) {
   return (
@@ -227,6 +243,7 @@ function ComboboxChipRemove({ className, ...props }: ComboboxChipRemoveProps) {
 
 export const Combobox = {
   Root: BaseCombobox.Root,
+  Control: ComboboxControl,
   Input: ComboboxInput,
   Trigger: ComboboxTrigger,
   Icon: ComboboxIcon,

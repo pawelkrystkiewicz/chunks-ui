@@ -3,6 +3,7 @@ export type {
   ComboboxChipRemoveProps,
   ComboboxChipsProps,
   ComboboxClearProps,
+  ComboboxControlProps,
   ComboboxEmptyProps,
   ComboboxGroupLabelProps,
   ComboboxGroupProps,
