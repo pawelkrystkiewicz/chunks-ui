@@ -1,6 +1,10 @@
+"use client";
+
 import { Switch as BaseSwitch } from "@base-ui/react/switch";
 import type { ComponentProps } from "react";
 import { cn } from "../../lib/cn";
+import { springs } from "../../lib/motion";
+import { useMotion, useReducedMotion } from "../../lib/use-motion";
 
 export type SwitchRootProps = ComponentProps<typeof BaseSwitch.Root>;
 
@@ -23,6 +27,30 @@ function SwitchRoot({ className, ...props }: SwitchRootProps) {
 export type SwitchThumbProps = ComponentProps<typeof BaseSwitch.Thumb>;
 
 function SwitchThumb({ className, ...props }: SwitchThumbProps) {
+  const m = useMotion();
+  const reduced = useReducedMotion();
+  const useSpring = !!m && !reduced;
+
+  if (useSpring) {
+    return (
+      <BaseSwitch.Thumb
+        render={(renderProps, state) => (
+          <m.motion.span
+            {...(renderProps as Record<string, unknown>)}
+            className={cn(
+              "pointer-events-none block size-4 rounded-full bg-background shadow-sm",
+              className,
+            )}
+            initial={false}
+            animate={{ x: state.checked ? 16 : 0 }}
+            transition={springs.micro}
+          />
+        )}
+        {...props}
+      />
+    );
+  }
+
   return (
     <BaseSwitch.Thumb
       className={cn(

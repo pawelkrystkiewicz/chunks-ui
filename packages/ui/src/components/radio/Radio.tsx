@@ -1,7 +1,11 @@
+"use client";
+
 import { Radio as BaseRadio } from "@base-ui/react/radio";
 import { RadioGroup as BaseRadioGroup } from "@base-ui/react/radio-group";
 import type { ComponentProps, ReactNode } from "react";
 import { cn } from "../../lib/cn";
+import { springs } from "../../lib/motion";
+import { useMotion, useReducedMotion } from "../../lib/use-motion";
 
 export type RadioGroupProps = ComponentProps<typeof BaseRadioGroup>;
 
@@ -35,10 +39,37 @@ function RadioRoot({ className, ...props }: RadioRootProps) {
 export type RadioIndicatorProps = ComponentProps<typeof BaseRadio.Indicator>;
 
 function RadioIndicator({ className, ...props }: RadioIndicatorProps) {
+  const m = useMotion();
+  const reduced = useReducedMotion();
+  const useSpring = !!m && !reduced;
+
+  if (!useSpring) {
+    return (
+      <BaseRadio.Indicator className={cn("flex items-center justify-center", className)} {...props}>
+        <span className="size-2 rounded-full bg-primary" />
+      </BaseRadio.Indicator>
+    );
+  }
+
   return (
-    <BaseRadio.Indicator className={cn("flex items-center justify-center", className)} {...props}>
-      <span className="size-2 rounded-full bg-primary" />
-    </BaseRadio.Indicator>
+    <BaseRadio.Indicator
+      keepMounted
+      render={(renderProps, state) => (
+        <m.motion.span
+          {...(renderProps as Record<string, unknown>)}
+          className={cn("flex items-center justify-center", className)}
+          initial={false}
+          animate={{
+            scale: state.checked ? 1 : 0,
+            opacity: state.checked ? 1 : 0,
+          }}
+          transition={springs.micro}
+        >
+          <span className="size-2 rounded-full bg-primary" />
+        </m.motion.span>
+      )}
+      {...props}
+    />
   );
 }
 

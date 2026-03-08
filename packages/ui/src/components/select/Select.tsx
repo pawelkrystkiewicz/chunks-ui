@@ -1,6 +1,11 @@
+"use client";
+
 import { Select as BaseSelect } from "@base-ui/react/select";
 import type { ComponentProps } from "react";
 import { cn } from "../../lib/cn";
+import { springs } from "../../lib/motion";
+import { createPopupRenderer } from "../../lib/popup-motion";
+import { useMotion, useReducedMotion } from "../../lib/use-motion";
 
 export type SelectRootProps = ComponentProps<typeof BaseSelect.Root>;
 export type SelectTriggerProps = ComponentProps<typeof BaseSelect.Trigger>;
@@ -49,13 +54,27 @@ function SelectIcon({ className, ...props }: SelectIconProps) {
 }
 
 function SelectPopup({ className, ...props }: SelectPopupProps) {
+  const m = useMotion();
+  const reduced = useReducedMotion();
+  const useSpring = !!m && !reduced;
+
+  const render = useSpring
+    ? createPopupRenderer({
+        m,
+        spring: springs.popup,
+        from: { opacity: 0, scale: 0.95 },
+        to: { opacity: 1, scale: 1 },
+      })
+    : undefined;
+
   return (
     <BaseSelect.Popup
+      render={render}
       className={cn(
         "z-dropdowns rounded border border-border bg-popover p-1 text-popover-foreground shadow-md",
-        "data-starting-style:opacity-0",
-        "data-ending-style:opacity-0",
-        "micro-interactions",
+        !useSpring && "data-starting-style:opacity-0",
+        !useSpring && "data-ending-style:opacity-0",
+        !useSpring && "micro-interactions",
         className,
       )}
       {...props}

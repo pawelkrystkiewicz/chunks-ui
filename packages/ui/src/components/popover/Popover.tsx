@@ -1,6 +1,11 @@
+"use client";
+
 import { Popover as BasePopover } from "@base-ui/react/popover";
 import type { ComponentProps } from "react";
 import { cn } from "../../lib/cn";
+import { springs } from "../../lib/motion";
+import { createPopupRenderer } from "../../lib/popup-motion";
+import { useMotion, useReducedMotion } from "../../lib/use-motion";
 
 export type PopoverRootProps = ComponentProps<typeof BasePopover.Root>;
 export type PopoverTriggerProps = ComponentProps<typeof BasePopover.Trigger>;
@@ -25,8 +30,21 @@ function PopoverContent({
   alignOffset,
   ...props
 }: PopoverContentProps) {
+  const m = useMotion();
+  const reduced = useReducedMotion();
+  const useSpring = !!m && !reduced;
+
+  const render = useSpring
+    ? createPopupRenderer({
+        m,
+        spring: springs.popup,
+        from: { opacity: 0, scale: 0.95 },
+        to: { opacity: 1, scale: 1 },
+      })
+    : undefined;
+
   return (
-    <BasePopover.Portal>
+    <BasePopover.Portal keepMounted={useSpring}>
       <BasePopover.Positioner
         sideOffset={sideOffset}
         side={side}
@@ -34,11 +52,12 @@ function PopoverContent({
         alignOffset={alignOffset}
       >
         <BasePopover.Popup
+          render={render}
           className={cn(
             "z-dropdowns rounded border border-border bg-popover p-4 text-popover-foreground shadow-md",
-            "data-[starting-style]:scale-95 data-[starting-style]:opacity-0",
-            "data-[ending-style]:scale-95 data-[ending-style]:opacity-0",
-            "micro-interactions",
+            !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
+            !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
+            !useSpring && "micro-interactions",
             className,
           )}
           {...props}
