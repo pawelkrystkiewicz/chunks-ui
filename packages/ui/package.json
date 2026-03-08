@@ -18,7 +18,10 @@
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsup",
@@ -70,7 +73,31 @@
     "vite": "^7.3.1",
     "vitest": "^4.0.18"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pawelkrystkiewicz/chunks-ui",
+    "directory": "packages/ui"
+  },
+  "bugs": {
+    "url": "https://github.com/pawelkrystkiewicz/chunks-ui/issues"
+  },
+  "homepage": "https://github.com/pawelkrystkiewicz/chunks-ui#readme",
+  "keywords": [
+    "react",
+    "components",
+    "ui",
+    "tailwind",
+    "tailwind-css",
+    "base-ui",
+    "headless",
+    "motion",
+    "animation",
+    "accessible",
+    "typescript",
+    "react-19"
+  ],
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "provenance": true
   }
 }
