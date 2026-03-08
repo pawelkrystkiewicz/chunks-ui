@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { axe } from "jest-axe";
 import { afterEach, describe, expect, it } from "vitest";
 import { Switch } from "./Switch";
@@ -36,5 +36,18 @@ describe("Switch", () => {
       </Switch.Root>,
     );
     expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it("renders Thumb without CSS transition class in motion mode", async () => {
+    // CSS fallback: Thumb has `micro-interactions` class.
+    // Motion mode: motion handles animation; `micro-interactions` is absent.
+    render(
+      <Switch.Root>
+        <Switch.Thumb data-testid="thumb" />
+      </Switch.Root>,
+    );
+    await waitFor(() => {
+      expect(screen.getByTestId("thumb")).not.toHaveClass("micro-interactions");
+    });
   });
 });

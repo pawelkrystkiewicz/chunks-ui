@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
@@ -196,5 +196,24 @@ describe("Tabs", () => {
       </Tabs.Root>,
     );
     expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it("renders Contents in motion mode using inert instead of display:none", async () => {
+    // CSS fallback: inactive panels get `style="display: none"`.
+    // Motion mode: panels stay mounted with `inert` attribute; no display:none.
+    const { container } = render(
+      <Tabs.Root defaultValue="a">
+        <Tabs.Contents>
+          <Tabs.Content value="a">Panel A</Tabs.Content>
+          <Tabs.Content value="b" data-testid="panel-b">
+            Panel B
+          </Tabs.Content>
+        </Tabs.Contents>
+      </Tabs.Root>,
+    );
+    await waitFor(() => {
+      const panelB = container.querySelector('[data-testid="panel-b"]');
+      expect(panelB?.parentElement).not.toHaveStyle("display: none");
+    });
   });
 });
