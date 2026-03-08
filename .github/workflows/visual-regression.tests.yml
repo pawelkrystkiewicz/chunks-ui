@@ -29,24 +29,30 @@ jobs:
       - name: Run Visual Regression Tests
         run: cd packages/ui && bun run test:visual
 
+      - name: Upload diff screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: visual-regression-diffs
+          path: packages/ui/.vitest-attachments
+          retention-days: 7
+
       - name: Notify Slack on Success
         if: success() && github.ref == 'refs/heads/main'
         uses: slackapi/slack-github-action@v2.1.1
         with:
-          channel-id: '${{ secrets.SLACK_CHANNEL_ID }}'
-          slack-message: |
-            Visual Regression Tests passed on main branch
-            <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload: |
+            channel: "${{ secrets.SLACK_CHANNEL_ID }}"
+            text: "Visual Regression Tests passed on main branch\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>"
 
       - name: Notify Slack on Failure
         if: failure() && github.ref == 'refs/heads/main'
         uses: slackapi/slack-github-action@v2.1.1
         with:
-          channel-id: '${{ secrets.SLACK_CHANNEL_ID }}'
-          slack-message: |
-            Visual Regression Tests failed on main branch
-            <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload: |
+            channel: "${{ secrets.SLACK_CHANNEL_ID }}"
+            text: "Visual Regression Tests failed on main branch\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>"
