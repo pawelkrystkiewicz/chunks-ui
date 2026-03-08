@@ -40,7 +40,7 @@ Accordion, Toast, Menu, Progress, Calendar, DatePicker, Scroll Area, Number Fiel
 | Styling     | Tailwind CSS v4 + CVA                          |
 | Animation   | Motion v12+ (optional peer dep)                |
 | Build       | tsup (ESM + CJS + `.d.ts`)                     |
-| Test        | Vitest + Testing Library + jest-axe             |
+| Test        | Vitest + Testing Library + jest-axe            |
 | Lint/Format | Biome                                          |
 | Package mgr | Bun                                            |
 | Versioning  | Changesets                                     |

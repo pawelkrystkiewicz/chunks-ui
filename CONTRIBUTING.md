@@ -58,9 +58,10 @@ button/
 ### Animation
 
 - Import spring presets from `src/lib/motion.ts` — no magic numbers in components
+- Use `useMotion()` hook from `src/lib/use-motion.ts` for lazy Motion detection
+- Use `createPopupRenderer()` from `src/lib/popup-motion.tsx` for popup animations
 - Components must work without Motion installed (CSS transition fallback)
-- Respect `prefers-reduced-motion`
-- Use `useMotion()` hook for Motion detection
+- Respect `prefers-reduced-motion` via `useReducedMotion()` hook
 
 ### Exports
 
@@ -99,7 +100,7 @@ bun run test:unit:coverage # with coverage report
 2. Implement changes
 3. Run quality gates locally: `bun run lint && bun run check-types && bun run test`
 4. Push branch and open PR
-5. CI runs lint, typecheck, unit tests, and visual regression
+5. CI runs lint, typecheck, and unit tests with coverage
 
 ## Quality Gates
 

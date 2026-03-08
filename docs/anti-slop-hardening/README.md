@@ -6,33 +6,54 @@ Source: Jim West's "Anti-Slop" guide for agentic engineering, analyzed via the C
 
 ## Audit Date
 
-2026-03-08
+2026-03-08 (initial), 2026-03-08 (remediation applied)
 
 ## Overall Scorecard
 
-| # | Practice | Grade | Priority |
-|---|----------|-------|----------|
-| 1 | [Quality Gates](./01-quality-gates.md) | **B+** | HIGH |
-| 2 | [Hooks](./02-hooks.md) | **D** | HIGH |
-| 3 | [Testing Philosophy](./03-testing.md) | **B** | MEDIUM |
-| 4 | [Agent Isolation](./04-agent-isolation.md) | **F** | LOW |
-| 5 | [Standardization](./05-standardization.md) | **B+** | LOW |
-| 6 | [Task Decomposition](./06-task-decomposition.md) | **F** | LOW |
-| 7 | [Traceability](./07-traceability.md) | **F** | LOW |
-| 8 | [Input Token Quality](./08-input-token-quality.md) | **B** | MEDIUM |
-| 9 | [Specs & Documentation](./09-specs-docs.md) | **B-** | MEDIUM |
-| 10 | [Hard Blocks](./10-hard-blocks.md) | **F** | HIGH |
+| # | Practice | Before | After | Priority |
+|---|----------|--------|-------|----------|
+| 1 | [Quality Gates](./01-quality-gates.md) | B+ | **A-** | DONE |
+| 2 | [Hooks](./02-hooks.md) | D | **C+** | DONE |
+| 3 | [Testing Philosophy](./03-testing.md) | B | **A-** | DONE |
+| 4 | [Agent Isolation](./04-agent-isolation.md) | F | F | LOW |
+| 5 | [Standardization](./05-standardization.md) | B+ | **A-** | LOW |
+| 6 | [Task Decomposition](./06-task-decomposition.md) | F | F | LOW |
+| 7 | [Traceability](./07-traceability.md) | F | F | LOW |
+| 8 | [Input Token Quality](./08-input-token-quality.md) | B | **B+** | MEDIUM |
+| 9 | [Specs & Documentation](./09-specs-docs.md) | B- | **B** | MEDIUM |
+| 10 | [Hard Blocks](./10-hard-blocks.md) | F | **C** | DONE |
 
-## Quick Wins
+## Remediation Applied (2026-03-08)
 
-1. Add CI workflows for lint + typecheck (10 min)
-2. Create `.claude/hooks.json` with `git push` block + session start context injection
-3. Enable `noUnusedLocals` + `noUnusedParameters` in tsconfig
-4. Create `CONTRIBUTING.md`
-5. Install and wire up `jest-axe` for a11y testing
+### Quick Wins (all completed)
+
+1. ~~Add CI workflows for lint + typecheck~~ — `.github/workflows/quality-gates.yml`
+2. ~~Create `.claude/hooks.json`~~ — blocks git push, force-push, hard reset, .github/ writes
+3. ~~Enable `noUnusedLocals` + `noUnusedParameters`~~ — in `base.json` + root `tsconfig.json`
+4. ~~Create `CONTRIBUTING.md`~~ — branch naming, commit format, component anatomy, testing checklist
+5. ~~Install and wire up `jest-axe`~~ — globally in `vitest.setup.ts`
+
+### Additional Hardening
+
+6. ~~Add a11y tests to all 21 components~~ — `axe()` assertions in every spec file
+7. ~~Add ToggleGroup tests~~ — 7 tests (renders, className, single/multi select, disabled, a11y)
+8. ~~Set `passWithNoTests: false`~~ — deleted test files now fail CI
+9. ~~Add Biome `noExplicitAny: error`~~ — blocks `any` type usage
+10. ~~Add Biome `useSortedClasses: error`~~ — enforces Tailwind class ordering (auto-fixed 18 files)
+11. ~~Expand TESTING_STRATEGY.md~~ — added a11y testing, coverage targets, mocking philosophy, file organization sections
+12. ~~Add `UserPromptSubmit` hook~~ — session lifecycle tracking
+13. ~~Block `.github/` writes~~ — agents cannot modify CI/CD workflows
+
+### Remaining Gaps
+
+- **Agent isolation** (F) — no worktrees, no agent manifests; LOW priority for solo project
+- **Task decomposition** (F) — no per-task overlays; LOW priority for solo project
+- **Traceability** (F) — no tool call logging; LOW priority, git history sufficient
+- **llms.txt** — promised in PRD Section 11, not yet created
+- **Visual regression tests** — CI workflow exists, zero test files
 
 ## Context
 
 Canopy's approach is built for a multi-agent orchestration ecosystem (Overstory, Mulch, Seeds, Canopy) with 8 distinct agent types. chunks-ui is a personal component library with a solo developer. Practices 4, 6, and 7 (agent isolation, task decomposition, traceability) are rated F but are LOW priority because the infrastructure overhead doesn't justify itself at this scale.
 
-The HIGH priority items (quality gates in CI, hooks, hard blocks) are universally valuable regardless of team size.
+The HIGH priority items (quality gates in CI, hooks, hard blocks) have been addressed.

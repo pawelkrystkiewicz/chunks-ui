@@ -5,6 +5,7 @@ export default {
   checkbox: { title: "Checkbox" },
   chip: { title: "Chip" },
   "clear-button": { title: "ClearButton" },
+  combobox: { title: "Combobox" },
   dialog: { title: "Dialog" },
   drawer: { title: "Drawer" },
   field: { title: "Field" },
