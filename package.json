@@ -20,12 +20,15 @@
     "lint:root": "biome check .",
     "changeset": "changeset",
     "version-packages": "changeset version",
-    "release": "turbo run build --filter=chunks-ui && changeset publish"
+    "release": "turbo run build --filter=chunks-ui && changeset publish",
+    "version:next": "bun run ./scripts/calculate-next-version.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.6",
     "@changesets/cli": "^2.30.0",
     "@types/bun": "^1.3.10",
+    "@types/js-yaml": "^4.0.9",
+    "js-yaml": "^4.1.1",
     "lefthook": "^2.1.3",
     "turbo": "^2.8.14"
   },
