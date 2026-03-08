@@ -178,7 +178,7 @@ function ComboboxItemIndicator({ className, ...props }: ComboboxItemIndicatorPro
 function ComboboxEmpty({ className, ...props }: ComboboxEmptyProps) {
   return (
     <BaseCombobox.Empty
-      className={cn("px-2 py-4 text-center text-sm text-muted-foreground", className)}
+      className={cn("px-2 py-4 text-center text-muted-foreground text-sm", className)}
       {...props}
     />
   );
@@ -215,7 +215,7 @@ function ComboboxClear({ className, ...props }: ComboboxClearProps) {
 function ComboboxGroupLabel({ className, ...props }: ComboboxGroupLabelProps) {
   return (
     <BaseCombobox.GroupLabel
-      className={cn("px-2 py-1.5 text-xs font-semibold text-muted-foreground", className)}
+      className={cn("px-2 py-1.5 font-semibold text-muted-foreground text-xs", className)}
       {...props}
     />
   );
@@ -237,7 +237,7 @@ function ComboboxChipRemove({ className, ...props }: ComboboxChipRemoveProps) {
   return (
     <BaseCombobox.ChipRemove
       className={cn(
-        "inline-flex items-center text-muted-foreground hover:text-foreground micro-interactions",
+        "micro-interactions inline-flex items-center text-muted-foreground hover:text-foreground",
         className,
       )}
       {...props}

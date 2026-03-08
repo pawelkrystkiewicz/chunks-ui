@@ -26,7 +26,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           navbar={
             <Navbar
               logo={
-                <div className="flex items-center gap-2 flex-nowrap">
+                <div className="flex flex-nowrap items-center gap-2">
                   <Image
                     src="/logo.svg"
                     alt={metadata.title}

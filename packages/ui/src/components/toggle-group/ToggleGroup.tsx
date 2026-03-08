@@ -117,7 +117,7 @@ function ToggleGroupRoot({
       <BaseToggleGroup
         ref={containerRef}
         className={cn(
-          "relative inline-flex items-center gap-0.5 bg-muted rounded-lg p-1",
+          "relative inline-flex items-center gap-0.5 rounded-lg bg-muted p-1",
           "data-[orientation=vertical]:flex-col",
           className,
         )}
@@ -132,14 +132,14 @@ function ToggleGroupRoot({
           bounds &&
           (useSpring && m ? (
             <m.motion.span
-              className="absolute z-0 bg-background rounded-md shadow-sm"
+              className="absolute z-0 rounded-md bg-background shadow-sm"
               initial={false}
               animate={bounds}
               transition={springs.indicator}
             />
           ) : (
             <span
-              className="absolute z-0 bg-background rounded-md shadow-sm micro-interactions duration-200 ease-snappy"
+              className="micro-interactions absolute z-0 rounded-md bg-background shadow-sm duration-200 ease-snappy"
               style={bounds}
             />
           ))}
@@ -168,13 +168,13 @@ function ToggleGroupItem({ className, value, ...props }: ToggleGroupItemProps) {
       ref={ref}
       value={value}
       className={cn(
-        "relative z-[1] inline-flex items-center justify-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium",
-        "text-muted-foreground micro-interactions",
+        "relative z-[1] inline-flex items-center justify-center gap-2 rounded-md px-3 py-1.5 font-medium text-sm",
+        "micro-interactions text-muted-foreground",
         "hover:text-foreground",
         "data-pressed:text-foreground",
         "focus-visible:outline-2 focus-visible:outline-ring",
         "disabled:pointer-events-none disabled:opacity-50",
-        "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "[&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
         ctx?.multiple && "data-pressed:bg-background data-pressed:shadow-sm",
         className,
       )}

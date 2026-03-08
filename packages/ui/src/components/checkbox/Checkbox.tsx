@@ -15,9 +15,9 @@ function CheckboxRoot({ className, ...props }: CheckboxRootProps) {
         "peer size-4 shrink-0 rounded border border-input",
         "micro-interactions",
         "focus-visible:outline-2 focus-visible:outline-ring",
-        "data-[checked]:bg-primary data-[checked]:border-primary data-[checked]:text-primary-foreground",
-        "data-[indeterminate]:bg-primary data-[indeterminate]:border-primary data-[indeterminate]:text-primary-foreground",
-        "data-[disabled]:opacity-50 data-[disabled]:pointer-events-none",
+        "data-[checked]:border-primary data-[checked]:bg-primary data-[checked]:text-primary-foreground",
+        "data-[indeterminate]:border-primary data-[indeterminate]:bg-primary data-[indeterminate]:text-primary-foreground",
+        "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         className,
       )}
       {...props}

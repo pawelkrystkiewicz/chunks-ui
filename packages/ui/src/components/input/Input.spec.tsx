@@ -1,5 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { axe } from "jest-axe";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Input } from "./Input";
 
@@ -39,5 +40,10 @@ describe("Input", () => {
     render(<Input onClear={onClear} endAdornment={<span data-testid="end" />} data-testid="inp" />);
     expect(screen.getByRole("button", { name: "Clear" })).toBeInTheDocument();
     expect(screen.queryByTestId("end")).not.toBeInTheDocument();
+  });
+
+  it("has no a11y violations", async () => {
+    const { container } = render(<Input placeholder="Enter text" aria-label="Text input" />);
+    expect(await axe(container)).toHaveNoViolations();
   });
 });

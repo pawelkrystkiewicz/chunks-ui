@@ -1,4 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
+import { axe } from "jest-axe";
 import { afterEach, describe, expect, it } from "vitest";
 import { Dialog } from "./Dialog";
 
@@ -58,5 +59,20 @@ describe("Dialog", () => {
       </Dialog.Root>,
     );
     expect(screen.getByTestId("desc")).toHaveClass("custom");
+  });
+
+  it("has no a11y violations", async () => {
+    const { container } = render(
+      <Dialog.Root open>
+        <Dialog.Portal>
+          <Dialog.Backdrop />
+          <Dialog.Popup>
+            <Dialog.Title>Title</Dialog.Title>
+            <Dialog.Description>Desc</Dialog.Description>
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>,
+    );
+    expect(await axe(container)).toHaveNoViolations();
   });
 });

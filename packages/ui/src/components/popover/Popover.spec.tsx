@@ -1,4 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
+import { axe } from "jest-axe";
 import { afterEach, describe, expect, it } from "vitest";
 import { Popover } from "./Popover";
 
@@ -55,5 +56,24 @@ describe("Popover", () => {
       </Popover.Root>,
     );
     expect(screen.getByTestId("desc")).toHaveClass("custom");
+  });
+
+  it("has no a11y violations", async () => {
+    const { container } = render(
+      <Popover.Root open>
+        <Popover.Trigger>Open</Popover.Trigger>
+        <Popover.Content>
+          <Popover.Title>Title</Popover.Title>
+        </Popover.Content>
+      </Popover.Root>,
+    );
+    expect(
+      await axe(container, {
+        rules: {
+          // Base UI focus-guard spans with role="button" are internal implementation details
+          "aria-command-name": { enabled: false },
+        },
+      }),
+    ).toHaveNoViolations();
   });
 });

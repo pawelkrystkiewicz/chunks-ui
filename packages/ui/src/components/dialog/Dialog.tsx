@@ -84,12 +84,12 @@ function DialogPopup({ className, ...props }: DialogPopupProps) {
 }
 
 function DialogTitle({ className, ...props }: DialogTitleProps) {
-  return <BaseDialog.Title className={cn("text-lg font-semibold", className)} {...props} />;
+  return <BaseDialog.Title className={cn("font-semibold text-lg", className)} {...props} />;
 }
 
 function DialogDescription({ className, ...props }: DialogDescriptionProps) {
   return (
-    <BaseDialog.Description className={cn("text-sm text-muted-foreground", className)} {...props} />
+    <BaseDialog.Description className={cn("text-muted-foreground text-sm", className)} {...props} />
   );
 }
 

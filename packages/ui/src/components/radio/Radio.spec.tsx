@@ -1,4 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
+import { axe } from "jest-axe";
 import { afterEach, describe, expect, it } from "vitest";
 import { Radio } from "./Radio";
 
@@ -40,5 +41,16 @@ describe("Radio", () => {
       </Radio.Group>,
     );
     expect(screen.getByTestId("ind")).toHaveClass("custom");
+  });
+
+  it("has no a11y violations", async () => {
+    const { container } = render(
+      <Radio.Group defaultValue="a" aria-label="Options">
+        <Radio.Root value="a" aria-label="Option A">
+          <Radio.Indicator />
+        </Radio.Root>
+      </Radio.Group>,
+    );
+    expect(await axe(container)).toHaveNoViolations();
   });
 });

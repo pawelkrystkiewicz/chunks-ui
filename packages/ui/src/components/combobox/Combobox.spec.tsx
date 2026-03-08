@@ -1,4 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
+import { axe } from "jest-axe";
 import { afterEach, describe, expect, it } from "vitest";
 import { Combobox } from "./Combobox";
 
@@ -279,4 +280,13 @@ describe("Combobox", () => {
   // Chip and ChipRemove are thin styling wrappers that require
   // multi-select with active selections to render in Base UI context.
   // They are covered by integration/Playwright CT tests.
+
+  it("has no a11y violations", async () => {
+    const { container } = render(
+      <Combobox.Root>
+        <Combobox.Input aria-label="Search" className="custom" data-testid="input" />
+      </Combobox.Root>,
+    );
+    expect(await axe(container)).toHaveNoViolations();
+  });
 });

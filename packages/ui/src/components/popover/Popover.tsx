@@ -72,13 +72,13 @@ function PopoverArrow({ className, ...props }: PopoverArrowProps) {
 }
 
 function PopoverTitle({ className, ...props }: PopoverTitleProps) {
-  return <BasePopover.Title className={cn("text-sm font-semibold", className)} {...props} />;
+  return <BasePopover.Title className={cn("font-semibold text-sm", className)} {...props} />;
 }
 
 function PopoverDescription({ className, ...props }: PopoverDescriptionProps) {
   return (
     <BasePopover.Description
-      className={cn("text-sm text-muted-foreground", className)}
+      className={cn("text-muted-foreground text-sm", className)}
       {...props}
     />
   );

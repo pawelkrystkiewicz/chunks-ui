@@ -24,7 +24,7 @@ function RadioRoot({ className, ...props }: RadioRootProps) {
   return (
     <BaseRadio.Root
       className={cn(
-        "peer inline-flex items-center justify-center size-4 shrink-0 rounded-full border border-input",
+        "peer inline-flex size-4 shrink-0 items-center justify-center rounded-full border border-input",
         "micro-interactions cursor-pointer",
         "focus-visible:outline-2 focus-visible:outline-ring",
         "data-[checked]:border-primary",
@@ -81,7 +81,7 @@ function RadioItem({ children, className, disabled, ...props }: RadioItemProps) 
   return (
     <label
       className={cn(
-        "flex items-center gap-2 cursor-pointer",
+        "flex cursor-pointer items-center gap-2",
         disabled && "cursor-not-allowed",
         className,
       )}

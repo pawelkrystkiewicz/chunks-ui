@@ -87,7 +87,7 @@ function TabsList({ className, ...props }: TabsListProps) {
   return (
     <BaseTabs.List
       className={cn(
-        "relative flex items-center bg-muted rounded-lg p-1",
+        "relative flex items-center rounded-lg bg-muted p-1",
         "data-[orientation=vertical]:flex-col",
         className,
       )}
@@ -100,8 +100,8 @@ function TabsTab({ className, ...props }: TabsTabProps) {
   return (
     <BaseTabs.Tab
       className={cn(
-        "relative z-[1] inline-flex items-center justify-center px-4 py-2 text-sm font-medium",
-        "text-muted-foreground micro-interactions",
+        "relative z-[1] inline-flex items-center justify-center px-4 py-2 font-medium text-sm",
+        "micro-interactions text-muted-foreground",
         "hover:text-foreground",
         "data-active:text-foreground",
         "focus-visible:outline-2 focus-visible:outline-ring",
@@ -156,7 +156,7 @@ function TabsIndicator({ className, ...props }: TabsIndicatorProps) {
           : undefined
       }
       className={cn(
-        "absolute bg-background rounded-md shadow-sm",
+        "absolute rounded-md bg-background shadow-sm",
         !useSpring && "micro-interactions duration-200 ease-snappy",
         className,
       )}

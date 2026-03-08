@@ -100,12 +100,12 @@ function DrawerPopup({ side = "right", className, ...props }: DrawerPopupProps) 
 }
 
 function DrawerTitle({ className, ...props }: DrawerTitleProps) {
-  return <BaseDialog.Title className={cn("text-lg font-semibold", className)} {...props} />;
+  return <BaseDialog.Title className={cn("font-semibold text-lg", className)} {...props} />;
 }
 
 function DrawerDescription({ className, ...props }: DrawerDescriptionProps) {
   return (
-    <BaseDialog.Description className={cn("text-sm text-muted-foreground", className)} {...props} />
+    <BaseDialog.Description className={cn("text-muted-foreground text-sm", className)} {...props} />
   );
 }
 

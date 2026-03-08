@@ -122,7 +122,7 @@ function SelectItemIndicator({ className, ...props }: SelectItemIndicatorProps) 
 function SelectGroupLabel({ className, ...props }: SelectGroupLabelProps) {
   return (
     <BaseSelect.GroupLabel
-      className={cn("px-2 py-1 text-xs text-muted-foreground cursor-default", className)}
+      className={cn("cursor-default px-2 py-1 text-muted-foreground text-xs", className)}
       {...props}
     />
   );

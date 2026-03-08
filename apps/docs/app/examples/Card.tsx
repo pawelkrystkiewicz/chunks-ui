@@ -50,15 +50,15 @@ export function CardCustomContentExample() {
             <div className="flex items-center gap-3">
               <Avatar alt="Alice Johnson" size={32} />
               <div>
-                <p className="text-sm font-medium">Alice Johnson</p>
-                <p className="text-xs text-muted-foreground">Admin</p>
+                <p className="font-medium text-sm">Alice Johnson</p>
+                <p className="text-muted-foreground text-xs">Admin</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <Avatar alt="Bob Smith" size={32} />
               <div>
-                <p className="text-sm font-medium">Bob Smith</p>
-                <p className="text-xs text-muted-foreground">Member</p>
+                <p className="font-medium text-sm">Bob Smith</p>
+                <p className="text-muted-foreground text-xs">Member</p>
               </div>
             </div>
           </div>

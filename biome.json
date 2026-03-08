@@ -24,6 +24,12 @@
             "inputComponents": ["RadioRoot"]
           }
         }
+      },
+      "suspicious": {
+        "noExplicitAny": "error"
+      },
+      "nursery": {
+        "useSortedClasses": "error"
       }
     }
   },

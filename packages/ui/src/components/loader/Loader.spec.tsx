@@ -1,4 +1,5 @@
 import { cleanup, render } from "@testing-library/react";
+import { axe } from "jest-axe";
 import { afterEach, describe, expect, it } from "vitest";
 import { Loader } from "./Loader";
 
@@ -30,5 +31,10 @@ describe("Loader", () => {
   it("applies color variant", () => {
     const { container } = render(<Loader color="primary" />);
     expect(container.querySelector("svg")).toHaveClass("text-primary");
+  });
+
+  it("has no a11y violations", async () => {
+    const { container } = render(<Loader />);
+    expect(await axe(container)).toHaveNoViolations();
   });
 });

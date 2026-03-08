@@ -1,4 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
+import { axe } from "jest-axe";
 import { afterEach, describe, expect, it } from "vitest";
 import { Checkbox } from "./Checkbox";
 
@@ -31,5 +32,14 @@ describe("Checkbox", () => {
       </Checkbox.Root>,
     );
     expect(screen.getByTestId("ind")).toHaveClass("custom");
+  });
+
+  it("has no a11y violations", async () => {
+    const { container } = render(
+      <Checkbox.Root aria-label="Accept terms">
+        <Checkbox.Indicator />
+      </Checkbox.Root>,
+    );
+    expect(await axe(container)).toHaveNoViolations();
   });
 });

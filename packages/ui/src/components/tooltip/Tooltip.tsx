@@ -40,10 +40,10 @@ function TooltipPopup({ className, ...props }: TooltipPopupProps) {
     <BaseTooltip.Popup
       render={render}
       className={cn(
-        "z-tooltips rounded bg-foreground px-2.5 py-1 text-xs text-background shadow-md",
+        "z-tooltips rounded bg-foreground px-2.5 py-1 text-background text-xs shadow-md",
         !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
         !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
-        !useSpring && "micro-interactions",
+        // !useSpring && "micro-interactions",
         className,
       )}
       {...props}
@@ -52,6 +52,7 @@ function TooltipPopup({ className, ...props }: TooltipPopupProps) {
 }
 
 function TooltipArrow({ className, ...props }: TooltipArrowProps) {
+  // TODO: not visible in docs example
   return <BaseTooltip.Arrow className={cn("fill-foreground", className)} {...props} />;
 }
 
@@ -59,9 +60,13 @@ function TooltipPositioner({ className, ...props }: TooltipPositionerProps) {
   return <BaseTooltip.Positioner sideOffset={6} className={cn(className)} {...props} />;
 }
 
+function TooltipTrigger({ delay = 100, ...props }: TooltipTriggerProps) {
+  return <BaseTooltip.Trigger delay={delay} {...props} />;
+}
+
 export const Tooltip = {
   Root: BaseTooltip.Root,
-  Trigger: BaseTooltip.Trigger,
+  Trigger: TooltipTrigger,
   Portal: TooltipPortal,
   Positioner: TooltipPositioner,
   Popup: TooltipPopup,

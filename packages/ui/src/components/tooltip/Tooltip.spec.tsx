@@ -1,4 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
+import { axe } from "jest-axe";
 import { afterEach, describe, expect, it } from "vitest";
 import { Tooltip } from "./Tooltip";
 
@@ -51,5 +52,26 @@ describe("Tooltip", () => {
       </Tooltip.Root>,
     );
     expect(screen.getByTestId("pos")).toHaveClass("custom");
+  });
+
+  it("has no a11y violations", async () => {
+    const { container } = render(
+      <Tooltip.Root open>
+        <Tooltip.Trigger>Hover</Tooltip.Trigger>
+        <Tooltip.Portal>
+          <Tooltip.Positioner>
+            <Tooltip.Popup>Tip</Tooltip.Popup>
+          </Tooltip.Positioner>
+        </Tooltip.Portal>
+      </Tooltip.Root>,
+    );
+    expect(
+      await axe(container, {
+        rules: {
+          // Base UI focus-guard spans with role="button" are internal implementation details
+          "aria-command-name": { enabled: false },
+        },
+      }),
+    ).toHaveNoViolations();
   });
 });
