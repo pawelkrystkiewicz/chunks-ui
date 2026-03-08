@@ -12,7 +12,7 @@ export function SelectBasicExample() {
           <Select.Icon />
         </Select.Trigger>
         <Select.Portal>
-          <Select.Positioner>
+          <Select.Positioner sideOffset={5} alignItemWithTrigger={false}>
             <Select.Popup>
               <Select.Item value="apple">
                 <Select.ItemText>Apple</Select.ItemText>
@@ -24,6 +24,10 @@ export function SelectBasicExample() {
               </Select.Item>
               <Select.Item value="cherry">
                 <Select.ItemText>Cherry</Select.ItemText>
+                <Select.ItemIndicator />
+              </Select.Item>
+              <Select.Item value="strawberry" disabled>
+                <Select.ItemText>Strawberry</Select.ItemText>
                 <Select.ItemIndicator />
               </Select.Item>
             </Select.Popup>
@@ -43,10 +47,10 @@ export function SelectGroupedExample() {
           <Select.Icon />
         </Select.Trigger>
         <Select.Portal>
-          <Select.Positioner>
+          <Select.Positioner sideOffset={5} alignItemWithTrigger={false}>
             <Select.Popup>
               <Select.Group>
-                <Select.GroupLabel>Warm</Select.GroupLabel>
+                <Select.GroupLabel className={"uppercase"}>Warm</Select.GroupLabel>
                 <Select.Item value="red">
                   <Select.ItemText>Red</Select.ItemText>
                   <Select.ItemIndicator />
@@ -57,7 +61,7 @@ export function SelectGroupedExample() {
                 </Select.Item>
               </Select.Group>
               <Select.Group>
-                <Select.GroupLabel>Cool</Select.GroupLabel>
+                <Select.GroupLabel className={"uppercase"}>Cool</Select.GroupLabel>
                 <Select.Item value="blue">
                   <Select.ItemText>Blue</Select.ItemText>
                   <Select.ItemIndicator />

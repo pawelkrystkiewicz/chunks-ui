@@ -22,7 +22,7 @@ function SelectTrigger({ className, ...props }: SelectTriggerProps) {
         "placeholder:text-muted-foreground",
         "focus-visible:outline-2 focus-visible:outline-ring",
         "disabled:pointer-events-none disabled:opacity-50",
-        "data-[placeholder]:text-muted-foreground",
+        "data-placeholder:text-muted-foreground",
         className,
       )}
       {...props}
@@ -53,8 +53,8 @@ function SelectPopup({ className, ...props }: SelectPopupProps) {
     <BaseSelect.Popup
       className={cn(
         "z-dropdowns rounded border border-border bg-popover p-1 text-popover-foreground shadow-md",
-        "data-[starting-style]:opacity-0",
-        "data-[ending-style]:opacity-0",
+        "data-starting-style:opacity-0",
+        "data-ending-style:opacity-0",
         "micro-interactions",
         className,
       )}
@@ -68,8 +68,9 @@ function SelectItem({ className, ...props }: SelectItemProps) {
     <BaseSelect.Item
       className={cn(
         "relative flex w-full cursor-default items-center rounded py-1.5 pr-8 pl-2 text-sm outline-none",
-        "data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground",
-        "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+        "data-highlighted:bg-accent data-highlighted:text-accent-foreground",
+        "data-disabled:pointer-events-none data-disabled:opacity-50",
+        "cursor-pointer",
         className,
       )}
       {...props}
@@ -102,23 +103,23 @@ function SelectItemIndicator({ className, ...props }: SelectItemIndicatorProps) 
 function SelectGroupLabel({ className, ...props }: SelectGroupLabelProps) {
   return (
     <BaseSelect.GroupLabel
-      className={cn("px-2 py-1.5 text-xs font-semibold text-muted-foreground", className)}
+      className={cn("px-2 py-1 text-xs text-muted-foreground cursor-default", className)}
       {...props}
     />
   );
 }
 
 export const Select = {
+  Group: BaseSelect.Group,
+  GroupLabel: SelectGroupLabel,
+  Icon: SelectIcon,
+  Item: SelectItem,
+  ItemIndicator: SelectItemIndicator,
+  ItemText: BaseSelect.ItemText,
+  Popup: SelectPopup,
+  Portal: BaseSelect.Portal,
+  Positioner: BaseSelect.Positioner,
   Root: BaseSelect.Root,
   Trigger: SelectTrigger,
   Value: BaseSelect.Value,
-  Icon: SelectIcon,
-  Portal: BaseSelect.Portal,
-  Positioner: BaseSelect.Positioner,
-  Popup: SelectPopup,
-  Item: SelectItem,
-  ItemText: BaseSelect.ItemText,
-  ItemIndicator: SelectItemIndicator,
-  Group: BaseSelect.Group,
-  GroupLabel: SelectGroupLabel,
 };
