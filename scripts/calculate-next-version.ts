@@ -123,6 +123,9 @@ function hasChangesets(changesetDir: string): boolean {
  */
 function getCurrentVersion(packagePath: string): string {
   const pkg = JSON.parse(readFileSync(packagePath, "utf-8"));
+  if (!pkg.version) {
+    throw new Error(`No "version" field found in ${packagePath}`);
+  }
   return pkg.version;
 }
 

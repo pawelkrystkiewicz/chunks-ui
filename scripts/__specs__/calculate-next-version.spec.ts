@@ -1,4 +1,12 @@
-import { existsSync, mkdirSync, rmSync, writeFileSync } from "fs";
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  rmdirSync,
+  statSync,
+  unlinkSync,
+  writeFileSync,
+} from "fs";
 import { join } from "path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
@@ -10,6 +18,19 @@ import {
   parseChangesetFrontMatter,
   parseVersion,
 } from "../calculate-next-version";
+
+const removeDirRecursive = (dir: string) => {
+  if (!existsSync(dir)) return;
+  for (const entry of readdirSync(dir)) {
+    const fullPath = join(dir, entry);
+    if (statSync(fullPath).isDirectory()) {
+      removeDirRecursive(fullPath);
+    } else {
+      unlinkSync(fullPath);
+    }
+  }
+  rmdirSync(dir);
+};
 
 describe("parseVersion", () => {
   it("should parse valid semver versions", () => {
@@ -122,7 +143,7 @@ Description`;
     expect(parseChangesetFrontMatter(content)).toBe(null);
   });
 
-  it("should return null for invalid YAML", () => {
+  it("should return null when YAML value is not a recognised bump type", () => {
     const content = `---
 this is not valid: yaml: syntax:
 ---
@@ -137,14 +158,14 @@ describe("determineBumpType", () => {
 
   beforeEach(() => {
     if (existsSync(testDir)) {
-      rmSync(testDir, { recursive: true, force: true });
+      removeDirRecursive(testDir);
     }
     mkdirSync(testDir, { recursive: true });
   });
 
   afterEach(() => {
     if (existsSync(testDir)) {
-      rmSync(testDir, { recursive: true, force: true });
+      removeDirRecursive(testDir);
     }
   });
 
@@ -264,14 +285,14 @@ describe("hasChangesets", () => {
 
   beforeEach(() => {
     if (existsSync(testDir)) {
-      rmSync(testDir, { recursive: true, force: true });
+      removeDirRecursive(testDir);
     }
     mkdirSync(testDir, { recursive: true });
   });
 
   afterEach(() => {
     if (existsSync(testDir)) {
-      rmSync(testDir, { recursive: true, force: true });
+      removeDirRecursive(testDir);
     }
   });
 
@@ -311,14 +332,14 @@ describe("getCurrentVersion", () => {
 
   beforeEach(() => {
     if (existsSync(testPackageDir)) {
-      rmSync(testPackageDir, { recursive: true, force: true });
+      removeDirRecursive(testPackageDir);
     }
     mkdirSync(testPackageDir, { recursive: true });
   });
 
   afterEach(() => {
     if (existsSync(testPackageDir)) {
-      rmSync(testPackageDir, { recursive: true, force: true });
+      removeDirRecursive(testPackageDir);
     }
   });
 
@@ -361,6 +382,17 @@ describe("getCurrentVersion", () => {
 
     expect(getCurrentVersion(packageJsonPath)).toBe("10.20.30");
   });
+
+  it("should throw when version field is missing", () => {
+    writeFileSync(packageJsonPath, JSON.stringify({ name: "test-package" }));
+    expect(() => getCurrentVersion(packageJsonPath)).toThrow(
+      `No "version" field found in ${packageJsonPath}`,
+    );
+  });
+
+  it("should throw when package.json does not exist", () => {
+    expect(() => getCurrentVersion(join(testPackageDir, "nonexistent.json"))).toThrow();
+  });
 });
 
 describe("calculateVersionInfo", () => {
@@ -370,7 +402,7 @@ describe("calculateVersionInfo", () => {
 
   beforeEach(() => {
     if (existsSync(testDir)) {
-      rmSync(testDir, { recursive: true, force: true });
+      removeDirRecursive(testDir);
     }
     mkdirSync(testDir, { recursive: true });
     mkdirSync(changesetDir, { recursive: true });
@@ -386,7 +418,7 @@ describe("calculateVersionInfo", () => {
 
   afterEach(() => {
     if (existsSync(testDir)) {
-      rmSync(testDir, { recursive: true, force: true });
+      removeDirRecursive(testDir);
     }
   });
 
