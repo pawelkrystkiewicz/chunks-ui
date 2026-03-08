@@ -14,6 +14,7 @@ export default defineConfig({
   reporter: process.env.CI ? "github" : "list",
 
   expect: {
+    timeout: 15_000,
     toHaveScreenshot: {
       maxDiffPixelRatio: 0.005,
     },
@@ -35,7 +36,8 @@ export default defineConfig({
 
   webServer: {
     command: "bunx vite --config visual-tests/vite.config.ts",
-    port: 5173,
+    url: "http://localhost:5173/src/Main.tsx",
+    timeout: 120_000,
     reuseExistingServer: !process.env.CI,
   },
 });

@@ -17,19 +17,14 @@ export type TooltipArrowProps = ComponentProps<typeof BaseTooltip.Arrow>;
 function TooltipPortal({ keepMounted, ...props }: TooltipPortalProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
-  /* v8 ignore next */
   const useSpring = !!m && !reduced;
-
   return <BaseTooltip.Portal keepMounted={keepMounted ?? useSpring} {...props} />;
 }
 
 function TooltipPopup({ className, ...props }: TooltipPopupProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
-  /* v8 ignore next */
   const useSpring = !!m && !reduced;
-
-  /* v8 ignore next 8 */
   const render = useSpring
     ? createPopupRenderer({
         m,

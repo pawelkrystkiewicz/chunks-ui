@@ -43,6 +43,27 @@ describe("Radio", () => {
     expect(screen.getByTestId("ind")).toHaveClass("custom");
   });
 
+  it("renders Item with label", () => {
+    render(
+      <Radio.Group aria-label="Options">
+        <Radio.Item value="a">Option A</Radio.Item>
+      </Radio.Group>,
+    );
+    expect(screen.getByText("Option A")).toBeInTheDocument();
+    expect(screen.getByRole("radio")).toBeInTheDocument();
+  });
+
+  it("renders disabled Item with cursor-not-allowed class", () => {
+    const { container } = render(
+      <Radio.Group aria-label="Options">
+        <Radio.Item value="a" disabled>
+          Option A
+        </Radio.Item>
+      </Radio.Group>,
+    );
+    expect(container.querySelector("label")).toHaveClass("cursor-not-allowed");
+  });
+
   it("has no a11y violations", async () => {
     const { container } = render(
       <Radio.Group defaultValue="a" aria-label="Options">

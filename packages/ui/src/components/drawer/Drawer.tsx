@@ -34,19 +34,14 @@ const motionPositionClasses = {
 function DrawerPortal({ keepMounted, ...props }: DrawerPortalProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
-  /* v8 ignore next */
   const useSpring = !!m && !reduced;
-
   return <BaseDialog.Portal keepMounted={keepMounted ?? useSpring} {...props} />;
 }
 
 function DrawerBackdrop({ className, ...props }: DrawerBackdropProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
-  /* v8 ignore next */
   const useSpring = !!m && !reduced;
-
-  /* v8 ignore next 7 */
   const render = useSpring
     ? createPopupRenderer({
         m,
@@ -74,13 +69,9 @@ function DrawerBackdrop({ className, ...props }: DrawerBackdropProps) {
 function DrawerPopup({ side = "right", className, ...props }: DrawerPopupProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
-  /* v8 ignore next */
   const useSpring = !!m && !reduced;
-
   const resolvedSide = side ?? "right";
   const dir = slideDirections[resolvedSide];
-
-  /* v8 ignore next 7 */
   const render = useSpring
     ? createPopupRenderer({
         m,

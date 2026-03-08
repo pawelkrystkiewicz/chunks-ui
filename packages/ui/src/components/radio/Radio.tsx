@@ -41,39 +41,35 @@ export type RadioIndicatorProps = ComponentProps<typeof BaseRadio.Indicator>;
 function RadioIndicator({ className, ...props }: RadioIndicatorProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
-  /* v8 ignore next */
   const useSpring = !!m && !reduced;
-
-  if (!useSpring) {
+  if (useSpring) {
     return (
-      <BaseRadio.Indicator className={cn("flex items-center justify-center", className)} {...props}>
-        <span className="size-2 rounded-full bg-primary" />
-      </BaseRadio.Indicator>
+      <BaseRadio.Indicator
+        keepMounted
+        render={(renderProps, state) => (
+          <m.motion.span
+            {...(renderProps as Record<string, unknown>)}
+            className={cn("flex items-center justify-center", className)}
+            initial={false}
+            animate={{
+              scale: state.checked ? 1 : 0,
+              opacity: state.checked ? 1 : 0,
+            }}
+            transition={springs.micro}
+          >
+            <span className="size-2 rounded-full bg-primary" />
+          </m.motion.span>
+        )}
+        {...props}
+      />
     );
   }
 
-  /* v8 ignore start */
   return (
-    <BaseRadio.Indicator
-      keepMounted
-      render={(renderProps, state) => (
-        <m.motion.span
-          {...(renderProps as Record<string, unknown>)}
-          className={cn("flex items-center justify-center", className)}
-          initial={false}
-          animate={{
-            scale: state.checked ? 1 : 0,
-            opacity: state.checked ? 1 : 0,
-          }}
-          transition={springs.micro}
-        >
-          <span className="size-2 rounded-full bg-primary" />
-        </m.motion.span>
-      )}
-      {...props}
-    />
+    <BaseRadio.Indicator className={cn("flex items-center justify-center", className)} {...props}>
+      <span className="size-2 rounded-full bg-primary" />
+    </BaseRadio.Indicator>
   );
-  /* v8 ignore stop */
 }
 
 export type RadioItemProps = Omit<RadioRootProps, "children"> & {
