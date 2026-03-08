@@ -67,15 +67,19 @@ export { Loader, type LoaderProps, loaderVariants } from "./components/loader";
 export type {
   PopoverArrowProps,
   PopoverCloseProps,
+  PopoverContentProps,
   PopoverDescriptionProps,
-  PopoverPopupProps,
-  PopoverPositionerProps,
   PopoverRootProps,
   PopoverTitleProps,
   PopoverTriggerProps,
 } from "./components/popover";
 export { Popover } from "./components/popover";
-export type { RadioGroupProps, RadioIndicatorProps, RadioRootProps } from "./components/radio";
+export type {
+  RadioGroupProps,
+  RadioIndicatorProps,
+  RadioItemProps,
+  RadioRootProps,
+} from "./components/radio";
 export { Radio } from "./components/radio";
 export type {
   SelectGroupLabelProps,
@@ -95,6 +99,8 @@ export { Separator, type SeparatorProps } from "./components/separator";
 export type { SwitchRootProps, SwitchThumbProps } from "./components/switch";
 export { Switch } from "./components/switch";
 export type {
+  TabsContentProps,
+  TabsContentsProps,
   TabsIndicatorProps,
   TabsListProps,
   TabsPanelProps,
@@ -103,6 +109,11 @@ export type {
 } from "./components/tabs";
 export { Tabs } from "./components/tabs";
 export { Textarea, type TextareaProps } from "./components/textarea";
+export type {
+  ToggleGroupItemProps,
+  ToggleGroupRootProps,
+} from "./components/toggle-group";
+export { ToggleGroup } from "./components/toggle-group";
 export type {
   TooltipArrowProps,
   TooltipPopupProps,
@@ -114,3 +125,4 @@ export { Tooltip } from "./components/tooltip";
 // Utilities
 export { cn } from "./lib/cn";
 export { springs } from "./lib/motion";
+export { useMotion, useReducedMotion } from "./lib/use-motion";

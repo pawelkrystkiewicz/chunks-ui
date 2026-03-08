@@ -1,4 +1,5 @@
 import { cleanup, render } from "@testing-library/react";
+import { axe } from "jest-axe";
 import { afterEach, describe, expect, it } from "vitest";
 import { Separator } from "./Separator";
 
@@ -13,5 +14,10 @@ describe("Separator", () => {
   it("merges custom className", () => {
     const { container } = render(<Separator className="custom" />);
     expect(container.querySelector("[role='separator']")).toHaveClass("custom");
+  });
+
+  it("has no a11y violations", async () => {
+    const { container } = render(<Separator />);
+    expect(await axe(container)).toHaveNoViolations();
   });
 });

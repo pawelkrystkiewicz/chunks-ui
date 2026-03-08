@@ -1,7 +1,12 @@
+"use client";
+
 import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
 import type React from "react";
 import type { ComponentProps } from "react";
 import { cn } from "../../lib/cn";
+import { springs } from "../../lib/motion";
+import { createPopupRenderer } from "../../lib/popup-motion";
+import { useMotion, useReducedMotion } from "../../lib/use-motion";
 
 export type ComboboxRootProps = ComponentProps<typeof BaseCombobox.Root>;
 export type ComboboxInputProps = ComponentProps<typeof BaseCombobox.Input>;
@@ -25,7 +30,7 @@ function ComboboxControl({ className, ...props }: ComboboxControlProps) {
   return (
     <div
       className={cn(
-        "relative flex flex-wrap items-center gap-1 rounded-lg border border-input bg-background px-3 py-1.5",
+        "relative flex flex-wrap items-center gap-1 rounded border border-input bg-background px-3 py-1.5",
         "has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ring",
         "has-[:disabled]:pointer-events-none has-[:disabled]:opacity-50",
         className,
@@ -39,7 +44,7 @@ function ComboboxInput({ className, ...props }: ComboboxInputProps) {
   return (
     <BaseCombobox.Input
       className={cn(
-        "flex h-9 w-full rounded-lg border border-input bg-background px-3 text-sm",
+        "flex h-9 w-full rounded border border-input bg-background px-3 text-sm",
         "placeholder:text-muted-foreground",
         "focus-visible:outline-2 focus-visible:outline-ring",
         "disabled:pointer-events-none disabled:opacity-50",
@@ -104,13 +109,27 @@ function ComboboxPositioner({ className, ...props }: ComboboxPositionerProps) {
 }
 
 function ComboboxPopup({ className, ...props }: ComboboxPopupProps) {
+  const m = useMotion();
+  const reduced = useReducedMotion();
+  const useSpring = !!m && !reduced;
+
+  const render = useSpring
+    ? createPopupRenderer({
+        m,
+        spring: springs.popup,
+        from: { opacity: 0, scale: 0.95 },
+        to: { opacity: 1, scale: 1 },
+      })
+    : undefined;
+
   return (
     <BaseCombobox.Popup
+      render={render}
       className={cn(
-        "z-dropdowns rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-md",
-        "data-[starting-style]:opacity-0",
-        "data-[ending-style]:opacity-0",
-        "transition-opacity duration-150",
+        "z-dropdowns rounded border border-border bg-popover p-1 text-popover-foreground shadow-md",
+        !useSpring && "data-starting-style:opacity-0",
+        !useSpring && "data-ending-style:opacity-0",
+        !useSpring && "micro-interactions",
         className,
       )}
       {...props}
@@ -122,7 +141,7 @@ function ComboboxItem({ className, ...props }: ComboboxItemProps) {
   return (
     <BaseCombobox.Item
       className={cn(
-        "relative flex w-full cursor-default items-center rounded-md py-1.5 pr-8 pl-2 text-sm outline-none",
+        "relative flex w-full cursor-default items-center rounded py-1.5 pr-8 pl-2 text-sm outline-none",
         "data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground",
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         className,
@@ -159,7 +178,7 @@ function ComboboxItemIndicator({ className, ...props }: ComboboxItemIndicatorPro
 function ComboboxEmpty({ className, ...props }: ComboboxEmptyProps) {
   return (
     <BaseCombobox.Empty
-      className={cn("px-2 py-4 text-center text-sm text-muted-foreground", className)}
+      className={cn("px-2 py-4 text-center text-muted-foreground text-sm", className)}
       {...props}
     />
   );
@@ -170,7 +189,7 @@ function ComboboxClear({ className, ...props }: ComboboxClearProps) {
     <BaseCombobox.Clear
       className={cn(
         "absolute inset-y-0 right-7 flex items-center text-muted-foreground hover:text-foreground",
-        "transition-colors duration-150",
+        "micro-interactions",
         className,
       )}
       {...props}
@@ -196,7 +215,7 @@ function ComboboxClear({ className, ...props }: ComboboxClearProps) {
 function ComboboxGroupLabel({ className, ...props }: ComboboxGroupLabelProps) {
   return (
     <BaseCombobox.GroupLabel
-      className={cn("px-2 py-1.5 text-xs font-semibold text-muted-foreground", className)}
+      className={cn("px-2 py-1.5 font-semibold text-muted-foreground text-xs", className)}
       {...props}
     />
   );
@@ -206,7 +225,7 @@ function ComboboxChip({ className, ...props }: ComboboxChipProps) {
   return (
     <BaseCombobox.Chip
       className={cn(
-        "inline-flex items-center gap-1 rounded-md border border-border bg-muted px-1.5 py-0.5 text-xs",
+        "inline-flex items-center gap-1 rounded border border-border bg-muted px-1.5 py-0.5 text-xs",
         className,
       )}
       {...props}
@@ -218,7 +237,7 @@ function ComboboxChipRemove({ className, ...props }: ComboboxChipRemoveProps) {
   return (
     <BaseCombobox.ChipRemove
       className={cn(
-        "inline-flex items-center text-muted-foreground hover:text-foreground transition-colors duration-150",
+        "micro-interactions inline-flex items-center text-muted-foreground hover:text-foreground",
         className,
       )}
       {...props}

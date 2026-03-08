@@ -1,4 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
+import { axe } from "jest-axe";
 import { afterEach, describe, expect, it } from "vitest";
 import { Tabs } from "./Tabs";
 
@@ -75,5 +76,18 @@ describe("Tabs", () => {
       </Tabs.Root>,
     );
     expect(screen.getByTestId("ind")).toHaveClass("custom");
+  });
+
+  it("has no a11y violations", async () => {
+    const { container } = render(
+      <Tabs.Root defaultValue="a">
+        <Tabs.List>
+          <Tabs.Tab value="a">A</Tabs.Tab>
+          <Tabs.Indicator />
+        </Tabs.List>
+        <Tabs.Panel value="a">Content</Tabs.Panel>
+      </Tabs.Root>,
+    );
+    expect(await axe(container)).toHaveNoViolations();
   });
 });

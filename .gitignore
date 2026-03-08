@@ -9,6 +9,10 @@ dist
 # next.js
 .next
 
+# generated llm docs
+apps/docs/public/llm.txt
+apps/docs/public/llm-full.txt
+
 # code coverage
 coverage
 *.lcov

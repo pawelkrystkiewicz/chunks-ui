@@ -1,5 +1,4 @@
-import { Popover } from 'chunks-ui'
-import { Container } from '@/components'
+import { PopoverBasicExample, PopoverArrowExample, PopoverCloseExample } from '@/examples/Popover'
 
 # Popover
 
@@ -16,119 +15,61 @@ import { Popover } from "chunks-ui";
 ```tsx
 <Popover.Root>
   <Popover.Trigger>More info</Popover.Trigger>
-  <Popover.Portal>
-    <Popover.Positioner>
-      <Popover.Popup>
-        <Popover.Title>Details</Popover.Title>
-        <Popover.Description>
-          This is additional context about the feature.
-        </Popover.Description>
-      </Popover.Popup>
-    </Popover.Positioner>
-  </Popover.Portal>
+  <Popover.Content>
+    <Popover.Title>Details</Popover.Title>
+    <Popover.Description>
+      This is additional context about the feature.
+    </Popover.Description>
+  </Popover.Content>
 </Popover.Root>
 ```
 
-<Container>
-  <Popover.Root>
-    <Popover.Trigger>More info</Popover.Trigger>
-    <Popover.Portal>
-      <Popover.Positioner>
-        <Popover.Popup>
-          <Popover.Title>Details</Popover.Title>
-          <Popover.Description>
-            This is additional context about the feature.
-          </Popover.Description>
-        </Popover.Popup>
-      </Popover.Positioner>
-    </Popover.Portal>
-  </Popover.Root>
-</Container>
+<PopoverBasicExample />
 
 ## With Arrow
 
 ```tsx
 <Popover.Root>
   <Popover.Trigger>Help</Popover.Trigger>
-  <Popover.Portal>
-    <Popover.Positioner>
-      <Popover.Popup>
-        <Popover.Arrow />
-        <Popover.Title>Need help?</Popover.Title>
-        <Popover.Description>
-          Contact support at help@example.com.
-        </Popover.Description>
-      </Popover.Popup>
-    </Popover.Positioner>
-  </Popover.Portal>
+  <Popover.Content>
+    <Popover.Arrow />
+    <Popover.Title>Need help?</Popover.Title>
+    <Popover.Description>
+      Contact support at help@example.com.
+    </Popover.Description>
+  </Popover.Content>
 </Popover.Root>
 ```
 
-<Container>
-  <Popover.Root>
-    <Popover.Trigger>Help</Popover.Trigger>
-    <Popover.Portal>
-      <Popover.Positioner>
-        <Popover.Popup>
-          <Popover.Arrow />
-          <Popover.Title>Need help?</Popover.Title>
-          <Popover.Description>
-            Contact support at help@example.com.
-          </Popover.Description>
-        </Popover.Popup>
-      </Popover.Positioner>
-    </Popover.Portal>
-  </Popover.Root>
-</Container>
+<PopoverArrowExample />
 
 ## With Close Button
 
 ```tsx
 <Popover.Root>
   <Popover.Trigger>Open</Popover.Trigger>
-  <Popover.Portal>
-    <Popover.Positioner>
-      <Popover.Popup>
-        <div className="flex items-center justify-between">
-          <Popover.Title>Settings</Popover.Title>
-          <Popover.Close>Close</Popover.Close>
-        </div>
-        <Popover.Description>
-          Configure your preferences here.
-        </Popover.Description>
-      </Popover.Popup>
-    </Popover.Positioner>
-  </Popover.Portal>
+  <Popover.Content>
+    <div className="flex items-center justify-between">
+      <Popover.Title>Settings</Popover.Title>
+      <Popover.Close>Close</Popover.Close>
+    </div>
+    <Popover.Description>
+      Configure your preferences here.
+    </Popover.Description>
+  </Popover.Content>
 </Popover.Root>
 ```
 
-<Container>
-  <Popover.Root>
-    <Popover.Trigger>Open</Popover.Trigger>
-    <Popover.Portal>
-      <Popover.Positioner>
-        <Popover.Popup>
-          <div className="flex items-center justify-between">
-            <Popover.Title>Settings</Popover.Title>
-            <Popover.Close>Close</Popover.Close>
-          </div>
-          <Popover.Description>
-            Configure your preferences here.
-          </Popover.Description>
-        </Popover.Popup>
-      </Popover.Positioner>
-    </Popover.Portal>
-  </Popover.Root>
-</Container>
+<PopoverCloseExample />
 
 ## Positioning
 
-The `Popover.Positioner` uses Base UI's built-in Floating UI integration. It has a default `sideOffset` of `8px`. You can customize placement via Base UI's `side` and `align` props:
+The `Popover.Content` uses Base UI's built-in Floating UI integration. It has a default `sideOffset` of `8px`. You can customize placement via `side` and `align` props:
 
 ```tsx
-<Popover.Positioner side="bottom" align="start">
-  <Popover.Popup>...</Popover.Popup>
-</Popover.Positioner>
+<Popover.Content side="bottom" align="start">
+  ...
+</Popover.Content>
 ```
 
 ## Compound Parts
@@ -137,9 +78,7 @@ The `Popover.Positioner` uses Base UI's built-in Floating UI integration. It has
 |---|---|
 | `Popover.Root` | State container. Manages open/close. |
 | `Popover.Trigger` | Element that toggles the popover. |
-| `Popover.Portal` | Renders children in a portal. |
-| `Popover.Positioner` | Handles Floating UI positioning. Default `sideOffset={8}`. |
-| `Popover.Popup` | The popup panel. `z-dropdowns` (200). Has border, shadow, and rounded corners. |
+| `Popover.Content` | Portal + positioner + popup panel. Default `sideOffset={8}`. Accepts `side`, `align`, `alignOffset` props. |
 | `Popover.Arrow` | SVG arrow pointing to the trigger. Filled with `--popover` color. |
 | `Popover.Title` | Popover heading. Semibold `text-sm`. |
 | `Popover.Description` | Supporting text. `text-muted-foreground`. |
@@ -152,3 +91,13 @@ The `Popover.Positioner` uses Base UI's built-in Floating UI integration. It has
 | `open` | `boolean` | -- | Controlled open state |
 | `defaultOpen` | `boolean` | `false` | Initial open state (uncontrolled) |
 | `onOpenChange` | `(open: boolean) => void` | -- | Called when open state changes |
+
+## Popover.Content Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `side` | `"top" \| "bottom" \| "left" \| "right"` | `"bottom"` | Preferred side |
+| `sideOffset` | `number` | `8` | Distance from the trigger |
+| `align` | `"start" \| "center" \| "end"` | `"center"` | Alignment along the side |
+| `alignOffset` | `number` | `0` | Offset from the alignment edge |
+| `className` | `string` | -- | Additional CSS classes |

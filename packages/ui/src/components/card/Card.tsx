@@ -25,14 +25,14 @@ export type CardTitleProps = ComponentProps<"h3">;
 
 function CardTitle({ className, ...props }: CardTitleProps) {
   return (
-    <h3 className={cn("text-lg font-semibold leading-none tracking-tight", className)} {...props} />
+    <h3 className={cn("font-semibold text-lg leading-none tracking-tight", className)} {...props} />
   );
 }
 
 export type CardDescriptionProps = ComponentProps<"p">;
 
 function CardDescription({ className, ...props }: CardDescriptionProps) {
-  return <p className={cn("text-sm text-muted-foreground", className)} {...props} />;
+  return <p className={cn("text-muted-foreground text-sm", className)} {...props} />;
 }
 
 export type CardContentProps = ComponentProps<"div">;

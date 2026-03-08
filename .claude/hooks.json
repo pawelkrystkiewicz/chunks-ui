@@ -1,0 +1,61 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'Success'"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash(git push*)",
+        "hooks": [
+          {
+            "type": "block",
+            "message": "Agents must not push to remote. A human must review and push."
+          }
+        ]
+      },
+      {
+        "matcher": "Bash(git reset --hard*)",
+        "hooks": [
+          {
+            "type": "block",
+            "message": "Hard reset is not allowed by agents. Use safer alternatives."
+          }
+        ]
+      },
+      {
+        "matcher": "Bash(git push --force*)",
+        "hooks": [
+          {
+            "type": "block",
+            "message": "Force push is never allowed by agents."
+          }
+        ]
+      },
+      {
+        "matcher": "Write(.github/**)",
+        "hooks": [
+          {
+            "type": "block",
+            "message": "Agents must not modify CI/CD workflows. A human must make these changes."
+          }
+        ]
+      },
+      {
+        "matcher": "Edit(.github/**)",
+        "hooks": [
+          {
+            "type": "block",
+            "message": "Agents must not modify CI/CD workflows. A human must make these changes."
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,4 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
+import { axe } from "jest-axe";
 import { afterEach, describe, expect, it } from "vitest";
 import { Switch } from "./Switch";
 
@@ -26,5 +27,14 @@ describe("Switch", () => {
       </Switch.Root>,
     );
     expect(screen.getByTestId("thumb")).toHaveClass("custom");
+  });
+
+  it("has no a11y violations", async () => {
+    const { container } = render(
+      <Switch.Root aria-label="Toggle">
+        <Switch.Thumb />
+      </Switch.Root>,
+    );
+    expect(await axe(container)).toHaveNoViolations();
   });
 });

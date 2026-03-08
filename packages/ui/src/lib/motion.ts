@@ -11,6 +11,9 @@ export const springs = {
     restDelta: 0.01,
   },
 
+  /** Popup enter/exit — snappy with slight bounce */
+  popup: { type: "spring", stiffness: 300, damping: 25 },
+
   /** Enter/exit overlays — gentle fade */
   overlay: { type: "spring", stiffness: 200, damping: 25 },
 

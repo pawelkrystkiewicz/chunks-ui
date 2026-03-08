@@ -1,4 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
+import { axe } from "jest-axe";
 import { afterEach, describe, expect, it } from "vitest";
 import { Card } from "./Card";
 
@@ -49,5 +50,17 @@ describe("Card", () => {
     expect(screen.getByTestId("desc")).toHaveClass("d");
     expect(screen.getByTestId("content")).toHaveClass("c");
     expect(screen.getByTestId("footer")).toHaveClass("f");
+  });
+
+  it("has no a11y violations", async () => {
+    const { container } = render(
+      <Card.Root>
+        <Card.Header>
+          <Card.Title>Title</Card.Title>
+        </Card.Header>
+        <Card.Content>Content</Card.Content>
+      </Card.Root>,
+    );
+    expect(await axe(container)).toHaveNoViolations();
   });
 });

@@ -1,4 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
+import { axe } from "jest-axe";
 import { afterEach, describe, expect, it } from "vitest";
 import { Drawer } from "./Drawer";
 
@@ -95,5 +96,18 @@ describe("Drawer", () => {
       </Drawer.Root>,
     );
     expect(screen.getByTestId("desc")).toHaveClass("custom");
+  });
+
+  it("has no a11y violations", async () => {
+    const { container } = render(
+      <Drawer.Root open>
+        <Drawer.Portal>
+          <Drawer.Popup>
+            <Drawer.Title>Title</Drawer.Title>
+          </Drawer.Popup>
+        </Drawer.Portal>
+      </Drawer.Root>,
+    );
+    expect(await axe(container)).toHaveNoViolations();
   });
 });

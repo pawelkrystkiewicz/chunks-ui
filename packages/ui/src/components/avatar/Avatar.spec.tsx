@@ -1,4 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
+import { axe } from "jest-axe";
 import { afterEach, describe, expect, it } from "vitest";
 import { Avatar } from "./Avatar";
 
@@ -63,5 +64,10 @@ describe("Avatar", () => {
   it("renders with no src and no alt (undefined initials)", () => {
     const { container } = render(<Avatar data-testid="av" />);
     expect(container.querySelector("[data-testid='av']")).toBeInTheDocument();
+  });
+
+  it("has no a11y violations", async () => {
+    const { container } = render(<Avatar src="https://example.com/avatar.jpg" alt="John Doe" />);
+    expect(await axe(container)).toHaveNoViolations();
   });
 });

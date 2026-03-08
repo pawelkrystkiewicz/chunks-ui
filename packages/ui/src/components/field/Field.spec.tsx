@@ -1,4 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
+import { axe } from "jest-axe";
 import { afterEach, describe, expect, it } from "vitest";
 import { Field } from "./Field";
 
@@ -53,5 +54,16 @@ describe("Field", () => {
       </Field.Root>,
     );
     expect(screen.getByTestId("desc")).toHaveClass("custom");
+  });
+
+  it("has no a11y violations", async () => {
+    const { container } = render(
+      <Field.Root>
+        <Field.Label>Name</Field.Label>
+        <input aria-label="Name" />
+        <Field.Description>Help text</Field.Description>
+      </Field.Root>,
+    );
+    expect(await axe(container)).toHaveNoViolations();
   });
 });

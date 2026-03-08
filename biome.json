@@ -16,7 +16,21 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true
+      "recommended": true,
+      "a11y": {
+        "noLabelWithoutControl": {
+          "level": "error",
+          "options": {
+            "inputComponents": ["RadioRoot"]
+          }
+        }
+      },
+      "suspicious": {
+        "noExplicitAny": "error"
+      },
+      "nursery": {
+        "useSortedClasses": "error"
+      }
     }
   },
   "javascript": {

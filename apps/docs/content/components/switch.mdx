@@ -1,5 +1,4 @@
-import { Switch, Field } from 'chunks-ui'
-import { Container } from '@/components'
+import { SwitchBasicExample, SwitchWithLabelExample, SwitchDisabledExample } from '@/examples/Switch'
 
 # Switch
 
@@ -19,11 +18,7 @@ import { Switch } from "chunks-ui";
 </Switch.Root>
 ```
 
-<Container>
-  <Switch.Root>
-    <Switch.Thumb />
-  </Switch.Root>
-</Container>
+<SwitchBasicExample />
 
 ## With Label
 
@@ -38,16 +33,7 @@ import { Switch } from "chunks-ui";
 </Field.Root>
 ```
 
-<Container>
-  <Field.Root>
-    <div className="flex items-center gap-2">
-      <Switch.Root>
-        <Switch.Thumb />
-      </Switch.Root>
-      <Field.Label>Enable notifications</Field.Label>
-    </div>
-  </Field.Root>
-</Container>
+<SwitchWithLabelExample />
 
 ## Controlled
 
@@ -71,11 +57,7 @@ function ControlledSwitch() {
 </Switch.Root>
 ```
 
-<Container>
-  <Switch.Root disabled>
-    <Switch.Thumb />
-  </Switch.Root>
-</Container>
+<SwitchDisabledExample />
 
 ## Compound Parts
 

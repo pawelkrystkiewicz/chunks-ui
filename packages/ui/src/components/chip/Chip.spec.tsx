@@ -1,5 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { axe } from "jest-axe";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Chip } from "./Chip";
 
@@ -31,5 +32,10 @@ describe("Chip", () => {
   it("does not show remove button without onRemove", () => {
     render(<Chip>Tag</Chip>);
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  });
+
+  it("has no a11y violations", async () => {
+    const { container } = render(<Chip>Tag</Chip>);
+    expect(await axe(container)).toHaveNoViolations();
   });
 });

@@ -1,5 +1,4 @@
-import { Radio } from 'chunks-ui'
-import { Container } from '@/components'
+import { RadioBasicExample, RadioDisabledExample } from '@/examples/Radio'
 
 # Radio
 
@@ -15,49 +14,13 @@ import { Radio } from "chunks-ui";
 
 ```tsx
 <Radio.Group defaultValue="option-a">
-  <div className="flex items-center gap-2">
-    <Radio.Root value="option-a">
-      <Radio.Indicator />
-    </Radio.Root>
-    <label>Option A</label>
-  </div>
-  <div className="flex items-center gap-2">
-    <Radio.Root value="option-b">
-      <Radio.Indicator />
-    </Radio.Root>
-    <label>Option B</label>
-  </div>
-  <div className="flex items-center gap-2">
-    <Radio.Root value="option-c">
-      <Radio.Indicator />
-    </Radio.Root>
-    <label>Option C</label>
-  </div>
+  <Radio.Item value="option-a">Option A</Radio.Item>
+  <Radio.Item value="option-b">Option B</Radio.Item>
+  <Radio.Item value="option-c">Option C</Radio.Item>
 </Radio.Group>
 ```
 
-<Container>
-  <Radio.Group defaultValue="option-a">
-    <div className="flex items-center gap-2">
-      <Radio.Root value="option-a">
-        <Radio.Indicator />
-      </Radio.Root>
-      <label>Option A</label>
-    </div>
-    <div className="flex items-center gap-2">
-      <Radio.Root value="option-b">
-        <Radio.Indicator />
-      </Radio.Root>
-      <label>Option B</label>
-    </div>
-    <div className="flex items-center gap-2">
-      <Radio.Root value="option-c">
-        <Radio.Indicator />
-      </Radio.Root>
-      <label>Option C</label>
-    </div>
-  </Radio.Group>
-</Container>
+<RadioBasicExample />
 
 ## Controlled
 
@@ -67,18 +30,8 @@ function ControlledRadio() {
 
   return (
     <Radio.Group value={value} onValueChange={setValue}>
-      <div className="flex items-center gap-2">
-        <Radio.Root value="a">
-          <Radio.Indicator />
-        </Radio.Root>
-        <label>Option A</label>
-      </div>
-      <div className="flex items-center gap-2">
-        <Radio.Root value="b">
-          <Radio.Indicator />
-        </Radio.Root>
-        <label>Option B</label>
-      </div>
+      <Radio.Item value="a">Option A</Radio.Item>
+      <Radio.Item value="b">Option B</Radio.Item>
     </Radio.Group>
   );
 }
@@ -90,31 +43,18 @@ Disable individual radio buttons or the entire group:
 
 ```tsx
 <Radio.Group disabled>
-  <div className="flex items-center gap-2">
-    <Radio.Root value="a">
-      <Radio.Indicator />
-    </Radio.Root>
-    <label>Disabled option</label>
-  </div>
+  <Radio.Item value="a">Disabled option</Radio.Item>
 </Radio.Group>
 ```
 
-<Container>
-  <Radio.Group disabled>
-    <div className="flex items-center gap-2">
-      <Radio.Root value="a">
-        <Radio.Indicator />
-      </Radio.Root>
-      <label>Disabled option</label>
-    </div>
-  </Radio.Group>
-</Container>
+<RadioDisabledExample />
 
 ## Compound Parts
 
 | Part | Description |
 |---|---|
 | `Radio.Group` | Wrapper that manages value state. Renders a vertical flex column by default. |
+| `Radio.Item` | Convenience compound: label + radio + indicator in one element. |
 | `Radio.Root` | Individual radio button. Renders a circular control. |
 | `Radio.Indicator` | The inner dot that appears when the radio is selected. |
 

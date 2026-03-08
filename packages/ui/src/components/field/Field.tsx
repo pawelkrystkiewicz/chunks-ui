@@ -13,7 +13,7 @@ export type FieldLabelProps = ComponentProps<typeof BaseField.Label>;
 function FieldLabel({ className, ...props }: FieldLabelProps) {
   return (
     <BaseField.Label
-      className={cn("text-sm font-medium leading-none", "data-[disabled]:opacity-50", className)}
+      className={cn("font-medium text-sm leading-none", "data-[disabled]:opacity-50", className)}
       {...props}
     />
   );
@@ -23,14 +23,14 @@ export type FieldDescriptionProps = ComponentProps<typeof BaseField.Description>
 
 function FieldDescription({ className, ...props }: FieldDescriptionProps) {
   return (
-    <BaseField.Description className={cn("text-xs text-muted-foreground", className)} {...props} />
+    <BaseField.Description className={cn("text-muted-foreground text-xs", className)} {...props} />
   );
 }
 
 export type FieldErrorProps = ComponentProps<typeof BaseField.Error>;
 
 function FieldError({ className, ...props }: FieldErrorProps) {
-  return <BaseField.Error className={cn("text-xs text-destructive", className)} {...props} />;
+  return <BaseField.Error className={cn("text-destructive text-xs", className)} {...props} />;
 }
 
 export const Field = {

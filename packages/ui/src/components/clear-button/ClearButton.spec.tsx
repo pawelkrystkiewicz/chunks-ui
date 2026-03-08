@@ -1,5 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { axe } from "jest-axe";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ClearButton } from "./ClearButton";
 
@@ -31,5 +32,10 @@ describe("ClearButton", () => {
   it("has type=button", () => {
     render(<ClearButton />);
     expect(screen.getByRole("button")).toHaveAttribute("type", "button");
+  });
+
+  it("has no a11y violations", async () => {
+    const { container } = render(<ClearButton label="Clear" onClick={() => {}} />);
+    expect(await axe(container)).toHaveNoViolations();
   });
 });

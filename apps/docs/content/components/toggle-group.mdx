@@ -1,0 +1,82 @@
+import { ToggleGroupBasicExample, ToggleGroupMultipleExample } from '@/examples/ToggleGroup'
+
+# Toggle Group
+
+A group of toggle buttons where one or multiple items can be pressed at a time. Built on Base UI's `Toggle` and `ToggleGroup` primitives. In single-select mode, a sliding indicator animates between the active item using Motion (with CSS transition fallback).
+
+## Import
+
+```tsx
+import { ToggleGroup } from "chunks-ui";
+```
+
+## Basic Usage
+
+By default, the toggle group operates in single-select mode. Only one item can be pressed at a time, and a sliding indicator highlights the active selection:
+
+```tsx
+<ToggleGroup.Root defaultValue={["bold"]}>
+  <ToggleGroup.Item value="bold">Bold</ToggleGroup.Item>
+  <ToggleGroup.Item value="italic">Italic</ToggleGroup.Item>
+  <ToggleGroup.Item value="underline">Underline</ToggleGroup.Item>
+</ToggleGroup.Root>
+```
+
+<ToggleGroupBasicExample />
+
+## Multiple Selection
+
+Set `multiple` to allow pressing more than one item at a time. Each pressed item gets its own background highlight instead of a shared sliding indicator:
+
+```tsx
+<ToggleGroup.Root multiple defaultValue={["bold", "italic"]}>
+  <ToggleGroup.Item value="bold">Bold</ToggleGroup.Item>
+  <ToggleGroup.Item value="italic">Italic</ToggleGroup.Item>
+  <ToggleGroup.Item value="underline">Underline</ToggleGroup.Item>
+</ToggleGroup.Root>
+```
+
+<ToggleGroupMultipleExample />
+
+## Controlled
+
+```tsx
+function ControlledToggleGroup() {
+  const [value, setValue] = useState(["bold"]);
+
+  return (
+    <ToggleGroup.Root value={value} onValueChange={setValue}>
+      <ToggleGroup.Item value="bold">Bold</ToggleGroup.Item>
+      <ToggleGroup.Item value="italic">Italic</ToggleGroup.Item>
+      <ToggleGroup.Item value="underline">Underline</ToggleGroup.Item>
+    </ToggleGroup.Root>
+  );
+}
+```
+
+## Compound Parts
+
+| Part | Description |
+|---|---|
+| `ToggleGroup.Root` | Container that manages selection state. Renders a pill-shaped muted background with inline-flex layout. In single-select mode, renders a sliding indicator behind the active item. |
+| `ToggleGroup.Item` | Individual toggle button. Shows muted text by default, foreground text when pressed. In multiple mode, each pressed item gets its own background highlight. |
+
+## ToggleGroup.Root Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `value` | `unknown[]` | -- | Controlled pressed values |
+| `defaultValue` | `unknown[]` | `[]` | Initial pressed values (uncontrolled) |
+| `onValueChange` | `(value: unknown[]) => void` | -- | Called when the pressed state changes |
+| `multiple` | `boolean` | `false` | Allow multiple items to be pressed at once |
+| `orientation` | `"horizontal" \| "vertical"` | `"horizontal"` | Layout direction |
+| `disabled` | `boolean` | `false` | Disable all toggle items |
+| `className` | `string` | -- | Additional CSS classes |
+
+## ToggleGroup.Item Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `value` | `unknown` | **required** | The value this item represents |
+| `disabled` | `boolean` | `false` | Disable this toggle item |
+| `className` | `string` | -- | Additional CSS classes |

@@ -1,9 +1,8 @@
 export type {
   PopoverArrowProps,
   PopoverCloseProps,
+  PopoverContentProps,
   PopoverDescriptionProps,
-  PopoverPopupProps,
-  PopoverPositionerProps,
   PopoverRootProps,
   PopoverTitleProps,
   PopoverTriggerProps,

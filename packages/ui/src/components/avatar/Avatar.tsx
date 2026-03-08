@@ -10,12 +10,6 @@ export type AvatarProps = ComponentProps<"span"> & {
   shape?: AvatarStyles["shape"];
 };
 
-const shapeClasses = {
-  circle: "rounded-full",
-  rounded: "rounded-md",
-  square: "rounded-none",
-};
-
 export function Avatar({
   src,
   alt,

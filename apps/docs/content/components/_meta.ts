@@ -5,6 +5,7 @@ export default {
   checkbox: { title: "Checkbox" },
   chip: { title: "Chip" },
   "clear-button": { title: "ClearButton" },
+  combobox: { title: "Combobox" },
   dialog: { title: "Dialog" },
   drawer: { title: "Drawer" },
   field: { title: "Field" },
@@ -17,5 +18,6 @@ export default {
   switch: { title: "Switch" },
   tabs: { title: "Tabs" },
   textarea: { title: "Textarea" },
+  "toggle-group": { title: "ToggleGroup" },
   tooltip: { title: "Tooltip" },
 };
