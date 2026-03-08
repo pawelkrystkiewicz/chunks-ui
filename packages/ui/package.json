@@ -75,7 +75,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/pawelkrystkiewicz/chunks-ui",
+    "url": "git+https://github.com/pawelkrystkiewicz/chunks-ui.git",
     "directory": "packages/ui"
   },
   "bugs": {
