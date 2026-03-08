@@ -35,8 +35,8 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: "bunx vite --config visual-tests/vite.config.ts",
-    url: "http://localhost:5173/src/Main.tsx",
+    command: "bunx vite visual-tests --config visual-tests/vite.config.ts",
+    url: "http://localhost:5173/",
     timeout: 120_000,
     reuseExistingServer: !process.env.CI,
   },
