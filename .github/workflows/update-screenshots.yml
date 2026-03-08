@@ -49,7 +49,7 @@ jobs:
         run: bun x playwright install --with-deps chromium
 
       - name: Update Visual Regression Screenshots
-        run: cd packages/ui && bun run test:visual -- --update
+        run: cd packages/ui && bun run test:visual:update
 
       # check what changed
       - name: Check for changes

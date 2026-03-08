@@ -195,9 +195,7 @@ function TabsContents({ className, children, transition, ...props }: TabsContent
   useEffect(() => {
     const pane = itemRefs.current[safeIndex];
     if (!pane) return;
-
     setHeight(measure(safeIndex));
-
     const ro = new ResizeObserver(() => {
       requestAnimationFrame(() => setHeight(measure(safeIndex)));
     });

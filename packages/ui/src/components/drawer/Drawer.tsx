@@ -5,7 +5,7 @@ import type { VariantProps } from "class-variance-authority";
 import type { ComponentProps } from "react";
 import { cn } from "../../lib/cn";
 import { springs } from "../../lib/motion";
-import { createPopupRenderer } from "../../lib/popup-motion";
+import { createPopupRenderer } from "../../lib/PopupMotion";
 import { useMotion, useReducedMotion } from "../../lib/use-motion";
 import { drawerPopupVariants } from "./Drawer.Variants";
 
@@ -35,7 +35,6 @@ function DrawerPortal({ keepMounted, ...props }: DrawerPortalProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
   const useSpring = !!m && !reduced;
-
   return <BaseDialog.Portal keepMounted={keepMounted ?? useSpring} {...props} />;
 }
 
@@ -43,7 +42,6 @@ function DrawerBackdrop({ className, ...props }: DrawerBackdropProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
   const useSpring = !!m && !reduced;
-
   const render = useSpring
     ? createPopupRenderer({
         m,
@@ -72,10 +70,8 @@ function DrawerPopup({ side = "right", className, ...props }: DrawerPopupProps) 
   const m = useMotion();
   const reduced = useReducedMotion();
   const useSpring = !!m && !reduced;
-
   const resolvedSide = side ?? "right";
   const dir = slideDirections[resolvedSide];
-
   const render = useSpring
     ? createPopupRenderer({
         m,

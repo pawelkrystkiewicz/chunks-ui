@@ -65,7 +65,7 @@ chunks-ui/
           cn.ts             # clsx + tailwind-merge
           motion.ts         # shared spring presets
           use-motion.ts     # useMotion() + useReducedMotion() hooks
-          popup-motion.tsx  # createPopupRenderer() for Base UI popups
+          PopupMotion.tsx   # createPopupRenderer() for Base UI popups
         theme.css           # CSS variables
         index.ts            # barrel export
       tsup.config.ts

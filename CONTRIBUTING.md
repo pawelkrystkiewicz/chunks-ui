@@ -59,7 +59,7 @@ button/
 
 - Import spring presets from `src/lib/motion.ts` — no magic numbers in components
 - Use `useMotion()` hook from `src/lib/use-motion.ts` for lazy Motion detection
-- Use `createPopupRenderer()` from `src/lib/popup-motion.tsx` for popup animations
+- Use `createPopupRenderer()` from `src/lib/PopupMotion.tsx` for popup animations
 - Components must work without Motion installed (CSS transition fallback)
 - Respect `prefers-reduced-motion` via `useReducedMotion()` hook
 

@@ -30,7 +30,6 @@ function SwitchThumb({ className, ...props }: SwitchThumbProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
   const useSpring = !!m && !reduced;
-
   if (useSpring) {
     return (
       <BaseSwitch.Thumb

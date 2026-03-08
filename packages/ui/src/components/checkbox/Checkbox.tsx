@@ -31,64 +31,63 @@ function CheckboxIndicator({ className, ...props }: CheckboxIndicatorProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
   const useSpring = !!m && !reduced;
-
-  if (!useSpring) {
+  if (useSpring) {
     return (
       <BaseCheckbox.Indicator
-        className={cn("flex items-center justify-center text-current", className)}
+        keepMounted
+        render={(renderProps, state) => (
+          <m.motion.span
+            {...(renderProps as Record<string, unknown>)}
+            className={cn("flex items-center justify-center text-current", className)}
+            initial={false}
+            animate={{
+              opacity: state.checked ? 1 : 0,
+              scale: state.checked ? 1 : 0.5,
+            }}
+            transition={springs.micro}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="size-3"
+              aria-hidden="true"
+            >
+              <m.motion.path
+                d="M20 6 9 17l-5-5"
+                initial={false}
+                animate={{ pathLength: state.checked ? 1 : 0 }}
+                transition={springs.micro}
+              />
+            </svg>
+          </m.motion.span>
+        )}
         {...props}
-      >
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="size-3"
-          aria-hidden="true"
-        >
-          <path d="M20 6 9 17l-5-5" />
-        </svg>
-      </BaseCheckbox.Indicator>
+      />
     );
   }
 
   return (
     <BaseCheckbox.Indicator
-      keepMounted
-      render={(renderProps, state) => (
-        <m.motion.span
-          {...(renderProps as Record<string, unknown>)}
-          className={cn("flex items-center justify-center text-current", className)}
-          initial={false}
-          animate={{
-            opacity: state.checked ? 1 : 0,
-            scale: state.checked ? 1 : 0.5,
-          }}
-          transition={springs.micro}
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="size-3"
-            aria-hidden="true"
-          >
-            <m.motion.path
-              d="M20 6 9 17l-5-5"
-              initial={false}
-              animate={{ pathLength: state.checked ? 1 : 0 }}
-              transition={springs.micro}
-            />
-          </svg>
-        </m.motion.span>
-      )}
+      className={cn("flex items-center justify-center text-current", className)}
       {...props}
-    />
+    >
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="size-3"
+        aria-hidden="true"
+      >
+        <path d="M20 6 9 17l-5-5" />
+      </svg>
+    </BaseCheckbox.Indicator>
   );
 }
 

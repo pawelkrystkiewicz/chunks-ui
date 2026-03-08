@@ -4,7 +4,7 @@ import { Dialog as BaseDialog } from "@base-ui/react/dialog";
 import type { ComponentProps } from "react";
 import { cn } from "../../lib/cn";
 import { springs } from "../../lib/motion";
-import { createPopupRenderer } from "../../lib/popup-motion";
+import { createPopupRenderer } from "../../lib/PopupMotion";
 import { useMotion, useReducedMotion } from "../../lib/use-motion";
 
 export type DialogRootProps = ComponentProps<typeof BaseDialog.Root>;
@@ -20,7 +20,6 @@ function DialogPortal({ keepMounted, ...props }: DialogPortalProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
   const useSpring = !!m && !reduced;
-
   return <BaseDialog.Portal keepMounted={keepMounted ?? useSpring} {...props} />;
 }
 
@@ -28,7 +27,6 @@ function DialogBackdrop({ className, ...props }: DialogBackdropProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
   const useSpring = !!m && !reduced;
-
   const render = useSpring
     ? createPopupRenderer({
         m,
@@ -57,7 +55,6 @@ function DialogPopup({ className, ...props }: DialogPopupProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
   const useSpring = !!m && !reduced;
-
   const render = useSpring
     ? createPopupRenderer({
         m,

@@ -21,7 +21,7 @@ Personal React 19+ component library. Single npm package (`chunks-ui`) replacing
 - `packages/ui/src/lib/cn.ts` — `clsx` + `tailwind-merge` helper
 - `packages/ui/src/lib/motion.ts` — shared spring presets
 - `packages/ui/src/lib/use-motion.ts` — `useMotion()` (lazy Motion loader) + `useReducedMotion()` hooks
-- `packages/ui/src/lib/popup-motion.tsx` — `createPopupRenderer()` for Base UI popup animations
+- `packages/ui/src/lib/PopupMotion.tsx` — `createPopupRenderer()` for Base UI popup animations
 - `packages/ui/src/theme.css` — CSS variables (OKLCH, shadcn convention)
 - `packages/ui/src/index.ts` — barrel export
 - `apps/docs/` — Next.js 16 + Nextra 4 docs site
