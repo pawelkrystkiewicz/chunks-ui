@@ -4,7 +4,9 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "generate:llm": "bun run scripts/generate-llm-txt.ts",
     "dev": "next dev",
+    "prebuild": "bun run generate:llm",
     "build": "next build",
     "start": "next start",
     "lint": "biome check .",
