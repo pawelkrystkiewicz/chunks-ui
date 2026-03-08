@@ -67,9 +67,8 @@ export { Loader, type LoaderProps, loaderVariants } from "./components/loader";
 export type {
   PopoverArrowProps,
   PopoverCloseProps,
+  PopoverContentProps,
   PopoverDescriptionProps,
-  PopoverPopupProps,
-  PopoverPositionerProps,
   PopoverRootProps,
   PopoverTitleProps,
   PopoverTriggerProps,

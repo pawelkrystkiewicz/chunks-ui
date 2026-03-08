@@ -4,30 +4,48 @@ import { cn } from "../../lib/cn";
 
 export type PopoverRootProps = ComponentProps<typeof BasePopover.Root>;
 export type PopoverTriggerProps = ComponentProps<typeof BasePopover.Trigger>;
-export type PopoverPositionerProps = ComponentProps<typeof BasePopover.Positioner>;
-export type PopoverPopupProps = ComponentProps<typeof BasePopover.Popup>;
+export type PopoverCloseProps = ComponentProps<typeof BasePopover.Close>;
 export type PopoverArrowProps = ComponentProps<typeof BasePopover.Arrow>;
 export type PopoverTitleProps = ComponentProps<typeof BasePopover.Title>;
 export type PopoverDescriptionProps = ComponentProps<typeof BasePopover.Description>;
-export type PopoverCloseProps = ComponentProps<typeof BasePopover.Close>;
 
-function PopoverPopup({ className, ...props }: PopoverPopupProps) {
+export type PopoverContentProps = ComponentProps<typeof BasePopover.Popup> & {
+  /** @default 8 */
+  sideOffset?: ComponentProps<typeof BasePopover.Positioner>["sideOffset"];
+  side?: ComponentProps<typeof BasePopover.Positioner>["side"];
+  align?: ComponentProps<typeof BasePopover.Positioner>["align"];
+  alignOffset?: ComponentProps<typeof BasePopover.Positioner>["alignOffset"];
+};
+
+function PopoverContent({
+  className,
+  sideOffset = 8,
+  side,
+  align,
+  alignOffset,
+  ...props
+}: PopoverContentProps) {
   return (
-    <BasePopover.Popup
-      className={cn(
-        "z-dropdowns rounded border border-border bg-popover p-4 text-popover-foreground shadow-md",
-        "data-[starting-style]:scale-95 data-[starting-style]:opacity-0",
-        "data-[ending-style]:scale-95 data-[ending-style]:opacity-0",
-        "micro-interactions",
-        className,
-      )}
-      {...props}
-    />
+    <BasePopover.Portal>
+      <BasePopover.Positioner
+        sideOffset={sideOffset}
+        side={side}
+        align={align}
+        alignOffset={alignOffset}
+      >
+        <BasePopover.Popup
+          className={cn(
+            "z-dropdowns rounded border border-border bg-popover p-4 text-popover-foreground shadow-md",
+            "data-[starting-style]:scale-95 data-[starting-style]:opacity-0",
+            "data-[ending-style]:scale-95 data-[ending-style]:opacity-0",
+            "micro-interactions",
+            className,
+          )}
+          {...props}
+        />
+      </BasePopover.Positioner>
+    </BasePopover.Portal>
   );
-}
-
-function PopoverPositioner({ className, ...props }: PopoverPositionerProps) {
-  return <BasePopover.Positioner sideOffset={8} className={cn(className)} {...props} />;
 }
 
 function PopoverArrow({ className, ...props }: PopoverArrowProps) {
@@ -50,9 +68,7 @@ function PopoverDescription({ className, ...props }: PopoverDescriptionProps) {
 export const Popover = {
   Root: BasePopover.Root,
   Trigger: BasePopover.Trigger,
-  Portal: BasePopover.Portal,
-  Positioner: PopoverPositioner,
-  Popup: PopoverPopup,
+  Content: PopoverContent,
   Arrow: PopoverArrow,
   Title: PopoverTitle,
   Description: PopoverDescription,
