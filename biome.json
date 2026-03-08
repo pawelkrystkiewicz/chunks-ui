@@ -33,6 +33,37 @@
       }
     }
   },
+  "overrides": [
+    {
+      "includes": [
+        "packages/ui/**/*.tsx",
+        "packages/ui/**/*.jsx",
+        "packages/ui/visual-tests/**/*.visual.ts"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "useFilenamingConvention": {
+              "level": "error",
+              "options": {
+                "filenameCases": ["PascalCase"]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["**/visual-tests/src/main.tsx"],
+      "linter": {
+        "rules": {
+          "style": {
+            "useFilenamingConvention": "off"
+          }
+        }
+      }
+    }
+  ],
   "javascript": {
     "formatter": {
       "quoteStyle": "double"

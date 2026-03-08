@@ -4,7 +4,7 @@ import { Popover as BasePopover } from "@base-ui/react/popover";
 import type { ComponentProps } from "react";
 import { cn } from "../../lib/cn";
 import { springs } from "../../lib/motion";
-import { createPopupRenderer } from "../../lib/popup-motion";
+import { createPopupRenderer } from "../../lib/PopupMotion";
 import { useMotion, useReducedMotion } from "../../lib/use-motion";
 
 export type PopoverRootProps = ComponentProps<typeof BasePopover.Root>;

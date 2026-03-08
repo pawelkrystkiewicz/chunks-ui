@@ -5,7 +5,7 @@ import type React from "react";
 import type { ComponentProps } from "react";
 import { cn } from "../../lib/cn";
 import { springs } from "../../lib/motion";
-import { createPopupRenderer } from "../../lib/popup-motion";
+import { createPopupRenderer } from "../../lib/PopupMotion";
 import { useMotion, useReducedMotion } from "../../lib/use-motion";
 
 export type ComboboxRootProps = ComponentProps<typeof BaseCombobox.Root>;
