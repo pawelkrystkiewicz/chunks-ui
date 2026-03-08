@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { axe } from "jest-axe";
 import { afterEach, describe, expect, it } from "vitest";
 import { Radio } from "./Radio";
@@ -73,5 +73,21 @@ describe("Radio", () => {
       </Radio.Group>,
     );
     expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it("keeps Indicator mounted when unchecked in motion mode", async () => {
+    // No defaultValue → radio is unchecked.
+    // CSS fallback: Indicator unmounts when unchecked (no keepMounted).
+    // Motion mode: keepMounted keeps it in the DOM.
+    render(
+      <Radio.Group>
+        <Radio.Root value="a">
+          <Radio.Indicator data-testid="ind" />
+        </Radio.Root>
+      </Radio.Group>,
+    );
+    await waitFor(() => {
+      expect(screen.getByTestId("ind")).toBeInTheDocument();
+    });
   });
 });
