@@ -1,4 +1,5 @@
 import { cva } from "class-variance-authority";
+import type { ElementColor, ElementVariant } from "../../types";
 
 export const buttonVariants = cva(
   [
@@ -16,14 +17,14 @@ export const buttonVariants = cva(
         contained: ["active:scale-95"],
         outlined: ["border bg-transparent", "active:scale-95"],
         text: ["bg-transparent", "active:scale-95"],
-      },
+      } satisfies Record<ElementVariant, string | string[]>,
       color: {
         primary: "",
         success: "",
         warning: "",
         destructive: "",
         secondary: "",
-      },
+      } satisfies Record<ElementColor, string>,
     },
     compoundVariants: [
       // Contained

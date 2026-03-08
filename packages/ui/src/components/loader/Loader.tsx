@@ -1,17 +1,15 @@
-import type { VariantProps } from "class-variance-authority";
 import type { ComponentProps } from "react";
 import { cn } from "../../lib/cn";
-import { loaderVariants } from "./Loader.Variants";
 
-export type LoaderProps = ComponentProps<"svg"> & VariantProps<typeof loaderVariants>;
+export type LoaderProps = ComponentProps<"svg">;
 
-export function Loader({ color, className, ...props }: LoaderProps) {
+export function Loader({ className, ...props }: LoaderProps) {
   return (
     <svg
       viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className={cn(loaderVariants({ color }), className)}
+      className={cn("size-ui-icon-height animate-spin text-current", className)}
       aria-hidden="true"
       {...props}
     >

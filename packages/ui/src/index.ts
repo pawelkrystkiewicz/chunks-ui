@@ -63,7 +63,7 @@ export type {
 } from "./components/field";
 export { Field } from "./components/field";
 export { Input, type InputProps, inputVariants } from "./components/input";
-export { Loader, type LoaderProps, loaderVariants } from "./components/loader";
+export { Loader, type LoaderProps } from "./components/loader";
 export type {
   PopoverArrowProps,
   PopoverCloseProps,

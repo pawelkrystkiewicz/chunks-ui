@@ -1,4 +1,5 @@
 import { cva } from "class-variance-authority";
+import type { ElementColor } from "../../types";
 
 export const chipVariants = cva(
   [
@@ -14,7 +15,7 @@ export const chipVariants = cva(
         success: "border-success/30 bg-success/10 text-success",
         warning: "border-warning/30 bg-warning/10 text-warning",
         secondary: "border-border bg-secondary text-secondary-foreground",
-      },
+      } satisfies Record<ElementColor, string>,
     },
     defaultVariants: {
       color: "secondary",

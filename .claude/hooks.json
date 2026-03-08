@@ -5,7 +5,17 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo 'Success'"
+            "command": "echo 'Constraints: bun (not npm/yarn/pnpm). Variants in *.Variants.ts files. Base UI render prop (not asChild). Commits: type(scope): message. No git push — human reviews first.'"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '=== CLAUDE.md (re-injected before compaction) ===' && cat CLAUDE.md"
           }
         ]
       }
@@ -53,6 +63,60 @@
           {
             "type": "block",
             "message": "Agents must not modify CI/CD workflows. A human must make these changes."
+          }
+        ]
+      },
+      {
+        "matcher": "Write(CLAUDE.md)",
+        "hooks": [
+          {
+            "type": "block",
+            "message": "CLAUDE.md is a human-authored spec. Agents must not overwrite it."
+          }
+        ]
+      },
+      {
+        "matcher": "Edit(CLAUDE.md)",
+        "hooks": [
+          {
+            "type": "block",
+            "message": "CLAUDE.md is a human-authored spec. Agents must not modify it."
+          }
+        ]
+      },
+      {
+        "matcher": "Write(PRD.md)",
+        "hooks": [
+          {
+            "type": "block",
+            "message": "PRD.md is a human-authored spec. Agents must not overwrite it."
+          }
+        ]
+      },
+      {
+        "matcher": "Edit(PRD.md)",
+        "hooks": [
+          {
+            "type": "block",
+            "message": "PRD.md is a human-authored spec. Agents must not modify it."
+          }
+        ]
+      },
+      {
+        "matcher": "Write(.claude/hooks.json)",
+        "hooks": [
+          {
+            "type": "block",
+            "message": "Agents must not modify safety hooks. A human must manage hooks.json."
+          }
+        ]
+      },
+      {
+        "matcher": "Edit(.claude/hooks.json)",
+        "hooks": [
+          {
+            "type": "block",
+            "message": "Agents must not modify safety hooks. A human must manage hooks.json."
           }
         ]
       }
