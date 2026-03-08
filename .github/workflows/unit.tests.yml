@@ -1,7 +1,5 @@
 name: Unit Tests
 on:
-  push:
-    branches: [master]
   pull_request:
 permissions:
   contents: read
@@ -40,22 +38,3 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           working-directory: packages/ui
 
-      - name: Notify Slack on Success
-        if: success() && github.ref == 'refs/heads/master'
-        uses: slackapi/slack-github-action@v2.1.1
-        with:
-          method: chat.postMessage
-          token: ${{ secrets.SLACK_BOT_TOKEN }}
-          payload: |
-            channel: "${{ secrets.SLACK_CHANNEL_ID }}"
-            text: "Unit Tests passed on master branch with coverage report\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>"
-
-      - name: Notify Slack on Failure
-        if: failure() && github.ref == 'refs/heads/master'
-        uses: slackapi/slack-github-action@v2.1.1
-        with:
-          method: chat.postMessage
-          token: ${{ secrets.SLACK_BOT_TOKEN }}
-          payload: |
-            channel: "${{ secrets.SLACK_CHANNEL_ID }}"
-            text: "Unit Tests failed on master branch\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>"
