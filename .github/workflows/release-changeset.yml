@@ -52,31 +52,28 @@ jobs:
         if: steps.changesets.outputs.published == 'true'
         uses: slackapi/slack-github-action@v2.1.1
         with:
-          channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
-          slack-message: |
-            Published ${{ fromJSON(steps.changesets.outputs.publishedPackages)[0].name }}@${{ fromJSON(steps.changesets.outputs.publishedPackages)[0].version }} to npm
-            <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload: |
+            channel: "${{ secrets.SLACK_CHANNEL_ID }}"
+            text: "Published ${{ fromJSON(steps.changesets.outputs.publishedPackages)[0].name }}@${{ fromJSON(steps.changesets.outputs.publishedPackages)[0].version }} to npm\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>"
 
       - name: Notify Slack on Release PR Created
         if: steps.changesets.outputs.hasChangesets == 'true'
         uses: slackapi/slack-github-action@v2.1.1
         with:
-          channel-id: '${{ secrets.SLACK_CHANNEL_ID }}'
-          slack-message: |
-            Release PR created with changelog updates
-            <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload: |
+            channel: "${{ secrets.SLACK_CHANNEL_ID }}"
+            text: "Release PR created with changelog updates\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>"
 
       - name: Notify Slack on Release Failure
         if: failure()
         uses: slackapi/slack-github-action@v2.1.1
         with:
-          channel-id: '${{ secrets.SLACK_CHANNEL_ID }}'
-          slack-message: |
-            Release workflow failed
-            <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload: |
+            channel: "${{ secrets.SLACK_CHANNEL_ID }}"
+            text: "Release workflow failed\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>"
