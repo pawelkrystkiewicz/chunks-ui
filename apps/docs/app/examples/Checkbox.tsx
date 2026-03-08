@@ -31,7 +31,7 @@ export function CheckboxWithLabelExample() {
 export function CheckboxIndeterminateExample() {
   return (
     <Container>
-      <Checkbox.Root checked="indeterminate">
+      <Checkbox.Root indeterminate>
         <Checkbox.Indicator />
       </Checkbox.Root>
     </Container>

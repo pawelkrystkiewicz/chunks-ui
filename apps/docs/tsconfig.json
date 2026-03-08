@@ -1,7 +1,7 @@
 {
   "extends": "@chunks-ui/typescript-config/react-app.json",
   "include": ["."],
-  "exclude": [".next", "node_modules"],
+  "exclude": [".next", "node_modules", "scripts"],
   "compilerOptions": {
     "noUncheckedIndexedAccess": true,
     "paths": {
