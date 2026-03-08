@@ -35,11 +35,7 @@
   },
   "overrides": [
     {
-      "includes": [
-        "packages/ui/**/*.tsx",
-        "packages/ui/**/*.jsx",
-        "packages/ui/visual-tests/**/*.visual.ts"
-      ],
+      "includes": ["packages/ui/**/*.tsx", "packages/ui/**/*.jsx"],
       "linter": {
         "rules": {
           "style": {
@@ -49,16 +45,6 @@
                 "filenameCases": ["PascalCase"]
               }
             }
-          }
-        }
-      }
-    },
-    {
-      "includes": ["**/visual-tests/src/main.tsx"],
-      "linter": {
-        "rules": {
-          "style": {
-            "useFilenamingConvention": "off"
           }
         }
       }

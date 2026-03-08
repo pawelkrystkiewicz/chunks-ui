@@ -46,3 +46,10 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 # playwright
 test-results
 playwright-report
+
+# vitest browser attachments (temp files, not baselines)
+.vitest-attachments
+
+# visual regression screenshots — only linux CI baselines are committed
+**/__screenshots__/**/*.png
+!**/__screenshots__/**/*-linux.png

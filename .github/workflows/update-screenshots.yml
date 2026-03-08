@@ -46,7 +46,7 @@ jobs:
         run: bun install
 
       - name: Install Playwright Browsers
-        run: bun x playwright install --with-deps chromium
+        run: bunx playwright install --with-deps chromium
 
       - name: Update Visual Regression Screenshots
         run: cd packages/ui && bun run test:visual:update
