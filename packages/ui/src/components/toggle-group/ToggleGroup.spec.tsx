@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
-import { afterEach, beforeAll, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { ToggleGroup } from "./ToggleGroup";
 
 beforeAll(() => {
@@ -90,6 +90,54 @@ describe("ToggleGroup", () => {
     for (const btn of screen.getAllByRole("button")) {
       expect(btn).toBeDisabled();
     }
+  });
+
+  it("calls onValueChange when selection changes", async () => {
+    const user = userEvent.setup();
+    const onValueChange = vi.fn();
+    render(
+      <ToggleGroup.Root onValueChange={onValueChange}>
+        <ToggleGroup.Item value="a">A</ToggleGroup.Item>
+      </ToggleGroup.Root>,
+    );
+    await user.click(screen.getByText("A"));
+    expect(onValueChange).toHaveBeenCalled();
+  });
+
+  it("syncs to externally controlled value", () => {
+    const { rerender } = render(
+      <ToggleGroup.Root value={["a"]}>
+        <ToggleGroup.Item value="a">A</ToggleGroup.Item>
+        <ToggleGroup.Item value="b">B</ToggleGroup.Item>
+      </ToggleGroup.Root>,
+    );
+    rerender(
+      <ToggleGroup.Root value={["b"]}>
+        <ToggleGroup.Item value="a">A</ToggleGroup.Item>
+        <ToggleGroup.Item value="b">B</ToggleGroup.Item>
+      </ToggleGroup.Root>,
+    );
+    expect(screen.getByText("B")).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("renders CSS indicator after single-select", async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <ToggleGroup.Root>
+        <ToggleGroup.Item value="a">A</ToggleGroup.Item>
+      </ToggleGroup.Root>,
+    );
+    await user.click(screen.getByText("A"));
+    expect(container.querySelector("span.absolute.z-0")).toBeInTheDocument();
+  });
+
+  it("deregisters Item on unmount", () => {
+    const { rerender } = render(
+      <ToggleGroup.Root>
+        <ToggleGroup.Item value="a">A</ToggleGroup.Item>
+      </ToggleGroup.Root>,
+    );
+    expect(() => rerender(<ToggleGroup.Root />)).not.toThrow();
   });
 
   it("has no a11y violations", async () => {

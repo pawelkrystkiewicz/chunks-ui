@@ -1,7 +1,16 @@
 import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { Tabs } from "./Tabs";
+
+beforeAll(() => {
+  globalThis.ResizeObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+});
 
 afterEach(cleanup);
 
@@ -76,6 +85,104 @@ describe("Tabs", () => {
       </Tabs.Root>,
     );
     expect(screen.getByTestId("ind")).toHaveClass("custom");
+  });
+
+  it("renders Contents with panels (CSS fallback)", () => {
+    render(
+      <Tabs.Root defaultValue="a">
+        <Tabs.List>
+          <Tabs.Tab value="a">A</Tabs.Tab>
+          <Tabs.Tab value="b">B</Tabs.Tab>
+        </Tabs.List>
+        <Tabs.Contents>
+          <Tabs.Content value="a">Panel A</Tabs.Content>
+          <Tabs.Content value="b" data-testid="panel-b">
+            Panel B
+          </Tabs.Content>
+        </Tabs.Contents>
+      </Tabs.Root>,
+    );
+    expect(screen.getByText("Panel A")).toBeInTheDocument();
+    expect(screen.getByTestId("panel-b").parentElement).toHaveStyle("display: none");
+  });
+
+  it("merges custom className on Contents", () => {
+    render(
+      <Tabs.Root defaultValue="a">
+        <Tabs.Contents className="custom" data-testid="contents">
+          <Tabs.Content value="a">Panel A</Tabs.Content>
+        </Tabs.Contents>
+      </Tabs.Root>,
+    );
+    expect(screen.getByTestId("contents")).toHaveClass("custom");
+  });
+
+  it("merges custom className on Content", () => {
+    render(
+      <Tabs.Root defaultValue="a">
+        <Tabs.Contents>
+          <Tabs.Content value="a" className="custom" data-testid="content">
+            Panel A
+          </Tabs.Content>
+        </Tabs.Contents>
+      </Tabs.Root>,
+    );
+    expect(screen.getByTestId("content")).toHaveClass("custom");
+  });
+
+  it("renders Contents with custom transition prop", () => {
+    render(
+      <Tabs.Root defaultValue="a">
+        <Tabs.Contents transition={{ duration: 0.1 }}>
+          <Tabs.Content value="a">Panel A</Tabs.Content>
+        </Tabs.Contents>
+      </Tabs.Root>,
+    );
+    expect(screen.getByText("Panel A")).toBeInTheDocument();
+  });
+
+  it("calls onValueChange when tab is clicked", async () => {
+    const user = userEvent.setup();
+    const onValueChange = vi.fn();
+    render(
+      <Tabs.Root defaultValue="a" onValueChange={onValueChange}>
+        <Tabs.List>
+          <Tabs.Tab value="a">A</Tabs.Tab>
+          <Tabs.Tab value="b">B</Tabs.Tab>
+        </Tabs.List>
+      </Tabs.Root>,
+    );
+    await user.click(screen.getByText("B"));
+    expect(onValueChange).toHaveBeenCalled();
+  });
+
+  it("syncs Contents to controlled value", () => {
+    const { rerender } = render(
+      <Tabs.Root value="a">
+        <Tabs.Contents>
+          <Tabs.Content value="a" data-testid="panel-a">
+            Panel A
+          </Tabs.Content>
+          <Tabs.Content value="b" data-testid="panel-b">
+            Panel B
+          </Tabs.Content>
+        </Tabs.Contents>
+      </Tabs.Root>,
+    );
+    expect(screen.getByTestId("panel-b").parentElement).toHaveStyle("display: none");
+    rerender(
+      <Tabs.Root value="b">
+        <Tabs.Contents>
+          <Tabs.Content value="a" data-testid="panel-a">
+            Panel A
+          </Tabs.Content>
+          <Tabs.Content value="b" data-testid="panel-b">
+            Panel B
+          </Tabs.Content>
+        </Tabs.Contents>
+      </Tabs.Root>,
+    );
+    expect(screen.getByTestId("panel-a").parentElement).toHaveStyle("display: none");
   });
 
   it("has no a11y violations", async () => {

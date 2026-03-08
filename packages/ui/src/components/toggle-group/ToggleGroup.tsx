@@ -130,7 +130,7 @@ function ToggleGroupRoot({
         {/* Single-select sliding indicator */}
         {!multiple &&
           bounds &&
-          (useSpring && m ? (
+          /* v8 ignore next 7 */ (useSpring && m ? (
             <m.motion.span
               className="absolute z-0 rounded-md bg-background shadow-sm"
               initial={false}

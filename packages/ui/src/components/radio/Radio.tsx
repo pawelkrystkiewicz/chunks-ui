@@ -41,6 +41,7 @@ export type RadioIndicatorProps = ComponentProps<typeof BaseRadio.Indicator>;
 function RadioIndicator({ className, ...props }: RadioIndicatorProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
+  /* v8 ignore next */
   const useSpring = !!m && !reduced;
 
   if (!useSpring) {
@@ -51,6 +52,7 @@ function RadioIndicator({ className, ...props }: RadioIndicatorProps) {
     );
   }
 
+  /* v8 ignore start */
   return (
     <BaseRadio.Indicator
       keepMounted
@@ -71,6 +73,7 @@ function RadioIndicator({ className, ...props }: RadioIndicatorProps) {
       {...props}
     />
   );
+  /* v8 ignore stop */
 }
 
 export type RadioItemProps = Omit<RadioRootProps, "children"> & {

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { gotoFixture } from "./VisualTest.utils";
+import { gotoFixture, pauseAnimations } from "./VisualTest.utils";
 
 test.describe("Button", () => {
   test("variant matrix", async ({ page }) => {
@@ -19,11 +19,7 @@ test.describe("Button", () => {
 
   test("loading", async ({ page }) => {
     await gotoFixture(page, "button/Loading");
-    await page.evaluate(() => {
-      for (const el of document.querySelectorAll("*")) {
-        (el as HTMLElement).style.animationPlayState = "paused";
-      }
-    });
+    await pauseAnimations(page);
     await expect(page.locator("#fixture")).toHaveScreenshot("button-loading.png");
   });
 });

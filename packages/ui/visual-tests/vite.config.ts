@@ -4,9 +4,4 @@ import { defineConfig } from "vite";
 export default defineConfig({
   plugins: [react()],
   root: __dirname,
-  resolve: {
-    alias: {
-      "chunks-ui": `${__dirname}/../src`,
-    },
-  },
 });

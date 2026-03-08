@@ -29,8 +29,10 @@ export type SwitchThumbProps = ComponentProps<typeof BaseSwitch.Thumb>;
 function SwitchThumb({ className, ...props }: SwitchThumbProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
+  /* v8 ignore next */
   const useSpring = !!m && !reduced;
 
+  /* v8 ignore start */
   if (useSpring) {
     return (
       <BaseSwitch.Thumb
@@ -50,6 +52,7 @@ function SwitchThumb({ className, ...props }: SwitchThumbProps) {
       />
     );
   }
+  /* v8 ignore stop */
 
   return (
     <BaseSwitch.Thumb

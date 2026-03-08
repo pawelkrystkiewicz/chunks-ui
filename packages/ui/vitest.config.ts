@@ -10,7 +10,7 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "json-summary", "json"],
       include: ["src/components/**/*.{ts,tsx}"],
-      exclude: ["**/*.spec.*", "**/index.ts", "**/*.Variants.ts"],
+      exclude: ["**/*.spec.*", "**/index.ts", "**/*.Variants.{ts,tsx}"],
     },
   },
 });

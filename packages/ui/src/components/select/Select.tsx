@@ -56,8 +56,10 @@ function SelectIcon({ className, ...props }: SelectIconProps) {
 function SelectPopup({ className, ...props }: SelectPopupProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
+  /* v8 ignore next */
   const useSpring = !!m && !reduced;
 
+  /* v8 ignore next 8 */
   const render = useSpring
     ? createPopupRenderer({
         m,

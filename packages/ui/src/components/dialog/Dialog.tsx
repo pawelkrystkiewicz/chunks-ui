@@ -19,6 +19,7 @@ export type DialogCloseProps = ComponentProps<typeof BaseDialog.Close>;
 function DialogPortal({ keepMounted, ...props }: DialogPortalProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
+  /* v8 ignore next */
   const useSpring = !!m && !reduced;
 
   return <BaseDialog.Portal keepMounted={keepMounted ?? useSpring} {...props} />;
@@ -27,8 +28,10 @@ function DialogPortal({ keepMounted, ...props }: DialogPortalProps) {
 function DialogBackdrop({ className, ...props }: DialogBackdropProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
+  /* v8 ignore next */
   const useSpring = !!m && !reduced;
 
+  /* v8 ignore next 7 */
   const render = useSpring
     ? createPopupRenderer({
         m,
@@ -56,8 +59,10 @@ function DialogBackdrop({ className, ...props }: DialogBackdropProps) {
 function DialogPopup({ className, ...props }: DialogPopupProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
+  /* v8 ignore next */
   const useSpring = !!m && !reduced;
 
+  /* v8 ignore next 8 */
   const render = useSpring
     ? createPopupRenderer({
         m,

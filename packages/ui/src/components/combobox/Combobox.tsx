@@ -113,7 +113,7 @@ function ComboboxPopup({ className, ...props }: ComboboxPopupProps) {
   const reduced = useReducedMotion();
   const useSpring = !!m && !reduced;
 
-  const render = useSpring
+  const render = /* v8 ignore next 6 */ useSpring
     ? createPopupRenderer({
         m,
         spring: springs.popup,

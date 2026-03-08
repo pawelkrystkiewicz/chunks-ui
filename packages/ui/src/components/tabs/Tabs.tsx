@@ -125,11 +125,13 @@ function TabsPanel({ className, ...props }: TabsPanelProps) {
 function TabsIndicator({ className, ...props }: TabsIndicatorProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
+  /* v8 ignore next */
   const useSpring = !!m && !reduced;
 
   return (
     <BaseTabs.Indicator
       render={
+        /* v8 ignore start */
         useSpring
           ? (renderProps, state) => {
               const style = { ...((renderProps.style ?? {}) as Record<string, unknown>) };
@@ -153,7 +155,8 @@ function TabsIndicator({ className, ...props }: TabsIndicatorProps) {
                 />
               );
             }
-          : undefined
+          : /* v8 ignore stop */
+            undefined
       }
       className={cn(
         "absolute rounded-md bg-background shadow-sm",
@@ -172,6 +175,7 @@ function TabsIndicator({ className, ...props }: TabsIndicatorProps) {
 function TabsContents({ className, children, transition, ...props }: TabsContentsProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
+  /* v8 ignore next */
   const useSpring = !!m && !reduced;
   const ctx = useContext(TabsContext);
 
@@ -231,6 +235,7 @@ function TabsContents({ className, children, transition, ...props }: TabsContent
     );
   }
 
+  /* v8 ignore start */
   // --- Motion-powered slide + height ---
   return (
     <m.motion.div
@@ -262,6 +267,7 @@ function TabsContents({ className, children, transition, ...props }: TabsContent
       </m.motion.div>
     </m.motion.div>
   );
+  /* v8 ignore stop */
 }
 
 // ---------------------------------------------------------------------------

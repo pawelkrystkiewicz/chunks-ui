@@ -11,6 +11,11 @@ const items = [
 ];
 
 describe("Combobox", () => {
+  it("renders Control with custom className", () => {
+    render(<Combobox.Control className="custom" data-testid="control" />);
+    expect(screen.getByTestId("control")).toHaveClass("custom");
+  });
+
   it("renders Input with custom className", () => {
     render(
       <Combobox.Root>

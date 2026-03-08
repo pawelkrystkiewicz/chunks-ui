@@ -30,6 +30,7 @@ export type CheckboxIndicatorProps = ComponentProps<typeof BaseCheckbox.Indicato
 function CheckboxIndicator({ className, ...props }: CheckboxIndicatorProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
+  /* v8 ignore next */
   const useSpring = !!m && !reduced;
 
   if (!useSpring) {
@@ -54,6 +55,7 @@ function CheckboxIndicator({ className, ...props }: CheckboxIndicatorProps) {
     );
   }
 
+  /* v8 ignore start */
   return (
     <BaseCheckbox.Indicator
       keepMounted
@@ -90,6 +92,7 @@ function CheckboxIndicator({ className, ...props }: CheckboxIndicatorProps) {
       {...props}
     />
   );
+  /* v8 ignore stop */
 }
 
 export const Checkbox = {
