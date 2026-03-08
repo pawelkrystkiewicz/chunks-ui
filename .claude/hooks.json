@@ -1,0 +1,33 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash(git push*)",
+        "hooks": [
+          {
+            "type": "block",
+            "message": "Agents must not push to remote. A human must review and push."
+          }
+        ]
+      },
+      {
+        "matcher": "Bash(git reset --hard*)",
+        "hooks": [
+          {
+            "type": "block",
+            "message": "Hard reset is not allowed by agents. Use safer alternatives."
+          }
+        ]
+      },
+      {
+        "matcher": "Bash(git push --force*)",
+        "hooks": [
+          {
+            "type": "block",
+            "message": "Force push is never allowed by agents."
+          }
+        ]
+      }
+    ]
+  }
+}
