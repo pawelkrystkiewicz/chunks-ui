@@ -17,7 +17,7 @@ No agent isolation exists. All agents share:
 ## Canopy's Model (for reference)
 
 | Agent | Tools | Constraints |
-|-------|-------|-------------|
+| ----------- | ------------------------------------ | ------------------- |
 | Scout | Read, Glob, Grep, Bash | read-only |
 | Builder | Read, Write, Edit, Glob, Grep, Bash | — |
 | Reviewer | Read, Glob, Grep, Bash | read-only |
@@ -37,11 +37,16 @@ The meaningful safety improvements from agent isolation are already achievable t
 - **CI quality gates** (covered in [01-quality-gates.md](./01-quality-gates.md)) catch bad code before merge
 - **Pre-commit hooks** catch issues locally
 
-## If Scaling Up
+## Implementation
 
-If the project grows to multi-contributor or multi-agent workflows:
+Role definitions created in `.claude/agents/`:
 
-1. Define a `Reviewer` agent profile (read-only, Glob, Grep, Read, Bash)
-2. Define a `Builder` agent profile (full write access)
-3. Add `maxDepth: 2` to prevent runaway agent spawning
-4. Use worktrees for parallel agent work on separate features
+- `scout.md` — read-only exploration, system prompt + use-when guidelines
+- `builder.md` — implementation with file scope discipline, worktree guidance
+- `reviewer.md` — read-only review with structured CRITICAL/WARNING/INFO report format
+
+Role docs are used as system prompt additions when spawning Agent tool calls. Tool restrictions are not mechanically enforced (requires Canopy-style infra), but convention + prompt-level constraints provide meaningful isolation.
+
+Worktree isolation available via `isolation: "worktree"` on the Agent tool.
+
+**Grade updated: F → C** (role definitions + worktree pattern documented; enforcement is convention-based)

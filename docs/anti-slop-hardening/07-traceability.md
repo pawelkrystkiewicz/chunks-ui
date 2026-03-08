@@ -9,7 +9,7 @@
 No traceability infrastructure exists:
 
 | Feature | Status |
-|---------|--------|
+| ----------------------------------------------- | -------------------------------------------------- |
 | Tool call logging (PreToolUse/PostToolUse) | Not configured |
 | Session bracketing (SessionStart/Stop) | Not configured |
 | Post-session learnings capture | Not configured |
@@ -20,18 +20,23 @@ No traceability infrastructure exists:
 ## Why LOW Priority
 
 Traceability matters most when:
+
 - Multiple agents work concurrently on the same codebase
 - You need to debug which agent introduced a regression
 - You need to audit agent behavior for compliance
 
 For a solo developer with a single agent context, git history provides sufficient traceability. The developer is the human in the loop for every session.
 
-## Minimal Traceability (If Desired)
+## Implementation
 
-If you want basic traceability without the full Canopy stack:
+Minimal traceability stack (80% value, 10% effort):
 
-1. **Git commit messages** — already follow `type(scope): message` convention, providing natural audit trail
-2. **PR descriptions** — custom command `/pr-description` generates structured summaries
-3. **Session notes** — add a PostToolUse hook after `git commit` to append commit summary to `.claude/output/session-log.md`
+1. **Git commit messages** — `type(scope): message` convention provides natural audit trail
+2. **PR descriptions** — `/pr-description` custom command generates structured summaries
+3. **Session log** — PostToolUse hook fires after every `git commit*`, appends to `.claude/output/session-log.md`:
 
-This gives 80% of traceability value with 10% of the effort.
+   ```text
+   [2026-03-08 14:32:01 +0100] HEAD -> feat/button | abc1234 feat(button): add size variants
+   ```
+
+**Grade updated: F → D+** (session log hook active; full tool-call logging and session bracketing remain out of scope for solo project)

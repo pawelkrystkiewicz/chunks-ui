@@ -1,9 +1,10 @@
 import { describe, it } from "vitest";
+import { ELEMENT_COLOR, ELEMENT_VARIANTS } from "../../types";
 import { pauseAnimations, renderFixture } from "../../VisualTest.utils";
 import { Button } from "./index";
 
-const variants = ["contained", "outlined", "ghost", "link"] as const;
-const colors = ["primary", "destructive", "success", "warning", "secondary"] as const;
+const variants = ELEMENT_VARIANTS;
+const colors = ELEMENT_COLOR;
 
 const icon = (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">

@@ -1,8 +1,9 @@
 import { describe, it } from "vitest";
+import { ELEMENT_COLOR } from "../../types";
 import { renderFixture } from "../../VisualTest.utils";
 import { Chip } from "./index";
 
-const colors = ["primary", "destructive", "success", "warning", "secondary"] as const;
+const colors = ELEMENT_COLOR;
 
 describe("Chip", () => {
   it("color matrix", async () => {

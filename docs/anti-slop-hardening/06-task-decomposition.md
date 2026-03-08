@@ -16,6 +16,7 @@
 
 **Layer 1 (Base):** `.md` files defining workflow, constraints, capabilities per agent type
 **Layer 2 (Overlay):** Per-task CLAUDE.md with:
+
 - Task ID
 - File scope (which files to touch)
 - Spec path (which spec to implement)
@@ -26,13 +27,16 @@ This ensures each agent knows exactly what it should and shouldn't do.
 ## Why LOW Priority
 
 For a personal component library:
+
 - Tasks are typically "add component X" or "fix bug in Y" — scope is naturally narrow
 - The developer provides scope via conversation context
 - Adding overlay infrastructure adds maintenance burden without proportional benefit
 - The 16 custom commands already provide structured task guidance
 
-## If Scaling Up
+## Implementation
 
-1. Create per-component CLAUDE.md files in component directories with component-specific conventions
-2. Use task overlays when spawning agents for parallel work (e.g., "implement Dialog" and "implement Drawer" simultaneously)
-3. Set file scope constraints to prevent cross-component contamination
+Layer 2 overlay pattern implemented as a custom command:
+
+- `.claude/commands/new-component.md` — `/new-component <ComponentName>` generates a structured task brief with: branch name, declared file scope, out-of-scope list, PRD spec reference, pre-flight checklist, and definition of done. Asks human to confirm scope before writing code.
+
+**Grade updated: F → C** (task overlay pattern implemented via custom command; per-component CLAUDE.md files and file scope enforcement remain convention-based)
