@@ -109,10 +109,7 @@ export type {
 } from "./components/tabs";
 export { Tabs } from "./components/tabs";
 export { Textarea, type TextareaProps } from "./components/textarea";
-export type {
-  ToggleGroupItemProps,
-  ToggleGroupRootProps,
-} from "./components/toggle-group";
+export type { ToggleGroupItemProps, ToggleGroupRootProps } from "./components/toggle-group";
 export { ToggleGroup } from "./components/toggle-group";
 export type {
   TooltipArrowProps,
@@ -126,3 +123,4 @@ export { Tooltip } from "./components/tooltip";
 export { cn } from "./lib/cn";
 export { springs } from "./lib/motion";
 export { useMotion, useReducedMotion } from "./lib/use-motion";
+export * from "./types";

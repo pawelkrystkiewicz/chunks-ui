@@ -15,14 +15,13 @@ export const buttonVariants = cva(
       variant: {
         contained: ["active:scale-95"],
         outlined: ["border bg-transparent", "active:scale-95"],
-        ghost: ["bg-transparent", "active:scale-95"],
-        link: "bg-transparent underline-offset-4 hover:underline",
+        text: ["bg-transparent", "active:scale-95"],
       },
       color: {
         primary: "",
-        destructive: "",
         success: "",
         warning: "",
+        destructive: "",
         secondary: "",
       },
     },
@@ -79,57 +78,31 @@ export const buttonVariants = cva(
         color: "secondary",
         className: "border-border text-secondary-foreground hover:bg-accent",
       },
-      // Ghost
+      // Text
       {
-        variant: "ghost",
+        variant: "text",
         color: "primary",
         className: "text-primary hover:bg-primary/10",
       },
       {
-        variant: "ghost",
+        variant: "text",
         color: "destructive",
         className: "text-destructive hover:bg-destructive/10",
       },
       {
-        variant: "ghost",
+        variant: "text",
         color: "success",
         className: "text-success hover:bg-success/10",
       },
       {
-        variant: "ghost",
+        variant: "text",
         color: "warning",
         className: "text-warning hover:bg-warning/10",
       },
       {
-        variant: "ghost",
+        variant: "text",
         color: "secondary",
         className: "text-secondary-foreground hover:bg-accent",
-      },
-      // Link
-      {
-        variant: "link",
-        color: "primary",
-        className: "text-primary",
-      },
-      {
-        variant: "link",
-        color: "destructive",
-        className: "text-destructive",
-      },
-      {
-        variant: "link",
-        color: "success",
-        className: "text-success",
-      },
-      {
-        variant: "link",
-        color: "warning",
-        className: "text-warning",
-      },
-      {
-        variant: "link",
-        color: "secondary",
-        className: "text-secondary-foreground",
       },
     ],
     defaultVariants: {

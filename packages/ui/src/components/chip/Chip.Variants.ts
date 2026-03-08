@@ -4,6 +4,7 @@ export const chipVariants = cva(
   [
     "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5",
     "text-xs font-medium micro-interactions",
+    // TODO: add const height?
   ],
   {
     variants: {
