@@ -159,7 +159,7 @@ function CodePreview() {
         <button
           type="button"
           onClick={copy}
-          className="ml-auto inline-flex items-center justify-center size-7 rounded-md text-[oklch(0.45_0_0)] hover:text-[oklch(0.7_0_0)] hover:bg-[oklch(0.2_0_0)] transition-colors"
+          className="ml-auto inline-flex items-center justify-center size-7 rounded text-[oklch(0.45_0_0)] hover:text-[oklch(0.7_0_0)] hover:bg-[oklch(0.2_0_0)] transition-colors"
           aria-label={copied ? "Copied" : "Copy to clipboard"}
         >
           {copied ? <Check size={13} /> : <Copy size={13} />}
@@ -225,14 +225,14 @@ export function LandingPage() {
           >
             <Link
               href="/getting-started"
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:opacity-90 transition-opacity no-underline"
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded bg-primary text-primary-foreground font-medium text-sm hover:opacity-90 transition-opacity no-underline"
             >
               Get Started
               <ArrowRight size={14} />
             </Link>
             <Link
               href="/components/button"
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg border border-border font-medium text-sm hover:bg-accent transition-colors no-underline"
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded border border-border font-medium text-sm hover:bg-accent transition-colors no-underline"
             >
               Browse Components
             </Link>
@@ -303,7 +303,7 @@ export function LandingPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
             {PRINCIPLES.map((p) => (
               <div key={p.title} className="flex gap-4">
-                <div className="flex-shrink-0 size-10 rounded-lg bg-secondary flex items-center justify-center">
+                <div className="flex-shrink-0 size-10 rounded bg-secondary flex items-center justify-center">
                   <p.icon size={18} className="text-muted-foreground" strokeWidth={1.5} />
                 </div>
                 <div>
@@ -361,7 +361,7 @@ export function LandingPage() {
           </div>
           <Link
             href="/getting-started"
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:opacity-90 transition-opacity no-underline"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded bg-primary text-primary-foreground font-medium text-sm hover:opacity-90 transition-opacity no-underline"
           >
             Get Started
             <ArrowRight size={14} />

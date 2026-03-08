@@ -18,7 +18,7 @@ function SelectTrigger({ className, ...props }: SelectTriggerProps) {
   return (
     <BaseSelect.Trigger
       className={cn(
-        "flex h-9 w-full items-center justify-between rounded-lg border border-input bg-background px-3 text-sm",
+        "flex h-9 w-full items-center justify-between rounded border border-input bg-background px-3 text-sm",
         "placeholder:text-muted-foreground",
         "focus-visible:outline-2 focus-visible:outline-ring",
         "disabled:pointer-events-none disabled:opacity-50",
@@ -52,7 +52,7 @@ function SelectPopup({ className, ...props }: SelectPopupProps) {
   return (
     <BaseSelect.Popup
       className={cn(
-        "z-dropdowns rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-md",
+        "z-dropdowns rounded border border-border bg-popover p-1 text-popover-foreground shadow-md",
         "data-[starting-style]:opacity-0",
         "data-[ending-style]:opacity-0",
         "micro-interactions",
@@ -67,7 +67,7 @@ function SelectItem({ className, ...props }: SelectItemProps) {
   return (
     <BaseSelect.Item
       className={cn(
-        "relative flex w-full cursor-default items-center rounded-md py-1.5 pr-8 pl-2 text-sm outline-none",
+        "relative flex w-full cursor-default items-center rounded py-1.5 pr-8 pl-2 text-sm outline-none",
         "data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground",
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         className,

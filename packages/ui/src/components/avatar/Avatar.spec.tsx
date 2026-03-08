@@ -42,7 +42,7 @@ describe("Avatar", () => {
     expect(screen.getByTestId("av")).toHaveClass("rounded-full");
 
     rerender(<Avatar alt="T" shape="rounded" data-testid="av" />);
-    expect(screen.getByTestId("av")).toHaveClass("rounded-md");
+    expect(screen.getByTestId("av")).toHaveClass("rounded");
 
     rerender(<Avatar alt="T" shape="square" data-testid="av" />);
     expect(screen.getByTestId("av")).toHaveClass("rounded-none");

@@ -13,15 +13,17 @@ export function TabsBasicExample() {
           <Tabs.Tab value="tab-3">Notifications</Tabs.Tab>
           <Tabs.Indicator />
         </Tabs.List>
-        <Tabs.Panel value="tab-1">
-          <p>Account settings content.</p>
-        </Tabs.Panel>
-        <Tabs.Panel value="tab-2">
-          <p>Security settings content.</p>
-        </Tabs.Panel>
-        <Tabs.Panel value="tab-3">
-          <p>Notification preferences.</p>
-        </Tabs.Panel>
+        <Tabs.Contents>
+          <Tabs.Content value="tab-1">
+            <p className="p-4">Account settings content.</p>
+          </Tabs.Content>
+          <Tabs.Content value="tab-2">
+            <p className="p-4">Security settings content.</p>
+          </Tabs.Content>
+          <Tabs.Content value="tab-3">
+            <p className="p-4">Notification preferences.</p>
+          </Tabs.Content>
+        </Tabs.Contents>
       </Tabs.Root>
     </Container>
   );
@@ -36,8 +38,14 @@ export function TabsVerticalExample() {
           <Tabs.Tab value="tab-2">Advanced</Tabs.Tab>
           <Tabs.Indicator />
         </Tabs.List>
-        <Tabs.Panel value="tab-1">General settings</Tabs.Panel>
-        <Tabs.Panel value="tab-2">Advanced settings</Tabs.Panel>
+        <Tabs.Contents>
+          <Tabs.Content value="tab-1">
+            <p className="p-4">General settings</p>
+          </Tabs.Content>
+          <Tabs.Content value="tab-2">
+            <p className="p-4">Advanced settings</p>
+          </Tabs.Content>
+        </Tabs.Contents>
       </Tabs.Root>
     </Container>
   );

@@ -17,5 +17,6 @@ export default {
   switch: { title: "Switch" },
   tabs: { title: "Tabs" },
   textarea: { title: "Textarea" },
+  "toggle-group": { title: "ToggleGroup" },
   tooltip: { title: "Tooltip" },
 };

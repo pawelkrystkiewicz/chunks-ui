@@ -15,7 +15,7 @@ function PopoverPopup({ className, ...props }: PopoverPopupProps) {
   return (
     <BasePopover.Popup
       className={cn(
-        "z-dropdowns rounded-lg border border-border bg-popover p-4 text-popover-foreground shadow-md",
+        "z-dropdowns rounded border border-border bg-popover p-4 text-popover-foreground shadow-md",
         "data-[starting-style]:scale-95 data-[starting-style]:opacity-0",
         "data-[ending-style]:scale-95 data-[ending-style]:opacity-0",
         "micro-interactions",

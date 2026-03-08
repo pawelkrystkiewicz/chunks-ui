@@ -1,26 +1,30 @@
 name: Update Visual Regression Screenshots
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: # manual trigger only
 
 env:
   LANG: en_US.UTF-8
   LC_ALL: en_US.UTF-8
   AUTHOR_NAME: 'github-actions[bot]'
   AUTHOR_EMAIL: '41898282+github-actions[bot]@users.noreply.github.com'
+  COMMIT_MESSAGE: |
+    test: update visual regression screenshots
 
 jobs:
   update-screenshots:
     runs-on: ubuntu-24.04
 
+    # safety first: don't run on main
     if: github.ref_name != github.event.repository.default_branch
 
+    # one at a time per branch
     concurrency:
       group: visual-regression-screenshots@${{ github.ref_name }}
       cancel-in-progress: true
 
     permissions:
-      contents: write
+      contents: write # needs to push changes
 
     steps:
       - name: Checkout selected branch
@@ -32,9 +36,6 @@ jobs:
         run: |
           git config --global user.name "$AUTHOR_NAME"
           git config --global user.email "$AUTHOR_EMAIL"
-        env:
-          AUTHOR_NAME: ${{ env.AUTHOR_NAME }}
-          AUTHOR_EMAIL: ${{ env.AUTHOR_EMAIL }}
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -50,6 +51,7 @@ jobs:
       - name: Update Visual Regression Screenshots
         run: cd packages/ui && bun run test:visual -- --update
 
+      # check what changed
       - name: Check for changes
         id: check_changes
         run: |
@@ -58,6 +60,7 @@ jobs:
             echo "changes=true" >> $GITHUB_OUTPUT
             echo "Changes detected"
 
+            # save the list for the summary
             echo "changed_files<<EOF" >> $GITHUB_OUTPUT
             echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
@@ -67,30 +70,41 @@ jobs:
             echo "No changes detected"
           fi
 
+      # commit if there are changes
       - name: Commit changes
         if: steps.check_changes.outputs.changes == 'true'
         run: |
           git add -A
-          ACTOR="${{ github.actor }}"
-          ACTOR_ID="${{ github.actor_id }}"
-          git commit -m "test: update visual regression screenshots" -m "Co-authored-by: ${ACTOR} <${ACTOR_ID}+${ACTOR}@users.noreply.github.com>"
+          git commit -m "$COMMIT_MESSAGE"
+        env:
+          COMMIT_MESSAGE: ${{ env.COMMIT_MESSAGE }}
 
       - name: Push changes
         if: steps.check_changes.outputs.changes == 'true'
         run: git push origin ${{ github.ref_name }}
 
+      # pretty summary for humans
       - name: Summary
         if: always()
         run: |
-          CHANGES="${{ steps.check_changes.outputs.changes }}"
           if [[ "$CHANGES" == "true" ]]; then
-            CHANGED_COUNT="${{ steps.check_changes.outputs.changed_count }}"
-            BRANCH="${{ github.ref_name }}"
             echo "### Visual Regression Screenshots Updated" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Updated **${CHANGED_COUNT}** screenshot(s) on \`${BRANCH}\`" >> $GITHUB_STEP_SUMMARY
+            echo "Successfully updated **${CHANGED_COUNT}** screenshot(s) on \`${BRANCH}\`" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "#### Changed Files:" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "$CHANGED_FILES" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "The updated screenshots have been committed and pushed. Your visual regression baseline is now up to date." >> $GITHUB_STEP_SUMMARY
           else
             echo "### No Screenshot Updates Required" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "All screenshots are already up to date." >> $GITHUB_STEP_SUMMARY
           fi
+        env:
+          CHANGES: ${{ steps.check_changes.outputs.changes }}
+          CHANGED_COUNT: ${{ steps.check_changes.outputs.changed_count }}
+          CHANGED_FILES: ${{ steps.check_changes.outputs.changed_files }}
+          BRANCH: ${{ github.ref_name }}
