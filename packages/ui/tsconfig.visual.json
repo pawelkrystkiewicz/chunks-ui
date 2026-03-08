@@ -1,0 +1,9 @@
+{
+  "extends": "@chunks-ui/typescript-config/react-library.json",
+  "include": ["src/**/*.visual.spec.tsx", "src/VisualTest.utils.tsx", "vitest.visual.setup.ts"],
+  "exclude": ["dist", "node_modules"],
+  "compilerOptions": {
+    "noUncheckedIndexedAccess": true,
+    "types": ["vitest/globals", "@vitest/browser/matchers"]
+  }
+}

@@ -4,6 +4,7 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     include: ["src/**/*.spec.{ts,tsx}"],
+    exclude: ["src/**/*.visual.spec.tsx"],
     passWithNoTests: false,
     setupFiles: ["./vitest.setup.ts"],
     coverage: {
