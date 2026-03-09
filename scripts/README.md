@@ -27,6 +27,7 @@ Output:
 }
 ```
 
+
 **GitHub Actions output format:**
 
 ```bash
