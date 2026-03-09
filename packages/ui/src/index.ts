@@ -73,6 +73,16 @@ export { Field } from "./components/field";
 export { Input, type InputProps, inputVariants } from "./components/input";
 export { Loader, type LoaderProps } from "./components/loader";
 export type {
+  NumberFieldDecrementProps,
+  NumberFieldGroupProps,
+  NumberFieldIncrementProps,
+  NumberFieldInputProps,
+  NumberFieldRootProps,
+  NumberFieldScrubAreaCursorProps,
+  NumberFieldScrubAreaProps,
+} from "./components/number-field";
+export { NumberField } from "./components/number-field";
+export type {
   PopoverArrowProps,
   PopoverCloseProps,
   PopoverContentProps,
@@ -83,12 +93,27 @@ export type {
 } from "./components/popover";
 export { Popover } from "./components/popover";
 export type {
+  ProgressIndicatorProps,
+  ProgressRootProps,
+  ProgressTrackProps,
+} from "./components/progress";
+export { Progress } from "./components/progress";
+export type {
   RadioGroupProps,
   RadioIndicatorProps,
   RadioItemProps,
   RadioRootProps,
 } from "./components/radio";
 export { Radio } from "./components/radio";
+export type {
+  ScrollAreaContentProps,
+  ScrollAreaCornerProps,
+  ScrollAreaRootProps,
+  ScrollAreaScrollbarProps,
+  ScrollAreaThumbProps,
+  ScrollAreaViewportProps,
+} from "./components/scroll-area";
+export { ScrollArea } from "./components/scroll-area";
 export type {
   SelectGroupLabelProps,
   SelectGroupProps,
@@ -126,6 +151,8 @@ export type {
 } from "./components/tabs";
 export { Tabs } from "./components/tabs";
 export { Textarea, type TextareaProps } from "./components/textarea";
+export type { Theme, ThemeToggleProps } from "./components/theme-toggle";
+export { ThemeToggle } from "./components/theme-toggle";
 export type { ToggleGroupItemProps, ToggleGroupRootProps } from "./components/toggle-group";
 export { ToggleGroup } from "./components/toggle-group";
 export type {
