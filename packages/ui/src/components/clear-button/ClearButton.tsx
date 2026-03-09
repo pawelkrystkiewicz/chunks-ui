@@ -1,34 +1,47 @@
 import type { ComponentProps } from "react";
 import { cn } from "../../lib/cn";
+import { BUTTON_ANIMATION_CLASSES } from "../shared";
 
 export type ClearButtonProps = ComponentProps<"button"> & {
   label?: string;
 };
 
-export function ClearButton({ label = "Clear", className, ...props }: ClearButtonProps) {
+const DEFAULT_LABEL = "Clear";
+
+export function ClearButton({ className, label, ...props }: ClearButtonProps) {
+  const resolvedLabel = label ?? props["aria-label"] ?? DEFAULT_LABEL;
   return (
     <button
       type="button"
-      aria-label={label}
+      aria-label={resolvedLabel}
       className={cn(
-        "inline-flex size-5 items-center justify-center rounded-full",
+        "inline-flex size-6 items-center justify-center rounded-full",
         "text-muted-foreground hover:bg-accent hover:text-foreground",
-        "micro-interactions focus-visible:outline-2 focus-visible:outline-ring",
+        "focus-visible:outline-2 focus-visible:outline-ring",
         "disabled:pointer-events-none disabled:opacity-50",
+        "hover:text-destructive",
+        "cursor-pointer",
+        ...BUTTON_ANIMATION_CLASSES,
+        "hover:scale-105",
         className,
       )}
       {...props}
     >
       <svg
+        aria-hidden="true"
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
-        className="size-3.5"
-        aria-hidden="true"
+        strokeLinejoin="round"
+        className="size-4"
       >
-        <path d="M18 6 6 18M6 6l12 12" />
+        <path d="M18 6 6 18" />
+        <path d="m6 6 12 12" />
       </svg>
     </button>
   );

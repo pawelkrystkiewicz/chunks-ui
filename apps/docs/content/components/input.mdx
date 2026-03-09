@@ -1,7 +1,7 @@
 import { Input } from 'chunks-ui'
 import { SearchIcon } from 'lucide-react'
 import { Container } from '@/components'
-import { InputErrorExample, InputWithFieldExample } from '@/examples/Input'
+import { InputErrorExample, InputWithFieldExample, InputWithClearButton } from '@/examples/Input'
 
 # Input
 
@@ -10,7 +10,7 @@ A styled text input built on Base UI's `Input` primitive. Supports start/end ado
 ## Import
 
 ```tsx
-import { Input } from "chunks-ui";
+import { Input } from 'chunks-ui'
 ```
 
 ## Basic Usage
@@ -28,31 +28,19 @@ import { Input } from "chunks-ui";
 Use `startAdornment` and `endAdornment` to place icons or text at the edges of the input:
 
 ```tsx
-<Input
-  startAdornment={<SearchIcon className="size-4" />}
-  placeholder="Search..."
-/>
+<Input startAdornment={<SearchIcon className="size-4" />} placeholder="Search..." />
 ```
 
 <Container>
-  <Input
-    startAdornment={<SearchIcon className="size-4" />}
-    placeholder="Search..."
-  />
+  <Input startAdornment={<SearchIcon className="size-4" />} placeholder="Search..." />
 </Container>
 
 ```tsx
-<Input
-  endAdornment={<span className="text-xs text-muted-foreground">USD</span>}
-  placeholder="0.00"
-/>
+<Input endAdornment={<span className="text-xs text-muted-foreground">USD</span>} placeholder="0.00" />
 ```
 
 <Container>
-  <Input
-    endAdornment={<span className="text-xs text-muted-foreground">USD</span>}
-    placeholder="0.00"
-  />
+  <Input endAdornment={<span className="text-xs text-muted-foreground">USD</span>} placeholder="0.00" />
 </Container>
 
 ## Clear Button
@@ -60,19 +48,23 @@ Use `startAdornment` and `endAdornment` to place icons or text at the edges of t
 Pass an `onClear` callback to show a built-in clear button (uses the `ClearButton` component internally):
 
 ```tsx
-function SearchInput() {
-  const [value, setValue] = useState("");
+export const InputWithClearButton = () => {
+  const [value, setValue] = useState('')
 
   return (
     <Input
       value={value}
-      onChange={(e) => setValue(e.target.value)}
-      onClear={() => setValue("")}
+      onChange={e => setValue(e.target.value)}
+      onClear={() => setValue('')}
       placeholder="Search..."
     />
-  );
+  )
 }
 ```
+
+<Container>
+  <InputWithClearButton />
+</Container>
 
 ## Error State
 
@@ -104,11 +96,11 @@ Wrap `Input` in a `Field` for labels, descriptions, and validation:
 
 ## Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `startAdornment` | `ReactNode` | -- | Element before the input text |
-| `endAdornment` | `ReactNode` | -- | Element after the input text |
-| `onClear` | `() => void` | -- | Show clear button; called on click |
-| `className` | `string` | -- | Additional CSS classes |
+| Prop             | Type         | Default | Description                        |
+| ---------------- | ------------ | ------- | ---------------------------------- |
+| `startAdornment` | `ReactNode`  | --      | Element before the input text      |
+| `endAdornment`   | `ReactNode`  | --      | Element after the input text       |
+| `onClear`        | `() => void` | --      | Show clear button; called on click |
+| `className`      | `string`     | --      | Additional CSS classes             |
 
 All other props are forwarded to the underlying Base UI `Input` (supports `value`, `onChange`, `placeholder`, `disabled`, etc.).

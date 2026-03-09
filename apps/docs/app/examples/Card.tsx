@@ -2,7 +2,6 @@
 
 import { Avatar, Button, Card } from "chunks-ui";
 import { Container } from "@/components";
-
 export function CardBasicExample() {
   return (
     <Container>

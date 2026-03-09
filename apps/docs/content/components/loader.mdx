@@ -13,6 +13,8 @@ import { Loader } from "chunks-ui";
 
 ## Basic Usage
 
+The spinner inherits the current text color of its parent, so it always keeps contrast with the background.
+
 ```tsx
 <Loader />
 ```
@@ -21,33 +23,19 @@ import { Loader } from "chunks-ui";
   <Loader />
 </Container>
 
-## Colors
+## Custom Color
+
+Override the color via `className`:
 
 ```tsx
-<Loader color="current" />
-<Loader color="primary" />
-<Loader color="muted" />
+<Loader className="text-primary" />
+<Loader className="text-muted-foreground" />
 ```
 
 <Container>
-  <Loader color="current" />
-  <Loader color="primary" />
-  <Loader color="muted" />
+  <Loader className="text-primary" />
+  <Loader className="text-muted-foreground" />
 </Container>
-
-| Color | CSS Class | Use case |
-|---|---|---|
-| `current` | `text-current` | Inherits parent text color (default) |
-| `primary` | `text-primary` | Brand blue spinner |
-| `muted` | `text-muted-foreground` | Subtle background loading |
-
-## Full-Page Loading
-
-```tsx
-<div className="flex h-screen items-center justify-center">
-  <Loader color="primary" />
-</div>
-```
 
 ## Inline with Text
 
@@ -65,11 +53,18 @@ import { Loader } from "chunks-ui";
   </div>
 </Container>
 
+## Full-Page Loading
+
+```tsx
+<div className="flex h-screen items-center justify-center">
+  <Loader />
+</div>
+```
+
 ## Props
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
-| `color` | `"current" \| "primary" \| "muted"` | `"current"` | Spinner color |
-| `className` | `string` | -- | Additional CSS classes |
+| `className` | `string` | -- | Additional CSS classes. Use `text-*` utilities to override the color. |
 
 All other props are forwarded to the root `<svg>` element. The spinner uses `animate-spin` for rotation and is marked `aria-hidden="true"`.

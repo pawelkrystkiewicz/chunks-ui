@@ -14,7 +14,7 @@ Display user profile images with fallback to initials.
 ### Button
 Interactive button with variants, colors, loading state, and icon support.
 
-- **Variants**: `variant` ("contained" | "outlined" | "ghost" | "link"), `color` ("primary" | "destructive" | "success" | "warning" | "secondary")
+- **Variants**: `variant` ("contained" | "outlined" | "text"), `color` ("primary" | "destructive" | "success" | "warning" | "secondary")
 - **Props**: `loading`, `startIcon`, `endIcon`, `disabled`
 - **Features**: Loading spinner, icon slots
 - **File**: `src/components/button/Button.tsx`
@@ -43,7 +43,7 @@ Small badge-like element with optional removal.
 ### ClearButton
 X icon button for clearing inputs.
 
-- **Props**: `label` (aria-label, default "Clear")
+- **Props**: standard `<button>` props; `aria-label` and `title` default to `"Clear"`
 - **File**: `src/components/clear-button/ClearButton.tsx`
 
 ### Combobox
@@ -153,7 +153,7 @@ Hover tooltip with arrow.
 Tailwind class merge utility (clsx + tailwind-merge).
 
 ### springs
-Motion spring presets: `indicator`, `content`, `overlay`, `micro`.
+Motion spring presets: `indicator`, `content`, `popup`, `overlay`, `micro`.
 
 ### useMotion()
 Lazy-load motion/react with SSR safety.

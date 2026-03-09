@@ -29,15 +29,13 @@ The `variant` prop controls the visual style:
 ```tsx
 <Button variant="contained">Contained</Button>
 <Button variant="outlined">Outlined</Button>
-<Button variant="ghost">Ghost</Button>
-<Button variant="link">Link</Button>
+<Button variant="text">Text</Button>
 ```
 
 <Container>
   <Button variant="contained">Contained</Button>
   <Button variant="outlined">Outlined</Button>
-  <Button variant="ghost">Ghost</Button>
-  <Button variant="link">Link</Button>
+  <Button variant="text">Text</Button>
 </Container>
 
 ## Colors
@@ -64,14 +62,14 @@ Colors work with all variants:
 
 ```tsx
 <Button variant="outlined" color="destructive">Delete</Button>
-<Button variant="ghost" color="success">Approve</Button>
+<Button variant="text" color="success">Approve</Button>
 ```
 
 <Container>
   <Button variant="outlined" color="destructive">
     Delete
   </Button>
-  <Button variant="ghost" color="success">
+  <Button variant="text" color="success">
     Approve
   </Button>
 </Container>
@@ -106,7 +104,7 @@ Icons are hidden during loading state. The `startIcon` slot is replaced by the `
 
 | Prop        | Type                                                                  | Default       | Description                          |
 | ----------- | --------------------------------------------------------------------- | ------------- | ------------------------------------ |
-| `variant`   | `"contained" \| "outlined" \| "ghost" \| "link"`                      | `"contained"` | Visual style                         |
+| `variant`   | `"contained" \| "outlined" \| "text"`                                 | `"contained"` | Visual style                         |
 | `color`     | `"primary" \| "destructive" \| "success" \| "warning" \| "secondary"` | `"primary"`   | Semantic color                       |
 | `loading`   | `boolean`                                                             | `false`       | Show spinner and disable interaction |
 | `startIcon` | `ReactNode`                                                           | --            | Icon before children                 |

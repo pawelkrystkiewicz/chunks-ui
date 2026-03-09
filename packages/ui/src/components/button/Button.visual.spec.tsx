@@ -1,9 +1,10 @@
 import { describe, it } from "vitest";
+import { ELEMENT_COLOR, ELEMENT_VARIANTS } from "../../types";
 import { pauseAnimations, renderFixture } from "../../VisualTest.utils";
 import { Button } from "./index";
 
-const variants = ["contained", "outlined", "ghost", "link"] as const;
-const colors = ["primary", "destructive", "success", "warning", "secondary"] as const;
+const variants = ELEMENT_VARIANTS;
+const colors = ELEMENT_COLOR;
 
 const icon = (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
@@ -13,22 +14,18 @@ const icon = (
 );
 
 describe("Button", () => {
-  it("variant matrix", async () => {
-    const { fixture } = await renderFixture(
-      <div
-        style={{ display: "grid", gridTemplateColumns: `repeat(${colors.length}, auto)`, gap: 12 }}
-      >
-        {variants.map((v) =>
-          colors.map((c) => (
-            <Button key={`${v}-${c}`} variant={v} color={c}>
-              {v}
-            </Button>
-          )),
-        )}
-      </div>,
-    );
-    await expect(fixture).toMatchScreenshot();
-  });
+  for (const variant of variants) {
+    for (const color of colors) {
+      it(`[${color}] [${variant}]`, async () => {
+        const { fixture } = await renderFixture(
+          <Button variant={variant} color={color}>
+            {color} {variant}
+          </Button>,
+        );
+        await expect(fixture).toMatchScreenshot();
+      });
+    }
+  }
 
   it("disabled", async () => {
     const { fixture } = await renderFixture(

@@ -1,5 +1,6 @@
 import { ClearButton } from 'chunks-ui'
 import { Container } from '@/components'
+import { ClearButtonInContextExample } from '@/examples/ClearButton'
 
 # ClearButton
 
@@ -8,13 +9,13 @@ A small circular icon button for clearing or dismissing values. Used internally 
 ## Import
 
 ```tsx
-import { ClearButton } from "chunks-ui";
+import { ClearButton } from 'chunks-ui'
 ```
 
 ## Basic Usage
 
 ```tsx
-<ClearButton onClick={() => console.log("Cleared")} />
+<ClearButton onClick={() => console.log('Cleared')} />
 ```
 
 <Container>
@@ -23,47 +24,28 @@ import { ClearButton } from "chunks-ui";
 
 ## Custom Label
 
-The `label` prop sets the `aria-label` for accessibility:
+Pass `aria-label` directly to override the default:
 
 ```tsx
-<ClearButton label="Remove tag" onClick={handleRemove} />
-<ClearButton label="Dismiss" onClick={handleDismiss} />
+<ClearButton aria-label="Remove tag" onClick={handleRemove} />
 ```
 
 <Container>
-  <ClearButton label="Remove tag" />
-  <ClearButton label="Dismiss" />
+  <ClearButton aria-label="Remove tag" />
 </Container>
 
 Default label is `"Clear"`.
 
-## In Context
-
-The ClearButton is commonly composed inside other components:
-
-```tsx
-{/* Inside a custom search input */}
-<div className="relative flex items-center">
-  <input className="pr-8" value={query} onChange={handleChange} />
-  {query && (
-    <span className="absolute right-2">
-      <ClearButton onClick={() => setQuery("")} />
-    </span>
-  )}
-</div>
-```
-
 ## Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `label` | `string` | `"Clear"` | Accessible `aria-label` |
-| `className` | `string` | -- | Additional CSS classes |
-| `onClick` | `() => void` | -- | Click handler |
-| `disabled` | `boolean` | `false` | Disable the button |
+| Prop        | Type         | Default | Description            |
+| ----------- | ------------ | ------- | ---------------------- |
+| `className` | `string`     | --      | Additional CSS classes |
+| `onClick`   | `() => void` | --      | Click handler          |
+| `disabled`  | `boolean`    | `false` | Disable the button     |
 
-All other props are forwarded to the underlying `<button>` element.
+All HTML `<button>` props are forwarded. `aria-label` and `title` default to `"Clear"` if not provided.
 
 ## Styling
 
-The button renders at `size-5` (20px) with a rounded-full shape. It shows `text-muted-foreground` by default and transitions to `text-foreground` with a `bg-accent` background on hover.
+The button renders at `size-6` (24px) with a rounded-full shape. It shows `text-muted-foreground` by default and transitions to `bg-accent text-destructive` on hover.

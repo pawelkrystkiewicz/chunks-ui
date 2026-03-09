@@ -28,9 +28,9 @@ describe("Loader", () => {
     expect(container.querySelector("svg")).toHaveClass("size-ui-icon-height");
   });
 
-  it("applies color variant", () => {
-    const { container } = render(<Loader color="primary" />);
-    expect(container.querySelector("svg")).toHaveClass("text-primary");
+  it("inherits color via text-current", () => {
+    const { container } = render(<Loader />);
+    expect(container.querySelector("svg")).toHaveClass("text-current");
   });
 
   it("has no a11y violations", async () => {
