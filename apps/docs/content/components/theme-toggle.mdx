@@ -1,0 +1,55 @@
+import { ThemeToggleBasicExample, ThemeToggleCustomIconsExample } from '@/examples/ThemeToggle'
+
+# ThemeToggle
+
+A controlled button for switching between light and dark themes. Animates between sun and moon icons with a crossfade, and respects `prefers-reduced-motion`.
+
+## Import
+
+```tsx
+import { ThemeToggle } from "chunks-ui";
+```
+
+## Basic Usage
+
+`ThemeToggle` is fully controlled — pass the current `theme` and an `onClick` handler to toggle it:
+
+```tsx
+function App() {
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+
+  return (
+    <ThemeToggle
+      theme={theme}
+      onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+    />
+  );
+}
+```
+
+<ThemeToggleBasicExample />
+
+## Custom Icons
+
+Replace the default sun/moon icons via `lightIcon` and `darkIcon`:
+
+```tsx
+<ThemeToggle
+  theme={theme}
+  onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+  lightIcon={<SunIcon />}
+  darkIcon={<MoonIcon />}
+/>
+```
+
+<ThemeToggleCustomIconsExample />
+
+## Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `theme` | `"light" \| "dark"` | **required** | Current active theme |
+| `onClick` | `React.MouseEventHandler<HTMLButtonElement>` | -- | Called when the button is clicked |
+| `lightIcon` | `React.ReactNode` | Built-in sun SVG | Icon shown in light mode |
+| `darkIcon` | `React.ReactNode` | Built-in moon SVG | Icon shown in dark mode |
+| `className` | `string` | -- | Additional CSS classes |

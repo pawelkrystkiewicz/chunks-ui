@@ -11,6 +11,7 @@ export type {
 export { Accordion } from "./components/accordion";
 export { Avatar, type AvatarProps } from "./components/avatar";
 export { Button, type ButtonProps, buttonVariants } from "./components/button";
+export { Calendar, type CalendarProps } from "./components/calendar";
 export type {
   CardContentProps,
   CardDescriptionProps,
@@ -43,6 +44,7 @@ export type {
   ComboboxTriggerProps,
 } from "./components/combobox";
 export { Combobox } from "./components/combobox";
+export { DatePicker, type DatePickerProps } from "./components/date-picker";
 export type {
   DialogBackdropProps,
   DialogCloseProps,
@@ -72,6 +74,22 @@ export type {
 export { Field } from "./components/field";
 export { Input, type InputProps, inputVariants } from "./components/input";
 export { Loader, type LoaderProps } from "./components/loader";
+export type {
+  MenuArrowProps,
+  MenuCheckboxItemIndicatorProps,
+  MenuCheckboxItemProps,
+  MenuContentProps,
+  MenuGroupLabelProps,
+  MenuGroupProps,
+  MenuItemProps,
+  MenuRadioGroupProps,
+  MenuRadioItemIndicatorProps,
+  MenuRadioItemProps,
+  MenuRootProps,
+  MenuSeparatorProps,
+  MenuTriggerProps,
+} from "./components/menu";
+export { Menu } from "./components/menu";
 export type {
   NumberFieldDecrementProps,
   NumberFieldGroupProps,
@@ -153,6 +171,16 @@ export { Tabs } from "./components/tabs";
 export { Textarea, type TextareaProps } from "./components/textarea";
 export type { Theme, ThemeToggleProps } from "./components/theme-toggle";
 export { ThemeToggle } from "./components/theme-toggle";
+export type {
+  ToastActionProps,
+  ToastCloseProps,
+  ToastDescriptionProps,
+  ToastProviderProps,
+  ToastRootProps,
+  ToastTitleProps,
+  ToastViewportProps,
+} from "./components/toast";
+export { Toast } from "./components/toast";
 export type { ToggleGroupItemProps, ToggleGroupRootProps } from "./components/toggle-group";
 export { ToggleGroup } from "./components/toggle-group";
 export type {
