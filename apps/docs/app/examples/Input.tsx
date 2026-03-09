@@ -1,6 +1,7 @@
 "use client";
 
 import { Field, Input } from "chunks-ui";
+import { useState } from "react";
 import { Container } from "@/components";
 
 export function InputErrorExample() {
@@ -26,3 +27,16 @@ export function InputWithFieldExample() {
     </Container>
   );
 }
+
+export const InputWithClearButton = () => {
+  const [value, setValue] = useState("");
+
+  return (
+    <Input
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      onClear={() => setValue("")}
+      placeholder="Search..."
+    />
+  );
+};

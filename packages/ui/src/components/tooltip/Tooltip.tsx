@@ -50,15 +50,26 @@ function TooltipPopup({ className, ...props }: TooltipPopupProps) {
 }
 
 function TooltipArrow({ className, ...props }: TooltipArrowProps) {
-  // TODO: not visible in docs example
-  return <BaseTooltip.Arrow className={cn("fill-foreground", className)} {...props} />;
+  return (
+    <BaseTooltip.Arrow
+      className={cn(
+        "absolute size-2.5 rotate-45 bg-foreground",
+        "data-[side=top]:-bottom-[5px]",
+        "data-[side=bottom]:-top-[5px]",
+        "data-[side=left]:-right-[5px]",
+        "data-[side=right]:-left-[5px]",
+        className,
+      )}
+      {...props}
+    />
+  );
 }
 
 function TooltipPositioner({ className, ...props }: TooltipPositionerProps) {
   return <BaseTooltip.Positioner sideOffset={6} className={cn(className)} {...props} />;
 }
 
-function TooltipTrigger({ delay = 100, ...props }: TooltipTriggerProps) {
+function TooltipTrigger({ delay = 50, ...props }: TooltipTriggerProps) {
   return <BaseTooltip.Trigger delay={delay} {...props} />;
 }
 

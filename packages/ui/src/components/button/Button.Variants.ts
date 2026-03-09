@@ -1,5 +1,6 @@
 import { cva } from "class-variance-authority";
 import type { ElementColor, ElementVariant } from "../../types";
+import { BUTTON_ANIMATION_CLASSES } from "../shared";
 
 export const buttonVariants = cva(
   [
@@ -8,15 +9,14 @@ export const buttonVariants = cva(
     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
     "disabled:pointer-events-none disabled:opacity-50",
     "[&_svg]:pointer-events-none [&_svg]:shrink-0",
-
-    "micro-interactions",
+    ...BUTTON_ANIMATION_CLASSES,
   ],
   {
     variants: {
       variant: {
-        contained: ["active:scale-95"],
-        outlined: ["border bg-transparent", "active:scale-95"],
-        text: ["bg-transparent", "active:scale-95"],
+        contained: [],
+        outlined: ["border bg-transparent"],
+        text: ["bg-transparent"],
       } satisfies Record<ElementVariant, string | string[]>,
       color: {
         primary: "",

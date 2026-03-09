@@ -44,7 +44,7 @@ function CardContent({ className, ...props }: CardContentProps) {
 export type CardFooterProps = ComponentProps<"div">;
 
 function CardFooter({ className, ...props }: CardFooterProps) {
-  return <div className={cn("flex items-center p-6 pt-0", className)} {...props} />;
+  return <div className={cn("flex items-center gap-2 p-6 pt-0", className)} {...props} />;
 }
 
 export const Card = {
