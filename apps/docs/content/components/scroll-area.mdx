@@ -1,0 +1,92 @@
+import { ScrollAreaBasicExample, ScrollAreaHorizontalExample, ScrollAreaBothExample } from '@/examples/ScrollArea'
+
+# ScrollArea
+
+A custom scrollable container built on Base UI's `ScrollArea` primitive. Hides native scrollbars and replaces them with styled overlays that appear on hover or scroll.
+
+## Import
+
+```tsx
+import { ScrollArea } from "chunks-ui";
+```
+
+## Basic Usage
+
+Vertical scrolling — constrain height on the root and the scrollbar renders automatically:
+
+```tsx
+<ScrollArea.Root className="h-64 w-full rounded border border-border">
+  <ScrollArea.Viewport>
+    <ScrollArea.Content>
+      {/* tall content */}
+    </ScrollArea.Content>
+  </ScrollArea.Viewport>
+  <ScrollArea.Scrollbar orientation="vertical">
+    <ScrollArea.Thumb />
+  </ScrollArea.Scrollbar>
+</ScrollArea.Root>
+```
+
+<ScrollAreaBasicExample />
+
+## Horizontal Scrollbar
+
+Set `orientation="horizontal"` on the scrollbar for wide content:
+
+```tsx
+<ScrollArea.Root className="w-full rounded border border-border">
+  <ScrollArea.Viewport>
+    <ScrollArea.Content>{/* wide content */}</ScrollArea.Content>
+  </ScrollArea.Viewport>
+  <ScrollArea.Scrollbar orientation="horizontal">
+    <ScrollArea.Thumb />
+  </ScrollArea.Scrollbar>
+</ScrollArea.Root>
+```
+
+<ScrollAreaHorizontalExample />
+
+## Both Axes
+
+Add both scrollbars and `ScrollArea.Corner` to fill the intersection:
+
+```tsx
+<ScrollArea.Root className="h-48 w-full rounded border border-border">
+  <ScrollArea.Viewport>
+    <ScrollArea.Content>{/* tall + wide content */}</ScrollArea.Content>
+  </ScrollArea.Viewport>
+  <ScrollArea.Scrollbar orientation="vertical">
+    <ScrollArea.Thumb />
+  </ScrollArea.Scrollbar>
+  <ScrollArea.Scrollbar orientation="horizontal">
+    <ScrollArea.Thumb />
+  </ScrollArea.Scrollbar>
+  <ScrollArea.Corner />
+</ScrollArea.Root>
+```
+
+<ScrollAreaBothExample />
+
+## Compound Parts
+
+| Part | Description |
+|---|---|
+| `ScrollArea.Root` | Outer container. Sets `overflow: hidden` and positions scrollbars. |
+| `ScrollArea.Viewport` | The scrollable window. Native scrollbars are hidden via CSS. |
+| `ScrollArea.Content` | Wraps the actual content inside the viewport. |
+| `ScrollArea.Scrollbar` | The custom scrollbar track. Fades in on hover/scroll via `data-[hovering]` and `data-[scrolling]`. |
+| `ScrollArea.Thumb` | The draggable scrollbar handle. Expands the hit area with a negative margin. |
+| `ScrollArea.Corner` | Fills the corner square when both scrollbars are visible. |
+
+## ScrollArea.Root Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `className` | `string` | -- | Additional CSS classes. Set `height` here to enable vertical scrolling. |
+
+## ScrollArea.Scrollbar Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `orientation` | `"vertical" \| "horizontal"` | `"vertical"` | Which axis the scrollbar controls |
+| `className` | `string` | -- | Additional CSS classes |

@@ -1,0 +1,100 @@
+import { NumberFieldBasicExample, NumberFieldMinMaxExample, NumberFieldScrubExample, NumberFieldDisabledExample } from '@/examples/NumberField'
+
+# NumberField
+
+A numeric input built on Base UI's `NumberField` primitive. Supports increment/decrement buttons, min/max/step constraints, and scrub-area drag interaction.
+
+## Import
+
+```tsx
+import { NumberField } from "chunks-ui";
+```
+
+## Basic Usage
+
+```tsx
+<NumberField.Root defaultValue={10}>
+  <NumberField.Group>
+    <NumberField.Decrement />
+    <NumberField.Input />
+    <NumberField.Increment />
+  </NumberField.Group>
+</NumberField.Root>
+```
+
+<NumberFieldBasicExample />
+
+## Min, Max, and Step
+
+Use `min`, `max`, and `step` to constrain the value:
+
+```tsx
+<NumberField.Root defaultValue={5} min={1} max={20}>
+  <NumberField.Group>
+    <NumberField.Decrement />
+    <NumberField.Input />
+    <NumberField.Increment />
+  </NumberField.Group>
+</NumberField.Root>
+```
+
+<NumberFieldMinMaxExample />
+
+## Scrub Area
+
+Wrap a label with `NumberField.ScrubArea` to allow click-and-drag adjustment. The cursor hides during the scrub gesture via `NumberField.ScrubAreaCursor`:
+
+```tsx
+<NumberField.Root defaultValue={100}>
+  <NumberField.ScrubArea>
+    <span>Drag to adjust</span>
+    <NumberField.ScrubAreaCursor />
+  </NumberField.ScrubArea>
+  <NumberField.Group>
+    <NumberField.Decrement />
+    <NumberField.Input />
+    <NumberField.Increment />
+  </NumberField.Group>
+</NumberField.Root>
+```
+
+<NumberFieldScrubExample />
+
+## Disabled
+
+```tsx
+<NumberField.Root defaultValue={42} disabled>
+  <NumberField.Group>
+    <NumberField.Decrement />
+    <NumberField.Input />
+    <NumberField.Increment />
+  </NumberField.Group>
+</NumberField.Root>
+```
+
+<NumberFieldDisabledExample />
+
+## Compound Parts
+
+| Part | Description |
+|---|---|
+| `NumberField.Root` | State container. Manages value, min, max, step, and disabled state. |
+| `NumberField.Group` | Wraps `Decrement`, `Input`, and `Increment` into a single bordered control. |
+| `NumberField.Input` | The text input. Displays and accepts the numeric value. |
+| `NumberField.Decrement` | Button that decrements the value by `step`. |
+| `NumberField.Increment` | Button that increments the value by `step`. |
+| `NumberField.ScrubArea` | A region the user can click-drag to change the value. |
+| `NumberField.ScrubAreaCursor` | A virtual cursor shown during the scrub gesture (hidden by default). |
+
+## NumberField.Root Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `value` | `number` | -- | Controlled value |
+| `defaultValue` | `number` | -- | Initial value (uncontrolled) |
+| `onValueChange` | `(value: number) => void` | -- | Called when value changes |
+| `min` | `number` | -- | Minimum allowed value |
+| `max` | `number` | -- | Maximum allowed value |
+| `step` | `number` | `1` | Step increment |
+| `disabled` | `boolean` | `false` | Disable all interaction |
+| `className` | `string` | -- | Additional CSS classes |

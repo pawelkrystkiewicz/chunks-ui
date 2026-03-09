@@ -35,6 +35,16 @@
   },
   "overrides": [
     {
+      "includes": ["**/*.spec.tsx", "**/*.spec.ts", "**/*.test.tsx", "**/*.test.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noNonNullAssertion": "off"
+          }
+        }
+      }
+    },
+    {
       "includes": ["packages/ui/**/*.tsx", "packages/ui/**/*.jsx"],
       "linter": {
         "rules": {

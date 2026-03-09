@@ -1,0 +1,60 @@
+import { ProgressBasicExample, ProgressIndeterminateExample, ProgressValuesExample } from '@/examples/Progress'
+
+# Progress
+
+A progress bar built on Base UI's `Progress` primitive. Supports determinate values and an indeterminate loading state.
+
+## Import
+
+```tsx
+import { Progress } from "chunks-ui";
+```
+
+## Basic Usage
+
+Pass `value` and `max` to show a determinate progress bar:
+
+```tsx
+<Progress.Root value={65} max={100}>
+  <Progress.Track>
+    <Progress.Indicator />
+  </Progress.Track>
+</Progress.Root>
+```
+
+<ProgressBasicExample />
+
+## Indeterminate
+
+Omit `value` (or pass `null`) to activate the indeterminate pulse animation:
+
+```tsx
+<Progress.Root>
+  <Progress.Track>
+    <Progress.Indicator />
+  </Progress.Track>
+</Progress.Root>
+```
+
+<ProgressIndeterminateExample />
+
+## Multiple Values
+
+<ProgressValuesExample />
+
+## Compound Parts
+
+| Part | Description |
+|---|---|
+| `Progress.Root` | State container. Holds `value`, `max`, and exposes `data-indeterminate` when no value is set. |
+| `Progress.Track` | The background rail. Full-width pill shape. |
+| `Progress.Indicator` | Fills the track proportionally. Pulses when indeterminate. |
+
+## Progress.Root Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `value` | `number \| null` | `null` | Current progress value. `null` triggers indeterminate state. |
+| `max` | `number` | `100` | Maximum value |
+| `aria-label` | `string` | -- | Accessible label for the progress bar |
+| `className` | `string` | -- | Additional CSS classes |

@@ -1,0 +1,149 @@
+import { SliderBasicExample, SliderWithValueExample, SliderRangeExample, SliderVerticalExample, SliderDisabledExample } from '@/examples/Slider'
+
+# Slider
+
+A draggable range input built on Base UI's `Slider` primitive. Supports single values, ranges, horizontal and vertical orientations, and keyboard navigation.
+
+## Import
+
+```tsx
+import { Slider } from "chunks-ui";
+```
+
+## Basic Usage
+
+```tsx
+<Slider.Root defaultValue={40}>
+  <Slider.Control>
+    <Slider.Track>
+      <Slider.Indicator />
+      <Slider.Thumb aria-label="Value" />
+    </Slider.Track>
+  </Slider.Control>
+</Slider.Root>
+```
+
+<SliderBasicExample />
+
+## With Value Display
+
+Use `Slider.Value` to display the current value. Place it anywhere inside `Slider.Root`:
+
+```tsx
+<Slider.Root defaultValue={60}>
+  <div className="flex items-center justify-between">
+    <span className="text-sm text-muted-foreground">Volume</span>
+    <Slider.Value />
+  </div>
+  <Slider.Control>
+    <Slider.Track>
+      <Slider.Indicator />
+      <Slider.Thumb aria-label="Volume" />
+    </Slider.Track>
+  </Slider.Control>
+</Slider.Root>
+```
+
+<SliderWithValueExample />
+
+## Range Slider
+
+Pass an array to `defaultValue` and render a `Slider.Thumb` with `index` for each handle:
+
+```tsx
+<Slider.Root defaultValue={[20, 80]}>
+  <Slider.Control>
+    <Slider.Track>
+      <Slider.Indicator />
+      <Slider.Thumb index={0} aria-label="Minimum" />
+      <Slider.Thumb index={1} aria-label="Maximum" />
+    </Slider.Track>
+  </Slider.Control>
+</Slider.Root>
+```
+
+<SliderRangeExample />
+
+## Vertical Orientation
+
+Set `orientation="vertical"` on the root. The track and indicator switch to a vertical layout automatically:
+
+```tsx
+<Slider.Root defaultValue={50} orientation="vertical">
+  <Slider.Control>
+    <Slider.Track>
+      <Slider.Indicator />
+      <Slider.Thumb aria-label="Value" />
+    </Slider.Track>
+  </Slider.Control>
+</Slider.Root>
+```
+
+<SliderVerticalExample />
+
+## Controlled
+
+```tsx
+function ControlledSlider() {
+  const [value, setValue] = useState(50);
+
+  return (
+    <Slider.Root value={value} onValueChange={setValue}>
+      <Slider.Control>
+        <Slider.Track>
+          <Slider.Indicator />
+          <Slider.Thumb aria-label="Value" />
+        </Slider.Track>
+      </Slider.Control>
+    </Slider.Root>
+  );
+}
+```
+
+## Disabled
+
+```tsx
+<Slider.Root defaultValue={50} disabled>
+  <Slider.Control>
+    <Slider.Track>
+      <Slider.Indicator />
+      <Slider.Thumb aria-label="Value" />
+    </Slider.Track>
+  </Slider.Control>
+</Slider.Root>
+```
+
+<SliderDisabledExample />
+
+## Compound Parts
+
+| Part | Description |
+|---|---|
+| `Slider.Root` | State container. Manages value, orientation, and disabled state. |
+| `Slider.Value` | Displays the current numeric value as text. |
+| `Slider.Control` | The interactive area. Handles pointer and keyboard events. |
+| `Slider.Track` | The background rail. Full width (or height when vertical). |
+| `Slider.Indicator` | Fills the track from origin to the current thumb position. |
+| `Slider.Thumb` | The draggable handle. Requires `aria-label` for accessibility. |
+
+## Slider.Root Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `value` | `number \| number[]` | -- | Controlled value |
+| `defaultValue` | `number \| number[]` | `0` | Initial value (uncontrolled) |
+| `onValueChange` | `(value: number \| number[]) => void` | -- | Called on value change |
+| `min` | `number` | `0` | Minimum value |
+| `max` | `number` | `100` | Maximum value |
+| `step` | `number` | `1` | Step increment |
+| `orientation` | `"horizontal" \| "vertical"` | `"horizontal"` | Layout direction |
+| `disabled` | `boolean` | `false` | Disable interaction |
+| `className` | `string` | -- | Additional CSS classes |
+
+## Slider.Thumb Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `index` | `number` | `0` | Which value this thumb controls (range sliders) |
+| `aria-label` | `string` | **required** | Accessible label for the thumb |
+| `className` | `string` | -- | Additional CSS classes |

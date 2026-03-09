@@ -1,0 +1,130 @@
+import { MenuBasicExample, MenuGroupExample, MenuCheckboxExample, MenuRadioExample } from '@/examples/Menu'
+
+# Menu
+
+A dropdown menu built on Base UI's `Menu` primitive. Supports plain items, groups, checkbox items, and radio groups. Animates with Motion when available, falls back to CSS transitions.
+
+## Import
+
+```tsx
+import { Menu } from "chunks-ui";
+```
+
+## Basic Usage
+
+```tsx
+<Menu.Root>
+  <Menu.Trigger>Options</Menu.Trigger>
+  <Menu.Content>
+    <Menu.Item>View profile</Menu.Item>
+    <Menu.Item>Edit settings</Menu.Item>
+    <Menu.Separator />
+    <Menu.Item>Sign out</Menu.Item>
+  </Menu.Content>
+</Menu.Root>
+```
+
+<MenuBasicExample />
+
+## Groups
+
+Use `Menu.Group` with `Menu.GroupLabel` to organize items into labelled sections:
+
+```tsx
+<Menu.Root>
+  <Menu.Trigger>Actions</Menu.Trigger>
+  <Menu.Content>
+    <Menu.Group>
+      <Menu.GroupLabel>File</Menu.GroupLabel>
+      <Menu.Item>New file</Menu.Item>
+      <Menu.Item>Open...</Menu.Item>
+    </Menu.Group>
+    <Menu.Separator />
+    <Menu.Group>
+      <Menu.GroupLabel>Edit</Menu.GroupLabel>
+      <Menu.Item>Undo</Menu.Item>
+      <Menu.Item>Redo</Menu.Item>
+    </Menu.Group>
+  </Menu.Content>
+</Menu.Root>
+```
+
+<MenuGroupExample />
+
+## Checkbox Items
+
+`Menu.CheckboxItem` keeps a checked state. Pair with `Menu.CheckboxItemIndicator` to show a check mark:
+
+```tsx
+<Menu.CheckboxItem checked={showGrid} onCheckedChange={setShowGrid}>
+  <Menu.CheckboxItemIndicator>✓</Menu.CheckboxItemIndicator>
+  Show grid
+</Menu.CheckboxItem>
+```
+
+<MenuCheckboxExample />
+
+## Radio Group
+
+`Menu.RadioGroup` enforces single selection among `Menu.RadioItem` children:
+
+```tsx
+<Menu.RadioGroup value={theme} onValueChange={setTheme}>
+  <Menu.RadioItem value="light">
+    <Menu.RadioItemIndicator>•</Menu.RadioItemIndicator>
+    Light
+  </Menu.RadioItem>
+  <Menu.RadioItem value="dark">
+    <Menu.RadioItemIndicator>•</Menu.RadioItemIndicator>
+    Dark
+  </Menu.RadioItem>
+</Menu.RadioGroup>
+```
+
+<MenuRadioExample />
+
+## Positioning
+
+`Menu.Content` accepts positioning props forwarded to Base UI's positioner:
+
+```tsx
+<Menu.Content side="right" align="start" sideOffset={8}>
+  ...
+</Menu.Content>
+```
+
+## Compound Parts
+
+| Part | Description |
+|---|---|
+| `Menu.Root` | State container. Manages open/close. |
+| `Menu.Trigger` | Element that opens the menu. |
+| `Menu.Content` | Portal + positioner + popup panel. Default `sideOffset={4}`. |
+| `Menu.Item` | A single actionable menu entry. |
+| `Menu.Separator` | Horizontal divider between groups of items. |
+| `Menu.Group` | Semantic grouping wrapper for related items. |
+| `Menu.GroupLabel` | Non-interactive label for a `Menu.Group`. |
+| `Menu.CheckboxItem` | Menu item with a toggleable checked state. |
+| `Menu.CheckboxItemIndicator` | Visual indicator shown when `CheckboxItem` is checked. |
+| `Menu.RadioGroup` | Enforces single selection among `RadioItem` children. |
+| `Menu.RadioItem` | Selectable item within a `Menu.RadioGroup`. |
+| `Menu.RadioItemIndicator` | Visual indicator shown when `RadioItem` is selected. |
+| `Menu.Arrow` | SVG arrow pointing to the trigger. |
+
+## Menu.Content Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `side` | `"top" \| "bottom" \| "left" \| "right"` | `"bottom"` | Preferred side relative to the trigger |
+| `sideOffset` | `number` | `4` | Distance from the trigger |
+| `align` | `"start" \| "center" \| "end"` | `"center"` | Alignment along the side |
+| `alignOffset` | `number` | `0` | Offset from the alignment edge |
+| `className` | `string` | -- | Additional CSS classes |
+
+## Menu.Item Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `disabled` | `boolean` | `false` | Prevent interaction and dim the item |
+| `onClick` | `() => void` | -- | Called when the item is activated |
+| `className` | `string` | -- | Additional CSS classes |

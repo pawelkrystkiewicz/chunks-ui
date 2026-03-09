@@ -1,8 +1,17 @@
 // chunks-ui barrel export
 
 // Components
+export type {
+  AccordionHeaderProps,
+  AccordionItemProps,
+  AccordionPanelProps,
+  AccordionRootProps,
+  AccordionTriggerProps,
+} from "./components/accordion";
+export { Accordion } from "./components/accordion";
 export { Avatar, type AvatarProps } from "./components/avatar";
 export { Button, type ButtonProps, buttonVariants } from "./components/button";
+export { Calendar, type CalendarProps } from "./components/calendar";
 export type {
   CardContentProps,
   CardDescriptionProps,
@@ -35,6 +44,7 @@ export type {
   ComboboxTriggerProps,
 } from "./components/combobox";
 export { Combobox } from "./components/combobox";
+export { DatePicker, type DatePickerProps } from "./components/date-picker";
 export type {
   DialogBackdropProps,
   DialogCloseProps,
@@ -65,6 +75,32 @@ export { Field } from "./components/field";
 export { Input, type InputProps, inputVariants } from "./components/input";
 export { Loader, type LoaderProps } from "./components/loader";
 export type {
+  MenuArrowProps,
+  MenuCheckboxItemIndicatorProps,
+  MenuCheckboxItemProps,
+  MenuContentProps,
+  MenuGroupLabelProps,
+  MenuGroupProps,
+  MenuItemProps,
+  MenuRadioGroupProps,
+  MenuRadioItemIndicatorProps,
+  MenuRadioItemProps,
+  MenuRootProps,
+  MenuSeparatorProps,
+  MenuTriggerProps,
+} from "./components/menu";
+export { Menu } from "./components/menu";
+export type {
+  NumberFieldDecrementProps,
+  NumberFieldGroupProps,
+  NumberFieldIncrementProps,
+  NumberFieldInputProps,
+  NumberFieldRootProps,
+  NumberFieldScrubAreaCursorProps,
+  NumberFieldScrubAreaProps,
+} from "./components/number-field";
+export { NumberField } from "./components/number-field";
+export type {
   PopoverArrowProps,
   PopoverCloseProps,
   PopoverContentProps,
@@ -75,12 +111,27 @@ export type {
 } from "./components/popover";
 export { Popover } from "./components/popover";
 export type {
+  ProgressIndicatorProps,
+  ProgressRootProps,
+  ProgressTrackProps,
+} from "./components/progress";
+export { Progress } from "./components/progress";
+export type {
   RadioGroupProps,
   RadioIndicatorProps,
   RadioItemProps,
   RadioRootProps,
 } from "./components/radio";
 export { Radio } from "./components/radio";
+export type {
+  ScrollAreaContentProps,
+  ScrollAreaCornerProps,
+  ScrollAreaRootProps,
+  ScrollAreaScrollbarProps,
+  ScrollAreaThumbProps,
+  ScrollAreaViewportProps,
+} from "./components/scroll-area";
+export { ScrollArea } from "./components/scroll-area";
 export type {
   SelectGroupLabelProps,
   SelectGroupProps,
@@ -96,6 +147,15 @@ export type {
 } from "./components/select";
 export { Select } from "./components/select";
 export { Separator, type SeparatorProps } from "./components/separator";
+export type {
+  SliderControlProps,
+  SliderIndicatorProps,
+  SliderRootProps,
+  SliderThumbProps,
+  SliderTrackProps,
+  SliderValueProps,
+} from "./components/slider";
+export { Slider } from "./components/slider";
 export type { SwitchRootProps, SwitchThumbProps } from "./components/switch";
 export { Switch } from "./components/switch";
 export type {
@@ -109,6 +169,18 @@ export type {
 } from "./components/tabs";
 export { Tabs } from "./components/tabs";
 export { Textarea, type TextareaProps } from "./components/textarea";
+export type { Theme, ThemeToggleProps } from "./components/theme-toggle";
+export { ThemeToggle } from "./components/theme-toggle";
+export type {
+  ToastActionProps,
+  ToastCloseProps,
+  ToastDescriptionProps,
+  ToastProviderProps,
+  ToastRootProps,
+  ToastTitleProps,
+  ToastViewportProps,
+} from "./components/toast";
+export { Toast } from "./components/toast";
 export type { ToggleGroupItemProps, ToggleGroupRootProps } from "./components/toggle-group";
 export { ToggleGroup } from "./components/toggle-group";
 export type {

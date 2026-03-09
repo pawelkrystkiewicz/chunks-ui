@@ -1,0 +1,61 @@
+import { CalendarBasicExample, CalendarControlledExample, CalendarDisabledDatesExample } from '@/examples/Calendar'
+
+# Calendar
+
+A standalone date picker grid built without an external primitive. Supports controlled and uncontrolled selection, min/max bounds, and custom disabled-date predicates.
+
+## Import
+
+```tsx
+import { Calendar } from "chunks-ui";
+```
+
+## Basic Usage
+
+```tsx
+<Calendar />
+```
+
+<CalendarBasicExample />
+
+## Controlled
+
+```tsx
+function ControlledCalendar() {
+  const [date, setDate] = useState<Date | null>(null);
+
+  return (
+    <Calendar value={date} onValueChange={setDate} />
+  );
+}
+```
+
+<CalendarControlledExample />
+
+## Disabled Dates
+
+Use `min`/`max` to set a date range, or `isDateDisabled` to disable individual dates with a predicate:
+
+```tsx
+const today = new Date();
+const isWeekend = (date: Date) => date.getDay() === 0 || date.getDay() === 6;
+
+<Calendar
+  min={today}
+  isDateDisabled={isWeekend}
+/>
+```
+
+<CalendarDisabledDatesExample />
+
+## Calendar Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `value` | `Date \| null` | -- | Controlled selected date |
+| `defaultValue` | `Date \| null` | `null` | Initial selected date (uncontrolled) |
+| `onValueChange` | `(date: Date \| null) => void` | -- | Called when the selected date changes |
+| `min` | `Date` | -- | Earliest selectable date (inclusive) |
+| `max` | `Date` | -- | Latest selectable date (inclusive) |
+| `isDateDisabled` | `(date: Date) => boolean` | -- | Predicate to disable individual dates |
+| `className` | `string` | -- | Additional CSS classes |

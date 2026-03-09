@@ -1,0 +1,72 @@
+import { DatePickerBasicExample, DatePickerControlledExample, DatePickerConstrainedExample, DatePickerDisabledExample } from '@/examples/DatePicker'
+
+# DatePicker
+
+A trigger-and-popover date picker built on Base UI's `Popover` primitive and the `Calendar` component. Selecting a date closes the popover automatically.
+
+## Import
+
+```tsx
+import { DatePicker } from "chunks-ui";
+```
+
+## Basic Usage
+
+```tsx
+<DatePicker />
+```
+
+<DatePickerBasicExample />
+
+## Controlled
+
+```tsx
+function ControlledDatePicker() {
+  const [date, setDate] = useState<Date | null>(null);
+
+  return (
+    <DatePicker
+      value={date}
+      onValueChange={setDate}
+      placeholder="Select a date"
+    />
+  );
+}
+```
+
+<DatePickerControlledExample />
+
+## Date Constraints
+
+Use `min` and `max` to limit the selectable range. Dates outside the range are rendered disabled in the calendar:
+
+```tsx
+const today = new Date();
+const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, today.getDate());
+
+<DatePicker min={today} max={nextMonth} />
+```
+
+<DatePickerConstrainedExample />
+
+## Disabled
+
+```tsx
+<DatePicker disabled />
+```
+
+<DatePickerDisabledExample />
+
+## DatePicker Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `value` | `Date \| null` | -- | Controlled selected date |
+| `defaultValue` | `Date \| null` | `null` | Initial selected date (uncontrolled) |
+| `onValueChange` | `(date: Date \| null) => void` | -- | Called when a date is selected |
+| `placeholder` | `string` | `"Pick a date"` | Trigger placeholder text |
+| `disabled` | `boolean` | `false` | Disable the trigger and prevent opening |
+| `min` | `Date` | -- | Earliest selectable date |
+| `max` | `Date` | -- | Latest selectable date |
+| `isDateDisabled` | `(date: Date) => boolean` | -- | Predicate to disable individual dates |
+| `className` | `string` | -- | Additional CSS classes on the root element |
