@@ -4,12 +4,12 @@ import { ThemeToggle } from "./index";
 
 describe("ThemeToggle", () => {
   it("light theme", async () => {
-    const { fixture } = await renderFixture(<ThemeToggle theme="light" onThemeChange={() => {}} />);
+    const { fixture } = await renderFixture(<ThemeToggle theme="light" onClick={() => {}} />);
     await expect(fixture).toMatchScreenshot();
   });
 
   it("dark theme", async () => {
-    const { fixture } = await renderFixture(<ThemeToggle theme="dark" onThemeChange={() => {}} />);
+    const { fixture } = await renderFixture(<ThemeToggle theme="dark" onClick={() => {}} />);
     await expect(fixture).toMatchScreenshot();
   });
 });
