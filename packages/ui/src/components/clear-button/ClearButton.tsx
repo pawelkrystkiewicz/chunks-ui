@@ -16,7 +16,7 @@ export function ClearButton({ className, label, ...props }: ClearButtonProps) {
       aria-label={resolvedLabel}
       className={cn(
         "inline-flex size-6 items-center justify-center rounded-full",
-        "text-muted-foreground hover:bg-accent hover:text-foreground",
+        "text-muted-foreground hover:bg-destructive/5 hover:text-foreground",
         "focus-visible:outline-2 focus-visible:outline-ring",
         "disabled:pointer-events-none disabled:opacity-50",
         "hover:text-destructive",

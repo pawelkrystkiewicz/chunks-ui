@@ -1,0 +1,97 @@
+import { TableBasicExample, TableMinimalExample } from '@/examples/Table'
+
+# Table
+
+A compound styling component for HTML tables. Zero logic — just consistent styling for headers, rows, cells, and captions. Pairs perfectly with [TanStack Table](https://tanstack.com/table) for data-rich use cases (see [Data Table](/components/data-table)).
+
+## Import
+
+```tsx
+import { Table } from "chunks-ui";
+```
+
+## Basic Usage
+
+```tsx
+<Table.Root>
+  <Table.Caption>A list of your recent invoices.</Table.Caption>
+  <Table.Header>
+    <Table.Row>
+      <Table.Head>Invoice</Table.Head>
+      <Table.Head>Status</Table.Head>
+      <Table.Head>Method</Table.Head>
+      <Table.Head className="text-right">Amount</Table.Head>
+    </Table.Row>
+  </Table.Header>
+  <Table.Body>
+    <Table.Row>
+      <Table.Cell className="font-medium">INV001</Table.Cell>
+      <Table.Cell>Paid</Table.Cell>
+      <Table.Cell>Credit Card</Table.Cell>
+      <Table.Cell className="text-right">$250.00</Table.Cell>
+    </Table.Row>
+  </Table.Body>
+  <Table.Footer>
+    <Table.Row>
+      <Table.Cell colSpan={3}>Total</Table.Cell>
+      <Table.Cell className="text-right">$1,750.00</Table.Cell>
+    </Table.Row>
+  </Table.Footer>
+</Table.Root>
+```
+
+<TableBasicExample />
+
+## Minimal Table
+
+You can use any subset of compound parts:
+
+```tsx
+<Table.Root>
+  <Table.Header>
+    <Table.Row>
+      <Table.Head>Name</Table.Head>
+      <Table.Head>Role</Table.Head>
+    </Table.Row>
+  </Table.Header>
+  <Table.Body>
+    <Table.Row>
+      <Table.Cell>Alice Johnson</Table.Cell>
+      <Table.Cell>Admin</Table.Cell>
+    </Table.Row>
+  </Table.Body>
+</Table.Root>
+```
+
+<TableMinimalExample />
+
+## Compound Parts
+
+| Part | Element | Description |
+|---|---|---|
+| `Table.Root` | `<table>` | Outer wrapper. Full-width, scrollable overflow container. |
+| `Table.Header` | `<thead>` | Header section. Bottom border on rows. |
+| `Table.Body` | `<tbody>` | Body section. No border on last row. |
+| `Table.Footer` | `<tfoot>` | Footer section. Top border, muted background. |
+| `Table.Row` | `<tr>` | Row. Bottom border, hover highlight, `data-[state=selected]` support. |
+| `Table.Head` | `<th>` | Header cell. Muted foreground, medium weight, left-aligned. |
+| `Table.Cell` | `<td>` | Data cell. Standard padding, vertical alignment. |
+| `Table.Caption` | `<caption>` | Table description. Muted text, below the table. |
+
+## Row Selection
+
+Use `data-state="selected"` on `Table.Row` to highlight selected rows:
+
+```tsx
+<Table.Row data-state="selected">
+  <Table.Cell>This row is highlighted</Table.Cell>
+</Table.Row>
+```
+
+## Props
+
+All compound parts accept their native HTML element props plus `className` for additional styling. There are no component-specific variant props — this is a pure styling layer.
+
+## With TanStack Table
+
+For sorting, filtering, pagination, and row selection, see the [Data Table](/components/data-table) recipe.
