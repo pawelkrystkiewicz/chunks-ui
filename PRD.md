@@ -83,6 +83,7 @@ Components are ordered by build priority. Tier 1 ships in v0.1.0. Tier 2 lands i
 | 28  | **Scroll Area**  | `Scroll Area`     | Custom scrollbar styling.                                     |
 | 29  | **Number Field** | `Number Field`    | Numeric input with stepper.                                   |
 | 30  | **Slider**       | `Slider`          | Range input.                                                  |
+| 31  | **ThemeToggle**  | — (custom)        | Presentation-only toggle button. Customizable icon slots.     |
 
 #### Removed — Not carried forward
 
@@ -92,7 +93,7 @@ Components are ordered by build priority. Tier 1 ships in v0.1.0. Tier 2 lands i
 | **Show**                  | `{condition && <X />}` — React syntax.                                               |
 | **For**                   | `items.map(item => ...)` — React syntax.                                             |
 | **Link**                  | Empty shell. Users import Next.js `Link` or React Router `Link` directly.            |
-| **DarkModeToggle**        | App-level concern. Too opinionated (specific SVGs, animation library).               |
+| **DarkModeToggle**        | Replaced by `ThemeToggle` — a logic-free button with customizable icon slots.        |
 | **LoadingOverlay**        | Two-line composition: `<Overlay><Loader /></Overlay>`.                               |
 | **Highlighter**           | Niche search highlighting. Belongs in app code.                                      |
 | **Icon** (built-in paths) | Hardcoded SVG paths lock users in. Pass `<LucideIcon />` as children/prop instead.   |
@@ -121,6 +122,46 @@ v0.1.0 ships Select + Combobox. Autocomplete joins in later if needed.
 Base UI v1.2 provides 36+ headless primitives. Chunks uses ~20 of them. The key win: **Floating UI is bundled inside Base UI** — no separate `@floating-ui/react` dependency. Components that previously needed manual positioning (Autocomplete, Popover, DatePicker, Select) get it for free via Base UI's `*.Positioner` subparts.
 
 The custom Autocomplete from Creation UI is **replaced entirely** by Base UI's `Combobox` (selection from list). No custom floating logic needed.
+
+### 2.5 ThemeToggle
+
+A **presentation-only** icon button for light/dark mode. No internal state, no theme detection — the consuming app owns all of that logic. The component renders a styled button and swaps between two icon slots based on the current theme value passed in.
+
+#### API
+
+```tsx
+export type Theme = 'light' | 'dark'
+
+interface ThemeToggleProps {
+  theme: Theme
+  onClick?: React.MouseEventHandler<HTMLButtonElement>
+  lightIcon?: React.ReactNode  // default: <Sun /> from lucide-react
+  darkIcon?: React.ReactNode   // default: <Moon /> from lucide-react
+  className?: string
+}
+```
+
+#### Design rules
+
+- **No internal state.** `theme` is a controlled prop; the parent decides when it changes.
+- **Default icons from Lucide React** (`lucide-react` is listed as a peer dependency). Users can pass any `ReactNode` to override — e.g. a custom SVG, a different icon library, or an emoji.
+- **`Theme` type is a public export** from `chunks-ui` so consumers can type their own state without importing from a third-party.
+- The active icon is shown via CSS (`opacity`/`scale` transition), not conditional rendering, so both icons are always in the DOM and the transition is smooth.
+- Respects `prefers-reduced-motion` — disables the scale/rotate transition when set.
+- `lucide-react` is a **peer dependency**, not a hard dependency. If the user overrides both icon slots, Lucide is never imported.
+
+#### Usage example
+
+```tsx
+import { ThemeToggle, Theme } from 'chunks-ui'
+
+const [theme, setTheme] = useState<Theme>('light')
+
+<ThemeToggle
+  theme={theme}
+  onClick={() => setTheme(t => t === 'light' ? 'dark' : 'light')}
+/>
+```
 
 ---
 
