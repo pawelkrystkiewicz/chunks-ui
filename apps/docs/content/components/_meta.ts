@@ -1,4 +1,5 @@
 export default {
+  accordion: { title: "Accordion" },
   avatar: { title: "Avatar" },
   button: { title: "Button" },
   card: { title: "Card" },
@@ -15,6 +16,7 @@ export default {
   radio: { title: "Radio" },
   select: { title: "Select" },
   separator: { title: "Separator" },
+  slider: { title: "Slider" },
   switch: { title: "Switch" },
   tabs: { title: "Tabs" },
   textarea: { title: "Textarea" },

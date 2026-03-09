@@ -1,0 +1,146 @@
+import { AccordionBasicExample, AccordionMultipleExample, AccordionDefaultOpenExample, AccordionDisabledExample } from '@/examples/Accordion'
+
+# Accordion
+
+A vertically stacked set of collapsible sections built on Base UI's `Accordion` primitive. Each item has a trigger header that reveals its panel with an animated height transition.
+
+## Import
+
+```tsx
+import { Accordion } from "chunks-ui";
+```
+
+## Basic Usage
+
+```tsx
+<Accordion.Root>
+  <Accordion.Item value="item-1">
+    <Accordion.Header>
+      <Accordion.Trigger>What is chunks-ui?</Accordion.Trigger>
+    </Accordion.Header>
+    <Accordion.Panel>
+      <div className="pb-4">A personal React component library.</div>
+    </Accordion.Panel>
+  </Accordion.Item>
+  <Accordion.Item value="item-2">
+    <Accordion.Header>
+      <Accordion.Trigger>Is it accessible?</Accordion.Trigger>
+    </Accordion.Header>
+    <Accordion.Panel>
+      <div className="pb-4">Yes — keyboard nav and ARIA handled by Base UI.</div>
+    </Accordion.Panel>
+  </Accordion.Item>
+</Accordion.Root>
+```
+
+<AccordionBasicExample />
+
+## Multiple Open Items
+
+By default only one item can be open at a time. Set `multiple` to allow expanding several items simultaneously:
+
+```tsx
+<Accordion.Root multiple>
+  {/* items */}
+</Accordion.Root>
+```
+
+<AccordionMultipleExample />
+
+## Default Open
+
+Pass an array of item values to `defaultValue` to start with those items expanded:
+
+```tsx
+<Accordion.Root defaultValue={["item-1"]}>
+  {/* items */}
+</Accordion.Root>
+```
+
+<AccordionDefaultOpenExample />
+
+## Controlled
+
+```tsx
+function ControlledAccordion() {
+  const [value, setValue] = useState<string[]>([]);
+
+  return (
+    <Accordion.Root value={value} onValueChange={setValue}>
+      <Accordion.Item value="item-1">
+        <Accordion.Header>
+          <Accordion.Trigger>Section</Accordion.Trigger>
+        </Accordion.Header>
+        <Accordion.Panel>
+          <div className="pb-4">Content</div>
+        </Accordion.Panel>
+      </Accordion.Item>
+    </Accordion.Root>
+  );
+}
+```
+
+## Disabled Item
+
+Set `disabled` on `Accordion.Item` to prevent it from being opened:
+
+```tsx
+<Accordion.Item value="item-2" disabled>
+  <Accordion.Header>
+    <Accordion.Trigger>Unavailable</Accordion.Trigger>
+  </Accordion.Header>
+  <Accordion.Panel>
+    <div className="pb-4">Unreachable content.</div>
+  </Accordion.Panel>
+</Accordion.Item>
+```
+
+<AccordionDisabledExample />
+
+## Animation
+
+The panel height animates using CSS transitions via Base UI's `--accordion-panel-height` CSS variable. No JavaScript animation library is required. To opt out, override the `transition` class on `Accordion.Panel`.
+
+Respects `prefers-reduced-motion` — the transition duration collapses to `0` when the user has reduced motion enabled.
+
+## Compound Parts
+
+| Part | Description |
+|---|---|
+| `Accordion.Root` | State container. Manages which items are open. |
+| `Accordion.Item` | Wraps a single collapsible section. Requires a unique `value`. |
+| `Accordion.Header` | Semantic `<h3>` wrapper around the trigger. |
+| `Accordion.Trigger` | Clickable button that toggles the panel. Includes the chevron icon. |
+| `Accordion.Panel` | The collapsible content area. Animates height on open/close. |
+
+## Accordion.Root Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `value` | `string[]` | -- | Controlled open items |
+| `defaultValue` | `string[]` | `[]` | Initially open items (uncontrolled) |
+| `onValueChange` | `(value: string[]) => void` | -- | Called when open items change |
+| `multiple` | `boolean` | `false` | Allow multiple items open simultaneously |
+| `className` | `string` | -- | Additional CSS classes |
+
+## Accordion.Item Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `value` | `string` | **required** | Unique identifier for this item |
+| `disabled` | `boolean` | `false` | Prevent this item from being opened |
+| `className` | `string` | -- | Additional CSS classes |
+
+## Accordion.Trigger Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `children` | `ReactNode` | **required** | Trigger label content |
+| `className` | `string` | -- | Additional CSS classes |
+
+## Accordion.Panel Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `children` | `ReactNode` | -- | Panel content |
+| `className` | `string` | -- | Additional CSS classes |

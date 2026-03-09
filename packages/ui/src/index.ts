@@ -1,6 +1,14 @@
 // chunks-ui barrel export
 
 // Components
+export type {
+  AccordionHeaderProps,
+  AccordionItemProps,
+  AccordionPanelProps,
+  AccordionRootProps,
+  AccordionTriggerProps,
+} from "./components/accordion";
+export { Accordion } from "./components/accordion";
 export { Avatar, type AvatarProps } from "./components/avatar";
 export { Button, type ButtonProps, buttonVariants } from "./components/button";
 export type {
@@ -96,6 +104,15 @@ export type {
 } from "./components/select";
 export { Select } from "./components/select";
 export { Separator, type SeparatorProps } from "./components/separator";
+export type {
+  SliderControlProps,
+  SliderIndicatorProps,
+  SliderRootProps,
+  SliderThumbProps,
+  SliderTrackProps,
+  SliderValueProps,
+} from "./components/slider";
+export { Slider } from "./components/slider";
 export type { SwitchRootProps, SwitchThumbProps } from "./components/switch";
 export { Switch } from "./components/switch";
 export type {
