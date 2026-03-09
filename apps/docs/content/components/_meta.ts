@@ -24,6 +24,8 @@ export default {
   separator: { title: "Separator" },
   slider: { title: "Slider" },
   switch: { title: "Switch" },
+  table: { title: "Table" },
+  "data-table": { title: "Data Table" },
   tabs: { title: "Tabs" },
   textarea: { title: "Textarea" },
   "theme-toggle": { title: "ThemeToggle" },

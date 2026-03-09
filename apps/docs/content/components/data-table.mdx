@@ -1,0 +1,167 @@
+import { DataTableExample } from '@/examples/DataTable'
+
+# Data Table
+
+A recipe for building data tables using [TanStack Table](https://tanstack.com/table) with chunks-ui's `Table` component for styling. TanStack handles all the logic (sorting, filtering, pagination, row selection) while `Table.*` handles the look and feel.
+
+## Dependencies
+
+```bash
+bun add @tanstack/react-table
+```
+
+## Full Example
+
+This example shows sorting, filtering, pagination, and row selection — all composed from chunks-ui primitives (`Table`, `Button`, `Input`, `Checkbox`).
+
+<DataTableExample />
+
+## How It Works
+
+### 1. Define Columns
+
+Use TanStack's `ColumnDef` type. Render chunks-ui components inside `header` and `cell`:
+
+```tsx
+import { type ColumnDef } from "@tanstack/react-table";
+import { Button, Checkbox } from "chunks-ui";
+
+const columns: ColumnDef<Payment>[] = [
+  {
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox.Root
+        checked={table.getIsAllPageRowsSelected()}
+        onCheckedChange={(checked) =>
+          table.toggleAllPageRowsSelected(!!checked)
+        }
+      >
+        <Checkbox.Indicator />
+      </Checkbox.Root>
+    ),
+    cell: ({ row }) => (
+      <Checkbox.Root
+        checked={row.getIsSelected()}
+        onCheckedChange={(checked) => row.toggleSelected(!!checked)}
+      >
+        <Checkbox.Indicator />
+      </Checkbox.Root>
+    ),
+  },
+  {
+    accessorKey: "email",
+    header: ({ column }) => (
+      <Button
+        variant="text"
+        color="secondary"
+        onClick={() =>
+          column.toggleSorting(column.getIsSorted() === "asc")
+        }
+      >
+        Email
+        <ArrowUpDown className="ml-1 size-4" />
+      </Button>
+    ),
+  },
+  {
+    accessorKey: "amount",
+    header: () => <div className="text-right">Amount</div>,
+    cell: ({ row }) => {
+      const formatted = new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+      }).format(row.getValue("amount"));
+      return <div className="text-right font-medium">{formatted}</div>;
+    },
+  },
+];
+```
+
+### 2. Create the Table Instance
+
+```tsx
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+} from "@tanstack/react-table";
+
+const table = useReactTable({
+  data,
+  columns,
+  getCoreRowModel: getCoreRowModel(),
+  getSortedRowModel: getSortedRowModel(),
+  getFilteredRowModel: getFilteredRowModel(),
+  getPaginationRowModel: getPaginationRowModel(),
+  state: { sorting, columnFilters, rowSelection },
+  onSortingChange: setSorting,
+  onColumnFiltersChange: setColumnFilters,
+  onRowSelectionChange: setRowSelection,
+});
+```
+
+### 3. Render with Table.\*
+
+Use `flexRender` from TanStack to render column definitions into chunks-ui styled cells:
+
+```tsx
+import { flexRender } from "@tanstack/react-table";
+import { Table } from "chunks-ui";
+
+<Table.Root>
+  <Table.Header>
+    {table.getHeaderGroups().map((headerGroup) => (
+      <Table.Row key={headerGroup.id}>
+        {headerGroup.headers.map((header) => (
+          <Table.Head key={header.id}>
+            {flexRender(header.column.columnDef.header, header.getContext())}
+          </Table.Head>
+        ))}
+      </Table.Row>
+    ))}
+  </Table.Header>
+  <Table.Body>
+    {table.getRowModel().rows.map((row) => (
+      <Table.Row
+        key={row.id}
+        data-state={row.getIsSelected() ? "selected" : undefined}
+      >
+        {row.getVisibleCells().map((cell) => (
+          <Table.Cell key={cell.id}>
+            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+          </Table.Cell>
+        ))}
+      </Table.Row>
+    ))}
+  </Table.Body>
+</Table.Root>
+```
+
+### 4. Add Controls
+
+Filter with `Input`, paginate with `Button` — no special wrapper needed:
+
+```tsx
+<Input
+  placeholder="Filter emails..."
+  value={(table.getColumn("email")?.getFilterValue() as string) ?? ""}
+  onChange={(e) => table.getColumn("email")?.setFilterValue(e.target.value)}
+/>
+
+<Button
+  variant="outlined"
+  onClick={() => table.previousPage()}
+  disabled={!table.getCanPreviousPage()}
+>
+  Previous
+</Button>
+```
+
+## Why This Pattern?
+
+- **No table logic in chunks-ui** — `Table.*` is pure styling, TanStack owns the state
+- **Composable** — swap TanStack for plain `.map()`, the styling stays the same
+- **Familiar** — same pattern as shadcn/ui, widely adopted in the React ecosystem
+- **Type-safe** — `ColumnDef<T>` gives you full type inference in cell renderers

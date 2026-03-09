@@ -1,8 +1,8 @@
 #!/usr/bin/env bun
 
-import { readdirSync, readFileSync } from "fs";
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import YAML from "js-yaml";
-import { join } from "path";
 
 interface VersionInfo {
   currentVersion: string;
@@ -16,7 +16,7 @@ interface VersionInfo {
  */
 function parseVersion(version: string): [number, number, number] {
   const parts = version.split(".").map(Number);
-  if (parts.length !== 3 || parts.some(isNaN)) {
+  if (parts.length !== 3 || parts.some(Number.isNaN)) {
     throw new Error(`Invalid version format: ${version}`);
   }
   return parts as [number, number, number];

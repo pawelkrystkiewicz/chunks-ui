@@ -159,6 +159,17 @@ export { Slider } from "./components/slider";
 export type { SwitchRootProps, SwitchThumbProps } from "./components/switch";
 export { Switch } from "./components/switch";
 export type {
+  TableBodyProps,
+  TableCaptionProps,
+  TableCellProps,
+  TableFooterProps,
+  TableHeaderProps,
+  TableHeadProps,
+  TableProps,
+  TableRowProps,
+} from "./components/table";
+export { Table } from "./components/table";
+export type {
   TabsContentProps,
   TabsContentsProps,
   TabsIndicatorProps,
