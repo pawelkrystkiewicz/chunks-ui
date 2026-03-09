@@ -107,16 +107,22 @@ export function DataTableExample() {
     state: { sorting, columnFilters, rowSelection },
   });
 
+  const emailCol = table.getColumn("email");
+  const search = (emailCol?.getFilterValue() as string) ?? "";
+  const onClear = () => emailCol?.setFilterValue("");
+
   return (
     <Container centered={false}>
       <div className="flex w-full flex-col gap-4">
         <Input
           placeholder="Filter emails..."
-          value={(table.getColumn("email")?.getFilterValue() as string) ?? ""}
-          onChange={(event) => table.getColumn("email")?.setFilterValue(event.target.value)}
+          value={search}
+          onChange={(event) => emailCol?.setFilterValue(event.target.value)}
+          onClear={onClear}
           className="max-w-sm"
         />
-        <div className="overflow-hidden rounded-md border">
+        {/* if you want to have border outside table you must apply it like here */}
+        <div className="overflow-hidden rounded-md border border-border">
           <Table.Root>
             <Table.Header>
               {table.getHeaderGroups().map((headerGroup) => (

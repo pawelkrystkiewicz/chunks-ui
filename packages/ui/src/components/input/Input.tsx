@@ -19,8 +19,10 @@ export function Input({ startAdornment, endAdornment, onClear, className, ...pro
     return <BaseInput className={cn(inputVariants(), className)} {...props} />;
   }
 
+  const clearable = Boolean(String(props.value).length && typeof onClear === "function");
+
   return (
-    <div className="relative flex items-center">
+    <div className={cn("relative inline-flex items-center", className)}>
       {startAdornment && (
         <span className="pointer-events-none absolute left-3 flex items-center text-muted-foreground">
           {startAdornment}
@@ -31,13 +33,13 @@ export function Input({ startAdornment, endAdornment, onClear, className, ...pro
           inputVariants(),
           startAdornment && "pl-9",
           (endAdornment || onClear) && "pr-9",
-          className,
         )}
         {...props}
       />
-      {(endAdornment || onClear) && (
+      {/* caveat: can't have both clearable and suffix */}
+      {(endAdornment || clearable) && (
         <span className="absolute right-3 flex items-center">
-          {onClear ? <ClearButton onClick={onClear} /> : endAdornment}
+          {clearable ? <ClearButton onClick={onClear} /> : endAdornment}
         </span>
       )}
     </div>
