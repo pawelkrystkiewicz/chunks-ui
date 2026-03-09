@@ -22,7 +22,8 @@
     "version-packages": "changeset version",
     "release": "turbo run build --filter=chunks-ui && changeset publish",
     "version:next": "bun run ./scripts/calculate-next-version.ts",
-    "update:screenshots": "sh scripts/update-screenshots.sh"
+    "update:screenshots": "sh scripts/update-screenshots.sh",
+    "generate:llm": "turbo run generate:llm --filter=@chunks-ui/docs"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.6",
