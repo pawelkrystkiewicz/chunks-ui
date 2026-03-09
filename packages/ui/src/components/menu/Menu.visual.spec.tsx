@@ -7,12 +7,6 @@ describe("Menu", () => {
     const { fixture } = await renderFixture(
       <Menu.Root>
         <Menu.Trigger>Options</Menu.Trigger>
-        <Menu.Content>
-          <Menu.Item>Edit</Menu.Item>
-          <Menu.Item>Copy</Menu.Item>
-          <Menu.Separator />
-          <Menu.Item>Delete</Menu.Item>
-        </Menu.Content>
       </Menu.Root>,
     );
     await expect(fixture).toMatchScreenshot();
