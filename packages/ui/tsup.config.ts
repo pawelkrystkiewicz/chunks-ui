@@ -5,7 +5,7 @@ export default defineConfig((options) => ({
   entryPoints: ["src/index.ts"],
   format: ["cjs", "esm"],
   dts: true,
-  external: ["react", "react-dom", "motion"],
+  external: ["react", "react-dom", "motion", "@base-ui/react", "class-variance-authority"],
   banner: { js: '"use client";' },
   onSuccess: async () => {
     copyFileSync("src/theme.css", "dist/theme.css");
