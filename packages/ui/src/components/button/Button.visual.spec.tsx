@@ -14,22 +14,18 @@ const icon = (
 );
 
 describe("Button", () => {
-  it("variant matrix", async () => {
-    const { fixture } = await renderFixture(
-      <div
-        style={{ display: "grid", gridTemplateColumns: `repeat(${colors.length}, auto)`, gap: 12 }}
-      >
-        {variants.map((v) =>
-          colors.map((c) => (
-            <Button key={`${v}-${c}`} variant={v} color={c}>
-              {v}
-            </Button>
-          )),
-        )}
-      </div>,
-    );
-    await expect(fixture).toMatchScreenshot();
-  });
+  for (const variant of variants) {
+    for (const color of colors) {
+      it(`[${color}] [${variant}]`, async () => {
+        const { fixture } = await renderFixture(
+          <Button variant={variant} color={color}>
+            {color} {variant}
+          </Button>,
+        );
+        await expect(fixture).toMatchScreenshot();
+      });
+    }
+  }
 
   it("disabled", async () => {
     const { fixture } = await renderFixture(
