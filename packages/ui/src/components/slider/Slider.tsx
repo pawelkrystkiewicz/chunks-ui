@@ -82,7 +82,8 @@ function SliderThumb({ className, ...props }: SliderThumbProps) {
     <BaseSlider.Thumb
       className={cn(
         "size-4 rounded-full border-2 border-primary bg-background shadow-sm",
-        "micro-interactions",
+        // animate only colors to avoid resize slugishness
+        "micro-interactions transition-colors!",
         "data-[dragging]:scale-110 data-[dragging]:shadow-md",
         "focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
