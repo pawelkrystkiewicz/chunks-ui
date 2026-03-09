@@ -34,6 +34,9 @@
     },
     "test:visual:update": {
       "cache": false
+    },
+    "generate:llm": {
+      "cache": false
     }
   }
 }
