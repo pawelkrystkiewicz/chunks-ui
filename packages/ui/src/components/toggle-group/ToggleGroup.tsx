@@ -103,8 +103,7 @@ function ToggleGroupRoot({
     });
   }, [activeValue]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: run once on mount; updates handled by ResizeObserver
-  useLayoutEffect(measureBounds, []);
+  useLayoutEffect(measureBounds, [measureBounds]);
 
   useEffect(() => {
     if (!containerRef.current) return;
