@@ -1,5 +1,11 @@
 # chunks-ui
 
+## 0.0.4
+
+### Patch Changes
+
+- c37cd6a: corret peerDeps and table components
+
 ## 0.0.3
 
 ### Patch Changes
