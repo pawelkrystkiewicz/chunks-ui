@@ -7,7 +7,7 @@ Radio buttons built on Base UI's `Radio` and `RadioGroup` primitives. Includes a
 ## Import
 
 ```tsx
-import { Radio } from "chunks-ui";
+import { Radio } from 'chunks-ui'
 ```
 
 ## Basic Usage
@@ -26,14 +26,14 @@ import { Radio } from "chunks-ui";
 
 ```tsx
 function ControlledRadio() {
-  const [value, setValue] = useState("a");
+  const [value, setValue] = useState('a')
 
   return (
     <Radio.Group value={value} onValueChange={setValue}>
       <Radio.Item value="a">Option A</Radio.Item>
       <Radio.Item value="b">Option B</Radio.Item>
     </Radio.Group>
-  );
+  )
 }
 ```
 
@@ -51,27 +51,27 @@ Disable individual radio buttons or the entire group:
 
 ## Compound Parts
 
-| Part | Description |
-|---|---|
-| `Radio.Group` | Wrapper that manages value state. Renders a vertical flex column by default. |
-| `Radio.Item` | Convenience compound: label + radio + indicator in one element. |
-| `Radio.Root` | Individual radio button. Renders a circular control. |
-| `Radio.Indicator` | The inner dot that appears when the radio is selected. |
+| Part              | Description                                                                  |
+| ----------------- | ---------------------------------------------------------------------------- |
+| `Radio.Group`     | Wrapper that manages value state. Renders a vertical flex column by default. |
+| `Radio.Item`      | Convenience compound: label + radio + indicator in one element.              |
+| `Radio.Root`      | Individual radio button. Renders a circular control.                         |
+| `Radio.Indicator` | The inner dot that appears when the radio is selected.                       |
 
 ## Radio.Group Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `value` | `string` | -- | Controlled selected value |
-| `defaultValue` | `string` | -- | Initial value (uncontrolled) |
-| `onValueChange` | `(value: string) => void` | -- | Called when selection changes |
-| `disabled` | `boolean` | `false` | Disable all radio buttons in the group |
-| `className` | `string` | -- | Additional CSS classes |
+| Prop            | Type                      | Default | Description                            |
+| --------------- | ------------------------- | ------- | -------------------------------------- |
+| `value`         | `string`                  | --      | Controlled selected value              |
+| `defaultValue`  | `string`                  | --      | Initial value (uncontrolled)           |
+| `onValueChange` | `(value: string) => void` | --      | Called when selection changes          |
+| `disabled`      | `boolean`                 | `false` | Disable all radio buttons in the group |
+| `className`     | `string`                  | --      | Additional CSS classes                 |
 
 ## Radio.Root Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `value` | `string` | **required** | The value this radio represents |
-| `disabled` | `boolean` | `false` | Disable this radio button |
-| `className` | `string` | -- | Additional CSS classes |
+| Prop        | Type      | Default      | Description                     |
+| ----------- | --------- | ------------ | ------------------------------- |
+| `value`     | `string`  | **required** | The value this radio represents |
+| `disabled`  | `boolean` | `false`      | Disable this radio button       |
+| `className` | `string`  | --           | Additional CSS classes          |
