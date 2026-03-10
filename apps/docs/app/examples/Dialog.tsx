@@ -1,6 +1,7 @@
 "use client";
 
 import { Button, Dialog } from "chunks-ui";
+import { useState } from "react";
 import { Container } from "@/components";
 
 export function DialogBasicExample() {
@@ -37,6 +38,26 @@ export function DialogBackdropExample() {
               The backdrop dims the content behind the dialog.
             </Dialog.Description>
             <Dialog.Close>Close</Dialog.Close>
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>
+    </Container>
+  );
+}
+
+export function DialogControlledExample() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Container>
+      <Dialog.Root open={open} onOpenChange={setOpen}>
+        <Dialog.Trigger>Open</Dialog.Trigger>
+        <Dialog.Portal>
+          <Dialog.Backdrop />
+          <Dialog.Popup>
+            <Dialog.Title>Controlled Dialog</Dialog.Title>
+            <Dialog.Description>You can control the open state.</Dialog.Description>
+            <Dialog.Close>Done</Dialog.Close>
           </Dialog.Popup>
         </Dialog.Portal>
       </Dialog.Root>

@@ -1,0 +1,52 @@
+import { CopyButtonBasicExample, CopyButtonCustomExample } from '@/examples/CopyButton'
+
+# CopyButton
+
+A button that copies a value to the clipboard and shows a brief confirmation. Transitions from a clipboard icon to a check icon on click.
+
+## Import
+
+```tsx
+import { CopyButton } from "chunks-ui";
+```
+
+## Basic Usage
+
+```tsx
+<CopyButton value="npm install chunks-ui" />
+```
+
+<CopyButtonBasicExample />
+
+## Custom Children
+
+Use the render-prop `children` for custom content. The `copied` boolean reflects the current state:
+
+```tsx
+<CopyButton value="REF-2024-XK9">
+  {({ copied }) => (
+    <span className="text-xs">{copied ? "Copied!" : "Copy code"}</span>
+  )}
+</CopyButton>
+```
+
+<CopyButtonCustomExample />
+
+## Timeout
+
+Control how long the "copied" confirmation persists with the `timeout` prop (default 2000ms):
+
+```tsx
+<CopyButton value="text" timeout={5000} />
+```
+
+## Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `value` | `string` | **required** | Text to copy to the clipboard |
+| `timeout` | `number` | `2000` | Duration (ms) of the "copied" state |
+| `children` | `(state: { copied: boolean }) => ReactNode` | -- | Custom render function |
+| `className` | `string` | -- | Additional CSS classes |
+
+All other `<button>` props are forwarded to the root element.

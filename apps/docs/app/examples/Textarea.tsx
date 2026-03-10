@@ -5,7 +5,7 @@ import { Container } from "@/components";
 
 export function TextareaWithFieldExample() {
   return (
-    <Container centered={false}>
+    <Container centered={false} className="max-w-md">
       <Field.Root>
         <Field.Label>Bio</Field.Label>
         <Field.Description>Write a short bio (max 280 characters)</Field.Description>

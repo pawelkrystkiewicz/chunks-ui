@@ -27,9 +27,6 @@
       },
       "suspicious": {
         "noExplicitAny": "error"
-      },
-      "nursery": {
-        "useSortedClasses": "error"
       }
     }
   },

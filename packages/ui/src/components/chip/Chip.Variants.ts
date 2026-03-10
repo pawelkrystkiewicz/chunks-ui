@@ -1,10 +1,19 @@
 import { cva } from "class-variance-authority";
-import type { ElementColor } from "../../types";
+import type { ElementBaseVariant, ElementColor } from "../../types";
 
 export const chipVariants = cva(
   [
-    "inline-flex h-5 items-center gap-1 rounded-full border px-2.5",
-    "text-xs font-medium micro-interactions",
+    "inline-flex",
+    "items-center",
+    "gap-2",
+    "rounded-full",
+    "border",
+    "px-2.5",
+    "py-0.5",
+    "text-xs",
+    "leading-5",
+    "font-medium",
+    "micro-interactions",
   ],
   {
     variants: {
@@ -15,9 +24,14 @@ export const chipVariants = cva(
         warning: "border-warning/30 bg-warning/10 text-warning",
         secondary: "border-border bg-secondary text-secondary-foreground",
       } satisfies Record<ElementColor, string>,
+      variant: {
+        contained: "",
+        outlined: "bg-transparent",
+      } satisfies Record<ElementBaseVariant, string>,
     },
     defaultVariants: {
       color: "secondary",
+      variant: "contained",
     },
   },
 );

@@ -1,0 +1,119 @@
+import { CollapsibleBasicExample, CollapsibleDefaultOpenExample, CollapsibleControlledExample } from '@/examples/Collapsible'
+
+# Collapsible
+
+A single togglable section built on Base UI's `Collapsible` primitive. For multiple collapsible sections with exclusive selection, use `Accordion` instead.
+
+## Import
+
+```tsx
+import { Collapsible } from "chunks-ui";
+```
+
+## Basic Usage
+
+```tsx
+<Collapsible.Root>
+  <Collapsible.Trigger>Toggle details</Collapsible.Trigger>
+  <Collapsible.Panel>
+    <div className="pb-4">Hidden content revealed on click.</div>
+  </Collapsible.Panel>
+</Collapsible.Root>
+```
+
+<CollapsibleBasicExample />
+
+## Default Open
+
+Set `defaultOpen` to render the panel expanded on first mount:
+
+```tsx
+<Collapsible.Root defaultOpen>
+  <Collapsible.Trigger className="group flex items-center gap-1.5">
+    Shipping information
+    <ChevronRightIcon className="size-4 rotate-0 group-data-[panel-open]:rotate-90" />
+  </Collapsible.Trigger>
+  <Collapsible.Panel>...</Collapsible.Panel>
+</Collapsible.Root>
+```
+
+<CollapsibleDefaultOpenExample />
+
+The chevron rotation uses Base UI's `data-panel-open` attribute — see [Styling with data attributes](#styling-with-data-attributes) below.
+
+## Controlled
+
+Use `open` and `onOpenChange` for controlled state:
+
+```tsx
+const [open, setOpen] = useState(false);
+
+<Collapsible.Root open={open} onOpenChange={setOpen}>
+  <Collapsible.Trigger>Advanced settings</Collapsible.Trigger>
+  <Collapsible.Panel>...</Collapsible.Panel>
+</Collapsible.Root>
+```
+
+<CollapsibleControlledExample />
+
+## Animation
+
+The panel height animates using CSS transitions via Base UI's `--collapsible-panel-height` CSS variable, matching the Accordion animation pattern. No JavaScript animation library is required.
+
+## Compound Parts
+
+| Part | Description |
+|---|---|
+| `Collapsible.Root` | State container. Manages open/closed state. |
+| `Collapsible.Trigger` | Button that toggles the panel. |
+| `Collapsible.Panel` | Collapsible content area with animated height. |
+
+## Styling with data attributes
+
+Base UI exposes data attributes on each part that you can target with Tailwind's `data-[]` modifier — no JavaScript state needed.
+
+### Trigger
+
+The Trigger receives `data-panel-open` when the panel is expanded. Combine it with Tailwind's `group` utility to style child elements:
+
+```tsx
+<Collapsible.Trigger className="group flex items-center gap-1.5">
+  Details
+  <ChevronRightIcon className="size-4 transition-transform group-data-[panel-open]:rotate-90" />
+</Collapsible.Trigger>
+```
+
+### Panel
+
+The Panel exposes `data-open`, `data-closed`, `data-starting-style`, and `data-ending-style`:
+
+```tsx
+<Collapsible.Panel
+  className="h-(--collapsible-panel-height) data-[starting-style]:h-0 data-[ending-style]:h-0"
+/>
+```
+
+| Attribute | Part | Present when |
+|---|---|---|
+| `data-panel-open` | Trigger | Panel is open |
+| `data-open` | Panel | Panel is open |
+| `data-closed` | Panel | Panel is closed |
+| `data-starting-style` | Panel | Entering (animating in) |
+| `data-ending-style` | Panel | Exiting (animating out) |
+
+### CSS variables
+
+| Variable | Description |
+|---|---|
+| `--collapsible-panel-height` | Computed height of the panel content |
+| `--collapsible-panel-width` | Computed width of the panel content |
+
+## Collapsible.Root Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `open` | `boolean` | -- | Controlled open state |
+| `defaultOpen` | `boolean` | `false` | Initial open state (uncontrolled) |
+| `onOpenChange` | `(open: boolean) => void` | -- | Called when open state changes |
+| `disabled` | `boolean` | `false` | Prevent toggling |
+| `className` | `string` | -- | Additional CSS classes |
