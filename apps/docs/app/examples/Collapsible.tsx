@@ -24,7 +24,7 @@ export function CollapsibleDefaultOpenExample() {
   return (
     <Container centered={false}>
       <Collapsible.Root defaultOpen className="w-full max-w-md">
-        <Collapsible.Trigger className="group flex items-center gap-1.5 py-2">
+        <Collapsible.Trigger className="group flex items-center gap-1.5 py-2 w-fit">
           Shipping information
           <ChevronRightIcon className="micro-interactions size-4 rotate-0 group-data-[panel-open]:rotate-90" />
         </Collapsible.Trigger>
