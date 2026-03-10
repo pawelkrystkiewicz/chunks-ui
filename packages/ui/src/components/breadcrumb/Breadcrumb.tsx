@@ -1,5 +1,14 @@
-import type { ComponentProps, ReactNode } from "react";
+import {
+  type ComponentProps,
+  cloneElement,
+  isValidElement,
+  type ReactElement,
+  type ReactNode,
+} from "react";
 import { cn } from "../../lib/cn";
+
+type RenderProps = { className?: string; children?: ReactNode; [key: string]: unknown };
+type RenderElement = ReactElement<RenderProps>;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -9,7 +18,7 @@ export type BreadcrumbRootProps = ComponentProps<"nav">;
 export type BreadcrumbListProps = ComponentProps<"ol">;
 export type BreadcrumbItemProps = ComponentProps<"li">;
 export type BreadcrumbLinkProps = ComponentProps<"a"> & {
-  render?: ReactNode;
+  render?: RenderElement;
 };
 export type BreadcrumbPageProps = ComponentProps<"span">;
 export type BreadcrumbSeparatorProps = ComponentProps<"li">;
@@ -40,14 +49,18 @@ function BreadcrumbItem({ className, ...props }: BreadcrumbItemProps) {
 }
 
 function BreadcrumbLink({ className, render, children, ...props }: BreadcrumbLinkProps) {
-  if (render) {
-    return (
-      <span className={cn("micro-interactions hover:text-foreground", className)}>{render}</span>
-    );
+  const classes = cn("micro-interactions hover:text-foreground", className);
+
+  if (isValidElement(render)) {
+    return cloneElement(render, {
+      ...props,
+      className: cn(classes, render.props.className),
+      children: render.props.children ?? children,
+    });
   }
 
   return (
-    <a className={cn("micro-interactions hover:text-foreground", className)} {...props}>
+    <a className={classes} {...props}>
       {children}
     </a>
   );

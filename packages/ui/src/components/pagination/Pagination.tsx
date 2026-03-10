@@ -1,6 +1,15 @@
-import type { ComponentProps, ReactNode } from "react";
+import {
+  type ComponentProps,
+  cloneElement,
+  isValidElement,
+  type ReactElement,
+  type ReactNode,
+} from "react";
 import { cn } from "../../lib/cn";
 import { BUTTON_ANIMATION_CLASSES } from "../shared";
+
+type RenderProps = { className?: string; children?: ReactNode; [key: string]: unknown };
+type RenderElement = ReactElement<RenderProps>;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -11,13 +20,13 @@ export type PaginationContentProps = ComponentProps<"ul">;
 export type PaginationItemProps = ComponentProps<"li">;
 export type PaginationLinkProps = ComponentProps<"a"> & {
   active?: boolean;
-  render?: ReactNode;
+  render?: RenderElement;
 };
 export type PaginationPreviousProps = ComponentProps<"a"> & {
-  render?: ReactNode;
+  render?: RenderElement;
 };
 export type PaginationNextProps = ComponentProps<"a"> & {
-  render?: ReactNode;
+  render?: RenderElement;
 };
 export type PaginationEllipsisProps = ComponentProps<"span">;
 
@@ -58,12 +67,13 @@ function PaginationItem({ className, ...props }: PaginationItemProps) {
 function PaginationLink({ className, active, render, children, ...props }: PaginationLinkProps) {
   const classes = cn(LINK_CLASSES, active && "border border-border bg-background", className);
 
-  if (render) {
-    return (
-      <span aria-current={active ? "page" : undefined} className={classes}>
-        {render}
-      </span>
-    );
+  if (isValidElement(render)) {
+    return cloneElement(render, {
+      ...props,
+      "aria-current": active ? "page" : undefined,
+      className: cn(classes, render.props.className),
+      children: render.props.children ?? children,
+    });
   }
 
   return (
@@ -96,8 +106,12 @@ function PaginationPrevious({ className, render, children, ...props }: Paginatio
     </>
   );
 
-  if (render) {
-    return <span className={classes}>{render}</span>;
+  if (isValidElement(render)) {
+    return cloneElement(render, {
+      ...props,
+      className: cn(classes, render.props.className),
+      children: render.props.children ?? content,
+    });
   }
 
   return (
@@ -130,8 +144,12 @@ function PaginationNext({ className, render, children, ...props }: PaginationNex
     </>
   );
 
-  if (render) {
-    return <span className={classes}>{render}</span>;
+  if (isValidElement(render)) {
+    return cloneElement(render, {
+      ...props,
+      className: cn(classes, render.props.className),
+      children: render.props.children ?? content,
+    });
   }
 
   return (
@@ -143,11 +161,7 @@ function PaginationNext({ className, render, children, ...props }: PaginationNex
 
 function PaginationEllipsis({ className, ...props }: PaginationEllipsisProps) {
   return (
-    <span
-      aria-hidden="true"
-      className={cn("flex size-9 items-center justify-center", className)}
-      {...props}
-    >
+    <span className={cn("flex size-9 items-center justify-center", className)} {...props}>
       <svg
         aria-hidden="true"
         xmlns="http://www.w3.org/2000/svg"

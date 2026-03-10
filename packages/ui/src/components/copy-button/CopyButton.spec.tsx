@@ -22,9 +22,10 @@ describe("CopyButton", () => {
 
   it("shows copied state after click", async () => {
     const user = userEvent.setup();
-    render(<CopyButton value="test" aria-label="Copy" />);
+    render(<CopyButton value="test" />);
+    expect(screen.getByRole("button", { name: "Copy to clipboard" })).toBeInTheDocument();
     await user.click(screen.getByRole("button"));
-    expect(screen.getByRole("button", { name: "Copy" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Copied" })).toBeInTheDocument();
   });
 
   it("renders custom children with copied state", async () => {
@@ -58,7 +59,7 @@ describe("CopyButton", () => {
   });
 
   it("has no a11y violations", async () => {
-    const { container } = render(<CopyButton value="test" aria-label="Copy to clipboard" />);
+    const { container } = render(<CopyButton value="test" />);
     expect(await axe(container)).toHaveNoViolations();
   });
 });

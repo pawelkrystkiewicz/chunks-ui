@@ -16,9 +16,9 @@ describe("Skeleton", () => {
     expect(container.firstChild).toHaveClass("h-4", "w-32");
   });
 
-  it("applies animate-pulse", () => {
+  it("applies animate-pulse with motion-safe guard", () => {
     const { container } = render(<Skeleton />);
-    expect(container.firstChild).toHaveClass("animate-pulse");
+    expect(container.firstChild).toHaveClass("motion-safe:animate-pulse");
   });
 
   it("has no a11y violations", async () => {

@@ -58,8 +58,11 @@ export function CopyButton({
     [value, timeout, onClick],
   );
 
+  const defaultLabel = !children ? (copied ? "Copied" : "Copy to clipboard") : undefined;
+
   return (
     <button
+      aria-label={defaultLabel}
       type="button"
       className={cn(
         "inline-flex size-8 items-center justify-center rounded-md",
