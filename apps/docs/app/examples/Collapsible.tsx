@@ -23,13 +23,13 @@ export function CollapsibleBasicExample() {
 export function CollapsibleDefaultOpenExample() {
   return (
     <Container centered={false}>
-      <Collapsible.Root defaultOpen className="group w-full max-w-md">
-        <Collapsible.Trigger className="flex items-center gap-1.5 py-2">
-          <ChevronRightIcon className="size-4 transition-transform duration-200 group-data-[panel-open]:rotate-90" />
+      <Collapsible.Root defaultOpen className="w-full max-w-md">
+        <Collapsible.Trigger className="group flex items-center gap-1.5 py-2">
           Shipping information
+          <ChevronRightIcon className="micro-interactions size-4 rotate-0 group-data-[panel-open]:rotate-90" />
         </Collapsible.Trigger>
         <Collapsible.Panel>
-          <div className="pb-4 pl-5.5 text-muted-foreground">
+          <div className="pb-4 text-muted-foreground">
             Free shipping on orders over $50. Standard delivery takes 3-5 business days.
           </div>
         </Collapsible.Panel>

@@ -40,7 +40,7 @@ function CollapsiblePanel({ className, ...props }: CollapsiblePanelProps) {
     <BaseCollapsible.Panel
       className={cn(
         "overflow-hidden text-sm",
-        "h-[var(--collapsible-panel-height)] transition-[height] duration-200 ease-out",
+        "micro-interactions h-(--collapsible-panel-height)",
         "data-ending-style:h-0 data-starting-style:h-0",
         className,
       )}
