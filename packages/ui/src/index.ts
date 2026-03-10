@@ -10,7 +10,7 @@ export type {
 } from "./components/accordion";
 export { Accordion } from "./components/accordion";
 export { Avatar, type AvatarProps } from "./components/avatar";
-export { Badge, type BadgeProps, badgeVariants } from "./components/badge";
+export { Badge, type BadgeProps } from "./components/badge";
 export type {
   BreadcrumbEllipsisProps,
   BreadcrumbItemProps,

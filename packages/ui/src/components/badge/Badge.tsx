@@ -1,10 +1,8 @@
-import type { VariantProps } from "class-variance-authority";
-import type { ComponentProps } from "react";
-import { cn } from "../../lib/cn";
-import { badgeVariants } from "./Badge.Variants";
+import { Chip, type ChipProps } from "../chip";
 
-export type BadgeProps = ComponentProps<"span"> & VariantProps<typeof badgeVariants>;
+export type BadgeProps = ChipProps;
 
-export function Badge({ color, variant, className, ...props }: BadgeProps) {
-  return <span className={cn(badgeVariants({ color, variant }), className)} {...props} />;
+/** Badge is a convenience alias for Chip with `size="md"`. */
+export function Badge({ size = "md", ...props }: BadgeProps) {
+  return <Chip size={size} {...props} />;
 }

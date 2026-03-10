@@ -44,6 +44,11 @@ describe("Badge", () => {
     expect(screen.getByTestId("badge")).toHaveClass("bg-transparent");
   });
 
+  it("defaults to size md", () => {
+    render(<Badge data-testid="badge">Default</Badge>);
+    expect(screen.getByTestId("badge")).toHaveClass("h-6");
+  });
+
   it("has no a11y violations", async () => {
     const { container } = render(<Badge>Accessible</Badge>);
     expect(await axe(container)).toHaveNoViolations();

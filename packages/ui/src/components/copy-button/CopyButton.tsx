@@ -12,8 +12,18 @@ import { cn } from "../../lib/cn";
 import { BUTTON_ANIMATION_CLASSES } from "../shared";
 
 export type CopyButtonProps = Omit<ComponentProps<"button">, "children"> & {
+  /**
+   * The string value to be copied to the clipboard when the button is clicked.
+   */
   value: string;
+  /**
+   * The duration in milliseconds for how long the "copied" state is visible (defaults to 2000ms).
+   */
   timeout?: number;
+  /**
+   * Render prop function that receives the copied state object and returns custom ReactNode for button content.
+   * If not provided, a default icon/UI is rendered.
+   */
   children?: (state: { copied: boolean }) => ReactNode;
 };
 
@@ -24,6 +34,7 @@ export function CopyButton({
   timeout = DEFAULT_TIMEOUT,
   children,
   className,
+  onClick,
   ...props
 }: CopyButtonProps) {
   const [copied, setCopied] = useState(false);
@@ -37,19 +48,19 @@ export function CopyButton({
 
   const handleClick = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
-      navigator.clipboard.writeText(value);
-      setCopied(true);
-      if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(() => setCopied(false), timeout);
-      props.onClick?.(e);
+      navigator.clipboard.writeText(value).then(() => {
+        setCopied(true);
+        if (timerRef.current) clearTimeout(timerRef.current);
+        timerRef.current = setTimeout(() => setCopied(false), timeout);
+      });
+      onClick?.(e);
     },
-    [value, timeout, props.onClick],
+    [value, timeout, onClick],
   );
 
   return (
     <button
       type="button"
-      aria-label={copied ? "Copied" : "Copy to clipboard"}
       className={cn(
         "inline-flex size-8 items-center justify-center rounded-md",
         "text-muted-foreground hover:bg-accent hover:text-foreground",

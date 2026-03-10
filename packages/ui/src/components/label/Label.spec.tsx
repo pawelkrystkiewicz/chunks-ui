@@ -26,12 +26,6 @@ describe("Label", () => {
   });
 
   it("has no a11y violations", async () => {
-    render(
-      <>
-        <Label htmlFor="test-input">Test</Label>
-        <input id="test-input" />
-      </>,
-    );
     const { container } = render(
       <>
         <Label htmlFor="a11y-input">Accessible</Label>

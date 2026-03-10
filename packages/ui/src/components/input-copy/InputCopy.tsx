@@ -12,7 +12,9 @@ export function InputCopy({ className, readOnly = true, ...props }: InputCopyPro
   return (
     <Input
       readOnly={readOnly}
-      endAdornment={<CopyButton value={props.value} className="size-6" />}
+      endAdornment={
+        <CopyButton value={props.value} aria-label="Copy to clipboard" className="size-6" />
+      }
       className={className}
       {...props}
     />

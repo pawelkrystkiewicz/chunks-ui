@@ -29,7 +29,6 @@ const LINK_CLASSES = [
   "inline-flex size-9 items-center justify-center rounded-md text-sm",
   "hover:bg-accent hover:text-accent-foreground",
   "focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
-  "disabled:pointer-events-none disabled:opacity-50",
   "cursor-pointer",
   ...BUTTON_ANIMATION_CLASSES,
 ];

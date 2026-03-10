@@ -6,7 +6,7 @@ import { Container } from "@/components";
 
 export function CollapsibleBasicExample() {
   return (
-    <Container>
+    <Container centered={false}>
       <Collapsible.Root className="w-full max-w-md">
         <Collapsible.Trigger className="py-2">Toggle details</Collapsible.Trigger>
         <Collapsible.Panel>
@@ -21,7 +21,7 @@ export function CollapsibleBasicExample() {
 
 export function CollapsibleDefaultOpenExample() {
   return (
-    <Container>
+    <Container centered={false}>
       <Collapsible.Root defaultOpen className="w-full max-w-md">
         <Collapsible.Trigger className="py-2">Shipping information</Collapsible.Trigger>
         <Collapsible.Panel>
@@ -38,7 +38,7 @@ export function CollapsibleControlledExample() {
   const [open, setOpen] = useState(false);
 
   return (
-    <Container>
+    <Container centered={false}>
       <div className="flex w-full max-w-md flex-col gap-2">
         <p className="text-muted-foreground text-sm">Panel is {open ? "open" : "closed"}</p>
         <Collapsible.Root open={open} onOpenChange={setOpen}>
