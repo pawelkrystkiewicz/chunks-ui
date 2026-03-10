@@ -30,8 +30,11 @@ export function SwitchWithLabelExample() {
 
 export function SwitchDisabledExample() {
   return (
-    <Container>
+    <Container className="rounded-lg bg-card p-8">
       <Switch.Root disabled>
+        <Switch.Thumb />
+      </Switch.Root>
+      <Switch.Root disabled checked>
         <Switch.Thumb />
       </Switch.Root>
     </Container>

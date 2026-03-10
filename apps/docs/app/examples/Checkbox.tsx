@@ -40,8 +40,11 @@ export function CheckboxIndeterminateExample() {
 
 export function CheckboxDisabledExample() {
   return (
-    <Container>
+    <Container className="rounded-lg bg-card p-8">
       <Checkbox.Root disabled>
+        <Checkbox.Indicator />
+      </Checkbox.Root>
+      <Checkbox.Root disabled checked>
         <Checkbox.Indicator />
       </Checkbox.Root>
     </Container>

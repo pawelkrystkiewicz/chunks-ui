@@ -17,9 +17,10 @@ export function RadioBasicExample() {
 
 export function RadioDisabledExample() {
   return (
-    <Container>
-      <Radio.Group disabled>
-        <Radio.Item value="a">Disabled option</Radio.Item>
+    <Container className="rounded-lg bg-card p-8">
+      <Radio.Group disabled defaultValue="b">
+        <Radio.Item value="a">Unselected</Radio.Item>
+        <Radio.Item value="b">Selected</Radio.Item>
       </Radio.Group>
     </Container>
   );

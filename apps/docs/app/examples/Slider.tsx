@@ -5,7 +5,7 @@ import { Container } from "@/components";
 
 export function SliderBasicExample() {
   return (
-    <Container>
+    <Container centered={false}>
       <div className="w-full max-w-sm">
         <Slider.Root defaultValue={40}>
           <Slider.Control>

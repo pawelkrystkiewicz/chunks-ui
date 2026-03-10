@@ -16,7 +16,7 @@ import { Avatar } from 'chunks-ui'
 With an image:
 
 ```tsx
-<Avatar src="/avatars/jane.jpg" alt="Jane Doe" />
+<Avatar src="/jane.jpeg" alt="Jane Doe" />
 ```
 
 Without an image (shows initials derived from `alt`):
@@ -26,6 +26,7 @@ Without an image (shows initials derived from `alt`):
 ```
 
 <Container>
+  <Avatar src={'/jane.jpeg'} alt="Jane Doe" />
   <Avatar alt="Jane Doe" />
 </Container>
 

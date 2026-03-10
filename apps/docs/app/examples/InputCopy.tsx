@@ -10,3 +10,11 @@ export function InputCopyBasicExample() {
     </Container>
   );
 }
+
+export function InputCopyEditableExample() {
+  return (
+    <Container centered={false}>
+      <InputCopy value="PROMO-2024-SUMMER" readOnly={false} />
+    </Container>
+  );
+}
