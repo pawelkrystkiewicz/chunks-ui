@@ -35,6 +35,7 @@ jobs:
         with:
           name: visual-regression-diffs
           path: packages/ui/.vitest-attachments
+          if-no-files-found: ignore
           retention-days: 7
 
       - name: Notify Slack on Success

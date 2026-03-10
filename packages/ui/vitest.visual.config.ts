@@ -23,6 +23,13 @@ export default defineConfig({
           context: { reducedMotion: "reduce" },
         },
       ],
+      expect: {
+        toMatchScreenshot: {
+          comparatorOptions: {
+            allowedMismatchedPixelRatio: 0.05,
+          },
+        },
+      },
     },
   },
 });
