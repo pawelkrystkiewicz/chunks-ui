@@ -52,7 +52,7 @@ export function CopyButton({
         setCopied(true);
         if (timerRef.current) clearTimeout(timerRef.current);
         timerRef.current = setTimeout(() => setCopied(false), timeout);
-      });
+      }, console.error);
       onClick?.(e);
     },
     [value, timeout, onClick],

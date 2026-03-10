@@ -23,13 +23,15 @@ function CollapsibleRoot({ className, ...props }: CollapsibleRootProps) {
 function CollapsibleTrigger({ className, ...props }: CollapsibleTriggerProps) {
   return (
     <BaseCollapsible.Trigger
-      className={cn(
-        "flex w-full cursor-pointer items-center justify-between font-medium text-sm",
-        "hover:text-foreground/80",
-        "focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
-        "disabled:pointer-events-none disabled:opacity-50",
-        className,
-      )}
+      className={(state) =>
+        cn(
+          "flex w-full cursor-pointer items-center justify-between font-medium text-sm",
+          "hover:text-foreground/80",
+          "focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
+          "disabled:pointer-events-none disabled:opacity-50",
+          typeof className === "function" ? className(state) : className,
+        )
+      }
       {...props}
     />
   );
@@ -38,12 +40,14 @@ function CollapsibleTrigger({ className, ...props }: CollapsibleTriggerProps) {
 function CollapsiblePanel({ className, ...props }: CollapsiblePanelProps) {
   return (
     <BaseCollapsible.Panel
-      className={cn(
-        "overflow-hidden text-sm",
-        "micro-interactions h-(--collapsible-panel-height)",
-        "data-ending-style:h-0 data-starting-style:h-0",
-        className,
-      )}
+      className={(state) =>
+        cn(
+          "overflow-hidden text-sm",
+          "micro-interactions h-(--collapsible-panel-height)",
+          "data-ending-style:h-0 data-starting-style:h-0",
+          typeof className === "function" ? className(state) : className,
+        )
+      }
       {...props}
     />
   );
