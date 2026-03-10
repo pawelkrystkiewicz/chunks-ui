@@ -1,0 +1,74 @@
+import { CollapsibleBasicExample, CollapsibleDefaultOpenExample, CollapsibleControlledExample } from '@/examples/Collapsible'
+
+# Collapsible
+
+A single togglable section built on Base UI's `Collapsible` primitive. For multiple collapsible sections with exclusive selection, use `Accordion` instead.
+
+## Import
+
+```tsx
+import { Collapsible } from "chunks-ui";
+```
+
+## Basic Usage
+
+```tsx
+<Collapsible.Root>
+  <Collapsible.Trigger>Toggle details</Collapsible.Trigger>
+  <Collapsible.Panel>
+    <div className="pb-4">Hidden content revealed on click.</div>
+  </Collapsible.Panel>
+</Collapsible.Root>
+```
+
+<CollapsibleBasicExample />
+
+## Default Open
+
+Set `defaultOpen` to render the panel expanded on first mount:
+
+```tsx
+<Collapsible.Root defaultOpen>
+  <Collapsible.Trigger>Shipping information</Collapsible.Trigger>
+  <Collapsible.Panel>...</Collapsible.Panel>
+</Collapsible.Root>
+```
+
+<CollapsibleDefaultOpenExample />
+
+## Controlled
+
+Use `open` and `onOpenChange` for controlled state:
+
+```tsx
+const [open, setOpen] = useState(false);
+
+<Collapsible.Root open={open} onOpenChange={setOpen}>
+  <Collapsible.Trigger>Advanced settings</Collapsible.Trigger>
+  <Collapsible.Panel>...</Collapsible.Panel>
+</Collapsible.Root>
+```
+
+<CollapsibleControlledExample />
+
+## Animation
+
+The panel height animates using CSS transitions via Base UI's `--collapsible-panel-height` CSS variable, matching the Accordion animation pattern. No JavaScript animation library is required.
+
+## Compound Parts
+
+| Part | Description |
+|---|---|
+| `Collapsible.Root` | State container. Manages open/closed state. |
+| `Collapsible.Trigger` | Button that toggles the panel. |
+| `Collapsible.Panel` | Collapsible content area with animated height. |
+
+## Collapsible.Root Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `open` | `boolean` | -- | Controlled open state |
+| `defaultOpen` | `boolean` | `false` | Initial open state (uncontrolled) |
+| `onOpenChange` | `(open: boolean) => void` | -- | Called when open state changes |
+| `disabled` | `boolean` | `false` | Prevent toggling |
+| `className` | `string` | -- | Additional CSS classes |

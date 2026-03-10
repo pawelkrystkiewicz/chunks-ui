@@ -1,0 +1,55 @@
+import { EmptyBasicExample, EmptyMinimalExample } from '@/examples/Empty'
+
+# Empty
+
+A structured empty state for lists, tables, and search results. Provides a consistent centered layout with optional icon, title, description, and action buttons.
+
+## Import
+
+```tsx
+import { Empty } from "chunks-ui";
+```
+
+## Basic Usage
+
+```tsx
+<Empty.Root>
+  <Empty.Media>
+    <BoxIcon />
+  </Empty.Media>
+  <Empty.Title>No paints found</Empty.Title>
+  <Empty.Description>Try adjusting your search or filter criteria.</Empty.Description>
+  <Empty.Actions>
+    <Button variant="outlined">Clear filters</Button>
+  </Empty.Actions>
+</Empty.Root>
+```
+
+<EmptyBasicExample />
+
+## Minimal
+
+All parts except `Root` are optional. Use just a title and description for simple cases:
+
+```tsx
+<Empty.Root>
+  <Empty.Title>No results</Empty.Title>
+  <Empty.Description>There are no items to display yet.</Empty.Description>
+</Empty.Root>
+```
+
+<EmptyMinimalExample />
+
+## Compound Parts
+
+| Part | Description |
+|---|---|
+| `Empty.Root` | Centered flex column container with vertical spacing. |
+| `Empty.Media` | Icon or illustration container. Auto-sizes SVGs to 48px. |
+| `Empty.Title` | Heading text (`<h3>`). |
+| `Empty.Description` | Supporting text in muted color. Max width constrained for readability. |
+| `Empty.Actions` | Horizontal button group. |
+
+## Props
+
+All parts accept `className` for customization. All other props are forwarded to their respective HTML elements (`<div>`, `<h3>`, `<p>`).

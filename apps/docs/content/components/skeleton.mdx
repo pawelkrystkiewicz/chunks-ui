@@ -1,0 +1,68 @@
+import { Skeleton } from 'chunks-ui'
+import { Container } from '@/components'
+
+# Skeleton
+
+A placeholder loading indicator. CSS-only animation with `animate-pulse` on a muted background. Use className to control size and shape.
+
+## Import
+
+```tsx
+import { Skeleton } from "chunks-ui";
+```
+
+## Basic Usage
+
+```tsx
+<Skeleton className="h-4 w-[250px]" />
+```
+
+<Container>
+  <div className="flex flex-col gap-3">
+    <Skeleton className="h-4 w-[250px]" />
+    <Skeleton className="h-4 w-[200px]" />
+    <Skeleton className="h-4 w-[150px]" />
+  </div>
+</Container>
+
+## Circle
+
+```tsx
+<Skeleton className="size-12 rounded-full" />
+```
+
+<Container>
+  <Skeleton className="size-12 rounded-full" />
+</Container>
+
+## Card Skeleton
+
+Compose multiple skeletons to create loading placeholders for complex layouts:
+
+```tsx
+<div className="flex items-center gap-4">
+  <Skeleton className="size-12 rounded-full" />
+  <div className="flex flex-col gap-2">
+    <Skeleton className="h-4 w-[180px]" />
+    <Skeleton className="h-3 w-[120px]" />
+  </div>
+</div>
+```
+
+<Container>
+  <div className="flex items-center gap-4">
+    <Skeleton className="size-12 rounded-full" />
+    <div className="flex flex-col gap-2">
+      <Skeleton className="h-4 w-[180px]" />
+      <Skeleton className="h-3 w-[120px]" />
+    </div>
+  </div>
+</Container>
+
+## Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `className` | `string` | -- | Controls size, shape, and border radius |
+
+All other props are forwarded to the root `<div>` element.

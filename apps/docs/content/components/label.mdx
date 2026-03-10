@@ -1,0 +1,52 @@
+import { Label } from 'chunks-ui'
+import { Container } from '@/components'
+
+# Label
+
+A standalone form label with consistent typography. Use when you need a label outside of a `Field` context. For labels inside a `Field.Root`, use `Field.Label` instead.
+
+## Import
+
+```tsx
+import { Label } from "chunks-ui";
+```
+
+## Basic Usage
+
+```tsx
+<Label htmlFor="email">Email address</Label>
+```
+
+<Container>
+  <Label htmlFor="email">Email address</Label>
+</Container>
+
+## With Input
+
+```tsx
+<div className="flex flex-col gap-1.5">
+  <Label htmlFor="username">Username</Label>
+  <input id="username" className="border rounded px-3 py-1.5 text-sm" />
+</div>
+```
+
+<Container>
+  <div className="flex flex-col gap-1.5">
+    <Label htmlFor="username">Username</Label>
+    <input id="username" className="rounded border px-3 py-1.5 text-sm" />
+  </div>
+</Container>
+
+## Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `htmlFor` | `string` | -- | Associates the label with a form control by ID |
+| `className` | `string` | -- | Additional CSS classes |
+
+All other props are forwarded to the native `<label>` element.
+
+## Styling
+
+- `font-medium text-sm leading-none` — matches `Field.Label` typography
+- `peer-disabled:cursor-not-allowed peer-disabled:opacity-50` — dims when the associated input has the `peer` + `disabled` classes

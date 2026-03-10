@@ -1,0 +1,90 @@
+import { BreadcrumbBasicExample, BreadcrumbEllipsisExample, BreadcrumbCustomSeparatorExample } from '@/examples/Breadcrumb'
+
+# Breadcrumb
+
+A navigation aid showing the user's location within a page hierarchy. Uses semantic HTML (`<nav>`, `<ol>`, `<li>`) with proper ARIA attributes.
+
+## Import
+
+```tsx
+import { Breadcrumb } from "chunks-ui";
+```
+
+## Basic Usage
+
+```tsx
+<Breadcrumb.Root>
+  <Breadcrumb.List>
+    <Breadcrumb.Item>
+      <Breadcrumb.Link href="/">Home</Breadcrumb.Link>
+    </Breadcrumb.Item>
+    <Breadcrumb.Separator />
+    <Breadcrumb.Item>
+      <Breadcrumb.Link href="/collections">Collections</Breadcrumb.Link>
+    </Breadcrumb.Item>
+    <Breadcrumb.Separator />
+    <Breadcrumb.Item>
+      <Breadcrumb.Page>Citadel Base White</Breadcrumb.Page>
+    </Breadcrumb.Item>
+  </Breadcrumb.List>
+</Breadcrumb.Root>
+```
+
+<BreadcrumbBasicExample />
+
+## Collapsed Breadcrumb
+
+Use `Breadcrumb.Ellipsis` to indicate hidden intermediate levels:
+
+```tsx
+<Breadcrumb.Item>
+  <Breadcrumb.Ellipsis />
+</Breadcrumb.Item>
+```
+
+<BreadcrumbEllipsisExample />
+
+## Custom Separator
+
+Pass children to `Breadcrumb.Separator` to replace the default chevron icon:
+
+```tsx
+<Breadcrumb.Separator>/</Breadcrumb.Separator>
+```
+
+<BreadcrumbCustomSeparatorExample />
+
+## Custom Link Component
+
+Use the `render` prop on `Breadcrumb.Link` to render a framework-specific link (e.g. React Router, Next.js):
+
+```tsx
+<Breadcrumb.Link render={<Link to="/paints" />}>Paints</Breadcrumb.Link>
+```
+
+## Compound Parts
+
+| Part | Description |
+|---|---|
+| `Breadcrumb.Root` | `<nav>` wrapper with `aria-label="Breadcrumb"`. |
+| `Breadcrumb.List` | Ordered list (`<ol>`) containing items. |
+| `Breadcrumb.Item` | List item (`<li>`) wrapping a link, page, or separator. |
+| `Breadcrumb.Link` | Clickable anchor. Accepts `render` prop for custom link components. |
+| `Breadcrumb.Page` | Current page indicator with `aria-current="page"`. |
+| `Breadcrumb.Separator` | Decorative separator. Defaults to a chevron icon. |
+| `Breadcrumb.Ellipsis` | Collapsed state indicator (three dots). |
+
+## Breadcrumb.Link Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `render` | `ReactNode` | -- | Custom link element (e.g. `<Link to="..." />`) |
+| `href` | `string` | -- | URL for the native `<a>` fallback |
+| `className` | `string` | -- | Additional CSS classes |
+
+## Breadcrumb.Separator Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `children` | `ReactNode` | Chevron icon | Custom separator content |
+| `className` | `string` | -- | Additional CSS classes |

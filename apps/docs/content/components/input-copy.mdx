@@ -1,0 +1,37 @@
+import { InputCopyBasicExample } from '@/examples/InputCopy'
+
+# InputCopy
+
+A read-only input with an integrated copy button. Composes `Input` and `CopyButton` internally.
+
+## Import
+
+```tsx
+import { InputCopy } from "chunks-ui";
+```
+
+## Basic Usage
+
+```tsx
+<InputCopy value="https://vibekanban.com/invite/abc123" />
+```
+
+<InputCopyBasicExample />
+
+## Editable
+
+Set `readOnly={false}` to allow the user to modify the value:
+
+```tsx
+<InputCopy value={code} readOnly={false} />
+```
+
+## Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `value` | `string` | **required** | The text to display and copy |
+| `readOnly` | `boolean` | `true` | Whether the input is read-only |
+| `className` | `string` | -- | Additional CSS classes |
+
+All other `Input` props are forwarded except `endAdornment` and `onClear` (reserved for the internal `CopyButton`).

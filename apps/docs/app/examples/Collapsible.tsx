@@ -1,0 +1,55 @@
+"use client";
+
+import { Collapsible } from "chunks-ui";
+import { useState } from "react";
+import { Container } from "@/components";
+
+export function CollapsibleBasicExample() {
+  return (
+    <Container>
+      <Collapsible.Root className="w-full max-w-md">
+        <Collapsible.Trigger className="py-2">Toggle details</Collapsible.Trigger>
+        <Collapsible.Panel>
+          <div className="pb-4 text-muted-foreground">
+            This content is hidden by default and revealed when the trigger is clicked.
+          </div>
+        </Collapsible.Panel>
+      </Collapsible.Root>
+    </Container>
+  );
+}
+
+export function CollapsibleDefaultOpenExample() {
+  return (
+    <Container>
+      <Collapsible.Root defaultOpen className="w-full max-w-md">
+        <Collapsible.Trigger className="py-2">Shipping information</Collapsible.Trigger>
+        <Collapsible.Panel>
+          <div className="pb-4 text-muted-foreground">
+            Free shipping on orders over $50. Standard delivery takes 3-5 business days.
+          </div>
+        </Collapsible.Panel>
+      </Collapsible.Root>
+    </Container>
+  );
+}
+
+export function CollapsibleControlledExample() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Container>
+      <div className="flex w-full max-w-md flex-col gap-2">
+        <p className="text-muted-foreground text-sm">Panel is {open ? "open" : "closed"}</p>
+        <Collapsible.Root open={open} onOpenChange={setOpen}>
+          <Collapsible.Trigger className="py-2">Advanced settings</Collapsible.Trigger>
+          <Collapsible.Panel>
+            <div className="pb-4 text-muted-foreground">
+              Controlled mode lets you manage the open state externally.
+            </div>
+          </Collapsible.Panel>
+        </Collapsible.Root>
+      </div>
+    </Container>
+  );
+}
