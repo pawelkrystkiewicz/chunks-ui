@@ -1,7 +1,6 @@
 export default {
   accordion: { title: "Accordion" },
   avatar: { title: "Avatar" },
-  badge: { title: "Badge" },
   breadcrumb: { title: "Breadcrumb" },
   button: { title: "Button" },
   calendar: { title: "Calendar" },
