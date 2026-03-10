@@ -1,5 +1,6 @@
 import { Chip } from 'chunks-ui'
 import { Container } from '@/components'
+import { ChipRemovableExample } from '@/examples/Chip'
 
 # Chip
 
@@ -41,6 +42,22 @@ import { Chip } from "chunks-ui";
 
 Each color applies a light tinted background with matching text and border (e.g. `bg-primary/10 text-primary border-primary/30`).
 
+## Variants
+
+The `variant` prop controls the fill style:
+
+```tsx
+<Chip variant="contained">Contained</Chip>
+<Chip variant="outlined">Outlined</Chip>
+```
+
+<Container>
+  <Chip variant="contained" color="primary">Contained</Chip>
+  <Chip variant="outlined" color="primary">Outlined</Chip>
+</Container>
+
+The `outlined` variant removes the background fill, keeping only the border and text color.
+
 ## Removable Chip
 
 Pass an `onRemove` callback to show a close button:
@@ -64,11 +81,14 @@ function TagList() {
 }
 ```
 
+<ChipRemovableExample />
+
 ## Props
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
 | `color` | `"primary" \| "destructive" \| "success" \| "warning" \| "secondary"` | `"secondary"` | Semantic color variant |
+| `variant` | `"contained" \| "outlined"` | `"contained"` | Fill style |
 | `onRemove` | `() => void` | -- | Show remove button; called on click |
 | `className` | `string` | -- | Additional CSS classes |
 | `children` | `ReactNode` | -- | Chip label content |

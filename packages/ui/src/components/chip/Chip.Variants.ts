@@ -3,8 +3,17 @@ import type { ElementBaseVariant, ElementColor } from "../../types";
 
 export const chipVariants = cva(
   [
-    "inline-flex items-center gap-1 rounded-full border px-2.5",
-    "text-xs font-medium micro-interactions",
+    "inline-flex",
+    "items-center",
+    "gap-2",
+    "rounded-full",
+    "border",
+    "px-2.5",
+    "py-0.5",
+    "text-xs",
+    "leading-5",
+    "font-medium",
+    "micro-interactions",
   ],
   {
     variants: {
@@ -19,15 +28,10 @@ export const chipVariants = cva(
         contained: "",
         outlined: "bg-transparent",
       } satisfies Record<ElementBaseVariant, string>,
-      size: {
-        sm: "h-5",
-        md: "h-6 py-0.5",
-      },
     },
     defaultVariants: {
       color: "secondary",
       variant: "contained",
-      size: "sm",
     },
   },
 );

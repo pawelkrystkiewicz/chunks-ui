@@ -9,9 +9,9 @@ export type ChipProps = ComponentProps<"span"> &
     onRemove?: () => void;
   };
 
-export function Chip({ color, variant, size, onRemove, className, children, ...props }: ChipProps) {
+export function Chip({ color, variant, onRemove, className, children, ...props }: ChipProps) {
   return (
-    <span className={cn(chipVariants({ color, variant, size }), className)} {...props}>
+    <span className={cn(chipVariants({ color, variant }), className)} {...props}>
       {children}
       {onRemove && <ClearButton label="Remove" onClick={onRemove} />}
     </span>
