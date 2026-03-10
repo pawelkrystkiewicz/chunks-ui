@@ -124,14 +124,14 @@
   --spacing-ui-icon-height: calc(var(--spacing-ui-height) * 0.5);
 
   /* Z-index layers */
-  --z-base: 0;
-  --z-dropdowns: 200;
-  --z-tooltips: 400;
-  --z-overlays: 500;
-  --z-drawers: 600;
-  --z-modals: 700;
-  --z-notifications: 800;
-  --z-toasts: 810;
+  --z-index-base: 0;
+  --z-index-dropdowns: 200;
+  --z-index-tooltips: 400;
+  --z-index-overlays: 500;
+  --z-index-drawers: 600;
+  --z-index-modals: 700;
+  --z-index-notifications: 800;
+  --z-index-toasts: 810;
 
   /* Border radius */
   --radius-sm: calc(var(--radius) - 4px);
