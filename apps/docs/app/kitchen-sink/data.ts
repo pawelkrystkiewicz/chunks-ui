@@ -36,6 +36,7 @@ const alice: TeamMember = {
   email: "alice@acme.dev",
   tasksCompleted: 24,
   tasksTotal: 28,
+  avatar: "/jane.jpeg",
 };
 
 const bob: TeamMember = {
@@ -49,11 +50,12 @@ const bob: TeamMember = {
 
 const carol: TeamMember = {
   id: "u3",
-  name: "Carol Zhang",
+  name: "Carl Zhang",
   role: "Backend Engineer",
   email: "carol@acme.dev",
   tasksCompleted: 18,
   tasksTotal: 22,
+  avatar: "/bro2.jpeg",
 };
 
 const dan: TeamMember = {
@@ -63,6 +65,7 @@ const dan: TeamMember = {
   email: "dan@acme.dev",
   tasksCompleted: 9,
   tasksTotal: 16,
+  avatar: "/bro.jpeg",
 };
 
 const eve: TeamMember = {
