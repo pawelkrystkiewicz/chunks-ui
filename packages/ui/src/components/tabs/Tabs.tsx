@@ -184,7 +184,7 @@ function TabsContents({ className, children, transition, ...props }: TabsContent
   // --- height measurement ---
   const containerRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const [height, setHeight] = useState(0);
+  const [height, setHeight] = useState<number | "auto">("auto");
 
   const measure = useCallback((index: number) => {
     const pane = itemRefs.current[index];
@@ -205,7 +205,7 @@ function TabsContents({ className, children, transition, ...props }: TabsContent
 
   // Set initial height before paint
   useLayoutEffect(() => {
-    if (height === 0) {
+    if (height === "auto") {
       const h = measure(safeIndex);
       if (h > 0) setHeight(h);
     }
