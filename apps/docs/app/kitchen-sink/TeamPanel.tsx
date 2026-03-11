@@ -13,7 +13,7 @@ export function TeamPanel() {
           <Card.Root key={member.id}>
             <Card.Content className="p-4">
               <div className="flex items-start gap-3">
-                <Avatar alt={member.name} size={40} />
+                <Avatar src={member.avatar} alt={member.name} size={40} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-medium text-sm">{member.name}</p>
                   <p className="truncate text-muted-foreground text-xs">{member.role}</p>

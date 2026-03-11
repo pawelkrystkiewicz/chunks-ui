@@ -227,7 +227,7 @@ export function TaskTable() {
                     <Tooltip.Root>
                       <Tooltip.Trigger>
                         <div className="flex items-center gap-2">
-                          <Avatar alt={task.assignee.name} size={24} />
+                          <Avatar src={task.assignee.avatar} alt={task.assignee.name} size={24} />
                           <span className="text-sm">{task.assignee.name.split(" ")[0]}</span>
                         </div>
                       </Tooltip.Trigger>
