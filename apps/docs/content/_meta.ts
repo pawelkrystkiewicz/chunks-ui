@@ -9,6 +9,14 @@ export default {
   },
   "getting-started": { title: "Getting Started" },
   components: { title: "Components" },
+  "kitchen-sink": {
+    title: "Kitchen Sink",
+    theme: {
+      layout: "full",
+      sidebar: false,
+      toc: false,
+    },
+  },
   theme: { title: "Theme" },
   "llm-separator": { type: "separator", title: "For LLMs" },
   "llm-txt": { title: "llm.txt", href: "/llm.txt" },
