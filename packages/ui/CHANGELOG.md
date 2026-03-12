@@ -1,5 +1,11 @@
 # chunks-ui
 
+## 0.0.6
+
+### Patch Changes
+
+- 936c296: fix Tabs not rendering content on mount
+
 ## 0.0.5
 
 ### Patch Changes
