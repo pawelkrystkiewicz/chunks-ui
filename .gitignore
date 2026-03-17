@@ -13,6 +13,9 @@ dist
 apps/docs/public/llm.txt
 apps/docs/public/llm-full.txt
 
+# pagefind search index (generated at build time)
+apps/docs/public/_pagefind
+
 # code coverage
 coverage
 *.lcov
