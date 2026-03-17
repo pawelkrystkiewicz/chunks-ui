@@ -149,6 +149,59 @@ export default withNextra({
 
 This is already configured in `apps/docs/next.config.mjs`.
 
+## TSDoc Declaration Reference Syntax
+
+TSDoc uses a formal grammar for cross-referencing symbols in `{@link}` and `{@inheritDoc}` tags. Full spec: [DeclarationReference.grammarkdown](https://github.com/microsoft/tsdoc/blob/main/tsdoc/src/beta/DeclarationReference.grammarkdown)
+
+### Reference format
+
+```
+[ModuleSource!] SymbolReference [:Meaning]
+```
+
+### Navigation punctuators
+
+| Punctuator | Navigates via | Example |
+|------------|---------------|---------|
+| `.` | exports | `chunks-ui!Button.render` |
+| `#` | members | `chunks-ui!ButtonProps#variant` |
+| `~` | locals | `chunks-ui!~internalHelper` |
+
+### Meaning keywords
+
+Disambiguate overloaded symbols by appending a meaning suffix:
+
+| Keyword | Resolves to |
+|---------|-------------|
+| `:class` | Class declaration |
+| `:interface` | Interface declaration |
+| `:type` | Type alias |
+| `:enum` | Enum declaration |
+| `:namespace` | Module / namespace |
+| `:function` | Function (`:function(0)` for first overload) |
+| `:var` | Variable |
+| `:constructor` | Constructor |
+| `:member` | Class or enum member |
+| `:call` | Call signature |
+| `:new` | Construct signature |
+| `:index` | Index signature |
+
+### Examples in JSDoc
+
+```tsx
+/**
+ * See {@link chunks-ui!Button:function} for the component.
+ * Color values are defined in {@link chunks-ui!ElementColor:type}.
+ * Inherits from {@link @base-ui/react!Button#Root:class}.
+ */
+```
+
+### Module source syntax
+
+- Quoted: `"@scope/pkg"!Symbol`
+- Unquoted: `chunks-ui!Symbol`
+- Global: `!Symbol` (no module prefix)
+
 ## Troubleshooting
 
 - **`Can't resolve 'next-mdx-import-source-file'`**: Add the `turbopack.resolveAlias` shown above.
