@@ -107,7 +107,8 @@ Icons are hidden during loading state. The `startIcon` slot is replaced by the `
   definition={generateDefinition({
     code: `
 import type { ButtonProps } from 'chunks-ui'
-export default ButtonProps
+type Props = Pick<ButtonProps, 'variant' | 'color' | 'loading' | 'startIcon' | 'endIcon'>
+export default Props
 `
   })}
 />
