@@ -1,5 +1,6 @@
 import { Avatar } from 'chunks-ui'
 import { Container } from '@/components'
+import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
 # Avatar
 
@@ -85,13 +86,14 @@ When no `src` is provided and no `fallback` is set, initials are automatically g
 
 ## Props
 
-| Prop        | Type                                | Default    | Description                                                    |
-| ----------- | ----------------------------------- | ---------- | -------------------------------------------------------------- |
-| `src`       | `string`                            | --         | Image URL. Shows image when provided, initials otherwise.      |
-| `alt`       | `string`                            | --         | Alt text for the image. Used to generate initials as fallback. |
-| `fallback`  | `string`                            | --         | Explicit fallback text (overrides auto-generated initials).    |
-| `size`      | `number`                            | `40`       | Avatar dimensions in pixels.                                   |
-| `shape`     | `"circle" \| "rounded" \| "square"` | `"circle"` | Avatar shape.                                                  |
-| `className` | `string`                            | --         | Additional CSS classes.                                        |
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { AvatarProps } from 'chunks-ui'
+type Props = Pick<AvatarProps, 'src' | 'alt' | 'fallback' | 'size' | 'shape'>
+export default Props
+`
+  })}
+/>
 
-All other props are forwarded to the root `<span>` element.
+All other props are forwarded to the underlying `<span>` element.

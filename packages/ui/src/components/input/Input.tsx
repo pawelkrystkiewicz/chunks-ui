@@ -7,8 +7,17 @@ import { inputVariants } from "./Input.Variants";
 
 export type InputProps = ComponentProps<typeof BaseInput> &
   VariantProps<typeof inputVariants> & {
+    /**
+     * Element rendered before the input text (e.g. a search icon).
+     */
     startAdornment?: ReactNode;
+    /**
+     * Element rendered after the input text (e.g. a unit label).
+     */
     endAdornment?: ReactNode;
+    /**
+     * Callback fired when the built-in clear button is clicked. Passing this prop enables the clear button.
+     */
     onClear?: () => void;
   };
 

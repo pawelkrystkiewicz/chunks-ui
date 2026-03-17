@@ -1,4 +1,5 @@
 import { DatePickerBasicExample, DatePickerControlledExample, DatePickerConstrainedExample, DatePickerDisabledExample } from '@/examples/DatePicker'
+import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
 # DatePicker
 
@@ -59,14 +60,12 @@ const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, today.getD
 
 ## DatePicker Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `value` | `Date \| null` | -- | Controlled selected date |
-| `defaultValue` | `Date \| null` | `null` | Initial selected date (uncontrolled) |
-| `onValueChange` | `(date: Date \| null) => void` | -- | Called when a date is selected |
-| `placeholder` | `string` | `"Pick a date"` | Trigger placeholder text |
-| `disabled` | `boolean` | `false` | Disable the trigger and prevent opening |
-| `min` | `Date` | -- | Earliest selectable date |
-| `max` | `Date` | -- | Latest selectable date |
-| `isDateDisabled` | `(date: Date) => boolean` | -- | Predicate to disable individual dates |
-| `className` | `string` | -- | Additional CSS classes on the root element |
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { DatePickerProps } from 'chunks-ui'
+type Props = Pick<DatePickerProps, 'value' | 'defaultValue' | 'onValueChange' | 'placeholder' | 'disabled' | 'min' | 'max' | 'isDateDisabled'>
+export default Props
+`
+  })}
+/>

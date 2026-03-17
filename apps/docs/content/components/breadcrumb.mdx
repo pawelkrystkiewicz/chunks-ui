@@ -1,4 +1,5 @@
 import { BreadcrumbBasicExample, BreadcrumbEllipsisExample, BreadcrumbCustomSeparatorExample } from '@/examples/Breadcrumb'
+import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
 # Breadcrumb
 
@@ -76,15 +77,18 @@ Use the `render` prop on `Breadcrumb.Link` to render a framework-specific link (
 
 ## Breadcrumb.Link Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `render` | `ReactNode` | -- | Custom link element (e.g. `<Link to="..." />`) |
-| `href` | `string` | -- | URL for the native `<a>` fallback |
-| `className` | `string` | -- | Additional CSS classes |
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { BreadcrumbLinkProps } from 'chunks-ui'
+type Props = Pick<BreadcrumbLinkProps, 'render'>
+export default Props
+`
+  })}
+/>
+
+All other props are forwarded to the underlying `<a>` element.
 
 ## Breadcrumb.Separator Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `children` | `ReactNode` | Chevron icon | Custom separator content |
-| `className` | `string` | -- | Additional CSS classes |
+All props are forwarded to the underlying `<li>` element. Pass `children` to replace the default chevron separator icon.

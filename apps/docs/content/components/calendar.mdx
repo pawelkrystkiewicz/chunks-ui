@@ -1,4 +1,5 @@
 import { CalendarBasicExample, CalendarControlledExample, CalendarDisabledDatesExample } from '@/examples/Calendar'
+import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
 # Calendar
 
@@ -50,12 +51,12 @@ const isWeekend = (date: Date) => date.getDay() === 0 || date.getDay() === 6;
 
 ## Calendar Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `value` | `Date \| null` | -- | Controlled selected date |
-| `defaultValue` | `Date \| null` | `null` | Initial selected date (uncontrolled) |
-| `onValueChange` | `(date: Date \| null) => void` | -- | Called when the selected date changes |
-| `min` | `Date` | -- | Earliest selectable date (inclusive) |
-| `max` | `Date` | -- | Latest selectable date (inclusive) |
-| `isDateDisabled` | `(date: Date) => boolean` | -- | Predicate to disable individual dates |
-| `className` | `string` | -- | Additional CSS classes |
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { CalendarProps } from 'chunks-ui'
+type Props = Pick<CalendarProps, 'value' | 'defaultValue' | 'onValueChange' | 'isDateDisabled' | 'min' | 'max'>
+export default Props
+`
+  })}
+/>

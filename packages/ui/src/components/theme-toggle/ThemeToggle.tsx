@@ -7,9 +7,15 @@ import { useReducedMotion } from "../../lib/use-motion";
 export type Theme = "light" | "dark";
 
 export interface ThemeToggleProps {
+  /** Current active theme.
+   * @remarks `"light" | "dark"`
+   */
   theme: Theme;
+  /** Called when the toggle button is clicked. */
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
+  /** Custom icon shown when the theme is light. */
   lightIcon?: React.ReactNode;
+  /** Custom icon shown when the theme is dark. */
   darkIcon?: React.ReactNode;
   className?: string;
 }

@@ -4,14 +4,17 @@ import { useCallback, useMemo, useState } from "react";
 import { cn } from "../../lib/cn";
 
 export type CalendarProps = {
+  /** Controlled selected date. */
   value?: Date | null;
+  /** Initial selected date for uncontrolled usage. */
   defaultValue?: Date | null;
+  /** Called when the selected date changes. */
   onValueChange?: (date: Date | null) => void;
-  /** Dates to disable — return true to disable a given date */
+  /** Dates to disable — return true to disable a given date. */
   isDateDisabled?: (date: Date) => boolean;
-  /** Minimum selectable date */
+  /** Minimum selectable date (inclusive). */
   min?: Date;
-  /** Maximum selectable date */
+  /** Maximum selectable date (inclusive). */
   max?: Date;
   className?: string;
 };

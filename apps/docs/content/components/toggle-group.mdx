@@ -61,22 +61,6 @@ function ControlledToggleGroup() {
 | `ToggleGroup.Root` | Container that manages selection state. Renders a pill-shaped muted background with inline-flex layout. In single-select mode, renders a sliding indicator behind the active item. |
 | `ToggleGroup.Item` | Individual toggle button. Shows muted text by default, foreground text when pressed. In multiple mode, each pressed item gets its own background highlight. |
 
-## ToggleGroup.Root Props
+## Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `value` | `unknown[]` | -- | Controlled pressed values |
-| `defaultValue` | `unknown[]` | `[]` | Initial pressed values (uncontrolled) |
-| `onValueChange` | `(value: unknown[]) => void` | -- | Called when the pressed state changes |
-| `multiple` | `boolean` | `false` | Allow multiple items to be pressed at once |
-| `orientation` | `"horizontal" \| "vertical"` | `"horizontal"` | Layout direction |
-| `disabled` | `boolean` | `false` | Disable all toggle items |
-| `className` | `string` | -- | Additional CSS classes |
-
-## ToggleGroup.Item Props
-
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `value` | `unknown` | **required** | The value this item represents |
-| `disabled` | `boolean` | `false` | Disable this toggle item |
-| `className` | `string` | -- | Additional CSS classes |
+All compound parts are thin style wrappers. `ToggleGroup.Root` props are forwarded to the underlying Base UI [`ToggleGroup`](https://base-ui.com/react/components/toggle-group#api-reference) and `ToggleGroup.Item` props are forwarded to the underlying Base UI [`Toggle`](https://base-ui.com/react/components/toggle-group#api-reference).

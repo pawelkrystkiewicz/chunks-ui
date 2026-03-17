@@ -3,10 +3,22 @@ import { cn } from "../../lib/cn";
 import { type AvatarStyles, avatarStyles } from "./Avatar.Variants";
 
 export type AvatarProps = ComponentProps<"span"> & {
+  /** Image URL. Shows image when provided, initials otherwise. */
   src?: string;
+  /** Alt text for the image. Used to generate fallback initials. */
   alt?: string;
+  /** Explicit fallback text displayed when no `src` is provided (overrides auto-generated initials). */
   fallback?: string;
+  /**
+   * Avatar dimensions in pixels.
+   * @default 40
+   */
   size?: number;
+  /**
+   * Avatar shape.
+   * @default "circle"
+   * @remarks `"circle" | "rounded" | "square"`
+   */
   shape?: AvatarStyles["shape"];
 };
 

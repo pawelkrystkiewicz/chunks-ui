@@ -1,4 +1,5 @@
 import { MenuBasicExample, MenuGroupExample, MenuCheckboxExample, MenuRadioExample } from '@/examples/Menu'
+import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
 # Menu
 
@@ -113,18 +114,18 @@ Use `Menu.Group` with `Menu.GroupLabel` to organize items into labelled sections
 
 ## Menu.Content Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `side` | `"top" \| "bottom" \| "left" \| "right"` | `"bottom"` | Preferred side relative to the trigger |
-| `sideOffset` | `number` | `4` | Distance from the trigger |
-| `align` | `"start" \| "center" \| "end"` | `"center"` | Alignment along the side |
-| `alignOffset` | `number` | `0` | Offset from the alignment edge |
-| `className` | `string` | -- | Additional CSS classes |
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { MenuContentProps } from 'chunks-ui'
+type Props = Pick<MenuContentProps, 'sideOffset' | 'side' | 'align' | 'alignOffset'>
+export default Props
+`
+  })}
+/>
+
+All other props are forwarded to the underlying Base UI [`Menu.Popup`](https://base-ui.com/react/components/menu#api-reference).
 
 ## Menu.Item Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `disabled` | `boolean` | `false` | Prevent interaction and dim the item |
-| `onClick` | `() => void` | -- | Called when the item is activated |
-| `className` | `string` | -- | Additional CSS classes |
+All props are forwarded to the underlying Base UI [`Menu.Item`](https://base-ui.com/react/components/menu#api-reference).

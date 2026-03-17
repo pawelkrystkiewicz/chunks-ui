@@ -66,18 +66,6 @@ function ControlledSwitch() {
 | `Switch.Root` | The switch track. Manages checked state and keyboard interaction. Changes background color when checked. |
 | `Switch.Thumb` | The sliding circle that moves between unchecked (`translate-x-0`) and checked (`translate-x-4`) positions. |
 
-## Switch.Root Props
+## Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `checked` | `boolean` | -- | Controlled checked state |
-| `defaultChecked` | `boolean` | `false` | Initial checked state (uncontrolled) |
-| `onCheckedChange` | `(checked: boolean) => void` | -- | Called when the switch is toggled |
-| `disabled` | `boolean` | `false` | Disable the switch |
-| `className` | `string` | -- | Additional CSS classes |
-
-## Switch.Thumb Props
-
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `className` | `string` | -- | Additional CSS classes |
+All compound parts are thin style wrappers. Props are forwarded to the underlying Base UI [`Switch`](https://base-ui.com/react/components/switch#api-reference).

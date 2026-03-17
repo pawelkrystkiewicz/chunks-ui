@@ -130,7 +130,7 @@ export default ButtonProps
 3. **Use `@default`** for every prop that has a default value in the destructured function signature.
 4. **Import from `chunks-ui`** in the `generateDefinition` code string, never from relative paths.
 5. **Use `Pick` to show only custom props** — don't list inherited HTML/Base UI attributes in the table.
-6. **Keep the manual "All other props are forwarded to..." note** below the `<TSDoc>` block where applicable.
+6. **Link to the underlying API reference** below the `<TSDoc>` block. When props are forwarded to a Base UI primitive, include a Markdown link so users can find the full API. Example: `All other props are forwarded to the underlying Base UI [\`Button\`](https://base-ui.com/react/components/button#api-reference).`
 7. **Remove the old hand-written Markdown table** when replacing with `<TSDoc>`.
 
 ## Turbopack / Next.js 16 Setup

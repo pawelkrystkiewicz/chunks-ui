@@ -2,6 +2,9 @@ import type { ComponentProps } from "react";
 import { cn } from "../../lib/cn";
 
 export type TextareaProps = ComponentProps<"textarea"> & {
+  /** Enable auto-resize via CSS `field-sizing: content`.
+   * @default false
+   */
   autoResize?: boolean;
 };
 
