@@ -1,4 +1,5 @@
 import { PopoverBasicExample, PopoverArrowExample, PopoverCloseExample } from '@/examples/Popover'
+import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
 # Popover
 
@@ -86,18 +87,18 @@ The `Popover.Content` uses Base UI's built-in Floating UI integration. It has a 
 
 ## Popover.Root Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `open` | `boolean` | -- | Controlled open state |
-| `defaultOpen` | `boolean` | `false` | Initial open state (uncontrolled) |
-| `onOpenChange` | `(open: boolean) => void` | -- | Called when open state changes |
+All props are forwarded to the underlying Base UI [`Popover.Root`](https://base-ui.com/react/components/popover#api-reference).
 
 ## Popover.Content Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `side` | `"top" \| "bottom" \| "left" \| "right"` | `"bottom"` | Preferred side |
-| `sideOffset` | `number` | `8` | Distance from the trigger |
-| `align` | `"start" \| "center" \| "end"` | `"center"` | Alignment along the side |
-| `alignOffset` | `number` | `0` | Offset from the alignment edge |
-| `className` | `string` | -- | Additional CSS classes |
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { PopoverContentProps } from 'chunks-ui'
+type Props = Pick<PopoverContentProps, 'sideOffset' | 'side' | 'align' | 'alignOffset'>
+export default Props
+`
+  })}
+/>
+
+All other props are forwarded to the underlying Base UI [`Popover.Popup`](https://base-ui.com/react/components/popover#api-reference).

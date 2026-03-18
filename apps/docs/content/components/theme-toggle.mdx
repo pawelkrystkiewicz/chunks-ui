@@ -1,4 +1,5 @@
 import { ThemeToggleBasicExample, ThemeToggleCustomIconsExample } from '@/examples/ThemeToggle'
+import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
 # ThemeToggle
 
@@ -46,10 +47,14 @@ Replace the default sun/moon icons via `lightIcon` and `darkIcon`:
 
 ## Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `theme` | `"light" \| "dark"` | **required** | Current active theme |
-| `onClick` | `React.MouseEventHandler<HTMLButtonElement>` | -- | Called when the button is clicked |
-| `lightIcon` | `React.ReactNode` | Built-in sun SVG | Icon shown in light mode |
-| `darkIcon` | `React.ReactNode` | Built-in moon SVG | Icon shown in dark mode |
-| `className` | `string` | -- | Additional CSS classes |
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { ThemeToggleProps } from 'chunks-ui'
+type Props = Pick<ThemeToggleProps, 'theme' | 'onClick' | 'lightIcon' | 'darkIcon'>
+export default Props
+`
+  })}
+/>
+
+All other props are forwarded to the underlying `<button>` element.

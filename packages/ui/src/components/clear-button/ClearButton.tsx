@@ -3,6 +3,10 @@ import { cn } from "../../lib/cn";
 import { BUTTON_ANIMATION_CLASSES } from "../shared";
 
 export type ClearButtonProps = ComponentProps<"button"> & {
+  /**
+   * Accessible label for the clear button, used as `aria-label`.
+   * @default "Clear"
+   */
   label?: string;
 };
 

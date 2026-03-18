@@ -113,34 +113,6 @@ Respects `prefers-reduced-motion` — the transition duration collapses to `0` w
 | `Accordion.Trigger` | Clickable button that toggles the panel. Includes the chevron icon. |
 | `Accordion.Panel` | The collapsible content area. Animates height on open/close. |
 
-## Accordion.Root Props
+## Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `value` | `string[]` | -- | Controlled open items |
-| `defaultValue` | `string[]` | `[]` | Initially open items (uncontrolled) |
-| `onValueChange` | `(value: string[]) => void` | -- | Called when open items change |
-| `multiple` | `boolean` | `false` | Allow multiple items open simultaneously |
-| `className` | `string` | -- | Additional CSS classes |
-
-## Accordion.Item Props
-
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `value` | `string` | **required** | Unique identifier for this item |
-| `disabled` | `boolean` | `false` | Prevent this item from being opened |
-| `className` | `string` | -- | Additional CSS classes |
-
-## Accordion.Trigger Props
-
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `children` | `ReactNode` | **required** | Trigger label content |
-| `className` | `string` | -- | Additional CSS classes |
-
-## Accordion.Panel Props
-
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `children` | `ReactNode` | -- | Panel content |
-| `className` | `string` | -- | Additional CSS classes |
+All compound parts accept the same props as their underlying Base UI [`Accordion`](https://base-ui.com/react/components/accordion#api-reference) counterparts. No additional custom props are defined.

@@ -1,4 +1,5 @@
 import { PaginationBasicExample, PaginationWithEllipsisExample } from '@/examples/Pagination'
+import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
 # Pagination
 
@@ -71,18 +72,28 @@ Use the `render` prop on `Link`, `Previous`, and `Next` to render framework-spec
 
 ## Pagination.Link Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `active` | `boolean` | `false` | Marks as current page with `aria-current="page"` |
-| `render` | `ReactNode` | -- | Custom link element |
-| `href` | `string` | -- | URL for the native `<a>` fallback |
-| `className` | `string` | -- | Additional CSS classes |
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { PaginationLinkProps } from 'chunks-ui'
+type Props = Pick<PaginationLinkProps, 'active' | 'render'>
+export default Props
+`
+  })}
+/>
+
+All other props are forwarded to the underlying `<a>` element.
 
 ## Pagination.Previous / Pagination.Next Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `render` | `ReactNode` | -- | Custom link element |
-| `href` | `string` | -- | URL for the native `<a>` fallback |
-| `children` | `ReactNode` | `"Previous"` / `"Next"` | Custom label text |
-| `className` | `string` | -- | Additional CSS classes |
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { PaginationPreviousProps } from 'chunks-ui'
+type Props = Pick<PaginationPreviousProps, 'render'>
+export default Props
+`
+  })}
+/>
+
+All other props are forwarded to the underlying `<a>` element.

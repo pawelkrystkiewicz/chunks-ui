@@ -1,6 +1,7 @@
 import { Textarea } from 'chunks-ui'
 import { Container } from '@/components'
 import { TextareaWithFieldExample } from '@/examples/Textarea'
+import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
 # Textarea
 
@@ -60,9 +61,14 @@ The textarea has a `min-h-20` minimum height by default.
 
 ## Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `autoResize` | `boolean` | `false` | Enable auto-resize via `field-sizing: content` |
-| `className` | `string` | -- | Additional CSS classes |
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { TextareaProps } from 'chunks-ui'
+type Props = Pick<TextareaProps, 'autoResize'>
+export default Props
+`
+  })}
+/>
 
-All standard `<textarea>` props are supported (`value`, `onChange`, `placeholder`, `disabled`, `rows`, `maxLength`, etc.).
+All other props are forwarded to the underlying `<textarea>` element.

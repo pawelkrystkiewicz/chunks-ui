@@ -1,6 +1,7 @@
 import { Chip } from 'chunks-ui'
 import { Container } from '@/components'
 import { ChipRemovableExample } from '@/examples/Chip'
+import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
 # Chip
 
@@ -85,12 +86,14 @@ function TagList() {
 
 ## Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `color` | `"primary" \| "destructive" \| "success" \| "warning" \| "secondary"` | `"secondary"` | Semantic color variant |
-| `variant` | `"contained" \| "outlined"` | `"contained"` | Fill style |
-| `onRemove` | `() => void` | -- | Show remove button; called on click |
-| `className` | `string` | -- | Additional CSS classes |
-| `children` | `ReactNode` | -- | Chip label content |
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { ChipProps } from 'chunks-ui'
+type Props = Pick<ChipProps, 'onRemove' | 'color' | 'variant'>
+export default Props
+`
+  })}
+/>
 
-All other props are forwarded to the root `<span>` element.
+All other props are forwarded to the underlying `<span>` element.

@@ -73,6 +73,9 @@ function RadioIndicator({ className, ...props }: RadioIndicatorProps) {
 }
 
 export type RadioItemProps = Omit<RadioRootProps, "children"> & {
+  /**
+   * Label text displayed next to the radio indicator.
+   */
   children: ReactNode;
 };
 

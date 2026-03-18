@@ -6,10 +6,26 @@ import { Loader } from "../loader";
 import { buttonVariants } from "./Button.Variants";
 
 export type ButtonProps = ComponentProps<typeof BaseButton> & {
+  /**
+   * Show a loading spinner and disable interaction.
+   * @default false
+   */
   loading?: boolean;
+  /** Icon rendered before `children`. Replaced by `Loader` when loading. */
   startIcon?: ReactNode;
+  /** Icon rendered after `children`. Hidden when loading. */
   endIcon?: ReactNode;
+  /**
+   * Visual style of the button.
+   * @default "contained"
+   * @remarks `"contained" | "outlined" | "text"`
+   */
   variant?: ElementVariant;
+  /**
+   * Semantic color theme.
+   * @default "primary"
+   * @remarks `"primary" | "destructive" | "success" | "warning" | "secondary"`
+   */
   color?: ElementColor;
 };
 

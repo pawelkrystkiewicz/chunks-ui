@@ -1,6 +1,7 @@
 import { Button } from 'chunks-ui'
 import { SearchIcon, PlusIcon, ArrowRightIcon } from 'lucide-react'
 import { Container } from '@/components'
+import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
 # Button
 
@@ -102,14 +103,14 @@ Icons are hidden during loading state. The `startIcon` slot is replaced by the `
 
 ## Props
 
-| Prop        | Type                                                                  | Default       | Description                          |
-| ----------- | --------------------------------------------------------------------- | ------------- | ------------------------------------ |
-| `variant`   | `"contained" \| "outlined" \| "text"`                                 | `"contained"` | Visual style                         |
-| `color`     | `"primary" \| "destructive" \| "success" \| "warning" \| "secondary"` | `"primary"`   | Semantic color                       |
-| `loading`   | `boolean`                                                             | `false`       | Show spinner and disable interaction |
-| `startIcon` | `ReactNode`                                                           | --            | Icon before children                 |
-| `endIcon`   | `ReactNode`                                                           | --            | Icon after children                  |
-| `disabled`  | `boolean`                                                             | `false`       | Disable the button                   |
-| `className` | `string`                                                              | --            | Additional CSS classes               |
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { ButtonProps } from 'chunks-ui'
+type Props = Pick<ButtonProps, 'variant' | 'color' | 'loading' | 'startIcon' | 'endIcon'>
+export default Props
+`
+  })}
+/>
 
-All other props are forwarded to the underlying Base UI `Button`.
+All other props are forwarded to the underlying Base UI [`Button`](https://base-ui.com/react/components/button#api-reference).

@@ -13,7 +13,14 @@ export type DrawerProps = ComponentProps<typeof BaseDialog.Root>;
 export type DrawerTriggerProps = ComponentProps<typeof BaseDialog.Trigger>;
 export type DrawerPortalProps = ComponentProps<typeof BaseDialog.Portal>;
 export type DrawerPopupProps = ComponentProps<typeof BaseDialog.Popup> &
-  VariantProps<typeof drawerPopupVariants>;
+  Omit<VariantProps<typeof drawerPopupVariants>, "side"> & {
+    /**
+     * Which edge of the viewport the drawer slides in from.
+     * @default "right"
+     * @remarks `"left" | "right" | "bottom"`
+     */
+    side?: "left" | "right" | "bottom";
+  };
 export type DrawerBackdropProps = ComponentProps<typeof BaseDialog.Backdrop>;
 export type DrawerTitleProps = ComponentProps<typeof BaseDialog.Title>;
 export type DrawerDescriptionProps = ComponentProps<typeof BaseDialog.Description>;

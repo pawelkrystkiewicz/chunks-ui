@@ -86,15 +86,6 @@ Wrap a label with `NumberField.ScrubArea` to allow click-and-drag adjustment. Th
 | `NumberField.ScrubArea` | A region the user can click-drag to change the value. |
 | `NumberField.ScrubAreaCursor` | A virtual cursor shown during the scrub gesture (hidden by default). |
 
-## NumberField.Root Props
+## Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `value` | `number` | -- | Controlled value |
-| `defaultValue` | `number` | -- | Initial value (uncontrolled) |
-| `onValueChange` | `(value: number) => void` | -- | Called when value changes |
-| `min` | `number` | -- | Minimum allowed value |
-| `max` | `number` | -- | Maximum allowed value |
-| `step` | `number` | `1` | Step increment |
-| `disabled` | `boolean` | `false` | Disable all interaction |
-| `className` | `string` | -- | Additional CSS classes |
+All parts accept the props from their corresponding Base UI [`NumberField`](https://base-ui.com/react/components/number-field#api-reference) sub-components.

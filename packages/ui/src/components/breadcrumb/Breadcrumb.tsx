@@ -18,6 +18,7 @@ export type BreadcrumbRootProps = ComponentProps<"nav">;
 export type BreadcrumbListProps = ComponentProps<"ol">;
 export type BreadcrumbItemProps = ComponentProps<"li">;
 export type BreadcrumbLinkProps = ComponentProps<"a"> & {
+  /** Custom link element to render instead of a native `<a>` (e.g. `<Link to="..." />`). */
   render?: RenderElement;
 };
 export type BreadcrumbPageProps = ComponentProps<"span">;

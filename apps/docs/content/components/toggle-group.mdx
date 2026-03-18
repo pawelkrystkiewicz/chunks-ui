@@ -15,10 +15,12 @@ import { ToggleGroup } from "chunks-ui";
 By default, the toggle group operates in single-select mode. Only one item can be pressed at a time, and a sliding indicator highlights the active selection:
 
 ```tsx
-<ToggleGroup.Root defaultValue={["bold"]}>
-  <ToggleGroup.Item value="bold">Bold</ToggleGroup.Item>
-  <ToggleGroup.Item value="italic">Italic</ToggleGroup.Item>
-  <ToggleGroup.Item value="underline">Underline</ToggleGroup.Item>
+import { AlignLeftIcon, AlignCenterIcon, AlignRightIcon } from 'lucide-react'
+
+<ToggleGroup.Root aria-label="Text alignment" defaultValue={["left"]}>
+  <ToggleGroup.Item value="left" aria-label="Align left"><AlignLeftIcon /></ToggleGroup.Item>
+  <ToggleGroup.Item value="center" aria-label="Align center"><AlignCenterIcon /></ToggleGroup.Item>
+  <ToggleGroup.Item value="right" aria-label="Align right"><AlignRightIcon /></ToggleGroup.Item>
 </ToggleGroup.Root>
 ```
 
@@ -29,10 +31,12 @@ By default, the toggle group operates in single-select mode. Only one item can b
 Set `multiple` to allow pressing more than one item at a time. Each pressed item gets its own background highlight instead of a shared sliding indicator:
 
 ```tsx
-<ToggleGroup.Root multiple defaultValue={["bold", "italic"]}>
-  <ToggleGroup.Item value="bold">Bold</ToggleGroup.Item>
-  <ToggleGroup.Item value="italic">Italic</ToggleGroup.Item>
-  <ToggleGroup.Item value="underline">Underline</ToggleGroup.Item>
+import { BoldIcon, ItalicIcon, UnderlineIcon } from 'lucide-react'
+
+<ToggleGroup.Root aria-label="Text formatting" multiple defaultValue={["bold", "italic"]}>
+  <ToggleGroup.Item value="bold" aria-label="Bold"><BoldIcon /></ToggleGroup.Item>
+  <ToggleGroup.Item value="italic" aria-label="Italic"><ItalicIcon /></ToggleGroup.Item>
+  <ToggleGroup.Item value="underline" aria-label="Underline"><UnderlineIcon /></ToggleGroup.Item>
 </ToggleGroup.Root>
 ```
 
@@ -41,14 +45,16 @@ Set `multiple` to allow pressing more than one item at a time. Each pressed item
 ## Controlled
 
 ```tsx
+import { AlignLeftIcon, AlignCenterIcon, AlignRightIcon } from 'lucide-react'
+
 function ControlledToggleGroup() {
-  const [value, setValue] = useState(["bold"]);
+  const [value, setValue] = useState(["left"]);
 
   return (
-    <ToggleGroup.Root value={value} onValueChange={setValue}>
-      <ToggleGroup.Item value="bold">Bold</ToggleGroup.Item>
-      <ToggleGroup.Item value="italic">Italic</ToggleGroup.Item>
-      <ToggleGroup.Item value="underline">Underline</ToggleGroup.Item>
+    <ToggleGroup.Root aria-label="Text alignment" value={value} onValueChange={setValue}>
+      <ToggleGroup.Item value="left" aria-label="Align left"><AlignLeftIcon /></ToggleGroup.Item>
+      <ToggleGroup.Item value="center" aria-label="Align center"><AlignCenterIcon /></ToggleGroup.Item>
+      <ToggleGroup.Item value="right" aria-label="Align right"><AlignRightIcon /></ToggleGroup.Item>
     </ToggleGroup.Root>
   );
 }
@@ -61,22 +67,6 @@ function ControlledToggleGroup() {
 | `ToggleGroup.Root` | Container that manages selection state. Renders a pill-shaped muted background with inline-flex layout. In single-select mode, renders a sliding indicator behind the active item. |
 | `ToggleGroup.Item` | Individual toggle button. Shows muted text by default, foreground text when pressed. In multiple mode, each pressed item gets its own background highlight. |
 
-## ToggleGroup.Root Props
+## Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `value` | `unknown[]` | -- | Controlled pressed values |
-| `defaultValue` | `unknown[]` | `[]` | Initial pressed values (uncontrolled) |
-| `onValueChange` | `(value: unknown[]) => void` | -- | Called when the pressed state changes |
-| `multiple` | `boolean` | `false` | Allow multiple items to be pressed at once |
-| `orientation` | `"horizontal" \| "vertical"` | `"horizontal"` | Layout direction |
-| `disabled` | `boolean` | `false` | Disable all toggle items |
-| `className` | `string` | -- | Additional CSS classes |
-
-## ToggleGroup.Item Props
-
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `value` | `unknown` | **required** | The value this item represents |
-| `disabled` | `boolean` | `false` | Disable this toggle item |
-| `className` | `string` | -- | Additional CSS classes |
+All compound parts are thin style wrappers. `ToggleGroup.Root` props are forwarded to the underlying Base UI [`ToggleGroup`](https://base-ui.com/react/components/toggle-group#api-reference) and `ToggleGroup.Item` props are forwarded to the underlying Base UI [`Toggle`](https://base-ui.com/react/components/toggle#api-reference).

@@ -1,4 +1,5 @@
 import { CopyButtonBasicExample, CopyButtonCustomExample } from '@/examples/CopyButton'
+import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
 # CopyButton
 
@@ -42,11 +43,14 @@ Control how long the "copied" confirmation persists with the `timeout` prop (def
 
 ## Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `value` | `string` | **required** | Text to copy to the clipboard |
-| `timeout` | `number` | `2000` | Duration (ms) of the "copied" state |
-| `children` | `(state: { copied: boolean }) => ReactNode` | -- | Custom render function |
-| `className` | `string` | -- | Additional CSS classes |
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { CopyButtonProps } from 'chunks-ui'
+type Props = Pick<CopyButtonProps, 'value' | 'timeout' | 'children'>
+export default Props
+`
+  })}
+/>
 
-All other `<button>` props are forwarded to the root element.
+All other props are forwarded to the underlying `<button>` element.

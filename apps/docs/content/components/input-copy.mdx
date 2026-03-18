@@ -1,4 +1,5 @@
 import { InputCopyBasicExample, InputCopyEditableExample } from '@/examples/InputCopy'
+import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
 # InputCopy
 
@@ -21,10 +22,14 @@ import { InputCopy } from "chunks-ui";
 
 ## Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `value` | `string` | **required** | The text to display and copy |
-| `readOnly` | `boolean` | `true` | Whether the input is read-only |
-| `className` | `string` | -- | Additional CSS classes |
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { InputCopyProps } from 'chunks-ui'
+type Props = Pick<InputCopyProps, 'value'>
+export default Props
+`
+  })}
+/>
 
 All other `Input` props are forwarded except `endAdornment` and `onClear` (reserved for the internal `CopyButton`).

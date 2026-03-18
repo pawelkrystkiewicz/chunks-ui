@@ -15,10 +15,25 @@ export type PopoverTitleProps = ComponentProps<typeof BasePopover.Title>;
 export type PopoverDescriptionProps = ComponentProps<typeof BasePopover.Description>;
 
 export type PopoverContentProps = ComponentProps<typeof BasePopover.Popup> & {
-  /** @default 8 */
+  /**
+   * Distance from the trigger element in pixels.
+   * @default 8
+   */
   sideOffset?: ComponentProps<typeof BasePopover.Positioner>["sideOffset"];
+  /**
+   * Preferred side of the trigger to render against.
+   * @remarks `"top" | "bottom" | "left" | "right"`
+   */
   side?: ComponentProps<typeof BasePopover.Positioner>["side"];
+  /**
+   * Alignment along the chosen side.
+   * @remarks `"start" | "center" | "end"`
+   */
   align?: ComponentProps<typeof BasePopover.Positioner>["align"];
+  /**
+   * Offset from the alignment edge in pixels.
+   * @default 0
+   */
   alignOffset?: ComponentProps<typeof BasePopover.Positioner>["alignOffset"];
 };
 

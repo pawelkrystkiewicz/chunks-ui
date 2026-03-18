@@ -1,6 +1,7 @@
 import { ClearButton } from 'chunks-ui'
 import { Container } from '@/components'
 import { ClearButtonInContextExample } from '@/examples/ClearButton'
+import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
 # ClearButton
 
@@ -24,27 +25,29 @@ import { ClearButton } from 'chunks-ui'
 
 ## Custom Label
 
-Pass `aria-label` directly to override the default:
+Use the `label` prop to override the default accessible label:
 
 ```tsx
-<ClearButton aria-label="Remove tag" onClick={handleRemove} />
+<ClearButton label="Remove tag" />
 ```
 
 <Container>
-  <ClearButton aria-label="Remove tag" />
+  <ClearButton label="Remove tag" />
 </Container>
-
-Default label is `"Clear"`.
 
 ## Props
 
-| Prop        | Type         | Default | Description            |
-| ----------- | ------------ | ------- | ---------------------- |
-| `className` | `string`     | --      | Additional CSS classes |
-| `onClick`   | `() => void` | --      | Click handler          |
-| `disabled`  | `boolean`    | `false` | Disable the button     |
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { ClearButtonProps } from 'chunks-ui'
+type Props = Pick<ClearButtonProps, 'label'>
+export default Props
+`
+  })}
+/>
 
-All HTML `<button>` props are forwarded. `aria-label` and `title` default to `"Clear"` if not provided.
+All other props are forwarded to the underlying `<button>` element.
 
 ## Styling
 
