@@ -4,4 +4,10 @@ const withNextra = nextra({
   contentDirBasePath: "/",
 });
 
-export default withNextra({});
+export default withNextra({
+  turbopack: {
+    resolveAlias: {
+      "next-mdx-import-source-file": "./mdx-components.tsx",
+    },
+  },
+});

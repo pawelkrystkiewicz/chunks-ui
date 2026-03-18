@@ -99,12 +99,6 @@ The positioner has a default `sideOffset` of `6px`. Override placement with `sid
 | `Tooltip.Arrow` | A rotated square (`bg-foreground`) absolutely positioned at the popup edge. Aligned to the anchor via Base UI CSS variables. |
 | `Tooltip.Provider` | Shared delay configuration for grouped tooltips. |
 
-## Tooltip.Root Props
+## Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `open` | `boolean` | -- | Controlled open state |
-| `defaultOpen` | `boolean` | `false` | Initial open state (uncontrolled) |
-| `onOpenChange` | `(open: boolean) => void` | -- | Called when open state changes |
-| `delay` | `number` | `600` | Milliseconds before showing |
-| `closeDelay` | `number` | `0` | Milliseconds before hiding |
+All compound parts are thin style wrappers. Props are forwarded to the underlying Base UI [`Tooltip`](https://base-ui.com/react/components/tooltip#api-reference). Note that `Tooltip.Trigger` defaults `delay` to `50` (Base UI default is `600`).

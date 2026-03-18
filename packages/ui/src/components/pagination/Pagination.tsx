@@ -19,13 +19,26 @@ export type PaginationRootProps = ComponentProps<"nav">;
 export type PaginationContentProps = ComponentProps<"ul">;
 export type PaginationItemProps = ComponentProps<"li">;
 export type PaginationLinkProps = ComponentProps<"a"> & {
+  /**
+   * Marks this link as the current page, setting `aria-current="page"`.
+   * @default false
+   */
   active?: boolean;
+  /**
+   * Custom React element to render instead of the default `<a>` tag.
+   */
   render?: RenderElement;
 };
 export type PaginationPreviousProps = ComponentProps<"a"> & {
+  /**
+   * Custom React element to render instead of the default `<a>` tag.
+   */
   render?: RenderElement;
 };
 export type PaginationNextProps = ComponentProps<"a"> & {
+  /**
+   * Custom React element to render instead of the default `<a>` tag.
+   */
   render?: RenderElement;
 };
 export type PaginationEllipsisProps = ComponentProps<"span">;

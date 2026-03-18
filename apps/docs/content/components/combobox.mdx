@@ -225,22 +225,6 @@ function ControlledCombobox() {
 | `Combobox.Value` | Displays the selected value. |
 | `Combobox.Status` | Accessible status announcements for screen readers. |
 
-## Combobox.Root Props
+## Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `items` | `Array<{ value: string; label: string }>` | -- | The items to display in the list |
-| `value` | `string \| string[]` | -- | Controlled selected value |
-| `defaultValue` | `string \| string[]` | -- | Initial value (uncontrolled) |
-| `onValueChange` | `(value: string \| string[]) => void` | -- | Called when selection changes |
-| `multiple` | `boolean` | `false` | Enable multi-select mode |
-| `open` | `boolean` | -- | Controlled open state |
-| `onOpenChange` | `(open: boolean) => void` | -- | Called when open state changes |
-
-## Combobox.Input Props
-
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `placeholder` | `string` | -- | Placeholder text |
-| `disabled` | `boolean` | `false` | Disable the input |
-| `className` | `string` | -- | Additional CSS classes |
+All compound parts accept the same props as their underlying Base UI [`Combobox`](https://base-ui.com/react/components/combobox#api-reference) counterparts. `Combobox.Control` is a plain `<div>` wrapper and accepts all standard HTML div props. No additional custom props are defined.

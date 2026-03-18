@@ -5,6 +5,9 @@ import { CopyButton } from "../copy-button";
 import { Input } from "../input";
 
 export type InputCopyProps = Omit<ComponentProps<typeof Input>, "endAdornment" | "onClear"> & {
+  /**
+   * The text to display in the input and copy to the clipboard.
+   */
   value: string;
 };
 

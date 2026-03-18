@@ -1,4 +1,5 @@
 import { RadioBasicExample, RadioDisabledExample } from '@/examples/Radio'
+import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
 # Radio
 
@@ -60,18 +61,22 @@ Disable individual radio buttons or the entire group:
 
 ## Radio.Group Props
 
-| Prop            | Type                      | Default | Description                            |
-| --------------- | ------------------------- | ------- | -------------------------------------- |
-| `value`         | `string`                  | --      | Controlled selected value              |
-| `defaultValue`  | `string`                  | --      | Initial value (uncontrolled)           |
-| `onValueChange` | `(value: string) => void` | --      | Called when selection changes          |
-| `disabled`      | `boolean`                 | `false` | Disable all radio buttons in the group |
-| `className`     | `string`                  | --      | Additional CSS classes                 |
+All props are forwarded to the underlying Base UI [`RadioGroup`](https://base-ui.com/react/components/radio-group#api-reference).
+
+## Radio.Item Props
+
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { RadioItemProps } from 'chunks-ui'
+type Props = Pick<RadioItemProps, 'children'>
+export default Props
+`
+  })}
+/>
+
+All other props are forwarded to the underlying Base UI [`Radio.Root`](https://base-ui.com/react/components/radio-group#api-reference).
 
 ## Radio.Root Props
 
-| Prop        | Type      | Default      | Description                     |
-| ----------- | --------- | ------------ | ------------------------------- |
-| `value`     | `string`  | **required** | The value this radio represents |
-| `disabled`  | `boolean` | `false`      | Disable this radio button       |
-| `className` | `string`  | --           | Additional CSS classes          |
+All props are forwarded to the underlying Base UI [`Radio.Root`](https://base-ui.com/react/components/radio-group#api-reference).

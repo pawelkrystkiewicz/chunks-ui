@@ -80,18 +80,6 @@ The indeterminate state is used for "select all" patterns where some items are c
 | `Checkbox.Root` | The checkbox control. Handles checked state and keyboard interaction. |
 | `Checkbox.Indicator` | Renders the check/indeterminate icon inside the root. |
 
-## Checkbox.Root Props
+## Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `checked` | `boolean \| "indeterminate"` | -- | Controlled checked state |
-| `defaultChecked` | `boolean` | `false` | Initial checked state (uncontrolled) |
-| `onCheckedChange` | `(checked: boolean) => void` | -- | Called when checked state changes |
-| `disabled` | `boolean` | `false` | Disable the checkbox |
-| `className` | `string` | -- | Additional CSS classes |
-
-## Checkbox.Indicator Props
-
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `className` | `string` | -- | Additional CSS classes |
+All compound parts accept the same props as their underlying Base UI [`Checkbox`](https://base-ui.com/react/components/checkbox#api-reference) counterparts. No additional custom props are defined.

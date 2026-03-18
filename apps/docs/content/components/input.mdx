@@ -2,6 +2,7 @@ import { Input } from 'chunks-ui'
 import { SearchIcon } from 'lucide-react'
 import { Container } from '@/components'
 import { InputErrorExample, InputWithFieldExample, InputWithClearButton } from '@/examples/Input'
+import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
 # Input
 
@@ -96,11 +97,14 @@ Wrap `Input` in a `Field` for labels, descriptions, and validation:
 
 ## Props
 
-| Prop             | Type         | Default | Description                        |
-| ---------------- | ------------ | ------- | ---------------------------------- |
-| `startAdornment` | `ReactNode`  | --      | Element before the input text      |
-| `endAdornment`   | `ReactNode`  | --      | Element after the input text       |
-| `onClear`        | `() => void` | --      | Show clear button; called on click |
-| `className`      | `string`     | --      | Additional CSS classes             |
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { InputProps } from 'chunks-ui'
+type Props = Pick<InputProps, 'startAdornment' | 'endAdornment' | 'onClear'>
+export default Props
+`
+  })}
+/>
 
-All other props are forwarded to the underlying Base UI `Input` (supports `value`, `onChange`, `placeholder`, `disabled`, etc.).
+All other props are forwarded to the underlying Base UI [`Input`](https://base-ui.com/react/components/input#api-reference).

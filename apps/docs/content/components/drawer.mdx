@@ -1,4 +1,5 @@
 import { DrawerBasicExample } from '@/examples/Drawer'
+import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
 # Drawer
 
@@ -90,15 +91,18 @@ The drawer slides in from its designated edge using `translate-x` (left/right) o
 
 ## Drawer.Root Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `open` | `boolean` | -- | Controlled open state |
-| `defaultOpen` | `boolean` | `false` | Initial open state (uncontrolled) |
-| `onOpenChange` | `(open: boolean) => void` | -- | Called when open state changes |
+All `Drawer.Root` props are forwarded to the underlying Base UI [`Dialog`](https://base-ui.com/react/components/dialog#api-reference).
 
 ## Drawer.Popup Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `side` | `"left" \| "right" \| "bottom"` | `"right"` | Which edge the drawer slides from |
-| `className` | `string` | -- | Additional CSS classes |
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { DrawerPopupProps } from 'chunks-ui'
+type Props = Pick<DrawerPopupProps, 'side'>
+export default Props
+`
+  })}
+/>
+
+All other props are forwarded to the underlying Base UI [`Dialog.Popup`](https://base-ui.com/react/components/dialog#api-reference).

@@ -90,15 +90,6 @@ add({
 | `actionProps` | `{ children: ReactNode; onClick: () => void }` | Props for the action button |
 | `timeout` | `number` | Auto-dismiss delay in milliseconds (provider default applies if omitted) |
 
-## Toast.Provider Props
+## Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `timeout` | `number` | `5000` | Default auto-dismiss delay in ms |
-| `limit` | `number` | -- | Maximum number of toasts shown simultaneously |
-
-## Toast.Viewport Props
-
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `className` | `string` | -- | Additional CSS classes on the viewport container |
+All compound parts are thin style wrappers. Props are forwarded to the underlying Base UI [`Toast`](https://base-ui.com/react/components/toast#api-reference).

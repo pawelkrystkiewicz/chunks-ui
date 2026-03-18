@@ -6,13 +6,39 @@ import { cn } from "../../lib/cn";
 import { Calendar } from "../calendar/Calendar";
 
 export type DatePickerProps = {
+  /**
+   * The currently selected date (controlled).
+   */
   value?: Date | null;
+  /**
+   * The initial selected date when uncontrolled.
+   * @default null
+   */
   defaultValue?: Date | null;
+  /**
+   * Callback fired when a date is selected or cleared.
+   */
   onValueChange?: (date: Date | null) => void;
+  /**
+   * Placeholder text shown in the trigger when no date is selected.
+   * @default "Pick a date"
+   */
   placeholder?: string;
+  /**
+   * Whether the date picker trigger is disabled.
+   */
   disabled?: boolean;
+  /**
+   * The earliest selectable date.
+   */
   min?: Date;
+  /**
+   * The latest selectable date.
+   */
   max?: Date;
+  /**
+   * Predicate function to disable individual dates in the calendar.
+   */
   isDateDisabled?: (date: Date) => boolean;
   className?: string;
 };

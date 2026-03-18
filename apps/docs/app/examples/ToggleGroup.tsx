@@ -1,15 +1,29 @@
 "use client";
 
 import { ToggleGroup } from "chunks-ui";
+import {
+  AlignCenterIcon,
+  AlignLeftIcon,
+  AlignRightIcon,
+  BoldIcon,
+  ItalicIcon,
+  UnderlineIcon,
+} from "lucide-react";
 import { Container } from "@/components";
 
 export function ToggleGroupBasicExample() {
   return (
     <Container>
-      <ToggleGroup.Root defaultValue={["bold"]}>
-        <ToggleGroup.Item value="bold">Bold</ToggleGroup.Item>
-        <ToggleGroup.Item value="italic">Italic</ToggleGroup.Item>
-        <ToggleGroup.Item value="underline">Underline</ToggleGroup.Item>
+      <ToggleGroup.Root aria-label="Text alignment" defaultValue={["left"]}>
+        <ToggleGroup.Item value="left" aria-label="Align left">
+          <AlignLeftIcon />
+        </ToggleGroup.Item>
+        <ToggleGroup.Item value="center" aria-label="Align center">
+          <AlignCenterIcon />
+        </ToggleGroup.Item>
+        <ToggleGroup.Item value="right" aria-label="Align right">
+          <AlignRightIcon />
+        </ToggleGroup.Item>
       </ToggleGroup.Root>
     </Container>
   );
@@ -18,10 +32,16 @@ export function ToggleGroupBasicExample() {
 export function ToggleGroupMultipleExample() {
   return (
     <Container>
-      <ToggleGroup.Root multiple defaultValue={["bold", "italic"]}>
-        <ToggleGroup.Item value="bold">Bold</ToggleGroup.Item>
-        <ToggleGroup.Item value="italic">Italic</ToggleGroup.Item>
-        <ToggleGroup.Item value="underline">Underline</ToggleGroup.Item>
+      <ToggleGroup.Root aria-label="Text formatting" multiple defaultValue={["bold", "italic"]}>
+        <ToggleGroup.Item value="bold" aria-label="Bold">
+          <BoldIcon />
+        </ToggleGroup.Item>
+        <ToggleGroup.Item value="italic" aria-label="Italic">
+          <ItalicIcon />
+        </ToggleGroup.Item>
+        <ToggleGroup.Item value="underline" aria-label="Underline">
+          <UnderlineIcon />
+        </ToggleGroup.Item>
       </ToggleGroup.Root>
     </Container>
   );

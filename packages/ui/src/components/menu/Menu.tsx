@@ -16,10 +16,25 @@ export type MenuRadioGroupProps = ComponentProps<typeof BaseMenu.RadioGroup>;
 export type MenuArrowProps = ComponentProps<typeof BaseMenu.Arrow>;
 
 export type MenuContentProps = ComponentProps<typeof BaseMenu.Popup> & {
-  /** @default 4 */
+  /**
+   * Distance from the trigger element in pixels.
+   * @default 4
+   */
   sideOffset?: ComponentProps<typeof BaseMenu.Positioner>["sideOffset"];
+  /**
+   * Preferred side of the trigger to render against.
+   * @remarks `"top" | "bottom" | "left" | "right"`
+   */
   side?: ComponentProps<typeof BaseMenu.Positioner>["side"];
+  /**
+   * Alignment along the chosen side.
+   * @remarks `"start" | "center" | "end"`
+   */
   align?: ComponentProps<typeof BaseMenu.Positioner>["align"];
+  /**
+   * Offset from the alignment edge in pixels.
+   * @default 0
+   */
   alignOffset?: ComponentProps<typeof BaseMenu.Positioner>["alignOffset"];
 };
 

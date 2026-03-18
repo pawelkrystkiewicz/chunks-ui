@@ -96,11 +96,6 @@ The popup enters with a scale-up + fade transition (`scale-95` to `scale-100`, `
 | `Dialog.Description` | Supporting text below the title. Rendered in `text-muted-foreground`. |
 | `Dialog.Close` | Button that closes the dialog. |
 
-## Dialog.Root Props
+## Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `open` | `boolean` | -- | Controlled open state |
-| `defaultOpen` | `boolean` | `false` | Initial open state (uncontrolled) |
-| `onOpenChange` | `(open: boolean) => void` | -- | Called when open state changes |
-| `modal` | `boolean` | `true` | Whether the dialog is modal |
+All Dialog parts are pass-throughs to the underlying Base UI [`Dialog`](https://base-ui.com/react/components/dialog#api-reference).

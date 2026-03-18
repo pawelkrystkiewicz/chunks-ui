@@ -27,17 +27,32 @@ describe("Input", () => {
     expect(screen.getByTestId("end")).toBeInTheDocument();
   });
 
-  it("renders clear button when onClear is provided", async () => {
+  it("renders clear button when onClear is provided and value is non-empty", async () => {
     const onClear = vi.fn();
-    render(<Input onClear={onClear} data-testid="inp" />);
+    render(<Input onClear={onClear} value="hello" data-testid="inp" />);
     const clearBtn = screen.getByRole("button", { name: "Clear" });
     await userEvent.click(clearBtn);
     expect(onClear).toHaveBeenCalledOnce();
   });
 
-  it("prefers clear button over end adornment", () => {
+  it("hides clear button when value is empty or undefined", () => {
     const onClear = vi.fn();
-    render(<Input onClear={onClear} endAdornment={<span data-testid="end" />} data-testid="inp" />);
+    const { rerender } = render(<Input onClear={onClear} data-testid="inp" />);
+    expect(screen.queryByRole("button", { name: "Clear" })).not.toBeInTheDocument();
+    rerender(<Input onClear={onClear} value="" data-testid="inp" />);
+    expect(screen.queryByRole("button", { name: "Clear" })).not.toBeInTheDocument();
+  });
+
+  it("prefers clear button over end adornment when value is non-empty", () => {
+    const onClear = vi.fn();
+    render(
+      <Input
+        onClear={onClear}
+        value="text"
+        endAdornment={<span data-testid="end" />}
+        data-testid="inp"
+      />,
+    );
     expect(screen.getByRole("button", { name: "Clear" })).toBeInTheDocument();
     expect(screen.queryByTestId("end")).not.toBeInTheDocument();
   });

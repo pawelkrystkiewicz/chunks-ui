@@ -126,24 +126,6 @@ function ControlledSlider() {
 | `Slider.Indicator` | Fills the track from origin to the current thumb position. |
 | `Slider.Thumb` | The draggable handle. Requires `aria-label` for accessibility. |
 
-## Slider.Root Props
+## Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `value` | `number \| number[]` | -- | Controlled value |
-| `defaultValue` | `number \| number[]` | `0` | Initial value (uncontrolled) |
-| `onValueChange` | `(value: number \| number[]) => void` | -- | Called on value change |
-| `min` | `number` | `0` | Minimum value |
-| `max` | `number` | `100` | Maximum value |
-| `step` | `number` | `1` | Step increment |
-| `orientation` | `"horizontal" \| "vertical"` | `"horizontal"` | Layout direction |
-| `disabled` | `boolean` | `false` | Disable interaction |
-| `className` | `string` | -- | Additional CSS classes |
-
-## Slider.Thumb Props
-
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `index` | `number` | `0` | Which value this thumb controls (range sliders) |
-| `aria-label` | `string` | **required** | Accessible label for the thumb |
-| `className` | `string` | -- | Additional CSS classes |
+All compound parts are thin style wrappers. Props are forwarded to the underlying Base UI [`Slider`](https://base-ui.com/react/components/slider#api-reference).
