@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { cn } from "../../lib/cn";
 
 export type CalendarProps = {
@@ -103,6 +103,14 @@ export function Calendar({
   const initialViewDate = selectedDate ?? new Date();
   const [viewYear, setViewYear] = useState(initialViewDate.getFullYear());
   const [viewMonth, setViewMonth] = useState(initialViewDate.getMonth());
+
+  // Sync visible month when controlled value changes to a different month
+  useEffect(() => {
+    if (isControlled && value) {
+      setViewYear(value.getFullYear());
+      setViewMonth(value.getMonth());
+    }
+  }, [isControlled, value]);
 
   const today = useMemo(() => startOfDay(new Date()), []);
 

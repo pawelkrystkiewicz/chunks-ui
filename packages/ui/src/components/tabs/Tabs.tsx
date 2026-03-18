@@ -32,13 +32,24 @@ export type TabsPanelProps = ComponentProps<typeof BaseTabs.Panel>;
 
 export type TabsIndicatorProps = ComponentProps<typeof BaseTabs.Indicator>;
 
+type MotionTransition = {
+  type?: "spring" | "tween" | "inertia";
+  stiffness?: number;
+  damping?: number;
+  bounce?: number;
+  mass?: number;
+  restDelta?: number;
+  restSpeed?: number;
+  duration?: number;
+};
+
 export type TabsContentsProps = Omit<ComponentProps<"div">, "children"> & {
   /** The `<Tabs.Content>` elements to animate between. */
   children: ReactNode;
   /** Custom spring transition config passed to Motion.
    * @default springs.content
    */
-  transition?: Record<string, unknown>;
+  transition?: MotionTransition;
 };
 
 export type TabsContentProps = ComponentProps<"div"> & {

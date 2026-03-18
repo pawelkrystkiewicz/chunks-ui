@@ -28,7 +28,8 @@ export function Input({ startAdornment, endAdornment, onClear, className, ...pro
     return <BaseInput className={cn(inputVariants(), className)} {...props} />;
   }
 
-  const clearable = Boolean(String(props.value).length && typeof onClear === "function");
+  const clearable =
+    typeof onClear === "function" && props.value != null && String(props.value).length > 0;
 
   return (
     <div className={cn("relative inline-flex items-center", className)}>
