@@ -17,10 +17,10 @@ By default, the toggle group operates in single-select mode. Only one item can b
 ```tsx
 import { AlignLeftIcon, AlignCenterIcon, AlignRightIcon } from 'lucide-react'
 
-<ToggleGroup.Root defaultValue={["left"]}>
-  <ToggleGroup.Item value="left"><AlignLeftIcon /></ToggleGroup.Item>
-  <ToggleGroup.Item value="center"><AlignCenterIcon /></ToggleGroup.Item>
-  <ToggleGroup.Item value="right"><AlignRightIcon /></ToggleGroup.Item>
+<ToggleGroup.Root aria-label="Text alignment" defaultValue={["left"]}>
+  <ToggleGroup.Item value="left" aria-label="Align left"><AlignLeftIcon /></ToggleGroup.Item>
+  <ToggleGroup.Item value="center" aria-label="Align center"><AlignCenterIcon /></ToggleGroup.Item>
+  <ToggleGroup.Item value="right" aria-label="Align right"><AlignRightIcon /></ToggleGroup.Item>
 </ToggleGroup.Root>
 ```
 
@@ -33,10 +33,10 @@ Set `multiple` to allow pressing more than one item at a time. Each pressed item
 ```tsx
 import { BoldIcon, ItalicIcon, UnderlineIcon } from 'lucide-react'
 
-<ToggleGroup.Root multiple defaultValue={["bold", "italic"]}>
-  <ToggleGroup.Item value="bold"><BoldIcon /></ToggleGroup.Item>
-  <ToggleGroup.Item value="italic"><ItalicIcon /></ToggleGroup.Item>
-  <ToggleGroup.Item value="underline"><UnderlineIcon /></ToggleGroup.Item>
+<ToggleGroup.Root aria-label="Text formatting" multiple defaultValue={["bold", "italic"]}>
+  <ToggleGroup.Item value="bold" aria-label="Bold"><BoldIcon /></ToggleGroup.Item>
+  <ToggleGroup.Item value="italic" aria-label="Italic"><ItalicIcon /></ToggleGroup.Item>
+  <ToggleGroup.Item value="underline" aria-label="Underline"><UnderlineIcon /></ToggleGroup.Item>
 </ToggleGroup.Root>
 ```
 
@@ -51,10 +51,10 @@ function ControlledToggleGroup() {
   const [value, setValue] = useState(["left"]);
 
   return (
-    <ToggleGroup.Root value={value} onValueChange={setValue}>
-      <ToggleGroup.Item value="left"><AlignLeftIcon /></ToggleGroup.Item>
-      <ToggleGroup.Item value="center"><AlignCenterIcon /></ToggleGroup.Item>
-      <ToggleGroup.Item value="right"><AlignRightIcon /></ToggleGroup.Item>
+    <ToggleGroup.Root aria-label="Text alignment" value={value} onValueChange={setValue}>
+      <ToggleGroup.Item value="left" aria-label="Align left"><AlignLeftIcon /></ToggleGroup.Item>
+      <ToggleGroup.Item value="center" aria-label="Align center"><AlignCenterIcon /></ToggleGroup.Item>
+      <ToggleGroup.Item value="right" aria-label="Align right"><AlignRightIcon /></ToggleGroup.Item>
     </ToggleGroup.Root>
   );
 }

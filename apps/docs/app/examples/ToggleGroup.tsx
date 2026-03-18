@@ -14,14 +14,14 @@ import { Container } from "@/components";
 export function ToggleGroupBasicExample() {
   return (
     <Container>
-      <ToggleGroup.Root defaultValue={["left"]}>
-        <ToggleGroup.Item value="left">
+      <ToggleGroup.Root aria-label="Text alignment" defaultValue={["left"]}>
+        <ToggleGroup.Item value="left" aria-label="Align left">
           <AlignLeftIcon />
         </ToggleGroup.Item>
-        <ToggleGroup.Item value="center">
+        <ToggleGroup.Item value="center" aria-label="Align center">
           <AlignCenterIcon />
         </ToggleGroup.Item>
-        <ToggleGroup.Item value="right">
+        <ToggleGroup.Item value="right" aria-label="Align right">
           <AlignRightIcon />
         </ToggleGroup.Item>
       </ToggleGroup.Root>
@@ -32,14 +32,14 @@ export function ToggleGroupBasicExample() {
 export function ToggleGroupMultipleExample() {
   return (
     <Container>
-      <ToggleGroup.Root multiple defaultValue={["bold", "italic"]}>
-        <ToggleGroup.Item value="bold">
+      <ToggleGroup.Root aria-label="Text formatting" multiple defaultValue={["bold", "italic"]}>
+        <ToggleGroup.Item value="bold" aria-label="Bold">
           <BoldIcon />
         </ToggleGroup.Item>
-        <ToggleGroup.Item value="italic">
+        <ToggleGroup.Item value="italic" aria-label="Italic">
           <ItalicIcon />
         </ToggleGroup.Item>
-        <ToggleGroup.Item value="underline">
+        <ToggleGroup.Item value="underline" aria-label="Underline">
           <UnderlineIcon />
         </ToggleGroup.Item>
       </ToggleGroup.Root>
