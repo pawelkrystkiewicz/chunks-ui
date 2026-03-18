@@ -15,10 +15,12 @@ import { ToggleGroup } from "chunks-ui";
 By default, the toggle group operates in single-select mode. Only one item can be pressed at a time, and a sliding indicator highlights the active selection:
 
 ```tsx
-<ToggleGroup.Root defaultValue={["bold"]}>
-  <ToggleGroup.Item value="bold">Bold</ToggleGroup.Item>
-  <ToggleGroup.Item value="italic">Italic</ToggleGroup.Item>
-  <ToggleGroup.Item value="underline">Underline</ToggleGroup.Item>
+import { AlignLeftIcon, AlignCenterIcon, AlignRightIcon } from 'lucide-react'
+
+<ToggleGroup.Root defaultValue={["left"]}>
+  <ToggleGroup.Item value="left"><AlignLeftIcon /></ToggleGroup.Item>
+  <ToggleGroup.Item value="center"><AlignCenterIcon /></ToggleGroup.Item>
+  <ToggleGroup.Item value="right"><AlignRightIcon /></ToggleGroup.Item>
 </ToggleGroup.Root>
 ```
 
@@ -29,10 +31,12 @@ By default, the toggle group operates in single-select mode. Only one item can b
 Set `multiple` to allow pressing more than one item at a time. Each pressed item gets its own background highlight instead of a shared sliding indicator:
 
 ```tsx
+import { BoldIcon, ItalicIcon, UnderlineIcon } from 'lucide-react'
+
 <ToggleGroup.Root multiple defaultValue={["bold", "italic"]}>
-  <ToggleGroup.Item value="bold">Bold</ToggleGroup.Item>
-  <ToggleGroup.Item value="italic">Italic</ToggleGroup.Item>
-  <ToggleGroup.Item value="underline">Underline</ToggleGroup.Item>
+  <ToggleGroup.Item value="bold"><BoldIcon /></ToggleGroup.Item>
+  <ToggleGroup.Item value="italic"><ItalicIcon /></ToggleGroup.Item>
+  <ToggleGroup.Item value="underline"><UnderlineIcon /></ToggleGroup.Item>
 </ToggleGroup.Root>
 ```
 
@@ -41,14 +45,16 @@ Set `multiple` to allow pressing more than one item at a time. Each pressed item
 ## Controlled
 
 ```tsx
+import { AlignLeftIcon, AlignCenterIcon, AlignRightIcon } from 'lucide-react'
+
 function ControlledToggleGroup() {
-  const [value, setValue] = useState(["bold"]);
+  const [value, setValue] = useState(["left"]);
 
   return (
     <ToggleGroup.Root value={value} onValueChange={setValue}>
-      <ToggleGroup.Item value="bold">Bold</ToggleGroup.Item>
-      <ToggleGroup.Item value="italic">Italic</ToggleGroup.Item>
-      <ToggleGroup.Item value="underline">Underline</ToggleGroup.Item>
+      <ToggleGroup.Item value="left"><AlignLeftIcon /></ToggleGroup.Item>
+      <ToggleGroup.Item value="center"><AlignCenterIcon /></ToggleGroup.Item>
+      <ToggleGroup.Item value="right"><AlignRightIcon /></ToggleGroup.Item>
     </ToggleGroup.Root>
   );
 }
@@ -63,4 +69,4 @@ function ControlledToggleGroup() {
 
 ## Props
 
-All compound parts are thin style wrappers. `ToggleGroup.Root` props are forwarded to the underlying Base UI [`ToggleGroup`](https://base-ui.com/react/components/toggle-group#api-reference) and `ToggleGroup.Item` props are forwarded to the underlying Base UI [`Toggle`](https://base-ui.com/react/components/toggle-group#api-reference).
+All compound parts are thin style wrappers. `ToggleGroup.Root` props are forwarded to the underlying Base UI [`ToggleGroup`](https://base-ui.com/react/components/toggle-group#api-reference) and `ToggleGroup.Item` props are forwarded to the underlying Base UI [`Toggle`](https://base-ui.com/react/components/toggle#api-reference).

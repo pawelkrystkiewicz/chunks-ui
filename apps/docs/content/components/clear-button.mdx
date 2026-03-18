@@ -25,17 +25,15 @@ import { ClearButton } from 'chunks-ui'
 
 ## Custom Label
 
-Pass `aria-label` directly to override the default:
+Use the `label` prop to override the default accessible label:
 
 ```tsx
-<ClearButton aria-label="Remove tag" onClick={handleRemove} />
+<ClearButton label="Remove tag" onClick={handleRemove} />
 ```
 
 <Container>
-  <ClearButton aria-label="Remove tag" />
+  <ClearButton label="Remove tag" />
 </Container>
-
-Default label is `"Clear"`.
 
 ## Props
 

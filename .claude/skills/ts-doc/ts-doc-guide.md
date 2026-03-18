@@ -6,7 +6,7 @@ The `TSDoc` component from `nextra/tsdoc` auto-generates props/API tables from T
 
 ## How It Works
 
-1. **Annotate** your TypeScript types with JSDoc comments (`@description`, `@default`, `@remarks`)
+1. **Annotate** your TypeScript types with JSDoc comments (summary line, `@default`, `@remarks`)
 2. **Import** `generateDefinition` and `TSDoc` in your MDX page
 3. **Point** `generateDefinition` at your type using inline code that re-exports it
 4. The `TSDoc` component renders a formatted props table with types, defaults, and descriptions
