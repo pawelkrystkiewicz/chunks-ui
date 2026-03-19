@@ -1,5 +1,11 @@
 # chunks-ui
 
+## 0.0.7
+
+### Patch Changes
+
+- 4f5eafd: update base-ui, fix indeterminate state on checkbox
+
 ## 0.0.6
 
 ### Patch Changes
