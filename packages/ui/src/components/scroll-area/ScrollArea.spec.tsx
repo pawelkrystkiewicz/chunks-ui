@@ -13,10 +13,10 @@ function DefaultScrollArea() {
           <p>Scrollable content</p>
         </ScrollArea.Content>
       </ScrollArea.Viewport>
-      <ScrollArea.Scrollbar orientation="vertical" data-testid="scrollbar-vertical">
+      <ScrollArea.Scrollbar orientation="vertical" keepMounted data-testid="scrollbar-vertical">
         <ScrollArea.Thumb data-testid="thumb" />
       </ScrollArea.Scrollbar>
-      <ScrollArea.Scrollbar orientation="horizontal" data-testid="scrollbar-horizontal">
+      <ScrollArea.Scrollbar orientation="horizontal" keepMounted data-testid="scrollbar-horizontal">
         <ScrollArea.Thumb />
       </ScrollArea.Scrollbar>
       <ScrollArea.Corner data-testid="corner" />
@@ -33,7 +33,7 @@ describe("ScrollArea", () => {
     expect(screen.getByTestId("scrollbar-vertical")).toBeInTheDocument();
     expect(screen.getByTestId("scrollbar-horizontal")).toBeInTheDocument();
     expect(screen.getByTestId("thumb")).toBeInTheDocument();
-    expect(screen.getByTestId("corner")).toBeInTheDocument();
+    // Corner only renders when both scrollbars have overflow (requires real layout; not testable in jsdom)
     expect(screen.getByText("Scrollable content")).toBeInTheDocument();
   });
 
@@ -55,7 +55,12 @@ describe("ScrollArea", () => {
         <ScrollArea.Viewport>
           <ScrollArea.Content>Content</ScrollArea.Content>
         </ScrollArea.Viewport>
-        <ScrollArea.Scrollbar orientation="vertical" className="custom-scrollbar" data-testid="sb">
+        <ScrollArea.Scrollbar
+          orientation="vertical"
+          keepMounted
+          className="custom-scrollbar"
+          data-testid="sb"
+        >
           <ScrollArea.Thumb />
         </ScrollArea.Scrollbar>
       </ScrollArea.Root>,

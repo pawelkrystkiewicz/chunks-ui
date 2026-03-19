@@ -8,6 +8,7 @@ dist
 
 # next.js
 .next
+apps/**/next-env.d.ts
 
 # generated llm docs
 apps/docs/public/llm.txt

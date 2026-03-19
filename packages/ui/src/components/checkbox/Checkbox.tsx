@@ -27,6 +27,9 @@ function CheckboxRoot({ className, ...props }: CheckboxRootProps) {
 
 export type CheckboxIndicatorProps = ComponentProps<typeof BaseCheckbox.Indicator>;
 
+const CHECKMARK = "M4,12 L9,17 L20,6";
+const MINUS = "M4,12 L12,12 L20,12";
+
 function CheckboxIndicator({ className, ...props }: CheckboxIndicatorProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
@@ -41,8 +44,8 @@ function CheckboxIndicator({ className, ...props }: CheckboxIndicatorProps) {
             className={cn("flex items-center justify-center text-current", className)}
             initial={false}
             animate={{
-              opacity: state.checked ? 1 : 0,
-              scale: state.checked ? 1 : 0.5,
+              opacity: state.checked || state.indeterminate ? 1 : 0,
+              scale: state.checked || state.indeterminate ? 1 : 0.5,
             }}
             transition={springs.micro}
           >
@@ -57,9 +60,8 @@ function CheckboxIndicator({ className, ...props }: CheckboxIndicatorProps) {
               aria-hidden="true"
             >
               <m.motion.path
-                d="M20 6 9 17l-5-5"
                 initial={false}
-                animate={{ pathLength: state.checked ? 1 : 0 }}
+                animate={{ d: state.indeterminate ? MINUS : CHECKMARK }}
                 transition={springs.micro}
               />
             </svg>
@@ -72,22 +74,27 @@ function CheckboxIndicator({ className, ...props }: CheckboxIndicatorProps) {
 
   return (
     <BaseCheckbox.Indicator
-      className={cn("flex items-center justify-center text-current", className)}
+      render={(renderProps, state) => (
+        <span
+          {...renderProps}
+          className={cn("flex items-center justify-center text-current", className)}
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="size-3"
+            aria-hidden="true"
+          >
+            <path d={state.indeterminate ? MINUS : CHECKMARK} />
+          </svg>
+        </span>
+      )}
       {...props}
-    >
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="3"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="size-3"
-        aria-hidden="true"
-      >
-        <path d="M20 6 9 17l-5-5" />
-      </svg>
-    </BaseCheckbox.Indicator>
+    />
   );
 }
 

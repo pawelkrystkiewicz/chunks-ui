@@ -1,6 +1,7 @@
 "use client";
 
 import { Checkbox, Field } from "chunks-ui";
+import { useState } from "react";
 import { Container } from "@/components";
 
 export function CheckboxBasicExample() {
@@ -28,10 +29,33 @@ export function CheckboxWithLabelExample() {
   );
 }
 
+type CheckboxState = "indeterminate" | "checked" | "unchecked";
+
 export function CheckboxIndeterminateExample() {
+  const [state, setState] = useState<CheckboxState>("indeterminate");
+
+  const onChange = () => {
+    setState((s) => {
+      switch (s) {
+        case "indeterminate":
+          return "checked";
+        case "checked":
+          return "unchecked";
+        case "unchecked":
+          return "indeterminate";
+        default:
+          return "checked";
+      }
+    });
+  };
+
   return (
     <Container>
-      <Checkbox.Root indeterminate>
+      <Checkbox.Root
+        indeterminate={state === "indeterminate"}
+        checked={state === "checked"}
+        onCheckedChange={onChange}
+      >
         <Checkbox.Indicator />
       </Checkbox.Root>
     </Container>
