@@ -32,7 +32,7 @@
     "@types/js-yaml": "^4.0.9",
     "js-yaml": "^4.1.1",
     "lefthook": "^2.1.4",
-    "turbo": "^2.8.17"
+    "turbo": "^2.8.20"
   },
   "packageManager": "bun@1.2.10",
   "peerDependencies": {
