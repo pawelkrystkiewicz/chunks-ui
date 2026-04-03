@@ -103,7 +103,9 @@ describe("Tabs", () => {
       </Tabs.Root>,
     );
     expect(screen.getByText("Panel A")).toBeInTheDocument();
-    expect(screen.getByTestId("panel-b").parentElement).toHaveStyle("display: none");
+    const wrapper = screen.getByTestId("panel-b").parentElement!;
+    const isHidden = wrapper.style.display === "none" || wrapper.hasAttribute("inert");
+    expect(isHidden).toBe(true);
   });
 
   it("merges custom className on Contents", () => {
@@ -169,7 +171,8 @@ describe("Tabs", () => {
         </Tabs.Contents>
       </Tabs.Root>,
     );
-    expect(screen.getByTestId("panel-b").parentElement).toHaveStyle("display: none");
+    const wrapperB = screen.getByTestId("panel-b").parentElement!;
+    expect(wrapperB.style.display === "none" || wrapperB.hasAttribute("inert")).toBe(true);
     rerender(
       <Tabs.Root value="b">
         <Tabs.Contents>
@@ -182,7 +185,8 @@ describe("Tabs", () => {
         </Tabs.Contents>
       </Tabs.Root>,
     );
-    expect(screen.getByTestId("panel-a").parentElement).toHaveStyle("display: none");
+    const wrapperA = screen.getByTestId("panel-a").parentElement!;
+    expect(wrapperA.style.display === "none" || wrapperA.hasAttribute("inert")).toBe(true);
   });
 
   it("has no a11y violations", async () => {

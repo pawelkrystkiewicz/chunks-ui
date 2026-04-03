@@ -60,6 +60,7 @@ function PopoverContent({
   return (
     <BasePopover.Portal keepMounted={useSpring}>
       <BasePopover.Positioner
+        className="z-dropdowns"
         sideOffset={sideOffset}
         side={side}
         align={align}
@@ -68,7 +69,7 @@ function PopoverContent({
         <BasePopover.Popup
           render={render}
           className={cn(
-            "z-dropdowns rounded border border-border bg-popover p-4 text-popover-foreground shadow-md",
+            "rounded border border-border bg-popover p-4 text-popover-foreground shadow-md",
             !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
             !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
             !useSpring && "micro-interactions",
