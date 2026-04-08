@@ -89,10 +89,10 @@ export function DatePicker({
           {displayValue || placeholder}
         </BasePopover.Trigger>
         <BasePopover.Portal>
-          <BasePopover.Positioner sideOffset={8}>
+          <BasePopover.Positioner className="z-dropdowns" sideOffset={8}>
             <BasePopover.Popup
               className={cn(
-                "z-dropdowns rounded border border-border bg-popover shadow-md",
+                "rounded border border-border bg-popover shadow-md",
                 "data-starting-style:scale-95 data-starting-style:opacity-0",
                 "data-ending-style:scale-95 data-ending-style:opacity-0",
                 "micro-interactions",

@@ -104,7 +104,10 @@ function ComboboxIcon({ className, ...props }: ComboboxIconProps) {
 
 function ComboboxPositioner({ className, ...props }: ComboboxPositionerProps) {
   return (
-    <BaseCombobox.Positioner className={cn("w-[var(--anchor-width)]", className)} {...props} />
+    <BaseCombobox.Positioner
+      className={cn("z-dropdowns w-[var(--anchor-width)]", className)}
+      {...props}
+    />
   );
 }
 
@@ -125,7 +128,7 @@ function ComboboxPopup({ className, ...props }: ComboboxPopupProps) {
     <BaseCombobox.Popup
       render={render}
       className={cn(
-        "z-dropdowns rounded border border-border bg-popover p-1 text-popover-foreground shadow-md",
+        "rounded border border-border bg-popover p-1 text-popover-foreground shadow-md",
         !useSpring && "data-starting-style:opacity-0",
         !useSpring && "data-ending-style:opacity-0",
         !useSpring && "micro-interactions",
