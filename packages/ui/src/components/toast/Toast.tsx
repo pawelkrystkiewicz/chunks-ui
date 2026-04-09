@@ -4,6 +4,7 @@ import { Toast as BaseToast } from "@base-ui/react/toast";
 import { AlertTriangle, CheckCircle2, Info, type LucideIcon, X, XCircle } from "lucide-react";
 import type { ComponentProps } from "react";
 import { cn } from "../../lib/cn";
+import { useReducedMotion } from "../../lib/use-motion";
 
 export const createToastManager = BaseToast.createToastManager;
 
@@ -84,15 +85,16 @@ function ToastViewport({ className, ...props }: ToastViewportProps) {
 }
 
 function ToastRoot({ className, toast, ...props }: ToastRootProps) {
+  const reduced = useReducedMotion();
   return (
     <BaseToast.Root
       toast={toast}
       className={cn(
         "group relative flex w-full items-center gap-3 overflow-hidden rounded-xl border border-border bg-popover p-4 pr-10 shadow-lg",
-        "micro-interactions",
-        "data-starting-style:translate-x-full data-starting-style:opacity-0",
-        "data-ending-style:translate-x-full data-ending-style:opacity-0",
-        "transition-[transform,opacity] duration-300 ease-out",
+        !reduced && "micro-interactions",
+        !reduced && "data-starting-style:translate-x-full data-starting-style:opacity-0",
+        !reduced && "data-ending-style:translate-x-full data-ending-style:opacity-0",
+        !reduced && "transition-[transform,opacity] duration-300 ease-out",
         className,
       )}
       {...props}
