@@ -46,9 +46,10 @@
     },
     "packages/ui": {
       "name": "chunks-ui",
-      "version": "0.0.7",
+      "version": "0.0.8",
       "dependencies": {
         "clsx": "^2.1.1",
+        "lucide-react": "^0.577.0",
         "tailwind-merge": "^3.5.0",
       },
       "devDependencies": {
