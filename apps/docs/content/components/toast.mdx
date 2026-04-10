@@ -177,27 +177,31 @@ No factory functions, no closures — the icon references are stable, so React r
 
 ## Dismissable Toasts
 
-By default `Toast.Viewport` does **not** render a close button — toasts auto-dismiss after the provider's `timeout`. To let users dismiss them manually, pass `dissmissable` on the viewport:
+By default toasts auto-dismiss after the provider's `timeout` and don't render a close button. Opt in per-toast by passing `dissmissable: true` to `add()`:
 
 ```tsx
-<Toast.Provider>
-  {children}
-  <Toast.Viewport dissmissable />
-</Toast.Provider>
+const { add } = Toast.useToast();
+
+add({
+  title: "Saved",
+  description: "Your changes are safe.",
+  dissmissable: true,
+})
 ```
 
-Every toast rendered by that viewport now has a `×` button in the top-right corner that dismisses it via Base UI's `Toast.Close`.
+That toast gets a `×` button in the top-right corner that dismisses it via Base UI's `Toast.Close`. Other toasts in the same viewport are unaffected — dismissability is a per-toast concern, not a viewport-wide setting.
 
 ### Reacting to Close
 
 If you need to run a side effect when the user dismisses a toast — tracking analytics, offering an undo stack, syncing with a backend — pass `onClose`. It receives the close button's click event. Passing `onClose` also implicitly enables the close button, so you don't need to also set `dissmissable`:
 
 ```tsx
-<Toast.Viewport
-  onClose={(event) => {
+add({
+  title: "Message archived",
+  onClose: (event) => {
     analytics.track('toast_dismissed', { id: event.currentTarget.dataset.toastId })
-  }}
-/>
+  },
+})
 ```
 
 `onClose` runs *in addition to* Base UI's built-in dismissal — it's for side effects, not for preventing the toast from closing.
@@ -279,36 +283,22 @@ The stacking CSS respects `prefers-reduced-motion: reduce` — users with that s
 | `icon` | `ComponentType<{ className?: string }>` | Component rendered in the leading slot. Library passes default sizing via `className` — pass a lucide/heroicons component directly |
 | `iconClassName` | `string` | Extra classes merged into the `icon`'s `className` (use for color) |
 | `className` | `string` | Extra classes merged into `Toast.Root` (use for per-toast borders, accents, backgrounds) |
+| `dissmissable` | `boolean` | Renders a close (×) button on this toast |
+| `onClose` | `(event) => void` | Click handler for the close button (implicitly enables `dissmissable`) |
 | `actionProps` | `{ children: ReactNode; onClick: () => void }` | Props for the action button |
 | `timeout` | `number` | Auto-dismiss delay in milliseconds (provider default applies if omitted) |
 
 ## Props
 
-### Toast.Viewport
+### Toast.useToast — `add` / `update` / `promise` options
 
-Props added by chunks-ui on top of Base UI's `Toast.Viewport`:
-
-<TSDoc
-  definition={generateDefinition({
-    code: `
-import type { ToastViewportProps } from 'chunks-ui'
-type Props = Pick<ToastViewportProps, 'dissmissable' | 'onClose'>
-export default Props
-`
-  })}
-/>
-
-All other props are forwarded to the underlying Base UI [`Toast.Viewport`](https://base-ui.com/react/components/toast#api-reference).
-
-### Toast.useToast — `add` / `update` / `promise` style options
-
-Per-toast styling fields chunks-ui adds to Base UI's `ToastObject` via module augmentation. Pass any subset of these to `add()`, `update()`, or any branch of `promise()`:
+Per-toast fields chunks-ui adds to Base UI's `ToastObject` via module augmentation. Pass any subset of these to `add()`, `update()`, or any branch of `promise()`:
 
 <TSDoc
   definition={generateDefinition({
     code: `
 import type { ToastStyleOptions } from 'chunks-ui'
-type Props = Pick<ToastStyleOptions, 'icon' | 'iconClassName' | 'className'>
+type Props = Pick<ToastStyleOptions, 'icon' | 'iconClassName' | 'className' | 'dissmissable' | 'onClose'>
 export default Props
 `
   })}

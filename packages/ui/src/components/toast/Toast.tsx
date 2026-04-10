@@ -7,13 +7,13 @@ import { cn } from "../../lib/cn";
 import { useReducedMotion } from "../../lib/use-motion";
 
 /**
- * Per-toast styling slots added by chunks-ui on top of Base UI's
- * `ToastObject`. Pass any subset of these to `toast.add(...)` /
- * `toast.promise(...)` / `toast.update(...)`.
+ * Per-toast slots added by chunks-ui on top of Base UI's `ToastObject`.
+ * Pass any subset of these to `toast.add(...)` / `toast.promise(...)` /
+ * `toast.update(...)`.
  *
- * All three are intentionally additive and opinion-free — chunks-ui
+ * All fields are intentionally additive and opinion-free — chunks-ui
  * stays out of the icon ecosystem and lets callers bring their own
- * icons, colors, and per-type styling.
+ * icons, colors, per-type styling, and dismissal behaviour.
  */
 export interface ToastStyleOptions {
   /**
@@ -35,12 +35,29 @@ export interface ToastStyleOptions {
    * — typically driven off `type`.
    */
   className?: string;
+  /**
+   * When `true`, renders a close (×) button on this toast. Clicking it
+   * dismisses the toast via Base UI's `Toast.Close`. Passing `onClose`
+   * implicitly enables this — you only need to set `dissmissable` when
+   * you want the button without a side-effect handler.
+   *
+   * @default false
+   */
+  dissmissable?: boolean;
+  /**
+   * Click handler attached to the close button. Passing this prop also
+   * implicitly renders the close button (no need to also set
+   * `dissmissable`). Fires in addition to Base UI's built-in dismissal,
+   * so use it for side effects (analytics, undo stacks, etc.) — not to
+   * prevent the toast from closing.
+   */
+  onClose?: ComponentProps<typeof BaseToast.Close>["onClick"];
 }
 
 /**
  * Module augmentation: merge `ToastStyleOptions` into Base UI's
  * `ToastObject` interface so `add()`, `update()`, and `promise()` all
- * accept the chunks-ui per-toast styling fields at the top level.
+ * accept the chunks-ui per-toast fields at the top level.
  */
 declare module "@base-ui/react/toast" {
   interface ToastObject<Data extends object> extends ToastStyleOptions {}
@@ -49,30 +66,14 @@ declare module "@base-ui/react/toast" {
 export const createToastManager = BaseToast.createToastManager;
 
 export type ToastProviderProps = ComponentProps<typeof BaseToast.Provider>;
-export type ToastViewportProps = ComponentProps<typeof BaseToast.Viewport> & {
-  /**
-   * When `true`, renders a close (×) button on every toast rendered by this
-   * viewport. Clicking it dismisses the toast via Base UI's `Toast.Close`.
-   *
-   * @default false
-   */
-  dissmissable?: boolean;
-  /**
-   * Optional click handler attached to the close button. Passing this prop
-   * also implicitly renders the close button (no need to also set
-   * `dissmissable`). Fires in addition to Base UI's built-in dismissal, so
-   * use it for side effects (analytics, undo stacks, etc.) — not to prevent
-   * the toast from closing.
-   */
-  onClose?: ToastCloseProps["onClick"];
-};
+export type ToastViewportProps = ComponentProps<typeof BaseToast.Viewport>;
 export type ToastRootProps = ComponentProps<typeof BaseToast.Root>;
 export type ToastTitleProps = ComponentProps<typeof BaseToast.Title>;
 export type ToastDescriptionProps = ComponentProps<typeof BaseToast.Description>;
 export type ToastCloseProps = ComponentProps<typeof BaseToast.Close>;
 export type ToastActionProps = ComponentProps<typeof BaseToast.Action>;
 
-function ToastViewport({ className, dissmissable, onClose, ...props }: ToastViewportProps) {
+function ToastViewport({ className, ...props }: ToastViewportProps) {
   const manager = BaseToast.useToastManager();
 
   return (
@@ -95,7 +96,7 @@ function ToastViewport({ className, dissmissable, onClose, ...props }: ToastView
               )}
               {toast.actionProps != null && <ToastAction {...toast.actionProps} />}
             </BaseToast.Content>
-            {(dissmissable || onClose) && <ToastClose onClick={onClose} />}
+            {(toast.dissmissable || toast.onClose) && <ToastClose onClick={toast.onClose} />}
           </ToastRoot>
         );
       })}
