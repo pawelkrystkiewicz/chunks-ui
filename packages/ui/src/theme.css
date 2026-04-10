@@ -242,19 +242,23 @@
 }
 
 /* Fade the text content of toasts sitting behind the frontmost one in the
- * stack. Base UI sets `data-behind` on `Toast.Content` automatically. Only
- * kicks in inside a stacking viewport because `data-behind` is never set
- * outside of the stacking context. */
-.ToastContent {
+ * stack, and restore it when the viewport is hovered/focused. Scoped to
+ * `.toast-stack` because Base UI also sets `data-behind` on regular
+ * (non-stacked) viewports — without the scope, every non-frontmost toast
+ * in the app would have invisible content. */
+.toast-stack .ToastContent {
   transition: opacity 250ms;
 }
-.ToastContent[data-behind] {
+.toast-stack .ToastContent[data-behind] {
   opacity: 0;
+}
+.toast-stack .ToastContent[data-expanded] {
+  opacity: 1;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .toast-stack,
-  .ToastContent {
+  .toast-stack .ToastContent {
     transition: none;
   }
 }
