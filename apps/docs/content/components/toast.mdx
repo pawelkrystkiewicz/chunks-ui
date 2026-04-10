@@ -50,11 +50,70 @@ function SaveButton() {
 
 <ToastBasicExample />
 
-## Multiple Toasts
+## Semantic Types — A Custom Pattern
 
-Multiple toasts stack in the viewport. Each call to `add` creates an independent toast:
+Each call to `add` creates an independent toast that stacks in the viewport. The example below renders four colour-coded variants — but **chunks-ui doesn't ship semantic types or default colours**. The icons, accent borders, and text colours are entirely a consumer-side pattern built on the three per-toast styling slots (`icon`, `iconClassName`, `className`).
 
 <ToastVariantsExample />
+
+Here's the entire pattern. A pure-data `TYPE_STYLES` map declared once, then spread into `add()` at the call site:
+
+```tsx
+import { Button, Toast } from 'chunks-ui'
+import { AlertTriangle, CheckCircle2, Info, XCircle } from 'lucide-react'
+
+const TYPE_STYLES = {
+  primary: {
+    icon: Info,
+    iconClassName: 'text-primary',
+    className: 'border-l-4 border-primary',
+  },
+  success: {
+    icon: CheckCircle2,
+    iconClassName: 'text-success',
+    className: 'border-l-4 border-success',
+  },
+  destructive: {
+    icon: XCircle,
+    iconClassName: 'text-destructive',
+    className: 'border-l-4 border-destructive',
+  },
+  warning: {
+    icon: AlertTriangle,
+    iconClassName: 'text-warning',
+    className: 'border-l-4 border-warning',
+  },
+} as const
+
+type ToastType = keyof typeof TYPE_STYLES
+
+function ToastTrigger({
+  label,
+  title,
+  description,
+  type,
+}: {
+  label: string
+  title: string
+  description?: string
+  type?: ToastType
+}) {
+  const { add } = Toast.useToast()
+
+  return (
+    <Button
+      type="button"
+      variant="outlined"
+      color={type}
+      onClick={() => add({ title, description, ...(type && TYPE_STYLES[type]) })}
+    >
+      {label}
+    </Button>
+  )
+}
+```
+
+No factory functions, no closures — the icon references in `TYPE_STYLES` are stable lucide components, so React reconciles them cleanly across re-renders. Add a type, drop a row in the map; rename a colour, change one row. The library never has to ship an opinion.
 
 ## With Action
 
@@ -258,7 +317,8 @@ Per-toast styling fields chunks-ui adds to Base UI's `ToastObject` via module au
   definition={generateDefinition({
     code: `
 import type { ToastStyleOptions } from 'chunks-ui'
-export default ToastStyleOptions
+type Props = Pick<ToastStyleOptions, 'icon' | 'iconClassName' | 'className'>
+export default Props
 `
   })}
 />
