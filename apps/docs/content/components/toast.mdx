@@ -14,7 +14,7 @@ A notification system built on Base UI's `Toast` primitive. Toasts slide in from
 ## Import
 
 ```tsx
-import { Toast } from "chunks-ui";
+import { Toast } from "chunks-ui"
 ```
 
 ## Setup
@@ -28,7 +28,7 @@ export default function RootLayout({ children }) {
       {children}
       <Toast.Viewport />
     </Toast.Provider>
-  );
+  )
 }
 ```
 
@@ -38,51 +38,57 @@ Use `Toast.useToast()` to get the `add` function and trigger notifications:
 
 ```tsx
 function SaveButton() {
-  const { add } = Toast.useToast();
+  const { add } = Toast.useToast()
 
   return (
     <button onClick={() => add({ title: "Saved", description: "Your changes have been saved." })}>
       Save
     </button>
-  );
+  )
 }
 ```
 
 <ToastBasicExample />
 
-## Semantic Types — A Custom Pattern
+## Per-toast Styling
 
-Each call to `add` creates an independent toast that stacks in the viewport. The example below renders four colour-coded variants — but **chunks-ui doesn't ship semantic types or default colours**. The icons, accent borders, and text colours are entirely a consumer-side pattern built on the three per-toast styling slots (`icon`, `iconClassName`, `className`).
+`chunks-ui` doesn't ship any icons, semantic types, or default colours — bring your own. Three per-toast slots let you plug into whatever icon library and design tokens your project uses:
+
+| Field | Purpose |
+|---|---|
+| `icon` | Component rendered in the leading slot. Receives a `className` prop pre-populated with default sizing (`size-5 shrink-0 self-start`). |
+| `iconClassName` | Extra classes merged onto `icon` — use for color. |
+| `className` | Extra classes merged onto `Toast.Root` — use for accent bars, borders, background tints. |
+
+For the simple case, pass a lucide component directly:
+
+```tsx
+import { CheckCircle2 } from 'lucide-react'
+
+add({
+  title: "File saved",
+  icon: CheckCircle2,
+  iconClassName: "text-success",
+})
+```
+
+### Semantic Types — A Custom Pattern
+
+The example below renders four colour-coded variants — but **chunks-ui doesn't ship semantic types**. The icons, accent borders, and text colours are entirely a consumer-side pattern built on the three slots above.
 
 <ToastVariantsExample />
 
-Here's the entire pattern. A pure-data `TYPE_STYLES` map declared once, then spread into `add()` at the call site:
+Define a pure-data `TYPE_STYLES` map once and spread it into `add()` at the call site:
 
 ```tsx
 import { Button, Toast } from 'chunks-ui'
 import { AlertTriangle, CheckCircle2, Info, XCircle } from 'lucide-react'
 
 const TYPE_STYLES = {
-  primary: {
-    icon: Info,
-    iconClassName: 'text-primary',
-    className: 'border-l-4 border-primary',
-  },
-  success: {
-    icon: CheckCircle2,
-    iconClassName: 'text-success',
-    className: 'border-l-4 border-success',
-  },
-  destructive: {
-    icon: XCircle,
-    iconClassName: 'text-destructive',
-    className: 'border-l-4 border-destructive',
-  },
-  warning: {
-    icon: AlertTriangle,
-    iconClassName: 'text-warning',
-    className: 'border-l-4 border-warning',
-  },
+  primary:     { icon: Info,          iconClassName: 'text-primary',     className: 'border-l-4 border-primary' },
+  success:     { icon: CheckCircle2,  iconClassName: 'text-success',     className: 'border-l-4 border-success' },
+  destructive: { icon: XCircle,       iconClassName: 'text-destructive', className: 'border-l-4 border-destructive' },
+  warning:     { icon: AlertTriangle, iconClassName: 'text-warning',     className: 'border-l-4 border-warning' },
 } as const
 
 type ToastType = keyof typeof TYPE_STYLES
@@ -113,14 +119,14 @@ function ToastTrigger({
 }
 ```
 
-No factory functions, no closures — the icon references in `TYPE_STYLES` are stable lucide components, so React reconciles them cleanly across re-renders. Add a type, drop a row in the map; rename a colour, change one row. The library never has to ship an opinion.
+No factory functions, no closures — the icon references are stable lucide components, so React reconciles them cleanly across re-renders. Add a type, drop a row in the map; rename a colour, change one row. The library never has to ship an opinion.
 
 ## With Action
 
 Pass `actionProps` to render a labelled action button inside the toast:
 
 ```tsx
-const { add } = Toast.useToast();
+const { add } = Toast.useToast()
 
 add({
   title: "Message deleted",
@@ -129,58 +135,17 @@ add({
     children: "Undo",
     onClick: () => restoreMessage(),
   },
-});
-```
-
-<ToastWithActionExample />
-
-## Icons and per-type styling
-
-`chunks-ui` doesn't ship any icons or semantic type styles itself — bring your own. Three per-toast slots let you plug into whatever icon library and design tokens your project uses:
-
-| Field | Purpose |
-|---|---|
-| `icon` | Component rendered in the leading slot. Receives a `className` prop pre-populated with default sizing (`size-5 shrink-0 self-start`). |
-| `iconClassName` | Extra classes merged onto `icon` — use for color. |
-| `className` | Extra classes merged onto `Toast.Root` — use for accent bars, borders, background tints. |
-
-For the simple case, pass a lucide component directly:
-
-```tsx
-import { CheckCircle2 } from 'lucide-react'
-
-add({
-  title: "File saved",
-  icon: CheckCircle2,
-  iconClassName: "text-success",
 })
 ```
 
-For per-type styling, define a data-only map and spread it into `add()`:
-
-```tsx
-import { AlertTriangle, CheckCircle2, Info, XCircle } from 'lucide-react'
-
-const TYPE_STYLES = {
-  primary:     { icon: Info,          iconClassName: "text-primary",     className: "border-l-4 border-primary" },
-  success:     { icon: CheckCircle2,  iconClassName: "text-success",     className: "border-l-4 border-success" },
-  destructive: { icon: XCircle,       iconClassName: "text-destructive", className: "border-l-4 border-destructive" },
-  warning:     { icon: AlertTriangle, iconClassName: "text-warning",     className: "border-l-4 border-warning" },
-} as const
-
-function notify(type: keyof typeof TYPE_STYLES, title: string) {
-  add({ title, ...TYPE_STYLES[type] })
-}
-```
-
-No factory functions, no closures — the icon references are stable, so React reconciles them cleanly. Skipping all three fields gives you a plain, unstyled toast. Everything the library ships in Toast is additive to Base UI.
+<ToastWithActionExample />
 
 ## Dismissable Toasts
 
 By default toasts auto-dismiss after the provider's `timeout` and don't render a close button. Opt in per-toast by passing `dissmissable: true` to `add()`:
 
 ```tsx
-const { add } = Toast.useToast();
+const { add } = Toast.useToast()
 
 add({
   title: "Saved",
@@ -211,7 +176,7 @@ add({
 `toast.promise(promise, { loading, success, error })` wires a single toast through the lifecycle of an async operation. It starts with the `loading` options, then swaps to `success` or `error` once the promise settles. `success` and `error` can be static options or functions that receive the resolved value / rejection reason:
 
 ```tsx
-const { promise } = Toast.useToast();
+const { promise } = Toast.useToast()
 
 promise(uploadFile(), {
   loading: { title: "Uploading file…", description: "Hold tight." },
@@ -227,7 +192,7 @@ promise(uploadFile(), {
     icon: XCircle,
     iconClassName: "text-destructive",
   }),
-});
+})
 ```
 
 The method returns the original promise, so you can still `await` or `.catch()` it downstream — the toast is a side effect, not a replacement for your own error handling.
@@ -265,34 +230,20 @@ The stacking CSS respects `prefers-reduced-motion: reduce` — users with that s
 
 | Part | Description |
 |---|---|
-| `Toast.Provider` | Context provider. Must wrap any component that calls `useToast`. |
+| `Toast.Provider` | Context provider. Must wrap any component that calls `useToast`. Accepts `timeout` and `limit`. |
 | `Toast.Viewport` | Fixed-position container that renders all active toasts. |
 | `Toast.Root` | Individual toast wrapper with slide/fade enter/exit transitions. |
 | `Toast.Title` | Bold toast heading. |
 | `Toast.Description` | Supporting text in `text-muted-foreground`. |
 | `Toast.Close` | Icon button that dismisses the toast. |
 | `Toast.Action` | Optional action button rendered inside the toast. |
-| `Toast.useToast` | Hook that returns `{ add, toasts }` for the nearest provider. |
-
-## Toast.useToast — `add` Options
-
-| Option | Type | Description |
-|---|---|---|
-| `title` | `string` | Toast heading text |
-| `description` | `string` | Supporting body text |
-| `icon` | `ComponentType<{ className?: string }>` | Component rendered in the leading slot. Library passes default sizing via `className` — pass a lucide/heroicons component directly |
-| `iconClassName` | `string` | Extra classes merged into the `icon`'s `className` (use for color) |
-| `className` | `string` | Extra classes merged into `Toast.Root` (use for per-toast borders, accents, backgrounds) |
-| `dissmissable` | `boolean` | Renders a close (×) button on this toast |
-| `onClose` | `(event) => void` | Click handler for the close button (implicitly enables `dissmissable`) |
-| `actionProps` | `{ children: ReactNode; onClick: () => void }` | Props for the action button |
-| `timeout` | `number` | Auto-dismiss delay in milliseconds (provider default applies if omitted) |
+| `Toast.useToast` | Hook that returns `{ toasts, add, close, update, promise }` for the nearest provider. |
 
 ## Props
 
-### Toast.useToast — `add` / `update` / `promise` options
+### Per-toast options — `add` / `update` / `promise`
 
-Per-toast fields chunks-ui adds to Base UI's `ToastObject` via module augmentation. Pass any subset of these to `add()`, `update()`, or any branch of `promise()`:
+Pass any subset of these at the call site. The fields below are chunks-ui additions on top of Base UI's `ToastObject` — all other options (`title`, `description`, `type`, `timeout`, `actionProps`, `priority`, `data`, …) are forwarded directly to Base UI; see the [`ToastObject` API reference](https://base-ui.com/react/components/toast#api-reference) for the full list.
 
 <TSDoc
   definition={generateDefinition({
@@ -304,6 +255,4 @@ export default Props
   })}
 />
 
-All other options (`title`, `description`, `type`, `timeout`, `actionProps`, `priority`, `data`, …) are forwarded directly to Base UI — see the [`ToastObject` API reference](https://base-ui.com/react/components/toast#api-reference) for the full list.
-
-All other compound parts (`Toast.Root`, `Toast.Title`, `Toast.Description`, `Toast.Close`, `Toast.Action`) are thin style wrappers and forward their props to the corresponding Base UI primitive.
+All compound parts (`Toast.Provider`, `Toast.Viewport`, `Toast.Root`, `Toast.Title`, `Toast.Description`, `Toast.Close`, `Toast.Action`) are thin style wrappers and forward their props to the corresponding Base UI primitive.
