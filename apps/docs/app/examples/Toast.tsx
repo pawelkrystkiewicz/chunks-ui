@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, type ButtonProps, Toast } from "chunks-ui";
+import { Button, type ButtonProps, Loader, Toast } from "chunks-ui";
 import { AlertTriangle, CheckCircle2, Info, XCircle } from "lucide-react";
 import { Container } from "@/components";
 
@@ -170,12 +170,19 @@ function ToastPromiseTrigger() {
         promise(uploadFile(), {
           loading: {
             title: "Uploading file…",
-            description: "Hold tight, this will only take a moment.",
-            ...TYPE_STYLES.primary,
+            description: "Hold tight, this will only take a moment",
+            icon: Loader,
+            iconClassName: "text-primary animate-spin",
+            className: "border-l-4 border-primary",
           },
           success: (result) => ({
             title: "Upload complete",
-            description: `Saved ${result.name} to your workspace.`,
+            description: (
+              <span className="text-xs">
+                <code className="bg-muted px-1 rounded border border-border">{result.name}</code>{" "}
+                saved
+              </span>
+            ),
             ...TYPE_STYLES.success,
           }),
           error: (err) => ({
