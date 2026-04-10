@@ -1,6 +1,6 @@
 "use client";
 
-import { Toast } from "chunks-ui";
+import { Button, Toast, type ToastType } from "chunks-ui";
 import { Container } from "@/components";
 
 function ToastSetup({ children }: { children: React.ReactNode }) {
@@ -12,25 +12,25 @@ function ToastSetup({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ToastTrigger({
-  label,
-  title,
-  description,
-}: {
+interface ToastTriggerProps {
   label: string;
   title: string;
   description?: string;
-}) {
+  type?: ToastType;
+}
+
+function ToastTrigger({ label, title, description, type }: ToastTriggerProps) {
   const { add } = Toast.useToast();
 
   return (
-    <button
+    <Button
       type="button"
-      onClick={() => add({ title, description })}
-      className="micro-interactions inline-flex h-9 items-center rounded-md border border-border bg-background px-4 font-medium text-sm hover:bg-accent hover:text-accent-foreground focus-visible:outline-2 focus-visible:outline-ring"
+      onClick={() => add({ title, description, type })}
+      variant="outlined"
+      color={type}
     >
       {label}
-    </button>
+    </Button>
   );
 }
 
@@ -57,16 +57,25 @@ export function ToastVariantsExample() {
             label="Info"
             title="Build started"
             description="Deploying to production..."
+            type="info"
           />
           <ToastTrigger
             label="Success"
             title="Deployment complete"
             description="Version 2.4.1 is now live."
+            type="success"
           />
           <ToastTrigger
             label="Error"
             title="Build failed"
             description="Check the logs for details."
+            type="destructive"
+          />
+          <ToastTrigger
+            label="Warning"
+            title="Usage at 94%"
+            description="Limit reset in 5 min"
+            type="warning"
           />
         </div>
       </ToastSetup>

@@ -1,4 +1,5 @@
 import { ToastBasicExample, ToastVariantsExample, ToastWithActionExample } from '@/examples/Toast'
+import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
 # Toast
 
@@ -68,6 +69,33 @@ add({
 
 <ToastWithActionExample />
 
+## Dismissable Toasts
+
+By default `Toast.Viewport` does **not** render a close button — toasts auto-dismiss after the provider's `timeout`. To let users dismiss them manually, pass `dissmissable` on the viewport:
+
+```tsx
+<Toast.Provider>
+  {children}
+  <Toast.Viewport dissmissable />
+</Toast.Provider>
+```
+
+Every toast rendered by that viewport now has a `×` button in the top-right corner that dismisses it via Base UI's `Toast.Close`.
+
+### Reacting to Close
+
+If you need to run a side effect when the user dismisses a toast — tracking analytics, offering an undo stack, syncing with a backend — pass `onClose`. It receives the close button's click event. Passing `onClose` also implicitly enables the close button, so you don't need to also set `dissmissable`:
+
+```tsx
+<Toast.Viewport
+  onClose={(event) => {
+    analytics.track('toast_dismissed', { id: event.currentTarget.dataset.toastId })
+  }}
+/>
+```
+
+`onClose` runs *in addition to* Base UI's built-in dismissal — it's for side effects, not for preventing the toast from closing.
+
 ## Compound Parts
 
 | Part | Description |
@@ -92,4 +120,16 @@ add({
 
 ## Props
 
-All compound parts are thin style wrappers. Props are forwarded to the underlying Base UI [`Toast`](https://base-ui.com/react/components/toast#api-reference).
+### Toast.Viewport
+
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { ToastViewportProps } from 'chunks-ui'
+type Props = Pick<ToastViewportProps, 'dissmissable' | 'onClose'>
+export default Props
+`
+  })}
+/>
+
+All other props are forwarded to the underlying Base UI [`Toast.Viewport`](https://base-ui.com/react/components/toast#api-reference). All other compound parts are thin style wrappers and forward their props to the corresponding Base UI primitive.

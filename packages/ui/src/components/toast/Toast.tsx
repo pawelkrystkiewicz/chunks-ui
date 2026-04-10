@@ -9,14 +9,30 @@ import { useReducedMotion } from "../../lib/use-motion";
 export const createToastManager = BaseToast.createToastManager;
 
 export type ToastProviderProps = ComponentProps<typeof BaseToast.Provider>;
-export type ToastViewportProps = ComponentProps<typeof BaseToast.Viewport>;
+export type ToastViewportProps = ComponentProps<typeof BaseToast.Viewport> & {
+  /**
+   * When `true`, renders a close (×) button on every toast rendered by this
+   * viewport. Clicking it dismisses the toast via Base UI's `Toast.Close`.
+   *
+   * @default false
+   */
+  dissmissable?: boolean;
+  /**
+   * Optional click handler attached to the close button. Passing this prop
+   * also implicitly renders the close button (no need to also set
+   * `dissmissable`). Fires in addition to Base UI's built-in dismissal, so
+   * use it for side effects (analytics, undo stacks, etc.) — not to prevent
+   * the toast from closing.
+   */
+  onClose?: ToastCloseProps["onClick"];
+};
 export type ToastRootProps = ComponentProps<typeof BaseToast.Root>;
 export type ToastTitleProps = ComponentProps<typeof BaseToast.Title>;
 export type ToastDescriptionProps = ComponentProps<typeof BaseToast.Description>;
 export type ToastCloseProps = ComponentProps<typeof BaseToast.Close>;
 export type ToastActionProps = ComponentProps<typeof BaseToast.Action>;
 
-type ToastType = "success" | "error" | "warning" | "info";
+export type ToastType = "success" | "destructive" | "warning" | "info";
 
 interface TypeStyle {
   icon: LucideIcon;
@@ -26,7 +42,7 @@ interface TypeStyle {
 
 const TYPE_STYLES: Record<ToastType, TypeStyle> = {
   success: { icon: CheckCircle2, accent: "bg-success", iconColor: "text-success" },
-  error: { icon: XCircle, accent: "bg-destructive", iconColor: "text-destructive" },
+  destructive: { icon: XCircle, accent: "bg-destructive", iconColor: "text-destructive" },
   warning: { icon: AlertTriangle, accent: "bg-warning", iconColor: "text-warning" },
   info: { icon: Info, accent: "bg-primary", iconColor: "text-primary" },
 };
@@ -44,7 +60,7 @@ function getTypeStyle(type: string | undefined): TypeStyle {
   return DEFAULT_STYLE;
 }
 
-function ToastViewport({ className, ...props }: ToastViewportProps) {
+function ToastViewport({ className, dissmissable, onClose, ...props }: ToastViewportProps) {
   const manager = BaseToast.useToastManager();
 
   return (
@@ -60,10 +76,6 @@ function ToastViewport({ className, ...props }: ToastViewportProps) {
         const Icon = style.icon;
         return (
           <ToastRoot key={toast.id} toast={toast}>
-            <span
-              aria-hidden="true"
-              className={cn("absolute inset-y-0 left-0 w-1", style.accent)}
-            />
             <Icon
               aria-hidden="true"
               data-testid="toast-icon"
@@ -76,7 +88,7 @@ function ToastViewport({ className, ...props }: ToastViewportProps) {
               )}
               {toast.actionProps != null && <ToastAction {...toast.actionProps} />}
             </div>
-            <ToastClose />
+            {(dissmissable || onClose) && <ToastClose onClick={onClose} />}
           </ToastRoot>
         );
       })}
@@ -90,11 +102,13 @@ function ToastRoot({ className, toast, ...props }: ToastRootProps) {
     <BaseToast.Root
       toast={toast}
       className={cn(
-        "group relative flex w-full items-center gap-3 overflow-hidden rounded-xl border border-border bg-popover p-4 pr-10 shadow-lg",
-        !reduced && "micro-interactions",
-        !reduced && "data-starting-style:translate-x-full data-starting-style:opacity-0",
-        !reduced && "data-ending-style:translate-x-full data-ending-style:opacity-0",
-        !reduced && "transition-[transform,opacity] duration-300 ease-out",
+        "group relative flex w-full items-center gap-3 overflow-hidden rounded-sm border border-border bg-popover p-4 pr-10 shadow-lg",
+        !reduced && [
+          "micro-interactions",
+          "data-starting-style:translate-x-full data-starting-style:opacity-0",
+          "data-ending-style:translate-x-full data-ending-style:opacity-0",
+          "transition-[transform,opacity] duration-300 ease-out",
+        ],
         className,
       )}
       {...props}
@@ -125,7 +139,7 @@ function ToastClose({ className, children, ...props }: ToastCloseProps) {
     <BaseToast.Close
       aria-label="Close"
       className={cn(
-        "micro-interactions absolute top-1/2 right-2 flex size-6 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground",
+        "micro-interactions absolute top-5 right-2 flex size-6 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground",
         "focus-visible:outline-2 focus-visible:outline-ring",
         className,
       )}

@@ -98,18 +98,20 @@ describe("Toast", () => {
     expect(screen.getByTestId("viewport").querySelector("[data-type='success']")).not.toBeNull();
   });
 
-  it("renders an icon and data-type for an error toast", async () => {
+  it("renders an icon and data-type for a destructive toast", async () => {
     const user = userEvent.setup();
     render(
       <Toast.Provider>
-        <TypedToastHarness type="error" title="Oops" description="Something failed." />
+        <TypedToastHarness type="destructive" title="Oops" description="Something failed." />
         <Toast.Viewport data-testid="viewport" />
       </Toast.Provider>,
     );
-    await user.click(screen.getByRole("button", { name: "Show error toast" }));
+    await user.click(screen.getByRole("button", { name: "Show destructive toast" }));
     await screen.findByText("Oops");
     expect(screen.getByTestId("toast-icon")).toHaveClass("text-destructive");
-    expect(screen.getByTestId("viewport").querySelector("[data-type='error']")).not.toBeNull();
+    expect(
+      screen.getByTestId("viewport").querySelector("[data-type='destructive']"),
+    ).not.toBeNull();
   });
 
   it("renders an icon and data-type for a warning toast", async () => {
