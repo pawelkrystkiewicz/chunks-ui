@@ -4,7 +4,8 @@ export type {
   ToastDescriptionProps,
   ToastProviderProps,
   ToastRootProps,
+  ToastStyleOptions,
   ToastTitleProps,
   ToastViewportProps,
 } from "./Toast";
-export { Toast } from "./Toast";
+export { createToastManager, Toast } from "./Toast";
