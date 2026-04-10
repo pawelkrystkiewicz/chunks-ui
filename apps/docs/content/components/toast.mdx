@@ -69,6 +69,24 @@ add({
 
 <ToastWithActionExample />
 
+## Icons
+
+Pass an `icon` component to `add()` to render a leading icon inside the toast. `chunks-ui` doesn't ship any icons itself — bring your own from lucide-react, heroicons, a custom SVG, whatever. The icon receives no props, so size and color are up to you:
+
+```tsx
+import { CheckCircle2 } from 'lucide-react'
+
+const { add } = Toast.useToast();
+
+add({
+  title: "File saved",
+  description: "Your changes have been saved.",
+  icon: () => <CheckCircle2 className="size-5 text-success" />,
+});
+```
+
+Skipping `icon` renders a toast with no leading slot — there's no default. This keeps the library icon-agnostic and lets you pair toasts with your project's design system. The `Toast.Variants` example above demonstrates per-type icons using a small local helper.
+
 ## Dismissable Toasts
 
 By default `Toast.Viewport` does **not** render a close button — toasts auto-dismiss after the provider's `timeout`. To let users dismiss them manually, pass `dissmissable` on the viewport:
@@ -115,6 +133,7 @@ If you need to run a side effect when the user dismisses a toast — tracking an
 |---|---|---|
 | `title` | `string` | Toast heading text |
 | `description` | `string` | Supporting body text |
+| `icon` | `ComponentType` | Component rendered in the toast's leading slot. Receives no props — bring your own icon library |
 | `actionProps` | `{ children: ReactNode; onClick: () => void }` | Props for the action button |
 | `timeout` | `number` | Auto-dismiss delay in milliseconds (provider default applies if omitted) |
 

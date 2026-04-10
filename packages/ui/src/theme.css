@@ -120,7 +120,7 @@
   --ease-snappy: cubic-bezier(0.2, 0, 0, 1);
 
   /* Component sizing */
-  --spacing-ui-height: 35px;
+  --spacing-ui-height: 30px;
   --spacing-ui-icon-height: calc(var(--spacing-ui-height) * 0.5);
 
   /* Z-index layers */

@@ -82,7 +82,7 @@ describe("Toast", () => {
     expect(screen.getByText("Changes have been saved.")).toBeInTheDocument();
   });
 
-  it("renders an icon and data-type for a success toast", async () => {
+  it("sets data-type on the root for a success toast", async () => {
     const user = userEvent.setup();
     render(
       <Toast.Provider>
@@ -92,13 +92,10 @@ describe("Toast", () => {
     );
     await user.click(screen.getByRole("button", { name: "Show success toast" }));
     await screen.findByText("Done");
-    const icon = screen.getByTestId("toast-icon");
-    expect(icon).toBeInTheDocument();
-    expect(icon).toHaveClass("text-success");
     expect(screen.getByTestId("viewport").querySelector("[data-type='success']")).not.toBeNull();
   });
 
-  it("renders an icon and data-type for a destructive toast", async () => {
+  it("sets data-type on the root for a destructive toast", async () => {
     const user = userEvent.setup();
     render(
       <Toast.Provider>
@@ -108,13 +105,12 @@ describe("Toast", () => {
     );
     await user.click(screen.getByRole("button", { name: "Show destructive toast" }));
     await screen.findByText("Oops");
-    expect(screen.getByTestId("toast-icon")).toHaveClass("text-destructive");
     expect(
       screen.getByTestId("viewport").querySelector("[data-type='destructive']"),
     ).not.toBeNull();
   });
 
-  it("renders an icon and data-type for a warning toast", async () => {
+  it("sets data-type on the root for a warning toast", async () => {
     const user = userEvent.setup();
     render(
       <Toast.Provider>
@@ -124,11 +120,10 @@ describe("Toast", () => {
     );
     await user.click(screen.getByRole("button", { name: "Show warning toast" }));
     await screen.findByText("Careful");
-    expect(screen.getByTestId("toast-icon")).toHaveClass("text-warning");
     expect(screen.getByTestId("viewport").querySelector("[data-type='warning']")).not.toBeNull();
   });
 
-  it("renders an icon and data-type for an info toast", async () => {
+  it("sets data-type on the root for an info toast", async () => {
     const user = userEvent.setup();
     render(
       <Toast.Provider>
@@ -138,21 +133,52 @@ describe("Toast", () => {
     );
     await user.click(screen.getByRole("button", { name: "Show info toast" }));
     await screen.findByText("Heads up");
-    expect(screen.getByTestId("toast-icon")).toHaveClass("text-primary");
     expect(screen.getByTestId("viewport").querySelector("[data-type='info']")).not.toBeNull();
   });
 
-  it("falls back to muted style for unknown toast types", async () => {
+  it("renders a caller-provided icon component in the leading slot", async () => {
     const user = userEvent.setup();
+
+    function IconHarness() {
+      const toast = Toast.useToast();
+      return (
+        <button
+          type="button"
+          onClick={() =>
+            toast.add({
+              title: "With icon",
+              icon: () => <span data-testid="caller-icon">★</span>,
+            })
+          }
+        >
+          Show icon toast
+        </button>
+      );
+    }
+
     render(
       <Toast.Provider>
-        <TypedToastHarness type="totally-custom" title="Custom" />
+        <IconHarness />
         <Toast.Viewport data-testid="viewport" />
       </Toast.Provider>,
     );
-    await user.click(screen.getByRole("button", { name: "Show totally-custom toast" }));
-    await screen.findByText("Custom");
-    expect(screen.getByTestId("toast-icon")).toHaveClass("text-muted-foreground");
+    await user.click(screen.getByRole("button", { name: "Show icon toast" }));
+    await screen.findByText("With icon");
+    expect(screen.getByTestId("caller-icon")).toBeInTheDocument();
+    expect(screen.getByTestId("caller-icon")).toHaveTextContent("★");
+  });
+
+  it("renders no leading-slot content when the caller omits the icon prop", async () => {
+    const user = userEvent.setup();
+    render(
+      <Toast.Provider>
+        <TypedToastHarness type="success" title="No icon" />
+        <Toast.Viewport data-testid="viewport" />
+      </Toast.Provider>,
+    );
+    await user.click(screen.getByRole("button", { name: "Show success toast" }));
+    await screen.findByText("No icon");
+    expect(screen.queryByTestId("caller-icon")).toBeNull();
   });
 
   it("renders a title-only toast without an empty description node", async () => {

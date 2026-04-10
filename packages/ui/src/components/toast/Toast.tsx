@@ -1,10 +1,27 @@
 "use client";
 
 import { Toast as BaseToast } from "@base-ui/react/toast";
-import { AlertTriangle, CheckCircle2, Info, type LucideIcon, X, XCircle } from "lucide-react";
-import type { ComponentProps } from "react";
+import { X } from "lucide-react";
+import type { ComponentProps, ComponentType } from "react";
 import { cn } from "../../lib/cn";
 import { useReducedMotion } from "../../lib/use-motion";
+
+/**
+ * Module augmentation: add an optional `icon` slot to Base UI's ToastObject
+ * interface so consumers can pass any React component (lucide, heroicons, a
+ * custom SVG, etc.) via `add({ icon: MyIcon })` and have it rendered by
+ * `Toast.Viewport`. Intentionally untyped beyond "any component" — chunks-ui
+ * stays out of the icon ecosystem and lets callers choose.
+ */
+declare module "@base-ui/react/toast" {
+  interface ToastObject<Data extends object> {
+    /**
+     * Optional icon component rendered in the toast's leading slot.
+     * Receives no props — size and color are up to the caller.
+     */
+    icon?: ComponentType;
+  }
+}
 
 export const createToastManager = BaseToast.createToastManager;
 
@@ -32,34 +49,6 @@ export type ToastDescriptionProps = ComponentProps<typeof BaseToast.Description>
 export type ToastCloseProps = ComponentProps<typeof BaseToast.Close>;
 export type ToastActionProps = ComponentProps<typeof BaseToast.Action>;
 
-export type ToastType = "success" | "destructive" | "warning" | "info";
-
-interface TypeStyle {
-  icon: LucideIcon;
-  accent: string;
-  iconColor: string;
-}
-
-const TYPE_STYLES: Record<ToastType, TypeStyle> = {
-  success: { icon: CheckCircle2, accent: "bg-success", iconColor: "text-success" },
-  destructive: { icon: XCircle, accent: "bg-destructive", iconColor: "text-destructive" },
-  warning: { icon: AlertTriangle, accent: "bg-warning", iconColor: "text-warning" },
-  info: { icon: Info, accent: "bg-primary", iconColor: "text-primary" },
-};
-
-const DEFAULT_STYLE: TypeStyle = {
-  icon: Info,
-  accent: "bg-muted-foreground",
-  iconColor: "text-muted-foreground",
-};
-
-function getTypeStyle(type: string | undefined): TypeStyle {
-  if (type && type in TYPE_STYLES) {
-    return TYPE_STYLES[type as ToastType];
-  }
-  return DEFAULT_STYLE;
-}
-
 function ToastViewport({ className, dissmissable, onClose, ...props }: ToastViewportProps) {
   const manager = BaseToast.useToastManager();
 
@@ -72,15 +61,11 @@ function ToastViewport({ className, dissmissable, onClose, ...props }: ToastView
       {...props}
     >
       {manager.toasts.map((toast) => {
-        const style = getTypeStyle(toast.type);
-        const Icon = style.icon;
+        // extend type to support icon as JSX component
+        const Icon = toast.icon;
         return (
           <ToastRoot key={toast.id} toast={toast}>
-            <Icon
-              aria-hidden="true"
-              data-testid="toast-icon"
-              className={cn("size-5 shrink-0 self-start", style.iconColor)}
-            />
+            {Icon && <Icon />}
             <div className="flex min-w-0 flex-1 flex-col gap-1">
               {toast.title != null && <ToastTitle>{toast.title}</ToastTitle>}
               {toast.description != null && (

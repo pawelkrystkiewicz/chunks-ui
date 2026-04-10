@@ -1,7 +1,37 @@
 "use client";
 
-import { Button, Toast, type ToastType } from "chunks-ui";
+import { Button, type ButtonProps, cn, Toast } from "chunks-ui";
+import { AlertTriangle, CheckCircle2, Info, type LucideIcon, XCircle } from "lucide-react";
 import { Container } from "@/components";
+
+type ToastType = Exclude<NonNullable<ButtonProps["color"]>, "secondary">;
+
+interface TypeStyle {
+  icon: LucideIcon;
+  accent: string;
+  iconColor: string;
+}
+
+const TYPE_STYLES: Record<ToastType, TypeStyle> = {
+  primary: { icon: Info, accent: "bg-primary", iconColor: "text-primary" },
+  success: { icon: CheckCircle2, accent: "bg-success", iconColor: "text-success" },
+  destructive: { icon: XCircle, accent: "bg-destructive", iconColor: "text-destructive" },
+  warning: { icon: AlertTriangle, accent: "bg-warning", iconColor: "text-warning" },
+};
+
+// className={cn('size-5 shrink-0 self-start')}
+
+const DEFAULT_STYLE: TypeStyle = {
+  icon: Info,
+  accent: "bg-muted-foreground",
+  iconColor: "text-muted-foreground",
+};
+
+function getIcon(type: string | undefined) {
+  const { icon: Icon, iconColor } = TYPE_STYLES[type as ToastType] ?? DEFAULT_STYLE;
+
+  return () => <Icon className={cn("size-5 shrink-0 self-start", iconColor)} />;
+}
 
 function ToastSetup({ children }: { children: React.ReactNode }) {
   return (
@@ -25,7 +55,7 @@ function ToastTrigger({ label, title, description, type }: ToastTriggerProps) {
   return (
     <Button
       type="button"
-      onClick={() => add({ title, description, type })}
+      onClick={() => add({ title, description, icon: getIcon(type) })}
       variant="outlined"
       color={type}
     >
@@ -57,7 +87,7 @@ export function ToastVariantsExample() {
             label="Info"
             title="Build started"
             description="Deploying to production..."
-            type="info"
+            type="primary"
           />
           <ToastTrigger
             label="Success"
