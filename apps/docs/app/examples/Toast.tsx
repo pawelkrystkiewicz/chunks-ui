@@ -210,30 +210,6 @@ export function ToastPromiseExample() {
   );
 }
 
-/**
- * Classes applied to each stacked toast via `toast.className`. Uses the CSS
- * variables Base UI exposes on every `Toast.Root`:
- *
- * - `--toast-index`: the toast's position in the stack (0 = frontmost).
- * - `--toast-offset-y`: the natural fanned-out offset when expanded.
- *
- * Collapsed: stack with a small vertical offset and scale per index.
- * Expanded (viewport has `data-expanded`): fan out using `--toast-offset-y`.
- */
-const STACK_ROOT_CLASS = [
-  "absolute right-0 bottom-0 w-full origin-bottom",
-  "[transform:translateY(calc(var(--toast-index)*-0.75rem))_scale(calc(1-var(--toast-index)*0.05))]",
-  "group-data-[expanded]:[transform:translateY(calc(var(--toast-offset-y)*-1px))_scale(1)]",
-].join(" ");
-
-/**
- * Viewport className override for the stacking demo. `block` replaces the
- * default `flex flex-col gap-2` so children can absolute-stack at the same
- * point. `h-0` removes the viewport's block-layout footprint. `group` enables
- * the `group-data-[expanded]:` variant on each Root.
- */
-const STACK_VIEWPORT_CLASS = "group block h-0";
-
 function ToastStackingTrigger() {
   const { add } = Toast.useToast();
 
@@ -246,9 +222,9 @@ function ToastStackingTrigger() {
           add({
             title: `Notification ${i}`,
             description: "Hover the stack to expand.",
-            className: `${STACK_ROOT_CLASS} ${TYPE_STYLES.primary.className}`,
             icon: TYPE_STYLES.primary.icon,
             iconClassName: TYPE_STYLES.primary.iconClassName,
+            className: "toast-stack",
           });
         }
       }}
@@ -263,7 +239,7 @@ export function ToastStackingExample() {
     <Container>
       <Toast.Provider limit={5}>
         <ToastStackingTrigger />
-        <Toast.Viewport className={STACK_VIEWPORT_CLASS} />
+        <Toast.Viewport className="toast-stack-viewport" />
       </Toast.Provider>
     </Container>
   );

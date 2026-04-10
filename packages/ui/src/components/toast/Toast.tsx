@@ -88,13 +88,13 @@ function ToastViewport({ className, dissmissable, onClose, ...props }: ToastView
         return (
           <ToastRoot key={toast.id} toast={toast} className={toast.className}>
             {Icon && <Icon className={cn("size-5 shrink-0 self-start", toast.iconClassName)} />}
-            <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <BaseToast.Content className="ToastContent flex min-w-0 flex-1 flex-col gap-1">
               {toast.title != null && <ToastTitle>{toast.title}</ToastTitle>}
               {toast.description != null && (
                 <ToastDescription>{toast.description}</ToastDescription>
               )}
               {toast.actionProps != null && <ToastAction {...toast.actionProps} />}
-            </div>
+            </BaseToast.Content>
             {(dissmissable || onClose) && <ToastClose onClick={onClose} />}
           </ToastRoot>
         );
@@ -109,6 +109,7 @@ function ToastRoot({ className, toast, ...props }: ToastRootProps) {
     <BaseToast.Root
       toast={toast}
       className={cn(
+        "Toast",
         "group relative flex w-full items-center gap-3 overflow-hidden rounded-sm border border-border bg-popover p-4 pr-10 shadow-lg",
         !reduced && [
           "micro-interactions",

@@ -232,37 +232,28 @@ The method returns the original promise, so you can still `await` or `.catch()` 
 
 ## Stacking Behaviour
 
-By default `Toast.Viewport` renders toasts as a flexbox column. For the "stacked deck" pattern — where a pile of notifications collapses behind the frontmost one and fans out on hover — override the viewport layout and drive the transform with Base UI's per-toast CSS variables:
+By default `Toast.Viewport` renders toasts as a flex column. For the "stacked deck" pattern — where a pile of notifications collapses behind the frontmost one and fans out on hover — chunks-ui ships two opt-in CSS classes in `theme.css`:
 
-| CSS variable | Set by | Meaning |
+| Class | Where | What it does |
 |---|---|---|
-| `--toast-index` | `Toast.Root` | Zero-based position in the stack (0 = frontmost). |
-| `--toast-offset-y` | `Toast.Root` | Natural vertical offset in pixels once the stack is expanded. |
-| `data-expanded` | `Toast.Viewport` | Present while the viewport is hovered or focused — flip to the fanned-out transform under this variant. |
-
-The `className` slot on each toast is all you need — no new components, no custom hooks:
+| `toast-stack-viewport` | `Toast.Viewport` | Overrides the default flex layout so children can absolute-stack at the same anchor point. |
+| `toast-stack` | each toast's `className` | Drives the collapsed/expanded transforms off Base UI's per-root CSS variables (`--toast-index`, `--toast-height`, `--toast-frontmost-height`, `--toast-offset-y`, `--toast-swipe-movement-x/y`) and responds to `data-expanded`, `data-starting-style`, `data-ending-style`, and `data-swipe-direction`. |
 
 ```tsx
-const STACK_ROOT_CLASS = [
-  "absolute right-0 bottom-0 w-full origin-bottom",
-  // Collapsed: offset + scale per stack index
-  "[transform:translateY(calc(var(--toast-index)*-0.75rem))_scale(calc(1-var(--toast-index)*0.05))]",
-  // Expanded: fan out using Base UI's natural offset
-  "group-data-[expanded]:[transform:translateY(calc(var(--toast-offset-y)*-1px))_scale(1)]",
-].join(" ");
-
 <Toast.Provider limit={5}>
   <TriggerButton />
-  {/* `group` + `block` + `h-0` override the default flex-column layout */}
-  <Toast.Viewport className="group block h-0" />
+  <Toast.Viewport className="toast-stack-viewport" />
 </Toast.Provider>
 
+// …trigger:
 add({
   title: "Notification",
   description: "Hover the stack to expand.",
-  className: STACK_ROOT_CLASS,
+  className: "toast-stack",
 })
 ```
+
+The stacking CSS respects `prefers-reduced-motion: reduce` — users with that setting get an instant stack/expand with no transitions. The pattern is ported directly from Base UI's reference example, so the visual and physics match what Base UI documents.
 
 <ToastStackingExample />
 
