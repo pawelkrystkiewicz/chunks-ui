@@ -7,33 +7,43 @@ import { cn } from "../../lib/cn";
 import { useReducedMotion } from "../../lib/use-motion";
 
 /**
- * Module augmentation: add optional per-toast styling slots to Base UI's
- * ToastObject interface. These are intentionally additive and opinion-free —
- * chunks-ui stays out of the icon ecosystem and lets callers bring their own
+ * Per-toast styling slots added by chunks-ui on top of Base UI's
+ * `ToastObject`. Pass any subset of these to `toast.add(...)` /
+ * `toast.promise(...)` / `toast.update(...)`.
+ *
+ * All three are intentionally additive and opinion-free — chunks-ui
+ * stays out of the icon ecosystem and lets callers bring their own
  * icons, colors, and per-type styling.
  */
+export interface ToastStyleOptions {
+  /**
+   * Icon component rendered in the toast's leading slot. Receives a
+   * `className` prop pre-populated with default sizing (`size-5
+   * shrink-0 self-start`), merged with `iconClassName` if provided.
+   * Pass a lucide/heroicons component directly, or a wrapper for
+   * fully custom rendering.
+   */
+  icon?: ComponentType<{ className?: string }>;
+  /**
+   * Extra classes applied to the rendered `icon`. Use this for color
+   * (e.g. `text-success`) without having to wrap the icon component.
+   */
+  iconClassName?: string;
+  /**
+   * Extra classes merged into `Toast.Root`'s className. Use this for
+   * per-toast styling like accent bars, borders, or background tints
+   * — typically driven off `type`.
+   */
+  className?: string;
+}
+
+/**
+ * Module augmentation: merge `ToastStyleOptions` into Base UI's
+ * `ToastObject` interface so `add()`, `update()`, and `promise()` all
+ * accept the chunks-ui per-toast styling fields at the top level.
+ */
 declare module "@base-ui/react/toast" {
-  interface ToastObject<Data extends object> {
-    /**
-     * Icon component rendered in the toast's leading slot. Receives a
-     * `className` prop pre-populated with default sizing (`size-5
-     * shrink-0 self-start`), merged with `iconClassName` if provided.
-     * Pass a lucide/heroicons component directly, or a wrapper for
-     * fully custom rendering.
-     */
-    icon?: ComponentType<{ className?: string }>;
-    /**
-     * Extra classes applied to the rendered `icon`. Use this for color
-     * (e.g. `text-success`) without having to wrap the icon component.
-     */
-    iconClassName?: string;
-    /**
-     * Extra classes merged into `Toast.Root`'s className. Use this for
-     * per-toast styling like accent bars, borders, or background tints
-     * — typically driven off `type`.
-     */
-    className?: string;
-  }
+  interface ToastObject<Data extends object> extends ToastStyleOptions {}
 }
 
 export const createToastManager = BaseToast.createToastManager;

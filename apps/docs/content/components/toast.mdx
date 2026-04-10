@@ -1,4 +1,10 @@
-import { ToastBasicExample, ToastVariantsExample, ToastWithActionExample } from '@/examples/Toast'
+import {
+  ToastBasicExample,
+  ToastPromiseExample,
+  ToastStackingExample,
+  ToastVariantsExample,
+  ToastWithActionExample,
+} from '@/examples/Toast'
 import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
 # Toast
@@ -137,6 +143,70 @@ If you need to run a side effect when the user dismisses a toast — tracking an
 
 `onClose` runs *in addition to* Base UI's built-in dismissal — it's for side effects, not for preventing the toast from closing.
 
+## Promise Toasts
+
+`toast.promise(promise, { loading, success, error })` wires a single toast through the lifecycle of an async operation. It starts with the `loading` options, then swaps to `success` or `error` once the promise settles. `success` and `error` can be static options or functions that receive the resolved value / rejection reason:
+
+```tsx
+const { promise } = Toast.useToast();
+
+promise(uploadFile(), {
+  loading: { title: "Uploading file…", description: "Hold tight." },
+  success: (result) => ({
+    title: "Upload complete",
+    description: `Saved ${result.name} to your workspace.`,
+    icon: CheckCircle2,
+    iconClassName: "text-success",
+  }),
+  error: (err) => ({
+    title: "Upload failed",
+    description: err.message,
+    icon: XCircle,
+    iconClassName: "text-destructive",
+  }),
+});
+```
+
+The method returns the original promise, so you can still `await` or `.catch()` it downstream — the toast is a side effect, not a replacement for your own error handling.
+
+<ToastPromiseExample />
+
+## Stacking Behaviour
+
+By default `Toast.Viewport` renders toasts as a flexbox column. For the "stacked deck" pattern — where a pile of notifications collapses behind the frontmost one and fans out on hover — override the viewport layout and drive the transform with Base UI's per-toast CSS variables:
+
+| CSS variable | Set by | Meaning |
+|---|---|---|
+| `--toast-index` | `Toast.Root` | Zero-based position in the stack (0 = frontmost). |
+| `--toast-offset-y` | `Toast.Root` | Natural vertical offset in pixels once the stack is expanded. |
+| `data-expanded` | `Toast.Viewport` | Present while the viewport is hovered or focused — flip to the fanned-out transform under this variant. |
+
+The `className` slot on each toast is all you need — no new components, no custom hooks:
+
+```tsx
+const STACK_ROOT_CLASS = [
+  "absolute right-0 bottom-0 w-full origin-bottom",
+  // Collapsed: offset + scale per stack index
+  "[transform:translateY(calc(var(--toast-index)*-0.75rem))_scale(calc(1-var(--toast-index)*0.05))]",
+  // Expanded: fan out using Base UI's natural offset
+  "group-data-[expanded]:[transform:translateY(calc(var(--toast-offset-y)*-1px))_scale(1)]",
+].join(" ");
+
+<Toast.Provider limit={5}>
+  <TriggerButton />
+  {/* `group` + `block` + `h-0` override the default flex-column layout */}
+  <Toast.Viewport className="group block h-0" />
+</Toast.Provider>
+
+add({
+  title: "Notification",
+  description: "Hover the stack to expand.",
+  className: STACK_ROOT_CLASS,
+})
+```
+
+<ToastStackingExample />
+
 ## Compound Parts
 
 | Part | Description |
@@ -166,6 +236,8 @@ If you need to run a side effect when the user dismisses a toast — tracking an
 
 ### Toast.Viewport
 
+Props added by chunks-ui on top of Base UI's `Toast.Viewport`:
+
 <TSDoc
   definition={generateDefinition({
     code: `
@@ -176,4 +248,21 @@ export default Props
   })}
 />
 
-All other props are forwarded to the underlying Base UI [`Toast.Viewport`](https://base-ui.com/react/components/toast#api-reference). All other compound parts are thin style wrappers and forward their props to the corresponding Base UI primitive.
+All other props are forwarded to the underlying Base UI [`Toast.Viewport`](https://base-ui.com/react/components/toast#api-reference).
+
+### Toast.useToast — `add` / `update` / `promise` style options
+
+Per-toast styling fields chunks-ui adds to Base UI's `ToastObject` via module augmentation. Pass any subset of these to `add()`, `update()`, or any branch of `promise()`:
+
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { ToastStyleOptions } from 'chunks-ui'
+export default ToastStyleOptions
+`
+  })}
+/>
+
+All other options (`title`, `description`, `type`, `timeout`, `actionProps`, `priority`, `data`, …) are forwarded directly to Base UI — see the [`ToastObject` API reference](https://base-ui.com/react/components/toast#api-reference) for the full list.
+
+All other compound parts (`Toast.Root`, `Toast.Title`, `Toast.Description`, `Toast.Close`, `Toast.Action`) are thin style wrappers and forward their props to the corresponding Base UI primitive.

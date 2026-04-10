@@ -226,6 +226,7 @@ export type {
   ToastDescriptionProps,
   ToastProviderProps,
   ToastRootProps,
+  ToastStyleOptions,
   ToastTitleProps,
   ToastViewportProps,
 } from "./components/toast";

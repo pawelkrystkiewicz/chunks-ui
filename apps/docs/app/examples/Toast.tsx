@@ -142,3 +142,122 @@ export function ToastWithActionExample() {
     </Container>
   );
 }
+
+/**
+ * Fake async request used by the promise example. Resolves with a filename
+ * ~80% of the time, rejects with a network error the rest.
+ */
+function uploadFile(): Promise<{ name: string }> {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      if (Math.random() > 0.2) {
+        resolve({ name: "report-2026-04.pdf" });
+      } else {
+        reject(new Error("Network timeout"));
+      }
+    }, 1500);
+  });
+}
+
+function ToastPromiseTrigger() {
+  const { promise } = Toast.useToast();
+
+  return (
+    <Button
+      type="button"
+      variant="outlined"
+      onClick={() => {
+        promise(uploadFile(), {
+          loading: {
+            title: "Uploading file…",
+            description: "Hold tight, this will only take a moment.",
+            ...TYPE_STYLES.primary,
+          },
+          success: (result) => ({
+            title: "Upload complete",
+            description: `Saved ${result.name} to your workspace.`,
+            ...TYPE_STYLES.success,
+          }),
+          error: (err) => ({
+            title: "Upload failed",
+            description: err instanceof Error ? err.message : "Something went wrong.",
+            ...TYPE_STYLES.destructive,
+          }),
+        }).catch(() => {
+          /* swallow — the toast already surfaced the error to the user */
+        });
+      }}
+    >
+      Upload file
+    </Button>
+  );
+}
+
+export function ToastPromiseExample() {
+  return (
+    <Container>
+      <ToastSetup>
+        <ToastPromiseTrigger />
+      </ToastSetup>
+    </Container>
+  );
+}
+
+/**
+ * Classes applied to each stacked toast via `toast.className`. Uses the CSS
+ * variables Base UI exposes on every `Toast.Root`:
+ *
+ * - `--toast-index`: the toast's position in the stack (0 = frontmost).
+ * - `--toast-offset-y`: the natural fanned-out offset when expanded.
+ *
+ * Collapsed: stack with a small vertical offset and scale per index.
+ * Expanded (viewport has `data-expanded`): fan out using `--toast-offset-y`.
+ */
+const STACK_ROOT_CLASS = [
+  "absolute right-0 bottom-0 w-full origin-bottom",
+  "[transform:translateY(calc(var(--toast-index)*-0.75rem))_scale(calc(1-var(--toast-index)*0.05))]",
+  "group-data-[expanded]:[transform:translateY(calc(var(--toast-offset-y)*-1px))_scale(1)]",
+].join(" ");
+
+/**
+ * Viewport className override for the stacking demo. `block` replaces the
+ * default `flex flex-col gap-2` so children can absolute-stack at the same
+ * point. `h-0` removes the viewport's block-layout footprint. `group` enables
+ * the `group-data-[expanded]:` variant on each Root.
+ */
+const STACK_VIEWPORT_CLASS = "group block h-0";
+
+function ToastStackingTrigger() {
+  const { add } = Toast.useToast();
+
+  return (
+    <Button
+      type="button"
+      variant="outlined"
+      onClick={() => {
+        for (let i = 1; i <= 4; i++) {
+          add({
+            title: `Notification ${i}`,
+            description: "Hover the stack to expand.",
+            className: `${STACK_ROOT_CLASS} ${TYPE_STYLES.primary.className}`,
+            icon: TYPE_STYLES.primary.icon,
+            iconClassName: TYPE_STYLES.primary.iconClassName,
+          });
+        }
+      }}
+    >
+      Show stack
+    </Button>
+  );
+}
+
+export function ToastStackingExample() {
+  return (
+    <Container>
+      <Toast.Provider limit={5}>
+        <ToastStackingTrigger />
+        <Toast.Viewport className={STACK_VIEWPORT_CLASS} />
+      </Toast.Provider>
+    </Container>
+  );
+}
