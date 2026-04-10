@@ -255,4 +255,15 @@ export default Props
   })}
 />
 
-All compound parts (`Toast.Provider`, `Toast.Viewport`, `Toast.Root`, `Toast.Title`, `Toast.Description`, `Toast.Close`, `Toast.Action`) are thin style wrappers and forward their props to the corresponding Base UI primitive.
+### Toast.Viewport
+
+`Toast.Viewport` is a thin style wrapper — it forwards every prop directly to Base UI's [`Toast.Viewport`](https://base-ui.com/react/components/toast#api-reference). All per-toast behaviour (`icon`, `iconClassName`, `className`, `dissmissable`, `onClose`) lives on the individual `add()` call, not the container, so a single viewport can host a mix of dismissable and non-dismissable toasts, styled and unstyled ones, etc.
+
+Only string-level overrides are worth knowing about here:
+
+- Pass `className="toast-stack-viewport"` to opt into the [stacking pattern](#stacking-behaviour).
+- Otherwise, you almost never need to touch the viewport beyond mounting it.
+
+### Compound parts
+
+All other compound parts (`Toast.Provider`, `Toast.Root`, `Toast.Title`, `Toast.Description`, `Toast.Close`, `Toast.Action`) are thin style wrappers and forward their props to the corresponding Base UI primitive. See the [Base UI Toast reference](https://base-ui.com/react/components/toast#api-reference) for the full prop surface.
