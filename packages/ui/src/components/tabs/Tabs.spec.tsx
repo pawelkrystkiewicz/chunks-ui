@@ -14,6 +14,11 @@ beforeAll(() => {
 
 afterEach(cleanup);
 
+/** Returns true if the panel wrapper is hidden via CSS fallback or motion-mode inert. */
+function isHiddenPanel(wrapper: HTMLElement): boolean {
+  return wrapper.style.display === "none" || wrapper.hasAttribute("inert");
+}
+
 describe("Tabs", () => {
   it("renders all sub-components", () => {
     render(
@@ -87,7 +92,7 @@ describe("Tabs", () => {
     expect(screen.getByTestId("ind")).toHaveClass("custom");
   });
 
-  it("renders Contents with panels (CSS fallback)", () => {
+  it("hides inactive panels via display:none or inert", () => {
     render(
       <Tabs.Root defaultValue="a">
         <Tabs.List>
@@ -103,7 +108,7 @@ describe("Tabs", () => {
       </Tabs.Root>,
     );
     expect(screen.getByText("Panel A")).toBeInTheDocument();
-    expect(screen.getByTestId("panel-b").parentElement).toHaveStyle("display: none");
+    expect(isHiddenPanel(screen.getByTestId("panel-b").parentElement!)).toBe(true);
   });
 
   it("merges custom className on Contents", () => {
@@ -169,7 +174,7 @@ describe("Tabs", () => {
         </Tabs.Contents>
       </Tabs.Root>,
     );
-    expect(screen.getByTestId("panel-b").parentElement).toHaveStyle("display: none");
+    expect(isHiddenPanel(screen.getByTestId("panel-b").parentElement!)).toBe(true);
     rerender(
       <Tabs.Root value="b">
         <Tabs.Contents>
@@ -182,7 +187,7 @@ describe("Tabs", () => {
         </Tabs.Contents>
       </Tabs.Root>,
     );
-    expect(screen.getByTestId("panel-a").parentElement).toHaveStyle("display: none");
+    expect(isHiddenPanel(screen.getByTestId("panel-a").parentElement!)).toBe(true);
   });
 
   it("has no a11y violations", async () => {

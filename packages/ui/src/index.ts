@@ -226,10 +226,11 @@ export type {
   ToastDescriptionProps,
   ToastProviderProps,
   ToastRootProps,
+  ToastStyleOptions,
   ToastTitleProps,
   ToastViewportProps,
 } from "./components/toast";
-export { Toast } from "./components/toast";
+export { createToastManager, Toast } from "./components/toast";
 export type { ToggleGroupItemProps, ToggleGroupRootProps } from "./components/toggle-group";
 export { ToggleGroup } from "./components/toggle-group";
 export type {

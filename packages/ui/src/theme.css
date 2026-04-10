@@ -143,3 +143,122 @@
 .micro-interactions {
   transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/*
+ * Toast stacking pattern — ported from Base UI's reference example.
+ * Opt in per-Viewport by combining the two classes below:
+ *
+ *   <Toast.Viewport className="toast-stack-viewport" />
+ *   // then, for every toast:
+ *   add({ title, className: "toast-stack" })
+ *
+ * Drives the collapsed/expanded deck behaviour off Base UI's per-root
+ * CSS variables (--toast-index, --toast-height, --toast-frontmost-height,
+ * --toast-offset-y, --toast-swipe-movement-x/y) and data attributes
+ * (data-expanded, data-starting-style, data-ending-style,
+ * data-swipe-direction, data-limited).
+ */
+.toast-stack-viewport {
+  /* Override the default flex-column layout so children can absolute-stack
+   * at the same bottom-right anchor point. */
+  display: block;
+}
+
+.toast-stack {
+  --toast-stack-gap: 0.75rem;
+  --toast-stack-peek: 0.75rem;
+  --toast-stack-scale: calc(max(0, 1 - (var(--toast-index) * 0.1)));
+  --toast-stack-shrink: calc(1 - var(--toast-stack-scale));
+  --toast-stack-height: var(--toast-frontmost-height, var(--toast-height));
+  --toast-stack-offset-y: calc(
+    var(--toast-offset-y) *
+    -1 +
+    (var(--toast-index) * var(--toast-stack-gap) * -1) +
+    var(--toast-swipe-movement-y)
+  );
+
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: auto;
+  width: 100%;
+  height: var(--toast-stack-height);
+  z-index: calc(1000 - var(--toast-index));
+  transform-origin: bottom center;
+  transition:
+    transform 500ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 500ms,
+    height 150ms;
+  transform: translateX(var(--toast-swipe-movement-x))
+    translateY(
+      calc(
+        var(--toast-swipe-movement-y) -
+        (var(--toast-index) * var(--toast-stack-peek)) -
+        (var(--toast-stack-shrink) * var(--toast-stack-height))
+      )
+    )
+    scale(var(--toast-stack-scale));
+}
+
+.toast-stack[data-expanded] {
+  transform: translateX(var(--toast-swipe-movement-x)) translateY(var(--toast-stack-offset-y));
+  height: var(--toast-height);
+}
+
+.toast-stack[data-starting-style],
+.toast-stack[data-ending-style] {
+  transform: translateY(150%);
+  opacity: 0;
+}
+
+.toast-stack[data-ending-style][data-swipe-direction="up"] {
+  transform: translateY(calc(var(--toast-swipe-movement-y) - 150%));
+}
+.toast-stack[data-ending-style][data-swipe-direction="down"] {
+  transform: translateY(calc(var(--toast-swipe-movement-y) + 150%));
+}
+.toast-stack[data-ending-style][data-swipe-direction="left"] {
+  transform: translateX(calc(var(--toast-swipe-movement-x) - 150%))
+    translateY(var(--toast-stack-offset-y));
+}
+.toast-stack[data-ending-style][data-swipe-direction="right"] {
+  transform: translateX(calc(var(--toast-swipe-movement-x) + 150%))
+    translateY(var(--toast-stack-offset-y));
+}
+
+.toast-stack[data-limited] {
+  opacity: 0;
+}
+
+/* Fill the visual gap between stacked toasts so hovering across them doesn't
+ * lose the hover state and collapse the deck. */
+.toast-stack::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  height: calc(var(--toast-stack-gap) + 1px);
+}
+
+/* Fade the text content of toasts sitting behind the frontmost one in the
+ * stack, and restore it when the viewport is hovered/focused. Scoped to
+ * `.toast-stack` because Base UI also sets `data-behind` on regular
+ * (non-stacked) viewports — without the scope, every non-frontmost toast
+ * in the app would have invisible content. */
+.toast-stack .ToastContent {
+  transition: opacity 250ms;
+}
+.toast-stack .ToastContent[data-behind] {
+  opacity: 0;
+}
+.toast-stack .ToastContent[data-expanded] {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast-stack,
+  .toast-stack .ToastContent {
+    transition: none;
+  }
+}

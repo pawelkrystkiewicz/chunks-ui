@@ -70,7 +70,7 @@ function SelectPopup({ className, ...props }: SelectPopupProps) {
     <BaseSelect.Popup
       render={render}
       className={cn(
-        "z-dropdowns rounded border border-border bg-popover p-1 text-popover-foreground shadow-md",
+        "rounded border border-border bg-popover p-1 text-popover-foreground shadow-md",
         !useSpring && "data-starting-style:opacity-0",
         !useSpring && "data-ending-style:opacity-0",
         !useSpring && "micro-interactions",
@@ -118,6 +118,10 @@ function SelectItemIndicator({ className, ...props }: SelectItemIndicatorProps) 
   );
 }
 
+function SelectPositioner({ className, ...props }: SelectPositionerProps) {
+  return <BaseSelect.Positioner className={cn("z-dropdowns", className)} {...props} />;
+}
+
 function SelectGroupLabel({ className, ...props }: SelectGroupLabelProps) {
   return (
     <BaseSelect.GroupLabel
@@ -136,7 +140,7 @@ export const Select = {
   ItemText: BaseSelect.ItemText,
   Popup: SelectPopup,
   Portal: BaseSelect.Portal,
-  Positioner: BaseSelect.Positioner,
+  Positioner: SelectPositioner,
   Root: BaseSelect.Root,
   Trigger: SelectTrigger,
   Value: BaseSelect.Value,

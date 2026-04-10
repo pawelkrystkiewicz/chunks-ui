@@ -67,6 +67,7 @@ function MenuContent({
   return (
     <BaseMenu.Portal keepMounted={useSpring}>
       <BaseMenu.Positioner
+        className="z-dropdowns"
         sideOffset={sideOffset}
         side={side}
         align={align}
@@ -75,7 +76,7 @@ function MenuContent({
         <BaseMenu.Popup
           render={render}
           className={cn(
-            "z-dropdowns min-w-[8rem] rounded border border-border bg-popover p-1 text-popover-foreground shadow-md",
+            "min-w-[8rem] rounded border border-border bg-popover p-1 text-popover-foreground shadow-md",
             !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
             !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
             !useSpring && "micro-interactions",
