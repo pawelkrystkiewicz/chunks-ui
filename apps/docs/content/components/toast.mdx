@@ -69,23 +69,46 @@ add({
 
 <ToastWithActionExample />
 
-## Icons
+## Icons and per-type styling
 
-Pass an `icon` component to `add()` to render a leading icon inside the toast. `chunks-ui` doesn't ship any icons itself — bring your own from lucide-react, heroicons, a custom SVG, whatever. The icon receives no props, so size and color are up to you:
+`chunks-ui` doesn't ship any icons or semantic type styles itself — bring your own. Three per-toast slots let you plug into whatever icon library and design tokens your project uses:
+
+| Field | Purpose |
+|---|---|
+| `icon` | Component rendered in the leading slot. Receives a `className` prop pre-populated with default sizing (`size-5 shrink-0 self-start`). |
+| `iconClassName` | Extra classes merged onto `icon` — use for color. |
+| `className` | Extra classes merged onto `Toast.Root` — use for accent bars, borders, background tints. |
+
+For the simple case, pass a lucide component directly:
 
 ```tsx
 import { CheckCircle2 } from 'lucide-react'
 
-const { add } = Toast.useToast();
-
 add({
   title: "File saved",
-  description: "Your changes have been saved.",
-  icon: () => <CheckCircle2 className="size-5 text-success" />,
-});
+  icon: CheckCircle2,
+  iconClassName: "text-success",
+})
 ```
 
-Skipping `icon` renders a toast with no leading slot — there's no default. This keeps the library icon-agnostic and lets you pair toasts with your project's design system. The `Toast.Variants` example above demonstrates per-type icons using a small local helper.
+For per-type styling, define a data-only map and spread it into `add()`:
+
+```tsx
+import { AlertTriangle, CheckCircle2, Info, XCircle } from 'lucide-react'
+
+const TYPE_STYLES = {
+  primary:     { icon: Info,          iconClassName: "text-primary",     className: "border-l-4 border-primary" },
+  success:     { icon: CheckCircle2,  iconClassName: "text-success",     className: "border-l-4 border-success" },
+  destructive: { icon: XCircle,       iconClassName: "text-destructive", className: "border-l-4 border-destructive" },
+  warning:     { icon: AlertTriangle, iconClassName: "text-warning",     className: "border-l-4 border-warning" },
+} as const
+
+function notify(type: keyof typeof TYPE_STYLES, title: string) {
+  add({ title, ...TYPE_STYLES[type] })
+}
+```
+
+No factory functions, no closures — the icon references are stable, so React reconciles them cleanly. Skipping all three fields gives you a plain, unstyled toast. Everything the library ships in Toast is additive to Base UI.
 
 ## Dismissable Toasts
 
@@ -133,7 +156,9 @@ If you need to run a side effect when the user dismisses a toast — tracking an
 |---|---|---|
 | `title` | `string` | Toast heading text |
 | `description` | `string` | Supporting body text |
-| `icon` | `ComponentType` | Component rendered in the toast's leading slot. Receives no props — bring your own icon library |
+| `icon` | `ComponentType<{ className?: string }>` | Component rendered in the leading slot. Library passes default sizing via `className` — pass a lucide/heroicons component directly |
+| `iconClassName` | `string` | Extra classes merged into the `icon`'s `className` (use for color) |
+| `className` | `string` | Extra classes merged into `Toast.Root` (use for per-toast borders, accents, backgrounds) |
 | `actionProps` | `{ children: ReactNode; onClick: () => void }` | Props for the action button |
 | `timeout` | `number` | Auto-dismiss delay in milliseconds (provider default applies if omitted) |
 

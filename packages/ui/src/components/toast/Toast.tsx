@@ -7,19 +7,32 @@ import { cn } from "../../lib/cn";
 import { useReducedMotion } from "../../lib/use-motion";
 
 /**
- * Module augmentation: add an optional `icon` slot to Base UI's ToastObject
- * interface so consumers can pass any React component (lucide, heroicons, a
- * custom SVG, etc.) via `add({ icon: MyIcon })` and have it rendered by
- * `Toast.Viewport`. Intentionally untyped beyond "any component" — chunks-ui
- * stays out of the icon ecosystem and lets callers choose.
+ * Module augmentation: add optional per-toast styling slots to Base UI's
+ * ToastObject interface. These are intentionally additive and opinion-free —
+ * chunks-ui stays out of the icon ecosystem and lets callers bring their own
+ * icons, colors, and per-type styling.
  */
 declare module "@base-ui/react/toast" {
   interface ToastObject<Data extends object> {
     /**
-     * Optional icon component rendered in the toast's leading slot.
-     * Receives no props — size and color are up to the caller.
+     * Icon component rendered in the toast's leading slot. Receives a
+     * `className` prop pre-populated with default sizing (`size-5
+     * shrink-0 self-start`), merged with `iconClassName` if provided.
+     * Pass a lucide/heroicons component directly, or a wrapper for
+     * fully custom rendering.
      */
-    icon?: ComponentType;
+    icon?: ComponentType<{ className?: string }>;
+    /**
+     * Extra classes applied to the rendered `icon`. Use this for color
+     * (e.g. `text-success`) without having to wrap the icon component.
+     */
+    iconClassName?: string;
+    /**
+     * Extra classes merged into `Toast.Root`'s className. Use this for
+     * per-toast styling like accent bars, borders, or background tints
+     * — typically driven off `type`.
+     */
+    className?: string;
   }
 }
 
@@ -61,11 +74,10 @@ function ToastViewport({ className, dissmissable, onClose, ...props }: ToastView
       {...props}
     >
       {manager.toasts.map((toast) => {
-        // extend type to support icon as JSX component
         const Icon = toast.icon;
         return (
-          <ToastRoot key={toast.id} toast={toast}>
-            {Icon && <Icon />}
+          <ToastRoot key={toast.id} toast={toast} className={toast.className}>
+            {Icon && <Icon className={cn("size-5 shrink-0 self-start", toast.iconClassName)} />}
             <div className="flex min-w-0 flex-1 flex-col gap-1">
               {toast.title != null && <ToastTitle>{toast.title}</ToastTitle>}
               {toast.description != null && (

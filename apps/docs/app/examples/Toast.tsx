@@ -1,37 +1,33 @@
 "use client";
 
-import { Button, type ButtonProps, cn, Toast } from "chunks-ui";
-import { AlertTriangle, CheckCircle2, Info, type LucideIcon, XCircle } from "lucide-react";
+import { Button, type ButtonProps, Toast } from "chunks-ui";
+import { AlertTriangle, CheckCircle2, Info, XCircle } from "lucide-react";
 import { Container } from "@/components";
 
 type ToastType = Exclude<NonNullable<ButtonProps["color"]>, "secondary">;
 
-interface TypeStyle {
-  icon: LucideIcon;
-  accent: string;
-  iconColor: string;
-}
-
-const TYPE_STYLES: Record<ToastType, TypeStyle> = {
-  primary: { icon: Info, accent: "bg-primary", iconColor: "text-primary" },
-  success: { icon: CheckCircle2, accent: "bg-success", iconColor: "text-success" },
-  destructive: { icon: XCircle, accent: "bg-destructive", iconColor: "text-destructive" },
-  warning: { icon: AlertTriangle, accent: "bg-warning", iconColor: "text-warning" },
-};
-
-// className={cn('size-5 shrink-0 self-start')}
-
-const DEFAULT_STYLE: TypeStyle = {
-  icon: Info,
-  accent: "bg-muted-foreground",
-  iconColor: "text-muted-foreground",
-};
-
-function getIcon(type: string | undefined) {
-  const { icon: Icon, iconColor } = TYPE_STYLES[type as ToastType] ?? DEFAULT_STYLE;
-
-  return () => <Icon className={cn("size-5 shrink-0 self-start", iconColor)} />;
-}
+const TYPE_STYLES = {
+  primary: {
+    icon: Info,
+    iconClassName: "text-primary",
+    className: "border-l-4 border-primary",
+  },
+  success: {
+    icon: CheckCircle2,
+    iconClassName: "text-success",
+    className: "border-l-4 border-success",
+  },
+  destructive: {
+    icon: XCircle,
+    iconClassName: "text-destructive",
+    className: "border-l-4 border-destructive",
+  },
+  warning: {
+    icon: AlertTriangle,
+    iconClassName: "text-warning",
+    className: "border-l-4 border-warning",
+  },
+} as const satisfies Record<ToastType, { icon: unknown; iconClassName: string; className: string }>;
 
 function ToastSetup({ children }: { children: React.ReactNode }) {
   return (
@@ -55,7 +51,7 @@ function ToastTrigger({ label, title, description, type }: ToastTriggerProps) {
   return (
     <Button
       type="button"
-      onClick={() => add({ title, description, icon: getIcon(type) })}
+      onClick={() => add({ title, description, ...(type && TYPE_STYLES[type]) })}
       variant="outlined"
       color={type}
     >

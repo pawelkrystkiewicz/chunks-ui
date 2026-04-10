@@ -147,7 +147,11 @@ describe("Toast", () => {
           onClick={() =>
             toast.add({
               title: "With icon",
-              icon: () => <span data-testid="caller-icon">★</span>,
+              icon: ({ className }) => (
+                <span data-testid="caller-icon" className={className}>
+                  ★
+                </span>
+              ),
             })
           }
         >
@@ -164,8 +168,82 @@ describe("Toast", () => {
     );
     await user.click(screen.getByRole("button", { name: "Show icon toast" }));
     await screen.findByText("With icon");
-    expect(screen.getByTestId("caller-icon")).toBeInTheDocument();
-    expect(screen.getByTestId("caller-icon")).toHaveTextContent("★");
+    const icon = screen.getByTestId("caller-icon");
+    expect(icon).toBeInTheDocument();
+    expect(icon).toHaveTextContent("★");
+    // Library passes default sizing via className
+    expect(icon).toHaveClass("size-5");
+    expect(icon).toHaveClass("shrink-0");
+    expect(icon).toHaveClass("self-start");
+  });
+
+  it("merges iconClassName onto the icon's className", async () => {
+    const user = userEvent.setup();
+
+    function IconClassHarness() {
+      const toast = Toast.useToast();
+      return (
+        <button
+          type="button"
+          onClick={() =>
+            toast.add({
+              title: "Colored icon",
+              icon: ({ className }) => <span data-testid="colored-icon" className={className} />,
+              iconClassName: "text-success",
+            })
+          }
+        >
+          Show colored
+        </button>
+      );
+    }
+
+    render(
+      <Toast.Provider>
+        <IconClassHarness />
+        <Toast.Viewport data-testid="viewport" />
+      </Toast.Provider>,
+    );
+    await user.click(screen.getByRole("button", { name: "Show colored" }));
+    await screen.findByText("Colored icon");
+    const icon = screen.getByTestId("colored-icon");
+    expect(icon).toHaveClass("size-5");
+    expect(icon).toHaveClass("text-success");
+  });
+
+  it("merges className onto Toast.Root", async () => {
+    const user = userEvent.setup();
+
+    function RootClassHarness() {
+      const toast = Toast.useToast();
+      return (
+        <button
+          type="button"
+          onClick={() =>
+            toast.add({
+              title: "With accent",
+              className: "border-l-4 border-success",
+            })
+          }
+        >
+          Show accented
+        </button>
+      );
+    }
+
+    render(
+      <Toast.Provider>
+        <RootClassHarness />
+        <Toast.Viewport data-testid="viewport" />
+      </Toast.Provider>,
+    );
+    await user.click(screen.getByRole("button", { name: "Show accented" }));
+    const title = await screen.findByText("With accent");
+    // Title is nested inside the leading-slot div inside Toast.Root — climb two levels.
+    const root = title.closest("[class*='rounded-']");
+    expect(root).not.toBeNull();
+    expect(root).toHaveClass("border-l-4");
+    expect(root).toHaveClass("border-success");
   });
 
   it("renders no leading-slot content when the caller omits the icon prop", async () => {
