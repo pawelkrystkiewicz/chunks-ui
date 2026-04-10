@@ -140,9 +140,9 @@ add({
 
 <ToastWithActionExample />
 
-## Dismissable Toasts
+## Dismissible Toasts
 
-By default toasts auto-dismiss after the provider's `timeout` and don't render a close button. Opt in per-toast by passing `dissmissable: true` to `add()`:
+By default toasts auto-dismiss after the provider's `timeout` and don't render a close button. Opt in per-toast by passing `dismissible: true` to `add()`:
 
 ```tsx
 const { add } = Toast.useToast()
@@ -150,15 +150,17 @@ const { add } = Toast.useToast()
 add({
   title: "Saved",
   description: "Your changes are safe.",
-  dissmissable: true,
+  dismissible: true,
 })
 ```
 
-That toast gets a `×` button in the top-right corner that dismisses it via Base UI's `Toast.Close`. Other toasts in the same viewport are unaffected — dismissability is a per-toast concern, not a viewport-wide setting.
+That toast gets a `×` button in the top-right corner that dismisses it via Base UI's `Toast.Close`. Other toasts in the same viewport are unaffected — dismissibility is a per-toast concern, not a viewport-wide setting.
+
+> **Note**: Early versions of this branch exposed the field as `dissmissable` (double-s typo). That name is kept as a `@deprecated` alias for backwards compatibility — if both are set, `dismissible` wins. Prefer `dismissible` in new code.
 
 ### Reacting to Close
 
-If you need to run a side effect when the user dismisses a toast — tracking analytics, offering an undo stack, syncing with a backend — pass `onClose`. It receives the close button's click event. Passing `onClose` also implicitly enables the close button, so you don't need to also set `dissmissable`:
+If you need to run a side effect when the user dismisses a toast — tracking analytics, offering an undo stack, syncing with a backend — pass `onClose`. It receives the close button's click event. Passing `onClose` also implicitly enables the close button, so you don't need to also set `dismissible`:
 
 ```tsx
 add({
@@ -249,7 +251,7 @@ Pass any subset of these at the call site. The fields below are chunks-ui additi
   definition={generateDefinition({
     code: `
 import type { ToastStyleOptions } from 'chunks-ui'
-type Props = Pick<ToastStyleOptions, 'icon' | 'iconClassName' | 'className' | 'dissmissable' | 'onClose'>
+type Props = Pick<ToastStyleOptions, 'icon' | 'iconClassName' | 'className' | 'dismissible' | 'dissmissable' | 'onClose'>
 export default Props
 `
   })}

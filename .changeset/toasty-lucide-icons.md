@@ -13,8 +13,8 @@ Five new fields are merged into Base UI's `ToastObject` via TypeScript module au
 - `icon` — any `ComponentType<{ className?: string }>`. The library passes default sizing (`size-5 shrink-0 self-start`) via `className`, so lucide/heroicons components can be passed directly with no wrapper. Skipping the field renders a toast with no leading slot — there is no default icon.
 - `iconClassName` — extra classes merged onto the icon (use for colour, e.g. `text-success`).
 - `className` — extra classes merged onto `Toast.Root` (use for per-toast accent bars, borders, background tints).
-- `dissmissable` — renders a `×` close button on that specific toast.
-- `onClose` — click handler for the close button; implicitly enables the button even without `dissmissable: true`.
+- `dismissible` — renders a `×` close button on that specific toast. (A misspelled alias `dissmissable` is kept for backwards compatibility with early adopters of this branch but is marked `@deprecated` in the type.)
+- `onClose` — click handler for the close button; implicitly enables the button even without `dismissible: true`.
 
 The library ships no semantic types, no default colours, and no icon library. Downstream consumers can build whatever pattern their design system needs — the docs show a ~20-line `TYPE_STYLES` map that covers `primary | success | destructive | warning` in pure data, with zero closures or factory functions.
 

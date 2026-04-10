@@ -38,16 +38,24 @@ export interface ToastStyleOptions {
   /**
    * When `true`, renders a close (×) button on this toast. Clicking it
    * dismisses the toast via Base UI's `Toast.Close`. Passing `onClose`
-   * implicitly enables this — you only need to set `dissmissable` when
+   * implicitly enables this — you only need to set `dismissible` when
    * you want the button without a side-effect handler.
    *
    * @default false
+   */
+  dismissible?: boolean;
+  /**
+   * Misspelled alias of `dismissible`. Kept for backwards compatibility
+   * with early adopters of this branch — prefer `dismissible` in new code.
+   * If both are set, `dismissible` wins.
+   *
+   * @deprecated Use `dismissible` instead.
    */
   dissmissable?: boolean;
   /**
    * Click handler attached to the close button. Passing this prop also
    * implicitly renders the close button (no need to also set
-   * `dissmissable`). Fires in addition to Base UI's built-in dismissal,
+   * `dismissible`). Fires in addition to Base UI's built-in dismissal,
    * so use it for side effects (analytics, undo stacks, etc.) — not to
    * prevent the toast from closing.
    */
@@ -86,6 +94,10 @@ function ToastViewport({ className, ...props }: ToastViewportProps) {
     >
       {manager.toasts.map((toast) => {
         const Icon = toast.icon;
+        // Canonical name is `dismissible`; `dissmissable` is a deprecated
+        // alias kept for backwards compatibility. If both are set,
+        // `dismissible` wins.
+        const dismissible = toast.dismissible ?? toast.dissmissable;
         return (
           <ToastRoot key={toast.id} toast={toast} className={toast.className}>
             {Icon && <Icon className={cn("size-5 shrink-0 self-start", toast.iconClassName)} />}
@@ -96,7 +108,7 @@ function ToastViewport({ className, ...props }: ToastViewportProps) {
               )}
               {toast.actionProps != null && <ToastAction {...toast.actionProps} />}
             </BaseToast.Content>
-            {(toast.dissmissable || toast.onClose) && <ToastClose onClick={toast.onClose} />}
+            {(dismissible || toast.onClose) && <ToastClose onClick={toast.onClose} />}
           </ToastRoot>
         );
       })}
