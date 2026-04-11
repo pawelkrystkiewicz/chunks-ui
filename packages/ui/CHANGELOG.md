@@ -1,5 +1,11 @@
 # chunks-ui
 
+## 0.1.1
+
+### Patch Changes
+
+- ac0d4a7: Widen `Avatar` `fallback` prop type from `string` to `ReactNode`, allowing icons or other elements to be rendered as the fallback when no `src` is provided.
+
 ## 0.1.0
 
 ### Minor Changes
