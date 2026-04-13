@@ -97,6 +97,11 @@ export type {
   FieldRootProps,
 } from "./components/field";
 export { Field } from "./components/field";
+export {
+  IconButton,
+  type IconButtonProps,
+  iconButtonVariants,
+} from "./components/icon-button";
 export { Input, type InputProps, inputVariants } from "./components/input";
 export { InputCopy, type InputCopyProps } from "./components/input-copy";
 export { Label, type LabelProps } from "./components/label";

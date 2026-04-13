@@ -1,0 +1,102 @@
+import { IconButton } from 'chunks-ui'
+import { PlusIcon, TrashIcon, CheckIcon, SearchIcon, SettingsIcon } from 'lucide-react'
+import { Container } from '@/components'
+import { generateDefinition, TSDoc } from 'nextra/tsdoc'
+
+# IconButton
+
+A compact, square button for a single icon. Built on Base UI's `Button` primitive and sharing the same `variant` and `color` system as [`Button`](./button).
+
+## Import
+
+```tsx
+import { IconButton } from 'chunks-ui'
+```
+
+## Basic Usage
+
+Icon-only buttons have no visible text, so an `aria-label` is **required** for accessibility.
+
+```tsx
+<IconButton aria-label="Add item">
+  <PlusIcon />
+</IconButton>
+```
+
+<Container>
+  <IconButton aria-label="Add item">
+    <PlusIcon />
+  </IconButton>
+</Container>
+
+## Variants
+
+The `variant` prop controls the visual style. Default: `text`.
+
+```tsx
+<IconButton variant="contained" aria-label="Add"><PlusIcon /></IconButton>
+<IconButton variant="outlined" aria-label="Add"><PlusIcon /></IconButton>
+<IconButton variant="text" aria-label="Add"><PlusIcon /></IconButton>
+```
+
+<Container>
+  <IconButton variant="contained" aria-label="Add"><PlusIcon /></IconButton>
+  <IconButton variant="outlined" aria-label="Add"><PlusIcon /></IconButton>
+  <IconButton variant="text" aria-label="Add"><PlusIcon /></IconButton>
+</Container>
+
+## Colors
+
+The `color` prop sets the semantic color. Default: `secondary` — the familiar muted "toolbar icon" look.
+
+```tsx
+<IconButton variant="contained" color="primary" aria-label="Search"><SearchIcon /></IconButton>
+<IconButton variant="contained" color="destructive" aria-label="Delete"><TrashIcon /></IconButton>
+<IconButton variant="contained" color="success" aria-label="Confirm"><CheckIcon /></IconButton>
+<IconButton variant="contained" color="warning" aria-label="Settings"><SettingsIcon /></IconButton>
+<IconButton variant="contained" color="secondary" aria-label="Add"><PlusIcon /></IconButton>
+```
+
+<Container>
+  <IconButton variant="contained" color="primary" aria-label="Search"><SearchIcon /></IconButton>
+  <IconButton variant="contained" color="destructive" aria-label="Delete"><TrashIcon /></IconButton>
+  <IconButton variant="contained" color="success" aria-label="Confirm"><CheckIcon /></IconButton>
+  <IconButton variant="contained" color="warning" aria-label="Settings"><SettingsIcon /></IconButton>
+  <IconButton variant="contained" color="secondary" aria-label="Add"><PlusIcon /></IconButton>
+</Container>
+
+Colors work with all variants:
+
+```tsx
+<IconButton variant="outlined" color="destructive" aria-label="Delete"><TrashIcon /></IconButton>
+<IconButton variant="text" color="success" aria-label="Confirm"><CheckIcon /></IconButton>
+```
+
+<Container>
+  <IconButton variant="outlined" color="destructive" aria-label="Delete"><TrashIcon /></IconButton>
+  <IconButton variant="text" color="success" aria-label="Confirm"><CheckIcon /></IconButton>
+</Container>
+
+## Accessibility
+
+Because the button has no visible text, you **must** provide an `aria-label` describing the action. Screen readers will announce this label; without it the button is anonymous.
+
+```tsx
+<IconButton aria-label="Delete item">
+  <TrashIcon />
+</IconButton>
+```
+
+## Props
+
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { IconButtonProps } from 'chunks-ui'
+type Props = Pick<IconButtonProps, 'variant' | 'color'>
+export default Props
+`
+  })}
+/>
+
+All other props are forwarded to the underlying Base UI [`Button`](https://base-ui.com/react/components/button#api-reference).

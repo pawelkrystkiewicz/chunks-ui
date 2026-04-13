@@ -16,6 +16,7 @@ export default {
   drawer: { title: "Drawer" },
   empty: { title: "Empty" },
   field: { title: "Field" },
+  "icon-button": { title: "IconButton" },
   input: { title: "Input" },
   "input-copy": { title: "InputCopy" },
   label: { title: "Label" },
