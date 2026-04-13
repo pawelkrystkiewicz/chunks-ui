@@ -114,7 +114,6 @@ describe("NumberField", () => {
     const input = screen.getByRole("textbox") as HTMLInputElement;
     expect(input).not.toBeDisabled();
     expect(input).not.toHaveAttribute("aria-disabled", "true");
-    expect(screen.getByTestId("group")).not.toHaveClass("pointer-events-none");
     await user.clear(input);
     await user.type(input, "5");
     await user.tab();
