@@ -8,10 +8,12 @@ import {
   useRef,
   useState,
 } from "react";
-import { cn } from "../../lib/cn";
-import { BUTTON_ANIMATION_CLASSES } from "../shared";
+import { IconButton, type IconButtonProps } from "../icon-button";
 
-export type CopyButtonProps = Omit<ComponentProps<"button">, "children"> & {
+type IconButtonOnClick = NonNullable<IconButtonProps["onClick"]>;
+type IconButtonClickEvent = Parameters<IconButtonOnClick>[0];
+
+export type CopyButtonProps = Omit<ComponentProps<typeof IconButton>, "children"> & {
   /**
    * The string value to be copied to the clipboard when the button is clicked.
    */
@@ -33,7 +35,6 @@ export function CopyButton({
   value,
   timeout = DEFAULT_TIMEOUT,
   children,
-  className,
   onClick,
   ...props
 }: CopyButtonProps) {
@@ -47,7 +48,7 @@ export function CopyButton({
   }, []);
 
   const handleClick = useCallback(
-    (e: React.MouseEvent<HTMLButtonElement>) => {
+    (e: IconButtonClickEvent) => {
       navigator.clipboard.writeText(value).then(() => {
         setCopied(true);
         if (timerRef.current) clearTimeout(timerRef.current);
@@ -61,21 +62,7 @@ export function CopyButton({
   const defaultLabel = !children ? (copied ? "Copied" : "Copy to clipboard") : undefined;
 
   return (
-    <button
-      aria-label={defaultLabel}
-      type="button"
-      className={cn(
-        "inline-flex size-8 items-center justify-center rounded-md",
-        "text-muted-foreground hover:bg-accent hover:text-foreground",
-        "focus-visible:outline-2 focus-visible:outline-ring",
-        "disabled:pointer-events-none disabled:opacity-50",
-        "cursor-pointer",
-        ...BUTTON_ANIMATION_CLASSES,
-        className,
-      )}
-      {...props}
-      onClick={handleClick}
-    >
+    <IconButton aria-label={defaultLabel} {...props} onClick={handleClick}>
       {children ? (
         children({ copied })
       ) : copied ? (
@@ -112,6 +99,6 @@ export function CopyButton({
           <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
         </svg>
       )}
-    </button>
+    </IconButton>
   );
 }
