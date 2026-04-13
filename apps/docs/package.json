@@ -5,11 +5,11 @@
   "private": true,
   "scripts": {
     "generate:llm": "bun run scripts/generate-llm-txt.ts",
-    "dev": "next dev",
+    "dev": "next dev -p 3005",
     "prebuild": "bun run generate:llm",
     "build": "next build",
     "postbuild": "pagefind --site .next/server/app --output-path public/_pagefind",
-    "start": "next start",
+    "start": "next start -p 3005",
     "lint": "biome check .",
     "check-types": "tsc --noEmit",
     "clean": "rm -rf .turbo node_modules .next"
