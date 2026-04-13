@@ -32,7 +32,7 @@ function NumberFieldGroup({ className, ...props }: NumberFieldGroupProps) {
       className={cn(
         "flex items-center rounded border border-input bg-background",
         "has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ring",
-        "has-[:disabled]:pointer-events-none has-[:disabled]:opacity-50",
+        "has-[input:disabled]:pointer-events-none has-[input:disabled]:opacity-50",
         className,
       )}
       {...props}
