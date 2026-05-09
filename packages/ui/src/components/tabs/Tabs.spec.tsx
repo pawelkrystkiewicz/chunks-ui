@@ -315,13 +315,17 @@ describe("Tabs.Animate", () => {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.15 }}
+          className="custom-anim"
           data-testid="anim"
         >
           <span>content</span>
         </Tabs.Animate>
       </Tabs.Root>,
     );
-    expect(screen.getByTestId("anim")).toBeInTheDocument();
+    const el = screen.getByTestId("anim");
+    expect(el).toBeInTheDocument();
+    expect(el).toHaveClass("custom-anim");
+    expect(el).toHaveAttribute("data-testid", "anim");
   });
 
   it("forwards className", () => {

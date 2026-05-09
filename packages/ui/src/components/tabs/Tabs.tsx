@@ -85,11 +85,6 @@ const TabsContext = createContext<TabsContextValue | null>(null);
 function TabsRoot({ className, value, defaultValue, onValueChange, ...props }: TabsRootProps) {
   const [trackedValue, setTrackedValue] = useState(value ?? defaultValue);
 
-  // Sync controlled value
-  useEffect(() => {
-    if (value !== undefined) setTrackedValue(value);
-  }, [value]);
-
   const handleValueChange = useCallback(
     (...args: Parameters<NonNullable<TabsRootProps["onValueChange"]>>) => {
       setTrackedValue(args[0]);
@@ -98,8 +93,12 @@ function TabsRoot({ className, value, defaultValue, onValueChange, ...props }: T
     [onValueChange],
   );
 
+  // Derive context value directly so controlled updates are synchronous.
+  // Using useEffect to sync would cause useTabsValue()/Tabs.Animate to lag one render.
+  const contextValue = value !== undefined ? value : trackedValue;
+
   return (
-    <TabsContext.Provider value={{ value: trackedValue }}>
+    <TabsContext.Provider value={{ value: contextValue }}>
       <BaseTabs.Root
         className={cn(className)}
         value={value}

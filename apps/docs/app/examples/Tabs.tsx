@@ -167,6 +167,8 @@ function useTabsDirection(order: readonly string[]): 1 | -1 {
   const currentIdx = order.indexOf(value);
   const prevIdx = order.indexOf(prevRef.current);
   const direction: 1 | -1 = currentIdx === -1 || prevIdx === -1 || currentIdx >= prevIdx ? 1 : -1;
+  // `order` is intentionally omitted — we only track `value` changes via prevRef,
+  // not index shifts from a reordered array.
   useEffect(() => {
     prevRef.current = value;
   }, [value]);
