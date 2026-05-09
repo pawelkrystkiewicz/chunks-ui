@@ -1,8 +1,9 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
+import { useEffect } from "react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { Tabs } from "./Tabs";
+import { Tabs, useTabsValue } from "./Tabs";
 
 beforeAll(() => {
   globalThis.ResizeObserver = class {
@@ -220,5 +221,117 @@ describe("Tabs", () => {
       const panelB = container.querySelector('[data-testid="panel-b"]');
       expect(panelB?.parentElement).not.toHaveStyle("display: none");
     });
+  });
+});
+
+describe("useTabsValue", () => {
+  function ValueProbe() {
+    const value = useTabsValue();
+    return <span data-testid="value">{String(value)}</span>;
+  }
+
+  it("returns the active value from context", () => {
+    render(
+      <Tabs.Root value="a">
+        <ValueProbe />
+      </Tabs.Root>,
+    );
+    expect(screen.getByTestId("value")).toHaveTextContent("a");
+  });
+
+  it("updates when the controlled value changes", () => {
+    const { rerender } = render(
+      <Tabs.Root value="a">
+        <ValueProbe />
+      </Tabs.Root>,
+    );
+    expect(screen.getByTestId("value")).toHaveTextContent("a");
+    rerender(
+      <Tabs.Root value="b">
+        <ValueProbe />
+      </Tabs.Root>,
+    );
+    expect(screen.getByTestId("value")).toHaveTextContent("b");
+  });
+
+  it("throws when used outside <Tabs.Root>", () => {
+    // Suppress the expected React error log for this case.
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    expect(() => render(<ValueProbe />)).toThrow(/Tabs\.Root/);
+    errSpy.mockRestore();
+  });
+});
+
+describe("Tabs.Animate", () => {
+  it("renders children", () => {
+    render(
+      <Tabs.Root value="a">
+        <Tabs.Animate>
+          <span data-testid="kid">hello</span>
+        </Tabs.Animate>
+      </Tabs.Root>,
+    );
+    expect(screen.getByTestId("kid")).toHaveTextContent("hello");
+  });
+
+  it("re-keys on tab value change (forces remount)", async () => {
+    const onMount = vi.fn();
+    function MountedChild() {
+      useEffect(() => {
+        onMount();
+      }, []);
+      return null;
+    }
+    const { rerender } = render(
+      <Tabs.Root value="a">
+        <Tabs.Animate>
+          <MountedChild />
+        </Tabs.Animate>
+      </Tabs.Root>,
+    );
+    await waitFor(() => {
+      expect(onMount.mock.calls.length).toBeGreaterThanOrEqual(1);
+    });
+    // Capture the count after any post-mount upgrades (e.g. motion module
+    // load swapping the wrapper element type) settle.
+    const before = onMount.mock.calls.length;
+    rerender(
+      <Tabs.Root value="b">
+        <Tabs.Animate>
+          <MountedChild />
+        </Tabs.Animate>
+      </Tabs.Root>,
+    );
+    // A `key` change must cause at least one additional mount.
+    await waitFor(() => {
+      expect(onMount.mock.calls.length).toBeGreaterThan(before);
+    });
+  });
+
+  it("accepts custom initial / animate / transition without error", () => {
+    render(
+      <Tabs.Root value="a">
+        <Tabs.Animate
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.15 }}
+          data-testid="anim"
+        >
+          <span>content</span>
+        </Tabs.Animate>
+      </Tabs.Root>,
+    );
+    expect(screen.getByTestId("anim")).toBeInTheDocument();
+  });
+
+  it("forwards className", () => {
+    render(
+      <Tabs.Root value="a">
+        <Tabs.Animate className="custom" data-testid="anim">
+          <span>content</span>
+        </Tabs.Animate>
+      </Tabs.Root>,
+    );
+    expect(screen.getByTestId("anim")).toHaveClass("custom");
   });
 });

@@ -1,4 +1,10 @@
-import { TabsBasicExample, TabsVerticalExample } from '@/examples/Tabs'
+import {
+  TabsAnimateExample,
+  TabsBasicExample,
+  TabsDirectionExample,
+  TabsHookExample,
+  TabsVerticalExample,
+} from '@/examples/Tabs'
 import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
 # Tabs
@@ -79,6 +85,109 @@ The `Tabs.Indicator` component renders an absolutely-positioned bar at the botto
 
 The indicator works without JavaScript animation -- it relies purely on CSS transitions.
 
+## Routed Tabs (single panel)
+
+`Tabs.Contents` mounts every panel in a flex track and slides between them on the x-axis. That works great for tabbed UIs where every panel coexists -- but it doesn't fit a router-driven setup, where only one panel is rendered at a time (typically through a single outlet) and the previous panel has already unmounted by the time the new one appears.
+
+For that case, opt out of `Tabs.Contents` and reach for one of:
+
+- **`Tabs.Animate`** — drop-in wrapper around the active panel content. Re-keys on tab change so children always remount, and accepts `initial` / `animate` / `transition` props so you bring your own animation.
+- **`useTabsValue()`** — hook returning the active tab value. Use it when you need a motion primitive `Tabs.Animate` doesn't expose (`AnimatePresence`, layout animations, custom orchestration).
+
+The two compose: read `useTabsValue()` to derive a value (e.g. direction relative to a known order), then feed it to `Tabs.Animate`.
+
+### With `Tabs.Animate` (component)
+
+The simplest case. One outlet, one motion target. Pass `initial` / `animate` / `transition` directly:
+
+```tsx
+<Tabs.Root value={tab} onValueChange={setTab}>
+  <Tabs.List>
+    <Tabs.Tab value="home">Home</Tabs.Tab>
+    <Tabs.Tab value="profile">Profile</Tabs.Tab>
+    <Tabs.Tab value="settings">Settings</Tabs.Tab>
+    <Tabs.Indicator />
+  </Tabs.List>
+  <Tabs.Animate
+    initial={{ y: 16, opacity: 0 }}
+    animate={{ y: 0, opacity: 1 }}
+    transition={{ duration: 0.2 }}
+  >
+    {/* render content for the active tab */}
+  </Tabs.Animate>
+</Tabs.Root>
+```
+
+<TabsAnimateExample />
+
+### With `useTabsValue` (hook)
+
+When you need a motion feature that `Tabs.Animate` doesn't surface — here, an exit animation via `AnimatePresence`:
+
+```tsx
+import { useTabsValue } from "chunks-ui";
+import { AnimatePresence, motion } from "motion/react";
+
+function HookPanel({ children }) {
+  const value = useTabsValue();
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key={String(value)}
+        initial={{ scale: 0.97, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.97, opacity: 0 }}
+        transition={{ duration: 0.18 }}
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+```
+
+<TabsHookExample />
+
+### Direction-aware slide (hook + component)
+
+The case `Tabs.Contents` cannot serve: a routed-tabs UI where you've opted out of the multi-panel slide because only one panel is mounted at a time, but you still want the new panel to enter from the *direction the user navigated* — right when going forward, left when going back.
+
+The hook and the component compose cleanly here. `useTabsValue()` exposes the active value; a small wrapper hook stores the previous value in a ref, compares its position in a known order, and derives a direction. That direction feeds `initial.x` on `Tabs.Animate`, which handles re-keying and motion-availability fallbacks for you:
+
+```tsx
+import { Tabs, useTabsValue } from "chunks-ui";
+import { useEffect, useRef } from "react";
+
+function useTabsDirection(order: readonly string[]): 1 | -1 {
+  const value = String(useTabsValue() ?? "");
+  const prevRef = useRef(value);
+  const currentIdx = order.indexOf(value);
+  const prevIdx = order.indexOf(prevRef.current);
+  const direction = currentIdx === -1 || prevIdx === -1 || currentIdx >= prevIdx ? 1 : -1;
+  useEffect(() => {
+    prevRef.current = value;
+  }, [value]);
+  return direction;
+}
+
+function DirectionAwarePanel({ order, children }) {
+  const direction = useTabsDirection(order);
+  return (
+    <Tabs.Animate
+      initial={{ x: direction * 32, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      transition={{ type: "spring", stiffness: 320, damping: 30 }}
+    >
+      {children}
+    </Tabs.Animate>
+  );
+}
+```
+
+<TabsDirectionExample />
+
+> **Don't** wrap `Tabs.Animate` inside `Tabs.Contents`. `Tabs.Contents` already mounts every panel and slides between them; layering `Tabs.Animate` on top double-animates and re-mounts panels that haven't changed visibility. `Tabs.Animate` is for the routed/single-outlet case; `Tabs.Contents` is for the multi-panel case. Pick one.
+
 ## Compound Parts
 
 | Part | Description |
@@ -90,6 +199,13 @@ The indicator works without JavaScript animation -- it relies purely on CSS tran
 | `Tabs.Indicator` | Animated bar that slides to the active tab position. |
 | `Tabs.Contents` | Animated container that slides between panels and animates height using Motion (CSS fallback). |
 | `Tabs.Content` | Individual content panel for use inside `Tabs.Contents`. Requires a `value` matching a `Tabs.Tab`. |
+| `Tabs.Animate` | Single-child wrapper for routed tabs. Re-keys on tab change, accepts `initial` / `animate` / `transition`. |
+
+## Hooks
+
+| Hook | Description |
+|---|---|
+| `useTabsValue()` | Read the active tab value from the surrounding `<Tabs.Root>` context. Throws if used outside a `Tabs.Root`. Use as an escape hatch when `Tabs.Animate` doesn't fit. |
 
 ## Props
 
@@ -116,6 +232,20 @@ All other props are forwarded to the underlying `<div>` element.
     code: `
 import type { TabsContentProps } from 'chunks-ui'
 type Props = Pick<TabsContentProps, 'value'>
+export default Props
+`
+  })}
+/>
+
+All other props are forwarded to the underlying `<div>` element.
+
+### Tabs.Animate Props
+
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { TabsAnimateProps } from 'chunks-ui'
+type Props = Pick<TabsAnimateProps, 'children' | 'initial' | 'animate' | 'transition'>
 export default Props
 `
   })}
