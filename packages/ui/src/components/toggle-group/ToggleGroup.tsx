@@ -126,6 +126,12 @@ function ToggleGroupRoot({
         defaultValue={defaultValue}
         onValueChange={handleValueChange}
         {...props}
+        // Base UI v1.4+ adds aria-orientation but role="group" doesn't support it per ARIA spec.
+        // Strip it via render prop to pass a11y checks.
+        render={(renderProps) => {
+          const { "aria-orientation": _ariaOrientation, ...rest } = renderProps;
+          return <div {...rest} />;
+        }}
       >
         {/* Single-select sliding indicator */}
         {!multiple &&
