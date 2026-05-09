@@ -1,4 +1,4 @@
-import { type ComponentProps, useMemo } from "react";
+import { type ComponentProps, type ReactNode, useMemo } from "react";
 import { cn } from "../../lib/cn";
 import { type AvatarStyles, avatarStyles } from "./Avatar.Variants";
 
@@ -7,8 +7,8 @@ export type AvatarProps = ComponentProps<"span"> & {
   src?: string;
   /** Alt text for the image. Used to generate fallback initials. */
   alt?: string;
-  /** Explicit fallback text displayed when no `src` is provided (overrides auto-generated initials). */
-  fallback?: string;
+  /** Explicit fallback displayed when no `src` is provided (overrides auto-generated initials). */
+  fallback?: ReactNode;
   /**
    * Avatar dimensions in pixels.
    * @default 40

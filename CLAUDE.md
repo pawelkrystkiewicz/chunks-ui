@@ -38,6 +38,12 @@ Personal React 19+ component library. Single npm package (`chunks-ui`) replacing
 - `bun run format` — auto-format with Biome
 - `bun run clean` — remove dist, node_modules, .turbo, .next
 
+### Visual Regression Testing
+
+- `bun run test:visual` — run visual regression tests (requires Playwright browsers)
+- `bun run test:visual:update` — update visual snapshots locally
+- `bun run update:screenshots` — **trigger GitHub Actions workflow** to update screenshots on current branch (interactive, uses `gh` CLI)
+
 ## Key Conventions
 
 - Always use `bun`, never `npm`/`yarn`/`pnpm`
@@ -51,6 +57,7 @@ Personal React 19+ component library. Single npm package (`chunks-ui`) replacing
 - Components must work without Motion installed (CSS transition fallback)
 - Respect `prefers-reduced-motion`
 - Commits: `type(scope): message` (e.g. `feat(tabs): add indicator animation`)
+- Visual tests for time-dependent components (Calendar, etc.) must use `vi.useFakeTimers()` to freeze dates
 
 ## Reference
 

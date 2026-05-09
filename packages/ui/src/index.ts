@@ -97,6 +97,11 @@ export type {
   FieldRootProps,
 } from "./components/field";
 export { Field } from "./components/field";
+export {
+  IconButton,
+  type IconButtonProps,
+  iconButtonVariants,
+} from "./components/icon-button";
 export { Input, type InputProps, inputVariants } from "./components/input";
 export { InputCopy, type InputCopyProps } from "./components/input-copy";
 export { Label, type LabelProps } from "./components/label";
@@ -208,6 +213,7 @@ export type {
 } from "./components/table";
 export { Table } from "./components/table";
 export type {
+  TabsAnimateProps,
   TabsContentProps,
   TabsContentsProps,
   TabsIndicatorProps,
@@ -216,7 +222,7 @@ export type {
   TabsRootProps,
   TabsTabProps,
 } from "./components/tabs";
-export { Tabs } from "./components/tabs";
+export { Tabs, useTabsValue } from "./components/tabs";
 export { Textarea, type TextareaProps } from "./components/textarea";
 export type { Theme, ThemeToggleProps } from "./components/theme-toggle";
 export { ThemeToggle } from "./components/theme-toggle";

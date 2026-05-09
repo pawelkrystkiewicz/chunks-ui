@@ -9,6 +9,7 @@ import {
   ItalicIcon,
   UnderlineIcon,
 } from "lucide-react";
+import { useState } from "react";
 import { Container } from "@/components";
 
 export function ToggleGroupBasicExample() {
@@ -41,6 +42,33 @@ export function ToggleGroupMultipleExample() {
         </ToggleGroup.Item>
         <ToggleGroup.Item value="underline" aria-label="Underline">
           <UnderlineIcon />
+        </ToggleGroup.Item>
+      </ToggleGroup.Root>
+    </Container>
+  );
+}
+
+export function ToggleGroupRequiredExample() {
+  const [value, setValue] = useState(["left"]);
+
+  return (
+    <Container>
+      <ToggleGroup.Root
+        aria-label="Text alignment"
+        value={value}
+        onValueChange={(newValue) => {
+          // Reject empty selection — keep previous value
+          if (newValue.length > 0) setValue(newValue);
+        }}
+      >
+        <ToggleGroup.Item value="left" aria-label="Align left">
+          <AlignLeftIcon />
+        </ToggleGroup.Item>
+        <ToggleGroup.Item value="center" aria-label="Align center">
+          <AlignCenterIcon />
+        </ToggleGroup.Item>
+        <ToggleGroup.Item value="right" aria-label="Align right">
+          <AlignRightIcon />
         </ToggleGroup.Item>
       </ToggleGroup.Root>
     </Container>

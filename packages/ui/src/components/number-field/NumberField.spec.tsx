@@ -1,6 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
+import * as React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { NumberField } from "./NumberField";
 
@@ -93,6 +94,30 @@ describe("NumberField", () => {
     render(<BasicNumberField defaultValue={10} max={10} />);
     await user.click(screen.getByRole("button", { name: "Increment" }));
     expect(screen.getByRole("textbox")).toHaveValue("10");
+  });
+
+  it("keeps input editable when value equals min (regression: boundary should not disable whole control)", async () => {
+    const user = userEvent.setup();
+    function Controlled() {
+      const [value, setValue] = React.useState<number | null>(0);
+      return (
+        <NumberField.Root min={0} max={15} value={value} onValueChange={setValue}>
+          <NumberField.Group data-testid="group">
+            <NumberField.Decrement aria-label="Decrement" />
+            <NumberField.Input />
+            <NumberField.Increment aria-label="Increment" />
+          </NumberField.Group>
+        </NumberField.Root>
+      );
+    }
+    render(<Controlled />);
+    const input = screen.getByRole("textbox") as HTMLInputElement;
+    expect(input).not.toBeDisabled();
+    expect(input).not.toHaveAttribute("aria-disabled", "true");
+    await user.clear(input);
+    await user.type(input, "5");
+    await user.tab();
+    expect(input).toHaveValue("5");
   });
 
   it("has no a11y violations", async () => {

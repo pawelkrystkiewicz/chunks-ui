@@ -62,10 +62,15 @@ function ToggleGroupRoot({
 
   const handleValueChange = useCallback(
     (...args: Parameters<NonNullable<ToggleGroupRootProps["onValueChange"]>>) => {
-      setTrackedValue(args[0]);
+      // Only update internal state for uncontrolled mode.
+      // In controlled mode, trackedValue syncs via useEffect when value prop changes.
+      // This allows users to reject changes (e.g., prevent empty selection).
+      if (value === undefined) {
+        setTrackedValue(args[0]);
+      }
       onValueChange?.(...args);
     },
-    [onValueChange],
+    [onValueChange, value],
   );
 
   const registerItem = useCallback((val: string, el: HTMLElement | null) => {
@@ -126,6 +131,12 @@ function ToggleGroupRoot({
         defaultValue={defaultValue}
         onValueChange={handleValueChange}
         {...props}
+        // Base UI v1.4+ adds aria-orientation but role="group" doesn't support it per ARIA spec.
+        // Strip it via render prop to pass a11y checks.
+        render={(renderProps) => {
+          const { "aria-orientation": _ariaOrientation, ...rest } = renderProps;
+          return <div {...rest} />;
+        }}
       >
         {/* Single-select sliding indicator */}
         {!multiple &&

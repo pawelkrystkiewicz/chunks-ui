@@ -1,5 +1,18 @@
 # chunks-ui
 
+## 0.1.2
+
+### Patch Changes
+
+- 40ff119: Add `IconButton` — a compact, square button built on Base UI's `Button` primitive for single-icon actions. Shares the same `variant` (`contained` | `outlined` | `text`) and `color` (`primary` | `destructive` | `success` | `warning` | `secondary`) system as `Button`, and defaults to `variant="text" color="secondary"` for the familiar muted toolbar look. `CopyButton` now composes `IconButton` internally, replacing its hand-rolled wrapper.
+- 208af30: Fix `NumberField` group becoming unusable when the value reaches `min` or `max`. The group's `has-[:disabled]` selector was matching Base UI's auto-disabled increment/decrement buttons at boundaries, which applied `pointer-events-none opacity-50` to the whole control — so reaching a boundary locked out the input too. Scoped the selector to `has-[input:disabled]` so only a disabled input disables the group.
+
+## 0.1.1
+
+### Patch Changes
+
+- ac0d4a7: Widen `Avatar` `fallback` prop type from `string` to `ReactNode`, allowing icons or other elements to be rendered as the fallback when no `src` is provided.
+
 ## 0.1.0
 
 ### Minor Changes
