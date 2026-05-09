@@ -57,6 +57,20 @@ export type TabsContentProps = ComponentProps<"div"> & {
   value: unknown;
 };
 
+/** Loose target type for motion `initial` / `animate` — keeps `Tabs.Animate` decoupled
+ *  from motion's exported types since motion is an optional peer. */
+type MotionTarget = Record<string, unknown>;
+
+export type TabsAnimateProps = ComponentProps<"div"> & {
+  children: ReactNode;
+  /** Motion `initial` state. @default { y: 8, opacity: 0 } */
+  initial?: MotionTarget;
+  /** Motion `animate` state. @default { y: 0, opacity: 1 } */
+  animate?: MotionTarget;
+  /** Motion transition config. @default springs.content */
+  transition?: MotionTransition;
+};
+
 // ---------------------------------------------------------------------------
 // Internal context – tracks active value for <Tabs.Contents>
 // ---------------------------------------------------------------------------
@@ -71,11 +85,6 @@ const TabsContext = createContext<TabsContextValue | null>(null);
 function TabsRoot({ className, value, defaultValue, onValueChange, ...props }: TabsRootProps) {
   const [trackedValue, setTrackedValue] = useState(value ?? defaultValue);
 
-  // Sync controlled value
-  useEffect(() => {
-    if (value !== undefined) setTrackedValue(value);
-  }, [value]);
-
   const handleValueChange = useCallback(
     (...args: Parameters<NonNullable<TabsRootProps["onValueChange"]>>) => {
       setTrackedValue(args[0]);
@@ -84,8 +93,12 @@ function TabsRoot({ className, value, defaultValue, onValueChange, ...props }: T
     [onValueChange],
   );
 
+  // Derive context value directly so controlled updates are synchronous.
+  // Using useEffect to sync would cause useTabsValue()/Tabs.Animate to lag one render.
+  const contextValue = value !== undefined ? value : trackedValue;
+
   return (
-    <TabsContext.Provider value={{ value: trackedValue }}>
+    <TabsContext.Provider value={{ value: contextValue }}>
       <BaseTabs.Root
         className={cn(className)}
         value={value}
@@ -285,6 +298,62 @@ function TabsContent({ className, value: _value, ...props }: TabsContentProps) {
 }
 
 // ---------------------------------------------------------------------------
+// Hook – read the active tab value from context (escape hatch for custom motion)
+// ---------------------------------------------------------------------------
+
+export function useTabsValue(): unknown {
+  const ctx = useContext(TabsContext);
+  if (!ctx) throw new Error("useTabsValue must be used inside <Tabs.Root>");
+  return ctx.value;
+}
+
+// ---------------------------------------------------------------------------
+// Animate – single-child wrapper that re-keys + animates on tab value change.
+// For routed tabs (single <Outlet>) where <Tabs.Contents>'s multi-panel slide
+// doesn't apply. Bring-your-own initial/animate/transition with a fade+rise default.
+// ---------------------------------------------------------------------------
+
+const DEFAULT_ANIMATE_INITIAL: MotionTarget = { y: 8, opacity: 0 };
+const DEFAULT_ANIMATE_TARGET: MotionTarget = { y: 0, opacity: 1 };
+
+function TabsAnimate({
+  children,
+  initial = DEFAULT_ANIMATE_INITIAL,
+  animate = DEFAULT_ANIMATE_TARGET,
+  transition,
+  className,
+  ...props
+}: TabsAnimateProps) {
+  const value = useTabsValue();
+  const m = useMotion();
+  const reduced = useReducedMotion();
+  const useSpring = !!m && !reduced;
+  const key = String(value ?? "");
+  const trans = transition ?? springs.content;
+
+  if (!useSpring || !m) {
+    return (
+      <div key={key} className={cn(className)} {...props}>
+        {children}
+      </div>
+    );
+  }
+
+  return (
+    <m.motion.div
+      key={key}
+      className={cn(className)}
+      initial={initial as never}
+      animate={animate as never}
+      transition={trans}
+      {...(props as Record<string, unknown>)}
+    >
+      {children}
+    </m.motion.div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Compound export
 // ---------------------------------------------------------------------------
 
@@ -296,4 +365,5 @@ export const Tabs = {
   Indicator: TabsIndicator,
   Contents: TabsContents,
   Content: TabsContent,
+  Animate: TabsAnimate,
 };

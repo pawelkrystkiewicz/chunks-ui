@@ -1,4 +1,5 @@
 export type {
+  TabsAnimateProps,
   TabsContentProps,
   TabsContentsProps,
   TabsIndicatorProps,
@@ -7,4 +8,4 @@ export type {
   TabsRootProps,
   TabsTabProps,
 } from "./Tabs";
-export { Tabs } from "./Tabs";
+export { Tabs, useTabsValue } from "./Tabs";
