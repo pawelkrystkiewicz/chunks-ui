@@ -62,10 +62,15 @@ function ToggleGroupRoot({
 
   const handleValueChange = useCallback(
     (...args: Parameters<NonNullable<ToggleGroupRootProps["onValueChange"]>>) => {
-      setTrackedValue(args[0]);
+      // Only update internal state for uncontrolled mode.
+      // In controlled mode, trackedValue syncs via useEffect when value prop changes.
+      // This allows users to reject changes (e.g., prevent empty selection).
+      if (value === undefined) {
+        setTrackedValue(args[0]);
+      }
       onValueChange?.(...args);
     },
-    [onValueChange],
+    [onValueChange, value],
   );
 
   const registerItem = useCallback((val: string, el: HTMLElement | null) => {
