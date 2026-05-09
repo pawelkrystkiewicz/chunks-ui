@@ -1,6 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
+import { useState } from "react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { ToggleGroup } from "./ToggleGroup";
 
@@ -149,5 +150,34 @@ describe("ToggleGroup", () => {
     );
     const results = await axe(container);
     expect(results).toHaveNoViolations();
+  });
+
+  it("allows controlled mode to reject empty selection", async () => {
+    const user = userEvent.setup();
+
+    function ControlledToggleGroup() {
+      const [value, setValue] = useState(["a"]);
+      return (
+        <ToggleGroup.Root
+          value={value}
+          onValueChange={(newValue) => {
+            // Reject empty selection
+            if (newValue.length > 0) setValue(newValue);
+          }}
+        >
+          <ToggleGroup.Item value="a">A</ToggleGroup.Item>
+          <ToggleGroup.Item value="b">B</ToggleGroup.Item>
+        </ToggleGroup.Root>
+      );
+    }
+
+    render(<ControlledToggleGroup />);
+    const btnA = screen.getByText("A");
+
+    expect(btnA).toHaveAttribute("aria-pressed", "true");
+
+    // Click selected item to deselect — should be rejected
+    await user.click(btnA);
+    expect(btnA).toHaveAttribute("aria-pressed", "true");
   });
 });

@@ -1,4 +1,4 @@
-import { ToggleGroupBasicExample, ToggleGroupMultipleExample } from '@/examples/ToggleGroup'
+import { ToggleGroupBasicExample, ToggleGroupMultipleExample, ToggleGroupRequiredExample } from '@/examples/ToggleGroup'
 
 # Toggle Group
 
@@ -25,6 +25,18 @@ import { AlignLeftIcon, AlignCenterIcon, AlignRightIcon } from 'lucide-react'
 ```
 
 <ToggleGroupBasicExample />
+
+### Preventing Deselection
+
+Base UI allows deselecting the active item by clicking it again. To enforce that one item is always selected, reject empty values:
+
+```tsx
+onValueChange={(newValue) => {
+  if (newValue.length > 0) setValue(newValue);
+}}
+```
+
+<ToggleGroupRequiredExample />
 
 ## Multiple Selection
 
