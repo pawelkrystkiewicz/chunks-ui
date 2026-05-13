@@ -86,9 +86,7 @@ jobs:
           REF_NAME: ${{ github.ref_name }}
           GH_PAT: ${{ secrets.PAT_TOKEN }}
           REPO: ${{ github.repository }}
-        run: |
-          git remote set-url origin "https://x-access-token:${GH_PAT}@github.com/${REPO}.git"
-          git push origin "HEAD:${REF_NAME}"
+        run: git push "https://x-access-token:${GH_PAT}@github.com/${REPO}.git" "HEAD:${REF_NAME}"
 
       # pretty summary for humans
       - name: Summary
