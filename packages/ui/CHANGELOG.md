@@ -1,5 +1,15 @@
 # chunks-ui
 
+## 0.1.4
+
+### Patch Changes
+
+- 048efd5: fix(icon-button): allow hover styles on nested SVG
+
+  Removed `[&_svg]:pointer-events-none` from IconButton's base classes.
+  Consumers can now apply `hover:` utilities directly to icon children
+  instead of wiring up `group` / `group-hover:`. No API change.
+
 ## 0.1.3
 
 ### Patch Changes
