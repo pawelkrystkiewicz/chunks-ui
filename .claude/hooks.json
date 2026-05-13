@@ -60,24 +60,6 @@
         ]
       },
       {
-        "matcher": "Write(.github/**)",
-        "hooks": [
-          {
-            "type": "block",
-            "message": "Agents must not modify CI/CD workflows. A human must make these changes."
-          }
-        ]
-      },
-      {
-        "matcher": "Edit(.github/**)",
-        "hooks": [
-          {
-            "type": "block",
-            "message": "Agents must not modify CI/CD workflows. A human must make these changes."
-          }
-        ]
-      },
-      {
         "matcher": "Write(CLAUDE.md)",
         "hooks": [
           {

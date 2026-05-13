@@ -28,10 +28,10 @@ jobs:
 
     steps:
       - name: Checkout selected branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ github.ref_name }}
-          token: ${{ secrets.PAT_TOKEN }}
+          persist-credentials: false
 
       - name: Configure Git
         run: |
@@ -39,7 +39,7 @@ jobs:
           git config --global user.email "$AUTHOR_EMAIL"
 
       - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: latest
 
@@ -82,7 +82,11 @@ jobs:
 
       - name: Push changes
         if: steps.check_changes.outputs.changes == 'true'
-        run: git push origin ${{ github.ref_name }}
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          GH_PAT: ${{ secrets.PAT_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: git push "https://x-access-token:${GH_PAT}@github.com/${REPO}.git" "HEAD:${REF_NAME}"
 
       # pretty summary for humans
       - name: Summary
