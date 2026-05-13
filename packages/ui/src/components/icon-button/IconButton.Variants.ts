@@ -7,7 +7,7 @@ export const iconButtonVariants = cva(
     "inline-flex size-8 items-center justify-center rounded-md",
     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
     "disabled:pointer-events-none disabled:opacity-50",
-    "[&_svg]:pointer-events-none [&_svg]:shrink-0",
+    "[&_svg]:shrink-0",
     "cursor-pointer",
     ...BUTTON_ANIMATION_CLASSES,
   ],
