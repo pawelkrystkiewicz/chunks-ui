@@ -9,6 +9,14 @@ export default {
   },
   "getting-started": { title: "Getting Started" },
   components: { title: "Components" },
+  create: {
+    title: "Create",
+    theme: {
+      layout: "full",
+      sidebar: false,
+      toc: false,
+    },
+  },
   "kitchen-sink": {
     title: "Kitchen Sink",
     theme: {
