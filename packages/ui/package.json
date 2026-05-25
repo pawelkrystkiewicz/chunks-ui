@@ -35,7 +35,7 @@
     "clean": "rm -rf .turbo node_modules dist coverage"
   },
   "peerDependencies": {
-    "@base-ui/react": "^1.4.1",
+    "@base-ui/react": "^1.5.0",
     "class-variance-authority": "^0.7.1",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
@@ -52,7 +52,7 @@
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
-    "@base-ui/react": "^1.4.1",
+    "@base-ui/react": "^1.5.0",
     "@chunks-ui/typescript-config": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "@playwright/test": "^1.60.0",
