@@ -290,14 +290,14 @@ export function toScopeStyle(t: Theme): CSSProperties {
 }
 
 /**
- * Minimum masonry column width in px. The widest card at default tokens is the
- * Calendar: a fixed grid of 79 spacing units (316px) plus a 2px border. Padding,
- * gaps and that grid grow with Spacing; text grows with Base size. The column
- * follows whichever knob is further above its default, so the masonry drops a
- * column instead of letting a card overflow.
+ * Minimum masonry column width in px. The widest card at default tokens is Tabs:
+ * 300px of padding, gaps and tab labels plus a 2px border (the Calendar card is
+ * 286px). Padding and gaps grow with Spacing; labels grow with Base size. The
+ * column follows whichever knob is further above its default, so the masonry
+ * drops a column instead of letting a card overflow.
  */
 export const previewColumnWidth = (t: Pick<Theme, "spacing" | "fontSize">) =>
-  Math.ceil(2 + 316 * Math.max(t.spacing, t.fontSize / 14));
+  Math.ceil(2 + 300 * Math.max(t.spacing, t.fontSize / 14));
 
 /** The "Get code" output: paste after the `chunks-ui` import. */
 export function buildCss(t: Theme): string {

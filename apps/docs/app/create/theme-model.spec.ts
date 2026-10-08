@@ -66,24 +66,29 @@ describe("toScopeStyle", () => {
 });
 
 describe("previewColumnWidth", () => {
-  it("fits the Calendar card at default tokens", () => {
-    expect(previewColumnWidth(DEFAULT_THEME)).toBe(318);
+  it("fits the Tabs card at default tokens", () => {
+    expect(previewColumnWidth(DEFAULT_THEME)).toBe(302);
+  });
+
+  it("keeps three default columns in the 979px preview of a 1440px window", () => {
+    const gap = 20; // gap-5 at default spacing
+    expect(3 * previewColumnWidth(DEFAULT_THEME) + 2 * gap).toBeLessThanOrEqual(979);
   });
 
   it("grows with Spacing and with Base size, following the larger of the two", () => {
-    expect(previewColumnWidth({ spacing: 1.25, fontSize: 14 })).toBe(397);
-    expect(previewColumnWidth({ spacing: 1, fontSize: 17 })).toBe(386);
-    expect(previewColumnWidth({ spacing: 1.25, fontSize: 17 })).toBe(397);
-    expect(previewColumnWidth({ spacing: 1.2, fontSize: 17 })).toBe(386);
+    expect(previewColumnWidth({ spacing: 1.25, fontSize: 14 })).toBe(377);
+    expect(previewColumnWidth({ spacing: 1, fontSize: 17 })).toBe(367);
+    expect(previewColumnWidth({ spacing: 1.25, fontSize: 17 })).toBe(377);
+    expect(previewColumnWidth({ spacing: 1.2, fontSize: 17 })).toBe(367);
   });
 
   it("shrinks when both knobs go below their defaults", () => {
-    expect(previewColumnWidth({ spacing: 0.75, fontSize: 12 })).toBe(273);
+    expect(previewColumnWidth({ spacing: 0.75, fontSize: 12 })).toBe(260);
   });
 
   it("ignores control height", () => {
     const tall: Theme = { ...DEFAULT_THEME, height: 44 };
-    expect(previewColumnWidth(tall)).toBe(318);
+    expect(previewColumnWidth(tall)).toBe(302);
   });
 });
 
