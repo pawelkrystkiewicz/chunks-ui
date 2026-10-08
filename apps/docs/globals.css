@@ -19,7 +19,6 @@
   --l-ill: #8d96b0;
   --l-brand: oklch(60.48% 0.2165 257.21);
   --l-brand-soft: oklch(70% 0.15 257);
-  --l-brand-tint: oklch(60.48% 0.2165 257.21 / 0.18);
   --l-grid:
     repeating-linear-gradient(90deg, transparent 0 20px, var(--l-ill) 20px 21px),
     repeating-linear-gradient(0deg, transparent 0 20px, var(--l-ill) 20px 21px);
@@ -51,7 +50,8 @@
 
 /*
  * The landing is full-bleed. On the page that renders it, lift Nextra's content-width cap,
- * drop the article padding and hide the empty pagination slot Nextra renders after <main>.
+ * drop the article padding and hide the last-updated spacer (`x:mt-16`) that Nextra renders
+ * after <main> even with `timestamp: false`.
  */
 :root:has(.landing) {
   --nextra-content-width: 100%;

@@ -3,10 +3,9 @@
 import { CopyButton, cn, springs, ThemeToggle } from "chunks-ui";
 import { ArrowRight, Box, Check, Copy, Menu, Moon, Sun, X } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useMounted } from "nextra/hooks";
 import { useTheme } from "nextra-theme-docs";
-import { type ComponentProps, type ReactNode, useState } from "react";
+import { type ComponentProps, type ReactNode, useEffect, useState } from "react";
 import {
   DEFAULT_THEME,
   FONTS_HREF,
@@ -161,7 +160,7 @@ function SplitCta({ href, children }: { href: string; children: ReactNode }) {
   return (
     <Link
       href={href}
-      className="group/cta inline-flex overflow-hidden rounded-lg font-semibold text-[14px] text-white transition-transform duration-200 hover:text-white active:scale-[.97]"
+      className="group/cta inline-flex overflow-hidden rounded-lg font-semibold text-[14px] text-white transition-transform duration-200 active:scale-[.97]"
     >
       <span className="bg-(--l-brand-soft) px-[18px] py-3 transition-colors duration-250 group-hover/cta:bg-[oklch(74%_.14_257)]">
         {children}
@@ -217,13 +216,31 @@ function CellMeta({ left, right }: { left: string; right: string }) {
   );
 }
 
-function CellText({ title, body, meta }: { title: string; body: string; meta: string[] }) {
+function CellText({
+  id,
+  title,
+  body,
+  meta,
+}: {
+  id?: string;
+  title: string;
+  body: string;
+  meta: string[];
+}) {
   return (
     <>
-      <h3 className="font-semibold text-(--l-fg) text-[20px] leading-tight tracking-[-.02em]">
+      <h3
+        id={id && `${id}-title`}
+        className="font-semibold text-(--l-fg) text-[20px] leading-tight tracking-[-.02em]"
+      >
         {title}
       </h3>
-      <p className="text-pretty text-(--l-muted) text-[14px] leading-normal">{body}</p>
+      <p
+        id={id && `${id}-body`}
+        className="text-pretty text-(--l-muted) text-[14px] leading-normal"
+      >
+        {body}
+      </p>
       <span className="mt-auto flex flex-wrap gap-2 pt-1 font-mono text-(--l-faint) text-[11px]">
         {meta.map((m, i) => (
           <span key={m} className="contents">
@@ -242,6 +259,18 @@ function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const dark = mounted && resolvedTheme === "dark";
   const closeMenu = () => setMenuOpen(false);
+
+  // The header isn't sticky: lock page scroll so the open menu and its close button stay put.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setMenuOpen(false);
+    document.documentElement.style.overflow = "hidden";
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.documentElement.style.overflow = "";
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [menuOpen]);
   const iconButton =
     "flex size-[35px] items-center justify-center rounded-lg bg-white/8 text-white hover:bg-white/16 hover:text-white";
 
@@ -251,7 +280,7 @@ function Header() {
         <Link
           href="/"
           aria-label="Chunks UI home"
-          className="flex items-center gap-2.5 px-[clamp(22px,2.4vw,28px)] py-[18px] font-bold text-[17px] text-white tracking-[-.01em] hover:text-white"
+          className="flex items-center gap-2.5 px-[clamp(22px,2.4vw,28px)] py-[18px] font-bold text-[17px] text-white tracking-[-.01em]"
         >
           <Logo />
           Chunks
@@ -280,7 +309,7 @@ function Header() {
           />
           <Link
             href={DOCS}
-            className="hidden h-[35px] items-center rounded-lg bg-white px-4 font-semibold text-[13px] text-black transition duration-300 hover:bg-white/88 hover:text-black active:scale-[.97] lg:inline-flex"
+            className="hidden h-[35px] items-center rounded-lg bg-white px-4 font-semibold text-[13px] text-black transition duration-300 hover:bg-white/88 active:scale-[.97] lg:inline-flex"
           >
             Get started
           </Link>
@@ -307,7 +336,7 @@ function Header() {
               key={label}
               href={href}
               onClick={closeMenu}
-              className="border-white/10 border-b py-2.5 font-semibold text-[28px] text-white tracking-[-.02em] hover:text-white"
+              className="border-white/10 border-b py-2.5 font-semibold text-[28px] text-white tracking-[-.02em]"
             >
               {label}
             </Href>
@@ -505,7 +534,9 @@ function ComponentsSection() {
               <Link
                 key={c.tag}
                 href={c.href}
-                className={cn(CELL, "group/card hover:text-(--l-fg)")}
+                aria-labelledby={`cat-${c.tag}-title`}
+                aria-describedby={`cat-${c.tag}-body`}
+                className={cn(CELL, "group/card")}
               >
                 <CellMeta left={`0${i + 1} · ${c.tag}`} right={`${names.length} COMPONENTS`} />
                 <div
@@ -520,6 +551,7 @@ function ComponentsSection() {
                   </span>
                 </div>
                 <CellText
+                  id={`cat-${c.tag}`}
                   title={c.title}
                   body={`${names.join(", ")}.${c.note ? ` ${c.note}` : ""}`}
                   meta={[`${core} core`, `${extended} extended`]}
@@ -538,7 +570,7 @@ const PRINCIPLES = [
     tag: "SCOPE",
     art: <ScopeArt />,
     title: "One component, one job.",
-    body: "Select, Combobox and Autocomplete are separate components. No god-component with a mode prop.",
+    body: "Select and Combobox are separate components. No god-component with a mode prop.",
     meta: ["<Select />", "<Combobox />"],
   },
   {
@@ -624,7 +656,6 @@ function MotionSection() {
 }
 
 function PresetGrid() {
-  const router = useRouter();
   return (
     <div className="-mr-px -mb-px grid grid-cols-2 lg:grid-cols-3">
       {/* No `precedence`: rendered in place, so it is removed on unmount */}
@@ -633,17 +664,14 @@ function PresetGrid() {
         const pal = palette({ ...preset.theme, mode: "light" }, "light");
         const { fontHeading, radius, height } = preset.theme;
         return (
-          <button
+          <Link
             key={preset.name}
-            type="button"
+            href="/create"
             title={`Open Create with ${preset.name}`}
             aria-label={`Open Create with ${preset.name}`}
-            onClick={() => {
-              // Keep the visitor's stored mode; the preset sets everything else.
-              saveTheme({ ...(loadTheme() ?? DEFAULT_THEME), ...preset.theme });
-              router.push("/create");
-            }}
-            className="flex min-w-0 cursor-pointer flex-col items-start gap-3.5 leading-[normal] border-(--l-line) border-r border-b px-6 pt-[22px] pb-6 text-left text-(--l-fg) transition-colors duration-300 ease-in-out hover:bg-(--l-card)"
+            // Keep the visitor's stored mode; the preset sets everything else.
+            onClick={() => saveTheme({ ...(loadTheme() ?? DEFAULT_THEME), ...preset.theme })}
+            className="flex min-w-0 flex-col items-start gap-3.5 leading-[normal] border-(--l-line) border-r border-b px-6 pt-[22px] pb-6 text-left text-(--l-fg) transition-colors duration-300 ease-in-out hover:bg-(--l-card)"
           >
             <span className="flex w-full items-center justify-between gap-2">
               <span
@@ -664,7 +692,7 @@ function PresetGrid() {
             <span className="max-w-full truncate font-mono text-(--l-faint) text-[10.5px] tracking-[.04em]">
               {fontHeading} · r{radius} · h{height}
             </span>
-          </button>
+          </Link>
         );
       })}
     </div>
@@ -790,7 +818,7 @@ function Footer() {
           <div className="flex flex-col items-start">
             <Link
               href="/"
-              className="flex items-center gap-2.5 font-bold text-[17px] text-white tracking-[-.01em] hover:text-white"
+              className="flex items-center gap-2.5 font-bold text-[17px] text-white tracking-[-.01em]"
             >
               <Logo />
               Chunks

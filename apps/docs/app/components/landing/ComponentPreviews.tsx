@@ -167,14 +167,7 @@ export function FeedbackPreview() {
       </div>
       <div className="flex items-center justify-between gap-2">
         <span className="flex">
-          <span
-            className={cn(
-              AVATAR,
-              "bg-[color-mix(in_oklch,var(--primary)_16%,var(--background))] text-primary",
-            )}
-          >
-            AK
-          </span>
+          <span className={cn(AVATAR, "bg-primary/16 text-primary")}>AK</span>
           <span className={cn(AVATAR, "-ml-[7px] bg-muted text-muted-foreground")}>BR</span>
           <span className={cn(AVATAR, "-ml-[7px] bg-muted text-muted-foreground")}>+3</span>
         </span>

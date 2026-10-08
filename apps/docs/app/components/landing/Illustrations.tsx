@@ -46,10 +46,10 @@ export function HeroStack({ total }: { total: number }) {
 
 const PLATE = cn("absolute inset-0 border-[1.5px] duration-500", LIFT);
 const MUTED = "border-(--l-ill) bg-(--l-card)";
-const ACCENT = "border-primary bg-(--l-brand-tint)";
+const ACCENT = "border-primary bg-primary/18";
 
 const SCOPE_TILES = [
-  { pos: "top-[calc(50%-76px)] left-[calc(50%-126px)]", lift: "delay-0", accent: true },
+  { pos: "top-[calc(50%-76px)] left-[calc(50%-126px)]", lift: "", accent: true },
   { pos: "top-[calc(50%-30px)] left-[calc(50%-30px)]", lift: "delay-60" },
   { pos: "top-[calc(50%+16px)] left-[calc(50%+66px)]", lift: "delay-120" },
   { pos: "top-[calc(50%+16px)] left-[calc(50%-126px)]", lift: "delay-180" },
