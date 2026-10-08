@@ -6,10 +6,10 @@ import { Settings } from "lucide-react";
 export function SettingsDrawer() {
   return (
     <Drawer.Root>
-      <Drawer.Trigger>
-        <Button variant="outlined" color="secondary" aria-label="Settings">
-          <Settings className="size-4" />
-        </Button>
+      <Drawer.Trigger
+        render={<Button variant="outlined" color="secondary" aria-label="Settings" />}
+      >
+        <Settings className="size-4" />
       </Drawer.Trigger>
       <Drawer.Portal>
         <Drawer.Backdrop />
@@ -75,10 +75,8 @@ export function SettingsDrawer() {
           </div>
 
           <div className="mt-8 flex justify-end gap-2">
-            <Drawer.Close>
-              <Button variant="outlined" color="secondary">
-                Cancel
-              </Button>
+            <Drawer.Close render={<Button variant="outlined" color="secondary" />}>
+              Cancel
             </Drawer.Close>
             <Button>Save Changes</Button>
           </div>

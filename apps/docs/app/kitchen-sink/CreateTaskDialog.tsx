@@ -7,8 +7,8 @@ import { PRIORITY_OPTIONS, STATUS_OPTIONS, TEAM } from "./data";
 export function CreateTaskDialog() {
   return (
     <Dialog.Root>
-      <Dialog.Trigger>
-        <Button startIcon={<Plus className="size-4" />}>New Task</Button>
+      <Dialog.Trigger render={<Button startIcon={<Plus className="size-4" />} />}>
+        New Task
       </Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Backdrop />
@@ -100,10 +100,8 @@ export function CreateTaskDialog() {
             </Field.Root>
 
             <div className="flex justify-end gap-2 pt-2">
-              <Dialog.Close>
-                <Button variant="outlined" color="secondary">
-                  Cancel
-                </Button>
+              <Dialog.Close render={<Button variant="outlined" color="secondary" />}>
+                Cancel
               </Dialog.Close>
               <Button type="submit">Create Task</Button>
             </div>
