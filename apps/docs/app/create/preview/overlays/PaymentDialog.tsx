@@ -1,10 +1,15 @@
+"use client";
+
 import { Button, Dialog, Field, Input } from "chunks-ui";
-import { OverlayHeader } from "./parts";
+import { useRef } from "react";
+import { focusOnOpen, OverlayHeader } from "./parts";
 
 type Plan = { name: string; price: string; desc: string };
 
 /** A demo checkout: no `<form>`, no network, nothing stored. Pay only closes it. */
 export function PaymentDialog({ plan }: { plan: Plan }) {
+  const cardNumber = useRef<HTMLInputElement>(null);
+
   return (
     <Dialog.Root>
       <Dialog.Trigger render={<Button className="w-full" />}>
@@ -12,7 +17,10 @@ export function PaymentDialog({ plan }: { plan: Plan }) {
       </Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Backdrop />
-        <Dialog.Popup className="flex w-[calc(100%-32px)] flex-col gap-5">
+        <Dialog.Popup
+          initialFocus={focusOnOpen(cardNumber)}
+          className="flex w-[calc(100%-32px)] flex-col gap-5"
+        >
           <OverlayHeader
             title="Payment details"
             description="A demo checkout. Nothing is charged, sent or stored."
@@ -30,7 +38,12 @@ export function PaymentDialog({ plan }: { plan: Plan }) {
           <div className="flex flex-col gap-4">
             <Field.Root className="gap-2">
               <Field.Label>Card number</Field.Label>
-              <Input inputMode="numeric" autoComplete="off" placeholder="4242 4242 4242 4242" />
+              <Input
+                ref={cardNumber}
+                inputMode="numeric"
+                autoComplete="off"
+                placeholder="4242 4242 4242 4242"
+              />
             </Field.Root>
             <div className="grid grid-cols-2 gap-3">
               <Field.Root className="gap-2">

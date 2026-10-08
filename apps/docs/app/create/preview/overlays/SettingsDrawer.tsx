@@ -1,6 +1,9 @@
+"use client";
+
 import { Button, Drawer, Field, IconButton, Switch } from "chunks-ui";
 import { Settings } from "lucide-react";
-import { OverlayHeader, SelectField } from "./parts";
+import { useRef } from "react";
+import { focusOnOpen, OverlayHeader, SelectField } from "./parts";
 
 const SWITCHES = [
   { title: "Email digests", desc: "A summary every Monday", on: true },
@@ -9,6 +12,8 @@ const SWITCHES = [
 ];
 
 export function SettingsDrawer() {
+  const defaultView = useRef<HTMLButtonElement>(null);
+
   return (
     <Drawer.Root>
       <Drawer.Trigger
@@ -24,10 +29,17 @@ export function SettingsDrawer() {
       </Drawer.Trigger>
       <Drawer.Portal>
         <Drawer.Backdrop />
-        <Drawer.Popup className="flex flex-col gap-6 overflow-y-auto">
+        <Drawer.Popup
+          initialFocus={focusOnOpen(defaultView)}
+          className="flex flex-col gap-6 overflow-y-auto"
+        >
           <OverlayHeader title="Settings" description="Preferences for the Acme workspace." />
           <div className="flex flex-col gap-4">
-            <SelectField label="Default view" items={["Board", "List", "Timeline"]} />
+            <SelectField
+              ref={defaultView}
+              label="Default view"
+              items={["Board", "List", "Timeline"]}
+            />
             <SelectField label="Week starts on" items={["Monday", "Sunday"]} />
           </div>
           <div className="flex flex-col">

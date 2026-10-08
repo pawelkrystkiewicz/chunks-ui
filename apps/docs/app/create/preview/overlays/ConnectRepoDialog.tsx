@@ -1,14 +1,16 @@
 "use client";
 
 import { Button, Dialog, Radio } from "chunks-ui";
-import { useId } from "react";
-import { OverlayHeader, SelectField } from "./parts";
+import { useId, useRef, useState } from "react";
+import { focusOnOpen, OverlayHeader, SelectField } from "./parts";
 
 const PROVIDERS = ["GitHub", "GitLab", "Bitbucket"];
 const REPOS = ["acme/dashboard", "acme/api", "acme/marketing-site"];
 
 export function ConnectRepoDialog() {
   const providerLabel = useId();
+  const [provider, setProvider] = useState("GitHub");
+  const checkedProvider = useRef<HTMLElement>(null);
 
   return (
     <Dialog.Root>
@@ -17,7 +19,10 @@ export function ConnectRepoDialog() {
       </Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Backdrop />
-        <Dialog.Popup className="flex w-[calc(100%-32px)] flex-col gap-5">
+        <Dialog.Popup
+          initialFocus={focusOnOpen(checkedProvider)}
+          className="flex w-[calc(100%-32px)] flex-col gap-5"
+        >
           <OverlayHeader
             title="Connect repository"
             description="Pick a Git provider and the repository to deploy."
@@ -28,11 +33,12 @@ export function ConnectRepoDialog() {
             </span>
             <Radio.Group
               aria-labelledby={providerLabel}
-              defaultValue={PROVIDERS[0]}
+              value={provider}
+              onValueChange={(v) => setProvider(String(v))}
               className="flex-row flex-wrap gap-x-5 text-sm"
             >
               {PROVIDERS.map((p) => (
-                <Radio.Item key={p} value={p}>
+                <Radio.Item key={p} value={p} ref={p === provider ? checkedProvider : undefined}>
                   {p}
                 </Radio.Item>
               ))}

@@ -1,5 +1,14 @@
 import { Dialog, Field, IconButton, Select } from "chunks-ui";
 import { X } from "lucide-react";
+import type { Ref, RefObject } from "react";
+
+/**
+ * `initialFocus` for a Popup: focus `ref` (the first field or action) instead of
+ * the close button. A touch open keeps Base UI's default, the popup itself, so
+ * no virtual keyboard opens.
+ */
+export const focusOnOpen = (ref: RefObject<HTMLElement | null>) => (openType: string) =>
+  openType === "touch" || ref.current;
 
 /** Title, description and a close button. Drawer parts are Dialog parts, so it serves both. */
 export function OverlayHeader({ title, description }: { title: string; description: string }) {
@@ -19,12 +28,20 @@ export function OverlayHeader({ title, description }: { title: string; descripti
   );
 }
 
-export function SelectField({ label, items }: { label: string; items: string[] }) {
+export function SelectField({
+  label,
+  items,
+  ref,
+}: {
+  label: string;
+  items: string[];
+  ref?: Ref<HTMLButtonElement>;
+}) {
   return (
     <Field.Root className="gap-2">
       <Field.Label>{label}</Field.Label>
       <Select.Root defaultValue={items[0]}>
-        <Select.Trigger>
+        <Select.Trigger ref={ref}>
           <Select.Value />
           <Select.Icon />
         </Select.Trigger>

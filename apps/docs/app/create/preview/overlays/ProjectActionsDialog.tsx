@@ -1,6 +1,9 @@
+"use client";
+
 import { Button, Dialog, IconButton, Separator } from "chunks-ui";
 import { Archive, Copy, Download, Link, MoreHorizontal } from "lucide-react";
-import { OverlayHeader } from "./parts";
+import { useRef } from "react";
+import { focusOnOpen, OverlayHeader } from "./parts";
 
 const ACTIONS = [
   { label: "Duplicate project", Icon: Copy },
@@ -11,6 +14,9 @@ const ACTIONS = [
 const actionClass = "w-full justify-start gap-3 px-3";
 
 export function ProjectActionsDialog() {
+  // Opens on the first action, like a menu: it is harmless, and Archive sits last
+  const firstAction = useRef<HTMLButtonElement>(null);
+
   return (
     <Dialog.Root>
       <Dialog.Trigger
@@ -20,12 +26,16 @@ export function ProjectActionsDialog() {
       </Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Backdrop />
-        <Dialog.Popup className="flex w-[calc(100%-32px)] max-w-sm flex-col gap-4">
+        <Dialog.Popup
+          initialFocus={focusOnOpen(firstAction)}
+          className="flex w-[calc(100%-32px)] max-w-sm flex-col gap-4"
+        >
           <OverlayHeader title="Project actions" description="acme-dashboard · Sprint 14" />
           <div className="-mx-3 flex flex-col gap-1">
-            {ACTIONS.map(({ label, Icon }) => (
+            {ACTIONS.map(({ label, Icon }, i) => (
               <Dialog.Close
                 key={label}
+                ref={i === 0 ? firstAction : undefined}
                 render={
                   <Button
                     variant="text"
