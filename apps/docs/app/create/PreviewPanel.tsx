@@ -2,7 +2,7 @@
 
 import { ToggleGroup } from "chunks-ui";
 import { Monitor, Smartphone, Tablet } from "lucide-react";
-import { useState } from "react";
+import { memo, useState } from "react";
 import { AlertsCard } from "./preview/AlertsCard";
 import { ButtonsCard } from "./preview/ButtonsCard";
 import { CalendarCard } from "./preview/CalendarCard";
@@ -82,23 +82,39 @@ export function PreviewPanel({ theme }: { theme: Theme }) {
           }}
           className="mx-auto gap-5 transition-[max-width] duration-400 ease-fluid motion-reduce:transition-none"
         >
-          <UsersCard />
-          <NewProjectCard />
-          <TypographyCard fontHeading={theme.fontHeading} fontBody={theme.fontBody} />
-          <ButtonsCard />
-          <PlanCard />
-          <CalendarCard />
-          <TeamCard />
-          <AlertsCard />
-          <VelocityCard />
-          <SignInCard />
-          <NotificationsCard />
-          <TabsCard />
-          <CommandCard />
-          <UsageCard />
-          <EmptyCard />
+          <PreviewCards fontHeading={theme.fontHeading} fontBody={theme.fontBody} />
         </div>
       </ThemeScope>
     </section>
   );
 }
+
+/**
+ * The cards read the theme through the scope's CSS variables, so only a font
+ * change (shown by name in TypographyCard) has to re-render them. Without memo,
+ * every knob change re-rendered all 15 cards and their 5 mounted overlays.
+ */
+const PreviewCards = memo(function PreviewCards({
+  fontHeading,
+  fontBody,
+}: Pick<Theme, "fontHeading" | "fontBody">) {
+  return (
+    <>
+      <UsersCard />
+      <NewProjectCard />
+      <TypographyCard fontHeading={fontHeading} fontBody={fontBody} />
+      <ButtonsCard />
+      <PlanCard />
+      <CalendarCard />
+      <TeamCard />
+      <AlertsCard />
+      <VelocityCard />
+      <SignInCard />
+      <NotificationsCard />
+      <TabsCard />
+      <CommandCard />
+      <UsageCard />
+      <EmptyCard />
+    </>
+  );
+});
