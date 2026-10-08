@@ -30,6 +30,42 @@ describe("Calendar", () => {
     }
   });
 
+  it("starts the week on Monday with weekStartsOn={1}", () => {
+    render(<Calendar value={MARCH_15_2026} weekStartsOn={1} />);
+    const headers = screen.getAllByRole("columnheader").map((th) => th.textContent);
+    expect(headers).toEqual(["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]);
+    // March 1, 2026 is a Sunday: last cell of the first row
+    const firstRow = screen.getAllByRole("row")[1];
+    expect(firstRow?.querySelectorAll("td")[6]).toHaveTextContent("1");
+  });
+
+  it("fills padding cells with neighbouring-month days only when showOutsideDays is set", () => {
+    const feb23 = "Monday, February 23, 2026";
+    const { rerender } = render(<Calendar value={MARCH_15_2026} weekStartsOn={1} />);
+    expect(screen.queryByRole("button", { name: feb23 })).not.toBeInTheDocument();
+    rerender(<Calendar value={MARCH_15_2026} weekStartsOn={1} showOutsideDays />);
+    expect(screen.getByRole("button", { name: feb23 })).toHaveClass("opacity-50");
+    expect(screen.getByRole("button", { name: "Saturday, April 4, 2026" })).toBeInTheDocument();
+  });
+
+  it("keeps the selected colour on a selected outside day", async () => {
+    const user = userEvent.setup();
+    render(<Calendar value={new Date(2026, 1, 28)} weekStartsOn={1} showOutsideDays />);
+    await user.click(screen.getByRole("button", { name: "Next month" }));
+    const feb28 = screen.getByRole("button", { name: "Saturday, February 28, 2026" });
+    expect(feb28).toHaveAttribute("data-selected", "true");
+    expect(feb28).toHaveClass("text-primary-foreground");
+    expect(feb28).not.toHaveClass("text-muted-foreground");
+    expect(feb28).not.toHaveClass("opacity-50");
+  });
+
+  it("moves the view to the month of a clicked outside day", async () => {
+    const user = userEvent.setup();
+    render(<Calendar defaultValue={MARCH_15_2026} weekStartsOn={1} showOutsideDays />);
+    await user.click(screen.getByRole("button", { name: "Monday, February 23, 2026" }));
+    expect(screen.getByText("February 2026")).toBeInTheDocument();
+  });
+
   it("calls onValueChange with the clicked date", async () => {
     const user = userEvent.setup();
     const onValueChange = vi.fn();

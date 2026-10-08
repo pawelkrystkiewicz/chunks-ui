@@ -17,14 +17,11 @@ function ActionsMenu() {
 
   return (
     <Menu.Root>
-      <Menu.Trigger>
-        <button
-          type="button"
-          className="inline-flex size-9 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          aria-label="More actions"
-        >
-          <MoreHorizontal className="size-4" />
-        </button>
+      <Menu.Trigger
+        aria-label="More actions"
+        className="inline-flex size-9 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+      >
+        <MoreHorizontal className="size-4" />
       </Menu.Trigger>
       <Menu.Content>
         <Menu.Group>

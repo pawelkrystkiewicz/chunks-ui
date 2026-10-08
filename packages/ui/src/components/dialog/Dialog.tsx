@@ -5,6 +5,7 @@ import type { ComponentProps } from "react";
 import { cn } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
+import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
 import { useMotion, useReducedMotion } from "../../lib/use-motion";
 
 export type DialogRootProps = ComponentProps<typeof BaseDialog.Root>;
@@ -16,11 +17,27 @@ export type DialogTitleProps = ComponentProps<typeof BaseDialog.Title>;
 export type DialogDescriptionProps = ComponentProps<typeof BaseDialog.Description>;
 export type DialogCloseProps = ComponentProps<typeof BaseDialog.Close>;
 
-function DialogPortal({ keepMounted, ...props }: DialogPortalProps) {
+function DialogPortal({ keepMounted, className, children, ...props }: DialogPortalProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
   const useSpring = !!m && !reduced;
-  return <BaseDialog.Portal keepMounted={keepMounted ?? useSpring} {...props} />;
+  const container = usePortalContainer();
+  return (
+    <BaseDialog.Portal
+      keepMounted={keepMounted ?? useSpring}
+      container={container}
+      // Popups portalled straight into this one (portal > node > positioner) sit above it; tooltips above dropdowns
+      className={(state) =>
+        cn(
+          "[&>*>.z-dropdowns]:z-[calc(var(--z-index-modals)+1)] [&>*>.z-tooltips]:z-[calc(var(--z-index-modals)+2)]",
+          typeof className === "function" ? className(state) : className,
+        )
+      }
+      {...props}
+    >
+      <PortalContainerProvider value={undefined}>{children}</PortalContainerProvider>
+    </BaseDialog.Portal>
+  );
 }
 
 function DialogBackdrop({ className, ...props }: DialogBackdropProps) {
@@ -81,7 +98,9 @@ function DialogPopup({ className, ...props }: DialogPopupProps) {
 }
 
 function DialogTitle({ className, ...props }: DialogTitleProps) {
-  return <BaseDialog.Title className={cn("font-semibold text-lg", className)} {...props} />;
+  return (
+    <BaseDialog.Title className={cn("font-heading font-semibold text-lg", className)} {...props} />
+  );
 }
 
 function DialogDescription({ className, ...props }: DialogDescriptionProps) {

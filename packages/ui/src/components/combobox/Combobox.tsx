@@ -6,6 +6,7 @@ import type { ComponentProps } from "react";
 import { cn } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
+import { usePortalContainer } from "../../lib/portal-container";
 import { useMotion, useReducedMotion } from "../../lib/use-motion";
 
 export type ComboboxRootProps = ComponentProps<typeof BaseCombobox.Root>;
@@ -30,7 +31,7 @@ function ComboboxControl({ className, ...props }: ComboboxControlProps) {
   return (
     <div
       className={cn(
-        "relative flex flex-wrap items-center gap-1 rounded border border-input bg-background px-3 py-1.5",
+        "relative flex flex-wrap items-center gap-1 rounded-md border border-input bg-background px-3 py-1.5",
         "has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ring",
         "has-[:disabled]:pointer-events-none has-[:disabled]:opacity-50",
         className,
@@ -44,7 +45,7 @@ function ComboboxInput({ className, ...props }: ComboboxInputProps) {
   return (
     <BaseCombobox.Input
       className={cn(
-        "flex h-9 w-full rounded border border-input bg-background px-3 text-sm",
+        "flex h-ui-height w-full rounded-md border border-input bg-background px-3 text-sm",
         "placeholder:text-muted-foreground",
         "focus-visible:outline-2 focus-visible:outline-ring",
         "disabled:pointer-events-none disabled:opacity-50",
@@ -128,7 +129,7 @@ function ComboboxPopup({ className, ...props }: ComboboxPopupProps) {
     <BaseCombobox.Popup
       render={render}
       className={cn(
-        "rounded border border-border bg-popover p-1 text-popover-foreground shadow-md",
+        "rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md",
         !useSpring && "data-starting-style:opacity-0",
         !useSpring && "data-ending-style:opacity-0",
         !useSpring && "micro-interactions",
@@ -143,7 +144,7 @@ function ComboboxItem({ className, ...props }: ComboboxItemProps) {
   return (
     <BaseCombobox.Item
       className={cn(
-        "relative flex w-full cursor-default items-center rounded py-1.5 pr-8 pl-2 text-sm outline-none",
+        "relative flex w-full cursor-default items-center rounded-sm py-1.5 pr-8 pl-2 text-sm outline-none",
         "data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground",
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         className,
@@ -227,7 +228,7 @@ function ComboboxChip({ className, ...props }: ComboboxChipProps) {
   return (
     <BaseCombobox.Chip
       className={cn(
-        "inline-flex items-center gap-1 rounded border border-border bg-muted px-1.5 py-0.5 text-xs",
+        "inline-flex items-center gap-1 rounded-sm border border-border bg-muted px-1.5 py-0.5 text-xs",
         className,
       )}
       {...props}
@@ -262,13 +263,17 @@ function ComboboxChipRemove({ className, ...props }: ComboboxChipRemoveProps) {
   );
 }
 
+function ComboboxPortal(props: ComponentProps<typeof BaseCombobox.Portal>) {
+  return <BaseCombobox.Portal container={usePortalContainer()} {...props} />;
+}
+
 export const Combobox = {
   Root: BaseCombobox.Root,
   Control: ComboboxControl,
   Input: ComboboxInput,
   Trigger: ComboboxTrigger,
   Icon: ComboboxIcon,
-  Portal: BaseCombobox.Portal,
+  Portal: ComboboxPortal,
   Positioner: ComboboxPositioner,
   Popup: ComboboxPopup,
   List: BaseCombobox.List,

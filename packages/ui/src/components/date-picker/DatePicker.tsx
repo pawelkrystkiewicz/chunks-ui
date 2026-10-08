@@ -3,6 +3,7 @@
 import { Popover as BasePopover } from "@base-ui/react/popover";
 import { useState } from "react";
 import { cn } from "../../lib/cn";
+import { usePortalContainer } from "../../lib/portal-container";
 import { Calendar } from "../calendar/Calendar";
 
 export type DatePickerProps = {
@@ -62,6 +63,7 @@ export function DatePicker({
   isDateDisabled,
   className,
 }: DatePickerProps) {
+  const container = usePortalContainer();
   const [open, setOpen] = useState(false);
   const [internalDate, setInternalDate] = useState<Date | null>(defaultValue ?? null);
   const selectedDate = value !== undefined ? value : internalDate;
@@ -80,7 +82,7 @@ export function DatePicker({
         <BasePopover.Trigger
           disabled={disabled}
           className={cn(
-            "flex h-ui-height w-full cursor-pointer items-center rounded border border-input bg-background px-3 text-left text-sm",
+            "flex h-ui-height w-full cursor-pointer items-center rounded-md border border-input bg-background px-3 text-left text-sm",
             "focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
             "disabled:pointer-events-none disabled:opacity-50",
             !displayValue && "text-muted-foreground",
@@ -88,11 +90,11 @@ export function DatePicker({
         >
           {displayValue || placeholder}
         </BasePopover.Trigger>
-        <BasePopover.Portal>
+        <BasePopover.Portal container={container}>
           <BasePopover.Positioner className="z-dropdowns" sideOffset={8}>
             <BasePopover.Popup
               className={cn(
-                "rounded border border-border bg-popover shadow-md",
+                "rounded-md border border-border bg-popover shadow-md",
                 "data-starting-style:scale-95 data-starting-style:opacity-0",
                 "data-ending-style:scale-95 data-ending-style:opacity-0",
                 "micro-interactions",

@@ -60,3 +60,4 @@ playwright-report
 # visual regression screenshots — only linux CI baselines are committed
 **/__screenshots__/**/*.png
 !**/__screenshots__/**/*-linux.png
+/design/

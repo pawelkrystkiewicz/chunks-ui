@@ -250,5 +250,6 @@ export { Tooltip } from "./components/tooltip";
 // Utilities
 export { cn } from "./lib/cn";
 export { springs } from "./lib/motion";
+export { PortalContainerProvider, usePortalContainer } from "./lib/portal-container";
 export { useMotion, useReducedMotion } from "./lib/use-motion";
 export * from "./types";

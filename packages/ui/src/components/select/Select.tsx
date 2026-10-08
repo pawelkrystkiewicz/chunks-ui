@@ -5,6 +5,7 @@ import type { ComponentProps } from "react";
 import { cn } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
+import { usePortalContainer } from "../../lib/portal-container";
 import { useMotion, useReducedMotion } from "../../lib/use-motion";
 
 export type SelectRootProps = ComponentProps<typeof BaseSelect.Root>;
@@ -23,7 +24,7 @@ function SelectTrigger({ className, ...props }: SelectTriggerProps) {
   return (
     <BaseSelect.Trigger
       className={cn(
-        "flex h-9 w-full items-center justify-between rounded border border-input bg-background px-3 text-sm",
+        "flex h-ui-height w-full items-center justify-between rounded-md border border-input bg-background px-3 text-sm",
         "placeholder:text-muted-foreground",
         "focus-visible:outline-2 focus-visible:outline-ring",
         "disabled:pointer-events-none disabled:opacity-50",
@@ -70,7 +71,7 @@ function SelectPopup({ className, ...props }: SelectPopupProps) {
     <BaseSelect.Popup
       render={render}
       className={cn(
-        "rounded border border-border bg-popover p-1 text-popover-foreground shadow-md",
+        "rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md",
         !useSpring && "data-starting-style:opacity-0",
         !useSpring && "data-ending-style:opacity-0",
         !useSpring && "micro-interactions",
@@ -85,7 +86,7 @@ function SelectItem({ className, ...props }: SelectItemProps) {
   return (
     <BaseSelect.Item
       className={cn(
-        "relative flex w-full cursor-default items-center rounded py-1.5 pr-8 pl-2 text-sm outline-none",
+        "relative flex w-full cursor-default items-center rounded-sm py-1.5 pr-8 pl-2 text-sm outline-none",
         "data-highlighted:bg-accent data-highlighted:text-accent-foreground",
         "data-disabled:pointer-events-none data-disabled:opacity-50",
         "cursor-pointer",
@@ -131,6 +132,10 @@ function SelectGroupLabel({ className, ...props }: SelectGroupLabelProps) {
   );
 }
 
+function SelectPortal(props: ComponentProps<typeof BaseSelect.Portal>) {
+  return <BaseSelect.Portal container={usePortalContainer()} {...props} />;
+}
+
 export const Select = {
   Group: BaseSelect.Group,
   GroupLabel: SelectGroupLabel,
@@ -139,7 +144,7 @@ export const Select = {
   ItemIndicator: SelectItemIndicator,
   ItemText: BaseSelect.ItemText,
   Popup: SelectPopup,
-  Portal: BaseSelect.Portal,
+  Portal: SelectPortal,
   Positioner: SelectPositioner,
   Root: BaseSelect.Root,
   Trigger: SelectTrigger,

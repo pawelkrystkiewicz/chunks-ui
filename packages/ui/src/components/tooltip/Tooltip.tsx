@@ -5,6 +5,7 @@ import type { ComponentProps } from "react";
 import { cn } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
+import { usePortalContainer } from "../../lib/portal-container";
 import { useMotion, useReducedMotion } from "../../lib/use-motion";
 
 export type TooltipRootProps = ComponentProps<typeof BaseTooltip.Root>;
@@ -18,7 +19,10 @@ function TooltipPortal({ keepMounted, ...props }: TooltipPortalProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
   const useSpring = !!m && !reduced;
-  return <BaseTooltip.Portal keepMounted={keepMounted ?? useSpring} {...props} />;
+  const container = usePortalContainer();
+  return (
+    <BaseTooltip.Portal keepMounted={keepMounted ?? useSpring} container={container} {...props} />
+  );
 }
 
 function TooltipPopup({ className, ...props }: TooltipPopupProps) {
@@ -38,7 +42,7 @@ function TooltipPopup({ className, ...props }: TooltipPopupProps) {
     <BaseTooltip.Popup
       render={render}
       className={cn(
-        "rounded bg-foreground px-2.5 py-1 text-background text-xs shadow-md",
+        "rounded-md bg-foreground px-2.5 py-1 text-background text-xs shadow-md",
         !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
         !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
         // !useSpring && "micro-interactions",

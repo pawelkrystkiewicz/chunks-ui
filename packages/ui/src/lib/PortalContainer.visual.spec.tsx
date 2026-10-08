@@ -1,0 +1,129 @@
+import { render } from "@testing-library/react";
+import type { ReactNode } from "react";
+import { useState } from "react";
+import { describe, expect, it } from "vitest";
+import { page } from "vitest/browser";
+import { Dialog } from "../components/dialog";
+import { Drawer } from "../components/drawer";
+import { Select } from "../components/select";
+import { Tooltip } from "../components/tooltip";
+import { PortalContainerProvider } from "./portal-container";
+
+// Lives in the browser (visual) suite, not jsdom: real clicks respect a modal's `inert` and the
+// stacking order, which jsdom cannot check. No screenshots are taken.
+function FruitSelect() {
+  return (
+    <Select.Root defaultValue="apple">
+      <Select.Trigger aria-label="Fruit">
+        <Select.Value />
+      </Select.Trigger>
+      <Select.Portal>
+        <Select.Positioner>
+          <Select.Popup>
+            <Select.Item value="apple">
+              <Select.ItemText>Apple</Select.ItemText>
+            </Select.Item>
+            <Select.Item value="banana">
+              <Select.ItemText>Banana</Select.ItemText>
+            </Select.Item>
+          </Select.Popup>
+        </Select.Positioner>
+      </Select.Portal>
+    </Select.Root>
+  );
+}
+
+const parents: Record<string, () => ReactNode> = {
+  Dialog: () => (
+    <Dialog.Root defaultOpen>
+      <Dialog.Portal>
+        <Dialog.Backdrop />
+        <Dialog.Popup>
+          <Dialog.Title>Pick a fruit</Dialog.Title>
+          <FruitSelect />
+        </Dialog.Popup>
+      </Dialog.Portal>
+    </Dialog.Root>
+  ),
+  Drawer: () => (
+    <Drawer.Root defaultOpen>
+      <Drawer.Portal>
+        <Drawer.Backdrop />
+        <Drawer.Popup side="right">
+          <Drawer.Title>Pick a fruit</Drawer.Title>
+          <FruitSelect />
+        </Drawer.Popup>
+      </Drawer.Portal>
+    </Drawer.Root>
+  ),
+};
+
+function Harness({ parent, withProvider }: { parent: string; withProvider: boolean }) {
+  const [layer, setLayer] = useState<HTMLElement | null>(null);
+  const content = parents[parent]?.();
+  return (
+    <>
+      {withProvider ? (
+        <PortalContainerProvider value={layer}>{content}</PortalContainerProvider>
+      ) : (
+        content
+      )}
+      <div ref={setLayer} />
+    </>
+  );
+}
+
+describe("popups nested in a modal", () => {
+  it.each([
+    ["Dialog", false],
+    ["Dialog", true],
+    ["Drawer", false],
+    ["Drawer", true],
+  ])("keeps a Select inside a %s usable (provider: %s)", async (parent, withProvider) => {
+    render(<Harness parent={parent} withProvider={withProvider} />);
+    const trigger = page.getByRole("combobox", { name: "Fruit" });
+    await trigger.click();
+    await page.getByRole("option", { name: "Banana" }).click();
+    await expect.element(trigger).toHaveTextContent("banana");
+  });
+
+  it("keeps a Tooltip above the modal Dialog it opens from", async () => {
+    render(
+      <Dialog.Root defaultOpen>
+        <Dialog.Portal>
+          <Dialog.Backdrop />
+          <Dialog.Popup>
+            <Dialog.Title>Help</Dialog.Title>
+            <Tooltip.Root defaultOpen>
+              <Tooltip.Trigger>Hover me</Tooltip.Trigger>
+              <Tooltip.Portal>
+                <Tooltip.Positioner>
+                  <Tooltip.Popup>Tooltip text</Tooltip.Popup>
+                </Tooltip.Positioner>
+              </Tooltip.Portal>
+            </Tooltip.Root>
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>,
+    );
+    await expect.element(page.getByText("Tooltip text")).toBeVisible();
+    const popup = page.getByText("Tooltip text").element();
+    const dialog = page.getByRole("dialog").element();
+    const centre = () => {
+      const box = popup.getBoundingClientRect();
+      return { x: box.left + box.width / 2, y: box.top + box.height / 2 };
+    };
+    // The tooltip must sit over the dialog (and be positioned), or the stacking check proves nothing
+    await expect
+      .poll(() => {
+        const { x, y } = centre();
+        const dialogBox = dialog.getBoundingClientRect();
+        return (
+          x > dialogBox.left && x < dialogBox.right && y > dialogBox.top && y < dialogBox.bottom
+        );
+      })
+      .toBe(true);
+    const { x, y } = centre();
+    expect(popup.contains(document.elementFromPoint(x, y))).toBe(true);
+  });
+});

@@ -16,6 +16,10 @@ export type CalendarProps = {
   min?: Date;
   /** Maximum selectable date (inclusive). */
   max?: Date;
+  /** First day of the week, `0` = Sunday (default), `1` = Monday. */
+  weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
+  /** Fill leading and trailing cells with dimmed days from the neighbouring months. */
+  showOutsideDays?: boolean;
   className?: string;
 };
 
@@ -50,25 +54,31 @@ function startOfDay(date: Date): Date {
 
 type CalendarCell = { key: string; date: Date | null };
 
-function buildWeekRows(year: number, month: number): CalendarCell[][] {
+function buildWeekRows(
+  year: number,
+  month: number,
+  weekStartsOn: number,
+  showOutsideDays: boolean,
+): CalendarCell[][] {
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
-  const startPad = firstDay.getDay(); // 0 = Sunday
+  const startPad = (firstDay.getDay() - weekStartsOn + 7) % 7;
   const totalDays = lastDay.getDate();
 
   const cells: CalendarCell[] = [];
 
   for (let i = 0; i < startPad; i++) {
-    cells.push({ key: `before-${i}`, date: null });
+    const date = new Date(year, month, i - startPad + 1);
+    cells.push({ key: date.toISOString(), date: showOutsideDays ? date : null });
   }
   for (let d = 1; d <= totalDays; d++) {
     const date = new Date(year, month, d);
     cells.push({ key: date.toISOString(), date });
   }
   // Pad to complete the last row
-  let afterIndex = 0;
-  while (cells.length % 7 !== 0) {
-    cells.push({ key: `after-${afterIndex++}`, date: null });
+  for (let d = 1; cells.length % 7 !== 0; d++) {
+    const date = new Date(year, month + 1, d);
+    cells.push({ key: date.toISOString(), date: showOutsideDays ? date : null });
   }
 
   const rows: CalendarCell[][] = [];
@@ -92,6 +102,8 @@ export function Calendar({
   isDateDisabled,
   min,
   max,
+  weekStartsOn = 0,
+  showOutsideDays = false,
   className,
 }: CalendarProps) {
   const isControlled = value !== undefined;
@@ -136,16 +148,24 @@ export function Calendar({
     });
   }, []);
 
-  const weekRows = useMemo(() => buildWeekRows(viewYear, viewMonth), [viewYear, viewMonth]);
+  const weekRows = useMemo(
+    () => buildWeekRows(viewYear, viewMonth, weekStartsOn, showOutsideDays),
+    [viewYear, viewMonth, weekStartsOn, showOutsideDays],
+  );
+  const dayNames = [...DAY_NAMES.slice(weekStartsOn), ...DAY_NAMES.slice(0, weekStartsOn)];
 
   const handleDayClick = useCallback(
     (date: Date) => {
       if (!isControlled) {
         setInternalValue(date);
       }
+      if (date.getMonth() !== viewMonth || date.getFullYear() !== viewYear) {
+        setViewYear(date.getFullYear());
+        setViewMonth(date.getMonth());
+      }
       onValueChange?.(date);
     },
-    [isControlled, onValueChange],
+    [isControlled, onValueChange, viewMonth, viewYear],
   );
 
   const isDayDisabled = useCallback(
@@ -166,7 +186,7 @@ export function Calendar({
           aria-label="Previous month"
           onClick={prevMonth}
           className={cn(
-            "inline-flex size-7 items-center justify-center rounded",
+            "inline-flex size-7 items-center justify-center rounded-sm",
             "micro-interactions text-foreground/70",
             "hover:bg-accent hover:text-accent-foreground",
             "focus-visible:outline-2 focus-visible:outline-ring",
@@ -193,7 +213,7 @@ export function Calendar({
           aria-label="Next month"
           onClick={nextMonth}
           className={cn(
-            "inline-flex size-7 items-center justify-center rounded",
+            "inline-flex size-7 items-center justify-center rounded-sm",
             "micro-interactions text-foreground/70",
             "hover:bg-accent hover:text-accent-foreground",
             "focus-visible:outline-2 focus-visible:outline-ring",
@@ -220,7 +240,7 @@ export function Calendar({
       <table className="border-collapse">
         <thead>
           <tr>
-            {DAY_NAMES.map((d) => (
+            {dayNames.map((d) => (
               <th
                 key={d}
                 scope="col"
@@ -266,12 +286,12 @@ export function Calendar({
                         disabled={disabled}
                         onClick={() => handleDayClick(date)}
                         className={cn(
-                          "inline-flex size-8 items-center justify-center rounded text-sm",
+                          "inline-flex size-8 items-center justify-center rounded-md text-sm",
                           "micro-interactions focus-visible:outline-2 focus-visible:outline-ring",
                           !isSelected && !isToday && "hover:bg-accent hover:text-accent-foreground",
                           isSelected && "bg-primary text-primary-foreground",
                           isToday && !isSelected && "font-medium text-primary ring-1 ring-primary",
-                          !isCurrentMonth && "text-muted-foreground opacity-50",
+                          !isCurrentMonth && !isSelected && "text-muted-foreground opacity-50",
                           disabled && "pointer-events-none opacity-40",
                         )}
                       >

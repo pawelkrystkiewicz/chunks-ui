@@ -6,6 +6,7 @@ import type { ComponentProps } from "react";
 import { cn } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
+import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
 import { useMotion, useReducedMotion } from "../../lib/use-motion";
 import { drawerPopupVariants } from "./Drawer.Variants";
 
@@ -38,11 +39,27 @@ const motionPositionClasses = {
   bottom: "inset-x-0 bottom-0 h-auto border-t rounded-t-xl",
 } as const;
 
-function DrawerPortal({ keepMounted, ...props }: DrawerPortalProps) {
+function DrawerPortal({ keepMounted, className, children, ...props }: DrawerPortalProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
   const useSpring = !!m && !reduced;
-  return <BaseDialog.Portal keepMounted={keepMounted ?? useSpring} {...props} />;
+  const container = usePortalContainer();
+  return (
+    <BaseDialog.Portal
+      keepMounted={keepMounted ?? useSpring}
+      container={container}
+      // Popups portalled straight into this one (portal > node > positioner) sit above it; tooltips above dropdowns
+      className={(state) =>
+        cn(
+          "[&>*>.z-dropdowns]:z-[calc(var(--z-index-drawers)+1)] [&>*>.z-tooltips]:z-[calc(var(--z-index-drawers)+2)]",
+          typeof className === "function" ? className(state) : className,
+        )
+      }
+      {...props}
+    >
+      <PortalContainerProvider value={undefined}>{children}</PortalContainerProvider>
+    </BaseDialog.Portal>
+  );
 }
 
 function DrawerBackdrop({ className, ...props }: DrawerBackdropProps) {
@@ -103,7 +120,9 @@ function DrawerPopup({ side = "right", className, ...props }: DrawerPopupProps) 
 }
 
 function DrawerTitle({ className, ...props }: DrawerTitleProps) {
-  return <BaseDialog.Title className={cn("font-semibold text-lg", className)} {...props} />;
+  return (
+    <BaseDialog.Title className={cn("font-heading font-semibold text-lg", className)} {...props} />
+  );
 }
 
 function DrawerDescription({ className, ...props }: DrawerDescriptionProps) {
