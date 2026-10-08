@@ -1,7 +1,7 @@
 import { cva } from "class-variance-authority";
 
 export const drawerPopupVariants = cva(
-  ["fixed z-drawers border-border bg-background p-6 shadow-xl micro-interactions"],
+  ["fixed border-border bg-background p-6 shadow-xl micro-interactions"],
   {
     variants: {
       side: {

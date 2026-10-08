@@ -48,12 +48,9 @@ function DrawerPortal({ keepMounted, className, children, ...props }: DrawerPort
     <BaseDialog.Portal
       keepMounted={keepMounted ?? useSpring}
       container={container}
-      // Popups portalled straight into this one (portal > node > positioner) sit above it; tooltips above dropdowns
+      // The portal node carries the z-layer, not the popup: whatever opens from the drawer portals in here and stacks above it
       className={(state) =>
-        cn(
-          "[&>*>.z-dropdowns]:z-[calc(var(--z-index-drawers)+1)] [&>*>.z-tooltips]:z-[calc(var(--z-index-drawers)+2)]",
-          typeof className === "function" ? className(state) : className,
-        )
+        cn("relative z-drawers", typeof className === "function" ? className(state) : className)
       }
       {...props}
     >
@@ -79,7 +76,7 @@ function DrawerBackdrop({ className, ...props }: DrawerBackdropProps) {
     <BaseDialog.Backdrop
       render={render}
       className={cn(
-        "fixed inset-0 z-drawers bg-black/50",
+        "fixed inset-0 bg-black/50",
         !useSpring && "data-starting-style:opacity-0",
         !useSpring && "data-ending-style:opacity-0",
         !useSpring && "micro-interactions",
@@ -109,7 +106,7 @@ function DrawerPopup({ side = "right", className, ...props }: DrawerPopupProps) 
     <BaseDialog.Popup
       render={render}
       className={cn(
-        useSpring && "fixed z-drawers border-border bg-background p-6 shadow-xl",
+        useSpring && "fixed border-border bg-background p-6 shadow-xl",
         useSpring && motionPositionClasses[resolvedSide],
         !useSpring && drawerPopupVariants({ side }),
         className,

@@ -26,12 +26,9 @@ function DialogPortal({ keepMounted, className, children, ...props }: DialogPort
     <BaseDialog.Portal
       keepMounted={keepMounted ?? useSpring}
       container={container}
-      // Popups portalled straight into this one (portal > node > positioner) sit above it; tooltips above dropdowns
+      // The portal node carries the z-layer, not the popup: whatever opens from the dialog portals in here and stacks above it
       className={(state) =>
-        cn(
-          "[&>*>.z-dropdowns]:z-[calc(var(--z-index-modals)+1)] [&>*>.z-tooltips]:z-[calc(var(--z-index-modals)+2)]",
-          typeof className === "function" ? className(state) : className,
-        )
+        cn("relative z-modals", typeof className === "function" ? className(state) : className)
       }
       {...props}
     >
@@ -57,7 +54,7 @@ function DialogBackdrop({ className, ...props }: DialogBackdropProps) {
     <BaseDialog.Backdrop
       render={render}
       className={cn(
-        "fixed inset-0 z-overlays bg-black/50",
+        "fixed inset-0 bg-black/50",
         !useSpring && "data-starting-style:opacity-0",
         !useSpring && "data-ending-style:opacity-0",
         !useSpring && "micro-interactions",
@@ -85,7 +82,7 @@ function DialogPopup({ className, ...props }: DialogPopupProps) {
     <BaseDialog.Popup
       render={render}
       className={cn(
-        "fixed top-1/2 left-1/2 z-modals w-full max-w-md -translate-x-1/2 -translate-y-1/2",
+        "fixed top-1/2 left-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2",
         "rounded-xl border border-border bg-background p-6 shadow-lg",
         !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
         !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",

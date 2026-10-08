@@ -127,3 +127,78 @@ describe("popups nested in a modal", () => {
     expect(popup.contains(document.elementFromPoint(x, y))).toBe(true);
   });
 });
+
+type OverlayProps = {
+  name: string;
+  side?: "left" | "right";
+  defaultOpen?: boolean;
+  children?: ReactNode;
+};
+
+const overlays = {
+  Dialog: ({ name, defaultOpen, children }) => (
+    <Dialog.Root defaultOpen={defaultOpen}>
+      <Dialog.Trigger>Open {name}</Dialog.Trigger>
+      <Dialog.Portal>
+        <Dialog.Backdrop />
+        <Dialog.Popup>
+          <Dialog.Title>{name}</Dialog.Title>
+          {children}
+          <Dialog.Close>Close {name}</Dialog.Close>
+        </Dialog.Popup>
+      </Dialog.Portal>
+    </Dialog.Root>
+  ),
+  Drawer: ({ name, side, defaultOpen, children }) => (
+    <Drawer.Root defaultOpen={defaultOpen}>
+      <Drawer.Trigger>Open {name}</Drawer.Trigger>
+      <Drawer.Portal>
+        <Drawer.Backdrop />
+        <Drawer.Popup side={side}>
+          <Drawer.Title>{name}</Drawer.Title>
+          {children}
+          <Drawer.Close>Close {name}</Drawer.Close>
+        </Drawer.Popup>
+      </Drawer.Portal>
+    </Drawer.Root>
+  ),
+} satisfies Record<string, (props: OverlayProps) => ReactNode>;
+
+const inside = (box: DOMRect, [x, y]: [number, number]) =>
+  x > box.left && x < box.right && y > box.top && y < box.bottom;
+
+describe("overlays opened from an overlay", () => {
+  it.each([
+    ["Dialog", "Dialog"],
+    ["Drawer", "Dialog"],
+    ["Dialog", "Drawer"],
+    ["Drawer", "Drawer"],
+  ] as const)("puts a %s opened from a %s on top of it", async (child, parent) => {
+    const Parent = overlays[parent];
+    const Child = overlays[child];
+    render(
+      <Parent name="Parent" defaultOpen>
+        <Child name="Child" side="left" />
+      </Parent>,
+    );
+    const parentPopup = page.getByRole("dialog", { name: "Parent" }).element();
+    await page.getByRole("button", { name: "Open Child" }).click();
+    const childLocator = page.getByRole("dialog", { name: "Child" });
+    await expect.element(childLocator).toBeVisible();
+    const childPopup = childLocator.element();
+    const parentBox = parentPopup.getBoundingClientRect();
+    const childCentre = (): [number, number] => {
+      const box = childPopup.getBoundingClientRect();
+      return [box.left + box.width / 2, box.top + box.height / 2];
+    };
+
+    // The child must have slid in over the parent, or the stacking check proves nothing
+    await expect.poll(() => inside(parentBox, childCentre())).toBe(true);
+    expect(childPopup.contains(document.elementFromPoint(...childCentre()))).toBe(true);
+
+    // The child is interactive; closing it leaves the parent open
+    await page.getByRole("button", { name: "Close Child" }).click();
+    await expect.element(childLocator).not.toBeInTheDocument();
+    await expect.element(page.getByRole("dialog", { name: "Parent" })).toBeVisible();
+  });
+});
