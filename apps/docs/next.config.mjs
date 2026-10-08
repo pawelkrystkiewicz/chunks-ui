@@ -5,6 +5,8 @@ const withNextra = nextra({
 });
 
 export default withNextra({
+  // Next 16.4 `next dev` writes an AGENTS.md here when it detects an AI agent
+  agentRules: false,
   turbopack: {
     resolveAlias: {
       "next-mdx-import-source-file": "./mdx-components.tsx",

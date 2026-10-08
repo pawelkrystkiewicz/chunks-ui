@@ -53,6 +53,7 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 # playwright
 test-results
 playwright-report
+.playwright-mcp/
 
 # vitest browser attachments (temp files, not baselines)
 .vitest-attachments
