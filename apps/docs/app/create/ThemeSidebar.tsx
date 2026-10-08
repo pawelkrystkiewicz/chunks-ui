@@ -15,6 +15,7 @@ import {
   PRIMARIES,
   palette,
   RADIUS_STOPS,
+  RANGES,
   type Shadow,
   samePrimary,
   sameTheme,
@@ -37,6 +38,10 @@ const CHARTS: { id: ChartId; name: string }[] = [
   { id: "default", name: "Default" },
   { id: "mono", name: "Mono" },
   { id: "vivid", name: "Spectrum" },
+];
+const MODES: { id: Mode; name: string; Icon: typeof Sun }[] = [
+  { id: "light", name: "Light", Icon: Sun },
+  { id: "dark", name: "Dark", Icon: Moon },
 ];
 const SHADOWS: { id: Shadow; name: string }[] = [
   { id: "none", name: "None" },
@@ -139,20 +144,16 @@ export function ThemeSidebar({
             onValueChange={(v) => v[0] && onChange({ mode: v[0] as Mode })}
             className={cn(SEGMENTED, "grid-cols-2")}
           >
-            <ToggleGroup.Item
-              value="light"
-              className={cn(SEGMENT, "h-[30px] gap-[7px] text-[12.5px]")}
-            >
-              <Sun className="size-3.5" />
-              Light
-            </ToggleGroup.Item>
-            <ToggleGroup.Item
-              value="dark"
-              className={cn(SEGMENT, "h-[30px] gap-[7px] text-[12.5px]")}
-            >
-              <Moon className="size-3.5" />
-              Dark
-            </ToggleGroup.Item>
+            {MODES.map(({ id, name, Icon }) => (
+              <ToggleGroup.Item
+                key={id}
+                value={id}
+                className={cn(SEGMENT, "h-[30px] gap-[7px] text-[12.5px]")}
+              >
+                <Icon className="size-3.5" />
+                {name}
+              </ToggleGroup.Item>
+            ))}
           </ToggleGroup.Root>
 
           <div className="flex flex-col gap-2.5">
@@ -272,8 +273,8 @@ export function ThemeSidebar({
             label="Base size"
             valueLabel={`${theme.fontSize}px`}
             value={theme.fontSize}
-            min={12}
-            max={17}
+            min={RANGES.fontSize[0]}
+            max={RANGES.fontSize[1]}
             onChange={(fontSize) => onChange({ fontSize })}
           />
         </Section>
@@ -283,8 +284,8 @@ export function ThemeSidebar({
             label="Radius"
             valueLabel={`${theme.radius}px`}
             value={theme.radius}
-            min={0}
-            max={20}
+            min={RANGES.radius[0]}
+            max={RANGES.radius[1]}
             onChange={(radius) => onChange({ radius })}
           >
             <div className="grid grid-cols-6 gap-1.5">
@@ -315,8 +316,8 @@ export function ThemeSidebar({
             label="Control height"
             valueLabel={`${theme.height}px`}
             value={theme.height}
-            min={28}
-            max={44}
+            min={RANGES.height[0]}
+            max={RANGES.height[1]}
             onChange={(height) => onChange({ height })}
           />
           <Knob
@@ -324,8 +325,8 @@ export function ThemeSidebar({
             valueLabel={`${(4 * theme.spacing).toFixed(1).replace(".0", "")}px · ${theme.spacing.toFixed(2)}×`}
             ariaLabel="Spacing scale"
             value={theme.spacing}
-            min={0.75}
-            max={1.25}
+            min={RANGES.spacing[0]}
+            max={RANGES.spacing[1]}
             step={0.05}
             onChange={(v) => onChange({ spacing: +v.toFixed(2) })}
           />

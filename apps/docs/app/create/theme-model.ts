@@ -347,27 +347,27 @@ export function shuffle(): Omit<Theme, "mode" | "fontSize"> {
     radius: pick(RADIUS_STOPS),
     height: pick([32, 35, 36, 38, 40]),
     spacing: pick([0.9, 1, 1.05, 1.1]),
-    shadow: pick(["none", "subtle", "lifted"] as const),
-    chart: pick(["default", "mono", "vivid"] as const),
+    shadow: pick(ENUMS.shadow),
+    chart: pick(ENUMS.chart),
   };
 }
 
 const STORE_KEY = "chunks-create-theme-v1";
 
-const ENUMS: Record<string, readonly string[]> = {
-  mode: ["light", "dark"],
-  shadow: ["none", "subtle", "lifted"],
-  chart: ["default", "mono", "vivid"],
+export const ENUMS = {
+  mode: ["light", "dark"] as const,
+  shadow: ["none", "subtle", "lifted"] as const,
+  chart: ["default", "mono", "vivid"] as const,
   base: BASES.map((b) => b.id),
-};
+} satisfies Record<string, readonly string[]>;
 
 /** The sidebar's slider ranges. */
-const RANGES: Record<string, [number, number]> = {
+export const RANGES = {
   fontSize: [12, 17],
   radius: [0, 20],
   height: [28, 44],
   spacing: [0.75, 1.25],
-};
+} satisfies Record<string, [number, number]>;
 
 export function loadTheme(): Theme | null {
   try {
@@ -383,7 +383,7 @@ export function loadTheme(): Theme | null {
       out.primary = { l: p.l, c: p.c, h: p.h };
     }
     for (const [k, allowed] of Object.entries(ENUMS)) {
-      if (allowed.includes(s[k])) out[k] = s[k];
+      if ((allowed as readonly string[]).includes(s[k])) out[k] = s[k];
     }
     for (const [k, [min, max]] of Object.entries(RANGES)) {
       if (Number.isFinite(s[k])) out[k] = Math.min(max, Math.max(min, s[k]));

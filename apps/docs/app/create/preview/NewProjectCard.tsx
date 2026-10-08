@@ -1,14 +1,9 @@
-"use client";
-
 import { Button, Field, Input, Select, Switch } from "chunks-ui";
-import { useState } from "react";
 import { PreviewCard, PreviewCardHeading } from "./PreviewCard";
 
 const FRAMEWORKS = ["Next.js", "Remix", "Astro", "Vite"];
 
 export function NewProjectCard() {
-  const [isPrivate, setIsPrivate] = useState(true);
-
   return (
     <PreviewCard className="gap-6">
       <PreviewCardHeading title="New project" description="Deploy an app from a Git repository." />
@@ -44,7 +39,7 @@ export function NewProjectCard() {
             <span className="font-medium text-sm">Private repository</span>
             <span className="text-muted-foreground text-xs">Only invited members can view.</span>
           </span>
-          <Switch.Root checked={isPrivate} onCheckedChange={setIsPrivate}>
+          <Switch.Root defaultChecked>
             <Switch.Thumb />
           </Switch.Root>
         </label>

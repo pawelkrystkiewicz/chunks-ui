@@ -16,8 +16,7 @@ export function UsersCard() {
       <div className="flex h-12 items-end gap-1" aria-hidden="true">
         {BARS.map((h, i) => (
           <div
-            // biome-ignore lint/suspicious/noArrayIndexKey: static decorative bars
-            key={i}
+            key={h}
             style={{ height: `${h}%` }}
             className={`flex-1 rounded-t-sm rounded-b-[2px] ${
               i === BARS.length - 1

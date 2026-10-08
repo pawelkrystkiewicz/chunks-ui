@@ -33,14 +33,12 @@ export function TypographyCard({
         </div>
       </div>
       <div className="flex flex-wrap gap-2">
-        {['variant="outlined"', 'size="sm"'].map((snippet) => (
-          <code
-            key={snippet}
-            className="rounded-sm bg-muted px-2 py-0.5 font-mono text-foreground text-xs"
-          >
-            {snippet}
-          </code>
-        ))}
+        <code className="rounded-sm bg-muted px-2 py-0.5 font-mono text-foreground text-xs">
+          variant="outlined"
+        </code>
+        <code className="rounded-sm bg-muted px-2 py-0.5 font-mono text-foreground text-xs">
+          size="sm"
+        </code>
       </div>
     </PreviewCard>
   );

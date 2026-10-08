@@ -1,13 +1,8 @@
-"use client";
-
 import { Button, Checkbox, Field, Input, Separator } from "chunks-ui";
 import { Github } from "lucide-react";
-import { useState } from "react";
 import { PreviewCard, PreviewCardHeading } from "./PreviewCard";
 
 export function SignInCard() {
-  const [remember, setRemember] = useState(true);
-
   return (
     <PreviewCard className="gap-6">
       <PreviewCardHeading title="Sign in" description="Welcome back to Acme." />
@@ -26,7 +21,7 @@ export function SignInCard() {
           <Input type="password" defaultValue="hunter2hunter" />
         </Field.Root>
         <div className="flex items-center gap-2 text-sm">
-          <Checkbox.Root id="remember" checked={remember} onCheckedChange={setRemember}>
+          <Checkbox.Root id="remember" defaultChecked>
             <Checkbox.Indicator />
           </Checkbox.Root>
           <label htmlFor="remember">Keep me signed in</label>
