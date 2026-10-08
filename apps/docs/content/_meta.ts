@@ -15,6 +15,10 @@ export default {
       layout: "full",
       sidebar: false,
       toc: false,
+      breadcrumb: false,
+      copyPage: false,
+      pagination: false,
+      timestamp: false,
     },
   },
   "kitchen-sink": {
