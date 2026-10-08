@@ -144,7 +144,8 @@ const overlays = {
         <Dialog.Backdrop />
         <Dialog.Popup>
           <Dialog.Title>{name}</Dialog.Title>
-          {children}
+          {/* Its own line, so a parent is taller than its child and shows around it */}
+          <div>{children}</div>
           <Dialog.Close>Close {name}</Dialog.Close>
         </Dialog.Popup>
       </Dialog.Portal>
@@ -157,7 +158,7 @@ const overlays = {
         <Drawer.Backdrop />
         <Drawer.Popup side={side}>
           <Drawer.Title>{name}</Drawer.Title>
-          {children}
+          <div>{children}</div>
           <Drawer.Close>Close {name}</Drawer.Close>
         </Drawer.Popup>
       </Drawer.Portal>
