@@ -166,9 +166,13 @@ export function Calendar({
       if (!isControlled) {
         setInternalValue(date);
       }
+      if (date.getMonth() !== viewMonth || date.getFullYear() !== viewYear) {
+        setViewYear(date.getFullYear());
+        setViewMonth(date.getMonth());
+      }
       onValueChange?.(date);
     },
-    [isControlled, onValueChange],
+    [isControlled, onValueChange, viewMonth, viewYear],
   );
 
   const isDayDisabled = useCallback(
@@ -294,7 +298,7 @@ export function Calendar({
                           !isSelected && !isToday && "hover:bg-accent hover:text-accent-foreground",
                           isSelected && "bg-primary text-primary-foreground",
                           isToday && !isSelected && "font-medium text-primary ring-1 ring-primary",
-                          !isCurrentMonth && "text-muted-foreground opacity-50",
+                          !isCurrentMonth && !isSelected && "text-muted-foreground opacity-50",
                           disabled && "pointer-events-none opacity-40",
                         )}
                       >

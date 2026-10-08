@@ -48,6 +48,33 @@ describe("Calendar", () => {
     expect(screen.getByRole("button", { name: "Saturday, April 4, 2026" })).toBeInTheDocument();
   });
 
+  it("keeps the selected colour on a selected outside day", async () => {
+    const user = userEvent.setup();
+    render(<Calendar value={new Date(2026, 1, 28)} weekStartsOn={1} showOutsideDays />);
+    await user.click(screen.getByRole("button", { name: "Next month" }));
+    const feb28 = screen.getByRole("button", { name: "Saturday, February 28, 2026" });
+    expect(feb28).toHaveAttribute("data-selected", "true");
+    expect(feb28).toHaveClass("text-primary-foreground");
+    expect(feb28).not.toHaveClass("text-muted-foreground");
+    expect(feb28).not.toHaveClass("opacity-50");
+  });
+
+  it("moves the view to the month of a clicked outside day", async () => {
+    const user = userEvent.setup();
+    render(<Calendar defaultValue={MARCH_15_2026} weekStartsOn={1} showOutsideDays />);
+    await user.click(screen.getByRole("button", { name: "Monday, February 23, 2026" }));
+    expect(screen.getByText("February 2026")).toBeInTheDocument();
+  });
+
+  it("shows outside days across year boundaries", () => {
+    const { rerender } = render(
+      <Calendar value={new Date(2026, 0, 15)} weekStartsOn={1} showOutsideDays />,
+    );
+    expect(screen.getByRole("button", { name: "Monday, December 29, 2025" })).toBeInTheDocument();
+    rerender(<Calendar value={new Date(2026, 11, 15)} weekStartsOn={1} showOutsideDays />);
+    expect(screen.getByRole("button", { name: "Friday, January 1, 2027" })).toBeInTheDocument();
+  });
+
   it("calls onValueChange with the clicked date", async () => {
     const user = userEvent.setup();
     const onValueChange = vi.fn();
