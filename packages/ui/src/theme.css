@@ -141,9 +141,17 @@
  */
 @theme {
   --font-sans: "Manrope", sans-serif;
-  --font-heading: var(--font-sans);
   --font-mono: "Fira Code", monospace;
   --spacing-ui-height: 35px;
+}
+
+/*
+ * No default `--font-heading`: when the token is unset the declaration is
+ * invalid at computed-value time, so titles inherit their font. Set it on any
+ * element to apply it to the titles inside.
+ */
+@utility font-heading {
+  font-family: var(--font-heading);
 }
 
 .micro-interactions {
