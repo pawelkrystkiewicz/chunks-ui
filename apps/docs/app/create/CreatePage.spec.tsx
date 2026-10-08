@@ -25,12 +25,14 @@ const pageChrome = () =>
     .join("||");
 
 it("applies the theme to the preview only, never to <html> or <body>", () => {
-  render(<CreatePage />);
   const before = pageChrome();
+  render(<CreatePage />);
+  expect(pageChrome()).toBe(before);
   const sidebar = screen.getByRole("complementary", { name: "Theme" });
 
   // Every preset, mode, swatch, base, chart, radius stop, shadow, shuffle and reset.
   // "Get code" is excluded: its dialog locks page scroll by design.
+  // The Select-driven font pickers (role=combobox) are not driven here.
   for (const button of sidebar.querySelectorAll("button:not([role=combobox])")) {
     if (button.textContent?.includes("Get code")) continue;
     fireEvent.click(button);
