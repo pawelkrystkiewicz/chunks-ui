@@ -11,7 +11,12 @@ export function UsageCard() {
     <PreviewCard>
       <PreviewCardHeading title="Usage" description="Current billing period" />
       {METERS.map((m) => (
-        <Progress.Root key={m.label} value={m.value} className="flex flex-col gap-2">
+        <Progress.Root
+          key={m.label}
+          value={m.value}
+          aria-label={m.label}
+          className="flex flex-col gap-2"
+        >
           <div className="flex justify-between text-[0.9286em]">
             <span>{m.label}</span>
             <span className="text-muted-foreground">{m.amount}</span>

@@ -35,7 +35,10 @@ export function GetCodeDialog({
               <X className="size-4" />
             </Dialog.Close>
           </div>
+          {/* biome-ignore lint/a11y/useSemanticElements: a named region on <pre> keeps the code block semantics */}
           <pre
+            role="region"
+            aria-label="Theme CSS"
             // biome-ignore lint/a11y/noNoninteractiveTabindex: scrollable region must be keyboard-focusable
             tabIndex={0}
             className="min-h-0 flex-1 overflow-auto border-border border-y bg-muted/40 px-6 py-4 font-mono text-xs leading-[1.7]"

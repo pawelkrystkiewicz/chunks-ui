@@ -114,12 +114,13 @@ export function ThemeSidebar({
                 >
                   <span className="flex w-full items-center justify-between">
                     <span
+                      aria-hidden
                       className="h-5 w-[30px] overflow-hidden font-semibold text-base leading-5"
                       style={{ fontFamily: fontOf(preset.theme.fontHeading).stack }}
                     >
                       Aa
                     </span>
-                    <span className="flex">
+                    <span aria-hidden className="flex">
                       <Dot color={pal.primary} />
                       <Dot color={pal["chart-2"]} className="-ml-[3px]" />
                     </span>

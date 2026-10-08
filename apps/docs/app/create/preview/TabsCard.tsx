@@ -40,7 +40,7 @@ export function TabsCard() {
               </div>
             ))}
           </div>
-          <Progress.Root value={25} className="flex flex-col gap-2">
+          <Progress.Root value={25} aria-label="Sprint 14" className="flex flex-col gap-2">
             <div className="flex justify-between text-xs">
               <span className="text-muted-foreground">Sprint 14</span>
               <span className="font-semibold">25%</span>
