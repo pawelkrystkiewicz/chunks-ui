@@ -51,6 +51,51 @@ function expectRestingAt(insets: Insets, state: State, gap: number) {
   expect(Math.min(insets.left, insets.right)).toBeGreaterThan(gap - 0.05);
 }
 
+type GeometryCase = {
+  spacing: number;
+  reducedMotion: boolean;
+  defaultChecked: boolean;
+  root?: string;
+  thumb?: string;
+};
+
+async function expectThumbGeometry({
+  spacing,
+  reducedMotion,
+  defaultChecked,
+  root,
+  thumb,
+}: GeometryCase) {
+  // `p-0.5` on the track: half a spacing unit.
+  const gap = spacing / 2;
+  const { getByRole, getByTestId } = render(
+    <div style={{ "--spacing": `${spacing}px`, padding: 40 } as CSSProperties}>
+      <Switch.Root aria-label="Geometry" defaultChecked={defaultChecked} className={root}>
+        <Switch.Thumb data-testid="thumb" className={thumb} />
+      </Switch.Root>
+    </div>,
+  );
+  const track = getByRole("switch");
+  // The Motion path replaces the thumb element once Motion loads, so always query it.
+  const isCssThumb = () => getByTestId("thumb").classList.contains("micro-interactions");
+  const expectThumbRestsAt = async (state: State) => {
+    expect(track.getAttribute("aria-checked")).toBe(String(state === "checked"));
+    const insets = await waitForStable(() => insetsWithin(track, getByTestId("thumb")));
+    expectRestingAt(insets, state, gap);
+  };
+
+  await expect.poll(isCssThumb, { timeout: 5000 }).toBe(reducedMotion);
+
+  const start: State = defaultChecked ? "checked" : "unchecked";
+  await expectThumbRestsAt(start);
+  await userEvent.click(track);
+  await expectThumbRestsAt(defaultChecked ? "unchecked" : "checked");
+  await userEvent.click(track);
+  await expectThumbRestsAt(start);
+
+  expect(isCssThumb()).toBe(reducedMotion);
+}
+
 describe.each(PATHS)("Switch thumb geometry, $path", ({ reducedMotion }) => {
   beforeAll(() =>
     commands.emulateMedia({ reducedMotion: reducedMotion ? "reduce" : "no-preference" }),
@@ -58,36 +103,26 @@ describe.each(PATHS)("Switch thumb geometry, $path", ({ reducedMotion }) => {
   afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
 
   describe.each(SIZES)("$size", ({ root, thumb }) => {
-    describe.each(STARTS)("starting $start", ({ start, defaultChecked }) => {
-      it.each(SPACINGS_PX)("rests one gap from the edges at --spacing: %spx", async (spacing) => {
-        // `p-0.5` on the track: half a spacing unit.
-        const gap = spacing / 2;
-        const { getByRole, getByTestId } = render(
-          <div style={{ "--spacing": `${spacing}px`, padding: 40 } as CSSProperties}>
-            <Switch.Root aria-label="Geometry" defaultChecked={defaultChecked} className={root}>
-              <Switch.Thumb data-testid="thumb" className={thumb} />
-            </Switch.Root>
-          </div>,
-        );
-        const track = getByRole("switch");
-        // The Motion path replaces the thumb element once Motion loads, so always query it.
-        const isCssThumb = () => getByTestId("thumb").classList.contains("micro-interactions");
-        const expectThumbRestsAt = async (state: State) => {
-          expect(track.getAttribute("aria-checked")).toBe(String(state === "checked"));
-          const insets = await waitForStable(() => insetsWithin(track, getByTestId("thumb")));
-          expectRestingAt(insets, state, gap);
-        };
-
-        await expect.poll(isCssThumb, { timeout: 5000 }).toBe(reducedMotion);
-
-        await expectThumbRestsAt(start);
-        await userEvent.click(track);
-        await expectThumbRestsAt(start === "unchecked" ? "checked" : "unchecked");
-        await userEvent.click(track);
-        await expectThumbRestsAt(start);
-
-        expect(isCssThumb()).toBe(reducedMotion);
-      });
+    describe.each(STARTS)("starting $start", ({ defaultChecked }) => {
+      it.each(SPACINGS_PX)("rests one gap from the edges at --spacing: %spx", (spacing) =>
+        expectThumbGeometry({ spacing, reducedMotion, defaultChecked, root, thumb }),
+      );
     });
   });
+});
+
+// Forced-colors mode (e.g. Windows contrast themes) draws the track edge and the thumb with
+// system colours. The thumb must rest in the same places there.
+describe.each(PATHS)("Switch thumb geometry in forced-colors mode, $path", ({ reducedMotion }) => {
+  beforeAll(() =>
+    commands.emulateMedia({
+      reducedMotion: reducedMotion ? "reduce" : "no-preference",
+      forcedColors: "active",
+    }),
+  );
+  afterAll(() => commands.emulateMedia({ reducedMotion: "reduce", forcedColors: "none" }));
+
+  it.each(SPACINGS_PX)("rests one gap from the edges at --spacing: %spx", (spacing) =>
+    expectThumbGeometry({ spacing, reducedMotion, defaultChecked: false }),
+  );
 });
