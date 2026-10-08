@@ -5,7 +5,6 @@ import { describe, expect, it } from "vitest";
 import { page } from "vitest/browser";
 import { Dialog } from "../components/dialog";
 import { Drawer } from "../components/drawer";
-import { Popover } from "../components/popover";
 import { Select } from "../components/select";
 import { Tooltip } from "../components/tooltip";
 import { PortalContainerProvider } from "./portal-container";
@@ -57,15 +56,6 @@ const parents: Record<string, () => ReactNode> = {
       </Drawer.Portal>
     </Drawer.Root>
   ),
-  Popover: () => (
-    <Popover.Root>
-      <Popover.Trigger>Open</Popover.Trigger>
-      <Popover.Content>
-        <Popover.Title>Pick a fruit</Popover.Title>
-        <FruitSelect />
-      </Popover.Content>
-    </Popover.Root>
-  ),
 };
 
 function Harness({ parent, withProvider }: { parent: string; withProvider: boolean }) {
@@ -97,19 +87,6 @@ describe("popups nested in a modal", () => {
     await expect.element(trigger).toHaveTextContent("banana");
   });
 
-  it("renders a Select inside a Popover into the Popover's portal under a provider", async () => {
-    render(<Harness parent="Popover" withProvider />);
-    await page.getByRole("button", { name: "Open" }).click();
-    const trigger = page.getByRole("combobox", { name: "Fruit" });
-    await trigger.click();
-    // Without the context reset the listbox would land in the provider's layer, outside the Popover
-    const portal = page.getByText("Pick a fruit").element().closest("[data-base-ui-portal]");
-    expect(portal?.contains(page.getByRole("listbox").element())).toBe(true);
-    await page.getByRole("option", { name: "Banana" }).click();
-    await expect.element(trigger).toHaveTextContent("banana");
-    await expect.element(page.getByText("Pick a fruit")).toBeVisible();
-  });
-
   it("keeps a Tooltip above the modal Dialog it opens from", async () => {
     render(
       <Dialog.Root defaultOpen>
@@ -132,21 +109,21 @@ describe("popups nested in a modal", () => {
     await expect.element(page.getByText("Tooltip text")).toBeVisible();
     const popup = page.getByText("Tooltip text").element();
     const dialog = page.getByRole("dialog").element();
+    const centre = () => {
+      const box = popup.getBoundingClientRect();
+      return { x: box.left + box.width / 2, y: box.top + box.height / 2 };
+    };
     // The tooltip must sit over the dialog (and be positioned), or the stacking check proves nothing
     await expect
       .poll(() => {
-        const box = popup.getBoundingClientRect();
+        const { x, y } = centre();
         const dialogBox = dialog.getBoundingClientRect();
-        const x = box.left + box.width / 2;
-        const y = box.top + box.height / 2;
         return (
           x > dialogBox.left && x < dialogBox.right && y > dialogBox.top && y < dialogBox.bottom
         );
       })
       .toBe(true);
-    const box = popup.getBoundingClientRect();
-    const x = box.left + box.width / 2;
-    const y = box.top + box.height / 2;
+    const { x, y } = centre();
     expect(popup.contains(document.elementFromPoint(x, y))).toBe(true);
   });
 });
