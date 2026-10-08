@@ -48,3 +48,11 @@ export const RADIUS_PRESETS = [
 export const PRELOADED_FONTS = new Set(["Manrope", "Fira Code", "Instrument Serif"]);
 
 export const CSS_VARS = ["--radius", "--font-sans", "--spacing", "--spacing-ui-height"] as const;
+
+// ponytail: one stylesheet for every option font; browsers only download faces that actually render
+export const OPTION_FONTS_HREF = `https://fonts.googleapis.com/css2?${[
+  ...new Set([...BODY_FONTS, ...HEADING_FONTS]),
+]
+  .filter((f) => !PRELOADED_FONTS.has(f))
+  .map((f) => `family=${f.replaceAll(" ", "+")}:wght@400;500;600;700`)
+  .join("&")}&display=swap`;

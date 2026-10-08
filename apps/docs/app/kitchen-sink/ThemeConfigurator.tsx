@@ -8,10 +8,10 @@ import {
   CSS_VARS,
   DEFAULT_CONFIG,
   HEADING_FONTS,
+  OPTION_FONTS_HREF,
   RADIUS_PRESETS,
   type ThemeConfig,
 } from "./configurator-constants";
-import { FontLoader } from "./FontLoader";
 import { KitchenSink } from "./KitchenSink";
 
 export function ThemeConfigurator() {
@@ -35,9 +35,10 @@ export function ThemeConfigurator() {
       originals.set("font-size", el.style.fontSize);
     }
 
-    el.style.setProperty("--radius", `${config.radius / 16}rem`);
+    // px, not rem: the Font Size slider changes the root font-size and must not rescale these
+    el.style.setProperty("--radius", `${config.radius}px`);
     el.style.setProperty("--font-sans", `"${config.bodyFont}", sans-serif`);
-    el.style.setProperty("--spacing", `${config.spacing / 16}rem`);
+    el.style.setProperty("--spacing", `${config.spacing}px`);
     el.style.setProperty("--spacing-ui-height", `${config.componentHeight}px`);
     el.style.fontSize = `${config.fontSize}px`;
 
@@ -55,7 +56,8 @@ export function ThemeConfigurator() {
 
   return (
     <>
-      <FontLoader fonts={[config.bodyFont, config.headingFont]} />
+      {/* No `precedence`: React renders it in place, so it is removed on unmount */}
+      <link rel="stylesheet" href={OPTION_FONTS_HREF} />
 
       {config.headingFont !== config.bodyFont && (
         <style>{`
@@ -130,6 +132,7 @@ export function ThemeConfigurator() {
                       <button
                         key={p.value}
                         type="button"
+                        aria-pressed={config.radius === p.value}
                         onClick={() => update({ radius: p.value })}
                         className={`rounded border px-2 py-0.5 text-xs ${
                           config.radius === p.value
