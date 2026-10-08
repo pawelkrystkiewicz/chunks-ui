@@ -173,7 +173,7 @@ describe("overlays opened from an overlay", () => {
     ["Drawer", "Dialog"],
     ["Dialog", "Drawer"],
     ["Drawer", "Drawer"],
-  ] as const)("puts a %s opened from a %s on top of it", async (child, parent) => {
+  ] as const)("puts a %s opened from a %s on top and dims it", async (child, parent) => {
     const Parent = overlays[parent];
     const Child = overlays[child];
     render(
@@ -195,6 +195,21 @@ describe("overlays opened from an overlay", () => {
     // The child must have slid in over the parent, or the stacking check proves nothing
     await expect.poll(() => inside(parentBox, childCentre())).toBe(true);
     expect(childPopup.contains(document.elementFromPoint(...childCentre()))).toBe(true);
+
+    // Where the parent still shows, a layer that dims it sits on top
+    const childBox = childPopup.getBoundingClientRect();
+    const parentOnly = (
+      [
+        [parentBox.left + 4, parentBox.top + 4],
+        [parentBox.right - 4, parentBox.top + 4],
+        [parentBox.left + 4, parentBox.bottom - 4],
+        [parentBox.right - 4, parentBox.bottom - 4],
+      ] as [number, number][]
+    ).find((point) => !inside(childBox, point));
+    expect(parentOnly).toBeDefined();
+    const cover = parentOnly && document.elementFromPoint(...parentOnly);
+    expect(cover && parentPopup.contains(cover)).toBe(false);
+    expect(cover && getComputedStyle(cover).backgroundColor).not.toBe("rgba(0, 0, 0, 0)");
 
     // The child is interactive; closing it leaves the parent open
     await page.getByRole("button", { name: "Close Child" }).click();

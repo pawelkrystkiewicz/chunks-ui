@@ -12,7 +12,17 @@ export type DialogRootProps = ComponentProps<typeof BaseDialog.Root>;
 export type DialogTriggerProps = ComponentProps<typeof BaseDialog.Trigger>;
 export type DialogPortalProps = ComponentProps<typeof BaseDialog.Portal>;
 export type DialogPopupProps = ComponentProps<typeof BaseDialog.Popup>;
-export type DialogBackdropProps = ComponentProps<typeof BaseDialog.Backdrop>;
+export type DialogBackdropProps = Omit<
+  ComponentProps<typeof BaseDialog.Backdrop>,
+  "forceRender"
+> & {
+  /**
+   * Whether the backdrop renders when this dialog is opened from another dialog or drawer, so it dims that parent.
+   * Base UI defaults this to `false`.
+   * @default true
+   */
+  forceRender?: boolean;
+};
 export type DialogTitleProps = ComponentProps<typeof BaseDialog.Title>;
 export type DialogDescriptionProps = ComponentProps<typeof BaseDialog.Description>;
 export type DialogCloseProps = ComponentProps<typeof BaseDialog.Close>;
@@ -37,7 +47,7 @@ function DialogPortal({ keepMounted, className, children, ...props }: DialogPort
   );
 }
 
-function DialogBackdrop({ className, ...props }: DialogBackdropProps) {
+function DialogBackdrop({ className, forceRender = true, ...props }: DialogBackdropProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
   const useSpring = !!m && !reduced;
@@ -53,6 +63,7 @@ function DialogBackdrop({ className, ...props }: DialogBackdropProps) {
   return (
     <BaseDialog.Backdrop
       render={render}
+      forceRender={forceRender}
       className={cn(
         "fixed inset-0 bg-black/50",
         !useSpring && "data-starting-style:opacity-0",

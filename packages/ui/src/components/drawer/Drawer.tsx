@@ -22,7 +22,17 @@ export type DrawerPopupProps = ComponentProps<typeof BaseDialog.Popup> &
      */
     side?: "left" | "right" | "bottom";
   };
-export type DrawerBackdropProps = ComponentProps<typeof BaseDialog.Backdrop>;
+export type DrawerBackdropProps = Omit<
+  ComponentProps<typeof BaseDialog.Backdrop>,
+  "forceRender"
+> & {
+  /**
+   * Whether the backdrop renders when this drawer is opened from another dialog or drawer, so it dims that parent.
+   * Base UI defaults this to `false`.
+   * @default true
+   */
+  forceRender?: boolean;
+};
 export type DrawerTitleProps = ComponentProps<typeof BaseDialog.Title>;
 export type DrawerDescriptionProps = ComponentProps<typeof BaseDialog.Description>;
 export type DrawerCloseProps = ComponentProps<typeof BaseDialog.Close>;
@@ -59,7 +69,7 @@ function DrawerPortal({ keepMounted, className, children, ...props }: DrawerPort
   );
 }
 
-function DrawerBackdrop({ className, ...props }: DrawerBackdropProps) {
+function DrawerBackdrop({ className, forceRender = true, ...props }: DrawerBackdropProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
   const useSpring = !!m && !reduced;
@@ -75,6 +85,7 @@ function DrawerBackdrop({ className, ...props }: DrawerBackdropProps) {
   return (
     <BaseDialog.Backdrop
       render={render}
+      forceRender={forceRender}
       className={cn(
         "fixed inset-0 bg-black/50",
         !useSpring && "data-starting-style:opacity-0",

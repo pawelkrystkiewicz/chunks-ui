@@ -83,7 +83,7 @@ The drawer slides in from its designated edge using `translate-x` (left/right) o
 | `Drawer.Root` | State container. Manages open/close state. |
 | `Drawer.Trigger` | Button that opens the drawer. |
 | `Drawer.Portal` | Renders children in a portal. Puts the drawer on the `z-drawers` (600) layer; popups, dialogs and drawers opened from it stack above it. |
-| `Drawer.Backdrop` | Semi-transparent overlay. |
+| `Drawer.Backdrop` | Semi-transparent overlay. Also renders for a nested drawer, so it dims the parent. |
 | `Drawer.Popup` | The sliding panel. Accepts `side` prop. |
 | `Drawer.Title` | Drawer heading. |
 | `Drawer.Description` | Supporting description text. |
