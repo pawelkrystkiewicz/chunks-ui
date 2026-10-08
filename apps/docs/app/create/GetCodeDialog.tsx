@@ -13,7 +13,7 @@ export function GetCodeDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const css = open ? buildCss(theme) : "";
+  const css = buildCss(theme);
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -35,7 +35,11 @@ export function GetCodeDialog({
               <X className="size-4" />
             </Dialog.Close>
           </div>
-          <pre className="min-h-0 flex-1 overflow-auto border-border border-y bg-muted/40 px-6 py-4 font-mono text-xs leading-[1.7]">
+          <pre
+            // biome-ignore lint/a11y/noNoninteractiveTabindex: scrollable region must be keyboard-focusable
+            tabIndex={0}
+            className="min-h-0 flex-1 overflow-auto border-border border-y bg-muted/40 px-6 py-4 font-mono text-xs leading-[1.7]"
+          >
             {css}
           </pre>
           <div className="flex items-center justify-between gap-3 py-3.5 pr-4 pl-6">

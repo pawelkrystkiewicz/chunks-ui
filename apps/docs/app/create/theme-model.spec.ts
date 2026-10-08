@@ -1,8 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   buildCss,
   chartList,
   DEFAULT_THEME,
+  loadTheme,
   PRESETS,
   palette,
   sameTheme,
@@ -77,5 +78,42 @@ describe("buildCss", () => {
     );
     expect(css).toContain("\n}\n\n.dark {\n  --primary: oklch(0.6048 0.2165 257.21);");
     expect(css.match(/--/g)).toHaveLength(67);
+  });
+});
+
+describe("loadTheme", () => {
+  const stored = (value: unknown) =>
+    vi.stubGlobal("localStorage", {
+      getItem: () => (typeof value === "string" ? value : JSON.stringify(value)),
+    });
+
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("returns null when nothing usable is stored", () => {
+    stored(null);
+    expect(loadTheme()).toBeNull();
+    stored("not json");
+    expect(loadTheme()).toBeNull();
+  });
+
+  it("keeps a valid stored theme", () => {
+    const t = { ...DEFAULT_THEME, radius: 4, base: "zinc", primary: { l: 0.5, c: 0.1, h: 20 } };
+    stored(t);
+    expect(loadTheme()).toEqual(t);
+  });
+
+  it("falls back to defaults for fields of the wrong type", () => {
+    stored({ ...DEFAULT_THEME, radius: "wide", fontBody: 3, primary: { l: 0.5, c: "x", h: 1 } });
+    expect(loadTheme()).toEqual(DEFAULT_THEME);
+  });
+
+  it("falls back to the default primary for an empty object", () => {
+    stored({ ...DEFAULT_THEME, primary: {} });
+    expect(loadTheme()?.primary).toEqual(DEFAULT_THEME.primary);
+  });
+
+  it("drops unknown keys", () => {
+    stored({ ...DEFAULT_THEME, extra: 1 });
+    expect(loadTheme()).toEqual(DEFAULT_THEME);
   });
 });

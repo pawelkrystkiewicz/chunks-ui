@@ -17,12 +17,12 @@ export function SignInCard() {
           <Input type="email" defaultValue="alice@acme.dev" />
         </Field.Root>
         <Field.Root className="gap-2">
-          <Field.Label className="flex justify-between">
-            Password
-            <a href="#forgot" className="font-medium text-primary text-xs">
+          <div className="flex items-center justify-between">
+            <Field.Label>Password</Field.Label>
+            <button type="button" className="font-medium text-primary text-xs hover:underline">
               Forgot?
-            </a>
-          </Field.Label>
+            </button>
+          </div>
           <Input type="password" defaultValue="hunter2hunter" />
         </Field.Root>
         <div className="flex items-center gap-2 text-sm">

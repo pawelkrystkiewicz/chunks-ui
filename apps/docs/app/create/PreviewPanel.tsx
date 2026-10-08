@@ -43,6 +43,7 @@ export function PreviewPanel({ theme }: { theme: Theme }) {
   return (
     <section
       aria-label="Preview"
+      data-pagefind-ignore
       className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-[14px] border border-border bg-background shadow-[0_1px_2px_oklch(0_0_0/0.04)]"
     >
       <div className="flex h-[50px] items-center justify-between gap-4 border-border border-b pr-2.5 pl-[18px]">

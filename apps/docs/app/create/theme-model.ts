@@ -350,7 +350,21 @@ const STORE_KEY = "chunks-create-theme-v1";
 export function loadTheme(): Theme | null {
   try {
     const s = JSON.parse(localStorage.getItem(STORE_KEY) ?? "null");
-    return s?.primary ? { ...DEFAULT_THEME, ...s } : null;
+    if (!s || typeof s !== "object") return null;
+    // Keep a stored field only when its type matches the default's, so an
+    // older or hand-edited value can't crash the render.
+    const out: Record<string, unknown> = { ...DEFAULT_THEME };
+    for (const [k, def] of Object.entries(DEFAULT_THEME)) {
+      if (k === "primary") {
+        const p = s.primary;
+        if (p && ["l", "c", "h"].every((n) => typeof p[n] === "number")) {
+          out.primary = { l: p.l, c: p.c, h: p.h };
+        }
+      } else if (typeof s[k] === typeof def) {
+        out[k] = s[k];
+      }
+    }
+    return out as Theme;
   } catch {
     return null;
   }
