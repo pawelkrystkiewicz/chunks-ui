@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { type KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { cn } from "../../lib/cn";
 
 export type CalendarProps = {
@@ -52,6 +53,48 @@ function startOfDay(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
+function addDays(date: Date, days: number): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
+}
+
+/** Same day `months` later, clamped to the target month's length (Mar 31 − 1 month = Feb 28). */
+function addMonths(date: Date, months: number): Date {
+  const year = date.getFullYear();
+  const month = date.getMonth() + months;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  return new Date(year, month, Math.min(date.getDate(), daysInMonth));
+}
+
+/** Column of `date` in a week that starts on `weekStartsOn` (0 = first column). */
+function weekdayIndex(date: Date, weekStartsOn: number): number {
+  return (date.getDay() - weekStartsOn + 7) % 7;
+}
+
+/** Day that a grid navigation key moves focus to (WAI-ARIA APG date grid), or null. */
+function getKeyTarget(event: KeyboardEvent, date: Date, weekStartsOn: number): Date | null {
+  if (event.altKey || event.ctrlKey || event.metaKey) return null;
+  switch (event.key) {
+    case "ArrowLeft":
+      return addDays(date, -1);
+    case "ArrowRight":
+      return addDays(date, 1);
+    case "ArrowUp":
+      return addDays(date, -7);
+    case "ArrowDown":
+      return addDays(date, 7);
+    case "Home":
+      return addDays(date, -weekdayIndex(date, weekStartsOn));
+    case "End":
+      return addDays(date, 6 - weekdayIndex(date, weekStartsOn));
+    case "PageUp":
+      return addMonths(date, event.shiftKey ? -12 : -1);
+    case "PageDown":
+      return addMonths(date, event.shiftKey ? 12 : 1);
+    default:
+      return null;
+  }
+}
+
 type CalendarCell = { key: string; date: Date | null };
 
 function buildWeekRows(
@@ -62,7 +105,7 @@ function buildWeekRows(
 ): CalendarCell[][] {
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
-  const startPad = (firstDay.getDay() - weekStartsOn + 7) % 7;
+  const startPad = weekdayIndex(firstDay, weekStartsOn);
   const totalDays = lastDay.getDate();
 
   const cells: CalendarCell[] = [];
@@ -126,6 +169,14 @@ export function Calendar({
 
   const today = useMemo(() => startOfDay(new Date()), []);
 
+  // Roving tabindex: the last focused day, if still in view, keeps the grid's single tab stop.
+  const [focusedDate, setFocusedDate] = useState<Date | null>(null);
+  const gridRef = useRef<HTMLTableElement>(null);
+  const isInView = (date: Date | null): date is Date =>
+    date !== null && date.getFullYear() === viewYear && date.getMonth() === viewMonth;
+  const tabStop =
+    [focusedDate, selectedDate, today].find(isInView) ?? new Date(viewYear, viewMonth, 1);
+
   const monthYearLabel = `${MONTH_NAMES[viewMonth]} ${viewYear}`;
 
   const prevMonth = useCallback(() => {
@@ -176,6 +227,19 @@ export function Calendar({
     },
     [isDateDisabled, min, max],
   );
+
+  const handleDayKeyDown = (event: KeyboardEvent, date: Date) => {
+    const target = getKeyTarget(event, date, weekStartsOn);
+    if (!target) return;
+    event.preventDefault();
+    // Render the target's month synchronously so its button exists before it takes focus.
+    flushSync(() => {
+      setFocusedDate(target);
+      setViewYear(target.getFullYear());
+      setViewMonth(target.getMonth());
+    });
+    gridRef.current?.querySelector<HTMLButtonElement>('button[tabindex="0"]')?.focus();
+  };
 
   return (
     <div className={cn("w-fit p-3", className)}>
@@ -237,7 +301,7 @@ export function Calendar({
       </div>
 
       {/* Day grid */}
-      <table className="border-collapse">
+      <table ref={gridRef} className="border-collapse">
         <thead>
           <tr>
             {dayNames.map((d) => (
@@ -282,9 +346,12 @@ export function Calendar({
                         type="button"
                         aria-label={ariaLabel}
                         aria-current={isToday ? "date" : undefined}
+                        aria-disabled={disabled || undefined}
                         data-selected={isSelected || undefined}
-                        disabled={disabled}
-                        onClick={() => handleDayClick(date)}
+                        tabIndex={isSameDay(date, tabStop) ? 0 : -1}
+                        onClick={disabled ? undefined : () => handleDayClick(date)}
+                        onFocus={() => setFocusedDate(date)}
+                        onKeyDown={(event) => handleDayKeyDown(event, date)}
                         className={cn(
                           "inline-flex size-8 items-center justify-center rounded-md text-sm",
                           "micro-interactions focus-visible:outline-2 focus-visible:outline-ring",
