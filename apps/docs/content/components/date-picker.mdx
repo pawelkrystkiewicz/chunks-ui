@@ -58,6 +58,16 @@ const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, today.getD
 
 <DatePickerDisabledExample />
 
+## Keyboard
+
+| Key | Action |
+| --- | --- |
+| <kbd>Enter</kbd> / <kbd>Space</kbd> on the trigger | Opens the calendar |
+| <kbd>Enter</kbd> / <kbd>Space</kbd> on a day | Selects the day, closes the calendar and returns focus to the trigger |
+| <kbd>Escape</kbd> | Closes the calendar without changing the date and returns focus to the trigger |
+
+When the calendar opens, focus goes to the selected day, or to today if no date is selected. Inside the calendar, the arrow, Home, End and Page keys move focus as described in [Calendar keyboard](/components/calendar#keyboard). Disabled days can take focus but cannot be selected.
+
 ## DatePicker Props
 
 <TSDoc
