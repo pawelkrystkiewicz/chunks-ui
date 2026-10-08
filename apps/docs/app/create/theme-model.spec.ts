@@ -71,13 +71,23 @@ describe("toScopeStyle", () => {
 describe("buildCss", () => {
   it("exports light and dark blocks with the library's default values", () => {
     const css = buildCss(DEFAULT_THEME);
-    expect(css.startsWith(":root {\n  --font-sans: 'Manrope'")).toBe(true);
+    expect(css.split("\n")[0]).toBe(
+      "/* Fonts: https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap */",
+    );
+    expect(css).toContain("\n:root {\n  --font-sans: 'Manrope'");
     expect(css).toContain("  --text-sm: 0.875rem;\n");
     expect(css).toContain(
       "  --radius: 0.625rem;\n  --spacing: 0.25rem;\n  --spacing-ui-height: 35px;\n",
     );
     expect(css).toContain("\n}\n\n.dark {\n  --primary: oklch(0.6048 0.2165 257.21);");
     expect(css.match(/--/g)).toHaveLength(67);
+  });
+
+  it("names both fonts when heading and body differ", () => {
+    const css = buildCss({ ...DEFAULT_THEME, fontHeading: "Newsreader", fontBody: "DM Sans" });
+    expect(css.split("\n")[0]).toBe(
+      "/* Fonts: https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Newsreader:wght@400;500;600;700&display=swap */",
+    );
   });
 });
 

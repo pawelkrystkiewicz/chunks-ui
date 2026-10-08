@@ -293,14 +293,21 @@ export function toScopeStyle(t: Theme): CSSProperties {
 export function buildCss(t: Theme): string {
   const block = (selector: string, pal: Record<string, string>, extra: string[]) =>
     `${selector} {\n${[...extra, ...Object.entries(pal).map(([k, v]) => `  --${k}: ${v};`)].join("\n")}\n}`;
-  return `${block(":root", palette(t, "light"), [
-    `  --font-sans: ${fontOf(t.fontBody).stack};`,
-    `  --font-heading: ${fontOf(t.fontHeading).stack};`,
-    ...textVars(t.fontSize, "rem").map(([k, v]) => `  ${k}: ${v};`),
-    `  --radius: ${t.radius / 16}rem;`,
-    `  --spacing: ${+(0.25 * t.spacing).toFixed(4)}rem;`,
-    `  --spacing-ui-height: ${t.height}px;`,
-  ])}\n\n${block(".dark", palette(t, "dark"), [])}`;
+  const fonts = [...new Set([t.fontBody, t.fontHeading])]
+    .map((f) => `family=${f.replaceAll(" ", "+")}:wght@400;500;600;700`)
+    .join("&");
+  return `/* Fonts: https://fonts.googleapis.com/css2?${fonts}&display=swap */\n${block(
+    ":root",
+    palette(t, "light"),
+    [
+      `  --font-sans: ${fontOf(t.fontBody).stack};`,
+      `  --font-heading: ${fontOf(t.fontHeading).stack};`,
+      ...textVars(t.fontSize, "rem").map(([k, v]) => `  ${k}: ${v};`),
+      `  --radius: ${t.radius / 16}rem;`,
+      `  --spacing: ${+(0.25 * t.spacing).toFixed(4)}rem;`,
+      `  --spacing-ui-height: ${t.height}px;`,
+    ],
+  )}\n\n${block(".dark", palette(t, "dark"), [])}`;
 }
 
 export const samePrimary = (a: Oklch, b: Oklch) =>
