@@ -1,5 +1,6 @@
-import { Button, Empty } from "chunks-ui";
+import { Empty } from "chunks-ui";
 import { Inbox } from "lucide-react";
+import { ConnectRepoDialog } from "./overlays/ConnectRepoDialog";
 import { PreviewCard } from "./PreviewCard";
 
 export function EmptyCard() {
@@ -15,9 +16,7 @@ export function EmptyCard() {
             Push to main to trigger your first build.
           </Empty.Description>
         </div>
-        <Button variant="outlined" color="secondary">
-          Connect repository
-        </Button>
+        <ConnectRepoDialog />
       </Empty.Root>
     </PreviewCard>
   );

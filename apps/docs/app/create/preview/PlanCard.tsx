@@ -1,7 +1,8 @@
 "use client";
 
-import { Button, Radio } from "chunks-ui";
+import { Radio } from "chunks-ui";
 import { useState } from "react";
+import { PaymentDialog } from "./overlays/PaymentDialog";
 import { PreviewCard, PreviewCardHeading } from "./PreviewCard";
 
 const PLANS = [
@@ -12,7 +13,7 @@ const PLANS = [
 
 export function PlanCard() {
   const [plan, setPlan] = useState("pro");
-  const selected = PLANS.find((p) => p.id === plan);
+  const selected = PLANS.find((p) => p.id === plan) ?? (PLANS[1] as (typeof PLANS)[number]);
 
   return (
     <PreviewCard>
@@ -39,7 +40,7 @@ export function PlanCard() {
           </label>
         ))}
       </Radio.Group>
-      <Button className="w-full">Continue with {selected?.name}</Button>
+      <PaymentDialog plan={selected} />
     </PreviewCard>
   );
 }
