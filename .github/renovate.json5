@@ -14,7 +14,7 @@
     schedule: ["before 10am on monday"],
     automerge: true,
   },
-  enabledManagers: ["npm", "github-actions"],
+  enabledManagers: ["npm", "bun", "github-actions"],
   automerge: false,
   automergeType: "pr",
   automergeStrategy: "squash",

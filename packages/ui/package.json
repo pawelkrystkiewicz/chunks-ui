@@ -35,10 +35,10 @@
     "clean": "rm -rf .turbo node_modules dist coverage"
   },
   "peerDependencies": {
-    "@base-ui/react": "^1.5.0",
+    "@base-ui/react": "^1.8.0",
     "class-variance-authority": "^0.7.1",
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
     "motion": ""
   },
   "peerDependenciesMeta": {
@@ -49,32 +49,32 @@
   "dependencies": {
     "clsx": "^2.1.1",
     "lucide-react": "^0.577.0",
-    "tailwind-merge": "^3.6.0"
+    "tailwind-merge": "^3.7.0"
   },
   "devDependencies": {
-    "@base-ui/react": "^1.5.0",
+    "@base-ui/react": "^1.8.0",
     "@chunks-ui/typescript-config": "workspace:*",
     "class-variance-authority": "^0.7.1",
-    "@playwright/test": "^1.60.0",
-    "@tailwindcss/postcss": "^4.3.0",
+    "@playwright/test": "^1.64.0",
+    "@tailwindcss/postcss": "^4.3.3",
     "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.2",
-    "@testing-library/user-event": "^14.6.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
     "@types/jest-axe": "^3.5.9",
-    "@types/react": "^19.2.17",
-    "@types/react-dom": "^19.2.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^5.2.0",
-    "@vitest/browser": "^4.1.8",
-    "@vitest/browser-playwright": "^4.1.8",
-    "@vitest/coverage-v8": "^4.1.8",
+    "@vitest/browser": "^4.1.11",
+    "@vitest/browser-playwright": "^4.1.11",
+    "@vitest/coverage-v8": "^4.1.11",
     "jest-axe": "^10.0.0",
     "jsdom": "^28.1.0",
-    "motion": "^12.40.0",
-    "tailwindcss": "^4.3.0",
+    "motion": "^12.43.0",
+    "tailwindcss": "^4.3.3",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
-    "vite": "^7.3.5",
-    "vitest": "^4.1.8"
+    "vite": "^7.3.7",
+    "vitest": "^4.1.11"
   },
   "repository": {
     "type": "git",
