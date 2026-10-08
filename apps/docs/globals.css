@@ -6,21 +6,61 @@
 @source "./";
 @source "../../packages/ui";
 
-@theme inline {
-  --font-display: "Instrument Serif", serif;
+/* Landing page surface tokens (app/components/landing). */
+.landing {
+  /* System fallback (not bare sans-serif) so → and ↗, which Manrope lacks, match the design. */
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --l-bg: #eef1f8;
+  --l-fg: #0b1020;
+  --l-muted: #5a6176;
+  --l-faint: #9aa2b8;
+  --l-line: #d9deea;
+  --l-card: #f7f8fc;
+  --l-ill: #8d96b0;
+  --l-brand: oklch(60.48% 0.2165 257.21);
+  --l-brand-soft: oklch(70% 0.15 257);
+  --l-brand-tint: oklch(60.48% 0.2165 257.21 / 0.18);
+  --l-grid:
+    repeating-linear-gradient(90deg, transparent 0 20px, var(--l-ill) 20px 21px),
+    repeating-linear-gradient(0deg, transparent 0 20px, var(--l-ill) 20px 21px);
+  --l-hero-bg: radial-gradient(
+    120% 90% at 72% 78%,
+    var(--l-brand) 0,
+    oklch(45% 0.2 262) 32%,
+    oklch(0.13 0.04 265) 68%,
+    #000 100%
+  );
+  --l-cta-bg: radial-gradient(
+    110% 120% at 20% 0,
+    var(--l-brand) 0,
+    oklch(42% 0.2 262) 35%,
+    oklch(0.13 0.04 265) 70%,
+    #000 100%
+  );
 }
 
-@keyframes fade-up {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.dark .landing {
+  --l-bg: oklch(0.16 0.02 265);
+  --l-fg: oklch(0.97 0 0);
+  --l-muted: oklch(0.72 0.02 265);
+  --l-faint: oklch(0.55 0.02 265);
+  --l-line: oklch(0.28 0.03 265);
+  --l-card: oklch(0.2 0.03 265);
+  --l-ill: oklch(0.55 0.04 265);
 }
 
-.fade-up {
-  animation: fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+/*
+ * The landing is full-bleed. On the page that renders it, lift Nextra's content-width cap,
+ * drop the article padding and hide the empty pagination slot Nextra renders after <main>.
+ */
+:root:has(.landing) {
+  --nextra-content-width: 100%;
+}
+
+article:has(> main > .landing) {
+  padding: 0;
+
+  & > main ~ div {
+    display: none;
+  }
 }
