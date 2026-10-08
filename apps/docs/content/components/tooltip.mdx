@@ -94,7 +94,7 @@ The popup sits 2 spacing units (8px at the default `--spacing`) from the trigger
 | `Tooltip.Root` | State container. Manages hover/focus open state. |
 | `Tooltip.Trigger` | The element that activates the tooltip on hover/focus. |
 | `Tooltip.Portal` | Renders children in a portal. |
-| `Tooltip.Positioner` | Floating UI positioner. Default `sideOffset={6}`. |
+| `Tooltip.Positioner` | Floating UI positioner. No default `sideOffset`; the gap to the trigger is a 2-spacing-unit margin on `Tooltip.Popup`, and a `sideOffset` adds to it. |
 | `Tooltip.Popup` | The tooltip content. Dark background (`bg-foreground`), light text (`text-background`). `z-tooltips` (400). |
 | `Tooltip.Arrow` | A rotated square (`bg-foreground`) absolutely positioned at the popup edge. Aligned to the anchor via Base UI CSS variables. |
 | `Tooltip.Provider` | Shared delay configuration for grouped tooltips. |
