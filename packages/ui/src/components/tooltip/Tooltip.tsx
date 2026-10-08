@@ -58,10 +58,11 @@ function TooltipArrow({ className, ...props }: TooltipArrowProps) {
     <BaseTooltip.Arrow
       className={cn(
         "absolute size-2.5 rotate-45 bg-foreground",
-        "data-[side=top]:-bottom-[5px]",
-        "data-[side=bottom]:-top-[5px]",
-        "data-[side=left]:-right-[5px]",
-        "data-[side=right]:-left-[5px]",
+        // Half the arrow's size, so its centre sits on the popup edge at any --spacing.
+        "data-[side=top]:-bottom-1.25",
+        "data-[side=bottom]:-top-1.25",
+        "data-[side=left]:-right-1.25",
+        "data-[side=right]:-left-1.25",
         className,
       )}
       {...props}
