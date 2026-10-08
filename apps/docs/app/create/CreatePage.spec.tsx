@@ -21,7 +21,7 @@ afterEach(() => {
 
 const pageChrome = () =>
   [document.documentElement, document.body]
-    .map((el) => `${el.className}|${el.getAttribute("style")}`)
+    .map((el) => Array.from(el.attributes, (a) => `${a.name}=${a.value}`).join(" "))
     .join("||");
 
 it("applies the theme to the preview only, never to <html> or <body>", () => {
