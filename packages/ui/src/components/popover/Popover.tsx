@@ -5,6 +5,7 @@ import type { ComponentProps } from "react";
 import { cn } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
+import { usePortalContainer } from "../../lib/portal-container";
 import { useMotion, useReducedMotion } from "../../lib/use-motion";
 
 export type PopoverRootProps = ComponentProps<typeof BasePopover.Root>;
@@ -46,6 +47,7 @@ function PopoverContent({
   ...props
 }: PopoverContentProps) {
   const m = useMotion();
+  const container = usePortalContainer();
   const reduced = useReducedMotion();
   const useSpring = !!m && !reduced;
   const render = useSpring
@@ -58,7 +60,7 @@ function PopoverContent({
     : undefined;
 
   return (
-    <BasePopover.Portal keepMounted={useSpring}>
+    <BasePopover.Portal keepMounted={useSpring} container={container}>
       <BasePopover.Positioner
         className="z-dropdowns"
         sideOffset={sideOffset}
@@ -69,7 +71,7 @@ function PopoverContent({
         <BasePopover.Popup
           render={render}
           className={cn(
-            "rounded border border-border bg-popover p-4 text-popover-foreground shadow-md",
+            "rounded-md border border-border bg-popover p-4 text-popover-foreground shadow-md",
             !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
             !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
             !useSpring && "micro-interactions",
@@ -87,7 +89,9 @@ function PopoverArrow({ className, ...props }: PopoverArrowProps) {
 }
 
 function PopoverTitle({ className, ...props }: PopoverTitleProps) {
-  return <BasePopover.Title className={cn("font-semibold text-sm", className)} {...props} />;
+  return (
+    <BasePopover.Title className={cn("font-heading font-semibold text-sm", className)} {...props} />
+  );
 }
 
 function PopoverDescription({ className, ...props }: PopoverDescriptionProps) {

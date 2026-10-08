@@ -12,7 +12,7 @@ export function Textarea({ autoResize, className, ...props }: TextareaProps) {
   return (
     <textarea
       className={cn(
-        "flex min-h-ui-height w-full rounded border border-input bg-background px-3 py-2 text-sm",
+        "flex min-h-ui-height w-full rounded-md border border-input bg-background px-3 py-2 text-sm",
         "text-foreground placeholder:text-muted-foreground",
         // animate only colors to avoid resize slugishness
         "micro-interactions transition-colors!",

@@ -16,6 +16,8 @@ export type CalendarProps = {
   min?: Date;
   /** Maximum selectable date (inclusive). */
   max?: Date;
+  /** First day of the week, `0` = Sunday (default), `1` = Monday. */
+  weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
   className?: string;
 };
 
@@ -50,10 +52,10 @@ function startOfDay(date: Date): Date {
 
 type CalendarCell = { key: string; date: Date | null };
 
-function buildWeekRows(year: number, month: number): CalendarCell[][] {
+function buildWeekRows(year: number, month: number, weekStartsOn: number): CalendarCell[][] {
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
-  const startPad = firstDay.getDay(); // 0 = Sunday
+  const startPad = (firstDay.getDay() - weekStartsOn + 7) % 7;
   const totalDays = lastDay.getDate();
 
   const cells: CalendarCell[] = [];
@@ -92,6 +94,7 @@ export function Calendar({
   isDateDisabled,
   min,
   max,
+  weekStartsOn = 0,
   className,
 }: CalendarProps) {
   const isControlled = value !== undefined;
@@ -136,7 +139,11 @@ export function Calendar({
     });
   }, []);
 
-  const weekRows = useMemo(() => buildWeekRows(viewYear, viewMonth), [viewYear, viewMonth]);
+  const weekRows = useMemo(
+    () => buildWeekRows(viewYear, viewMonth, weekStartsOn),
+    [viewYear, viewMonth, weekStartsOn],
+  );
+  const dayNames = [...DAY_NAMES.slice(weekStartsOn), ...DAY_NAMES.slice(0, weekStartsOn)];
 
   const handleDayClick = useCallback(
     (date: Date) => {
@@ -166,7 +173,7 @@ export function Calendar({
           aria-label="Previous month"
           onClick={prevMonth}
           className={cn(
-            "inline-flex size-7 items-center justify-center rounded",
+            "inline-flex size-7 items-center justify-center rounded-sm",
             "micro-interactions text-foreground/70",
             "hover:bg-accent hover:text-accent-foreground",
             "focus-visible:outline-2 focus-visible:outline-ring",
@@ -193,7 +200,7 @@ export function Calendar({
           aria-label="Next month"
           onClick={nextMonth}
           className={cn(
-            "inline-flex size-7 items-center justify-center rounded",
+            "inline-flex size-7 items-center justify-center rounded-sm",
             "micro-interactions text-foreground/70",
             "hover:bg-accent hover:text-accent-foreground",
             "focus-visible:outline-2 focus-visible:outline-ring",
@@ -220,7 +227,7 @@ export function Calendar({
       <table className="border-collapse">
         <thead>
           <tr>
-            {DAY_NAMES.map((d) => (
+            {dayNames.map((d) => (
               <th
                 key={d}
                 scope="col"
@@ -266,7 +273,7 @@ export function Calendar({
                         disabled={disabled}
                         onClick={() => handleDayClick(date)}
                         className={cn(
-                          "inline-flex size-8 items-center justify-center rounded text-sm",
+                          "inline-flex size-8 items-center justify-center rounded-md text-sm",
                           "micro-interactions focus-visible:outline-2 focus-visible:outline-ring",
                           !isSelected && !isToday && "hover:bg-accent hover:text-accent-foreground",
                           isSelected && "bg-primary text-primary-foreground",

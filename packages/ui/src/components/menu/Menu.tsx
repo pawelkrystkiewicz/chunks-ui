@@ -5,6 +5,7 @@ import type { ComponentProps } from "react";
 import { cn } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
+import { usePortalContainer } from "../../lib/portal-container";
 import { useMotion, useReducedMotion } from "../../lib/use-motion";
 
 export type MenuRootProps = ComponentProps<typeof BaseMenu.Root>;
@@ -53,6 +54,7 @@ function MenuContent({
   ...props
 }: MenuContentProps) {
   const m = useMotion();
+  const container = usePortalContainer();
   const reduced = useReducedMotion();
   const useSpring = !!m && !reduced;
   const render = useSpring
@@ -65,7 +67,7 @@ function MenuContent({
     : undefined;
 
   return (
-    <BaseMenu.Portal keepMounted={useSpring}>
+    <BaseMenu.Portal keepMounted={useSpring} container={container}>
       <BaseMenu.Positioner
         className="z-dropdowns"
         sideOffset={sideOffset}
@@ -76,7 +78,7 @@ function MenuContent({
         <BaseMenu.Popup
           render={render}
           className={cn(
-            "min-w-[8rem] rounded border border-border bg-popover p-1 text-popover-foreground shadow-md",
+            "min-w-[8rem] rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md",
             !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
             !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
             !useSpring && "micro-interactions",

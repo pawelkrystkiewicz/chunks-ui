@@ -37,7 +37,7 @@ function EmptyMedia({ className, ...props }: EmptyMediaProps) {
 }
 
 function EmptyTitle({ className, ...props }: EmptyTitleProps) {
-  return <h3 className={cn("font-semibold text-lg", className)} {...props} />;
+  return <h3 className={cn("font-heading font-semibold text-lg", className)} {...props} />;
 }
 
 function EmptyDescription({ className, ...props }: EmptyDescriptionProps) {

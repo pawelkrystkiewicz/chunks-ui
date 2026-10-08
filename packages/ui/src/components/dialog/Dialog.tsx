@@ -5,6 +5,7 @@ import type { ComponentProps } from "react";
 import { cn } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
+import { usePortalContainer } from "../../lib/portal-container";
 import { useMotion, useReducedMotion } from "../../lib/use-motion";
 
 export type DialogRootProps = ComponentProps<typeof BaseDialog.Root>;
@@ -20,7 +21,10 @@ function DialogPortal({ keepMounted, ...props }: DialogPortalProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
   const useSpring = !!m && !reduced;
-  return <BaseDialog.Portal keepMounted={keepMounted ?? useSpring} {...props} />;
+  const container = usePortalContainer();
+  return (
+    <BaseDialog.Portal keepMounted={keepMounted ?? useSpring} container={container} {...props} />
+  );
 }
 
 function DialogBackdrop({ className, ...props }: DialogBackdropProps) {
@@ -81,7 +85,9 @@ function DialogPopup({ className, ...props }: DialogPopupProps) {
 }
 
 function DialogTitle({ className, ...props }: DialogTitleProps) {
-  return <BaseDialog.Title className={cn("font-semibold text-lg", className)} {...props} />;
+  return (
+    <BaseDialog.Title className={cn("font-heading font-semibold text-lg", className)} {...props} />
+  );
 }
 
 function DialogDescription({ className, ...props }: DialogDescriptionProps) {

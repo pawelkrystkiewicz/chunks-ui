@@ -4,7 +4,7 @@ import { BUTTON_ANIMATION_CLASSES } from "../shared";
 
 export const buttonVariants = cva(
   [
-    "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded",
+    "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md",
     "h-ui-height px-4 text-sm font-medium",
     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
     "disabled:pointer-events-none disabled:opacity-50",

@@ -30,7 +30,7 @@ function NumberFieldGroup({ className, ...props }: NumberFieldGroupProps) {
   return (
     <BaseNumberField.Group
       className={cn(
-        "flex items-center rounded border border-input bg-background",
+        "flex items-center rounded-md border border-input bg-background",
         "has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ring",
         "has-[input:disabled]:pointer-events-none has-[input:disabled]:opacity-50",
         className,

@@ -30,6 +30,15 @@ describe("Calendar", () => {
     }
   });
 
+  it("starts the week on Monday with weekStartsOn={1}", () => {
+    render(<Calendar value={MARCH_15_2026} weekStartsOn={1} />);
+    const headers = screen.getAllByRole("columnheader").map((th) => th.textContent);
+    expect(headers).toEqual(["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]);
+    // March 1, 2026 is a Sunday: last cell of the first row
+    const firstRow = screen.getAllByRole("row")[1];
+    expect(firstRow?.querySelectorAll("td")[6]).toHaveTextContent("1");
+  });
+
   it("calls onValueChange with the clicked date", async () => {
     const user = userEvent.setup();
     const onValueChange = vi.fn();

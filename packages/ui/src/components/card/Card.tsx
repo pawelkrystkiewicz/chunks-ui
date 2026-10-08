@@ -25,7 +25,10 @@ export type CardTitleProps = ComponentProps<"h3">;
 
 function CardTitle({ className, ...props }: CardTitleProps) {
   return (
-    <h3 className={cn("font-semibold text-lg leading-none tracking-tight", className)} {...props} />
+    <h3
+      className={cn("font-heading font-semibold text-lg leading-none tracking-tight", className)}
+      {...props}
+    />
   );
 }
 
