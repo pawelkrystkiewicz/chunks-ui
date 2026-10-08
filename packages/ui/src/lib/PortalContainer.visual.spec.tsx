@@ -7,6 +7,7 @@ import { Dialog } from "../components/dialog";
 import { Drawer } from "../components/drawer";
 import { Popover } from "../components/popover";
 import { Select } from "../components/select";
+import { Tooltip } from "../components/tooltip";
 import { PortalContainerProvider } from "./portal-container";
 
 // Lives in the browser (visual) suite, not jsdom: real clicks respect a modal's `inert` and the
@@ -107,5 +108,45 @@ describe("popups nested in a modal", () => {
     await page.getByRole("option", { name: "Banana" }).click();
     await expect.element(trigger).toHaveTextContent("banana");
     await expect.element(page.getByText("Pick a fruit")).toBeVisible();
+  });
+
+  it("keeps a Tooltip above the modal Dialog it opens from", async () => {
+    render(
+      <Dialog.Root defaultOpen>
+        <Dialog.Portal>
+          <Dialog.Backdrop />
+          <Dialog.Popup>
+            <Dialog.Title>Help</Dialog.Title>
+            <Tooltip.Root defaultOpen>
+              <Tooltip.Trigger>Hover me</Tooltip.Trigger>
+              <Tooltip.Portal>
+                <Tooltip.Positioner>
+                  <Tooltip.Popup>Tooltip text</Tooltip.Popup>
+                </Tooltip.Positioner>
+              </Tooltip.Portal>
+            </Tooltip.Root>
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>,
+    );
+    await expect.element(page.getByText("Tooltip text")).toBeVisible();
+    const popup = page.getByText("Tooltip text").element();
+    const dialog = page.getByRole("dialog").element();
+    // The tooltip must sit over the dialog (and be positioned), or the stacking check proves nothing
+    await expect
+      .poll(() => {
+        const box = popup.getBoundingClientRect();
+        const dialogBox = dialog.getBoundingClientRect();
+        const x = box.left + box.width / 2;
+        const y = box.top + box.height / 2;
+        return (
+          x > dialogBox.left && x < dialogBox.right && y > dialogBox.top && y < dialogBox.bottom
+        );
+      })
+      .toBe(true);
+    const box = popup.getBoundingClientRect();
+    const x = box.left + box.width / 2;
+    const y = box.top + box.height / 2;
+    expect(popup.contains(document.elementFromPoint(x, y))).toBe(true);
   });
 });
