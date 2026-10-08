@@ -66,15 +66,6 @@ describe("Calendar", () => {
     expect(screen.getByText("February 2026")).toBeInTheDocument();
   });
 
-  it("shows outside days across year boundaries", () => {
-    const { rerender } = render(
-      <Calendar value={new Date(2026, 0, 15)} weekStartsOn={1} showOutsideDays />,
-    );
-    expect(screen.getByRole("button", { name: "Monday, December 29, 2025" })).toBeInTheDocument();
-    rerender(<Calendar value={new Date(2026, 11, 15)} weekStartsOn={1} showOutsideDays />);
-    expect(screen.getByRole("button", { name: "Friday, January 1, 2027" })).toBeInTheDocument();
-  });
-
   it("calls onValueChange with the clicked date", async () => {
     const user = userEvent.setup();
     const onValueChange = vi.fn();

@@ -69,23 +69,16 @@ function buildWeekRows(
 
   for (let i = 0; i < startPad; i++) {
     const date = new Date(year, month, i - startPad + 1);
-    cells.push(
-      showOutsideDays ? { key: date.toISOString(), date } : { key: `before-${i}`, date: null },
-    );
+    cells.push({ key: date.toISOString(), date: showOutsideDays ? date : null });
   }
   for (let d = 1; d <= totalDays; d++) {
     const date = new Date(year, month, d);
     cells.push({ key: date.toISOString(), date });
   }
   // Pad to complete the last row
-  let afterIndex = 0;
-  while (cells.length % 7 !== 0) {
-    const date = new Date(year, month + 1, ++afterIndex);
-    cells.push(
-      showOutsideDays
-        ? { key: date.toISOString(), date }
-        : { key: `after-${afterIndex}`, date: null },
-    );
+  for (let d = 1; cells.length % 7 !== 0; d++) {
+    const date = new Date(year, month + 1, d);
+    cells.push({ key: date.toISOString(), date: showOutsideDays ? date : null });
   }
 
   const rows: CalendarCell[][] = [];
