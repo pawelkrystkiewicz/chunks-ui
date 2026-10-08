@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -108,5 +108,61 @@ describe("DatePicker", () => {
         rules: { "aria-command-name": { enabled: false } },
       }),
     ).toHaveNoViolations();
+  });
+});
+
+describe("DatePicker keyboard", () => {
+  it.each([
+    { stop: "the selected day", defaultValue: new Date(2026, 2, 15), expected: MARCH_15_LABEL },
+    {
+      stop: "today when nothing is selected",
+      defaultValue: null,
+      expected: "Tuesday, March 10, 2026",
+    },
+  ])("focuses $stop when opened", async ({ defaultValue, expected }) => {
+    const user = userEvent.setup();
+    render(<DatePicker defaultValue={defaultValue} />);
+    const trigger = screen.getByRole("button");
+    for (const open of [() => user.click(trigger), () => user.keyboard("{Enter}")]) {
+      await open();
+      await waitFor(() => expect(screen.getByRole("button", { name: expected })).toHaveFocus());
+      await user.keyboard("{Escape}");
+      await waitFor(() => expect(trigger).toHaveFocus());
+    }
+  });
+
+  it("moves with arrow keys, and Enter selects, closes and refocuses the trigger", async () => {
+    const user = userEvent.setup();
+    const onValueChange = vi.fn();
+    render(<DatePicker defaultValue={new Date(2026, 2, 15)} onValueChange={onValueChange} />);
+    await user.tab();
+    await user.keyboard("{Enter}");
+    await waitFor(() => expect(screen.getByRole("button", { name: MARCH_15_LABEL })).toHaveFocus());
+    await user.keyboard("{ArrowRight}{PageDown}");
+    expect(screen.getByRole("button", { name: "Thursday, April 16, 2026" })).toHaveFocus();
+    await user.keyboard("{Enter}");
+    expect(onValueChange).toHaveBeenCalledOnce();
+    expect(onValueChange.mock.calls[0]?.[0]).toEqual(new Date(2026, 3, 16));
+    expect(screen.queryByRole("grid")).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "April 16, 2026" })).toHaveFocus(),
+    );
+  });
+
+  it("closes on Escape without selecting and refocuses the trigger", async () => {
+    const user = userEvent.setup();
+    const onValueChange = vi.fn();
+    render(<DatePicker defaultValue={new Date(2026, 2, 15)} onValueChange={onValueChange} />);
+    const trigger = screen.getByRole("button", { name: "March 15, 2026" });
+    await user.click(trigger);
+    await waitFor(() => expect(screen.getByRole("button", { name: MARCH_15_LABEL })).toHaveFocus());
+    await user.keyboard("{ArrowDown}");
+    expect(screen.getByRole("button", { name: "Sunday, March 22, 2026" })).toHaveFocus();
+    await user.keyboard("{Escape}");
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    await waitFor(() => expect(trigger).toHaveFocus());
+    expect(screen.queryByRole("grid")).not.toBeInTheDocument();
+    expect(onValueChange).not.toHaveBeenCalled();
+    expect(trigger).toHaveTextContent("March 15, 2026");
   });
 });
