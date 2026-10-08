@@ -135,7 +135,7 @@ describe("PortalContainerProvider", () => {
   });
 
   it.each(cases)("renders $name into document.body without a provider", async (c) => {
-    const { container } = render(<>{c.ui}</>);
+    const { container } = render(c.ui);
     await openPopup(c);
     const popup = await findPopup(c.name);
     expect(container).not.toContainElement(popup);
