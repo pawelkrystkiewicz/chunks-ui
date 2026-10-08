@@ -39,6 +39,15 @@ describe("Calendar", () => {
     expect(firstRow?.querySelectorAll("td")[6]).toHaveTextContent("1");
   });
 
+  it("fills padding cells with neighbouring-month days only when showOutsideDays is set", () => {
+    const feb23 = "Monday, February 23, 2026";
+    const { rerender } = render(<Calendar value={MARCH_15_2026} weekStartsOn={1} />);
+    expect(screen.queryByRole("button", { name: feb23 })).not.toBeInTheDocument();
+    rerender(<Calendar value={MARCH_15_2026} weekStartsOn={1} showOutsideDays />);
+    expect(screen.getByRole("button", { name: feb23 })).toHaveClass("opacity-50");
+    expect(screen.getByRole("button", { name: "Saturday, April 4, 2026" })).toBeInTheDocument();
+  });
+
   it("calls onValueChange with the clicked date", async () => {
     const user = userEvent.setup();
     const onValueChange = vi.fn();

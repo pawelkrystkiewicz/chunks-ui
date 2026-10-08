@@ -22,7 +22,13 @@ export function CalendarCard() {
   return (
     <PreviewCard className="gap-4 p-5">
       {mounted ? (
-        <Calendar value={date} onValueChange={setDate} weekStartsOn={1} className="mx-auto" />
+        <Calendar
+          value={date}
+          onValueChange={setDate}
+          weekStartsOn={1}
+          showOutsideDays
+          className="mx-auto"
+        />
       ) : (
         <div aria-hidden="true" className="mx-auto h-[312px] w-[276px]" />
       )}

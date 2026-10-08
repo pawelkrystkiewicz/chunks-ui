@@ -18,6 +18,8 @@ export type CalendarProps = {
   max?: Date;
   /** First day of the week, `0` = Sunday (default), `1` = Monday. */
   weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
+  /** Fill leading and trailing cells with dimmed days from the neighbouring months. */
+  showOutsideDays?: boolean;
   className?: string;
 };
 
@@ -52,7 +54,12 @@ function startOfDay(date: Date): Date {
 
 type CalendarCell = { key: string; date: Date | null };
 
-function buildWeekRows(year: number, month: number, weekStartsOn: number): CalendarCell[][] {
+function buildWeekRows(
+  year: number,
+  month: number,
+  weekStartsOn: number,
+  showOutsideDays: boolean,
+): CalendarCell[][] {
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
   const startPad = (firstDay.getDay() - weekStartsOn + 7) % 7;
@@ -61,7 +68,10 @@ function buildWeekRows(year: number, month: number, weekStartsOn: number): Calen
   const cells: CalendarCell[] = [];
 
   for (let i = 0; i < startPad; i++) {
-    cells.push({ key: `before-${i}`, date: null });
+    const date = new Date(year, month, i - startPad + 1);
+    cells.push(
+      showOutsideDays ? { key: date.toISOString(), date } : { key: `before-${i}`, date: null },
+    );
   }
   for (let d = 1; d <= totalDays; d++) {
     const date = new Date(year, month, d);
@@ -70,7 +80,12 @@ function buildWeekRows(year: number, month: number, weekStartsOn: number): Calen
   // Pad to complete the last row
   let afterIndex = 0;
   while (cells.length % 7 !== 0) {
-    cells.push({ key: `after-${afterIndex++}`, date: null });
+    const date = new Date(year, month + 1, ++afterIndex);
+    cells.push(
+      showOutsideDays
+        ? { key: date.toISOString(), date }
+        : { key: `after-${afterIndex}`, date: null },
+    );
   }
 
   const rows: CalendarCell[][] = [];
@@ -95,6 +110,7 @@ export function Calendar({
   min,
   max,
   weekStartsOn = 0,
+  showOutsideDays = false,
   className,
 }: CalendarProps) {
   const isControlled = value !== undefined;
@@ -140,8 +156,8 @@ export function Calendar({
   }, []);
 
   const weekRows = useMemo(
-    () => buildWeekRows(viewYear, viewMonth, weekStartsOn),
-    [viewYear, viewMonth, weekStartsOn],
+    () => buildWeekRows(viewYear, viewMonth, weekStartsOn, showOutsideDays),
+    [viewYear, viewMonth, weekStartsOn, showOutsideDays],
   );
   const dayNames = [...DAY_NAMES.slice(weekStartsOn), ...DAY_NAMES.slice(0, weekStartsOn)];
 
