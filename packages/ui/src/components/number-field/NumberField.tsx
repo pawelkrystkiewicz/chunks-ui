@@ -44,7 +44,7 @@ function NumberFieldInput({ className, ...props }: NumberFieldInputProps) {
   return (
     <BaseNumberField.Input
       className={cn(
-        "h-9 w-full min-w-16 flex-1 bg-transparent px-3 text-center text-foreground text-sm tabular-nums",
+        "h-ui-height w-full min-w-16 flex-1 bg-transparent px-3 text-center text-foreground text-sm tabular-nums",
         "placeholder:text-muted-foreground",
         "focus-visible:outline-none",
         "disabled:pointer-events-none",
@@ -59,7 +59,7 @@ function NumberFieldIncrement({ className, ...props }: NumberFieldIncrementProps
   return (
     <BaseNumberField.Increment
       className={cn(
-        "micro-interactions flex h-9 items-center justify-center px-2 text-muted-foreground hover:text-foreground",
+        "micro-interactions flex h-ui-height items-center justify-center px-2 text-muted-foreground hover:text-foreground",
         "border-input border-l",
         "disabled:pointer-events-none disabled:opacity-50",
         "data-[disabled]:opacity-50",
@@ -88,7 +88,7 @@ function NumberFieldDecrement({ className, ...props }: NumberFieldDecrementProps
   return (
     <BaseNumberField.Decrement
       className={cn(
-        "micro-interactions flex h-9 items-center justify-center px-2 text-muted-foreground hover:text-foreground",
+        "micro-interactions flex h-ui-height items-center justify-center px-2 text-muted-foreground hover:text-foreground",
         "border-input border-r",
         "disabled:pointer-events-none disabled:opacity-50",
         "data-[disabled]:opacity-50",
