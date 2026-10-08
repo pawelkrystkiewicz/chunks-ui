@@ -6,6 +6,7 @@ import {
   loadTheme,
   PRESETS,
   palette,
+  previewColumnWidth,
   sameTheme,
   type Theme,
   toScopeStyle,
@@ -61,6 +62,33 @@ describe("toScopeStyle", () => {
     expect(style["--spacing"]).toBe("4.4px");
     expect(style["--text-sm"]).toBe("16px");
     expect(style["--text-xs"]).toBe("13.7143px");
+  });
+});
+
+describe("previewColumnWidth", () => {
+  it("fits the Calendar card at default tokens", () => {
+    expect(previewColumnWidth(DEFAULT_THEME)).toBe(286);
+  });
+
+  it("keeps three default columns in the 979px preview of a 1440px window", () => {
+    const gap = 20; // gap-5 at default spacing
+    expect(3 * previewColumnWidth(DEFAULT_THEME) + 2 * gap).toBeLessThanOrEqual(979);
+  });
+
+  it("grows with Spacing and with Base size, following the larger of the two", () => {
+    expect(previewColumnWidth({ spacing: 1.25, fontSize: 14 })).toBe(357);
+    expect(previewColumnWidth({ spacing: 1, fontSize: 17 })).toBe(347);
+    expect(previewColumnWidth({ spacing: 1.25, fontSize: 17 })).toBe(357);
+    expect(previewColumnWidth({ spacing: 1.2, fontSize: 17 })).toBe(347);
+  });
+
+  it("shrinks when both knobs go below their defaults", () => {
+    expect(previewColumnWidth({ spacing: 0.75, fontSize: 12 })).toBe(246);
+  });
+
+  it("ignores control height", () => {
+    const tall: Theme = { ...DEFAULT_THEME, height: 44 };
+    expect(previewColumnWidth(tall)).toBe(286);
   });
 });
 

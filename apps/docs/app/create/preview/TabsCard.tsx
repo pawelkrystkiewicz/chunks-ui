@@ -14,7 +14,7 @@ const ACTIVITY = [
 ];
 
 const tabClass =
-  "h-[calc(var(--spacing-ui-height)-6px)] flex-1 rounded-md py-0 text-[0.9286em] data-active:bg-background data-active:shadow-sm";
+  "h-[calc(var(--spacing-ui-height)-6px)] flex-1 rounded-md px-3 py-0 text-[0.9286em] data-active:bg-background data-active:shadow-sm";
 
 export function TabsCard() {
   return (

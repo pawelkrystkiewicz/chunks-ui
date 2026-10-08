@@ -20,17 +20,19 @@ export function CalendarCard() {
     : "—";
 
   return (
-    <PreviewCard className="gap-4 p-5">
+    // No inner Calendar padding and a 16px side inset keep the card at 286px, so the
+    // default theme fits the narrow masonry columns (see `previewColumnWidth`).
+    <PreviewCard className="gap-4 px-4 py-5">
       {mounted ? (
         <Calendar
           value={date}
           onValueChange={setDate}
           weekStartsOn={1}
           showOutsideDays
-          className="mx-auto"
+          className="mx-auto p-0"
         />
       ) : (
-        <div aria-hidden="true" className="mx-auto h-[312px] w-[276px]" />
+        <div aria-hidden="true" className="mx-auto h-[288px] w-[252px]" />
       )}
       <div className="flex items-center justify-between gap-2 border-border border-t pt-3">
         <span className="text-[0.9286em] text-muted-foreground">
