@@ -48,8 +48,13 @@ function DrawerPortal({ keepMounted, className, children, ...props }: DrawerPort
     <BaseDialog.Portal
       keepMounted={keepMounted ?? useSpring}
       container={container}
-      // Popups opened inside render into this portal; lift them to its layer so DOM order puts them on top
-      className={cn("[&_.z-dropdowns]:z-drawers [&_.z-tooltips]:z-drawers", className)}
+      // Popups portalled straight into this one (portal > node > positioner) sit above it; tooltips above dropdowns
+      className={(state) =>
+        cn(
+          "[&>*>.z-dropdowns]:z-[calc(var(--z-index-drawers)+1)] [&>*>.z-tooltips]:z-[calc(var(--z-index-drawers)+2)]",
+          typeof className === "function" ? className(state) : className,
+        )
+      }
       {...props}
     >
       <PortalContainerProvider value={undefined}>{children}</PortalContainerProvider>
