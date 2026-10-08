@@ -6,7 +6,7 @@ import type { ComponentProps } from "react";
 import { cn } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
-import { usePortalContainer } from "../../lib/portal-container";
+import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
 import { useMotion, useReducedMotion } from "../../lib/use-motion";
 import { drawerPopupVariants } from "./Drawer.Variants";
 
@@ -39,13 +39,21 @@ const motionPositionClasses = {
   bottom: "inset-x-0 bottom-0 h-auto border-t rounded-t-xl",
 } as const;
 
-function DrawerPortal({ keepMounted, ...props }: DrawerPortalProps) {
+function DrawerPortal({ keepMounted, className, children, ...props }: DrawerPortalProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
   const useSpring = !!m && !reduced;
   const container = usePortalContainer();
   return (
-    <BaseDialog.Portal keepMounted={keepMounted ?? useSpring} container={container} {...props} />
+    <BaseDialog.Portal
+      keepMounted={keepMounted ?? useSpring}
+      container={container}
+      // Popups opened inside render into this portal; lift them to its layer so DOM order puts them on top
+      className={cn("[&_.z-dropdowns]:z-drawers [&_.z-tooltips]:z-drawers", className)}
+      {...props}
+    >
+      <PortalContainerProvider value={undefined}>{children}</PortalContainerProvider>
+    </BaseDialog.Portal>
   );
 }
 

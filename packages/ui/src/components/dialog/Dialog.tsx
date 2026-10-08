@@ -5,7 +5,7 @@ import type { ComponentProps } from "react";
 import { cn } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
-import { usePortalContainer } from "../../lib/portal-container";
+import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
 import { useMotion, useReducedMotion } from "../../lib/use-motion";
 
 export type DialogRootProps = ComponentProps<typeof BaseDialog.Root>;
@@ -17,13 +17,21 @@ export type DialogTitleProps = ComponentProps<typeof BaseDialog.Title>;
 export type DialogDescriptionProps = ComponentProps<typeof BaseDialog.Description>;
 export type DialogCloseProps = ComponentProps<typeof BaseDialog.Close>;
 
-function DialogPortal({ keepMounted, ...props }: DialogPortalProps) {
+function DialogPortal({ keepMounted, className, children, ...props }: DialogPortalProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
   const useSpring = !!m && !reduced;
   const container = usePortalContainer();
   return (
-    <BaseDialog.Portal keepMounted={keepMounted ?? useSpring} container={container} {...props} />
+    <BaseDialog.Portal
+      keepMounted={keepMounted ?? useSpring}
+      container={container}
+      // Popups opened inside render into this portal; lift them to its layer so DOM order puts them on top
+      className={cn("[&_.z-dropdowns]:z-modals [&_.z-tooltips]:z-modals", className)}
+      {...props}
+    >
+      <PortalContainerProvider value={undefined}>{children}</PortalContainerProvider>
+    </BaseDialog.Portal>
   );
 }
 
