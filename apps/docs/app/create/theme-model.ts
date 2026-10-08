@@ -347,22 +347,42 @@ export function shuffle(): Omit<Theme, "mode" | "fontSize"> {
 
 const STORE_KEY = "chunks-create-theme-v1";
 
+const ENUMS: Record<string, readonly string[]> = {
+  mode: ["light", "dark"],
+  shadow: ["none", "subtle", "lifted"],
+  chart: ["default", "mono", "vivid"],
+  base: BASES.map((b) => b.id),
+};
+
+/** The sidebar's slider ranges. */
+const RANGES: Record<string, [number, number]> = {
+  fontSize: [12, 17],
+  radius: [0, 20],
+  height: [28, 44],
+  spacing: [0.75, 1.25],
+};
+
 export function loadTheme(): Theme | null {
   try {
     const s = JSON.parse(localStorage.getItem(STORE_KEY) ?? "null");
     if (!s || typeof s !== "object") return null;
-    // Keep a stored field only when its type matches the default's, so an
-    // older or hand-edited value can't crash the render.
+    // Keep a stored field only when it is valid: enums must be in their allowed
+    // set, numbers finite (clamped to the sidebar range), primary all-finite.
+    // Anything else falls back to the default, so stale or hand-edited storage
+    // can't crash the render.
     const out: Record<string, unknown> = { ...DEFAULT_THEME };
-    for (const [k, def] of Object.entries(DEFAULT_THEME)) {
-      if (k === "primary") {
-        const p = s.primary;
-        if (p && ["l", "c", "h"].every((n) => typeof p[n] === "number")) {
-          out.primary = { l: p.l, c: p.c, h: p.h };
-        }
-      } else if (typeof s[k] === typeof def) {
-        out[k] = s[k];
-      }
+    const p = s.primary;
+    if (p && ["l", "c", "h"].every((n) => Number.isFinite(p[n]))) {
+      out.primary = { l: p.l, c: p.c, h: p.h };
+    }
+    for (const [k, allowed] of Object.entries(ENUMS)) {
+      if (allowed.includes(s[k])) out[k] = s[k];
+    }
+    for (const [k, [min, max]] of Object.entries(RANGES)) {
+      if (Number.isFinite(s[k])) out[k] = Math.min(max, Math.max(min, s[k]));
+    }
+    for (const k of ["fontHeading", "fontBody"] as const) {
+      if (typeof s[k] === "string") out[k] = s[k];
     }
     return out as Theme;
   } catch {

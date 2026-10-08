@@ -116,4 +116,20 @@ describe("loadTheme", () => {
     stored({ ...DEFAULT_THEME, extra: 1 });
     expect(loadTheme()).toEqual(DEFAULT_THEME);
   });
+
+  it("falls back to defaults for values outside the allowed sets", () => {
+    for (const bad of [{ shadow: "x" }, { mode: "x" }, { base: "x" }, { chart: "x" }]) {
+      stored({ ...DEFAULT_THEME, ...bad });
+      const t = loadTheme() as Theme;
+      expect(t).toEqual(DEFAULT_THEME);
+      expect(() => toScopeStyle(t)).not.toThrow();
+    }
+  });
+
+  it("clamps out-of-range numbers and rejects non-finite ones", () => {
+    stored({ ...DEFAULT_THEME, fontSize: 99, radius: -5, height: 1, spacing: 9 });
+    expect(loadTheme()).toMatchObject({ fontSize: 17, radius: 0, height: 28, spacing: 1.25 });
+    stored('{"fontSize":1e999,"radius":null,"primary":{"l":1e999,"c":0,"h":0}}');
+    expect(loadTheme()).toEqual(DEFAULT_THEME);
+  });
 });
