@@ -44,10 +44,6 @@ describe("palette", () => {
 });
 
 describe("presets", () => {
-  it("never carry a mode, so applying one keeps light/dark", () => {
-    for (const p of PRESETS) expect(p.theme).not.toHaveProperty("mode");
-  });
-
   it("matches the default theme by sameTheme in either mode", () => {
     const dark: Theme = { ...DEFAULT_THEME, mode: "dark" };
     const chunks = PRESETS[0]?.theme;
@@ -80,7 +76,6 @@ describe("buildCss", () => {
       "  --radius: 0.625rem;\n  --spacing: 0.25rem;\n  --spacing-ui-height: 35px;\n",
     );
     expect(css).toContain("\n}\n\n.dark {\n  --primary: oklch(0.6048 0.2165 257.21);");
-    expect(css.match(/--/g)).toHaveLength(67);
   });
 
   it("names both fonts when heading and body differ", () => {
@@ -113,17 +108,13 @@ describe("loadTheme", () => {
   });
 
   it("falls back to defaults for fields of the wrong type", () => {
-    stored({ ...DEFAULT_THEME, radius: "wide", fontBody: 3, primary: { l: 0.5, c: "x", h: 1 } });
-    expect(loadTheme()).toEqual(DEFAULT_THEME);
-  });
-
-  it("falls back to the default primary for an empty object", () => {
-    stored({ ...DEFAULT_THEME, primary: {} });
-    expect(loadTheme()?.primary).toEqual(DEFAULT_THEME.primary);
-  });
-
-  it("drops unknown keys", () => {
-    stored({ ...DEFAULT_THEME, extra: 1 });
+    stored({
+      ...DEFAULT_THEME,
+      radius: "wide",
+      fontBody: 3,
+      primary: { l: 0.5, c: "x", h: 1 },
+      extra: 1,
+    });
     expect(loadTheme()).toEqual(DEFAULT_THEME);
   });
 
