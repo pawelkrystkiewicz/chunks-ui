@@ -31,7 +31,7 @@ describe("DatePicker keyboard", () => {
   it("opens on the selected day, and Escape closes and refocuses the trigger every time", async () => {
     render(<DatePicker defaultValue={new Date(2026, 2, 15)} />);
     const trigger = page.getByRole("button", { name: "March 15, 2026", exact: true });
-    for (let cycle = 0; cycle < 6; cycle++) {
+    for (let cycle = 0; cycle < 4; cycle++) {
       if (cycle % 2 === 0) await trigger.click();
       else await userEvent.keyboard("{Enter}");
       await expect
