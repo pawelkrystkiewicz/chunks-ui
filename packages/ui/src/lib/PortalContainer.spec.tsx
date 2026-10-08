@@ -25,12 +25,7 @@ afterEach(() => {
   for (const el of containers.splice(0)) el.remove();
 });
 
-type Case = {
-  name: string;
-  ui: ReactNode;
-  /** Trigger to click before the popup exists (for components without an `open` prop). */
-  open?: string;
-};
+type Case = { name: string; ui: ReactNode };
 
 const cases: Case[] = [
   {
@@ -120,33 +115,29 @@ const cases: Case[] = [
       </Tooltip.Root>
     ),
   },
-  {
-    name: "DatePicker",
-    ui: <DatePicker placeholder="Pick" />,
-    open: "Pick",
-  },
 ];
-
-// DatePicker renders its popup internally, so it has no test id to target.
-const findPopup = (name: string) =>
-  name === "DatePicker" ? screen.findByRole("dialog") : screen.findByTestId("popup");
-
-async function openPopup({ open }: Case) {
-  if (open) await userEvent.click(screen.getByRole("button", { name: open }));
-}
 
 describe("PortalContainerProvider", () => {
   it.each(cases)("renders $name into the provided container", async (c) => {
     const container = makeContainer();
     render(<PortalContainerProvider value={container}>{c.ui}</PortalContainerProvider>);
-    await openPopup(c);
-    expect(container).toContainElement(await findPopup(c.name));
+    expect(container).toContainElement(await screen.findByTestId("popup"));
   });
 
-  it.each(cases)("renders $name into document.body without a provider", async (c) => {
-    const { container } = render(c.ui);
-    await openPopup(c);
-    const popup = await findPopup(c.name);
+  it("renders DatePicker into the provided container", async () => {
+    const container = makeContainer();
+    render(
+      <PortalContainerProvider value={container}>
+        <DatePicker placeholder="Pick" />
+      </PortalContainerProvider>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Pick" }));
+    expect(container).toContainElement(await screen.findByRole("dialog"));
+  });
+
+  it("renders into document.body without a provider", async () => {
+    const { container } = render(cases[0]?.ui);
+    const popup = await screen.findByTestId("popup");
     expect(container).not.toContainElement(popup);
     expect(document.body).toContainElement(popup);
   });
@@ -165,6 +156,6 @@ describe("PortalContainerProvider", () => {
     expect(screen.queryByTestId("popup")).not.toBeInTheDocument();
 
     rerender(<PortalContainerProvider value={container}>{popover}</PortalContainerProvider>);
-    expect(container).toContainElement(await findPopup("Popover"));
+    expect(container).toContainElement(await screen.findByTestId("popup"));
   });
 });
