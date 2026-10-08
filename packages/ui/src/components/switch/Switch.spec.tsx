@@ -50,4 +50,18 @@ describe("Switch", () => {
       expect(screen.getByTestId("thumb")).not.toHaveClass("micro-interactions");
     });
   });
+
+  it("moves the Motion thumb by its own width, not a fixed px offset", async () => {
+    // A px offset is only right at the default --spacing. Geometry at other spacings is
+    // covered in SwitchGeometry.visual.spec.tsx.
+    render(
+      <Switch.Root defaultChecked>
+        <Switch.Thumb data-testid="thumb" />
+      </Switch.Root>,
+    );
+    await waitFor(() => {
+      expect(screen.getByTestId("thumb")).not.toHaveClass("micro-interactions");
+    });
+    expect(screen.getByTestId("thumb").style.transform).toBe("translateX(100%)");
+  });
 });
