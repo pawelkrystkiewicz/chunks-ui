@@ -12,7 +12,18 @@ import { Select } from "../components/select";
 import { Tooltip } from "../components/tooltip";
 import { PortalContainerProvider } from "./portal-container";
 
-afterEach(cleanup);
+const containers: HTMLElement[] = [];
+const makeContainer = () => {
+  const el = document.createElement("div");
+  document.body.appendChild(el);
+  containers.push(el);
+  return el;
+};
+
+afterEach(() => {
+  cleanup();
+  for (const el of containers.splice(0)) el.remove();
+});
 
 type Case = {
   name: string;
@@ -126,12 +137,10 @@ async function openPopup({ open }: Case) {
 
 describe("PortalContainerProvider", () => {
   it.each(cases)("renders $name into the provided container", async (c) => {
-    const container = document.createElement("div");
-    document.body.appendChild(container);
+    const container = makeContainer();
     render(<PortalContainerProvider value={container}>{c.ui}</PortalContainerProvider>);
     await openPopup(c);
     expect(container).toContainElement(await findPopup(c.name));
-    container.remove();
   });
 
   it.each(cases)("renders $name into document.body without a provider", async (c) => {
@@ -143,8 +152,7 @@ describe("PortalContainerProvider", () => {
   });
 
   it("holds popups back while the container is null, then renders inside it", async () => {
-    const container = document.createElement("div");
-    document.body.appendChild(container);
+    const container = makeContainer();
     const popover = (
       <Popover.Root open>
         <Popover.Trigger>Open</Popover.Trigger>
@@ -158,6 +166,5 @@ describe("PortalContainerProvider", () => {
 
     rerender(<PortalContainerProvider value={container}>{popover}</PortalContainerProvider>);
     expect(container).toContainElement(await findPopup("Popover"));
-    container.remove();
   });
 });
