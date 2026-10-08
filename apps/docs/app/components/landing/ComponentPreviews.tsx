@@ -1,10 +1,10 @@
-import { cn } from "chunks-ui";
 import { Check, ChevronDown, CircleCheck, X } from "lucide-react";
 
 // Static mocks of each component category. They sit inside a card link, so they are
-// pictures, not live (interactive) components.
+// pictures, not live (interactive) components. Server components: classes are joined as plain
+// strings, so no two pieces set the same property.
 
-const BTN = "flex h-8 items-center justify-center rounded-lg px-3.5 font-medium text-[12.5px]";
+const BTN = "flex items-center justify-center rounded-lg font-medium text-[12.5px]";
 const FIELD =
   "flex h-[35px] items-center rounded-lg border border-input bg-background outline-2 outline-ring outline-offset-2";
 
@@ -22,13 +22,11 @@ function Segmented({
       {items.map((item, i) => (
         <span
           key={item}
-          className={cn(
-            "flex items-center justify-center font-medium text-[12px]",
+          className={`flex items-center justify-center font-medium text-[12px] ${className} ${
             i === active
               ? "rounded-md bg-background shadow-[0_1px_2px_oklch(0_0_0/.08)]"
-              : "text-muted-foreground",
-            className,
-          )}
+              : "text-muted-foreground"
+          }`}
         >
           {item}
         </span>
@@ -42,7 +40,7 @@ export function InputsPreview() {
     <div className="flex w-[min(100%,236px)] flex-col gap-3">
       <div className="flex flex-col gap-1.5">
         <span className="font-medium text-[12px]">Email</span>
-        <div className={cn(FIELD, "gap-2 pr-2 pl-3")}>
+        <div className={`${FIELD} gap-2 pr-2 pl-3`}>
           <span className="min-w-0 flex-1 text-[13px]">ada@chunk.dev</span>
           <span className="flex size-[18px] items-center justify-center rounded-full bg-muted text-muted-foreground">
             <X className="size-[11px]" strokeWidth={3} />
@@ -50,8 +48,8 @@ export function InputsPreview() {
         </div>
       </div>
       <div className="flex gap-2">
-        <span className={cn(BTN, "flex-1 bg-primary text-primary-foreground")}>Save</span>
-        <span className={cn(BTN, "border border-border")}>Cancel</span>
+        <span className={`${BTN} h-8 flex-1 bg-primary px-3.5 text-primary-foreground`}>Save</span>
+        <span className={`${BTN} h-8 border border-border px-3.5`}>Cancel</span>
       </div>
     </div>
   );
@@ -85,7 +83,7 @@ export function SelectionPreview() {
 export function PickersPreview() {
   return (
     <div className="flex w-[min(100%,216px)] flex-col gap-1.5">
-      <div className={cn(FIELD, "justify-between pr-2.5 pl-3")}>
+      <div className={`${FIELD} justify-between pr-2.5 pl-3`}>
         <span className="text-[13px]">Next.js</span>
         <ChevronDown className="size-3.5 text-muted-foreground" />
       </div>
@@ -93,10 +91,7 @@ export function PickersPreview() {
         {["Next.js", "Remix", "Astro"].map((item, i) => (
           <div
             key={item}
-            className={cn(
-              "flex h-7 items-center justify-between rounded-md px-2 text-[12.5px]",
-              i === 0 && "bg-accent",
-            )}
+            className={`flex h-7 items-center justify-between rounded-md px-2 text-[12.5px] ${i === 0 ? "bg-accent" : ""}`}
           >
             <span>{item}</span>
             {i === 0 && <Check className="size-3.5" strokeWidth={2.5} />}
@@ -118,8 +113,8 @@ export function OverlaysPreview() {
           <span className="text-muted-foreground text-[12px]">This removes 14 deployments.</span>
         </div>
         <div className="flex justify-end gap-1.5">
-          <span className={cn(BTN, "h-[30px] border border-border px-3")}>Cancel</span>
-          <span className={cn(BTN, "h-[30px] bg-destructive px-3 text-destructive-foreground")}>
+          <span className={`${BTN} h-[30px] border border-border px-3`}>Cancel</span>
+          <span className={`${BTN} h-[30px] bg-destructive px-3 text-destructive-foreground`}>
             Delete
           </span>
         </div>
@@ -167,13 +162,13 @@ export function FeedbackPreview() {
       </div>
       <div className="flex items-center justify-between gap-2">
         <span className="flex">
-          <span className={cn(AVATAR, "bg-primary/16 text-primary")}>AK</span>
-          <span className={cn(AVATAR, "-ml-[7px] bg-muted text-muted-foreground")}>BR</span>
-          <span className={cn(AVATAR, "-ml-[7px] bg-muted text-muted-foreground")}>+3</span>
+          <span className={`${AVATAR} bg-primary/16 text-primary`}>AK</span>
+          <span className={`${AVATAR} -ml-[7px] bg-muted text-muted-foreground`}>BR</span>
+          <span className={`${AVATAR} -ml-[7px] bg-muted text-muted-foreground`}>+3</span>
         </span>
         <span className="flex gap-1">
-          <span className={cn(CHIP, "border-primary/30 bg-primary/10 text-primary")}>New</span>
-          <span className={cn(CHIP, "border-success/30 bg-success/12 text-[oklch(55%_.14_166)]")}>
+          <span className={`${CHIP} border-primary/30 bg-primary/10 text-primary`}>New</span>
+          <span className={`${CHIP} border-success/30 bg-success/12 text-[oklch(55%_.14_166)]`}>
             Active
           </span>
         </span>

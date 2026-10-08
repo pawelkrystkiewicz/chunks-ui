@@ -1,20 +1,10 @@
-"use client";
+// Server component: interactive parts live in ./LandingClient.
+// chunks-ui is a client bundle, so only its components render here; `cn` and `springs` can't run here.
 
-import { CopyButton, cn, springs, ThemeToggle } from "chunks-ui";
-import { ArrowRight, Box, Check, Copy, Menu, Moon, Sun, X } from "lucide-react";
+import { CopyButton } from "chunks-ui";
+import { ArrowRight, Box } from "lucide-react";
 import Link from "next/link";
-import { useMounted } from "nextra/hooks";
-import { useTheme } from "nextra-theme-docs";
-import { type ComponentProps, type ReactNode, useEffect, useState } from "react";
-import {
-  DEFAULT_THEME,
-  FONTS_HREF,
-  fontOf,
-  loadTheme,
-  PRESETS,
-  palette,
-  saveTheme,
-} from "../../create/theme-model";
+import type { ComponentProps, ReactNode } from "react";
 import {
   FeedbackPreview,
   InputsPreview,
@@ -24,6 +14,14 @@ import {
   StructurePreview,
 } from "./ComponentPreviews";
 import { ApiArt, HeroStack, ScopeArt, SizeArt } from "./Illustrations";
+import {
+  CopyRow,
+  HeroCopy,
+  MobileMenu,
+  PresetGrid,
+  SpringList,
+  ThemeButton,
+} from "./LandingClient";
 
 const INSTALL = "bun add chunks-ui motion";
 const GITHUB = "https://github.com/pawelkrystkiewicz/chunks-ui";
@@ -138,16 +136,6 @@ function Href({ href, ...props }: ComponentProps<"a"> & { href: string }) {
   return <Link href={href} {...props} />;
 }
 
-function useCopy(text: string) {
-  const [copied, setCopied] = useState(false);
-  const copy = () =>
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1600);
-    }, console.error);
-  return [copied, copy] as const;
-}
-
 function Logo() {
   return (
     <span className="flex size-7 flex-none items-center justify-center rounded-full bg-white text-black">
@@ -202,7 +190,7 @@ function SectionHead({
 function Grid({ className, children }: { className: string; children: ReactNode }) {
   return (
     <div className="overflow-hidden border-(--l-line) border-t">
-      <div className={cn("-mr-px grid grid-cols-1", className)}>{children}</div>
+      <div className={`-mr-px grid grid-cols-1 ${className}`}>{children}</div>
     </div>
   );
 }
@@ -254,114 +242,51 @@ function CellText({
 }
 
 function Header() {
-  const { resolvedTheme, setTheme } = useTheme();
-  const mounted = useMounted();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const dark = mounted && resolvedTheme === "dark";
-  const closeMenu = () => setMenuOpen(false);
-
-  // The header isn't sticky: lock page scroll so the open menu and its close button stay put.
-  useEffect(() => {
-    if (!menuOpen) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setMenuOpen(false);
-    document.documentElement.style.overflow = "hidden";
-    window.addEventListener("keydown", onKey);
-    return () => {
-      document.documentElement.style.overflow = "";
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [menuOpen]);
-  const iconButton =
-    "flex size-[35px] items-center justify-center rounded-lg bg-white/8 text-white hover:bg-white/16 hover:text-white";
-
   return (
-    <>
-      <header className="relative z-5 grid grid-cols-[minmax(0,1fr)_auto] border-white/12 border-b lg:grid-cols-[240px_minmax(0,1fr)_240px]">
+    <header className="relative z-5 grid grid-cols-[minmax(0,1fr)_auto] border-white/12 border-b lg:grid-cols-[240px_minmax(0,1fr)_240px]">
+      <Link
+        href="/"
+        aria-label="Chunks UI home"
+        className="flex items-center gap-2.5 px-[clamp(22px,2.4vw,28px)] py-[18px] font-bold text-[17px] text-white tracking-[-.01em]"
+      >
+        <Logo />
+        Chunks
+      </Link>
+      <nav
+        aria-label="Primary"
+        className="hidden items-center justify-center gap-8 border-white/12 border-x px-7 py-[18px] text-[14px] lg:flex"
+      >
+        {NAV.map(({ label, href }) => (
+          <Href
+            key={label}
+            href={href}
+            className="text-white/70 transition-colors duration-250 hover:text-white"
+          >
+            {label}
+          </Href>
+        ))}
+      </nav>
+      <div className="flex items-center justify-end gap-2 px-[clamp(22px,2.4vw,28px)] py-[18px]">
+        <ThemeButton />
         <Link
-          href="/"
-          aria-label="Chunks UI home"
-          className="flex items-center gap-2.5 px-[clamp(22px,2.4vw,28px)] py-[18px] font-bold text-[17px] text-white tracking-[-.01em]"
+          href={DOCS}
+          className="hidden h-[35px] items-center rounded-lg bg-white px-4 font-semibold text-[13px] text-black transition duration-300 hover:bg-white/88 active:scale-[.97] lg:inline-flex"
         >
-          <Logo />
-          Chunks
+          Get started
         </Link>
-        <nav
-          aria-label="Primary"
-          className="hidden items-center justify-center gap-8 border-white/12 border-x px-7 py-[18px] text-[14px] lg:flex"
-        >
+        <MobileMenu>
           {NAV.map(({ label, href }) => (
             <Href
               key={label}
               href={href}
-              className="text-white/70 transition-colors duration-250 hover:text-white"
-            >
-              {label}
-            </Href>
-          ))}
-        </nav>
-        <div className="flex items-center justify-end gap-2 px-[clamp(22px,2.4vw,28px)] py-[18px]">
-          <ThemeToggle
-            theme={dark ? "dark" : "light"}
-            onClick={() => setTheme(dark ? "light" : "dark")}
-            lightIcon={<Sun className="size-4" />}
-            darkIcon={<Moon className="size-4" />}
-            className={iconButton}
-          />
-          <Link
-            href={DOCS}
-            className="hidden h-[35px] items-center rounded-lg bg-white px-4 font-semibold text-[13px] text-black transition duration-300 hover:bg-white/88 active:scale-[.97] lg:inline-flex"
-          >
-            Get started
-          </Link>
-          <button
-            type="button"
-            aria-label="Menu"
-            aria-expanded={menuOpen}
-            aria-controls="landing-menu"
-            onClick={() => setMenuOpen((open) => !open)}
-            className={cn(iconButton, "cursor-pointer transition-colors duration-300 lg:hidden")}
-          >
-            {menuOpen ? <X className="size-[18px]" /> : <Menu className="size-[18px]" />}
-          </button>
-        </div>
-      </header>
-      {menuOpen && (
-        <nav
-          id="landing-menu"
-          aria-label="Primary"
-          className="fixed inset-x-0 top-[72px] bottom-0 z-50 flex flex-col gap-1 bg-black px-[22px] py-6 lg:hidden"
-        >
-          {NAV.map(({ label, href }) => (
-            <Href
-              key={label}
-              href={href}
-              onClick={closeMenu}
               className="border-white/10 border-b py-2.5 font-semibold text-[28px] text-white tracking-[-.02em]"
             >
               {label}
             </Href>
           ))}
-        </nav>
-      )}
-    </>
-  );
-}
-
-function HeroInstall() {
-  const [copied, copy] = useCopy(INSTALL);
-  return (
-    <button
-      type="button"
-      onClick={copy}
-      title="Copy install command"
-      className="inline-flex h-11 cursor-pointer items-center gap-2.5 leading-[normal] rounded-lg border border-white/15 bg-black/30 pr-3 pl-3.5 font-mono text-[13px] text-white transition duration-250 hover:border-white/40 active:scale-[.97]"
-    >
-      <span className="text-white/45">$</span>
-      <span>{INSTALL}</span>
-      <span className="flex text-white/60">
-        {copied ? <Check className="size-3.5" strokeWidth={2.5} /> : <Copy className="size-3.5" />}
-      </span>
-    </button>
+        </MobileMenu>
+      </div>
+    </header>
   );
 }
 
@@ -382,17 +307,14 @@ function Hero() {
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[200px] bg-linear-to-b from-transparent to-(--l-bg)" />
       <Header />
       <div
-        className={cn(
-          WRAP,
-          "relative z-2 grid min-h-[600px] grid-cols-[repeat(auto-fit,minmax(min(100%,440px),1fr))] items-center gap-10 pt-[clamp(56px,8vw,96px)] pb-16",
-        )}
+        className={`${WRAP} relative z-2 grid min-h-[600px] grid-cols-[repeat(auto-fit,minmax(min(100%,440px),1fr))] items-center gap-10 pt-[clamp(56px,8vw,96px)] pb-16`}
       >
         <div className="flex min-w-0 flex-col items-start">
           <div className="flex flex-wrap gap-2 font-mono text-[11px] uppercase tracking-[.06em]">
             <span className={BADGE}>React component library</span>
             <span className={BADGE}>
-              Status: <i className={cn(SQUARE, "bg-success")} />
-              {TOTAL.core} core · <i className={cn(SQUARE, "bg-warning")} />
+              Status: <i className={`${SQUARE} bg-success`} />
+              {TOTAL.core} core · <i className={`${SQUARE} bg-warning`} />
               {TOTAL.extended} extended
             </span>
           </div>
@@ -405,14 +327,14 @@ function Hero() {
           </p>
           <div className="flex flex-wrap items-center gap-3">
             <SplitCta href={DOCS}>Read the docs</SplitCta>
-            <HeroInstall />
+            <HeroCopy text={INSTALL} />
           </div>
         </div>
         <div aria-hidden>
           <HeroStack total={TOTAL.core + TOTAL.extended} />
         </div>
       </div>
-      <div className={cn(WRAP, "relative z-2 pb-[120px]")}>
+      <div className={`${WRAP} relative z-2 pb-[120px]`}>
         <small className="font-mono text-[11px] text-white/60 tracking-[.1em]">BUILT ON</small>
         <div className="mt-3.5 flex flex-wrap gap-x-11 gap-y-4 font-bold text-[24px] tracking-[-.02em]">
           {BUILT_ON.map(({ label, href }) => (
@@ -451,14 +373,16 @@ const STEPS = [
   {
     step: "02 · THEME",
     lang: "CSS",
-    copy: "import 'chunks-ui/theme.css'",
+    copy: "@import 'chunks-ui/theme.css';\n@source '../node_modules/chunks-ui';",
     code: (
       <>
-        <Kw>import</Kw> 'chunks-ui/theme.css'
+        <Kw>@import</Kw> 'chunks-ui/theme.css';
+        {"\n"}
+        <Kw>@source</Kw> '../node_modules/chunks-ui';
       </>
     ),
     title: "Import the theme",
-    body: "Tailwind v4 picks up the CSS variables automatically. No plugin.",
+    body: "Add it next to Tailwind. @source lets Tailwind find the component classes.",
     meta: ["OKLCH", "light + dark"],
   },
   {
@@ -536,7 +460,7 @@ function ComponentsSection() {
                 href={c.href}
                 aria-labelledby={`cat-${c.tag}-title`}
                 aria-describedby={`cat-${c.tag}-body`}
-                className={cn(CELL, "group/card")}
+                className={`${CELL} group/card`}
               >
                 <CellMeta left={`0${i + 1} · ${c.tag}`} right={`${names.length} COMPONENTS`} />
                 <div
@@ -600,7 +524,7 @@ function Principles() {
         />
         <Grid className="lg:grid-cols-3">
           {PRINCIPLES.map((p, i) => (
-            <div key={p.tag} className={cn(CELL, "group/pr")}>
+            <div key={p.tag} className={`${CELL} group/pr`}>
               <CellMeta left={`0${i + 1} · PRINCIPLE`} right={p.tag} />
               <div aria-hidden>{p.art}</div>
               <CellText title={p.title} body={p.body} meta={p.meta} />
@@ -612,7 +536,7 @@ function Principles() {
   );
 }
 
-const STATEMENT = "flex min-w-0 flex-col gap-3.5 border-(--l-line) border-r border-b px-7 py-8";
+const STATEMENT = "flex min-w-0 flex-col border-(--l-line) border-r border-b px-7 py-8";
 const STATEMENT_LABEL = "font-mono text-primary text-[12px]";
 const STATEMENT_TEXT = "text-pretty text-(--l-fg) text-[20px] leading-normal tracking-[-.01em]";
 
@@ -622,14 +546,14 @@ function MotionSection() {
       <div className={WRAP}>
         <SectionHead eyebrow="Motion" title="Animated from day one." accent="Not retrofitted." />
         <Grid className="lg:grid-cols-2">
-          <div className={STATEMENT}>
+          <div className={`${STATEMENT} gap-3.5`}>
             <span className={STATEMENT_LABEL}>{"// The default"}</span>
             <p className={STATEMENT_TEXT}>
               Motion v12 is a first-class peer. Five spring presets cover tab indicators, content,
               popups, overlays and hover.
             </p>
           </div>
-          <div className={STATEMENT}>
+          <div className={`${STATEMENT} gap-3.5`}>
             <span className={STATEMENT_LABEL}>{"// The fallback"}</span>
             <p className={STATEMENT_TEXT}>
               No Motion installed? Components detect that at runtime and fall back to CSS
@@ -640,11 +564,7 @@ function MotionSection() {
         <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
           <span className="flex flex-wrap gap-x-5 gap-y-1.5 font-mono text-(--l-muted) text-[12px] tracking-[.04em]">
             <span className="text-(--l-faint)">STIFFNESS / DAMPING</span>
-            {Object.entries(springs).map(([name, s]) => (
-              <span key={name}>
-                {name} {s.stiffness}/{s.damping}
-              </span>
-            ))}
+            <SpringList />
           </span>
           <Href href={`${GITHUB}/blob/master/packages/ui/src/lib/motion.ts`} className={TEXT_LINK}>
             Motion presets →
@@ -652,50 +572,6 @@ function MotionSection() {
         </div>
       </div>
     </section>
-  );
-}
-
-function PresetGrid() {
-  return (
-    <div className="-mr-px -mb-px grid grid-cols-2 lg:grid-cols-3">
-      {/* No `precedence`: rendered in place, so it is removed on unmount */}
-      <link rel="stylesheet" href={FONTS_HREF} />
-      {PRESETS.map((preset) => {
-        const pal = palette({ ...preset.theme, mode: "light" }, "light");
-        const { fontHeading, radius, height } = preset.theme;
-        return (
-          <Link
-            key={preset.name}
-            href="/create"
-            title={`Open Create with ${preset.name}`}
-            aria-label={`Open Create with ${preset.name}`}
-            // Keep the visitor's stored mode; the preset sets everything else.
-            onClick={() => saveTheme({ ...(loadTheme() ?? DEFAULT_THEME), ...preset.theme })}
-            className="flex min-w-0 flex-col items-start gap-3.5 leading-[normal] border-(--l-line) border-r border-b px-6 pt-[22px] pb-6 text-left text-(--l-fg) transition-colors duration-300 ease-in-out hover:bg-(--l-card)"
-          >
-            <span className="flex w-full items-center justify-between gap-2">
-              <span
-                className="font-semibold text-[30px] leading-none tracking-[-.02em]"
-                style={{ fontFamily: fontOf(fontHeading).stack }}
-              >
-                Aa
-              </span>
-              <span aria-hidden className="flex">
-                <span className="size-3.5 rounded-full" style={{ background: pal.primary }} />
-                <span
-                  className="-ml-1 size-3.5 rounded-full shadow-[0_0_0_2px_var(--l-bg)]"
-                  style={{ background: pal["chart-2"] }}
-                />
-              </span>
-            </span>
-            <span className="font-semibold text-[15px] tracking-[-.01em]">{preset.name}</span>
-            <span className="max-w-full truncate font-mono text-(--l-faint) text-[10.5px] tracking-[.04em]">
-              {fontHeading} · r{radius} · h{height}
-            </span>
-          </Link>
-        );
-      })}
-    </div>
   );
 }
 
@@ -714,7 +590,7 @@ function CreateSection() {
           }
         />
         <Grid className="lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)]">
-          <div className={cn(STATEMENT, "gap-5")}>
+          <div className={`${STATEMENT} gap-5`}>
             <span className={STATEMENT_LABEL}>{"// The configurator"}</span>
             <p className={STATEMENT_TEXT}>
               Pick a preset or tune color, type, radius and density. Every change previews live
@@ -745,7 +621,6 @@ const LINK_ROWS = [
 ];
 
 function GetStarted() {
-  const [copied, copy] = useCopy(INSTALL);
   return (
     <section
       id="get-started"
@@ -753,10 +628,7 @@ function GetStarted() {
     >
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[140px] bg-linear-to-b from-(--l-bg) to-transparent" />
       <div
-        className={cn(
-          WRAP,
-          "relative grid grid-cols-1 items-end gap-14 pt-[180px] pb-24 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]",
-        )}
+        className={`${WRAP} relative grid grid-cols-1 items-end gap-14 pt-[180px] pb-24 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]`}
       >
         <h2 className="text-balance font-semibold text-[clamp(36px,5vw,60px)] text-white leading-[1.02] tracking-[-.045em]">
           Install once.
@@ -764,14 +636,11 @@ function GetStarted() {
           <em className="text-white/50 not-italic">Compose the rest.</em>
         </h2>
         <div className="flex flex-col border-white/15 border-t">
-          <button
-            type="button"
-            onClick={copy}
-            className={cn(ROW, "cursor-pointer leading-[normal]")}
-          >
-            <span className={ROW_LABEL}>{copied ? "// copied to clipboard" : "// install"}</span>
-            <span className="font-medium font-mono text-[18px]">{INSTALL}</span>
-          </button>
+          <CopyRow
+            text={INSTALL}
+            className={`${ROW} cursor-pointer leading-[normal]`}
+            labelClassName={ROW_LABEL}
+          />
           {LINK_ROWS.map(({ label, href, value }) => (
             <Href key={label} href={href} className={ROW}>
               <span className={ROW_LABEL}>{label}</span>
