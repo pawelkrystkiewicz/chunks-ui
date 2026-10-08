@@ -19,7 +19,7 @@ import { UsageCard } from "./preview/UsageCard";
 import { UsersCard } from "./preview/UsersCard";
 import { VelocityCard } from "./preview/VelocityCard";
 import { ThemeScope } from "./ThemeScope";
-import type { Theme } from "./theme-model";
+import { previewColumnWidth, type Theme } from "./theme-model";
 
 // Width only: media queries inside the preview still follow the real window.
 const VIEWPORTS = [
@@ -76,8 +76,11 @@ export function PreviewPanel({ theme }: { theme: Theme }) {
         className="min-h-[calc(100vh-200px)] bg-(--canvas) p-[28px] leading-[1.45] transition-[background] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] motion-reduce:transition-none"
       >
         <div
-          style={{ maxWidth: VIEWPORTS.find((vp) => vp.id === viewport)?.width }}
-          className="mx-auto columns-[290px] gap-5 transition-[max-width] duration-400 ease-fluid motion-reduce:transition-none"
+          style={{
+            maxWidth: VIEWPORTS.find((vp) => vp.id === viewport)?.width,
+            columnWidth: previewColumnWidth(theme),
+          }}
+          className="mx-auto gap-5 transition-[max-width] duration-400 ease-fluid motion-reduce:transition-none"
         >
           <UsersCard />
           <NewProjectCard />
