@@ -49,14 +49,10 @@ const motionPositionClasses = {
   bottom: "inset-x-0 bottom-0 h-auto border-t rounded-t-xl",
 } as const;
 
-function DrawerPortal({ keepMounted, className, children, ...props }: DrawerPortalProps) {
-  const m = useMotion();
-  const reduced = useReducedMotion();
-  const useSpring = !!m && !reduced;
+function DrawerPortal({ className, children, ...props }: DrawerPortalProps) {
   const container = usePortalContainer();
   return (
     <BaseDialog.Portal
-      keepMounted={keepMounted ?? useSpring}
       container={container}
       // The portal node carries the z-layer, not the popup: whatever opens from the drawer portals in here and stacks above it
       className={(state) =>

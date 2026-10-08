@@ -60,7 +60,7 @@ function PopoverContent({
     : undefined;
 
   return (
-    <BasePopover.Portal keepMounted={useSpring} container={container}>
+    <BasePopover.Portal container={container}>
       {/* A modal popover aria-hides nodes outside its portal, so popups opened inside portal in here */}
       <PortalContainerProvider value={undefined}>
         <BasePopover.Positioner

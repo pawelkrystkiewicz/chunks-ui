@@ -21,6 +21,14 @@ export default defineConfig({
         {
           browser: "chromium",
           context: { reducedMotion: "reduce" },
+          exclude: ["src/**/*.motion.visual.spec.tsx"],
+        },
+        // Motion only animates when reduced motion is off
+        {
+          browser: "chromium",
+          name: "chromium-motion",
+          context: { reducedMotion: "no-preference" },
+          include: ["src/**/*.motion.visual.spec.tsx"],
         },
       ],
       expect: {

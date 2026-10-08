@@ -27,14 +27,10 @@ export type DialogTitleProps = ComponentProps<typeof BaseDialog.Title>;
 export type DialogDescriptionProps = ComponentProps<typeof BaseDialog.Description>;
 export type DialogCloseProps = ComponentProps<typeof BaseDialog.Close>;
 
-function DialogPortal({ keepMounted, className, children, ...props }: DialogPortalProps) {
-  const m = useMotion();
-  const reduced = useReducedMotion();
-  const useSpring = !!m && !reduced;
+function DialogPortal({ className, children, ...props }: DialogPortalProps) {
   const container = usePortalContainer();
   return (
     <BaseDialog.Portal
-      keepMounted={keepMounted ?? useSpring}
       container={container}
       // The portal node carries the z-layer, not the popup: whatever opens from the dialog portals in here and stacks above it
       className={(state) =>

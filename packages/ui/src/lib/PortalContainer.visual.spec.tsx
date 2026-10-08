@@ -219,8 +219,8 @@ describe("overlays opened from an overlay", () => {
   });
 });
 
-// With Motion, Tooltip, Popover and Menu keep their portals mounted while closed (keepMounted).
-// A modal parent aria-hides every mounted node outside its own portal when it opens.
+// keepMounted puts the tooltip's portal in the DOM before the parent opens. A modal parent
+// aria-hides every mounted node outside its own portal when it opens.
 function InfoTooltip() {
   return (
     <Tooltip.Root>
