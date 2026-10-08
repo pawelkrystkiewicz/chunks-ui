@@ -77,7 +77,7 @@ Use `Tooltip.Provider` to share delay settings across multiple tooltips. This av
 
 ## Positioning
 
-The positioner has a default `sideOffset` of `6px`. Override placement with `side` and `align`:
+The popup sits 2 spacing units (8px at the default `--spacing`) from the trigger, so the arrow tip clears the trigger at any spacing. A `sideOffset` on the positioner adds to that gap. Override placement with `side` and `align`:
 
 ```tsx
 <Tooltip.Positioner side="right" align="center">
