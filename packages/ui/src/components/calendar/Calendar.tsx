@@ -1,6 +1,14 @@
 "use client";
 
-import { type KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type KeyboardEvent,
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { flushSync } from "react-dom";
 import { cn } from "../../lib/cn";
 
@@ -178,6 +186,7 @@ export function Calendar({
     [focusedDate, selectedDate, today].find(isInView) ?? new Date(viewYear, viewMonth, 1);
 
   const monthYearLabel = `${MONTH_NAMES[viewMonth]} ${viewYear}`;
+  const monthYearLabelId = useId();
 
   const prevMonth = useCallback(() => {
     setViewMonth((m) => {
@@ -271,7 +280,9 @@ export function Calendar({
             <path d="m15 18-6-6 6-6" />
           </svg>
         </button>
-        <span className="font-medium text-sm">{monthYearLabel}</span>
+        <span id={monthYearLabelId} className="font-medium text-sm">
+          {monthYearLabel}
+        </span>
         <button
           type="button"
           aria-label="Next month"
@@ -301,7 +312,13 @@ export function Calendar({
       </div>
 
       {/* Day grid */}
-      <table ref={gridRef} className="border-collapse">
+      <table
+        ref={gridRef}
+        // biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: ARIA in HTML allows role="grid" on <table>, as in the APG date picker
+        role="grid"
+        aria-labelledby={monthYearLabelId}
+        className="border-collapse"
+      >
         <thead>
           <tr>
             {dayNames.map((d) => (
@@ -341,7 +358,8 @@ export function Calendar({
                   });
 
                   return (
-                    <td key={key} className="p-0.5">
+                    // biome-ignore lint/a11y/useAriaPropsSupportedByRole: a <td> in a role="grid" table is a gridcell, which supports aria-selected
+                    <td key={key} aria-selected={isSelected || undefined} className="p-0.5">
                       <button
                         type="button"
                         aria-label={ariaLabel}

@@ -241,6 +241,22 @@ describe("Calendar", () => {
     expect(day1).toBeInTheDocument();
   });
 
+  it("exposes the days as a grid named by the shown month", async () => {
+    const user = userEvent.setup();
+    render(<Calendar value={MARCH_15_2026} />);
+    expect(screen.getByRole("grid", { name: "March 2026" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Next month" }));
+    expect(screen.getByRole("grid", { name: "April 2026" })).toBeInTheDocument();
+  });
+
+  it("marks only the selected day's cell as selected", () => {
+    const { container } = render(<Calendar value={MARCH_15_2026} />);
+    // A <td> in a role="grid" table is a gridcell; Testing Library still reports it as "cell".
+    const selected = container.querySelectorAll('td[aria-selected="true"]');
+    expect(selected).toHaveLength(1);
+    expect(selected[0]).toContainElement(dayButton(MARCH_15_2026));
+  });
+
   it("has no a11y violations", async () => {
     const { container } = render(<Calendar value={MARCH_15_2026} />);
     expect(await axe(container)).toHaveNoViolations();
