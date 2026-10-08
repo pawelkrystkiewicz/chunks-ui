@@ -1,3 +1,5 @@
+"use client";
+
 import { createContext, useContext } from "react";
 
 const PortalContainerContext = createContext<HTMLElement | null | undefined>(undefined);
