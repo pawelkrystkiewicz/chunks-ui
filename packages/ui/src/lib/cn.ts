@@ -32,13 +32,14 @@ const twMerge = extendTailwindMerge({
 /**
  * What `cn` accepts: clsx's `ClassValue` without functions. clsx types a dictionary as
  * `Record<string, any>`, which a function also matches, and then drops the function silently.
- * Functions and arrays both have a numeric `length`, so a dictionary here may not: functions
- * fail to type-check and arrays take the `ClassInput[]` branch, where each item is checked.
+ * A dictionary here may not have `call` (every function does) or `[Symbol.iterator]` (every
+ * array does), so functions fail to type-check and arrays, readonly ones included, take the
+ * array branch, where each item is checked.
  */
 export type ClassInput =
   | Exclude<ClassValue, ClassDictionary | ClassValue[]>
-  | ClassInput[]
-  | (ClassDictionary & { length?: never });
+  | readonly ClassInput[]
+  | (ClassDictionary & { call?: never; [Symbol.iterator]?: never });
 
 /** Merges class names with clsx, then resolves Tailwind conflicts (the last class wins). */
 export function cn(...inputs: ClassInput[]) {

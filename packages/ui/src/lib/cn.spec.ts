@@ -1,4 +1,5 @@
 /// <reference types="vite/client" />
+import type { ClassValue } from "clsx";
 import { describe, expect, it } from "vitest";
 import theme from "../theme.css?raw";
 import { cn, cnState } from "./cn";
@@ -50,21 +51,56 @@ describe("cnState", () => {
   });
 
   // clsx types its dictionaries as Record<string, any>, which a function matches. cn and cnState
-  // narrow that, so a function anywhere but cnState's last argument fails to type-check.
+  // narrow that, so a function anywhere but cnState's last argument fails to type-check. Each
+  // case is its own statement, so a directive can only cover the error it names.
   it("rejects functions it would drop", () => {
+    const fn: () => string = () => "c";
+    const maybeFn = fn as string | (() => string);
+    // biome-ignore lint/complexity/noBannedTypes: the Function type is the case under test
+    const anyFn = fn as Function;
     // @ts-expect-error cn has no state to call a function with
-    expect(cn("p-2", () => "p-4")).toBe("p-2");
-    // @ts-expect-error nor inside an array
-    expect(cn(["p-2", () => "p-4"])).toBe("p-2");
+    const direct = cn("a", fn);
+    // @ts-expect-error nor the Function type
+    const asFunction = cn("a", anyFn);
+    // @ts-expect-error nor a function inside an array
+    const inArray = cn(["a", fn]);
+    // @ts-expect-error nor one two arrays deep
+    const deep = cn(["a", ["b", fn]]);
+    // @ts-expect-error nor one inside a readonly tuple
+    const inTuple = cn(["a", fn] as const);
+    // @ts-expect-error nor a union that may hold one
+    const inUnion = cn("a", maybeFn);
     // @ts-expect-error only cnState's last argument may be a function
-    expect(cnState(() => "p-4", "p-2")).toBe("p-2");
+    const notLast = cnState(fn, "a");
+    // clsx drops them at runtime too
+    expect([direct, asFunction, inArray, deep, inTuple, inUnion, notLast]).toEqual([
+      "a",
+      "a",
+      "a",
+      "a b",
+      "a",
+      "a",
+      "a",
+    ]);
   });
 
-  it("still takes dictionaries, interface-typed ones included", () => {
+  it("still takes every class value clsx does", () => {
     interface Flags {
       "p-4": boolean;
     }
     const flags: Flags = { "p-4": true };
+    const record: Record<string, boolean> = { "p-4": true };
+    const value: ClassValue = "p-4";
+    const values: ClassValue[] = ["m-1", ["text-sm"]];
+    const props: { className?: ClassValue } = { className: "m-3" };
+    const readonlyList: readonly string[] = ["m-1", "text-sm"];
     expect(cn("p-2", { hidden: false }, flags)).toBe("p-4");
+    expect(cn("p-2", record)).toBe("p-4");
+    expect(cn(value, [value], ...values)).toBe("p-4 m-1 text-sm");
+    expect(cn("x", props.className)).toBe("x m-3");
+    expect(cn(readonlyList, ["block", { italic: true }] as const)).toBe("m-1 text-sm block italic");
+    // A dictionary may have any key, `length` included
+    expect(cn({ length: true })).toBe("length");
+    expect(cn({ block: true, length: 0 })).toBe("block");
   });
 });
