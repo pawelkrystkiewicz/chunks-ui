@@ -24,8 +24,8 @@ const pageChrome = () =>
     .map((el) => Array.from(el.attributes, (a) => `${a.name}=${a.value}`).join(" "))
     .join("||");
 
-// 47 sequential full-page interactions: about 0.7s on an idle machine, 4-10s measured
-// with the CPU oversubscribed (load ~110 on 18 cores, turbo running the ui suite too).
+// 47 full-page interactions. Measured on 18 cores: 0.6-1.3s idle, 2.5-3.9s at load 40-65,
+// 5.1-6.8s at load ~90 (turbo running the ui suite alongside, or 72 busy loops).
 it("applies the theme to the preview only, never to <html> or <body>", () => {
   const before = pageChrome();
   render(<CreatePage />);
@@ -49,4 +49,4 @@ it("applies the theme to the preview only, never to <html> or <body>", () => {
     .getByRole("region", { name: "Preview" })
     .querySelector("[style*='--radius']");
   expect(scope).not.toBeNull();
-}, 15_000);
+}, 10_000);

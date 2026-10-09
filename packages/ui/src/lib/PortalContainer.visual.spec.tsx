@@ -218,6 +218,41 @@ describe("overlays opened from an overlay", () => {
     await expect.element(childLocator).not.toBeInTheDocument();
     await expect.element(page.getByRole("dialog", { name: "Parent" })).toBeVisible();
   });
+
+  it.each([false, true])(
+    "keeps a Select usable inside a Drawer opened from a Dialog (provider: %s)",
+    async (withProvider) => {
+      render(
+        <Harness withProvider={withProvider}>
+          <overlays.Dialog name="Parent" defaultOpen>
+            <overlays.Drawer name="Child" side="right">
+              <FruitSelect />
+            </overlays.Drawer>
+          </overlays.Dialog>
+        </Harness>,
+      );
+      await page.getByRole("button", { name: "Open Child" }).click();
+      const drawer = page.getByRole("dialog", { name: "Child" });
+      await expect.element(drawer).toBeVisible();
+      const trigger = page.getByRole("combobox", { name: "Fruit" });
+      await trigger.click();
+      const option = page.getByRole("option", { name: "Banana" });
+      await expect.element(option).toBeVisible();
+      const optionCentre = (): [number, number] => {
+        const box = option.element().getBoundingClientRect();
+        return [box.left + box.width / 2, box.top + box.height / 2];
+      };
+
+      // The option must lie over the drawer, or the stacking check proves nothing
+      await expect
+        .poll(() => inside(drawer.element().getBoundingClientRect(), optionCentre()))
+        .toBe(true);
+      expect(option.element().contains(document.elementFromPoint(...optionCentre()))).toBe(true);
+
+      await option.click();
+      await expect.element(trigger).toHaveTextContent("banana");
+    },
+  );
 });
 
 // keepMounted puts the tooltip's portal in the DOM before the parent opens. A modal parent
