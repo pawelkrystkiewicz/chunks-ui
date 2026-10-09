@@ -1,7 +1,8 @@
 "use client";
 
-import { type Ref, type RefCallback, useCallback, useLayoutEffect, useRef, useState } from "react";
+import { type Ref, type RefCallback, useLayoutEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
+import { useMergedRef } from "./use-merged-ref";
 import { useMotion, useReducedMotion } from "./use-motion";
 
 type MotionModule = NonNullable<ReturnType<typeof useMotion>>;
@@ -19,6 +20,10 @@ function runningTransitions(element: Element) {
     return [];
   }
   return element.getAnimations().filter((animation) => animation instanceof CSSTransition);
+}
+
+function clearProperties(element: HTMLElement | SVGElement, names: string[] | undefined) {
+  for (const name of names ?? []) element.style.removeProperty(name);
 }
 
 // Switches between Motion and the CSS fallback scheduled for the same frame commit together,
@@ -69,14 +74,7 @@ export function useMotionAnimate<E extends HTMLElement | SVGElement>(
   const [driving, setDriving] = useState(available);
 
   const element = useRef<E | null>(null);
-  const ref = useCallback(
-    (node: E | null) => {
-      element.current = node;
-      if (typeof forwardedRef === "function") forwardedRef(node);
-      else if (forwardedRef) forwardedRef.current = node;
-    },
-    [forwardedRef],
-  );
+  const ref = useMergedRef(element, forwardedRef);
 
   const target = values && JSON.stringify(values);
   const latest = useRef({ target, transition, clear });
@@ -123,16 +121,13 @@ export function useMotionAnimate<E extends HTMLElement | SVGElement>(
       controls.current?.stop();
       controls.current = null;
       animated.current = null;
-      m.frame.postRender(() => {
-        for (const name of latest.current.clear ?? []) node.style.removeProperty(name);
-      });
+      m.frame.postRender(() => clearProperties(node, latest.current.clear));
     };
   }, [available, driving, m]);
 
   // Reduced motion turned on: finish the animation, then go back to the CSS fallback.
   // `m` going back to null while driving only happens through reloadMotion() in tests; the
   // element then keeps Motion's last values.
-  const cleared = clear?.join(" ");
   useLayoutEffect(() => {
     if (available || !driving || !m) return;
     const node = animated.current;
@@ -140,12 +135,10 @@ export function useMotionAnimate<E extends HTMLElement | SVGElement>(
     controls.current?.complete();
     controls.current = null;
     return switchAfterMotionWrites(m, () => {
-      if (node && cleared) {
-        for (const name of cleared.split(" ")) node.style.removeProperty(name);
-      }
+      if (node) clearProperties(node, latest.current.clear);
       setDriving(false);
     });
-  }, [available, driving, m, cleared]);
+  }, [available, driving, m]);
 
   useLayoutEffect(() => {
     const node = element.current;
