@@ -22,16 +22,10 @@ function runningTransitions(element: Element) {
   return element.getAnimations().filter((animation) => animation instanceof CSSTransition);
 }
 
-/**
- * Removes inline properties Motion set and forgets the values Motion holds for the element.
- * Motion only writes a value that changes, so without forgetting, handing the element back
- * would leave the removed properties unset.
- */
-function clearProperties(m: MotionModule, element: HTMLElement | SVGElement, names?: string[]) {
+/** Removes inline properties Motion set, for the CSS fallback */
+function clearProperties(element: HTMLElement | SVGElement, names?: string[]) {
   if (!names?.length) return;
   for (const name of names) element.style.removeProperty(name);
-  m.visualElementStore.get(element)?.unmount();
-  m.visualElementStore.delete(element);
 }
 
 // Switches between Motion and the CSS fallback scheduled for the same frame commit together,
@@ -115,6 +109,10 @@ export function useMotionAnimate<E extends HTMLElement | SVGElement>(
         if (pendingUndo.current) m.cancelFrame(pendingUndo.current);
         pendingUndo.current = null;
         controls.current = m.animate(node, JSON.parse(target), { duration: 0 });
+        // Motion only writes values that change: render all, so the values it still holds come
+        // back after the CSS fallback removed them. visualElementStore is Motion internals,
+        // hence the optional chaining for other Motion versions.
+        m.visualElementStore?.get(node)?.scheduleRender?.();
         animated.current = node;
         instant = node;
       }
@@ -139,7 +137,7 @@ export function useMotionAnimate<E extends HTMLElement | SVGElement>(
         // ran from an earlier callback in the same post-render step
         if (pendingUndo.current !== undo) return;
         pendingUndo.current = null;
-        clearProperties(m, node, latest.current.clear);
+        clearProperties(node, latest.current.clear);
       };
       pendingUndo.current = undo;
       m.frame.postRender(undo);
@@ -156,7 +154,7 @@ export function useMotionAnimate<E extends HTMLElement | SVGElement>(
     controls.current?.complete();
     controls.current = null;
     return switchAfterMotionWrites(m, () => {
-      if (node) clearProperties(m, node, latest.current.clear);
+      if (node) clearProperties(node, latest.current.clear);
       setDriving(false);
     });
   }, [available, driving, m]);

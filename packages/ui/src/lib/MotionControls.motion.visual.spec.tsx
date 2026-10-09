@@ -1,6 +1,6 @@
 import type { HTMLProps } from "@base-ui/react/types";
 import { render } from "@testing-library/react";
-import { frame } from "motion/react";
+import { frame, type HTMLMotionProps, motion } from "motion/react";
 import { Activity, Profiler, type ReactElement, type ReactNode, StrictMode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { commands } from "vitest/browser";
@@ -398,6 +398,34 @@ describe("controls once Motion has loaded", () => {
     await reducedMotion(false);
     await wait(400);
     expect(at()).toEqual(before);
+  });
+
+  // A consumer's motion.* element shares its VisualElement with the hook: going back to the
+  // CSS fallback and to Motion again must leave that element animating
+  it("keeps a consumer's motion.span animating after reduced motion turns on and off", async () => {
+    const ui = (faded: boolean) => (
+      <Switch.Root aria-label="Notifications" defaultChecked>
+        <Switch.Thumb
+          data-testid="moving"
+          render={(props) => (
+            <motion.span
+              {...(props as HTMLMotionProps<"span">)}
+              animate={{ opacity: faded ? 0.3 : 1 }}
+              transition={{ duration: 0 }}
+            />
+          )}
+        />
+      </Switch.Root>
+    );
+    const { rerender } = await renderSettled(ui(false));
+    const before = left(byTestId());
+
+    await reducedMotion(true);
+    await reducedMotion(false);
+    await wait(100);
+    expect(left(byTestId())).toBe(before);
+    rerender(ui(true));
+    await expect.poll(() => opacity(byTestId())).toBe(0.3);
   });
 
   // <Activity> hidden and shown again in the frame Motion arrives: the first hand-off is
