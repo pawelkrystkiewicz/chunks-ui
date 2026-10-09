@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 import { describe, expect, it } from "vitest";
 import theme from "../theme.css?raw";
-import { cn } from "./cn";
+import { cn, cnState } from "./cn";
 
 describe("cn", () => {
   it("lets height overrides beat h-ui-height", () => {
@@ -30,5 +30,22 @@ describe("cn", () => {
       const [prefix, stock] = stockClass[namespace as keyof typeof stockClass];
       expect(cn(`${prefix}-${key}`, stock), `${prefix}-${key}`).toBe(stock);
     }
+  });
+});
+
+describe("cnState", () => {
+  it("merges a string className like cn", () => {
+    expect(cnState("p-2 text-sm", false && "hidden", "p-4")).toBe("text-sm p-4");
+    expect(cnState("p-2", undefined)).toBe("p-2");
+  });
+
+  it("turns a className function into a function of the part's state", () => {
+    const className = cnState("p-2 text-sm", (state: { open: boolean }) =>
+      state.open ? "p-4" : undefined,
+    );
+    expect(typeof className).toBe("function");
+    if (typeof className !== "function") return;
+    expect(className({ open: true })).toBe("text-sm p-4");
+    expect(className({ open: false })).toBe("p-2 text-sm");
   });
 });
