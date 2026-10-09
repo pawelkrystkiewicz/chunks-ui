@@ -143,11 +143,14 @@ function expectInBetween(start: number, values: number[]) {
 
 /** The value once two reads a frame apart match */
 async function settled(read: () => number) {
+  // Three equal reads in a row, so one stalled frame mid-spring can't pass for settled
   let previous = read();
+  let same = 0;
   for (let frame = 0; frame < 120; frame++) {
     await nextFrame();
     const value = read();
-    if (value === previous) return value;
+    same = value === previous ? same + 1 : 0;
+    if (same === 2) return value;
     previous = value;
   }
   throw new Error(`Still changing after 120 frames, at ${previous}`);
