@@ -2,12 +2,12 @@
 "chunks-ui": minor
 ---
 
-Changed: the optional `motion` peer dependency now requires `^12.43.0`. It accepted any version before, but the components use Motion APIs from 12.43 (`animate()`, `frame` and `cancelFrame`), so an older Motion could break their animations at runtime.
+The optional `motion` peer dependency now requires `^12.0.0`. It accepted any version before. Motion 12.0.0 is the oldest version the components are tested against.
 
-If your app has `motion` below 12.43 installed, Bun, pnpm and Yarn now print a peer dependency warning, and npm 7 or newer stops the install with an `ERESOLVE` conflict. Upgrade Motion to fix it:
+If your app has a `motion` older than 12 installed, npm 7 or newer stops the install with an `ERESOLVE` error unless you pass `--legacy-peer-deps` or `--force`, and package managers that check peers print a warning. Upgrade Motion to fix it:
 
 ```bash
-bun add motion@^12.43.0
+bun add motion@^12
 ```
 
-Nothing changes if Motion is not installed: the components still fall back to CSS transitions.
+Apps without Motion installed are not affected: the components still fall back to CSS transitions.
