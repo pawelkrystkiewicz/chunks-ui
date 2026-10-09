@@ -141,6 +141,18 @@ function expectInBetween(start: number, values: number[]) {
   expect(values.some((value) => (value - start) * (value - end) < 0)).toBe(true);
 }
 
+/** The value once two reads a frame apart match */
+async function settled(read: () => number) {
+  let previous = read();
+  for (let frame = 0; frame < 120; frame++) {
+    await nextFrame();
+    const value = read();
+    if (value === previous) return value;
+    previous = value;
+  }
+  throw new Error(`Still changing after 120 frames, at ${previous}`);
+}
+
 /** What the CSS fallback leaves on the element, compared between two renders */
 function snapshot({ element, measure }: Control) {
   const node = element();
@@ -403,25 +415,27 @@ describe("controls once Motion has loaded", () => {
   });
 
   // Turning reduced motion off again hands the element back to Motion, which must put back
-  // the values it removed when the CSS fallback took over
-  it.each(names)("puts a %s back when reduced motion turns off again", async (name) => {
-    const subject = control(name);
-    await renderSettled(subject.ui());
-    // Radio and Checkbox start checked; move the others off their starting place
-    if (!subject.toChecked) subject.change();
-    await wait(400);
-    // To the pixel, or the hundredth of opacity: a spring at rest can be a fraction short
-    const at = () => ({
-      present: subject.element() !== null,
-      value: Number(subject.measure(subject.element()).toFixed(subject.measure === left ? 0 : 2)),
-    });
-    const before = at();
+  // the values it removed when the CSS fallback took over. Only these two end up somewhere
+  // the CSS fallback does not put them: Radio and Checkbox end at the fallback's opacity, and
+  // React keeps ToggleGroup's style.
+  it.each(["Switch", "Tabs.Indicator"])(
+    "puts a %s back when reduced motion turns off again",
+    async (name) => {
+      const { ui, element, change, measure, fallbackClass = "" } = control(name);
+      await renderSettled(ui());
+      const start = measure(element());
+      change();
+      await expect.poll(() => measure(element())).not.toBe(start);
+      // To the pixel: a spring at rest can be a fraction short
+      const before = Math.round(await settled(() => measure(element())));
 
-    await reducedMotion(true);
-    await reducedMotion(false);
-    await wait(400);
-    expect(at()).toEqual(before);
-  });
+      await reducedMotion(true);
+      await expect.poll(element).toHaveClass(fallbackClass);
+      await reducedMotion(false);
+      await expect.poll(element).not.toHaveClass(fallbackClass);
+      expect(Math.round(await settled(() => measure(element())))).toBe(before);
+    },
+  );
 
   // A consumer's motion.* element shares its VisualElement with the hook: going back to the
   // CSS fallback and to Motion again must leave that element animating
