@@ -7,7 +7,7 @@ import { Check, Copy, Menu, Moon, Sun, X } from "lucide-react";
 import Link from "next/link";
 import { useMounted } from "nextra/hooks";
 import { useTheme } from "nextra-theme-docs";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import {
   DEFAULT_THEME,
   fontOf,
@@ -22,12 +22,24 @@ const ICON_BUTTON =
 
 function useCopy(text: string) {
   const [copied, setCopied] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(timer.current), []);
   const copy = () =>
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true);
-      setTimeout(() => setCopied(false), 1600);
+      clearTimeout(timer.current);
+      timer.current = setTimeout(() => setCopied(false), 1600);
     }, console.error);
   return [copied, copy] as const;
+}
+
+/** Visually hidden live region: the copy icon and label swap are silent for screen readers. */
+function CopiedStatus({ copied }: { copied: boolean }) {
+  return (
+    <span role="status" className="sr-only">
+      {copied ? "Copied to clipboard" : ""}
+    </span>
+  );
 }
 
 export function ThemeButton() {
@@ -88,18 +100,25 @@ export function MobileMenu({ children }: { children: ReactNode }) {
 export function HeroCopy({ text }: { text: string }) {
   const [copied, copy] = useCopy(text);
   return (
-    <button
-      type="button"
-      onClick={copy}
-      title="Copy install command"
-      className="inline-flex h-11 cursor-pointer items-center gap-2.5 rounded-lg border border-white/15 bg-black/30 pr-3 pl-3.5 font-mono text-[13px] text-white leading-[normal] transition duration-250 hover:border-white/40 active:scale-[.97]"
-    >
-      <span className="text-white/45">$</span>
-      <span>{text}</span>
-      <span className="flex text-white/60">
-        {copied ? <Check className="size-3.5" strokeWidth={2.5} /> : <Copy className="size-3.5" />}
-      </span>
-    </button>
+    <>
+      <button
+        type="button"
+        onClick={copy}
+        title="Copy install command"
+        className="inline-flex h-11 cursor-pointer items-center gap-2.5 rounded-lg border border-white/15 bg-black/30 pr-3 pl-3.5 font-mono text-[13px] text-white leading-[normal] transition duration-250 hover:border-white/40 active:scale-[.97]"
+      >
+        <span className="text-white/45">$</span>
+        <span>{text}</span>
+        <span className="flex text-white/60">
+          {copied ? (
+            <Check className="size-3.5" strokeWidth={2.5} />
+          ) : (
+            <Copy className="size-3.5" />
+          )}
+        </span>
+      </button>
+      <CopiedStatus copied={copied} />
+    </>
   );
 }
 
@@ -114,10 +133,13 @@ export function CopyRow({
 }) {
   const [copied, copy] = useCopy(text);
   return (
-    <button type="button" onClick={copy} className={className}>
-      <span className={labelClassName}>{copied ? "// copied to clipboard" : "// install"}</span>
-      <span className="font-medium font-mono text-[18px]">{text}</span>
-    </button>
+    <>
+      <button type="button" onClick={copy} className={className}>
+        <span className={labelClassName}>{copied ? "// copied to clipboard" : "// install"}</span>
+        <span className="font-medium font-mono text-[18px]">{text}</span>
+      </button>
+      <CopiedStatus copied={copied} />
+    </>
   );
 }
 
@@ -173,7 +195,7 @@ export function PresetGrid() {
               </span>
             </span>
             <span className="font-semibold text-[15px] tracking-[-.01em]">{preset.name}</span>
-            <span className="max-w-full truncate font-mono text-(--l-faint) text-[10.5px] tracking-[.04em]">
+            <span className="max-w-full truncate font-mono text-(--l-muted) text-[10.5px] tracking-[.04em]">
               {fontHeading} · r{radius} · h{height}
             </span>
           </Link>

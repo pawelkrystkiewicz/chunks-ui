@@ -59,6 +59,8 @@ function switchAfterMotionWrites(m: MotionModule, apply: () => void) {
  * - Motion takes over once no CSS transition runs on the element, so a change made while it
  *   loads finishes as a CSS transition. It starts from the current values without animating.
  * - Reduced motion turned on mid-animation finishes the animation at once.
+ * - `values` of null mean there is nothing to show: the animation stops, and the next values
+ *   jump into place instead of animating from the last ones.
  * - Unmounting stops the animation.
  *
  * Motion writes styles in its next render step, so switching between Motion and the CSS
@@ -149,7 +151,8 @@ export function useMotionAnimate<E extends HTMLElement | SVGElement>(
   // element then keeps Motion's last values.
   useLayoutEffect(() => {
     if (available || !driving || !m) return;
-    // Turned on while <Activity> hid the element: the cleanup forgot it, but Motion's values stay
+    // Turned on while <Activity> hid the element, or while `values` were null: the element was
+    // forgotten, but Motion's values stay
     const node = animated.current ?? element.current;
     animated.current = null;
     controls.current?.complete();
@@ -162,7 +165,15 @@ export function useMotionAnimate<E extends HTMLElement | SVGElement>(
 
   useLayoutEffect(() => {
     const node = element.current;
-    if (!driving || !available || !m || !node || !target) return;
+    if (!driving || !available || !m || !node) return;
+    if (!target) {
+      // Nothing to show: stop, and forget the element, so the next values jump into place
+      // instead of animating from the last ones
+      controls.current?.stop();
+      controls.current = null;
+      animated.current = null;
+      return;
+    }
     // A new element jumps to its values instead of animating
     const first = animated.current !== node;
     if (first) controls.current?.stop();
@@ -172,6 +183,9 @@ export function useMotionAnimate<E extends HTMLElement | SVGElement>(
       JSON.parse(target),
       first ? { duration: 0 } : latest.current.transition,
     );
+    // Motion only writes values that change: on a jump, render all, so values the CSS fallback
+    // removed while Motion still held them come back (as in the hand-off above)
+    if (first) m.visualElementStore?.get(node)?.scheduleRender?.();
   }, [driving, available, m, target]);
 
   // On unmount, and when StrictMode or <Activity> clean effects up before running them again:

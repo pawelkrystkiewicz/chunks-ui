@@ -181,7 +181,9 @@ function TabsIndicatorElement({
 }) {
   const { activeTabPosition: position, activeTabSize: size } = state;
   const [indicatorRef, driven] = useMotionAnimate<HTMLElement>(
-    position && size
+    // While the tabs aren't rendered (display:none), Base UI measures the active tab as 0×0 and
+    // hides the indicator. That is no box to animate to: shown again, it jumps to the tab.
+    position && size && size.width > 0 && size.height > 0
       ? { left: position.left, top: position.top, width: size.width, height: size.height }
       : null,
     { transition: springs.indicator, clear: ["left", "top", "width", "height"] },
