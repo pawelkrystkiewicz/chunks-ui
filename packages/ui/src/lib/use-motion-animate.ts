@@ -4,6 +4,7 @@ import { type Ref, type RefCallback, useCallback, useLayoutEffect, useRef, useSt
 import { flushSync } from "react-dom";
 import { useMotion, useReducedMotion } from "./use-motion";
 
+type MotionModule = NonNullable<ReturnType<typeof useMotion>>;
 type AnimatedValues = Record<string, string | number>;
 
 type MotionAnimateOptions = {
@@ -18,6 +19,26 @@ function runningTransitions(element: Element) {
     return [];
   }
   return element.getAnimations().filter((animation) => animation instanceof CSSTransition);
+}
+
+// Switches between Motion and the CSS fallback scheduled for the same frame commit together,
+// in one flushSync, so many controls handing over at once cost one React commit
+const pendingSwitches = new Set<() => void>();
+
+function switchAfterMotionWrites(m: MotionModule, apply: () => void) {
+  if (pendingSwitches.size === 0) {
+    m.frame.postRender(() => {
+      const batch = [...pendingSwitches];
+      pendingSwitches.clear();
+      flushSync(() => {
+        for (const run of batch) run();
+      });
+    });
+  }
+  pendingSwitches.add(apply);
+  return () => {
+    pendingSwitches.delete(apply);
+  };
 }
 
 /**
@@ -69,6 +90,7 @@ export function useMotionAnimate<E extends HTMLElement | SVGElement>(
   useLayoutEffect(() => {
     if (!available || driving || !m) return;
     let cancelled = false;
+    let cancelSwitch: (() => void) | undefined;
     const handOver = () => {
       if (cancelled) return;
       const node = element.current;
@@ -82,13 +104,12 @@ export function useMotionAnimate<E extends HTMLElement | SVGElement>(
         controls.current = m.animate(node, JSON.parse(target), { duration: 0 });
         animated.current = node;
       }
-      m.frame.postRender(() => {
-        if (!cancelled) flushSync(() => setDriving(true));
-      });
+      cancelSwitch = switchAfterMotionWrites(m, () => setDriving(true));
     };
     handOver();
     return () => {
       cancelled = true;
+      cancelSwitch?.();
     };
   }, [available, driving, m]);
 
@@ -100,17 +121,12 @@ export function useMotionAnimate<E extends HTMLElement | SVGElement>(
     animated.current = null;
     controls.current?.complete();
     controls.current = null;
-    let cancelled = false;
-    m.frame.postRender(() => {
-      if (cancelled) return;
+    return switchAfterMotionWrites(m, () => {
       if (node && cleared) {
         for (const name of cleared.split(" ")) node.style.removeProperty(name);
       }
-      flushSync(() => setDriving(false));
+      setDriving(false);
     });
-    return () => {
-      cancelled = true;
-    };
   }, [available, driving, m, cleared]);
 
   useLayoutEffect(() => {

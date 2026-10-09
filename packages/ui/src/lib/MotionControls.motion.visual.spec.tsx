@@ -1,5 +1,5 @@
 import { render } from "@testing-library/react";
-import { type ReactNode, StrictMode } from "react";
+import { Profiler, type ReactNode, StrictMode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { commands } from "vitest/browser";
 import { Checkbox } from "../components/checkbox";
@@ -13,6 +13,7 @@ import { reloadMotion } from "./use-motion";
 // element in place: swapping in a motion.* element when Motion loads would remount it.
 
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const byTestId = () => document.querySelector<HTMLElement>('[data-testid="moving"]');
 const click = (selector: string) => document.querySelector<HTMLElement>(selector)?.click();
 const left = (element: HTMLElement | null) => element?.getBoundingClientRect().left ?? Number.NaN;
@@ -162,6 +163,27 @@ describe("controls when Motion loads", () => {
       Math.abs(value - (i === 0 ? start : (values[i - 1] ?? 0))),
     );
     expect(Math.max(...steps)).toBeLessThan(travel / 2);
+  });
+
+  it("hands N controls over to Motion in one commit", async () => {
+    const motion = motionLoading();
+    let commits = 0;
+    render(
+      <Profiler id="switches" onRender={() => commits++}>
+        {Array.from({ length: 20 }, (_, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: a fixed list
+          <Switch.Root key={i} aria-label={`Switch ${i}`}>
+            <Switch.Thumb />
+          </Switch.Root>
+        ))}
+      </Profiler>,
+    );
+    await wait(100);
+    commits = 0;
+    await motion.arrive();
+    await wait(100);
+    // One commit for Motion arriving, one for the hand-off; not one per switch
+    expect(commits).toBeLessThanOrEqual(2);
   });
 });
 
