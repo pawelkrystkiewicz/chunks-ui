@@ -16,6 +16,7 @@ import {
 } from "react";
 import { cn } from "../../lib/cn";
 import { springs } from "../../lib/motion";
+import { useMergedRef } from "../../lib/use-merged-ref";
 import { useMotion, useReducedMotion } from "../../lib/use-motion";
 
 // ---------------------------------------------------------------------------
@@ -196,7 +197,7 @@ function TabsIndicator({ className, ...props }: TabsIndicatorProps) {
 // Animated content container  –  slides between panels + animates height
 // ---------------------------------------------------------------------------
 
-function TabsContents({ className, children, transition, ...props }: TabsContentsProps) {
+function TabsContents({ className, children, transition, ref, ...props }: TabsContentsProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
   // Motion drives the plain elements below instead of replacing them with motion.div, so its
@@ -212,6 +213,7 @@ function TabsContents({ className, children, transition, ...props }: TabsContent
 
   // --- height measurement ---
   const containerRef = useRef<HTMLDivElement>(null);
+  const mergedContainerRef = useMergedRef(containerRef, ref);
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [height, setHeight] = useState<number | "auto">("auto");
 
@@ -288,7 +290,7 @@ function TabsContents({ className, children, transition, ...props }: TabsContent
   );
 
   return (
-    <div ref={containerRef} className={cn("overflow-hidden", className)} {...props}>
+    <div ref={mergedContainerRef} className={cn("overflow-hidden", className)} {...props}>
       {/* items-start: each panel keeps its own height, so the container can follow the active one */}
       <div ref={trackRef} className={motion ? "flex items-start" : undefined}>
         {childrenArray.map((child, i) => (
@@ -375,9 +377,11 @@ type TabsAnimateEnter = {
 function TabsAnimatePane({
   enter,
   reduced,
+  ref: consumerRef,
   ...props
 }: ComponentProps<"div"> & { enter: TabsAnimateEnter | null; reduced: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
+  const mergedRef = useMergedRef(ref, consumerRef);
   const [enterOnMount] = useState(enter);
   const entry = useRef<{ complete(): void } | null>(null);
   useLayoutEffect(() => {
@@ -402,7 +406,7 @@ function TabsAnimatePane({
     if (reduced) entry.current?.complete();
   }, [reduced]);
 
-  return <div ref={ref} {...props} />;
+  return <div ref={mergedRef} {...props} />;
 }
 
 // ---------------------------------------------------------------------------
