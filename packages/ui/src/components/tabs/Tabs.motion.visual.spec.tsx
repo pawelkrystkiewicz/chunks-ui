@@ -1,11 +1,69 @@
 import { render } from "@testing-library/react";
-import { useEffect } from "react";
+import { createRef, useEffect } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { commands, page } from "vitest/browser";
 import { reloadMotion } from "../../lib/use-motion";
-import { Tabs } from "./index";
+import { waitForStable } from "../../VisualTest.utils";
+import { Tabs, type TabsContentsProps } from "./index";
 
 // Runs with reduced motion off, so Tabs.Contents slides and resizes with Motion
+const HEIGHTS = { short: 40, tall: 120 } as const;
+type Panel = keyof typeof HEIGHTS;
+
+type ContentsOptions = Pick<TabsContentsProps, "ref" | "transition">;
+
+/**
+ * Tabs.Contents with a short and a tall panel, showing `value`. `ref` is passed even when it is
+ * undefined: an explicit `ref={undefined}` must not switch the animation off either.
+ */
+const panelsOfTwoHeights = (value: Panel, { ref, transition }: ContentsOptions = {}) => (
+  <Tabs.Root value={value}>
+    <Tabs.Contents data-testid="contents" ref={ref} transition={transition}>
+      <Tabs.Content value="short">
+        <div style={{ height: HEIGHTS.short, paddingTop: 20, boxSizing: "border-box" }}>
+          <span data-testid="marker">Short panel</span>
+        </div>
+      </Tabs.Content>
+      <Tabs.Content value="tall">
+        <div style={{ height: HEIGHTS.tall }}>Tall panel</div>
+      </Tabs.Content>
+    </Tabs.Contents>
+  </Tabs.Root>
+);
+
+/**
+ * Renders `from`, switches to `to`, and records the container height every frame until it
+ * settles, along with the tall panel's left edge before and after.
+ */
+async function switchPanels(from: Panel, to: Panel, options?: ContentsOptions) {
+  await reloadMotion();
+  const { rerender, getByTestId } = render(panelsOfTwoHeights(from, options));
+  const contents = getByTestId("contents");
+  const tallPanel = page.getByText("Tall panel").element();
+  const height = () => contents.getBoundingClientRect().height;
+  const start = await waitForStable(height);
+  const tallLeftBefore = tallPanel.getBoundingClientRect().left;
+
+  rerender(panelsOfTwoHeights(to, options));
+  const heights: number[] = [];
+  const end = await waitForStable(() => {
+    heights.push(height());
+    return heights.at(-1) ?? 0;
+  });
+  return {
+    contents,
+    start,
+    end,
+    heights,
+    tallLeftBefore,
+    tallLeftAfter: tallPanel.getBoundingClientRect().left,
+  };
+}
+
+/** Some frame between `from` and `to` (exclusive, by more than 1px): it eased, not jumped. */
+const passedThrough = (heights: number[], from: number, to: number) =>
+  heights.some((h) => h > Math.min(from, to) + 1 && h < Math.max(from, to) - 1);
+
 describe("Tabs with Motion", () => {
   it("mounts a panel's children once when Motion has already loaded", async () => {
     await reloadMotion();
@@ -194,5 +252,151 @@ describe("Tabs animations that must stop", () => {
       await nextFrame();
       expect(track.style.transform).toBe(transform);
     }
+  });
+
+  /** Switches short -> tall with the slow transition and returns mid-resize. */
+  async function resizeMidway() {
+    await reloadMotion();
+    const result = render(panelsOfTwoHeights("short", { transition: slow }));
+    const contents = result.getByTestId("contents");
+    await waitForStable(() => contents.offsetHeight);
+    result.rerender(panelsOfTwoHeights("tall", { transition: slow }));
+    await nextFrame();
+    await nextFrame();
+    await nextFrame();
+    // Mid-resize: between the two panel heights
+    const height = Number.parseFloat(contents.style.height);
+    expect(height).toBeGreaterThan(HEIGHTS.short);
+    expect(height).toBeLessThan(HEIGHTS.tall);
+    return { ...result, contents };
+  }
+
+  it("stops a Tabs.Contents resize when it unmounts", async () => {
+    const { contents, unmount } = await resizeMidway();
+    unmount();
+    // Stopping may write the value it stopped at once; after that nothing changes
+    await nextFrame();
+    const height = contents.style.height;
+    for (let frame = 0; frame < 5; frame++) {
+      await nextFrame();
+      expect(contents.style.height).toBe(height);
+    }
+  });
+
+  it("drops a Tabs.Contents slide and resize when reduced motion turns on", async () => {
+    const { contents } = await resizeMidway();
+    const track = contents.firstElementChild as HTMLElement;
+    await commands.emulateMedia({ reducedMotion: "reduce" });
+    // The inline styles are cleared, so the CSS layout shows the tall panel unshifted, full height
+    await expect.poll(() => contents.style.height, { timeout: 1000 }).toBe("");
+    for (let frame = 0; frame < 5; frame++) {
+      await nextFrame();
+      expect(contents.style.height).toBe("");
+      expect(track.style.transform).toBe("");
+      expect(Math.abs(contents.offsetHeight - HEIGHTS.tall)).toBeLessThanOrEqual(1);
+    }
+  });
+});
+
+describe("Tabs.Contents height with Motion", () => {
+  it.each([
+    ["short", "tall"],
+    ["tall", "short"],
+  ] as const)("animates from the %s panel's height to the %s panel's", async (from, to) => {
+    const { start, end, heights } = await switchPanels(from, to);
+
+    expect(Math.abs(start - HEIGHTS[from])).toBeLessThanOrEqual(1);
+    expect(Math.abs(end - HEIGHTS[to])).toBeLessThanOrEqual(1);
+    expect(passedThrough(heights, start, end)).toBe(true);
+  });
+
+  it("cannot be scrolled programmatically, so the active panel's top stays in view", async () => {
+    await reloadMotion();
+    // The short panel is active; the tall one next to it makes the track taller than the container
+    const { getByTestId } = render(panelsOfTwoHeights("short"));
+    const contents = getByTestId("contents");
+    await waitForStable(() => contents.getBoundingClientRect().height);
+
+    // The marker sits 20px down the short panel
+    getByTestId("marker").scrollIntoView();
+    expect(contents.scrollTop).toBe(0);
+  });
+
+  it("never shows the previous panel's height after a quick switch back", async () => {
+    await reloadMotion();
+    // Instant, so each frame shows the height the container was last told to have
+    const transition = { type: "tween", duration: 0 } as const;
+    const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+    const { rerender, getByTestId } = render(panelsOfTwoHeights("short", { transition }));
+    const contents = getByTestId("contents");
+    // Resolves inside an animation frame, so the switches below happen there too
+    await waitForStable(() => contents.offsetHeight);
+
+    rerender(panelsOfTwoHeights("tall", { transition }));
+    // Later this frame the tall panel's ResizeObserver queues a re-measure for the next one;
+    // switch back at the start of that frame, before the re-measure runs
+    await nextFrame();
+    rerender(panelsOfTwoHeights("short", { transition }));
+    const heights: number[] = [];
+    for (let frame = 0; frame < 10; frame++) {
+      await nextFrame();
+      heights.push(contents.offsetHeight);
+    }
+    expect(heights.every((h) => Math.abs(h - HEIGHTS.short) <= 1)).toBe(true);
+  });
+
+  it("sizes to the panel's layout height inside a scaled ancestor", async () => {
+    await reloadMotion();
+    // Like a Dialog popup that mounts at scale(0.95): a transform changes the size on screen,
+    // not the layout size, and does not trigger a ResizeObserver
+    const { getByTestId } = render(
+      <div style={{ transform: "scale(0.5)" }}>{panelsOfTwoHeights("short")}</div>,
+    );
+    const contents = getByTestId("contents");
+    const height = await waitForStable(() => contents.offsetHeight);
+    expect(Math.abs(height - HEIGHTS.short)).toBeLessThanOrEqual(1);
+  });
+});
+
+describe("Tabs refs with Motion", () => {
+  it("gives a ref on Tabs.Contents the container and still slides and resizes", async () => {
+    const ref = createRef<HTMLDivElement>();
+    const { contents, start, end, heights, tallLeftBefore, tallLeftAfter } = await switchPanels(
+      "short",
+      "tall",
+      { ref },
+    );
+
+    expect(ref.current).toBe(contents);
+    // Slid: the tall panel moved left into view
+    expect(tallLeftAfter).toBeLessThan(tallLeftBefore - 1);
+    // Resized with Motion
+    expect(Math.abs(end - HEIGHTS.tall)).toBeLessThanOrEqual(1);
+    expect(passedThrough(heights, start, end)).toBe(true);
+  });
+
+  it("gives a ref on Tabs.Animate the current pane and still animates it in", async () => {
+    const ref = createRef<HTMLDivElement>();
+    await reloadMotion();
+    const tabs = (value: string) => (
+      <Tabs.Root value={value}>
+        <Tabs.Animate ref={ref}>
+          <p>Panel {value}</p>
+        </Tabs.Animate>
+      </Tabs.Root>
+    );
+    const { rerender } = render(tabs("a"));
+    expect(ref.current).toBe(page.getByText("Panel a").element().parentElement);
+    await new Promise((resolve) => setTimeout(resolve, 600));
+
+    rerender(tabs("b"));
+    const pane = page.getByText("Panel b").element().parentElement as HTMLElement;
+    expect(ref.current).toBe(pane);
+    const opacities: number[] = [];
+    for (let frame = 0; frame < 30; frame++) {
+      opacities.push(Number(getComputedStyle(pane).opacity));
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+    }
+    expect(opacities.some((opacity) => opacity > 0 && opacity < 1)).toBe(true);
   });
 });

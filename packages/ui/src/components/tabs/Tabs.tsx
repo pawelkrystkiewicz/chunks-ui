@@ -16,6 +16,7 @@ import {
 } from "react";
 import { cn } from "../../lib/cn";
 import { springs } from "../../lib/motion";
+import { useMergedRef } from "../../lib/use-merged-ref";
 import { useMotion, useReducedMotion } from "../../lib/use-motion";
 
 // ---------------------------------------------------------------------------
@@ -196,7 +197,7 @@ function TabsIndicator({ className, ...props }: TabsIndicatorProps) {
 // Animated content container  –  slides between panels + animates height
 // ---------------------------------------------------------------------------
 
-function TabsContents({ className, children, transition, ...props }: TabsContentsProps) {
+function TabsContents({ className, children, transition, ref, ...props }: TabsContentsProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
   // Motion drives the plain elements below instead of replacing them with motion.div, so its
@@ -212,24 +213,33 @@ function TabsContents({ className, children, transition, ...props }: TabsContent
 
   // --- height measurement ---
   const containerRef = useRef<HTMLDivElement>(null);
+  const mergedContainerRef = useMergedRef(containerRef, ref);
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [height, setHeight] = useState<number | "auto">("auto");
 
+  // Layout height: getBoundingClientRect() would include an ancestor's transform (a Dialog
+  // mounts at scale(0.95)), and a transform ending doesn't trigger the ResizeObserver below
   const measure = useCallback((index: number) => {
     const pane = itemRefs.current[index];
     if (!pane) return 0;
-    return pane.getBoundingClientRect().height;
+    return Number.parseFloat(getComputedStyle(pane).height) || 0;
   }, []);
 
   useEffect(() => {
     const pane = itemRefs.current[safeIndex];
     if (!pane) return;
     setHeight(measure(safeIndex));
+    let frame = 0;
     const ro = new ResizeObserver(() => {
-      requestAnimationFrame(() => setHeight(measure(safeIndex)));
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => setHeight(measure(safeIndex)));
     });
     ro.observe(pane);
-    return () => ro.disconnect();
+    return () => {
+      ro.disconnect();
+      // A re-measure queued for the previous panel would set its height after a switch
+      cancelAnimationFrame(frame);
+    };
   }, [safeIndex, measure]);
 
   // Set initial height before paint
@@ -248,35 +258,48 @@ function TabsContents({ className, children, transition, ...props }: TabsContent
   });
   const trackRef = useRef<HTMLDivElement>(null);
   // The first animation jumps to the current state, as initial={false} did; without Motion
-  // the inline style it set is cleared so the CSS layout applies again
+  // the inline style it set is cleared so the CSS layout applies again. stop() writes the value
+  // it stopped at in Motion's next render step, so the style is cleared again in that step.
+  // That relies on our callback being queued after Motion's own write; the reduced-motion
+  // test in Tabs.motion.visual.spec.tsx guards it.
   const slide = useRef<{ stop(): void } | null>(null);
   useLayoutEffect(() => {
     const track = trackRef.current;
     if (!track) return;
     if (!motion) {
-      slide.current?.stop();
-      slide.current = null;
+      if (slide.current) {
+        slide.current.stop();
+        slide.current = null;
+        m?.frame.render(() => {
+          track.style.transform = "";
+        });
+      }
       track.style.transform = "";
       return;
     }
     const options = slide.current ? transitionRef.current : { duration: 0 };
     slide.current = motion.animate(track, { x: `${safeIndex * -100}%` }, options);
-  }, [motion, safeIndex]);
+  }, [m, motion, safeIndex]);
 
   const resize = useRef<{ stop(): void } | null>(null);
   useLayoutEffect(() => {
     const container = containerRef.current;
     if (!container) return;
     if (!motion) {
-      resize.current?.stop();
-      resize.current = null;
+      if (resize.current) {
+        resize.current.stop();
+        resize.current = null;
+        m?.frame.render(() => {
+          container.style.height = "";
+        });
+      }
       container.style.height = "";
       return;
     }
     if (height === "auto") return;
     const options = resize.current ? transitionRef.current : { duration: 0 };
     resize.current = motion.animate(container, { height }, options);
-  }, [motion, height]);
+  }, [m, motion, height]);
 
   // Stop on unmount, or Motion keeps writing to the detached elements until it settles
   useLayoutEffect(
@@ -288,8 +311,15 @@ function TabsContents({ className, children, transition, ...props }: TabsContent
   );
 
   return (
-    <div ref={containerRef} className={cn("overflow-hidden", className)} {...props}>
-      <div ref={trackRef} className={motion ? "flex" : undefined}>
+    <div
+      ref={mergedContainerRef}
+      // With Motion the track can be taller than the container. overflow:hidden would leave it
+      // scrollable, so scrollIntoView or focus could scroll the active panel's top out of view.
+      className={cn(motion ? "overflow-clip" : "overflow-hidden", className)}
+      {...props}
+    >
+      {/* items-start: each panel keeps its own height, so the container can follow the active one */}
+      <div ref={trackRef} className={motion ? "flex items-start" : undefined}>
         {childrenArray.map((child, i) => (
           <div
             key={String(childValue(child) ?? i)}
@@ -374,9 +404,11 @@ type TabsAnimateEnter = {
 function TabsAnimatePane({
   enter,
   reduced,
+  ref: consumerRef,
   ...props
 }: ComponentProps<"div"> & { enter: TabsAnimateEnter | null; reduced: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
+  const mergedRef = useMergedRef(ref, consumerRef);
   const [enterOnMount] = useState(enter);
   const entry = useRef<{ complete(): void } | null>(null);
   useLayoutEffect(() => {
@@ -401,7 +433,7 @@ function TabsAnimatePane({
     if (reduced) entry.current?.complete();
   }, [reduced]);
 
-  return <div ref={ref} {...props} />;
+  return <div ref={mergedRef} {...props} />;
 }
 
 // ---------------------------------------------------------------------------
