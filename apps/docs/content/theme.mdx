@@ -127,13 +127,15 @@ The z-index system provides ordered layers to prevent stacking conflicts:
 | Token | Value | Tailwind class | Use case |
 |---|---|---|---|
 | `--z-index-base` | `0` | `z-base` | Default content |
-| `--z-index-dropdowns` | `200` | `z-dropdowns` | Select popups, menus |
-| `--z-index-tooltips` | `400` | `z-tooltips` | Tooltip overlays |
-| `--z-index-overlays` | `500` | `z-overlays` | General overlays |
-| `--z-index-drawers` | `600` | `z-drawers` | Side/bottom drawers |
-| `--z-index-modals` | `700` | `z-modals` | Modal dialogs |
-| `--z-index-notifications` | `800` | `z-notifications` | Toast notifications |
-| `--z-index-toasts` | `810` | `z-toasts` | Toast containers |
+| `--z-index-dropdowns` | `200` | `z-dropdowns` | `Select`, `Combobox`, `Menu`, `Popover` and `DatePicker` popups |
+| `--z-index-tooltips` | `400` | `z-tooltips` | Tooltips |
+| `--z-index-overlays` | `500` | `z-overlays` | Not used by components. Free for your own overlays above popups and below drawers |
+| `--z-index-drawers` | `600` | `z-drawers` | `Drawer.Portal` |
+| `--z-index-modals` | `700` | `z-modals` | `Dialog.Portal` |
+| `--z-index-notifications` | `800` | `z-notifications` | Not used by components. Free for your own banners and notices |
+| `--z-index-toasts` | `810` | `z-toasts` | `Toast.Viewport` |
+
+`Dialog.Portal` and `Drawer.Portal` put their layer on the portal element, which is a stacking context. Their popup and backdrop stack inside it. Popups, dialogs and drawers opened from inside a dialog or drawer render into its portal, so they stack above it whatever their own layer. To move a dialog or drawer to another layer, set `className` on its `Portal`, for example `<Dialog.Portal className="z-notifications">`.
 
 ## Border Radius
 

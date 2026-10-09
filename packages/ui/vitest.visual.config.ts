@@ -26,9 +26,18 @@ export default defineConfig({
       provider: playwright(),
       commands: { emulateMedia },
       instances: [
+        // Reduced motion: components skip Motion springs, so screenshots never catch one mid-way
         {
           browser: "chromium",
-          context: { reducedMotion: "reduce" },
+          provider: playwright({ contextOptions: { reducedMotion: "reduce" } }),
+          exclude: ["src/**/*.motion.visual.spec.tsx"],
+        },
+        // Motion only animates when reduced motion is off
+        {
+          browser: "chromium",
+          name: "chromium-motion",
+          provider: playwright({ contextOptions: { reducedMotion: "no-preference" } }),
+          include: ["src/**/*.motion.visual.spec.tsx"],
         },
       ],
       expect: {

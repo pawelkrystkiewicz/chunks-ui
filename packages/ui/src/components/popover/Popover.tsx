@@ -5,7 +5,7 @@ import type { ComponentProps } from "react";
 import { cn } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
-import { usePortalContainer } from "../../lib/portal-container";
+import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
 import { useMotion, useReducedMotion } from "../../lib/use-motion";
 
 export type PopoverRootProps = ComponentProps<typeof BasePopover.Root>;
@@ -60,26 +60,29 @@ function PopoverContent({
     : undefined;
 
   return (
-    <BasePopover.Portal keepMounted={useSpring} container={container}>
-      <BasePopover.Positioner
-        className="z-dropdowns"
-        sideOffset={sideOffset}
-        side={side}
-        align={align}
-        alignOffset={alignOffset}
-      >
-        <BasePopover.Popup
-          render={render}
-          className={cn(
-            "rounded-md border border-border bg-popover p-4 text-popover-foreground shadow-md",
-            !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
-            !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
-            !useSpring && "micro-interactions",
-            className,
-          )}
-          {...props}
-        />
-      </BasePopover.Positioner>
+    <BasePopover.Portal container={container}>
+      {/* A modal popover aria-hides nodes outside its portal, so popups opened inside portal in here */}
+      <PortalContainerProvider value={undefined}>
+        <BasePopover.Positioner
+          className="z-dropdowns"
+          sideOffset={sideOffset}
+          side={side}
+          align={align}
+          alignOffset={alignOffset}
+        >
+          <BasePopover.Popup
+            render={render}
+            className={cn(
+              "rounded-md border border-border bg-popover p-4 text-popover-foreground shadow-md",
+              !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
+              !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
+              !useSpring && "micro-interactions",
+              className,
+            )}
+            {...props}
+          />
+        </BasePopover.Positioner>
+      </PortalContainerProvider>
     </BasePopover.Portal>
   );
 }

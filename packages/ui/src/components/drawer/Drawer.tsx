@@ -22,7 +22,17 @@ export type DrawerPopupProps = ComponentProps<typeof BaseDialog.Popup> &
      */
     side?: "left" | "right" | "bottom";
   };
-export type DrawerBackdropProps = ComponentProps<typeof BaseDialog.Backdrop>;
+export type DrawerBackdropProps = Omit<
+  ComponentProps<typeof BaseDialog.Backdrop>,
+  "forceRender"
+> & {
+  /**
+   * Whether the backdrop renders when this drawer is opened from another dialog or drawer, so it dims that parent.
+   * Base UI defaults this to `false`.
+   * @default true
+   */
+  forceRender?: boolean;
+};
 export type DrawerTitleProps = ComponentProps<typeof BaseDialog.Title>;
 export type DrawerDescriptionProps = ComponentProps<typeof BaseDialog.Description>;
 export type DrawerCloseProps = ComponentProps<typeof BaseDialog.Close>;
@@ -39,21 +49,14 @@ const motionPositionClasses = {
   bottom: "inset-x-0 bottom-0 h-auto border-t rounded-t-xl",
 } as const;
 
-function DrawerPortal({ keepMounted, className, children, ...props }: DrawerPortalProps) {
-  const m = useMotion();
-  const reduced = useReducedMotion();
-  const useSpring = !!m && !reduced;
+function DrawerPortal({ className, children, ...props }: DrawerPortalProps) {
   const container = usePortalContainer();
   return (
     <BaseDialog.Portal
-      keepMounted={keepMounted ?? useSpring}
       container={container}
-      // Popups portalled straight into this one (portal > node > positioner) sit above it; tooltips above dropdowns
+      // The portal node carries the z-layer, not the popup: whatever opens from the drawer portals in here and stacks above it
       className={(state) =>
-        cn(
-          "[&>*>.z-dropdowns]:z-[calc(var(--z-index-drawers)+1)] [&>*>.z-tooltips]:z-[calc(var(--z-index-drawers)+2)]",
-          typeof className === "function" ? className(state) : className,
-        )
+        cn("relative z-drawers", typeof className === "function" ? className(state) : className)
       }
       {...props}
     >
@@ -62,7 +65,7 @@ function DrawerPortal({ keepMounted, className, children, ...props }: DrawerPort
   );
 }
 
-function DrawerBackdrop({ className, ...props }: DrawerBackdropProps) {
+function DrawerBackdrop({ className, forceRender = true, ...props }: DrawerBackdropProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
   const useSpring = !!m && !reduced;
@@ -78,8 +81,9 @@ function DrawerBackdrop({ className, ...props }: DrawerBackdropProps) {
   return (
     <BaseDialog.Backdrop
       render={render}
+      forceRender={forceRender}
       className={cn(
-        "fixed inset-0 z-drawers bg-black/50",
+        "fixed inset-0 bg-black/50",
         !useSpring && "data-starting-style:opacity-0",
         !useSpring && "data-ending-style:opacity-0",
         !useSpring && "micro-interactions",
@@ -109,7 +113,7 @@ function DrawerPopup({ side = "right", className, ...props }: DrawerPopupProps) 
     <BaseDialog.Popup
       render={render}
       className={cn(
-        useSpring && "fixed z-drawers border-border bg-background p-6 shadow-xl",
+        useSpring && "fixed border-border bg-background p-6 shadow-xl",
         useSpring && motionPositionClasses[resolvedSide],
         !useSpring && drawerPopupVariants({ side }),
         className,
