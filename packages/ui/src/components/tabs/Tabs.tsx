@@ -199,7 +199,9 @@ function TabsIndicator({ className, ...props }: TabsIndicatorProps) {
 function TabsContents({ className, children, transition, ...props }: TabsContentsProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
-  const useSpring = !!m && !reduced;
+  // Motion drives the plain elements below instead of replacing them with motion.div, so its
+  // loading never remounts the panels and loses their state
+  const motion = reduced ? null : m;
   const ctx = useContext(TabsContext);
 
   const childrenArray = Children.toArray(children);
@@ -238,54 +240,62 @@ function TabsContents({ className, children, transition, ...props }: TabsContent
     }
   }, [safeIndex, height, measure]);
 
-  const springTransition = transition ?? springs.content;
-
-  // --- CSS-only fallback ---
-  if (!useSpring || !m) {
-    return (
-      <div className={cn("overflow-hidden", className)} {...props}>
-        {childrenArray.map((child, i) => (
-          <div
-            key={String(childValue(child) ?? i)}
-            style={i !== safeIndex ? { display: "none" } : undefined}
-          >
-            {child}
-          </div>
-        ))}
-      </div>
-    );
-  }
-
   // --- Motion-powered slide + height ---
+  const springTransition = transition ?? springs.content;
+  const transitionRef = useRef(springTransition);
+  useLayoutEffect(() => {
+    transitionRef.current = springTransition;
+  });
+  const trackRef = useRef<HTMLDivElement>(null);
+  // The first animation jumps to the current state, as initial={false} did; without Motion
+  // the inline style it set is cleared so the CSS layout applies again
+  const slide = useRef<{ stop(): void } | null>(null);
+  useLayoutEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+    if (!motion) {
+      slide.current?.stop();
+      slide.current = null;
+      track.style.transform = "";
+      return;
+    }
+    const options = slide.current ? transitionRef.current : { duration: 0 };
+    slide.current = motion.animate(track, { x: `${safeIndex * -100}%` }, options);
+  }, [motion, safeIndex]);
+
+  const resize = useRef<{ stop(): void } | null>(null);
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    if (!motion) {
+      resize.current?.stop();
+      resize.current = null;
+      container.style.height = "";
+      return;
+    }
+    if (height === "auto") return;
+    const options = resize.current ? transitionRef.current : { duration: 0 };
+    resize.current = motion.animate(container, { height }, options);
+  }, [motion, height]);
+
   return (
-    <m.motion.div
-      ref={containerRef}
-      className={cn("overflow-hidden", className)}
-      initial={false}
-      animate={{ height }}
-      transition={springTransition}
-      {...(props as Record<string, unknown>)}
-    >
-      <m.motion.div
-        className="flex"
-        initial={false}
-        animate={{ x: `${safeIndex * -100}%` }}
-        transition={springTransition}
-      >
+    <div ref={containerRef} className={cn("overflow-hidden", className)} {...props}>
+      <div ref={trackRef} className={motion ? "flex" : undefined}>
         {childrenArray.map((child, i) => (
           <div
             key={String(childValue(child) ?? i)}
             ref={(el) => {
               itemRefs.current[i] = el;
             }}
-            className="w-full shrink-0"
-            inert={i !== safeIndex || undefined}
+            className={motion ? "w-full shrink-0" : undefined}
+            style={!motion && i !== safeIndex ? { display: "none" } : undefined}
+            inert={motion && i !== safeIndex ? true : undefined}
           >
             {child}
           </div>
         ))}
-      </m.motion.div>
-    </m.motion.div>
+      </div>
+    </div>
   );
 }
 
@@ -327,30 +337,45 @@ function TabsAnimate({
   const value = useTabsValue();
   const m = useMotion();
   const reduced = useReducedMotion();
-  const useSpring = !!m && !reduced;
-  const key = String(value ?? "");
-  const trans = transition ?? springs.content;
-
-  if (!useSpring || !m) {
-    return (
-      <div key={key} className={cn(className)} {...props}>
-        {children}
-      </div>
-    );
-  }
+  const enter =
+    m && !reduced ? { m, initial, animate, transition: transition ?? springs.content } : null;
 
   return (
-    <m.motion.div
-      key={key}
-      className={cn(className)}
-      initial={initial as never}
-      animate={animate as never}
-      transition={trans}
-      {...(props as Record<string, unknown>)}
-    >
+    <TabsAnimatePane key={String(value ?? "")} enter={enter} className={cn(className)} {...props}>
       {children}
-    </m.motion.div>
+    </TabsAnimatePane>
   );
+}
+
+type TabsAnimateEnter = {
+  m: NonNullable<ReturnType<typeof useMotion>>;
+  initial: MotionTarget;
+  animate: MotionTarget;
+  transition: MotionTransition;
+};
+
+// One pane per tab value. It animates in only if Motion was ready when it mounted; Motion
+// arriving later leaves a showing pane alone rather than swapping in a motion.div
+function TabsAnimatePane({
+  enter,
+  ...props
+}: ComponentProps<"div"> & { enter: TabsAnimateEnter | null }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [enterOnMount] = useState(enter);
+  useLayoutEffect(() => {
+    const pane = ref.current;
+    if (!enterOnMount || !pane) return;
+    const { m, initial, animate, transition } = enterOnMount;
+    // From each `initial` value to its `animate` value, like motion.div's initial/animate
+    const keyframes = Object.fromEntries(
+      Object.entries(animate).map(([name, to]) => [
+        name,
+        name in initial ? [initial[name], to] : to,
+      ]),
+    );
+    m.animate(pane, keyframes as never, transition);
+  }, [enterOnMount]);
+  return <div ref={ref} {...props} />;
 }
 
 // ---------------------------------------------------------------------------
