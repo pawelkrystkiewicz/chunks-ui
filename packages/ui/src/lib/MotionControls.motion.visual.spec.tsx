@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { commands } from "vitest/browser";
 import { Switch } from "../components/switch";
+import { Tabs } from "../components/tabs";
 import { ToggleGroup } from "../components/toggle-group";
 import { reloadMotion } from "./use-motion";
 
@@ -48,6 +49,20 @@ const controls: Record<string, Control> = {
     change: () => click('[role="group"] > button:last-of-type'),
     measure: left,
     cssTransition: true,
+  },
+  "Tabs.Indicator": {
+    ui: (
+      <Tabs.Root defaultValue="a">
+        <Tabs.List>
+          <Tabs.Tab value="a">Alpha</Tabs.Tab>
+          <Tabs.Tab value="b">Beta, a longer tab</Tabs.Tab>
+          <Tabs.Indicator data-testid="moving" />
+        </Tabs.List>
+      </Tabs.Root>
+    ),
+    element: byTestId,
+    change: () => click('[role="tab"]:last-of-type'),
+    measure: left,
   },
 };
 
