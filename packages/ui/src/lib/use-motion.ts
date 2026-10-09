@@ -24,10 +24,11 @@ if (typeof window !== "undefined") {
 /**
  * Tests only: forget the loaded module and load it again. A popup that opens before the
  * returned promise settles mounts while Motion is still loading, as on a fresh page.
+ * `arrival` holds the module back until it settles, so a test can choose when Motion arrives.
  */
-export function reloadMotion(): Promise<unknown> {
+export function reloadMotion(arrival?: Promise<unknown>): Promise<unknown> {
   _cache = undefined;
-  return import("motion/react").then(setMotion);
+  return Promise.all([import("motion/react"), arrival]).then(([m]) => setMotion(m));
 }
 
 function subscribeToMotion(onLoad: () => void) {

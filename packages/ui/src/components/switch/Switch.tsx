@@ -4,7 +4,7 @@ import { Switch as BaseSwitch } from "@base-ui/react/switch";
 import type { ComponentProps } from "react";
 import { cn } from "../../lib/cn";
 import { springs } from "../../lib/motion";
-import { useMotion, useReducedMotion } from "../../lib/use-motion";
+import { useMotionAnimate } from "../../lib/use-motion-animate";
 
 export type SwitchRootProps = ComponentProps<typeof BaseSwitch.Root>;
 
@@ -40,35 +40,42 @@ const THUMB_CLASSES = cn(
 );
 
 function SwitchThumb({ className, ...props }: SwitchThumbProps) {
-  const m = useMotion();
-  const reduced = useReducedMotion();
-  const useSpring = !!m && !reduced;
-  if (useSpring) {
-    return (
-      <BaseSwitch.Thumb
-        render={(renderProps, state) => (
-          <m.motion.span
-            {...(renderProps as Record<string, unknown>)}
-            className={cn(THUMB_CLASSES, className)}
-            initial={false}
-            animate={{ x: state.checked ? "100%" : "0%" }}
-            transition={springs.micro}
-          />
-        )}
-        {...props}
-      />
-    );
-  }
-
   return (
     <BaseSwitch.Thumb
-      className={cn(
-        THUMB_CLASSES,
-        "micro-interactions",
-        "data-checked:translate-x-full data-unchecked:translate-x-0",
-        className,
+      render={(renderProps, state) => (
+        <SwitchThumbElement
+          {...renderProps}
+          checked={state.checked}
+          className={typeof className === "function" ? className(state) : className}
+        />
       )}
       {...props}
+    />
+  );
+}
+
+// The same span with and without Motion, so it isn't remounted when Motion loads
+function SwitchThumbElement({
+  checked,
+  className,
+  ref,
+  ...props
+}: ComponentProps<"span"> & { checked: boolean }) {
+  const [thumbRef, driven] = useMotionAnimate<HTMLSpanElement>(
+    { x: checked ? "100%" : "0%" },
+    { transition: springs.micro, clear: ["transform"] },
+    ref,
+  );
+  return (
+    <span
+      {...props}
+      ref={thumbRef}
+      className={cn(
+        THUMB_CLASSES,
+        !driven && "micro-interactions",
+        !driven && "data-checked:translate-x-full data-unchecked:translate-x-0",
+        className,
+      )}
     />
   );
 }
