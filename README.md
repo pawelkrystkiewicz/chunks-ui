@@ -99,7 +99,7 @@ Use with Tailwind: `bg-primary text-primary-foreground`, `bg-destructive text-de
 
 ## Animation
 
-Motion is a first-class but optional peer dependency. Components detect it at runtime — if absent, they fall back to CSS transitions.
+Motion is a first-class but optional peer dependency (`^12.0.0`). Components detect it at runtime — if absent, they fall back to CSS transitions.
 
 Shared spring presets in `src/lib/motion.ts`:
 
