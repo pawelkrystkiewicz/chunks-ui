@@ -62,13 +62,14 @@ function ToggleGroupRoot({
 
   const handleValueChange = useCallback(
     (...args: Parameters<NonNullable<ToggleGroupRootProps["onValueChange"]>>) => {
+      onValueChange?.(...args);
       // Only update internal state for uncontrolled mode.
       // In controlled mode, trackedValue syncs via useEffect when value prop changes.
       // This allows users to reject changes (e.g., prevent empty selection).
-      if (value === undefined) {
+      // A cancelled change keeps Base UI's value, so the indicator stays where it is too.
+      if (value === undefined && !args[1].isCanceled) {
         setTrackedValue(args[0]);
       }
-      onValueChange?.(...args);
     },
     [onValueChange, value],
   );
