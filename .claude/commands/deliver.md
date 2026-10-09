@@ -1,6 +1,6 @@
 ---
 description: Take a GitHub issue (or a described behaviour) from triage to a merged PR, end to end, using subagents
-argument-hint: <issue number(s) | issue URL | behaviour to change> [no merge]
+argument-hint: <issue number(s) | issue URL | behaviour to change> [no merge] [quick review | passes=N]
 ---
 
 # Deliver
@@ -77,21 +77,41 @@ The builder's prompt starts with the System Prompt from `.claude/agents/builder.
 - **Commits:** `type(scope): message` with the co-author trailer, and **no push**.
 - **Report back:** the commits, the test results, and anything left undone.
 
-## 6. Review (fresh reviewer subagent)
+## 6. Review
+
+Pick the mode:
+
+- **Sequential** (the default): use it when the `review-sequential` skill is listed in your available skills, unless the input says "quick review". It runs at least 3 passes, opening on Opus, so it costs more.
+- **Single:** use it when the input says "quick review", or when the skill is not listed.
+
+Both modes judge findings against the same rubric:
+
+- correctness and edge cases: cleanup on unmount, reduced motion toggled mid-animation, StrictMode double effects, ref merging, SSR and hydration, RTL;
+- accessibility;
+- tests that assert behaviour, not implementation;
+- accuracy of the changeset and docs;
+- scope creep.
+
+### Sequential
+
+Invoke the `review-sequential` skill (Skill tool). Use `passes=N` from the input if given (the skill raises anything below 3 to 3), otherwise its default of 3. Its args name:
+
+- `base=origin/master`, the branch, and that the repo is `<wt>`. Every git and gate command runs as `cd <wt> && …` or `git -C <wt> …`.
+- one paragraph on what the change is for, plus the rubric above;
+- **the fix waves:** each implementer gets the step-5 builder brief (the builder.md System Prompt, the file scope, TDD, gates, commit format with the co-author trailer). Only one implementer works in `<wt>` at a time.
+- **no push.** This overrides the skill's Finish. Step 7, not the skill's lint, is the final gate.
+
+You still own the triage. Out-of-scope findings and the skill's leftovers go on the Also possible list. Its per-pass table gives the findings fixed and dropped (with reasons). Write them one line each for the PR body and the report.
+
+### Single
 
 1. Package the diff into one file:
    `{ git -C <wt> log --oneline origin/master..HEAD; git -C <wt> diff --stat origin/master...HEAD; git -C <wt> diff -U10 origin/master...HEAD; } > <scratchpad>/<slug>.diff`
 2. Spawn a **fresh** reviewer. Its prompt starts with the System Prompt from `.claude/agents/reviewer.md` and adds:
    - the diff file path, one paragraph on what the change is for, and that the gates passed;
+   - the rubric above;
    - no implementer report and no earlier findings;
    - severities Critical, Important and Minor, which replace reviewer.md's labels. Each finding gives `file:line`, why it matters, and the fix.
-
-   Rubric:
-   - correctness and edge cases: cleanup on unmount, reduced motion toggled mid-animation, StrictMode double effects, ref merging, SSR and hydration, RTL;
-   - accessibility;
-   - tests that assert behaviour, not implementation;
-   - accuracy of the changeset and docs;
-   - scope creep.
 3. **Triage it yourself.** Check each finding against the code. Drop false positives and note why. Out-of-scope ideas go on the Also possible list.
 4. Send the findings you keep to the builder (SendMessage, or a new builder) for a fix wave with the same gates.
 5. If the fixes were substantial (new logic, not wording), run another fresh review on the new head.
