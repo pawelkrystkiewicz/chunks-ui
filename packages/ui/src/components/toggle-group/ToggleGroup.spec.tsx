@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
-import { useState } from "react";
+import { createRef, useState } from "react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { ToggleGroup } from "./ToggleGroup";
 
@@ -128,6 +128,34 @@ describe("ToggleGroup", () => {
         <ToggleGroup.Item value="a">A</ToggleGroup.Item>
       </ToggleGroup.Root>,
     );
+    await user.click(screen.getByText("A"));
+    expect(container.querySelector("span.absolute.z-0")).toBeInTheDocument();
+  });
+
+  it("forwards a ref on Root to the group, and still shows the indicator", async () => {
+    const user = userEvent.setup();
+    const ref = createRef<HTMLDivElement>();
+    const { container } = render(
+      <ToggleGroup.Root ref={ref}>
+        <ToggleGroup.Item value="a">A</ToggleGroup.Item>
+      </ToggleGroup.Root>,
+    );
+    expect(ref.current).toBe(screen.getByRole("group"));
+    await user.click(screen.getByText("A"));
+    expect(container.querySelector("span.absolute.z-0")).toBeInTheDocument();
+  });
+
+  it("forwards a ref on Item to its button, and still shows the indicator when it is selected", async () => {
+    const user = userEvent.setup();
+    const ref = createRef<HTMLButtonElement>();
+    const { container } = render(
+      <ToggleGroup.Root>
+        <ToggleGroup.Item value="a" ref={ref}>
+          A
+        </ToggleGroup.Item>
+      </ToggleGroup.Root>,
+    );
+    expect(ref.current).toBe(screen.getByRole("button"));
     await user.click(screen.getByText("A"));
     expect(container.querySelector("span.absolute.z-0")).toBeInTheDocument();
   });
