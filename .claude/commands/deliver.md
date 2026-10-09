@@ -79,7 +79,8 @@ The builder's prompt starts with the System Prompt from `.claude/agents/builder.
 
 ## 6. Review (fresh reviewer subagent)
 
-1. Package the diff into one file in the scratchpad: `git -C <wt> log --oneline origin/master..HEAD`, `git -C <wt> diff --stat origin/master...HEAD` and `git -C <wt> diff -U10 origin/master...HEAD`.
+1. Package the diff into one file:
+   `{ git -C <wt> log --oneline origin/master..HEAD; git -C <wt> diff --stat origin/master...HEAD; git -C <wt> diff -U10 origin/master...HEAD; } > <scratchpad>/<slug>.diff`
 2. Spawn a **fresh** reviewer. Its prompt starts with the System Prompt from `.claude/agents/reviewer.md` and adds:
    - the diff file path, one paragraph on what the change is for, and that the gates passed;
    - no implementer report and no earlier findings;
@@ -116,7 +117,7 @@ The PR body has:
 
 Run `<wt>/.claude/commands/merge-pr.sh <pr> [<pr>…]` in the background, once, with the PRs in merge order. Its header says what it enforces.
 
-The script gates on inline CodeRabbit threads only. Findings in the review body (nitpicks, "outside diff range") are yours to read.
+The script gates on inline CodeRabbit threads only. Findings that appear only in the review body do not block the merge: nitpicks are non-blocking by CodeRabbit's own label, and "outside diff range" comments are about code the PR did not change. Once the script finishes, read the body anyway. A valid finding goes to a follow-up PR or the Also possible list.
 
 Before any follow-up fix, run `git -C <wt> pull --no-rebase`, because the script may have merged master into the branch. Then act on the script's last line:
 
@@ -129,6 +130,8 @@ Before any follow-up fix, run `git -C <wt> pull --no-rebase`, because the script
 If the script merged while CodeRabbit was rate-limited (`CodeRabbit: rate-limited`), say so in the report: only the subagent review covered that PR.
 
 ## 9. Clean up and report
+
+Run cleanup from the main checkout; this is the one exception to the worktree rule, because the worktree is being removed.
 
 ```bash
 git worktree remove <wt> && git branch -D <type>/<slug>
