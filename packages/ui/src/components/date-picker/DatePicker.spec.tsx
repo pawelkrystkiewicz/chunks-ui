@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -89,6 +89,33 @@ describe("DatePicker", () => {
     expect(screen.getByRole("button", { name: MARCH_15_LABEL })).not.toHaveAttribute(
       "aria-disabled",
     );
+  });
+
+  it("starts the calendar week on Monday with weekStartsOn={1}", async () => {
+    render(<DatePicker defaultValue={new Date(2026, 2, 15)} weekStartsOn={1} />);
+    await userEvent.click(screen.getByRole("button", { name: "March 15, 2026" }));
+    const headers = screen.getAllByRole("columnheader").map((th) => th.textContent);
+    expect(headers).toEqual(["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]);
+  });
+
+  it("shows dimmed outside days, none of them a Tab stop, with showOutsideDays", async () => {
+    render(<DatePicker defaultValue={new Date(2026, 2, 15)} showOutsideDays />);
+    await userEvent.click(screen.getByRole("button", { name: "March 15, 2026" }));
+    // March 2026 ends on a Tuesday, so April 1–4 fill the last row.
+    for (const name of [
+      "Wednesday, April 1, 2026",
+      "Thursday, April 2, 2026",
+      "Friday, April 3, 2026",
+      "Saturday, April 4, 2026",
+    ]) {
+      const outsideDay = screen.getByRole("button", { name });
+      expect(outsideDay).toHaveClass("opacity-50");
+      expect(outsideDay).toHaveAttribute("tabindex", "-1");
+    }
+    const tabStops = within(screen.getByRole("grid"))
+      .getAllByRole("button")
+      .filter((button) => button.tabIndex === 0);
+    expect(tabStops).toEqual([screen.getByRole("button", { name: MARCH_15_LABEL })]);
   });
 
   it("disables trigger when disabled prop is set", () => {

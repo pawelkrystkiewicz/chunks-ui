@@ -1,4 +1,4 @@
-import { DatePickerBasicExample, DatePickerControlledExample, DatePickerConstrainedExample, DatePickerDisabledExample } from '@/examples/DatePicker'
+import { DatePickerBasicExample, DatePickerControlledExample, DatePickerConstrainedExample, DatePickerDisabledExample, DatePickerWeekOptionsExample } from '@/examples/DatePicker'
 import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
 # DatePicker
@@ -50,6 +50,16 @@ const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, today.getD
 
 <DatePickerConstrainedExample />
 
+## Week Start and Outside Days
+
+`weekStartsOn` and `showOutsideDays` are passed to the calendar in the popover. See [Calendar](/components/calendar#week-start-and-outside-days) for what they do.
+
+```tsx
+<DatePicker weekStartsOn={1} showOutsideDays />
+```
+
+<DatePickerWeekOptionsExample />
+
 ## Disabled
 
 ```tsx
@@ -74,7 +84,7 @@ When the calendar opens, focus goes to the selected day, or to today if no date 
   definition={generateDefinition({
     code: `
 import type { DatePickerProps } from 'chunks-ui'
-type Props = Pick<DatePickerProps, 'value' | 'defaultValue' | 'onValueChange' | 'placeholder' | 'disabled' | 'min' | 'max' | 'isDateDisabled'>
+type Props = Pick<DatePickerProps, 'value' | 'defaultValue' | 'onValueChange' | 'placeholder' | 'disabled' | 'min' | 'max' | 'isDateDisabled' | 'weekStartsOn' | 'showOutsideDays'>
 export default Props
 `
   })}
