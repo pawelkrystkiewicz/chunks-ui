@@ -253,6 +253,49 @@ describe("Tabs animations that must stop", () => {
       expect(track.style.transform).toBe(transform);
     }
   });
+
+  /** Switches short -> tall with the slow transition and returns mid-resize. */
+  async function resizeMidway() {
+    await reloadMotion();
+    const result = render(panelsOfTwoHeights("short", { transition: slow }));
+    const contents = result.getByTestId("contents");
+    await waitForStable(() => contents.offsetHeight);
+    result.rerender(panelsOfTwoHeights("tall", { transition: slow }));
+    await nextFrame();
+    await nextFrame();
+    await nextFrame();
+    // Mid-resize: between the two panel heights
+    const height = Number.parseFloat(contents.style.height);
+    expect(height).toBeGreaterThan(HEIGHTS.short);
+    expect(height).toBeLessThan(HEIGHTS.tall);
+    return { ...result, contents };
+  }
+
+  it("stops a Tabs.Contents resize when it unmounts", async () => {
+    const { contents, unmount } = await resizeMidway();
+    unmount();
+    // Stopping may write the value it stopped at once; after that nothing changes
+    await nextFrame();
+    const height = contents.style.height;
+    for (let frame = 0; frame < 5; frame++) {
+      await nextFrame();
+      expect(contents.style.height).toBe(height);
+    }
+  });
+
+  it("drops a Tabs.Contents slide and resize when reduced motion turns on", async () => {
+    const { contents } = await resizeMidway();
+    const track = contents.firstElementChild as HTMLElement;
+    await commands.emulateMedia({ reducedMotion: "reduce" });
+    // The inline styles are cleared, so the CSS layout shows the tall panel unshifted, full height
+    await expect.poll(() => contents.style.height, { timeout: 200 }).toBe("");
+    for (let frame = 0; frame < 5; frame++) {
+      await nextFrame();
+      expect(contents.style.height).toBe("");
+      expect(track.style.transform).toBe("");
+      expect(Math.abs(contents.offsetHeight - HEIGHTS.tall)).toBeLessThanOrEqual(1);
+    }
+  });
 });
 
 describe("Tabs.Contents height with Motion", () => {
