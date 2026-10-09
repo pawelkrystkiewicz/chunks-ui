@@ -1,5 +1,5 @@
 import { render } from "@testing-library/react";
-import type { ReactNode } from "react";
+import { createRef, type ReactNode, type Ref } from "react";
 import { page } from "vitest/browser";
 
 /** Renders children in a padded fixture wrapper. Returns the wrapper element for screenshotting. */
@@ -55,6 +55,35 @@ export function insetsWithin(outer: Element, inner: Element): Insets {
     bottom: o.bottom - i.bottom,
     left: i.left - o.left,
   };
+}
+
+/** Each edge of `a` within `tolerance` px of the same edge of `b`. */
+export function sameBox(
+  a: Pick<DOMRect, "left" | "top" | "width" | "height">,
+  b: Pick<DOMRect, "left" | "top" | "width" | "height">,
+  tolerance = 1,
+) {
+  return [a.left - b.left, a.top - b.top, a.width - b.width, a.height - b.height].every(
+    (delta) => Math.abs(delta) <= tolerance,
+  );
+}
+
+export type ConsumerRefKind = "object" | "callback" | "undefined";
+
+/** A ref of the given kind, as a consumer would pass it, and a way to read what it received. */
+export function consumerRef<T extends HTMLElement>(kind: ConsumerRefKind) {
+  if (kind === "object") {
+    const ref = createRef<T>();
+    return { ref: ref as Ref<T>, received: () => ref.current };
+  }
+  if (kind === "callback") {
+    let node: T | null = null;
+    const ref = (element: T | null) => {
+      node = element;
+    };
+    return { ref: ref as Ref<T>, received: () => node };
+  }
+  return { ref: undefined, received: () => undefined };
 }
 
 const nextFrame = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));

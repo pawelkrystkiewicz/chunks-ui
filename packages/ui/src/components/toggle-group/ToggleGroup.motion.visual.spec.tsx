@@ -1,37 +1,12 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { userEvent } from "vitest/browser";
-import { consumerRef, renderFixture, sameBox, waitForStable } from "../../VisualTest.utils";
+import { reloadMotion } from "../../lib/use-motion";
+import { consumerRef, sameBox, waitForStable } from "../../VisualTest.utils";
 import { ToggleGroup } from "./index";
 
-describe("ToggleGroup", () => {
-  it("single selection", async () => {
-    const { fixture } = await renderFixture(
-      <ToggleGroup.Root defaultValue={["center"]}>
-        <ToggleGroup.Item value="left">Left</ToggleGroup.Item>
-        <ToggleGroup.Item value="center">Center</ToggleGroup.Item>
-        <ToggleGroup.Item value="right">Right</ToggleGroup.Item>
-      </ToggleGroup.Root>,
-    );
-    await expect(fixture).toMatchScreenshot();
-  });
-
-  it("with disabled item", async () => {
-    const { fixture } = await renderFixture(
-      <ToggleGroup.Root defaultValue={["a"]}>
-        <ToggleGroup.Item value="a">A</ToggleGroup.Item>
-        <ToggleGroup.Item value="b" disabled>
-          B
-        </ToggleGroup.Item>
-        <ToggleGroup.Item value="c">C</ToggleGroup.Item>
-      </ToggleGroup.Root>,
-    );
-    await expect(fixture).toMatchScreenshot();
-  });
-});
-
-// Runs with reduced motion, so the indicator follows the selection on the CSS path
-describe("ToggleGroup with a consumer ref, CSS path", () => {
+// Runs with reduced motion off, so Motion drives the indicator
+describe("ToggleGroup with a consumer ref, Motion path", () => {
   it.each([
     ["Root", "object"],
     ["Root", "callback"],
@@ -40,8 +15,9 @@ describe("ToggleGroup with a consumer ref, CSS path", () => {
     ["Item", "callback"],
     ["Item", "undefined"],
   ] as const)(
-    "%s, %s ref: the ref gets the element and the indicator follows",
+    "%s, %s ref: the ref gets the element and Motion moves the indicator",
     async (part, kind) => {
+      await reloadMotion();
       const rootRef = consumerRef<HTMLDivElement>(kind);
       const itemRef = consumerRef<HTMLButtonElement>(kind);
       // `ref` is passed even when undefined: ref={undefined} must not break the indicator either
@@ -64,13 +40,25 @@ describe("ToggleGroup with a consumer ref, CSS path", () => {
       const indicator = () => group.querySelector<HTMLElement>(":scope > span");
 
       await expect.poll(() => indicator() !== null).toBe(true);
+      // Motion drives it: the CSS fallback's transition class is gone
+      await expect.poll(() => indicator()?.classList.contains("micro-interactions")).toBe(false);
       const onAlpha = await waitForStable(() => indicator()?.getBoundingClientRect().toJSON());
       expect(onAlpha && sameBox(onAlpha, alpha.getBoundingClientRect())).toBe(true);
 
       await userEvent.click(beta);
-      const onBeta = await waitForStable(() => indicator()?.getBoundingClientRect().toJSON());
+      const widths: number[] = [];
+      const onBeta = await waitForStable(() => {
+        const box = indicator()?.getBoundingClientRect();
+        if (box) widths.push(box.width);
+        return box?.toJSON();
+      });
       expect(onBeta).toBeDefined();
       expect(onBeta && sameBox(onBeta, beta.getBoundingClientRect())).toBe(true);
+      // In-between widths: Motion's spring moved it, rather than a jump
+      const [from, to] = [alpha.offsetWidth, beta.offsetWidth];
+      expect(widths.some((w) => w > Math.min(from, to) + 1 && w < Math.max(from, to) - 1)).toBe(
+        true,
+      );
     },
   );
 });

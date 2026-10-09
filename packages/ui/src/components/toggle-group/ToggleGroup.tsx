@@ -14,6 +14,7 @@ import {
 } from "react";
 import { cn } from "../../lib/cn";
 import { springs } from "../../lib/motion";
+import { useMergedRef } from "../../lib/use-merged-ref";
 import { useHeldWhileDriving, useMotionAnimate } from "../../lib/use-motion-animate";
 
 // ---------------------------------------------------------------------------
@@ -45,9 +46,12 @@ function ToggleGroupRoot({
   onValueChange,
   multiple = false,
   children,
+  ref,
   ...props
 }: ToggleGroupRootProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  // The indicator measures against the container, so a consumer's ref must not replace this one
+  const mergedRef = useMergedRef(containerRef, ref);
   const itemsRef = useRef(new Map<string, HTMLElement>());
   const [trackedValue, setTrackedValue] = useState<readonly unknown[]>(value ?? defaultValue ?? []);
 
@@ -122,7 +126,7 @@ function ToggleGroupRoot({
   return (
     <ToggleGroupContext.Provider value={{ registerItem, multiple }}>
       <BaseToggleGroup
-        ref={containerRef}
+        ref={mergedRef}
         className={cn(
           "relative inline-flex items-center gap-0.5 rounded-lg bg-muted p-1",
           "data-[orientation=vertical]:flex-col",
@@ -162,19 +166,21 @@ function ToggleGroupRoot({
 // Item
 // ---------------------------------------------------------------------------
 
-function ToggleGroupItem({ className, value, ...props }: ToggleGroupItemProps) {
+function ToggleGroupItem({ className, value, ref, ...props }: ToggleGroupItemProps) {
   const ctx = useContext(ToggleGroupContext);
-  const ref = useRef<HTMLButtonElement>(null);
+  const itemRef = useRef<HTMLButtonElement>(null);
+  // The root finds the item through this ref, so a consumer's ref must not replace it
+  const mergedRef = useMergedRef(itemRef, ref);
 
   useEffect(() => {
     if (value === undefined || !ctx) return;
-    ctx.registerItem(String(value), ref.current);
+    ctx.registerItem(String(value), itemRef.current);
     return () => ctx.registerItem(String(value), null);
   }, [value, ctx]);
 
   return (
     <BaseToggle
-      ref={ref}
+      ref={mergedRef}
       value={value}
       className={cn(
         "relative z-[1] inline-flex items-center justify-center gap-2 rounded-md px-3 py-1.5 font-medium text-sm",
