@@ -2,6 +2,7 @@ import { render } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { commands } from "vitest/browser";
+import { Checkbox } from "../components/checkbox";
 import { Radio } from "../components/radio";
 import { Switch } from "../components/switch";
 import { Tabs } from "../components/tabs";
@@ -80,6 +81,16 @@ const controls: Record<string, Control> = {
     ),
     element: byTestId,
     change: () => click('[aria-label="B"]'),
+    measure: opacity,
+  },
+  Checkbox: {
+    ui: (
+      <Checkbox.Root aria-label="Subscribe" defaultChecked>
+        <Checkbox.Indicator data-testid="moving" />
+      </Checkbox.Root>
+    ),
+    element: byTestId,
+    change: () => click('[role="checkbox"]'),
     measure: opacity,
   },
 };
@@ -215,4 +226,27 @@ describe("controls once Motion has loaded", () => {
       ]);
     },
   );
+
+  it("morphs the Checkbox mark between check and minus", async () => {
+    await reloadMotion();
+    const checkbox = (indeterminate: boolean) => (
+      <Checkbox.Root aria-label="Subscribe" checked indeterminate={indeterminate}>
+        <Checkbox.Indicator />
+      </Checkbox.Root>
+    );
+    const { rerender } = render(checkbox(false));
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    const path = document.querySelector("path") as SVGPathElement;
+    const check = path.getAttribute("d");
+
+    rerender(checkbox(true));
+    const shapes = new Set<string | null>();
+    for (let frame = 0; frame < 30; frame++) {
+      await nextFrame();
+      shapes.add(path.getAttribute("d"));
+    }
+    shapes.delete(check);
+    // In-between shapes before the minus, not a single swap
+    expect(shapes.size).toBeGreaterThan(1);
+  });
 });

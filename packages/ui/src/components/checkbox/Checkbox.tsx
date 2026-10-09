@@ -5,6 +5,7 @@ import type { ComponentProps } from "react";
 import { cn } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { useMotion, useReducedMotion } from "../../lib/use-motion";
+import { useHeldWhileDriving, useMotionAnimate } from "../../lib/use-motion-animate";
 
 export type CheckboxRootProps = ComponentProps<typeof BaseCheckbox.Root>;
 
@@ -33,68 +34,63 @@ const MINUS = "M4,12 L12,12 L20,12";
 function CheckboxIndicator({ className, ...props }: CheckboxIndicatorProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
-  const useSpring = !!m && !reduced;
-  if (useSpring) {
-    return (
-      <BaseCheckbox.Indicator
-        keepMounted
-        render={(renderProps, state) => (
-          <m.motion.span
-            {...(renderProps as Record<string, unknown>)}
-            className={cn("flex items-center justify-center text-current", className)}
-            initial={false}
-            animate={{
-              opacity: state.checked || state.indeterminate ? 1 : 0,
-              scale: state.checked || state.indeterminate ? 1 : 0.5,
-            }}
-            transition={springs.micro}
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="size-3"
-              aria-hidden="true"
-            >
-              <m.motion.path
-                initial={false}
-                animate={{ d: state.indeterminate ? MINUS : CHECKMARK }}
-                transition={springs.micro}
-              />
-            </svg>
-          </m.motion.span>
-        )}
-        {...props}
-      />
-    );
-  }
-
   return (
     <BaseCheckbox.Indicator
+      // With Motion it stays mounted while unchecked, so it can animate out
+      keepMounted={(m !== null && !reduced) || undefined}
       render={(renderProps, state) => (
-        <span
+        <CheckboxIndicatorElement
           {...renderProps}
-          className={cn("flex items-center justify-center text-current", className)}
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="size-3"
-            aria-hidden="true"
-          >
-            <path d={state.indeterminate ? MINUS : CHECKMARK} />
-          </svg>
-        </span>
+          checked={state.checked}
+          indeterminate={state.indeterminate}
+          className={typeof className === "function" ? className(state) : className}
+        />
       )}
       {...props}
     />
+  );
+}
+
+// The same span and path with and without Motion, so they aren't remounted when Motion loads
+function CheckboxIndicatorElement({
+  checked,
+  indeterminate,
+  className,
+  ref,
+  ...props
+}: ComponentProps<"span"> & { checked: boolean; indeterminate: boolean }) {
+  const shown = checked || indeterminate;
+  const d = indeterminate ? MINUS : CHECKMARK;
+  const [indicatorRef] = useMotionAnimate<HTMLSpanElement>(
+    { opacity: shown ? 1 : 0, scale: shown ? 1 : 0.5 },
+    { transition: springs.micro, clear: ["transform", "opacity"] },
+    ref,
+  );
+  const [pathRef, pathDriven] = useMotionAnimate<SVGPathElement>(
+    { d },
+    { transition: springs.micro },
+  );
+  // Motion morphs `d` between the check and the minus; React keeps the value it had then
+  const pathD = useHeldWhileDriving(pathDriven, d);
+  return (
+    <span
+      {...props}
+      ref={indicatorRef}
+      className={cn("flex items-center justify-center text-current", className)}
+    >
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="size-3"
+        aria-hidden="true"
+      >
+        <path ref={pathRef} d={pathD} />
+      </svg>
+    </span>
   );
 }
 
