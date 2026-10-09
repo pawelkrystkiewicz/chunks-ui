@@ -87,9 +87,9 @@ Without Motion, or with reduced motion, it takes its position and size from the 
 
 ### Restyling the indicator
 
-The indicator box always covers the active tab. While Motion moves it, Motion writes `left`, `top`, `width` and `height` as inline styles, and they win over classes. Position and size classes on `Tabs.Indicator`, such as `top-auto bottom-0 h-0.5`, therefore have no effect with Motion. The CSS fallback applies them, so the indicator would look different with and without Motion.
+The indicator box always covers the active tab. While Motion drives it, Motion writes `left`, `top`, `width` and `height` as inline styles, and they win over classes. Position and size classes on `Tabs.Indicator`, such as `top-auto bottom-0 h-0.5`, therefore have no effect with Motion. The CSS fallback applies them, so the indicator would look different with and without Motion.
 
-To change the look, keep the box and change what is drawn in it. For an underline, remove the pill's background and shadow, and draw the line with a pseudo-element at the bottom of the box:
+To change the look, keep the box and change what is drawn in it. For an underline in a horizontal list, remove the pill's background and shadow, and draw the line with a pseudo-element at the bottom of the box:
 
 ```tsx
 <Tabs.Root defaultValue="tab-1">
