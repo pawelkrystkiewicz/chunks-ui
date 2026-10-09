@@ -151,6 +151,10 @@ describe.each([
     const group = getByRole("group");
     const alpha = getByRole("button", { name: "Alpha" });
     const beta = getByRole("button", { name: "Beta, a longer item" });
+    // The path under test drives the indicator: the CSS fallback has a class Motion's path drops
+    await expect
+      .poll(() => group.querySelector(":scope > span")?.classList.contains("micro-interactions"))
+      .toBe(reducedMotion === "reduce");
     expect(await settledIndicatorOver(group, alpha)).toEqual(COVERS);
     await userEvent.click(beta);
     return { group, alpha, beta };
@@ -177,16 +181,17 @@ describe("ToggleGroup.Root with a consumer render, CSS path", () => {
   afterAll(() => commands.emulateMedia({ reducedMotion: "no-preference" }));
 
   it.each([
-    ["an element", <nav key="element" data-probe="" />],
+    ["an element", <nav key="element" data-probe="element" />, "element"],
     [
       "a function",
       ((props, state) => (
-        <nav {...props} data-probe={state.multiple ? "multiple" : "single"} />
+        <nav {...props} data-probe={state.orientation} />
       )) satisfies ToggleGroupRootProps["render"],
+      "horizontal",
     ],
   ] as const)(
     "renders %s, keeps the ref, and the indicator still follows",
-    async (_, consumerRender) => {
+    async (_, consumerRender, probe) => {
       const ref = createRef<HTMLDivElement>();
       const { getByRole } = render(
         <ToggleGroup.Root defaultValue={["a"]} ref={ref} render={consumerRender}>
@@ -196,7 +201,9 @@ describe("ToggleGroup.Root with a consumer render, CSS path", () => {
       );
       const group = getByRole("group");
       expect(group.tagName).toBe("NAV");
-      expect(group.hasAttribute("data-probe")).toBe(true);
+      expect(group.getAttribute("data-probe")).toBe(probe);
+      // Base UI >=1.6 leaves aria-orientation off role="group"; guard that it doesn't come back
+      // through `render`
       expect(group.hasAttribute("aria-orientation")).toBe(false);
       expect(ref.current).toBe(group);
 
