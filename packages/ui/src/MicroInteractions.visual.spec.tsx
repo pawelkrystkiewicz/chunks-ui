@@ -3,11 +3,15 @@ import type { ReactNode } from "react";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { commands } from "vitest/browser";
 import { Button } from "./components/button";
+import { Slider } from "./components/slider";
+import { Table } from "./components/table";
+import { Textarea } from "./components/textarea";
 
 /*
  * `.micro-interactions` (theme.css) gives components their default transition. Timing
  * utilities from the consumer, such as `duration-150` or `ease-linear`, must win over it, the
- * same as any other utility does over a component's own styles.
+ * same as any other utility does over a component's own styles. With reduced motion nothing
+ * turns the transition back on, not even a `transition-*` utility.
  */
 
 type Transition = { property: string; duration: string; timingFunction: string };
@@ -84,5 +88,57 @@ describe.each(ELEMENTS)(".micro-interactions on $element", ({ ui }) => {
     it("does not transition when a timing utility is added", () => {
       expect(transitionOf(renderTarget(ui("duration-150 ease-linear"))).property).toBe("none");
     });
+
+    it.each(["transition-colors", "transition-colors!"])(
+      "does not transition when %s is added",
+      (utility) => {
+        expect(transitionOf(renderTarget(ui(utility))).property).toBe("none");
+      },
+    );
+  });
+});
+
+// These set `transition-colors!` next to the class, so they fade colours only
+const COLOR_FADES = [
+  {
+    component: "Slider.Thumb",
+    ui: () => (
+      <Slider.Root defaultValue={[40]}>
+        <Slider.Control>
+          <Slider.Track>
+            <Slider.Thumb index={0} data-testid="target" />
+          </Slider.Track>
+        </Slider.Control>
+      </Slider.Root>
+    ),
+  },
+  { component: "Textarea", ui: () => <Textarea aria-label="Notes" data-testid="target" /> },
+  {
+    component: "Table.Row",
+    ui: () => (
+      <Table.Root>
+        <Table.Body>
+          <Table.Row data-testid="target">
+            <Table.Cell>Cell</Table.Cell>
+          </Table.Row>
+        </Table.Body>
+      </Table.Root>
+    ),
+  },
+] as const;
+
+describe.each(COLOR_FADES)("$component colour fade", ({ ui }) => {
+  afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
+
+  it("fades colours with no reduced-motion preference", async () => {
+    await commands.emulateMedia({ reducedMotion: "no-preference" });
+    const properties = transitionOf(renderTarget(ui())).property.split(", ");
+    expect(properties).toEqual(expect.arrayContaining(["color", "background-color"]));
+    expect(properties).not.toContain("all");
+  });
+
+  it("does not transition with reduced motion", async () => {
+    await commands.emulateMedia({ reducedMotion: "reduce" });
+    expect(transitionOf(renderTarget(ui())).property).toBe("none");
   });
 });
