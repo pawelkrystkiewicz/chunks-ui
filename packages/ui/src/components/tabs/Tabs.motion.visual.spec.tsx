@@ -276,6 +276,18 @@ describe("Tabs.Contents height with Motion", () => {
     getByTestId("marker").scrollIntoView();
     expect(contents.scrollTop).toBe(0);
   });
+
+  it("sizes to the panel's layout height inside a scaled ancestor", async () => {
+    await reloadMotion();
+    // Like a Dialog popup that mounts at scale(0.95): a transform changes the size on screen,
+    // not the layout size, and does not trigger a ResizeObserver
+    const { getByTestId } = render(
+      <div style={{ transform: "scale(0.5)" }}>{panelsOfTwoHeights("short")}</div>,
+    );
+    const contents = getByTestId("contents");
+    const height = await waitForStable(() => contents.offsetHeight);
+    expect(Math.abs(height - HEIGHTS.short)).toBeLessThanOrEqual(1);
+  });
 });
 
 describe("Tabs refs with Motion", () => {

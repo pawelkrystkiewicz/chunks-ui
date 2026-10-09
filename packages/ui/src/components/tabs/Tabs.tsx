@@ -217,10 +217,12 @@ function TabsContents({ className, children, transition, ref, ...props }: TabsCo
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [height, setHeight] = useState<number | "auto">("auto");
 
+  // Layout height: getBoundingClientRect() would include an ancestor's transform (a Dialog
+  // mounts at scale(0.95)), and a transform ending doesn't trigger the ResizeObserver below
   const measure = useCallback((index: number) => {
     const pane = itemRefs.current[index];
     if (!pane) return 0;
-    return pane.getBoundingClientRect().height;
+    return Number.parseFloat(getComputedStyle(pane).height) || 0;
   }, []);
 
   useEffect(() => {
