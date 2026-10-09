@@ -6,7 +6,7 @@ import { cn } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
 import { usePortalContainer } from "../../lib/portal-container";
-import { useMotion, useReducedMotion } from "../../lib/use-motion";
+import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
 
 export type TooltipRootProps = ComponentProps<typeof BaseTooltip.Root>;
 export type TooltipTriggerProps = ComponentProps<typeof BaseTooltip.Trigger>;
@@ -20,7 +20,7 @@ function TooltipPortal(props: TooltipPortalProps) {
 }
 
 function TooltipPopup({ className, ...props }: TooltipPopupProps) {
-  const m = useMotion();
+  const m = useLoadedMotion();
   const reduced = useReducedMotion();
   const useSpring = !!m && !reduced;
   const render = useSpring

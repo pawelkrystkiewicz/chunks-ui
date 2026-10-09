@@ -6,7 +6,7 @@ import { cn } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
 import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
-import { useMotion, useReducedMotion } from "../../lib/use-motion";
+import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
 
 export type DialogRootProps = ComponentProps<typeof BaseDialog.Root>;
 export type DialogTriggerProps = ComponentProps<typeof BaseDialog.Trigger>;
@@ -44,7 +44,7 @@ function DialogPortal({ className, children, ...props }: DialogPortalProps) {
 }
 
 function DialogBackdrop({ className, forceRender = true, ...props }: DialogBackdropProps) {
-  const m = useMotion();
+  const m = useLoadedMotion();
   const reduced = useReducedMotion();
   const useSpring = !!m && !reduced;
   const render = useSpring
@@ -73,7 +73,7 @@ function DialogBackdrop({ className, forceRender = true, ...props }: DialogBackd
 }
 
 function DialogPopup({ className, ...props }: DialogPopupProps) {
-  const m = useMotion();
+  const m = useLoadedMotion();
   const reduced = useReducedMotion();
   const useSpring = !!m && !reduced;
   const render = useSpring

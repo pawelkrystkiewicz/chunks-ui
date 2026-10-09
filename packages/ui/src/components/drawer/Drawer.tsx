@@ -7,7 +7,7 @@ import { cn } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
 import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
-import { useMotion, useReducedMotion } from "../../lib/use-motion";
+import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
 import { drawerPopupVariants } from "./Drawer.Variants";
 
 export type DrawerProps = ComponentProps<typeof BaseDialog.Root>;
@@ -68,7 +68,7 @@ function DrawerPortal({ className, children, ...props }: DrawerPortalProps) {
 }
 
 function DrawerBackdrop({ className, forceRender = true, ...props }: DrawerBackdropProps) {
-  const m = useMotion();
+  const m = useLoadedMotion();
   const reduced = useReducedMotion();
   const useSpring = !!m && !reduced;
   const render = useSpring
@@ -97,7 +97,7 @@ function DrawerBackdrop({ className, forceRender = true, ...props }: DrawerBackd
 }
 
 function DrawerPopup({ side = "right", className, ...props }: DrawerPopupProps) {
-  const m = useMotion();
+  const m = useLoadedMotion();
   const reduced = useReducedMotion();
   const useSpring = !!m && !reduced;
   const resolvedSide = side ?? "right";

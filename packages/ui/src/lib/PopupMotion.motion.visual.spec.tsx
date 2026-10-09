@@ -1,11 +1,13 @@
 import { render } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it } from "vitest";
+import { page } from "vitest/browser";
 import { Dialog } from "../components/dialog";
 import { Drawer } from "../components/drawer";
 import { Menu } from "../components/menu";
 import { Popover } from "../components/popover";
 import { Tooltip } from "../components/tooltip";
+import { reloadMotion } from "./use-motion";
 
 // Runs with reduced motion off, so the popups animate with Motion instead of CSS
 const popups = {
@@ -147,4 +149,76 @@ describe("popups animated with Motion", () => {
       expect(popup()).not.toBeNull();
     },
   );
+});
+
+const openPopups = {
+  Dialog: (
+    <Dialog.Root defaultOpen>
+      <Dialog.Portal>
+        <Dialog.Popup data-testid="popup">
+          <Dialog.Title>Dialog</Dialog.Title>
+          <input aria-label="Name" />
+        </Dialog.Popup>
+      </Dialog.Portal>
+    </Dialog.Root>
+  ),
+  Popover: (
+    <Popover.Root defaultOpen>
+      <Popover.Trigger>Popover</Popover.Trigger>
+      <Popover.Content data-testid="popup">
+        <input aria-label="Name" />
+      </Popover.Content>
+    </Popover.Root>
+  ),
+  Menu: (
+    <Menu.Root defaultOpen>
+      <Menu.Trigger>Menu</Menu.Trigger>
+      <Menu.Content data-testid="popup">
+        <Menu.Item>Item</Menu.Item>
+      </Menu.Content>
+    </Menu.Root>
+  ),
+};
+
+// Motion's import settles in a later task, so the synchronous steps after render() run while
+// it is still loading; user events would await past that point
+describe("popups open while Motion loads", () => {
+  async function renderWhileMotionLoads(ui: ReactNode) {
+    const loading = reloadMotion();
+    render(ui);
+    const node = popup();
+    // Opened before Motion arrived: no inline styles from a motion.div
+    expect(node?.style.opacity).toBe("");
+    return {
+      node,
+      async motionLoaded() {
+        await loading;
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      },
+    };
+  }
+
+  it.each(Object.keys(openPopups) as (keyof typeof openPopups)[])(
+    "keeps an open %s's node and focus when Motion finishes loading",
+    async (name) => {
+      const { node, motionLoaded } = await renderWhileMotionLoads(openPopups[name]);
+      // What Base UI focuses on open: the first tabbable element, else the popup
+      const focused = node?.querySelector("input") ?? node;
+      focused?.focus();
+      expect(document.activeElement).toBe(focused);
+
+      await motionLoaded();
+      expect(popup()).toBe(node);
+      expect(document.activeElement).toBe(focused);
+    },
+  );
+
+  it("keeps text typed into an open Dialog when Motion finishes loading", async () => {
+    const { node, motionLoaded } = await renderWhileMotionLoads(openPopups.Dialog);
+    const input = node?.querySelector("input");
+    if (input) input.value = "Ada";
+
+    await motionLoaded();
+    await expect.element(page.getByRole("textbox", { name: "Name" })).toHaveValue("Ada");
+  });
 });

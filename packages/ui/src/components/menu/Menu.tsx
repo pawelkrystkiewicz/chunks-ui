@@ -6,7 +6,7 @@ import { cn } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
 import { usePortalContainer } from "../../lib/portal-container";
-import { useMotion, useReducedMotion } from "../../lib/use-motion";
+import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
 
 export type MenuRootProps = ComponentProps<typeof BaseMenu.Root>;
 export type MenuTriggerProps = ComponentProps<typeof BaseMenu.Trigger>;
@@ -45,7 +45,16 @@ export type MenuCheckboxItemProps = ComponentProps<typeof BaseMenu.CheckboxItem>
 export type MenuRadioItemIndicatorProps = ComponentProps<typeof BaseMenu.RadioItemIndicator>;
 export type MenuCheckboxItemIndicatorProps = ComponentProps<typeof BaseMenu.CheckboxItemIndicator>;
 
-function MenuContent({
+function MenuContent(props: MenuContentProps) {
+  return (
+    <BaseMenu.Portal container={usePortalContainer()}>
+      {/* Mounts only while open, so it picks Motion or CSS each time the menu opens */}
+      <MenuContentPopup {...props} />
+    </BaseMenu.Portal>
+  );
+}
+
+function MenuContentPopup({
   className,
   sideOffset = 4,
   side,
@@ -53,8 +62,7 @@ function MenuContent({
   alignOffset,
   ...props
 }: MenuContentProps) {
-  const m = useMotion();
-  const container = usePortalContainer();
+  const m = useLoadedMotion();
   const reduced = useReducedMotion();
   const useSpring = !!m && !reduced;
   const render = useSpring
@@ -67,27 +75,25 @@ function MenuContent({
     : undefined;
 
   return (
-    <BaseMenu.Portal container={container}>
-      <BaseMenu.Positioner
-        className="z-dropdowns"
-        sideOffset={sideOffset}
-        side={side}
-        align={align}
-        alignOffset={alignOffset}
-      >
-        <BaseMenu.Popup
-          render={render}
-          className={cn(
-            "min-w-[8rem] rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md",
-            !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
-            !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
-            !useSpring && "micro-interactions",
-            className,
-          )}
-          {...props}
-        />
-      </BaseMenu.Positioner>
-    </BaseMenu.Portal>
+    <BaseMenu.Positioner
+      className="z-dropdowns"
+      sideOffset={sideOffset}
+      side={side}
+      align={align}
+      alignOffset={alignOffset}
+    >
+      <BaseMenu.Popup
+        render={render}
+        className={cn(
+          "min-w-[8rem] rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md",
+          !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
+          !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
+          !useSpring && "micro-interactions",
+          className,
+        )}
+        {...props}
+      />
+    </BaseMenu.Positioner>
   );
 }
 
