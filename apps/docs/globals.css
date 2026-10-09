@@ -2,7 +2,6 @@
 @import "chunks-ui/theme.css";
 
 @source "./";
-@source "../../packages/ui";
 
 /* Landing page surface tokens (app/components/landing). */
 .landing {

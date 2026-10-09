@@ -4,9 +4,9 @@ import { Popover as BasePopover } from "@base-ui/react/popover";
 import { useRef, useState } from "react";
 import { cn } from "../../lib/cn";
 import { usePortalContainer } from "../../lib/portal-container";
-import { Calendar } from "../calendar/Calendar";
+import { Calendar, type CalendarProps } from "../calendar/Calendar";
 
-export type DatePickerProps = {
+export type DatePickerProps = Pick<CalendarProps, "weekStartsOn" | "showOutsideDays"> & {
   /**
    * The currently selected date (controlled).
    */
@@ -61,6 +61,8 @@ export function DatePicker({
   min,
   max,
   isDateDisabled,
+  weekStartsOn,
+  showOutsideDays,
   className,
 }: DatePickerProps) {
   const container = usePortalContainer();
@@ -112,6 +114,8 @@ export function DatePicker({
                 min={min}
                 max={max}
                 isDateDisabled={isDateDisabled}
+                weekStartsOn={weekStartsOn}
+                showOutsideDays={showOutsideDays}
               />
             </BasePopover.Popup>
           </BasePopover.Positioner>

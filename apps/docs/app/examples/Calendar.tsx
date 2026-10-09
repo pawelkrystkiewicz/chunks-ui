@@ -40,3 +40,11 @@ export function CalendarDisabledDatesExample() {
     </Container>
   );
 }
+
+export function CalendarWeekOptionsExample() {
+  return (
+    <Container>
+      <Calendar weekStartsOn={1} showOutsideDays />
+    </Container>
+  );
+}

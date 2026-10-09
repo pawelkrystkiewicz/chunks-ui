@@ -25,9 +25,15 @@ export type CalendarProps = {
   min?: Date;
   /** Maximum selectable date (inclusive). */
   max?: Date;
-  /** First day of the week, `0` = Sunday (default), `1` = Monday. */
+  /**
+   * First day of the week: `0` = Sunday, `1` = Monday, up to `6` = Saturday.
+   * @default 0
+   */
   weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
-  /** Fill leading and trailing cells with dimmed days from the neighbouring months. */
+  /**
+   * Fill leading and trailing cells with dimmed days from the neighbouring months.
+   * @default false
+   */
   showOutsideDays?: boolean;
   className?: string;
 };

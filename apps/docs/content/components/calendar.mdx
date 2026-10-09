@@ -1,4 +1,4 @@
-import { CalendarBasicExample, CalendarControlledExample, CalendarDisabledDatesExample } from '@/examples/Calendar'
+import { CalendarBasicExample, CalendarControlledExample, CalendarDisabledDatesExample, CalendarWeekOptionsExample } from '@/examples/Calendar'
 import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
 # Calendar
@@ -49,6 +49,16 @@ const isWeekend = (date: Date) => date.getDay() === 0 || date.getDay() === 6;
 
 <CalendarDisabledDatesExample />
 
+## Week Start and Outside Days
+
+`weekStartsOn` sets the first column of the week: `0` is Sunday (the default), `1` is Monday. `showOutsideDays` fills the empty cells before the 1st and after the last day of the month with dimmed days from the neighbouring months. Clicking one of them selects it and shows its month. They are never Tab stops.
+
+```tsx
+<Calendar weekStartsOn={1} showOutsideDays />
+```
+
+<CalendarWeekOptionsExample />
+
 ## Keyboard
 
 The day grid follows the keyboard pattern of the [WAI-ARIA date picker example](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/examples/datepicker-dialog/). It has one Tab stop: the selected day if it is in the shown month, else today, else the 1st of the month. After you move with the keys, the day you moved to becomes the Tab stop. Days from neighbouring months (`showOutsideDays`) are never Tab stops.
@@ -73,7 +83,7 @@ The left and right arrows are not mirrored in right-to-left layouts.
   definition={generateDefinition({
     code: `
 import type { CalendarProps } from 'chunks-ui'
-type Props = Pick<CalendarProps, 'value' | 'defaultValue' | 'onValueChange' | 'isDateDisabled' | 'min' | 'max'>
+type Props = Pick<CalendarProps, 'value' | 'defaultValue' | 'onValueChange' | 'isDateDisabled' | 'min' | 'max' | 'weekStartsOn' | 'showOutsideDays'>
 export default Props
 `
   })}

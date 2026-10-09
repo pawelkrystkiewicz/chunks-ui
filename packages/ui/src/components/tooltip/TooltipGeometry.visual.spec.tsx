@@ -1,3 +1,4 @@
+import { DirectionProvider } from "@base-ui/react/direction-provider";
 import { render } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { waitForStable } from "../../VisualTest.utils";
@@ -12,8 +13,27 @@ import { Tooltip } from "./index";
  */
 
 const SPACINGS_PX = [3, 4, 4.8, 6];
-const SIDES = ["top", "right", "bottom", "left"] as const;
-type Side = (typeof SIDES)[number];
+const PHYSICAL_SIDES = ["top", "right", "bottom", "left"] as const;
+const LOGICAL_SIDES = ["inline-start", "inline-end"] as const;
+type PhysicalSide = (typeof PHYSICAL_SIDES)[number];
+type Side = PhysicalSide | (typeof LOGICAL_SIDES)[number];
+type Direction = "ltr" | "rtl";
+
+/** Physical sides once, logical sides in both directions (they resolve differently in each). */
+const CASES: { side: Side; dir: Direction }[] = [
+  ...PHYSICAL_SIDES.map((side) => ({ side, dir: "ltr" as const })),
+  ...LOGICAL_SIDES.flatMap((side) => [
+    { side, dir: "ltr" as const },
+    { side, dir: "rtl" as const },
+  ]),
+];
+
+/** Where a side renders: `inline-start` is the left in LTR and the right in RTL. */
+function physicalSide(side: Side, dir: Direction): PhysicalSide {
+  if (side === "inline-start") return dir === "ltr" ? "left" : "right";
+  if (side === "inline-end") return dir === "ltr" ? "right" : "left";
+  return side;
+}
 
 /**
  * Tip-to-trigger gap in spacing units: the popup sits 2 units from the trigger, and the arrow
@@ -28,7 +48,7 @@ const PRECISION = 1;
 const POSITION_ROUNDING_PX = 0.5;
 
 /** How far the arrow's centre lies past the popup edge, toward the trigger (0 = on the edge). */
-function centrePastEdge(side: Side, popup: DOMRect, arrow: DOMRect) {
+function centrePastEdge(side: PhysicalSide, popup: DOMRect, arrow: DOMRect) {
   // Rotation keeps the centre, so the bounding box centre is the square's centre.
   const centreX = arrow.left + arrow.width / 2;
   const centreY = arrow.top + arrow.height / 2;
@@ -45,7 +65,7 @@ function centrePastEdge(side: Side, popup: DOMRect, arrow: DOMRect) {
 }
 
 /** Space between the arrow tip (the bounding box edge facing the trigger) and the trigger. */
-function tipGap(side: Side, arrow: DOMRect, trigger: DOMRect) {
+function tipGap(side: PhysicalSide, arrow: DOMRect, trigger: DOMRect) {
   switch (side) {
     case "top":
       return trigger.top - arrow.bottom;
@@ -59,34 +79,39 @@ function tipGap(side: Side, arrow: DOMRect, trigger: DOMRect) {
 }
 
 /** Renders an open tooltip on `side` at `--spacing: spacing px` and measures it once settled. */
-async function measureTooltip(side: Side, spacing: number) {
-  // The popup is portalled to <body>, so the spacing goes on the root element.
+async function measureTooltip(side: Side, spacing: number, dir: Direction) {
+  // The popup is portalled to <body>, so the spacing and the direction go on the root element.
+  // Base UI needs the direction too, to resolve logical sides.
   document.documentElement.style.setProperty("--spacing", `${spacing}px`);
+  document.documentElement.dir = dir;
   const { getByTestId } = render(
-    <div style={{ padding: 120, display: "flex", justifyContent: "center" }}>
-      <Tooltip.Provider>
-        <Tooltip.Root defaultOpen>
-          <Tooltip.Trigger data-testid="trigger" render={<Button variant="outlined" />}>
-            Trigger
-          </Tooltip.Trigger>
-          <Tooltip.Portal>
-            <Tooltip.Positioner side={side}>
-              <Tooltip.Popup data-testid="popup">
-                <Tooltip.Arrow data-testid="arrow" />
-                Tooltip content
-              </Tooltip.Popup>
-            </Tooltip.Positioner>
-          </Tooltip.Portal>
-        </Tooltip.Root>
-      </Tooltip.Provider>
-    </div>,
+    <DirectionProvider direction={dir}>
+      <div style={{ padding: 120, display: "flex", justifyContent: "center" }}>
+        <Tooltip.Provider>
+          <Tooltip.Root defaultOpen>
+            <Tooltip.Trigger data-testid="trigger" render={<Button variant="outlined" />}>
+              Trigger
+            </Tooltip.Trigger>
+            <Tooltip.Portal>
+              <Tooltip.Positioner side={side}>
+                <Tooltip.Popup data-testid="popup">
+                  <Tooltip.Arrow data-testid="arrow" />
+                  Tooltip content
+                </Tooltip.Popup>
+              </Tooltip.Positioner>
+            </Tooltip.Portal>
+          </Tooltip.Root>
+        </Tooltip.Provider>
+      </div>
+    </DirectionProvider>,
   );
 
+  const physical = physicalSide(side, dir);
   const measured = await waitForStable(() => {
     const arrow = getByTestId("arrow").getBoundingClientRect();
     return {
-      centrePastEdge: centrePastEdge(side, getByTestId("popup").getBoundingClientRect(), arrow),
-      tipGap: tipGap(side, arrow, getByTestId("trigger").getBoundingClientRect()),
+      centrePastEdge: centrePastEdge(physical, getByTestId("popup").getBoundingClientRect(), arrow),
+      tipGap: tipGap(physical, arrow, getByTestId("trigger").getBoundingClientRect()),
     };
   });
   expect(getByTestId("arrow").getAttribute("data-side")).toBe(side);
@@ -95,13 +120,14 @@ async function measureTooltip(side: Side, spacing: number) {
 
 afterEach(() => {
   document.documentElement.style.removeProperty("--spacing");
+  document.documentElement.removeAttribute("dir");
 });
 
-describe.each(SIDES)("Tooltip arrow geometry, side %s", (side) => {
+describe.each(CASES)("Tooltip arrow geometry, side $side ($dir)", ({ side, dir }) => {
   it.each(SPACINGS_PX)(
     "centres the arrow on the popup edge at --spacing: %spx",
     async (spacing) => {
-      const measured = await measureTooltip(side, spacing);
+      const measured = await measureTooltip(side, spacing, dir);
       expect(measured.centrePastEdge).toBeCloseTo(0, PRECISION);
     },
   );
@@ -109,7 +135,7 @@ describe.each(SIDES)("Tooltip arrow geometry, side %s", (side) => {
   it.each(SPACINGS_PX)(
     "keeps a gap between the arrow tip and the trigger at --spacing: %spx",
     async (spacing) => {
-      const measured = await measureTooltip(side, spacing);
+      const measured = await measureTooltip(side, spacing, dir);
       expect(measured.tipGap).toBeGreaterThanOrEqual(0);
       expect(Math.abs(measured.tipGap - TIP_GAP_UNITS * spacing)).toBeLessThanOrEqual(
         POSITION_ROUNDING_PX,
