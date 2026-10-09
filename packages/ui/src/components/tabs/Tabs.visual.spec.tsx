@@ -1,5 +1,6 @@
+import { DirectionProvider } from "@base-ui/react/direction-provider";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { commands } from "vitest/browser";
+import { commands, userEvent } from "vitest/browser";
 import {
   insetsWithin,
   renderFixture,
@@ -14,6 +15,12 @@ const indicator = () => document.querySelector('[data-testid="indicator"]') as E
 /** The largest distance between an edge of the indicator and the same edge of the active tab */
 const offset = () =>
   Math.max(...Object.values(insetsWithin(activeTab(), indicator())).map(Math.abs));
+
+/** Waits for the indicator to come to rest, then checks it covers the active tab within 1px */
+async function expectIndicatorOverActiveTab() {
+  await waitForStable(offset);
+  expect(offset()).toBeLessThanOrEqual(1);
+}
 
 describe("Tabs", () => {
   it("horizontal", async () => {
@@ -107,8 +114,7 @@ function underline() {
 }
 
 async function expectUnderlineBelowActiveTab() {
-  await waitForStable(offset);
-  expect(offset()).toBeLessThanOrEqual(1);
+  await expectIndicatorOverActiveTab();
   // The pill is gone: only the line shows
   expect(getComputedStyle(indicator()).backgroundColor).toBe("rgba(0, 0, 0, 0)");
   const tab = activeTab().getBoundingClientRect();
@@ -150,5 +156,82 @@ describe.each(PATHS)("Tabs.Indicator restyled as an underline, $path", ({ reduce
     (document.querySelector('[role="tab"]:last-of-type') as HTMLElement).click();
     await expect.poll(() => activeTab().textContent).toBe("Advanced settings");
     await expectUnderlineBelowActiveTab();
+  });
+});
+
+// Wide enough together to overflow the 240px list below
+const MANY_TABS = ["Overview", "Analytics", "Reports", "Notifications", "Integrations", "Billing"];
+
+describe.each(PATHS)("Tabs.Indicator over the active tab, $path", ({ reducedMotion }) => {
+  beforeAll(() =>
+    commands.emulateMedia({ reducedMotion: reducedMotion ? "reduce" : "no-preference" }),
+  );
+  afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
+
+  /** Waits until this path places the indicator: Motion drops the CSS fallback's class */
+  const onThisPath = () =>
+    expect
+      .poll(() => indicator().classList.contains("micro-interactions"), { timeout: 5000 })
+      .toBe(reducedMotion);
+
+  // Base UI measures `--active-tab-left` from physical rects. Placing the indicator with an
+  // inline-start property, or from `--active-tab-right`, would mirror it here.
+  it("covers it in a right-to-left list", async () => {
+    const { getByRole } = await renderFixture(
+      <DirectionProvider direction="rtl">
+        <div dir="rtl">
+          <Tabs.Root defaultValue="tab-1">
+            <Tabs.List>
+              <Tabs.Tab value="tab-1">General</Tabs.Tab>
+              <Tabs.Tab value="tab-2">Advanced settings</Tabs.Tab>
+              <Tabs.Indicator data-testid="indicator" />
+            </Tabs.List>
+          </Tabs.Root>
+        </div>
+      </DirectionProvider>,
+    );
+    const first = getByRole("tab", { name: "General" });
+    const second = getByRole("tab", { name: "Advanced settings" });
+    // Right to left: the first tab is on the right
+    expect(first.getBoundingClientRect().left).toBeGreaterThan(second.getBoundingClientRect().left);
+    await onThisPath();
+    await expectIndicatorOverActiveTab();
+
+    await userEvent.click(second);
+    await expect.poll(activeTab).toBe(second);
+    await expectIndicatorOverActiveTab();
+  });
+
+  // The indicator sits inside the scrolling list, so it has to be placed in the list's scrolled
+  // content, not where the tab shows in the viewport
+  it("covers it in a scrolled list, after scrollIntoView and after a click", async () => {
+    const { getByRole } = await renderFixture(
+      <Tabs.Root defaultValue={MANY_TABS[0]} style={{ width: 240 }}>
+        <Tabs.List className="overflow-x-auto">
+          {MANY_TABS.map((name) => (
+            <Tabs.Tab key={name} value={name}>
+              {name}
+            </Tabs.Tab>
+          ))}
+          <Tabs.Indicator data-testid="indicator" />
+        </Tabs.List>
+      </Tabs.Root>,
+    );
+    const list = getByRole("tablist");
+    const last = getByRole("tab", { name: MANY_TABS.at(-1) });
+    // Off-screen: past the list's right edge
+    expect(last.getBoundingClientRect().left).toBeGreaterThan(list.getBoundingClientRect().right);
+    await onThisPath();
+    await expectIndicatorOverActiveTab();
+
+    last.scrollIntoView({ block: "nearest", inline: "nearest" });
+    await expect.poll(() => list.scrollLeft).toBeGreaterThan(0);
+    // The first tab, still active, scrolled out of view with the indicator over it
+    await expectIndicatorOverActiveTab();
+
+    await userEvent.click(last);
+    await expect.poll(activeTab).toBe(last);
+    expect(list.scrollLeft).toBeGreaterThan(0);
+    await expectIndicatorOverActiveTab();
   });
 });
