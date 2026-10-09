@@ -1,7 +1,7 @@
 import { render } from "@testing-library/react";
 import { useEffect } from "react";
-import { describe, expect, it } from "vitest";
-import { page } from "vitest/browser";
+import { afterEach, describe, expect, it } from "vitest";
+import { commands, page } from "vitest/browser";
 import { reloadMotion } from "../../lib/use-motion";
 import { Tabs } from "./index";
 
@@ -110,5 +110,89 @@ describe("Tabs with Motion", () => {
       await new Promise((resolve) => requestAnimationFrame(resolve));
     }
     expect(opacities.some((opacity) => opacity > 0 && opacity < 1)).toBe(true);
+  });
+});
+
+describe("Tabs animations that must stop", () => {
+  // Slow and linear, so each check below happens mid-animation
+  const slow = { type: "tween", duration: 2 } as const;
+  const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+
+  afterEach(async () => {
+    await commands.emulateMedia({ reducedMotion: "no-preference" });
+    // Motion reads the preference from the media query's change event
+    await nextFrame();
+  });
+
+  async function enterPane() {
+    await reloadMotion();
+    const tabs = (value: string) => (
+      <Tabs.Root value={value}>
+        <Tabs.Animate transition={slow}>
+          <p>Panel {value}</p>
+        </Tabs.Animate>
+      </Tabs.Root>
+    );
+    const result = render(tabs("a"));
+    result.rerender(tabs("b"));
+    const pane = page.getByText("Panel b").element().parentElement as HTMLElement;
+    await nextFrame();
+    const transform = pane.style.transform;
+    await nextFrame();
+    // Mid-entry: still fading in and still moving
+    expect(Number(getComputedStyle(pane).opacity)).toBeLessThan(1);
+    expect(pane.style.transform).not.toBe(transform);
+    return { ...result, pane };
+  }
+
+  it("finishes a Tabs.Animate entry when reduced motion turns on, and does not replay it", async () => {
+    const { pane } = await enterPane();
+    await commands.emulateMedia({ reducedMotion: "reduce" });
+    await expect.poll(() => getComputedStyle(pane).opacity, { timeout: 200 }).toBe("1");
+    expect(new DOMMatrix(getComputedStyle(pane).transform).m42).toBe(0);
+
+    await commands.emulateMedia({ reducedMotion: "no-preference" });
+    for (let frame = 0; frame < 5; frame++) {
+      await nextFrame();
+      expect(getComputedStyle(pane).opacity).toBe("1");
+    }
+  });
+
+  it("stops a Tabs.Animate entry when the pane unmounts", async () => {
+    const { pane, unmount } = await enterPane();
+    unmount();
+    expect(pane.getAnimations()).toEqual([]);
+    // Stopping may write the value it stopped at once; after that nothing moves
+    await nextFrame();
+    const transform = pane.style.transform;
+    for (let frame = 0; frame < 5; frame++) {
+      await nextFrame();
+      expect(pane.style.transform).toBe(transform);
+    }
+  });
+
+  it("stops a Tabs.Contents slide when it unmounts", async () => {
+    await reloadMotion();
+    const tabs = (value: string) => (
+      <Tabs.Root value={value}>
+        <Tabs.Contents transition={slow}>
+          <Tabs.Content value="a">Panel A</Tabs.Content>
+          <Tabs.Content value="b">Panel B</Tabs.Content>
+        </Tabs.Contents>
+      </Tabs.Root>
+    );
+    const { rerender, unmount } = render(tabs("a"));
+    rerender(tabs("b"));
+    await nextFrame();
+    await nextFrame();
+    // Content › panel wrapper › track
+    const track = page.getByText("Panel B").element().parentElement?.parentElement as HTMLElement;
+    unmount();
+    await nextFrame();
+    const transform = track.style.transform;
+    for (let frame = 0; frame < 5; frame++) {
+      await nextFrame();
+      expect(track.style.transform).toBe(transform);
+    }
   });
 });
