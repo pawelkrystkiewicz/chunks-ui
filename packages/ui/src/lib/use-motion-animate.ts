@@ -149,7 +149,8 @@ export function useMotionAnimate<E extends HTMLElement | SVGElement>(
   // element then keeps Motion's last values.
   useLayoutEffect(() => {
     if (available || !driving || !m) return;
-    const node = animated.current;
+    // Turned on while <Activity> hid the element: the cleanup forgot it, but Motion's values stay
+    const node = animated.current ?? element.current;
     animated.current = null;
     controls.current?.complete();
     controls.current = null;

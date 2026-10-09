@@ -313,6 +313,29 @@ describe("controls once Motion has loaded", () => {
     },
   );
 
+  // <Activity> cleans the effects up while hidden, and the hook forgets the element it animated
+  it.each(["Switch", "Tabs.Indicator"])(
+    "shows a %s as the CSS fallback renders it when reduced motion turned on while hidden",
+    async (name) => {
+      const subject = control(name);
+      const ui = (mode: "visible" | "hidden") => <Activity mode={mode}>{subject.ui()}</Activity>;
+      const { rerender, unmount } = await renderSettled(ui("visible"));
+      subject.change();
+      await wait(400);
+      rerender(ui("hidden"));
+      await reducedMotion(true);
+      rerender(ui("visible"));
+      await wait(100);
+      const shown = snapshot(subject);
+      unmount();
+
+      render(subject.ui());
+      subject.change();
+      await wait(100);
+      expect(shown).toEqual(snapshot(subject));
+    },
+  );
+
   it.each(["Radio", "Checkbox"])(
     "keeps an unchecked %s indicator mounted only while Motion drives it",
     async (name) => {
