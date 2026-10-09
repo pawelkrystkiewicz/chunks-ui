@@ -141,9 +141,11 @@ function expectInBetween(start: number, values: number[]) {
   expect(values.some((value) => (value - start) * (value - end) < 0)).toBe(true);
 }
 
-/** The value once two reads a frame apart match */
+/**
+ * The value once three reads in a row, a frame apart, match, so one stalled frame mid-spring
+ * can't pass for settled
+ */
 async function settled(read: () => number) {
-  // Three equal reads in a row, so one stalled frame mid-spring can't pass for settled
   let previous = read();
   let same = 0;
   for (let frame = 0; frame < 120; frame++) {
