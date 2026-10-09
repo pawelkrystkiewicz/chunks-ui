@@ -94,7 +94,7 @@ Consumers of `FavoriteToggle` can then pass either form, and both keep your base
 
 ## className functions on components
 
-Every chunks-ui part built on a Base UI part takes a `className` function and calls it with that part's state. Its result merges with the part's own classes:
+The parts that wrap a Base UI part take a `className` function and call it with that part's state. Its result merges with the part's own classes:
 
 ```tsx
 import { Tabs } from "chunks-ui";
@@ -106,9 +106,11 @@ import { Tabs } from "chunks-ui";
 
 Most of that state is also on the element as `data-*` attributes, so a plain string often does the same job: `className="data-active:font-semibold"`.
 
-Two components put `className` on an element that has no Base UI state:
+These put `className` on an element that has no Base UI state:
 
-- **`Radio.Item`** puts it on its `<label>`, so it takes a string only. Style the radio itself with `Radio.Root`.
+- **Plain HTML components**, such as `Card`, `Empty`, `Skeleton` and `Table`, take a string.
+- **`Tabs.Content`, `Tabs.Contents`, `Tabs.Animate`, `Combobox.Control` and `DatePicker`** render or wrap a plain `<div>`, so they take a string.
+- **`Radio.Item`** puts it on its `<label>`, so it takes a string. Style the radio itself with `Radio.Root`.
 - **`Input`** with `startAdornment`, `endAdornment` or `onClear` (and `InputCopy`, which always has an end adornment) puts a string on the wrapper that positions the adornments, and a function on the input inside it:
 
 ```tsx
@@ -122,11 +124,9 @@ import { Search } from "lucide-react";
 />;
 ```
 
-Components that render plain HTML elements, such as `Card`, `Empty`, `Skeleton` and `Table`, take a string `className`.
-
 ## Types
 
 | Type | Description |
 |---|---|
-| `ClassInput` | What `cn` accepts: a string, number, boolean or nullish value, an array of `ClassInput`, or a dictionary of class names to conditions. clsx's `ClassValue` without functions. |
+| `ClassInput` | What `cn` accepts: a string, number, bigint, boolean or nullish value, an array of `ClassInput`, or a dictionary of class names to conditions. clsx's `ClassValue` without functions. |
 | `StateClassName<State>` | A Base UI part's `className`: `string \| ((state: State) => string \| undefined) \| undefined`. The last argument of `cnState`. |
