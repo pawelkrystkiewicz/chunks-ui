@@ -58,6 +58,15 @@ type Name = keyof typeof popups;
 const popup = () => document.querySelector<HTMLElement>('[data-testid="popup"]');
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
 
+// Share of the element's box that is inside the viewport
+function visibleShare(element: HTMLElement | null) {
+  if (!element) return 0;
+  const box = element.getBoundingClientRect();
+  const width = Math.max(0, Math.min(box.right, innerWidth) - Math.max(box.left, 0));
+  const height = Math.max(0, Math.min(box.bottom, innerHeight) - Math.max(box.top, 0));
+  return (width * height) / (box.width * box.height);
+}
+
 async function renderClosed(name: Name, keepMounted?: boolean) {
   await import("motion/react");
   const result = render(popups[name](false, keepMounted));
@@ -98,6 +107,36 @@ describe("popups animated with Motion", () => {
         await nextFrame();
       }
       expect(opacities.some((opacity) => opacity > 0 && opacity < 1)).toBe(true);
+    },
+  );
+
+  it.each(["left", "right", "bottom"] as const)(
+    "keeps a %s Drawer mounted until it has slid out",
+    async (side) => {
+      const drawer = (open: boolean) => (
+        <Drawer.Root open={open}>
+          <Drawer.Portal>
+            <Drawer.Popup side={side} data-testid="popup">
+              <Drawer.Title>Drawer</Drawer.Title>
+            </Drawer.Popup>
+          </Drawer.Portal>
+        </Drawer.Root>
+      );
+      await import("motion/react");
+      const { rerender } = render(drawer(false));
+      rerender(drawer(true));
+      await expect.poll(() => visibleShare(popup())).toBeGreaterThan(0.99);
+
+      rerender(drawer(false));
+      const shares: number[] = [];
+      for (let element = popup(), frame = 0; element && frame < 180; element = popup(), frame++) {
+        shares.push(visibleShare(element));
+        await nextFrame();
+      }
+      expect(popup()).toBeNull();
+      // It slides: some frames show it partly off-screen, and it leaves the DOM once it is out
+      expect(shares.some((share) => share > 0 && share < 0.99)).toBe(true);
+      expect(shares.at(-1)).toBeLessThan(0.05);
     },
   );
 

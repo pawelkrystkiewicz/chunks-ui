@@ -37,10 +37,12 @@ export type DrawerTitleProps = ComponentProps<typeof BaseDialog.Title>;
 export type DrawerDescriptionProps = ComponentProps<typeof BaseDialog.Description>;
 export type DrawerCloseProps = ComponentProps<typeof BaseDialog.Close>;
 
+// `transform` rather than x/y: Motion runs it as a browser animation, which Base UI waits for
+// (element.getAnimations()) before it unmounts a closing popup, so the drawer can slide out
 const slideDirections = {
-  left: { from: { x: "-100%" }, to: { x: "0%" } },
-  right: { from: { x: "100%" }, to: { x: "0%" } },
-  bottom: { from: { y: "100%" }, to: { y: "0%" } },
+  left: { from: { transform: "translateX(-100%)" }, to: { transform: "translateX(0%)" } },
+  right: { from: { transform: "translateX(100%)" }, to: { transform: "translateX(0%)" } },
+  bottom: { from: { transform: "translateY(100%)" }, to: { transform: "translateY(0%)" } },
 } as const;
 
 const motionPositionClasses = {
