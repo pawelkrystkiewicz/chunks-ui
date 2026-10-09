@@ -214,7 +214,7 @@ describe("controls when Motion loads", () => {
       Math.abs(value - (i === 0 ? start : (values[i - 1] ?? 0))),
     );
     expect(Math.max(...steps)).toBeLessThan(travel / 2);
-    expect(element()).not.toHaveClass(fallbackClass ?? "");
+    if (fallbackClass) expect(element()).not.toHaveClass(fallbackClass);
   });
 
   it("hands N controls over to Motion in one commit", async () => {
@@ -225,7 +225,7 @@ describe("controls when Motion loads", () => {
         {Array.from({ length: 20 }, (_, i) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: a fixed list
           <Switch.Root key={i} aria-label={`Switch ${i}`}>
-            <Switch.Thumb />
+            <Switch.Thumb data-testid="thumb" />
           </Switch.Root>
         ))}
       </Profiler>,
@@ -234,7 +234,8 @@ describe("controls when Motion loads", () => {
     commits = 0;
     await motion.arrive();
     await wait(100);
-    // One commit for Motion arriving, one for the hand-off; not one per switch
+    // Every switch handed over, in one commit for Motion arriving and one for the hand-off
+    expect(document.querySelectorAll('[data-testid="thumb"].micro-interactions')).toHaveLength(0);
     expect(commits).toBeLessThanOrEqual(2);
   });
 });
@@ -291,14 +292,21 @@ describe("controls once Motion has loaded", () => {
       const subject = control(name);
       const { unmount } = await renderSettled(subject.ui());
       subject.change();
+      if (subject.toChecked) {
+        // Radio and Checkbox: animate the indicator in, so it is still there at the end
+        await wait(300);
+        subject.toChecked();
+      }
       await nextFrame();
       await nextFrame();
       await reducedMotion(true);
       const finished = snapshot(subject);
+      expect(finished.present).toBe(true);
       unmount();
 
       render(subject.ui());
       subject.change();
+      subject.toChecked?.();
       await wait(100);
       expect(finished).toEqual(snapshot(subject));
     },
