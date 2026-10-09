@@ -1,6 +1,6 @@
 ---
 description: Take a GitHub issue (or a described behaviour) from triage to a merged PR, end to end, using subagents
-argument-hint: <issue number(s) | issue URL | behaviour to change> [no merge]
+argument-hint: <issue number(s) | issue URL | behaviour to change> [no merge] [quick review | passes=N]
 ---
 
 # Deliver
@@ -77,21 +77,42 @@ The builder's prompt starts with the System Prompt from `.claude/agents/builder.
 - **Commits:** `type(scope): message` with the co-author trailer, and **no push**.
 - **Report back:** the commits, the test results, and anything left undone.
 
-## 6. Review (fresh reviewer subagent)
+## 6. Review
+
+Pick the mode:
+
+- **Sequential** (the default): use it when the `review-sequential` skill is available.
+- **Single:** use it when the input says "quick review", or when the skill is not available.
+
+Both modes judge findings against the same rubric:
+
+- correctness and edge cases: cleanup on unmount, reduced motion toggled mid-animation, StrictMode double effects, ref merging, SSR and hydration, RTL;
+- accessibility;
+- tests that assert behaviour, not implementation;
+- accuracy of the changeset and docs;
+- scope creep.
+
+### Sequential
+
+Invoke the `review-sequential` skill (Skill tool). Use `passes=N` from the input if given; otherwise use its default of 3. Its args name:
+
+- the range `origin/master..HEAD` and the branch;
+- that the repo is `<wt>`, and every git and gate command runs inside it;
+- one paragraph on what the change is for;
+- the rubric above;
+- **do not push.**
+
+The skill handles fresh reviewers, triage, fix waves and the ponytail sign-off. You still own the triage. Out-of-scope findings go on the Also possible list. Its final summary table feeds the PR body and the report.
+
+### Single
 
 1. Package the diff into one file:
    `{ git -C <wt> log --oneline origin/master..HEAD; git -C <wt> diff --stat origin/master...HEAD; git -C <wt> diff -U10 origin/master...HEAD; } > <scratchpad>/<slug>.diff`
 2. Spawn a **fresh** reviewer. Its prompt starts with the System Prompt from `.claude/agents/reviewer.md` and adds:
    - the diff file path, one paragraph on what the change is for, and that the gates passed;
+   - the rubric above;
    - no implementer report and no earlier findings;
    - severities Critical, Important and Minor, which replace reviewer.md's labels. Each finding gives `file:line`, why it matters, and the fix.
-
-   Rubric:
-   - correctness and edge cases: cleanup on unmount, reduced motion toggled mid-animation, StrictMode double effects, ref merging, SSR and hydration, RTL;
-   - accessibility;
-   - tests that assert behaviour, not implementation;
-   - accuracy of the changeset and docs;
-   - scope creep.
 3. **Triage it yourself.** Check each finding against the code. Drop false positives and note why. Out-of-scope ideas go on the Also possible list.
 4. Send the findings you keep to the builder (SendMessage, or a new builder) for a fix wave with the same gates.
 5. If the fixes were substantial (new logic, not wording), run another fresh review on the new head.
