@@ -9,7 +9,8 @@ import { Drawer } from "../components/drawer";
 import { Popover } from "../components/popover";
 import { Select } from "../components/select";
 import { Tooltip } from "../components/tooltip";
-import { AppBars, expectAboveAppBars, inside, overlays, waitForStable } from "../VisualTest.utils";
+import { AppBars, expectAboveAppBars, inside, overlays } from "../VisualTest.overlays";
+import { waitForStable } from "../VisualTest.utils";
 import { PortalContainerProvider } from "./portal-container";
 
 // Lives in the browser (visual) suite, not jsdom: real clicks respect a modal's `inert` and the
