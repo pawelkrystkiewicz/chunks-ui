@@ -22,8 +22,16 @@ function runningTransitions(element: Element) {
   return element.getAnimations().filter((animation) => animation instanceof CSSTransition);
 }
 
-function clearProperties(element: HTMLElement | SVGElement, names: string[] | undefined) {
-  for (const name of names ?? []) element.style.removeProperty(name);
+/**
+ * Removes inline properties Motion set and forgets the values Motion holds for the element.
+ * Motion only writes a value that changes, so without forgetting, handing the element back
+ * would leave the removed properties unset.
+ */
+function clearProperties(m: MotionModule, element: HTMLElement | SVGElement, names?: string[]) {
+  if (!names?.length) return;
+  for (const name of names) element.style.removeProperty(name);
+  m.visualElementStore.get(element)?.unmount();
+  m.visualElementStore.delete(element);
 }
 
 // Switches between Motion and the CSS fallback scheduled for the same frame commit together,
@@ -121,7 +129,7 @@ export function useMotionAnimate<E extends HTMLElement | SVGElement>(
       controls.current?.stop();
       controls.current = null;
       animated.current = null;
-      m.frame.postRender(() => clearProperties(node, latest.current.clear));
+      m.frame.postRender(() => clearProperties(m, node, latest.current.clear));
     };
   }, [available, driving, m]);
 
@@ -135,7 +143,7 @@ export function useMotionAnimate<E extends HTMLElement | SVGElement>(
     controls.current?.complete();
     controls.current = null;
     return switchAfterMotionWrites(m, () => {
-      if (node) clearProperties(node, latest.current.clear);
+      if (node) clearProperties(m, node, latest.current.clear);
       setDriving(false);
     });
   }, [available, driving, m]);

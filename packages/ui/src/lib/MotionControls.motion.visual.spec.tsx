@@ -37,6 +37,11 @@ type Control = {
   cssTransition?: boolean;
   /** A class the element always has, also under a consumer's `render` */
   baseClass: string;
+  /**
+   * For indicators that start checked: checks the element again after `change()` unchecked
+   * it, so a test can catch it animating in
+   */
+  toChecked?: () => void;
 };
 
 const controls: Record<string, Control> = {
@@ -98,6 +103,7 @@ const controls: Record<string, Control> = {
     change: () => click('[aria-label="B"]'),
     measure: opacity,
     baseClass: "justify-center",
+    toChecked: () => click('[aria-label="A"]'),
   },
   Checkbox: {
     ui: (consumerRender) => (
@@ -109,6 +115,7 @@ const controls: Record<string, Control> = {
     change: () => click('[role="checkbox"]'),
     measure: opacity,
     baseClass: "justify-center",
+    toChecked: () => click('[role="checkbox"]'),
   },
 };
 
@@ -361,5 +368,26 @@ describe("controls once Motion has loaded", () => {
     await nextFrame();
     const values = await sample(() => measure(byTestId()), 10);
     expect(new Set(values).size).toBe(1);
+  });
+
+  // Turning reduced motion off again hands the element back to Motion, which must put back
+  // the values it removed when the CSS fallback took over
+  it.each(names)("puts a %s back when reduced motion turns off again", async (name) => {
+    const subject = control(name);
+    await renderSettled(subject.ui());
+    // Radio and Checkbox start checked; move the others off their starting place
+    if (!subject.toChecked) subject.change();
+    await wait(400);
+    // To the pixel, or the hundredth of opacity: a spring at rest can be a fraction short
+    const at = () => ({
+      present: subject.element() !== null,
+      value: Number(subject.measure(subject.element()).toFixed(subject.measure === left ? 0 : 2)),
+    });
+    const before = at();
+
+    await reducedMotion(true);
+    await reducedMotion(false);
+    await wait(400);
+    expect(at()).toEqual(before);
   });
 });
