@@ -1,6 +1,13 @@
 import react from "@vitejs/plugin-react";
 import { playwright } from "@vitest/browser-playwright";
 import { defineConfig } from "vitest/config";
+import type { BrowserCommand } from "vitest/node";
+import type { EmulatedMedia } from "./src/VisualTest.utils";
+
+/** Emulates media features (e.g. no reduced-motion preference, to reach the Motion path). */
+const emulateMedia: BrowserCommand<[options: EmulatedMedia]> = async ({ page }, options) => {
+  await page.emulateMedia(options);
+};
 
 export default defineConfig({
   plugins: [react()],
@@ -17,10 +24,20 @@ export default defineConfig({
       enabled: true,
       headless: true,
       provider: playwright(),
+      commands: { emulateMedia },
       instances: [
+        // Reduced motion: components skip Motion springs, so screenshots never catch one mid-way
         {
           browser: "chromium",
-          context: { reducedMotion: "reduce" },
+          provider: playwright({ contextOptions: { reducedMotion: "reduce" } }),
+          exclude: ["src/**/*.motion.visual.spec.tsx"],
+        },
+        // Motion only animates when reduced motion is off
+        {
+          browser: "chromium",
+          name: "chromium-motion",
+          provider: playwright({ contextOptions: { reducedMotion: "no-preference" } }),
+          include: ["src/**/*.motion.visual.spec.tsx"],
         },
       ],
       expect: {

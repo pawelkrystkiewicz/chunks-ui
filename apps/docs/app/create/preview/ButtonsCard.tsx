@@ -1,5 +1,7 @@
-import { Button, IconButton } from "chunks-ui";
-import { MoreHorizontal, Plus, Settings } from "lucide-react";
+import { Button } from "chunks-ui";
+import { NewTaskDrawer } from "./overlays/NewTaskDrawer";
+import { ProjectActionsDialog } from "./overlays/ProjectActionsDialog";
+import { SettingsDrawer } from "./overlays/SettingsDrawer";
 import { PreviewCard, PreviewCardHeading } from "./PreviewCard";
 
 export function ButtonsCard() {
@@ -17,19 +19,9 @@ export function ButtonsCard() {
         <Button disabled>Disabled</Button>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <Button startIcon={<Plus size={16} />} className="pl-3">
-          New task
-        </Button>
-        <IconButton
-          variant="outlined"
-          aria-label="Settings"
-          className="size-ui-height text-foreground"
-        >
-          <Settings size={16} />
-        </IconButton>
-        <IconButton aria-label="More" className="size-ui-height text-foreground">
-          <MoreHorizontal size={16} />
-        </IconButton>
+        <NewTaskDrawer />
+        <SettingsDrawer />
+        <ProjectActionsDialog />
       </div>
     </PreviewCard>
   );

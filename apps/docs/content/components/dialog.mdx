@@ -35,7 +35,7 @@ import { Dialog } from "chunks-ui";
 
 ## With Backdrop
 
-The `Dialog.Backdrop` renders a semi-transparent black overlay (`bg-black/50`) with a fade transition. It uses the `z-overlays` z-index layer:
+The `Dialog.Backdrop` renders a semi-transparent black overlay (`bg-black/50`) with a fade transition. A dialog opened from inside another dialog or drawer renders its backdrop too, so it dims the parent (Base UI skips nested backdrops by default; pass `forceRender={false}` to do the same):
 
 ```tsx
 <Dialog.Root>
@@ -89,9 +89,9 @@ The popup enters with a scale-up + fade transition (`scale-95` to `scale-100`, `
 |---|---|
 | `Dialog.Root` | State container. Manages open/close. |
 | `Dialog.Trigger` | Button that opens the dialog. |
-| `Dialog.Portal` | Renders children in a portal outside the DOM tree. |
-| `Dialog.Backdrop` | Semi-transparent overlay behind the dialog. `z-overlays` (500). |
-| `Dialog.Popup` | Centered content panel. `z-modals` (700). Max width `max-w-md`. |
+| `Dialog.Portal` | Renders children in a portal outside the DOM tree. Puts the dialog on the `z-modals` (700) layer; popups, dialogs and drawers opened from it stack above it. |
+| `Dialog.Backdrop` | Semi-transparent overlay behind the dialog. Also renders for a nested dialog, so it dims the parent. |
+| `Dialog.Popup` | Centered content panel. Max width `max-w-md`. |
 | `Dialog.Title` | Dialog heading. Rendered as a semibold `text-lg`. |
 | `Dialog.Description` | Supporting text below the title. Rendered in `text-muted-foreground`. |
 | `Dialog.Close` | Button that closes the dialog. |

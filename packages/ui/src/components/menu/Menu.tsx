@@ -67,7 +67,7 @@ function MenuContent({
     : undefined;
 
   return (
-    <BaseMenu.Portal keepMounted={useSpring} container={container}>
+    <BaseMenu.Portal container={container}>
       <BaseMenu.Positioner
         className="z-dropdowns"
         sideOffset={sideOffset}

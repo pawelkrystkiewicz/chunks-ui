@@ -1,7 +1,7 @@
 "use client";
 
 import { Popover as BasePopover } from "@base-ui/react/popover";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { cn } from "../../lib/cn";
 import { usePortalContainer } from "../../lib/portal-container";
 import { Calendar } from "../calendar/Calendar";
@@ -64,6 +64,7 @@ export function DatePicker({
   className,
 }: DatePickerProps) {
   const container = usePortalContainer();
+  const popupRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [internalDate, setInternalDate] = useState<Date | null>(defaultValue ?? null);
   const selectedDate = value !== undefined ? value : internalDate;
@@ -93,6 +94,11 @@ export function DatePicker({
         <BasePopover.Portal container={container}>
           <BasePopover.Positioner className="z-dropdowns" sideOffset={8}>
             <BasePopover.Popup
+              ref={popupRef}
+              // Open on the calendar's tab-stop day (selected, else today), as in the APG date picker.
+              initialFocus={() =>
+                popupRef.current?.querySelector<HTMLElement>('[role="grid"] [tabindex="0"]') ?? null
+              }
               className={cn(
                 "rounded-md border border-border bg-popover shadow-md",
                 "data-starting-style:scale-95 data-starting-style:opacity-0",

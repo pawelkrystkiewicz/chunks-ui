@@ -2,9 +2,11 @@ import { render } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { describe, expect, it } from "vitest";
-import { page } from "vitest/browser";
+import { page, userEvent } from "vitest/browser";
+import { Combobox } from "../components/combobox";
 import { Dialog } from "../components/dialog";
 import { Drawer } from "../components/drawer";
+import { Popover } from "../components/popover";
 import { Select } from "../components/select";
 import { Tooltip } from "../components/tooltip";
 import { PortalContainerProvider } from "./portal-container";
@@ -58,15 +60,14 @@ const parents: Record<string, () => ReactNode> = {
   ),
 };
 
-function Harness({ parent, withProvider }: { parent: string; withProvider: boolean }) {
+function Harness({ children, withProvider }: { children: ReactNode; withProvider: boolean }) {
   const [layer, setLayer] = useState<HTMLElement | null>(null);
-  const content = parents[parent]?.();
   return (
     <>
       {withProvider ? (
-        <PortalContainerProvider value={layer}>{content}</PortalContainerProvider>
+        <PortalContainerProvider value={layer}>{children}</PortalContainerProvider>
       ) : (
-        content
+        children
       )}
       <div ref={setLayer} />
     </>
@@ -80,7 +81,7 @@ describe("popups nested in a modal", () => {
     ["Drawer", false],
     ["Drawer", true],
   ])("keeps a Select inside a %s usable (provider: %s)", async (parent, withProvider) => {
-    render(<Harness parent={parent} withProvider={withProvider} />);
+    render(<Harness withProvider={withProvider}>{parents[parent]?.()}</Harness>);
     const trigger = page.getByRole("combobox", { name: "Fruit" });
     await trigger.click();
     await page.getByRole("option", { name: "Banana" }).click();
@@ -126,4 +127,169 @@ describe("popups nested in a modal", () => {
     const { x, y } = centre();
     expect(popup.contains(document.elementFromPoint(x, y))).toBe(true);
   });
+});
+
+type OverlayProps = {
+  name: string;
+  side?: "left" | "right";
+  defaultOpen?: boolean;
+  children?: ReactNode;
+};
+
+const overlays = {
+  Dialog: ({ name, defaultOpen, children }) => (
+    <Dialog.Root defaultOpen={defaultOpen}>
+      <Dialog.Trigger>Open {name}</Dialog.Trigger>
+      <Dialog.Portal>
+        <Dialog.Backdrop />
+        <Dialog.Popup>
+          <Dialog.Title>{name}</Dialog.Title>
+          {/* Its own line, so a parent is taller than its child and shows around it */}
+          <div>{children}</div>
+          <Dialog.Close>Close {name}</Dialog.Close>
+        </Dialog.Popup>
+      </Dialog.Portal>
+    </Dialog.Root>
+  ),
+  Drawer: ({ name, side, defaultOpen, children }) => (
+    <Drawer.Root defaultOpen={defaultOpen}>
+      <Drawer.Trigger>Open {name}</Drawer.Trigger>
+      <Drawer.Portal>
+        <Drawer.Backdrop />
+        <Drawer.Popup side={side}>
+          <Drawer.Title>{name}</Drawer.Title>
+          <div>{children}</div>
+          <Drawer.Close>Close {name}</Drawer.Close>
+        </Drawer.Popup>
+      </Drawer.Portal>
+    </Drawer.Root>
+  ),
+} satisfies Record<string, (props: OverlayProps) => ReactNode>;
+
+const inside = (box: DOMRect, [x, y]: [number, number]) =>
+  x > box.left && x < box.right && y > box.top && y < box.bottom;
+
+describe("overlays opened from an overlay", () => {
+  it.each([
+    ["Dialog", "Dialog"],
+    ["Drawer", "Dialog"],
+    ["Dialog", "Drawer"],
+    ["Drawer", "Drawer"],
+  ] as const)("puts a %s opened from a %s on top and dims it", async (child, parent) => {
+    const Parent = overlays[parent];
+    const Child = overlays[child];
+    render(
+      <Parent name="Parent" defaultOpen>
+        <Child name="Child" side="left" />
+      </Parent>,
+    );
+    const parentPopup = page.getByRole("dialog", { name: "Parent" }).element();
+    await page.getByRole("button", { name: "Open Child" }).click();
+    const childLocator = page.getByRole("dialog", { name: "Child" });
+    await expect.element(childLocator).toBeVisible();
+    const childPopup = childLocator.element();
+    const parentBox = parentPopup.getBoundingClientRect();
+    const childCentre = (): [number, number] => {
+      const box = childPopup.getBoundingClientRect();
+      return [box.left + box.width / 2, box.top + box.height / 2];
+    };
+
+    // The child must have slid in over the parent, or the stacking check proves nothing
+    await expect.poll(() => inside(parentBox, childCentre())).toBe(true);
+    expect(childPopup.contains(document.elementFromPoint(...childCentre()))).toBe(true);
+
+    // Where the parent still shows, a layer that dims it sits on top
+    const childBox = childPopup.getBoundingClientRect();
+    const parentOnly = (
+      [
+        [parentBox.left + 4, parentBox.top + 4],
+        [parentBox.right - 4, parentBox.top + 4],
+        [parentBox.left + 4, parentBox.bottom - 4],
+        [parentBox.right - 4, parentBox.bottom - 4],
+      ] as [number, number][]
+    ).find((point) => !inside(childBox, point));
+    expect(parentOnly).toBeDefined();
+    const cover = parentOnly && document.elementFromPoint(...parentOnly);
+    expect(cover && parentPopup.contains(cover)).toBe(false);
+    expect(cover && getComputedStyle(cover).backgroundColor).not.toBe("rgba(0, 0, 0, 0)");
+
+    // The child is interactive; closing it leaves the parent open
+    await page.getByRole("button", { name: "Close Child" }).click();
+    await expect.element(childLocator).not.toBeInTheDocument();
+    await expect.element(page.getByRole("dialog", { name: "Parent" })).toBeVisible();
+  });
+});
+
+// keepMounted puts the tooltip's portal in the DOM before the parent opens. A modal parent
+// aria-hides every mounted node outside its own portal when it opens.
+function InfoTooltip() {
+  return (
+    <Tooltip.Root>
+      <Tooltip.Trigger>Info</Tooltip.Trigger>
+      <Tooltip.Portal keepMounted>
+        <Tooltip.Positioner>
+          <Tooltip.Popup>Tooltip text</Tooltip.Popup>
+        </Tooltip.Positioner>
+      </Tooltip.Portal>
+    </Tooltip.Root>
+  );
+}
+
+const modalPopups = {
+  Popover: {
+    ui: (
+      <Popover.Root modal>
+        <Popover.Trigger>Settings</Popover.Trigger>
+        <Popover.Content>
+          <InfoTooltip />
+          <Popover.Close>Done</Popover.Close>
+        </Popover.Content>
+      </Popover.Root>
+    ),
+    open: () => page.getByRole("button", { name: "Settings" }).click(),
+  },
+  Combobox: {
+    ui: (
+      <Combobox.Root items={["apple"]}>
+        <Combobox.Input aria-label="Fruit" />
+        <Combobox.Portal>
+          <Combobox.Positioner>
+            <Combobox.Popup>
+              <InfoTooltip />
+              <Combobox.List>
+                {(item: string) => (
+                  <Combobox.Item key={item} value={item}>
+                    {item}
+                  </Combobox.Item>
+                )}
+              </Combobox.List>
+            </Combobox.Popup>
+          </Combobox.Positioner>
+        </Combobox.Portal>
+      </Combobox.Root>
+    ),
+    open: async () => {
+      await page.getByRole("combobox", { name: "Fruit" }).click();
+      await userEvent.keyboard("a");
+    },
+  },
+};
+
+describe("popups nested in a modal popup", () => {
+  it.each([
+    ["Popover", false],
+    ["Popover", true],
+    ["Combobox", false],
+    ["Combobox", true],
+  ] as const)(
+    "keeps a Tooltip inside a %s visible to assistive tech (provider: %s)",
+    async (parent, withProvider) => {
+      render(<Harness withProvider={withProvider}>{modalPopups[parent].ui}</Harness>);
+      await modalPopups[parent].open();
+      await page.getByRole("button", { name: "Info" }).hover();
+      const tooltip = page.getByText("Tooltip text");
+      await expect.element(tooltip).toBeVisible();
+      expect(tooltip.element().closest('[aria-hidden="true"]')).toBeNull();
+    },
+  );
 });

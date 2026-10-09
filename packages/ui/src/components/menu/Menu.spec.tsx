@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -97,13 +97,18 @@ describe("Menu", () => {
     render(
       <Menu.Root open>
         <Menu.Trigger>Open</Menu.Trigger>
-        <Menu.Content>
+        <Menu.Content data-testid="content">
           <Menu.Item onClick={handleClick} data-testid="item">
             Click me
           </Menu.Item>
         </Menu.Content>
       </Menu.Root>,
     );
+    // Motion loads lazily. When it arrives, the popup becomes a motion.div and its items remount,
+    // so a click on an item grabbed before that lands on a detached node. Wait for motion mode.
+    await waitFor(() => {
+      expect(screen.getByTestId("content")).not.toHaveClass("micro-interactions");
+    });
     await user.click(screen.getByTestId("item"));
     expect(handleClick).toHaveBeenCalledTimes(1);
   });

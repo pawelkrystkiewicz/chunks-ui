@@ -6,7 +6,7 @@ import type { ComponentProps } from "react";
 import { cn } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
-import { usePortalContainer } from "../../lib/portal-container";
+import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
 import { useMotion, useReducedMotion } from "../../lib/use-motion";
 
 export type ComboboxRootProps = ComponentProps<typeof BaseCombobox.Root>;
@@ -263,8 +263,13 @@ function ComboboxChipRemove({ className, ...props }: ComboboxChipRemoveProps) {
   );
 }
 
-function ComboboxPortal(props: ComponentProps<typeof BaseCombobox.Portal>) {
-  return <BaseCombobox.Portal container={usePortalContainer()} {...props} />;
+function ComboboxPortal({ children, ...props }: ComponentProps<typeof BaseCombobox.Portal>) {
+  return (
+    <BaseCombobox.Portal container={usePortalContainer()} {...props}>
+      {/* The open popup aria-hides nodes outside its portal, so popups opened inside portal in here */}
+      <PortalContainerProvider value={undefined}>{children}</PortalContainerProvider>
+    </BaseCombobox.Portal>
+  );
 }
 
 export const Combobox = {

@@ -32,7 +32,8 @@ export function createPopupRenderer({ m, spring, from, to }: PopupMotionConfig) 
       <m.motion.div
         {...(renderProps as Record<string, unknown>)}
         style={style}
-        initial={false}
+        // Base UI mounts the popup as it opens, so animate in from the closed values
+        initial={from}
         animate={state.open ? to : from}
         transition={spring}
       />

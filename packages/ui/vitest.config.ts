@@ -7,6 +7,8 @@ export default defineConfig({
     exclude: ["src/**/*.visual.spec.tsx"],
     passWithNoTests: false,
     setupFiles: ["./vitest.setup.ts"],
+    // Vitest blanks CSS imports by default; cn.spec.ts reads the theme tokens as text
+    css: { include: [/theme\.css\?raw$/] },
     coverage: {
       provider: "v8",
       reporter: ["text", "json-summary", "json"],

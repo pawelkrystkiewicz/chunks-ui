@@ -12,26 +12,29 @@ export type DialogRootProps = ComponentProps<typeof BaseDialog.Root>;
 export type DialogTriggerProps = ComponentProps<typeof BaseDialog.Trigger>;
 export type DialogPortalProps = ComponentProps<typeof BaseDialog.Portal>;
 export type DialogPopupProps = ComponentProps<typeof BaseDialog.Popup>;
-export type DialogBackdropProps = ComponentProps<typeof BaseDialog.Backdrop>;
+export type DialogBackdropProps = Omit<
+  ComponentProps<typeof BaseDialog.Backdrop>,
+  "forceRender"
+> & {
+  /**
+   * Whether the backdrop renders when this dialog is opened from another dialog or drawer, so it dims that parent.
+   * Base UI defaults this to `false`.
+   * @default true
+   */
+  forceRender?: boolean;
+};
 export type DialogTitleProps = ComponentProps<typeof BaseDialog.Title>;
 export type DialogDescriptionProps = ComponentProps<typeof BaseDialog.Description>;
 export type DialogCloseProps = ComponentProps<typeof BaseDialog.Close>;
 
-function DialogPortal({ keepMounted, className, children, ...props }: DialogPortalProps) {
-  const m = useMotion();
-  const reduced = useReducedMotion();
-  const useSpring = !!m && !reduced;
+function DialogPortal({ className, children, ...props }: DialogPortalProps) {
   const container = usePortalContainer();
   return (
     <BaseDialog.Portal
-      keepMounted={keepMounted ?? useSpring}
       container={container}
-      // Popups portalled straight into this one (portal > node > positioner) sit above it; tooltips above dropdowns
+      // The portal node carries the z-layer, not the popup: whatever opens from the dialog portals in here and stacks above it
       className={(state) =>
-        cn(
-          "[&>*>.z-dropdowns]:z-[calc(var(--z-index-modals)+1)] [&>*>.z-tooltips]:z-[calc(var(--z-index-modals)+2)]",
-          typeof className === "function" ? className(state) : className,
-        )
+        cn("relative z-modals", typeof className === "function" ? className(state) : className)
       }
       {...props}
     >
@@ -40,7 +43,7 @@ function DialogPortal({ keepMounted, className, children, ...props }: DialogPort
   );
 }
 
-function DialogBackdrop({ className, ...props }: DialogBackdropProps) {
+function DialogBackdrop({ className, forceRender = true, ...props }: DialogBackdropProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
   const useSpring = !!m && !reduced;
@@ -56,8 +59,9 @@ function DialogBackdrop({ className, ...props }: DialogBackdropProps) {
   return (
     <BaseDialog.Backdrop
       render={render}
+      forceRender={forceRender}
       className={cn(
-        "fixed inset-0 z-overlays bg-black/50",
+        "fixed inset-0 bg-black/50",
         !useSpring && "data-starting-style:opacity-0",
         !useSpring && "data-ending-style:opacity-0",
         !useSpring && "micro-interactions",
@@ -85,7 +89,7 @@ function DialogPopup({ className, ...props }: DialogPopupProps) {
     <BaseDialog.Popup
       render={render}
       className={cn(
-        "fixed top-1/2 left-1/2 z-modals w-full max-w-md -translate-x-1/2 -translate-y-1/2",
+        "fixed top-1/2 left-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2",
         "rounded-xl border border-border bg-background p-6 shadow-lg",
         !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
         !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
