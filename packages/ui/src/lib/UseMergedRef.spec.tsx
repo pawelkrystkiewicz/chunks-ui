@@ -5,15 +5,23 @@ import { useMergedRef } from "./use-merged-ref";
 
 afterEach(cleanup);
 
+let ownRef: RefObject<HTMLDivElement | null> = { current: null };
+
+function Box({ consumer }: { consumer: Ref<HTMLDivElement> | undefined }) {
+  const ref = useRef<HTMLDivElement>(null);
+  ownRef = ref;
+  return <div data-testid="box" ref={useMergedRef(ref, consumer)} />;
+}
+
 /** Renders a div with its own ref object merged with `consumer`; `own()` reads that object. */
 function setup(consumer: Ref<HTMLDivElement> | undefined) {
-  let ownRef: RefObject<HTMLDivElement | null> = { current: null };
-  function Box() {
-    const ref = useRef<HTMLDivElement>(null);
-    ownRef = ref;
-    return <div data-testid="box" ref={useMergedRef(ref, consumer)} />;
-  }
-  return { own: () => ownRef.current, ...render(<Box />) };
+  const result = render(<Box consumer={consumer} />);
+  return {
+    ...result,
+    own: () => ownRef.current,
+    rerenderWith: (next: Ref<HTMLDivElement> | undefined) =>
+      result.rerender(<Box consumer={next} />),
+  };
 }
 
 describe("useMergedRef", () => {
@@ -48,5 +56,23 @@ describe("useMergedRef", () => {
     expect(detach).toHaveBeenCalledOnce();
     expect(own()).toBeNull();
     expect(consumer).not.toHaveBeenCalledWith(null);
+  });
+
+  it("moves the element to a new consumer ref and clears the old one", () => {
+    const first = createRef<HTMLDivElement>();
+    const second = createRef<HTMLDivElement>();
+    const { own, getByTestId, rerenderWith } = setup(first);
+    rerenderWith(second);
+    expect(first.current).toBeNull();
+    expect(second.current).toBe(getByTestId("box"));
+    expect(own()).toBe(getByTestId("box"));
+  });
+
+  it("does not call a stable consumer callback ref again on rerender", () => {
+    const consumer = vi.fn();
+    const { rerenderWith } = setup(consumer);
+    rerenderWith(consumer);
+    rerenderWith(consumer);
+    expect(consumer).toHaveBeenCalledOnce();
   });
 });
