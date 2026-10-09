@@ -1,10 +1,10 @@
 import { render } from "@testing-library/react";
 import { createRef, type RefObject } from "react";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { commands, userEvent } from "vitest/browser";
 import { reloadMotion } from "../../lib/use-motion";
 import { insetsWithin, waitForStable } from "../../VisualTest.utils";
-import { ToggleGroup } from "./index";
+import { ToggleGroup, type ToggleGroupRootProps } from "./index";
 
 // Runs with reduced motion off, so Motion drives the indicator; the CSS-path cases turn reduced
 // motion on. A consumer's ref must not replace the refs the indicator relies on: the Root's
@@ -20,6 +20,15 @@ const COVERS = {
   bottom: expect.closeTo(0, 0),
   left: expect.closeTo(0, 0),
 };
+
+/** The indicator's insets within `item` once it has settled; null without an indicator */
+const settledIndicatorOver = (group: HTMLElement, item: HTMLElement, widths?: number[]) =>
+  waitForStable(() => {
+    const indicator = group.querySelector<HTMLElement>(":scope > span");
+    if (!indicator) return null;
+    widths?.push(indicator.getBoundingClientRect().width);
+    return insetsWithin(item, indicator);
+  });
 
 /**
  * A ToggleGroup with a short and a long item and a consumer ref of `kind` on the Root or on the
@@ -76,27 +85,19 @@ async function expectRefAndIndicator(part: Part, kind: RefKind, path: "css" | "m
   const expectRefHolds = () => {
     if (kind !== "undefined") expect(tg.received()).toBe(part === "Root" ? tg.group : tg.beta);
   };
-  const settledOver = (item: HTMLElement, widths?: number[]) =>
-    waitForStable(() => {
-      const indicator = tg.indicator();
-      if (!indicator) return null;
-      widths?.push(indicator.getBoundingClientRect().width);
-      return insetsWithin(item, indicator);
-    });
-
   expectRefHolds();
   await expect.poll(() => tg.indicator()).not.toBeNull();
   // The CSS fallback has a transition class that Motion's path drops
   await expect
     .poll(() => tg.indicator()?.classList.contains("micro-interactions"))
     .toBe(path === "css");
-  expect(await settledOver(tg.alpha)).toEqual(COVERS);
+  expect(await settledIndicatorOver(tg.group, tg.alpha)).toEqual(COVERS);
 
   tg.rerender();
   expectRefHolds();
   await userEvent.click(tg.beta);
   const widths: number[] = [];
-  expect(await settledOver(tg.beta, widths)).toEqual(COVERS);
+  expect(await settledIndicatorOver(tg.group, tg.beta, widths)).toEqual(COVERS);
   return { widths, from: tg.alpha.offsetWidth, to: tg.beta.offsetWidth };
 }
 
@@ -126,6 +127,92 @@ describe("ToggleGroup with a consumer ref, Motion path", () => {
         (w) => w > Math.min(from, to) + 1 && w < Math.max(from, to) - 1,
       );
       expect(between, JSON.stringify(widths)).not.toHaveLength(0);
+    },
+  );
+});
+
+// Base UI keeps the pressed item when onValueChange cancels; the indicator must stay with it
+describe.each([
+  { path: "CSS", reducedMotion: "reduce" },
+  { path: "Motion", reducedMotion: "no-preference" },
+] as const)("ToggleGroup onValueChange, $path path", ({ reducedMotion }) => {
+  beforeAll(() => commands.emulateMedia({ reducedMotion }));
+  afterAll(() => commands.emulateMedia({ reducedMotion: "no-preference" }));
+
+  /** An uncontrolled group on Alpha: checks the indicator is there, then clicks Beta */
+  async function clickBeta(onValueChange: ToggleGroupRootProps["onValueChange"]) {
+    await reloadMotion();
+    const { getByRole } = render(
+      <ToggleGroup.Root defaultValue={["a"]} onValueChange={onValueChange}>
+        <ToggleGroup.Item value="a">Alpha</ToggleGroup.Item>
+        <ToggleGroup.Item value="b">Beta, a longer item</ToggleGroup.Item>
+      </ToggleGroup.Root>,
+    );
+    const group = getByRole("group");
+    const alpha = getByRole("button", { name: "Alpha" });
+    const beta = getByRole("button", { name: "Beta, a longer item" });
+    // The path under test drives the indicator: the CSS fallback has a class Motion's path drops
+    await expect
+      .poll(() => group.querySelector(":scope > span")?.classList.contains("micro-interactions"))
+      .toBe(reducedMotion === "reduce");
+    expect(await settledIndicatorOver(group, alpha)).toEqual(COVERS);
+    await userEvent.click(beta);
+    return { group, alpha, beta };
+  }
+
+  it("keeps the indicator on the pressed item when the change is cancelled", async () => {
+    const { group, alpha, beta } = await clickBeta((_, details) => details.cancel());
+    expect(alpha.getAttribute("aria-pressed")).toBe("true");
+    expect(beta.getAttribute("aria-pressed")).toBe("false");
+    expect(await settledIndicatorOver(group, alpha)).toEqual(COVERS);
+  });
+
+  it("moves the indicator when onValueChange does not cancel", async () => {
+    const onValueChange = vi.fn();
+    const { group, beta } = await clickBeta(onValueChange);
+    expect(onValueChange).toHaveBeenCalledWith(["b"], expect.anything());
+    expect(beta.getAttribute("aria-pressed")).toBe("true");
+    expect(await settledIndicatorOver(group, beta)).toEqual(COVERS);
+  });
+});
+
+describe("ToggleGroup.Root with a consumer render, CSS path", () => {
+  beforeAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
+  afterAll(() => commands.emulateMedia({ reducedMotion: "no-preference" }));
+
+  it.each([
+    ["an element", <nav key="element" data-probe="element" />, "element"],
+    [
+      "a function",
+      ((props, state) => (
+        <nav {...props} data-probe={state.orientation} />
+      )) satisfies ToggleGroupRootProps["render"],
+      "horizontal",
+    ],
+  ] as const)(
+    "renders %s, keeps the ref, and the indicator still follows",
+    async (_, consumerRender, probe) => {
+      const ref = createRef<HTMLDivElement>();
+      const { getByRole } = render(
+        <ToggleGroup.Root defaultValue={["a"]} ref={ref} render={consumerRender}>
+          <ToggleGroup.Item value="a">Alpha</ToggleGroup.Item>
+          <ToggleGroup.Item value="b">Beta, a longer item</ToggleGroup.Item>
+        </ToggleGroup.Root>,
+      );
+      const group = getByRole("group");
+      expect(group.tagName).toBe("NAV");
+      expect(group.getAttribute("data-probe")).toBe(probe);
+      // Base UI >=1.6 leaves aria-orientation off role="group"; guard that it doesn't come back
+      // through `render`
+      expect(group.hasAttribute("aria-orientation")).toBe(false);
+      expect(ref.current).toBe(group);
+
+      expect(await settledIndicatorOver(group, getByRole("button", { name: "Alpha" }))).toEqual(
+        COVERS,
+      );
+      const beta = getByRole("button", { name: "Beta, a longer item" });
+      await userEvent.click(beta);
+      expect(await settledIndicatorOver(group, beta)).toEqual(COVERS);
     },
   );
 });

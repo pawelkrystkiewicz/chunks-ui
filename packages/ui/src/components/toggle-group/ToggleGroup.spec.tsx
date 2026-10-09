@@ -160,6 +160,57 @@ describe("ToggleGroup", () => {
     expect(container.querySelector("span.absolute.z-0")).toBeInTheDocument();
   });
 
+  it("renders Root through a consumer's render element", () => {
+    render(
+      <ToggleGroup.Root render={<nav data-probe="" />}>
+        <ToggleGroup.Item value="a">A</ToggleGroup.Item>
+      </ToggleGroup.Root>,
+    );
+    const group = screen.getByRole("group");
+    expect(group.tagName).toBe("NAV");
+    expect(group).toHaveAttribute("data-probe");
+    // Base UI >=1.6 leaves aria-orientation off role="group"; guard that it doesn't come back
+    // through `render`
+    expect(group).not.toHaveAttribute("aria-orientation");
+  });
+
+  it("passes Root's state to a consumer's render function", () => {
+    render(
+      <ToggleGroup.Root
+        orientation="vertical"
+        render={(props, state) => <nav {...props} data-probe={state.orientation} />}
+      >
+        <ToggleGroup.Item value="a">A</ToggleGroup.Item>
+      </ToggleGroup.Root>,
+    );
+    const group = screen.getByRole("group");
+    expect(group.tagName).toBe("NAV");
+    expect(group).toHaveAttribute("data-probe", "vertical");
+    // Base UI >=1.6 leaves aria-orientation off role="group"; guard that it doesn't come back
+    // through `render`
+    expect(group).not.toHaveAttribute("aria-orientation");
+  });
+
+  it("keeps the indicator when onValueChange cancels deselecting the pressed item", async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <ToggleGroup.Root
+        onValueChange={(value, details) => {
+          if (!value.length) details.cancel();
+        }}
+      >
+        <ToggleGroup.Item value="a">A</ToggleGroup.Item>
+      </ToggleGroup.Root>,
+    );
+    const button = screen.getByRole("button");
+    await user.click(button);
+    expect(container.querySelector("span.absolute.z-0")).toBeInTheDocument();
+
+    await user.click(button);
+    expect(button).toHaveAttribute("aria-pressed", "true");
+    expect(container.querySelector("span.absolute.z-0")).toBeInTheDocument();
+  });
+
   it("deregisters Item on unmount", () => {
     const { rerender } = render(
       <ToggleGroup.Root>
