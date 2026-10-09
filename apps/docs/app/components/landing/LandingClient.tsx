@@ -195,7 +195,7 @@ export function PresetGrid() {
               </span>
             </span>
             <span className="font-semibold text-[15px] tracking-[-.01em]">{preset.name}</span>
-            <span className="max-w-full truncate font-mono text-(--l-faint) text-[10.5px] tracking-[.04em]">
+            <span className="max-w-full truncate font-mono text-(--l-muted) text-[10.5px] tracking-[.04em]">
               {fontHeading} · r{radius} · h{height}
             </span>
           </Link>
