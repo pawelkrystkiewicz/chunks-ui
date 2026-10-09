@@ -114,6 +114,8 @@ Use in Tailwind: `font-sans`, `font-mono`.
 
 Use in Tailwind: `ease-fluid`, `ease-snappy`.
 
+Components that animate with a CSS transition use the `micro-interactions` class from `theme.css`: 300ms, `cubic-bezier(0.4, 0, 0.2, 1)`, no transition with reduced motion. It sits in the `components` layer, so timing utilities in `className` override it, for example `<Button className="duration-150 ease-snappy">`.
+
 ## Component Sizing
 
 | Token | Value |
