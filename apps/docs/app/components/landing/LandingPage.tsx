@@ -174,7 +174,7 @@ function SectionHead({
   return (
     <div className="mb-10 flex flex-wrap items-end justify-between gap-6">
       <div className="flex flex-col">
-        <span className="font-mono text-(--l-faint) text-[11px] uppercase tracking-[.1em]">
+        <span className="font-mono text-(--l-muted) text-[11px] uppercase tracking-[.1em]">
           {eyebrow}
         </span>
         <h2 className="mt-2.5 text-balance font-semibold text-(--l-fg) text-[clamp(36px,5vw,56px)] leading-[1.02] tracking-[-.045em]">
@@ -197,7 +197,7 @@ function Grid({ className, children }: { className: string; children: ReactNode 
 
 function CellMeta({ left, right }: { left: string; right: string }) {
   return (
-    <span className="flex justify-between gap-2 font-mono text-(--l-faint) text-[10px] tracking-[.1em]">
+    <span className="flex justify-between gap-2 font-mono text-(--l-muted) text-[10px] tracking-[.1em]">
       <span>{left}</span>
       <span>{right}</span>
     </span>
@@ -229,7 +229,7 @@ function CellText({
       >
         {body}
       </p>
-      <span className="mt-auto flex flex-wrap gap-2 pt-1 font-mono text-(--l-faint) text-[11px]">
+      <span className="mt-auto flex flex-wrap gap-2 pt-1 font-mono text-(--l-muted) text-[11px]">
         {meta.map((m, i) => (
           <span key={m} className="contents">
             {i > 0 && <span>·</span>}
@@ -363,7 +363,7 @@ const STEPS = [
     copy: INSTALL,
     code: (
       <>
-        <span className="text-(--l-faint)">$</span> {INSTALL}
+        <span className="text-(--l-muted)">$</span> {INSTALL}
       </>
     ),
     title: "Install",
@@ -561,7 +561,7 @@ function MotionSection() {
         </Grid>
         <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
           <span className="flex flex-wrap gap-x-5 gap-y-1.5 font-mono text-(--l-muted) text-[12px] tracking-[.04em]">
-            <span className="text-(--l-faint)">STIFFNESS / DAMPING</span>
+            STIFFNESS / DAMPING
             <SpringList />
           </span>
           <Href href={`${GITHUB}/blob/master/packages/ui/src/lib/motion.ts`} className={TEXT_LINK}>
