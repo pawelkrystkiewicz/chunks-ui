@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { useEffect, useRef } from "react";
-import { describe, it } from "vitest";
-import { page } from "vitest/browser";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { commands, page } from "vitest/browser";
 import { Toast } from "./index";
 
 function AddToast({ title, description }: { title: string; description?: string }) {
@@ -37,5 +37,29 @@ describe("Toast", () => {
     );
     await screen.findByText("Connection lost");
     await expect(page.elementLocator(document.body)).toMatchScreenshot();
+  });
+});
+
+describe("Toast with motion allowed", () => {
+  beforeAll(() => commands.emulateMedia({ reducedMotion: "no-preference" }));
+  afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
+
+  // `translate-x-full` sets the `translate` property, not `transform`
+  it("slides and fades in", async () => {
+    render(
+      <Toast.Provider>
+        <AddToast title="File saved" />
+        <Toast.Viewport />
+      </Toast.Provider>,
+    );
+    const toast = (await screen.findByText("File saved")).closest(".Toast") as HTMLElement;
+    const transitioned = new Set<string>();
+    for (let frame = 0; frame < 30; frame++) {
+      for (const animation of toast.getAnimations()) {
+        if (animation instanceof CSSTransition) transitioned.add(animation.transitionProperty);
+      }
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+    }
+    expect([...transitioned].sort()).toEqual(["opacity", "translate"]);
   });
 });

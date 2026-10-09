@@ -128,7 +128,7 @@ function ToastRoot({ className, toast, ...props }: ToastRootProps) {
           "micro-interactions",
           "data-starting-style:translate-x-full data-starting-style:opacity-0",
           "data-ending-style:translate-x-full data-ending-style:opacity-0",
-          "transition-[transform,opacity] duration-300 ease-out",
+          "transition-[translate,opacity] duration-300 ease-out",
         ],
         className,
       )}
