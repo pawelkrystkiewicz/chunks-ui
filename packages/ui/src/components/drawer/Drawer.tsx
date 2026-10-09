@@ -3,7 +3,7 @@
 import { Dialog as BaseDialog } from "@base-ui/react/dialog";
 import type { VariantProps } from "class-variance-authority";
 import type { ComponentProps } from "react";
-import { cn } from "../../lib/cn";
+import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
 import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
@@ -57,9 +57,7 @@ function DrawerPortal({ className, children, ...props }: DrawerPortalProps) {
     <BaseDialog.Portal
       container={container}
       // The portal node carries the z-layer, not the popup: whatever opens from the drawer portals in here and stacks above it
-      className={(state) =>
-        cn("relative z-drawers", typeof className === "function" ? className(state) : className)
-      }
+      className={cnState("relative z-drawers", className)}
       {...props}
     >
       <PortalContainerProvider value={undefined}>{children}</PortalContainerProvider>
@@ -84,7 +82,7 @@ function DrawerBackdrop({ className, forceRender = true, ...props }: DrawerBackd
     <BaseDialog.Backdrop
       render={render}
       forceRender={forceRender}
-      className={cn(
+      className={cnState(
         "fixed inset-0 bg-black/50",
         !useSpring && "data-starting-style:opacity-0",
         !useSpring && "data-ending-style:opacity-0",
@@ -114,7 +112,7 @@ function DrawerPopup({ side = "right", className, ...props }: DrawerPopupProps) 
   return (
     <BaseDialog.Popup
       render={render}
-      className={cn(
+      className={cnState(
         useSpring && "fixed border-border bg-background p-6 shadow-xl",
         useSpring && motionPositionClasses[resolvedSide],
         !useSpring && drawerPopupVariants({ side }),
@@ -127,13 +125,19 @@ function DrawerPopup({ side = "right", className, ...props }: DrawerPopupProps) 
 
 function DrawerTitle({ className, ...props }: DrawerTitleProps) {
   return (
-    <BaseDialog.Title className={cn("font-heading font-semibold text-lg", className)} {...props} />
+    <BaseDialog.Title
+      className={cnState("font-heading font-semibold text-lg", className)}
+      {...props}
+    />
   );
 }
 
 function DrawerDescription({ className, ...props }: DrawerDescriptionProps) {
   return (
-    <BaseDialog.Description className={cn("text-muted-foreground text-sm", className)} {...props} />
+    <BaseDialog.Description
+      className={cnState("text-muted-foreground text-sm", className)}
+      {...props}
+    />
   );
 }
 

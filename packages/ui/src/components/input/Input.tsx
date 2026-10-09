@@ -1,7 +1,7 @@
 import { Input as BaseInput } from "@base-ui/react/input";
 import type { VariantProps } from "class-variance-authority";
 import type { ComponentProps, ReactNode } from "react";
-import { cn } from "../../lib/cn";
+import { cn, cnState } from "../../lib/cn";
 import { ClearButton } from "../clear-button";
 import { inputVariants } from "./Input.Variants";
 
@@ -25,7 +25,7 @@ export function Input({ startAdornment, endAdornment, onClear, className, ...pro
   const hasAdornments = startAdornment || endAdornment || onClear;
 
   if (!hasAdornments) {
-    return <BaseInput className={cn(inputVariants(), className)} {...props} />;
+    return <BaseInput className={cnState(inputVariants(), className)} {...props} />;
   }
 
   const clearable =

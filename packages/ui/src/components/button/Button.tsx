@@ -1,6 +1,6 @@
 import { Button as BaseButton } from "@base-ui/react/button";
 import type { ComponentProps, ReactNode } from "react";
-import { cn } from "../../lib/cn";
+import { cnState } from "../../lib/cn";
 import type { ElementColor, ElementVariant } from "../../types";
 import { Loader } from "../loader";
 import { buttonVariants } from "./Button.Variants";
@@ -44,7 +44,7 @@ export function Button({
     <BaseButton
       disabled={disabled || loading}
       focusableWhenDisabled={loading}
-      className={cn(buttonVariants({ variant, color }), className)}
+      className={cnState(buttonVariants({ variant, color }), className)}
       {...props}
     >
       {loading ? <Loader /> : startIcon}

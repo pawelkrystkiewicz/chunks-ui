@@ -14,7 +14,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { cn } from "../../lib/cn";
+import { cn, cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { useMotion, useReducedMotion } from "../../lib/use-motion";
@@ -103,7 +103,7 @@ function TabsRoot({ className, value, defaultValue, onValueChange, ...props }: T
   return (
     <TabsContext.Provider value={{ value: contextValue }}>
       <BaseTabs.Root
-        className={cn(className)}
+        className={cnState(className)}
         value={value}
         defaultValue={defaultValue}
         onValueChange={handleValueChange}
@@ -116,7 +116,7 @@ function TabsRoot({ className, value, defaultValue, onValueChange, ...props }: T
 function TabsList({ className, ...props }: TabsListProps) {
   return (
     <BaseTabs.List
-      className={cn(
+      className={cnState(
         "relative flex items-center rounded-lg bg-muted p-1",
         "data-[orientation=vertical]:flex-col",
         className,
@@ -129,7 +129,7 @@ function TabsList({ className, ...props }: TabsListProps) {
 function TabsTab({ className, ...props }: TabsTabProps) {
   return (
     <BaseTabs.Tab
-      className={cn(
+      className={cnState(
         "relative z-[1] inline-flex items-center justify-center px-4 py-2 font-medium text-sm",
         "micro-interactions text-muted-foreground",
         "hover:text-foreground",
@@ -146,7 +146,7 @@ function TabsTab({ className, ...props }: TabsTabProps) {
 function TabsPanel({ className, ...props }: TabsPanelProps) {
   return (
     <BaseTabs.Panel
-      className={cn("mt-2 focus-visible:outline-2 focus-visible:outline-ring", className)}
+      className={cnState("mt-2 focus-visible:outline-2 focus-visible:outline-ring", className)}
       {...props}
     />
   );

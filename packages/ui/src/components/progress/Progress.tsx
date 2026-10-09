@@ -2,7 +2,7 @@
 
 import { Progress as BaseProgress } from "@base-ui/react/progress";
 import type { ComponentProps } from "react";
-import { cn } from "../../lib/cn";
+import { cnState } from "../../lib/cn";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -17,13 +17,13 @@ export type ProgressIndicatorProps = ComponentProps<typeof BaseProgress.Indicato
 // ---------------------------------------------------------------------------
 
 function ProgressRoot({ className, ...props }: ProgressRootProps) {
-  return <BaseProgress.Root className={cn("w-full", className)} {...props} />;
+  return <BaseProgress.Root className={cnState("w-full", className)} {...props} />;
 }
 
 function ProgressTrack({ className, ...props }: ProgressTrackProps) {
   return (
     <BaseProgress.Track
-      className={cn("relative h-2 w-full overflow-hidden rounded-full bg-muted", className)}
+      className={cnState("relative h-2 w-full overflow-hidden rounded-full bg-muted", className)}
       {...props}
     />
   );
@@ -32,7 +32,7 @@ function ProgressTrack({ className, ...props }: ProgressTrackProps) {
 function ProgressIndicator({ className, ...props }: ProgressIndicatorProps) {
   return (
     <BaseProgress.Indicator
-      className={cn(
+      className={cnState(
         "h-full rounded-full bg-primary",
         "transition-[width] duration-300 ease-out",
         "data-[indeterminate]:w-full data-[indeterminate]:animate-pulse data-[indeterminate]:opacity-75",

@@ -2,7 +2,7 @@
 
 import { Accordion as BaseAccordion } from "@base-ui/react/accordion";
 import type { ComponentProps } from "react";
-import { cn } from "../../lib/cn";
+import { cnState } from "../../lib/cn";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -20,22 +20,25 @@ export type AccordionPanelProps = ComponentProps<typeof BaseAccordion.Panel>;
 
 function AccordionRoot({ className, ...props }: AccordionRootProps) {
   return (
-    <BaseAccordion.Root className={cn("w-full divide-y divide-border", className)} {...props} />
+    <BaseAccordion.Root
+      className={cnState("w-full divide-y divide-border", className)}
+      {...props}
+    />
   );
 }
 
 function AccordionItem({ className, ...props }: AccordionItemProps) {
-  return <BaseAccordion.Item className={cn("group/trigger", className)} {...props} />;
+  return <BaseAccordion.Item className={cnState("group/trigger", className)} {...props} />;
 }
 
 function AccordionHeader({ className, ...props }: AccordionHeaderProps) {
-  return <BaseAccordion.Header className={cn("flex", className)} {...props} />;
+  return <BaseAccordion.Header className={cnState("flex", className)} {...props} />;
 }
 
 function AccordionTrigger({ className, children, ...props }: AccordionTriggerProps) {
   return (
     <BaseAccordion.Trigger
-      className={cn(
+      className={cnState(
         "flex flex-1 cursor-pointer items-center justify-between py-4 text-left font-medium text-sm",
         "hover:text-foreground/80",
         "focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
@@ -67,7 +70,7 @@ function AccordionTrigger({ className, children, ...props }: AccordionTriggerPro
 function AccordionPanel({ className, ...props }: AccordionPanelProps) {
   return (
     <BaseAccordion.Panel
-      className={cn(
+      className={cnState(
         "overflow-hidden text-muted-foreground text-sm",
         "h-[var(--accordion-panel-height)] transition-[height] duration-200 ease-out",
         "data-ending-style:h-0 data-starting-style:h-0",

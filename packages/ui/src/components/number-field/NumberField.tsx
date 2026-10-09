@@ -2,7 +2,7 @@
 
 import { NumberField as BaseNumberField } from "@base-ui/react/number-field";
 import type { ComponentProps } from "react";
-import { cn } from "../../lib/cn";
+import { cnState } from "../../lib/cn";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -23,13 +23,13 @@ export type NumberFieldScrubAreaCursorProps = ComponentProps<
 // ---------------------------------------------------------------------------
 
 function NumberFieldRoot({ className, ...props }: NumberFieldRootProps) {
-  return <BaseNumberField.Root className={cn("flex flex-col", className)} {...props} />;
+  return <BaseNumberField.Root className={cnState("flex flex-col", className)} {...props} />;
 }
 
 function NumberFieldGroup({ className, ...props }: NumberFieldGroupProps) {
   return (
     <BaseNumberField.Group
-      className={cn(
+      className={cnState(
         "flex items-center rounded-md border border-input bg-background",
         "has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ring",
         "has-[input:disabled]:pointer-events-none has-[input:disabled]:opacity-50",
@@ -43,7 +43,7 @@ function NumberFieldGroup({ className, ...props }: NumberFieldGroupProps) {
 function NumberFieldInput({ className, ...props }: NumberFieldInputProps) {
   return (
     <BaseNumberField.Input
-      className={cn(
+      className={cnState(
         "h-ui-height w-full min-w-16 flex-1 bg-transparent px-3 text-center text-foreground text-sm tabular-nums",
         "placeholder:text-muted-foreground",
         "focus-visible:outline-none",
@@ -58,7 +58,7 @@ function NumberFieldInput({ className, ...props }: NumberFieldInputProps) {
 function NumberFieldIncrement({ className, ...props }: NumberFieldIncrementProps) {
   return (
     <BaseNumberField.Increment
-      className={cn(
+      className={cnState(
         "micro-interactions flex h-ui-height items-center justify-center px-2 text-muted-foreground hover:text-foreground",
         "border-input border-l",
         "disabled:pointer-events-none disabled:opacity-50",
@@ -87,7 +87,7 @@ function NumberFieldIncrement({ className, ...props }: NumberFieldIncrementProps
 function NumberFieldDecrement({ className, ...props }: NumberFieldDecrementProps) {
   return (
     <BaseNumberField.Decrement
-      className={cn(
+      className={cnState(
         "micro-interactions flex h-ui-height items-center justify-center px-2 text-muted-foreground hover:text-foreground",
         "border-input border-r",
         "disabled:pointer-events-none disabled:opacity-50",
@@ -116,14 +116,14 @@ function NumberFieldDecrement({ className, ...props }: NumberFieldDecrementProps
 function NumberFieldScrubArea({ className, ...props }: NumberFieldScrubAreaProps) {
   return (
     <BaseNumberField.ScrubArea
-      className={cn("cursor-ew-resize select-none text-muted-foreground text-sm", className)}
+      className={cnState("cursor-ew-resize select-none text-muted-foreground text-sm", className)}
       {...props}
     />
   );
 }
 
 function NumberFieldScrubAreaCursor({ className, ...props }: NumberFieldScrubAreaCursorProps) {
-  return <BaseNumberField.ScrubAreaCursor className={cn("hidden", className)} {...props} />;
+  return <BaseNumberField.ScrubAreaCursor className={cnState("hidden", className)} {...props} />;
 }
 
 // ---------------------------------------------------------------------------

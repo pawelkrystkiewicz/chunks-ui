@@ -12,7 +12,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { cn } from "../../lib/cn";
+import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { useHeldWhileDriving, useMotionAnimate } from "../../lib/use-motion-animate";
@@ -128,7 +128,7 @@ function ToggleGroupRoot({
     <ToggleGroupContext.Provider value={{ registerItem, multiple }}>
       <BaseToggleGroup
         ref={mergedRef}
-        className={cn(
+        className={cnState(
           "relative inline-flex items-center gap-0.5 rounded-lg bg-muted p-1",
           "data-[orientation=vertical]:flex-col",
           className,
@@ -177,7 +177,7 @@ function ToggleGroupItem({ className, value, ref, ...props }: ToggleGroupItemPro
     <BaseToggle
       ref={mergedRef}
       value={value}
-      className={cn(
+      className={cnState(
         "relative z-[1] inline-flex items-center justify-center gap-2 rounded-md px-3 py-1.5 font-medium text-sm",
         "micro-interactions text-muted-foreground",
         "hover:text-foreground",

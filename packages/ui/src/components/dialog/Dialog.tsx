@@ -2,7 +2,7 @@
 
 import { Dialog as BaseDialog } from "@base-ui/react/dialog";
 import type { ComponentProps } from "react";
-import { cn } from "../../lib/cn";
+import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
 import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
@@ -33,9 +33,7 @@ function DialogPortal({ className, children, ...props }: DialogPortalProps) {
     <BaseDialog.Portal
       container={container}
       // The portal node carries the z-layer, not the popup: whatever opens from the dialog portals in here and stacks above it
-      className={(state) =>
-        cn("relative z-modals", typeof className === "function" ? className(state) : className)
-      }
+      className={cnState("relative z-modals", className)}
       {...props}
     >
       <PortalContainerProvider value={undefined}>{children}</PortalContainerProvider>
@@ -60,7 +58,7 @@ function DialogBackdrop({ className, forceRender = true, ...props }: DialogBackd
     <BaseDialog.Backdrop
       render={render}
       forceRender={forceRender}
-      className={cn(
+      className={cnState(
         "fixed inset-0 bg-black/50",
         !useSpring && "data-starting-style:opacity-0",
         !useSpring && "data-ending-style:opacity-0",
@@ -88,7 +86,7 @@ function DialogPopup({ className, ...props }: DialogPopupProps) {
   return (
     <BaseDialog.Popup
       render={render}
-      className={cn(
+      className={cnState(
         "fixed top-1/2 left-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2",
         "rounded-xl border border-border bg-background p-6 shadow-lg",
         !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
@@ -103,13 +101,19 @@ function DialogPopup({ className, ...props }: DialogPopupProps) {
 
 function DialogTitle({ className, ...props }: DialogTitleProps) {
   return (
-    <BaseDialog.Title className={cn("font-heading font-semibold text-lg", className)} {...props} />
+    <BaseDialog.Title
+      className={cnState("font-heading font-semibold text-lg", className)}
+      {...props}
+    />
   );
 }
 
 function DialogDescription({ className, ...props }: DialogDescriptionProps) {
   return (
-    <BaseDialog.Description className={cn("text-muted-foreground text-sm", className)} {...props} />
+    <BaseDialog.Description
+      className={cnState("text-muted-foreground text-sm", className)}
+      {...props}
+    />
   );
 }
 

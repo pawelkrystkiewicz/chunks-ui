@@ -2,7 +2,7 @@
 
 import { Slider as BaseSlider } from "@base-ui/react/slider";
 import type { ComponentProps } from "react";
-import { cn } from "../../lib/cn";
+import { cnState } from "../../lib/cn";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -22,7 +22,7 @@ export type SliderThumbProps = ComponentProps<typeof BaseSlider.Thumb>;
 function SliderRoot({ className, ...props }: SliderRootProps) {
   return (
     <BaseSlider.Root
-      className={cn(
+      className={cnState(
         "flex w-full flex-col gap-2",
         "data-[orientation=vertical]:h-full data-[orientation=vertical]:w-auto data-[orientation=vertical]:flex-row",
         className,
@@ -35,7 +35,7 @@ function SliderRoot({ className, ...props }: SliderRootProps) {
 function SliderValue({ className, ...props }: SliderValueProps) {
   return (
     <BaseSlider.Value
-      className={cn("text-foreground text-sm tabular-nums", className)}
+      className={cnState("text-foreground text-sm tabular-nums", className)}
       {...props}
     />
   );
@@ -44,7 +44,7 @@ function SliderValue({ className, ...props }: SliderValueProps) {
 function SliderControl({ className, ...props }: SliderControlProps) {
   return (
     <BaseSlider.Control
-      className={cn(
+      className={cnState(
         "flex w-full cursor-pointer touch-none select-none items-center py-1",
         "data-[orientation=vertical]:h-full data-[orientation=vertical]:w-auto data-[orientation=vertical]:flex-col data-[orientation=vertical]:px-1 data-[orientation=vertical]:py-0",
         "data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50",
@@ -58,7 +58,7 @@ function SliderControl({ className, ...props }: SliderControlProps) {
 function SliderTrack({ className, ...props }: SliderTrackProps) {
   return (
     <BaseSlider.Track
-      className={cn(
+      className={cnState(
         "relative h-1.5 w-full grow rounded-full bg-muted",
         "data-[orientation=vertical]:h-full data-[orientation=vertical]:w-1.5",
         className,
@@ -71,7 +71,7 @@ function SliderTrack({ className, ...props }: SliderTrackProps) {
 function SliderIndicator({ className, ...props }: SliderIndicatorProps) {
   return (
     <BaseSlider.Indicator
-      className={cn("absolute rounded-full bg-primary", className)}
+      className={cnState("absolute rounded-full bg-primary", className)}
       {...props}
     />
   );
@@ -80,7 +80,7 @@ function SliderIndicator({ className, ...props }: SliderIndicatorProps) {
 function SliderThumb({ className, ...props }: SliderThumbProps) {
   return (
     <BaseSlider.Thumb
-      className={cn(
+      className={cnState(
         "size-4 rounded-full border-2 border-primary bg-background shadow-sm",
         // animate only colors to avoid resize slugishness
         "micro-interactions transition-colors!",
