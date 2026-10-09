@@ -1,6 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { commands } from "vitest/browser";
-import { insetsWithin, renderFixture, waitForStable } from "../../VisualTest.utils";
+import {
+  insetsWithin,
+  renderFixture,
+  SMALL_FEATURE_SCREENSHOT,
+  waitForStable,
+} from "../../VisualTest.utils";
 import { Tabs } from "./index";
 
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
@@ -33,7 +38,7 @@ describe("Tabs", () => {
         </Tabs.Contents>
       </Tabs.Root>,
     );
-    await expect(fixture).toMatchScreenshot();
+    await expect(fixture).toMatchScreenshot(SMALL_FEATURE_SCREENSHOT);
   });
 
   it("vertical", async () => {
@@ -54,7 +59,7 @@ describe("Tabs", () => {
         </Tabs.Contents>
       </Tabs.Root>,
     );
-    await expect(fixture).toMatchScreenshot();
+    await expect(fixture).toMatchScreenshot(SMALL_FEATURE_SCREENSHOT);
   });
 
   // Runs with reduced motion, so the indicator renders the CSS fallback without a transition

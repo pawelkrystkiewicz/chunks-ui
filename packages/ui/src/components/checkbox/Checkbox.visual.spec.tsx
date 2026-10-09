@@ -1,5 +1,5 @@
 import { describe, it } from "vitest";
-import { renderFixture } from "../../VisualTest.utils";
+import { renderFixture, SMALL_FEATURE_SCREENSHOT } from "../../VisualTest.utils";
 import { Checkbox } from "./index";
 
 describe("Checkbox", () => {
@@ -32,6 +32,6 @@ describe("Checkbox", () => {
         </span>
       </div>,
     );
-    await expect(fixture).toMatchScreenshot();
+    await expect(fixture).toMatchScreenshot(SMALL_FEATURE_SCREENSHOT);
   });
 });

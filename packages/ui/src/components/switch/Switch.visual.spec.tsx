@@ -1,7 +1,7 @@
 import { render } from "@testing-library/react";
 import { afterEach, describe, it } from "vitest";
 import { commands, userEvent } from "vitest/browser";
-import { renderFixture } from "../../VisualTest.utils";
+import { renderFixture, SMALL_FEATURE_SCREENSHOT } from "../../VisualTest.utils";
 import { Switch } from "./index";
 
 describe("Switch", () => {
@@ -28,7 +28,7 @@ describe("Switch", () => {
         </span>
       </div>,
     );
-    await expect(fixture).toMatchScreenshot();
+    await expect(fixture).toMatchScreenshot(SMALL_FEATURE_SCREENSHOT);
   });
 });
 
