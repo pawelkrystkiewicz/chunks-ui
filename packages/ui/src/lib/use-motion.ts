@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
 type MotionReact = typeof import("motion/react");
 
@@ -68,23 +68,26 @@ export function useLoadedMotion(): MotionReact | null {
   return mod;
 }
 
+const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
+
+function subscribeToReducedMotion(onChange: () => void) {
+  const query = window.matchMedia(REDUCED_MOTION);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+}
+
 /**
  * Returns true when the user has requested reduced motion via
  * the `prefers-reduced-motion: reduce` media query.
+ *
+ * False on the server and while hydrating, so server markup matches; true right after
+ * hydration for a reduced-motion user. A client-only render (a popup in a portal) reads the
+ * real preference on its first render.
  */
 export function useReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(
-    () =>
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+  return useSyncExternalStore(
+    subscribeToReducedMotion,
+    () => window.matchMedia(REDUCED_MOTION).matches,
+    () => false,
   );
-
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const handler = (e: MediaQueryListEvent) => setReduced(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
-
-  return reduced;
 }
