@@ -12,14 +12,11 @@ bun add chunks-ui motion
 
 ## Usage
 
-Add the theme to the CSS file that imports Tailwind (the `@source` path is relative to that file):
+Add the theme to the CSS file that imports Tailwind:
 
 ```css
 @import "tailwindcss";
 @import "chunks-ui/theme.css";
-
-/* Tailwind skips node_modules: point it at the package so the component classes get generated. */
-@source "../node_modules/chunks-ui";
 ```
 
 Then use the components:
@@ -28,7 +25,7 @@ Then use the components:
 import { Button, Tabs, Input } from 'chunks-ui'
 ```
 
-`theme.css` registers its CSS variables with Tailwind CSS v4 through `@theme` — no plugin needed.
+`theme.css` registers its CSS variables with Tailwind CSS v4 through `@theme`, and its `@source` makes Tailwind generate the classes the components use — no plugin needed.
 
 ## Components
 

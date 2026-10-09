@@ -373,16 +373,14 @@ const STEPS = [
   {
     step: "02 · THEME",
     lang: "CSS",
-    copy: "@import 'chunks-ui/theme.css';\n@source '../node_modules/chunks-ui';",
+    copy: "@import 'chunks-ui/theme.css';",
     code: (
       <>
         <Kw>@import</Kw> 'chunks-ui/theme.css';
-        {"\n"}
-        <Kw>@source</Kw> '../node_modules/chunks-ui';
       </>
     ),
     title: "Import the theme",
-    body: "Add it next to Tailwind. @source lets Tailwind find the component classes.",
+    body: "Next to Tailwind's import. Brings the tokens and the component classes. No plugin.",
     meta: ["OKLCH", "light + dark"],
   },
   {

@@ -1,3 +1,9 @@
+/*
+ * Tailwind skips node_modules when it looks for class names. This points it at the
+ * component code next to this file, so importing the theme is the only setup a consumer needs.
+ */
+@source "./";
+
 :root {
   /* Semantic colors (OKLCH) */
   --primary: oklch(60.48% 0.2165 257.21);
