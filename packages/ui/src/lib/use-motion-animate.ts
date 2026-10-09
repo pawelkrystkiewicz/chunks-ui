@@ -79,9 +79,9 @@ export function useMotionAnimate<E extends HTMLElement | SVGElement>(
   );
 
   const target = values && JSON.stringify(values);
-  const latest = useRef({ target, transition });
+  const latest = useRef({ target, transition, clear });
   useLayoutEffect(() => {
-    latest.current = { target, transition };
+    latest.current = { target, transition, clear };
   });
   const controls = useRef<{ complete(): void; stop(): void } | null>(null);
   const animated = useRef<E | null>(null);
@@ -90,6 +90,8 @@ export function useMotionAnimate<E extends HTMLElement | SVGElement>(
   useLayoutEffect(() => {
     if (!available || driving || !m) return;
     let cancelled = false;
+    let switched = false;
+    let instant: E | null = null;
     let cancelSwitch: (() => void) | undefined;
     const handOver = () => {
       if (cancelled) return;
@@ -103,17 +105,33 @@ export function useMotionAnimate<E extends HTMLElement | SVGElement>(
       if (node && target) {
         controls.current = m.animate(node, JSON.parse(target), { duration: 0 });
         animated.current = node;
+        instant = node;
       }
-      cancelSwitch = switchAfterMotionWrites(m, () => setDriving(true));
+      cancelSwitch = switchAfterMotionWrites(m, () => {
+        switched = true;
+        setDriving(true);
+      });
     };
     handOver();
     return () => {
       cancelled = true;
       cancelSwitch?.();
+      if (!instant || switched) return;
+      // Cancelled after the instant write was queued: the CSS fallback stays, so undo the
+      // write after it lands
+      const node = instant;
+      controls.current?.stop();
+      controls.current = null;
+      animated.current = null;
+      m.frame.postRender(() => {
+        for (const name of latest.current.clear ?? []) node.style.removeProperty(name);
+      });
     };
   }, [available, driving, m]);
 
-  // Reduced motion turned on: finish the animation, then go back to the CSS fallback
+  // Reduced motion turned on: finish the animation, then go back to the CSS fallback.
+  // `m` going back to null while driving only happens through reloadMotion() in tests; the
+  // element then keeps Motion's last values.
   const cleared = clear?.join(" ");
   useLayoutEffect(() => {
     if (available || !driving || !m) return;
