@@ -127,7 +127,16 @@ export function useMotionAnimate<E extends HTMLElement | SVGElement>(
     );
   }, [driving, available, m, target]);
 
-  useLayoutEffect(() => () => controls.current?.stop(), []);
+  // On unmount, and when StrictMode or <Activity> clean effects up before running them again:
+  // stop, and forget the element, so a re-run jumps to the values instead of animating to them
+  useLayoutEffect(
+    () => () => {
+      controls.current?.stop();
+      controls.current = null;
+      animated.current = null;
+    },
+    [],
+  );
 
   return [ref, driving];
 }

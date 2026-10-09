@@ -1,5 +1,5 @@
 import { render } from "@testing-library/react";
-import type { ReactNode } from "react";
+import { type ReactNode, StrictMode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { commands } from "vitest/browser";
 import { Checkbox } from "../components/checkbox";
@@ -248,5 +248,30 @@ describe("controls once Motion has loaded", () => {
     shapes.delete(check);
     // In-between shapes before the minus, not a single swap
     expect(shapes.size).toBeGreaterThan(1);
+  });
+
+  // StrictMode (and <Activity> hide/show) runs effects, cleans them up and runs them again.
+  // The re-run must jump to the values like the first run, not animate into them.
+  it.each([
+    ["a checked Switch", "Switch", true, left],
+    ["an unchecked Checkbox", "Checkbox", false, opacity],
+  ] as const)("shows %s at rest under StrictMode", async (_, name, checked, measure) => {
+    await reloadMotion();
+    render(
+      <StrictMode>
+        {name === "Switch" ? (
+          <Switch.Root aria-label="Notifications" defaultChecked={checked}>
+            <Switch.Thumb data-testid="moving" />
+          </Switch.Root>
+        ) : (
+          <Checkbox.Root aria-label="Subscribe" defaultChecked={checked}>
+            <Checkbox.Indicator data-testid="moving" />
+          </Checkbox.Root>
+        )}
+      </StrictMode>,
+    );
+    await nextFrame();
+    const values = await sample(() => measure(byTestId()), 10);
+    expect(new Set(values).size).toBe(1);
   });
 });
