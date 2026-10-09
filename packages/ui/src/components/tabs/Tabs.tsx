@@ -278,6 +278,15 @@ function TabsContents({ className, children, transition, ...props }: TabsContent
     resize.current = motion.animate(container, { height }, options);
   }, [motion, height]);
 
+  // Stop on unmount, or Motion keeps writing to the detached elements until it settles
+  useLayoutEffect(
+    () => () => {
+      slide.current?.stop();
+      resize.current?.stop();
+    },
+    [],
+  );
+
   return (
     <div ref={containerRef} className={cn("overflow-hidden", className)} {...props}>
       <div ref={trackRef} className={motion ? "flex" : undefined}>
@@ -341,7 +350,13 @@ function TabsAnimate({
     m && !reduced ? { m, initial, animate, transition: transition ?? springs.content } : null;
 
   return (
-    <TabsAnimatePane key={String(value ?? "")} enter={enter} className={cn(className)} {...props}>
+    <TabsAnimatePane
+      key={String(value ?? "")}
+      enter={enter}
+      reduced={reduced}
+      className={cn(className)}
+      {...props}
+    >
       {children}
     </TabsAnimatePane>
   );
@@ -358,10 +373,12 @@ type TabsAnimateEnter = {
 // arriving later leaves a showing pane alone rather than swapping in a motion.div
 function TabsAnimatePane({
   enter,
+  reduced,
   ...props
-}: ComponentProps<"div"> & { enter: TabsAnimateEnter | null }) {
+}: ComponentProps<"div"> & { enter: TabsAnimateEnter | null; reduced: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const [enterOnMount] = useState(enter);
+  const entry = useRef<{ complete(): void } | null>(null);
   useLayoutEffect(() => {
     const pane = ref.current;
     if (!enterOnMount || !pane) return;
@@ -373,8 +390,17 @@ function TabsAnimatePane({
         name in initial ? [initial[name], to] : to,
       ]),
     );
-    m.animate(pane, keyframes as never, transition);
+    const controls = m.animate(pane, keyframes as never, transition);
+    entry.current = controls;
+    // Stop on unmount, or Motion keeps writing to the detached pane until it settles
+    return () => controls.stop();
   }, [enterOnMount]);
+
+  // Reduced motion turned on mid-entry: finish it now. Turning it off again doesn't replay it.
+  useLayoutEffect(() => {
+    if (reduced) entry.current?.complete();
+  }, [reduced]);
+
   return <div ref={ref} {...props} />;
 }
 
