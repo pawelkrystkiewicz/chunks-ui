@@ -12,15 +12,20 @@ bun add motion
 
 ## Usage
 
-```tsx
-// Import the theme CSS in your app entry
-import 'chunks-ui/theme.css'
+Add the theme to the CSS file that imports Tailwind:
 
-// Use components
+```css
+@import "tailwindcss";
+@import "chunks-ui/theme.css";
+```
+
+Then use the components:
+
+```tsx
 import { Button, Tabs, Input } from 'chunks-ui'
 ```
 
-The consumer's Tailwind CSS v4 config picks up CSS variables from `theme.css` automatically — no plugin needed.
+`theme.css` registers its CSS variables with Tailwind CSS v4 through `@theme`, and its `@source` makes Tailwind generate the classes the components use — no plugin needed.
 
 ## Components
 

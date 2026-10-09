@@ -4,13 +4,14 @@ Chunks UI uses a CSS variable-based design token system following the [shadcn/ui
 
 ## Setup
 
-Import the theme CSS in your app entry point:
+Import the theme in the CSS file that imports Tailwind:
 
-```tsx
-import "chunks-ui/theme.css";
+```css
+@import "tailwindcss";
+@import "chunks-ui/theme.css";
 ```
 
-This single file provides all CSS variables for light mode, dark mode, and Tailwind v4 `@theme inline` tokens.
+This single file provides all CSS variables for light mode, dark mode, and Tailwind v4 `@theme inline` tokens. It also includes an `@source` for the package, so Tailwind generates the classes the components use.
 
 ## Color System
 

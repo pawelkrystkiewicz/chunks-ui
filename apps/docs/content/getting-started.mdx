@@ -10,10 +10,11 @@ bun add chunks-ui motion
 
 ## Setup
 
-Import the theme CSS in your app entry point (e.g. `app/layout.tsx`):
+Add the theme to the CSS file that imports Tailwind (e.g. `app/globals.css`):
 
-```tsx
-import "chunks-ui/theme.css";
+```css
+@import "tailwindcss";
+@import "chunks-ui/theme.css";
 ```
 
 Then import components as needed:
@@ -22,7 +23,7 @@ Then import components as needed:
 import { Button, Input, Tabs } from "chunks-ui";
 ```
 
-The theme CSS exposes OKLCH color tokens as CSS variables. Your Tailwind CSS v4 config picks them up automatically -- no plugin needed.
+The theme CSS exposes OKLCH color tokens as CSS variables and registers them with Tailwind CSS v4 through `@theme`. Its `@source` tells Tailwind to scan the package for the classes the components use -- no plugin needed.
 
 ## Architecture
 
