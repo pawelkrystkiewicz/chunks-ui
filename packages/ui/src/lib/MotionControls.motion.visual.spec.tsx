@@ -2,6 +2,7 @@ import { render } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { commands } from "vitest/browser";
+import { Radio } from "../components/radio";
 import { Switch } from "../components/switch";
 import { Tabs } from "../components/tabs";
 import { ToggleGroup } from "../components/toggle-group";
@@ -14,6 +15,8 @@ const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve))
 const byTestId = () => document.querySelector<HTMLElement>('[data-testid="moving"]');
 const click = (selector: string) => document.querySelector<HTMLElement>(selector)?.click();
 const left = (element: HTMLElement | null) => element?.getBoundingClientRect().left ?? Number.NaN;
+const opacity = (element: HTMLElement | null) =>
+  element ? Number(getComputedStyle(element).opacity) : Number.NaN;
 
 type Control = {
   ui: ReactNode;
@@ -63,6 +66,21 @@ const controls: Record<string, Control> = {
     element: byTestId,
     change: () => click('[role="tab"]:last-of-type'),
     measure: left,
+  },
+  Radio: {
+    ui: (
+      <Radio.Group defaultValue="a">
+        <Radio.Root value="a" aria-label="A">
+          <Radio.Indicator data-testid="moving" />
+        </Radio.Root>
+        <Radio.Root value="b" aria-label="B">
+          <Radio.Indicator />
+        </Radio.Root>
+      </Radio.Group>
+    ),
+    element: byTestId,
+    change: () => click('[aria-label="B"]'),
+    measure: opacity,
   },
 };
 
