@@ -62,6 +62,9 @@ describe("Switch", () => {
     await waitFor(() => {
       expect(screen.getByTestId("thumb")).not.toHaveClass("micro-interactions");
     });
-    expect(screen.getByTestId("thumb").style.transform).toBe("translateX(100%)");
+    // Motion writes the value in its next frame
+    await waitFor(() => {
+      expect(screen.getByTestId("thumb").style.transform).toBe("translateX(100%)");
+    });
   });
 });

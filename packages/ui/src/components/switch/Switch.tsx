@@ -4,7 +4,8 @@ import { Switch as BaseSwitch } from "@base-ui/react/switch";
 import type { ComponentProps } from "react";
 import { cn } from "../../lib/cn";
 import { springs } from "../../lib/motion";
-import { useMotion, useReducedMotion } from "../../lib/use-motion";
+import { useMotionAnimate } from "../../lib/use-motion-animate";
+import { type PartRenderProp, useRenderPart } from "../../lib/use-render-part";
 
 export type SwitchRootProps = ComponentProps<typeof BaseSwitch.Root>;
 
@@ -39,38 +40,47 @@ const THUMB_CLASSES = cn(
   "forced-colors:bg-[CanvasText] forced-colors:data-checked:bg-[Highlight]",
 );
 
-function SwitchThumb({ className, ...props }: SwitchThumbProps) {
-  const m = useMotion();
-  const reduced = useReducedMotion();
-  const useSpring = !!m && !reduced;
-  if (useSpring) {
-    return (
-      <BaseSwitch.Thumb
-        render={(renderProps, state) => (
-          <m.motion.span
-            {...(renderProps as Record<string, unknown>)}
-            className={cn(THUMB_CLASSES, className)}
-            initial={false}
-            animate={{ x: state.checked ? "100%" : "0%" }}
-            transition={springs.micro}
-          />
-        )}
-        {...props}
-      />
-    );
-  }
-
+function SwitchThumb({ className, render, ...props }: SwitchThumbProps) {
   return (
     <BaseSwitch.Thumb
-      className={cn(
-        THUMB_CLASSES,
-        "micro-interactions",
-        "data-checked:translate-x-full data-unchecked:translate-x-0",
-        className,
-      )}
       {...props}
+      render={(renderProps, state) => (
+        <SwitchThumbElement
+          {...renderProps}
+          state={state}
+          render={render}
+          className={typeof className === "function" ? className(state) : className}
+        />
+      )}
     />
   );
+}
+
+// The same element with and without Motion, so it isn't remounted when Motion loads
+function SwitchThumbElement({
+  state,
+  render,
+  className,
+  ref,
+  ...props
+}: ComponentProps<"span"> & {
+  state: BaseSwitch.Thumb.State;
+  render: PartRenderProp<BaseSwitch.Thumb.State>;
+}) {
+  const [thumbRef, driven] = useMotionAnimate<HTMLElement>(
+    { x: state.checked ? "100%" : "0%" },
+    { transition: springs.micro, clear: ["transform"] },
+    ref,
+  );
+  return useRenderPart(render, state, thumbRef, {
+    ...props,
+    className: cn(
+      THUMB_CLASSES,
+      !driven && "micro-interactions",
+      !driven && "data-checked:translate-x-full data-unchecked:translate-x-0",
+      className,
+    ),
+  });
 }
 
 export const Switch = {

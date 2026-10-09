@@ -18,6 +18,8 @@ import { cn } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { useMotion, useReducedMotion } from "../../lib/use-motion";
+import { useMotionAnimate } from "../../lib/use-motion-animate";
+import { type PartRenderProp, useRenderPart } from "../../lib/use-render-part";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -150,47 +152,49 @@ function TabsPanel({ className, ...props }: TabsPanelProps) {
   );
 }
 
-function TabsIndicator({ className, ...props }: TabsIndicatorProps) {
-  const m = useMotion();
-  const reduced = useReducedMotion();
-  const useSpring = !!m && !reduced;
-
+function TabsIndicator({ className, render, ...props }: TabsIndicatorProps) {
   return (
     <BaseTabs.Indicator
-      render={
-        useSpring
-          ? (renderProps, state) => {
-              const style = { ...((renderProps.style ?? {}) as Record<string, unknown>) };
-
-              delete style.left;
-              delete style.top;
-              delete style.width;
-              delete style.height;
-
-              return (
-                <m.motion.span
-                  {...(renderProps as Record<string, unknown>)}
-                  style={style}
-                  animate={{
-                    left: state.activeTabPosition?.left ?? 0,
-                    top: state.activeTabPosition?.top ?? 0,
-                    width: state.activeTabSize?.width ?? 0,
-                    height: state.activeTabSize?.height ?? 0,
-                  }}
-                  transition={springs.indicator}
-                />
-              );
-            }
-          : undefined
-      }
-      className={cn(
-        "absolute rounded-md bg-background shadow-sm",
-        !useSpring && "micro-interactions duration-200 ease-snappy",
-        className,
-      )}
       {...props}
+      render={(renderProps, state) => (
+        <TabsIndicatorElement
+          {...renderProps}
+          state={state}
+          render={render}
+          className={typeof className === "function" ? className(state) : className}
+        />
+      )}
     />
   );
+}
+
+// The same element with and without Motion, so it isn't remounted when Motion loads
+function TabsIndicatorElement({
+  state,
+  render,
+  className,
+  ref,
+  ...props
+}: ComponentProps<"span"> & {
+  state: BaseTabs.Indicator.State;
+  render: PartRenderProp<BaseTabs.Indicator.State>;
+}) {
+  const { activeTabPosition: position, activeTabSize: size } = state;
+  const [indicatorRef, driven] = useMotionAnimate<HTMLElement>(
+    position && size
+      ? { left: position.left, top: position.top, width: size.width, height: size.height }
+      : null,
+    { transition: springs.indicator, clear: ["left", "top", "width", "height"] },
+    ref,
+  );
+  return useRenderPart(render, state, indicatorRef, {
+    ...props,
+    className: cn(
+      "absolute rounded-md bg-background shadow-sm",
+      !driven && "micro-interactions duration-200 ease-snappy",
+      className,
+    ),
+  });
 }
 
 // ---------------------------------------------------------------------------

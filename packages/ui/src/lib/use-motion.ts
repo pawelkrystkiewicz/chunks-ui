@@ -6,15 +6,22 @@ type MotionReact = typeof import("motion/react");
 
 let _cache: MotionReact | null | undefined;
 const motionListeners = new Set<() => void>();
+// Bumped by reloadMotion(), so a load it superseded can't deliver Motion afterwards
+let loads = 0;
 
-function setMotion(m: MotionReact | null) {
+function setMotion(load: number, m: MotionReact | null) {
+  if (load !== loads) return;
   _cache = m;
   for (const notify of motionListeners) notify();
 }
 
 function loadMotion() {
   if (_cache !== undefined) return;
-  import("motion/react").then(setMotion, () => setMotion(null));
+  const load = loads;
+  import("motion/react").then(
+    (m) => setMotion(load, m),
+    () => setMotion(load, null),
+  );
 }
 
 if (typeof window !== "undefined") {
@@ -24,10 +31,12 @@ if (typeof window !== "undefined") {
 /**
  * Tests only: forget the loaded module and load it again. A popup that opens before the
  * returned promise settles mounts while Motion is still loading, as on a fresh page.
+ * `arrival` holds the module back until it settles, so a test can choose when Motion arrives.
  */
-export function reloadMotion(): Promise<unknown> {
+export function reloadMotion(arrival?: Promise<unknown>): Promise<unknown> {
   _cache = undefined;
-  return import("motion/react").then(setMotion);
+  const load = ++loads;
+  return Promise.all([import("motion/react"), arrival]).then(([m]) => setMotion(load, m));
 }
 
 function subscribeToMotion(onLoad: () => void) {
