@@ -229,11 +229,17 @@ function TabsContents({ className, children, transition, ref, ...props }: TabsCo
     const pane = itemRefs.current[safeIndex];
     if (!pane) return;
     setHeight(measure(safeIndex));
+    let frame = 0;
     const ro = new ResizeObserver(() => {
-      requestAnimationFrame(() => setHeight(measure(safeIndex)));
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => setHeight(measure(safeIndex)));
     });
     ro.observe(pane);
-    return () => ro.disconnect();
+    return () => {
+      ro.disconnect();
+      // A re-measure queued for the previous panel would set its height after a switch
+      cancelAnimationFrame(frame);
+    };
   }, [safeIndex, measure]);
 
   // Set initial height before paint

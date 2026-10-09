@@ -1,22 +1,24 @@
 import { render } from "@testing-library/react";
-import { createRef, type Ref, useEffect } from "react";
+import { createRef, useEffect } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { commands, page } from "vitest/browser";
 import { reloadMotion } from "../../lib/use-motion";
 import { waitForStable } from "../../VisualTest.utils";
-import { Tabs } from "./index";
+import { Tabs, type TabsContentsProps } from "./index";
 
 // Runs with reduced motion off, so Tabs.Contents slides and resizes with Motion
 const HEIGHTS = { short: 40, tall: 120 } as const;
 type Panel = keyof typeof HEIGHTS;
 
+type ContentsOptions = Pick<TabsContentsProps, "ref" | "transition">;
+
 /**
  * Tabs.Contents with a short and a tall panel, showing `value`. `ref` is passed even when it is
  * undefined: an explicit `ref={undefined}` must not switch the animation off either.
  */
-const panelsOfTwoHeights = (value: Panel, ref?: Ref<HTMLDivElement>) => (
+const panelsOfTwoHeights = (value: Panel, { ref, transition }: ContentsOptions = {}) => (
   <Tabs.Root value={value}>
-    <Tabs.Contents data-testid="contents" ref={ref}>
+    <Tabs.Contents data-testid="contents" ref={ref} transition={transition}>
       <Tabs.Content value="short">
         <div style={{ height: HEIGHTS.short, paddingTop: 20, boxSizing: "border-box" }}>
           <span data-testid="marker">Short panel</span>
@@ -33,16 +35,16 @@ const panelsOfTwoHeights = (value: Panel, ref?: Ref<HTMLDivElement>) => (
  * Renders `from`, switches to `to`, and records the container height every frame until it
  * settles, along with the tall panel's left edge before and after.
  */
-async function switchPanels(from: Panel, to: Panel, ref?: Ref<HTMLDivElement>) {
+async function switchPanels(from: Panel, to: Panel, options?: ContentsOptions) {
   await reloadMotion();
-  const { rerender, getByTestId } = render(panelsOfTwoHeights(from, ref));
+  const { rerender, getByTestId } = render(panelsOfTwoHeights(from, options));
   const contents = getByTestId("contents");
   const tallPanel = page.getByText("Tall panel").element();
   const height = () => contents.getBoundingClientRect().height;
   const start = await waitForStable(height);
   const tallLeftBefore = tallPanel.getBoundingClientRect().left;
 
-  rerender(panelsOfTwoHeights(to, ref));
+  rerender(panelsOfTwoHeights(to, options));
   const heights: number[] = [];
   const end = await waitForStable(() => {
     heights.push(height());
@@ -277,6 +279,29 @@ describe("Tabs.Contents height with Motion", () => {
     expect(contents.scrollTop).toBe(0);
   });
 
+  it("never shows the previous panel's height after a quick switch back", async () => {
+    await reloadMotion();
+    // Instant, so each frame shows the height the container was last told to have
+    const transition = { type: "tween", duration: 0 } as const;
+    const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+    const { rerender, getByTestId } = render(panelsOfTwoHeights("short", { transition }));
+    const contents = getByTestId("contents");
+    // Resolves inside an animation frame, so the switches below happen there too
+    await waitForStable(() => contents.offsetHeight);
+
+    rerender(panelsOfTwoHeights("tall", { transition }));
+    // Later this frame the tall panel's ResizeObserver queues a re-measure for the next one;
+    // switch back at the start of that frame, before the re-measure runs
+    await nextFrame();
+    rerender(panelsOfTwoHeights("short", { transition }));
+    const heights: number[] = [];
+    for (let frame = 0; frame < 10; frame++) {
+      await nextFrame();
+      heights.push(contents.offsetHeight);
+    }
+    expect(heights.every((h) => Math.abs(h - HEIGHTS.short) <= 1)).toBe(true);
+  });
+
   it("sizes to the panel's layout height inside a scaled ancestor", async () => {
     await reloadMotion();
     // Like a Dialog popup that mounts at scale(0.95): a transform changes the size on screen,
@@ -296,7 +321,7 @@ describe("Tabs refs with Motion", () => {
     const { contents, start, end, heights, tallLeftBefore, tallLeftAfter } = await switchPanels(
       "short",
       "tall",
-      ref,
+      { ref },
     );
 
     expect(ref.current).toBe(contents);
