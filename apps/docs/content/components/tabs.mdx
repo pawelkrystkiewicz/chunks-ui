@@ -81,7 +81,7 @@ Set `orientation="vertical"` on the root. The list switches to a vertical flex c
 
 ## Animated Indicator
 
-The `Tabs.Indicator` component renders a pill behind the active tab. With Motion installed, a spring moves it between tabs.
+The `Tabs.Indicator` component renders a pill behind the active tab. With Motion installed, a spring moves it between tabs. When the tabs are hidden (for example with `display: none`) and shown again, the pill appears over the active tab at once.
 
 Without Motion, or with reduced motion, it takes its position and size from the CSS variables Base UI sets on it (`--active-tab-left`, `--active-tab-top`, `--active-tab-width`, `--active-tab-height`). It slides with a CSS transition, which reduced motion turns off.
 

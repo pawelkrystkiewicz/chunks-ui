@@ -59,6 +59,8 @@ function switchAfterMotionWrites(m: MotionModule, apply: () => void) {
  * - Motion takes over once no CSS transition runs on the element, so a change made while it
  *   loads finishes as a CSS transition. It starts from the current values without animating.
  * - Reduced motion turned on mid-animation finishes the animation at once.
+ * - `values` of null mean there is nothing to show: the animation stops, and the next values
+ *   jump into place instead of animating from the last ones.
  * - Unmounting stops the animation.
  *
  * Motion writes styles in its next render step, so switching between Motion and the CSS
@@ -162,7 +164,15 @@ export function useMotionAnimate<E extends HTMLElement | SVGElement>(
 
   useLayoutEffect(() => {
     const node = element.current;
-    if (!driving || !available || !m || !node || !target) return;
+    if (!driving || !available || !m || !node) return;
+    if (!target) {
+      // Nothing to show: stop, and forget the element, so the next values jump into place
+      // instead of animating from the last ones
+      controls.current?.stop();
+      controls.current = null;
+      animated.current = null;
+      return;
+    }
     // A new element jumps to its values instead of animating
     const first = animated.current !== node;
     if (first) controls.current?.stop();

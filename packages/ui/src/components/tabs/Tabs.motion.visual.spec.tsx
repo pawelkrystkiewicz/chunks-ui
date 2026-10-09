@@ -1,9 +1,10 @@
 import { render } from "@testing-library/react";
+import { cancelFrame, frame } from "motion/react";
 import { createRef, useEffect } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { commands, page } from "vitest/browser";
 import { reloadMotion } from "../../lib/use-motion";
-import { waitForStable } from "../../VisualTest.utils";
+import { insetsWithin, waitForStable } from "../../VisualTest.utils";
 import { Tabs, type TabsContentsProps } from "./index";
 
 // Runs with reduced motion off, so Tabs.Contents slides and resizes with Motion
@@ -398,5 +399,92 @@ describe("Tabs refs with Motion", () => {
       await new Promise((resolve) => requestAnimationFrame(resolve));
     }
     expect(opacities.some((opacity) => opacity > 0 && opacity < 1)).toBe(true);
+  });
+});
+
+describe("Tabs.Indicator with Motion", () => {
+  type Shown = { hidden: boolean; value: "a" | "b" };
+
+  const tabs = ({ hidden, value }: Shown) => (
+    <div style={hidden ? { display: "none" } : undefined}>
+      <Tabs.Root value={value}>
+        <Tabs.List>
+          <Tabs.Tab value="a">Alpha</Tabs.Tab>
+          <Tabs.Tab value="b">Beta, a longer tab</Tabs.Tab>
+          <Tabs.Indicator data-testid="indicator" />
+        </Tabs.List>
+      </Tabs.Root>
+    </div>
+  );
+
+  /**
+   * Calls `read` once a frame for `frames` frames, after Motion's render step: the values that
+   * frame paints, Motion's writes for it included
+   */
+  const eachPaintedFrame = <T,>(read: () => T, frames: number) =>
+    new Promise<T[]>((resolve) => {
+      const values: T[] = [];
+      const step = () => {
+        values.push(read());
+        if (values.length < frames) return;
+        cancelFrame(step);
+        resolve(values);
+      };
+      frame.postRender(step, true);
+    });
+
+  /** The largest distance between an edge of the indicator and the same edge of the tab */
+  const offBy = (tab: Element, indicator: Element) =>
+    Math.max(...Object.values(insetsWithin(tab, indicator)).map(Math.abs));
+
+  /** Renders tab "a", hides the tabs, selects `value`, then shows them again */
+  async function reshow(value: Shown["value"]) {
+    await reloadMotion();
+    const { rerender, getByTestId, getByRole } = render(tabs({ hidden: false, value: "a" }));
+    const indicator = getByTestId("indicator");
+    await waitForStable(() => indicator.getBoundingClientRect().width);
+
+    // Hidden, Base UI measures the active tab as 0×0
+    rerender(tabs({ hidden: true, value: "a" }));
+    await waitForStable(() => indicator.getAttribute("style"));
+    // A separate step: selected in the same render that hides the tabs, Base UI would still
+    // measure the tab while it shows
+    rerender(tabs({ hidden: true, value }));
+    await waitForStable(() => indicator.getAttribute("style"));
+
+    rerender(tabs({ hidden: false, value }));
+    const tab = getByRole("tab", { name: value === "a" ? "Alpha" : "Beta, a longer tab" });
+    return { indicator, tab, rerender };
+  }
+
+  it.each([
+    ["the same tab", "a"],
+    ["a tab chosen while hidden", "b"],
+  ] as const)(
+    "shows the indicator over %s on its first visible frame after display:none",
+    async (_, value) => {
+      const { indicator, tab } = await reshow(value);
+      const visible = await eachPaintedFrame(
+        () => (indicator.checkVisibility() ? offBy(tab, indicator) : null),
+        30,
+      );
+      const offsets = visible.filter((offset) => offset !== null);
+      expect(offsets.length).toBeGreaterThan(0);
+      // No growing from 0×0, or sliding from where it was before it hid
+      expect(offsets[0]).toBeLessThanOrEqual(1);
+      expect(Math.max(...offsets)).toBeLessThanOrEqual(1);
+    },
+  );
+
+  it("still slides the indicator to the next tab after display:none", async () => {
+    const { indicator, rerender } = await reshow("a");
+    const start = await waitForStable(() => indicator.getBoundingClientRect().left);
+
+    rerender(tabs({ hidden: false, value: "b" }));
+    const lefts = await eachPaintedFrame(() => indicator.getBoundingClientRect().left, 40);
+    const end = lefts.at(-1) ?? start;
+    expect(end).toBeGreaterThan(start + 1);
+    // In-between frames: it slides rather than jumping
+    expect(lefts.some((left) => left > start + 1 && left < end - 1)).toBe(true);
   });
 });
