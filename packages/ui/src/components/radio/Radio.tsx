@@ -3,7 +3,7 @@
 import { Radio as BaseRadio } from "@base-ui/react/radio";
 import { RadioGroup as BaseRadioGroup } from "@base-ui/react/radio-group";
 import type { ComponentProps, ReactNode } from "react";
-import { cn } from "../../lib/cn";
+import { cn, cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { useMotion, useReducedMotion } from "../../lib/use-motion";
 import { useMotionAnimate } from "../../lib/use-motion-animate";
@@ -14,7 +14,7 @@ export type RadioGroupProps = ComponentProps<typeof BaseRadioGroup>;
 function RadioGroup({ className, ...props }: RadioGroupProps) {
   return (
     <BaseRadioGroup
-      className={cn("flex flex-col gap-2 data-[disabled]:opacity-50", className)}
+      className={cnState("flex flex-col gap-2 data-[disabled]:opacity-50", className)}
       {...props}
     />
   );
@@ -25,7 +25,7 @@ export type RadioRootProps = ComponentProps<typeof BaseRadio.Root>;
 function RadioRoot({ className, ...props }: RadioRootProps) {
   return (
     <BaseRadio.Root
-      className={cn(
+      className={cnState(
         "peer inline-flex size-4 shrink-0 items-center justify-center rounded-full border border-input",
         "micro-interactions cursor-pointer",
         "focus-visible:outline-2 focus-visible:outline-ring",
@@ -83,11 +83,16 @@ function RadioIndicatorElement({
   });
 }
 
-export type RadioItemProps = Omit<RadioRootProps, "children"> & {
+export type RadioItemProps = Omit<RadioRootProps, "children" | "className"> & {
   /**
    * Label text displayed next to the radio indicator.
    */
   children: ReactNode;
+  /**
+   * Classes for the item's `<label>`. A string only: the label has no Base UI state to pass
+   * to a function. Style the radio itself with `Radio.Root`.
+   */
+  className?: string;
 };
 
 function RadioItem({ children, className, disabled, ...props }: RadioItemProps) {

@@ -2,7 +2,7 @@
 
 import { Menu as BaseMenu } from "@base-ui/react/menu";
 import type { ComponentProps } from "react";
-import { cn } from "../../lib/cn";
+import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
 import { usePortalContainer } from "../../lib/portal-container";
@@ -84,7 +84,7 @@ function MenuContentPopup({
     >
       <BaseMenu.Popup
         render={render}
-        className={cn(
+        className={cnState(
           "min-w-[8rem] rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md",
           !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
           !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
@@ -100,7 +100,7 @@ function MenuContentPopup({
 function MenuItem({ className, ...props }: MenuItemProps) {
   return (
     <BaseMenu.Item
-      className={cn(
+      className={cnState(
         "relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none",
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         "data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground",
@@ -115,7 +115,7 @@ function MenuItem({ className, ...props }: MenuItemProps) {
 function MenuRadioItem({ className, children, ...props }: MenuRadioItemProps) {
   return (
     <BaseMenu.RadioItem
-      className={cn(
+      className={cnState(
         "relative flex cursor-default select-none items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 text-sm outline-none",
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         "data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground",
@@ -132,7 +132,7 @@ function MenuRadioItem({ className, children, ...props }: MenuRadioItemProps) {
 function MenuCheckboxItem({ className, children, ...props }: MenuCheckboxItemProps) {
   return (
     <BaseMenu.CheckboxItem
-      className={cn(
+      className={cnState(
         "relative flex cursor-default select-none items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 text-sm outline-none",
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         "data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground",
@@ -149,7 +149,7 @@ function MenuCheckboxItem({ className, children, ...props }: MenuCheckboxItemPro
 function MenuRadioItemIndicator({ className, ...props }: MenuRadioItemIndicatorProps) {
   return (
     <BaseMenu.RadioItemIndicator
-      className={cn("absolute left-2 flex size-3.5 items-center justify-center", className)}
+      className={cnState("absolute left-2 flex size-3.5 items-center justify-center", className)}
       {...props}
     />
   );
@@ -158,27 +158,29 @@ function MenuRadioItemIndicator({ className, ...props }: MenuRadioItemIndicatorP
 function MenuCheckboxItemIndicator({ className, ...props }: MenuCheckboxItemIndicatorProps) {
   return (
     <BaseMenu.CheckboxItemIndicator
-      className={cn("absolute left-2 flex size-3.5 items-center justify-center", className)}
+      className={cnState("absolute left-2 flex size-3.5 items-center justify-center", className)}
       {...props}
     />
   );
 }
 
 function MenuSeparator({ className, ...props }: MenuSeparatorProps) {
-  return <BaseMenu.Separator className={cn("-mx-1 my-1 h-px bg-border", className)} {...props} />;
+  return (
+    <BaseMenu.Separator className={cnState("-mx-1 my-1 h-px bg-border", className)} {...props} />
+  );
 }
 
 function MenuGroupLabel({ className, ...props }: MenuGroupLabelProps) {
   return (
     <BaseMenu.GroupLabel
-      className={cn("px-2 py-1.5 font-semibold text-muted-foreground text-xs", className)}
+      className={cnState("px-2 py-1.5 font-semibold text-muted-foreground text-xs", className)}
       {...props}
     />
   );
 }
 
 function MenuArrow({ className, ...props }: MenuArrowProps) {
-  return <BaseMenu.Arrow className={cn("fill-popover stroke-border", className)} {...props} />;
+  return <BaseMenu.Arrow className={cnState("fill-popover stroke-border", className)} {...props} />;
 }
 
 export const Menu = {

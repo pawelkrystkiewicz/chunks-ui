@@ -2,7 +2,7 @@
 
 import { Checkbox as BaseCheckbox } from "@base-ui/react/checkbox";
 import type { ComponentProps } from "react";
-import { cn } from "../../lib/cn";
+import { cn, cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { useMotion, useReducedMotion } from "../../lib/use-motion";
 import { useHeldWhileDriving, useMotionAnimate } from "../../lib/use-motion-animate";
@@ -13,7 +13,7 @@ export type CheckboxRootProps = ComponentProps<typeof BaseCheckbox.Root>;
 function CheckboxRoot({ className, ...props }: CheckboxRootProps) {
   return (
     <BaseCheckbox.Root
-      className={cn(
+      className={cnState(
         "peer inline-flex size-4 shrink-0 items-center justify-center overflow-hidden rounded-[min(calc(var(--radius)-4px),4px)] border border-input",
         "micro-interactions",
         "focus-visible:outline-2 focus-visible:outline-ring",

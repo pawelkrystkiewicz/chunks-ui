@@ -3,7 +3,7 @@
 import { Toast as BaseToast } from "@base-ui/react/toast";
 import { X } from "lucide-react";
 import type { ComponentProps, ComponentType } from "react";
-import { cn } from "../../lib/cn";
+import { cn, cnState } from "../../lib/cn";
 import { useReducedMotion } from "../../lib/use-motion";
 
 /**
@@ -86,7 +86,7 @@ function ToastViewport({ className, ...props }: ToastViewportProps) {
 
   return (
     <BaseToast.Viewport
-      className={cn(
+      className={cnState(
         "fixed right-4 bottom-4 z-toasts flex w-[380px] max-w-[calc(100vw-2rem)] flex-col gap-2 outline-none",
         className,
       )}
@@ -121,7 +121,7 @@ function ToastRoot({ className, toast, ...props }: ToastRootProps) {
   return (
     <BaseToast.Root
       toast={toast}
-      className={cn(
+      className={cnState(
         "Toast",
         "group relative flex w-full items-center gap-3 overflow-hidden rounded-sm border border-border bg-popover p-4 pr-10 shadow-lg",
         !reduced && [
@@ -140,7 +140,7 @@ function ToastRoot({ className, toast, ...props }: ToastRootProps) {
 function ToastTitle({ className, ...props }: ToastTitleProps) {
   return (
     <BaseToast.Title
-      className={cn("font-semibold text-foreground text-sm leading-tight", className)}
+      className={cnState("font-semibold text-foreground text-sm leading-tight", className)}
       {...props}
     />
   );
@@ -149,7 +149,7 @@ function ToastTitle({ className, ...props }: ToastTitleProps) {
 function ToastDescription({ className, ...props }: ToastDescriptionProps) {
   return (
     <BaseToast.Description
-      className={cn("text-muted-foreground text-sm leading-snug", className)}
+      className={cnState("text-muted-foreground text-sm leading-snug", className)}
       {...props}
     />
   );
@@ -159,7 +159,7 @@ function ToastClose({ className, children, ...props }: ToastCloseProps) {
   return (
     <BaseToast.Close
       aria-label="Close"
-      className={cn(
+      className={cnState(
         "micro-interactions absolute top-5 right-2 flex size-6 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground",
         "focus-visible:outline-2 focus-visible:outline-ring",
         className,
@@ -174,7 +174,7 @@ function ToastClose({ className, children, ...props }: ToastCloseProps) {
 function ToastAction({ className, ...props }: ToastActionProps) {
   return (
     <BaseToast.Action
-      className={cn(
+      className={cnState(
         "micro-interactions mt-1 inline-flex h-7 items-center rounded-md border border-border px-3 font-medium text-xs hover:bg-accent hover:text-accent-foreground",
         "focus-visible:outline-2 focus-visible:outline-ring",
         className,

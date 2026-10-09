@@ -2,7 +2,7 @@
 
 import { Popover as BasePopover } from "@base-ui/react/popover";
 import type { ComponentProps } from "react";
-import { cn } from "../../lib/cn";
+import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
 import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
@@ -80,7 +80,7 @@ function PopoverContentPopup({
     >
       <BasePopover.Popup
         render={render}
-        className={cn(
+        className={cnState(
           "rounded-md border border-border bg-popover p-4 text-popover-foreground shadow-md",
           !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
           !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
@@ -94,19 +94,24 @@ function PopoverContentPopup({
 }
 
 function PopoverArrow({ className, ...props }: PopoverArrowProps) {
-  return <BasePopover.Arrow className={cn("fill-popover stroke-border", className)} {...props} />;
+  return (
+    <BasePopover.Arrow className={cnState("fill-popover stroke-border", className)} {...props} />
+  );
 }
 
 function PopoverTitle({ className, ...props }: PopoverTitleProps) {
   return (
-    <BasePopover.Title className={cn("font-heading font-semibold text-sm", className)} {...props} />
+    <BasePopover.Title
+      className={cnState("font-heading font-semibold text-sm", className)}
+      {...props}
+    />
   );
 }
 
 function PopoverDescription({ className, ...props }: PopoverDescriptionProps) {
   return (
     <BasePopover.Description
-      className={cn("text-muted-foreground text-sm", className)}
+      className={cnState("text-muted-foreground text-sm", className)}
       {...props}
     />
   );

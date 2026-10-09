@@ -1,11 +1,11 @@
 import { Field as BaseField } from "@base-ui/react/field";
 import type { ComponentProps } from "react";
-import { cn } from "../../lib/cn";
+import { cnState } from "../../lib/cn";
 
 export type FieldRootProps = ComponentProps<typeof BaseField.Root>;
 
 function FieldRoot({ className, ...props }: FieldRootProps) {
-  return <BaseField.Root className={cn("flex flex-col gap-1", className)} {...props} />;
+  return <BaseField.Root className={cnState("flex flex-col gap-1", className)} {...props} />;
 }
 
 export type FieldLabelProps = ComponentProps<typeof BaseField.Label>;
@@ -13,7 +13,11 @@ export type FieldLabelProps = ComponentProps<typeof BaseField.Label>;
 function FieldLabel({ className, ...props }: FieldLabelProps) {
   return (
     <BaseField.Label
-      className={cn("font-medium text-sm leading-none", "data-[disabled]:opacity-50", className)}
+      className={cnState(
+        "font-medium text-sm leading-none",
+        "data-[disabled]:opacity-50",
+        className,
+      )}
       {...props}
     />
   );
@@ -23,14 +27,17 @@ export type FieldDescriptionProps = ComponentProps<typeof BaseField.Description>
 
 function FieldDescription({ className, ...props }: FieldDescriptionProps) {
   return (
-    <BaseField.Description className={cn("text-muted-foreground text-xs", className)} {...props} />
+    <BaseField.Description
+      className={cnState("text-muted-foreground text-xs", className)}
+      {...props}
+    />
   );
 }
 
 export type FieldErrorProps = ComponentProps<typeof BaseField.Error>;
 
 function FieldError({ className, ...props }: FieldErrorProps) {
-  return <BaseField.Error className={cn("text-destructive text-xs", className)} {...props} />;
+  return <BaseField.Error className={cnState("text-destructive text-xs", className)} {...props} />;
 }
 
 export const Field = {

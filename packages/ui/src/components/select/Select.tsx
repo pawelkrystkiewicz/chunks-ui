@@ -2,7 +2,7 @@
 
 import { Select as BaseSelect } from "@base-ui/react/select";
 import type { ComponentProps } from "react";
-import { cn } from "../../lib/cn";
+import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
 import { usePortalContainer } from "../../lib/portal-container";
@@ -23,7 +23,7 @@ export type SelectGroupLabelProps = ComponentProps<typeof BaseSelect.GroupLabel>
 function SelectTrigger({ className, ...props }: SelectTriggerProps) {
   return (
     <BaseSelect.Trigger
-      className={cn(
+      className={cnState(
         "flex h-ui-height w-full items-center justify-between rounded-md border border-input bg-background px-3 text-sm",
         "placeholder:text-muted-foreground",
         "focus-visible:outline-2 focus-visible:outline-ring",
@@ -38,7 +38,7 @@ function SelectTrigger({ className, ...props }: SelectTriggerProps) {
 
 function SelectIcon({ className, ...props }: SelectIconProps) {
   return (
-    <BaseSelect.Icon className={cn("ml-auto", className)} {...props}>
+    <BaseSelect.Icon className={cnState("ml-auto", className)} {...props}>
       <svg
         viewBox="0 0 24 24"
         fill="none"
@@ -70,7 +70,7 @@ function SelectPopup({ className, ...props }: SelectPopupProps) {
   return (
     <BaseSelect.Popup
       render={render}
-      className={cn(
+      className={cnState(
         "rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md",
         !useSpring && "data-starting-style:opacity-0",
         !useSpring && "data-ending-style:opacity-0",
@@ -85,7 +85,7 @@ function SelectPopup({ className, ...props }: SelectPopupProps) {
 function SelectItem({ className, ...props }: SelectItemProps) {
   return (
     <BaseSelect.Item
-      className={cn(
+      className={cnState(
         "relative flex w-full cursor-default items-center rounded-sm py-1.5 pr-8 pl-2 text-sm outline-none",
         "data-highlighted:bg-accent data-highlighted:text-accent-foreground",
         "data-disabled:pointer-events-none data-disabled:opacity-50",
@@ -100,7 +100,7 @@ function SelectItem({ className, ...props }: SelectItemProps) {
 function SelectItemIndicator({ className, ...props }: SelectItemIndicatorProps) {
   return (
     <BaseSelect.ItemIndicator
-      className={cn("absolute right-2 flex items-center", className)}
+      className={cnState("absolute right-2 flex items-center", className)}
       {...props}
     >
       <svg
@@ -120,13 +120,13 @@ function SelectItemIndicator({ className, ...props }: SelectItemIndicatorProps) 
 }
 
 function SelectPositioner({ className, ...props }: SelectPositionerProps) {
-  return <BaseSelect.Positioner className={cn("z-dropdowns", className)} {...props} />;
+  return <BaseSelect.Positioner className={cnState("z-dropdowns", className)} {...props} />;
 }
 
 function SelectGroupLabel({ className, ...props }: SelectGroupLabelProps) {
   return (
     <BaseSelect.GroupLabel
-      className={cn("cursor-default px-2 py-1 text-muted-foreground text-xs", className)}
+      className={cnState("cursor-default px-2 py-1 text-muted-foreground text-xs", className)}
       {...props}
     />
   );

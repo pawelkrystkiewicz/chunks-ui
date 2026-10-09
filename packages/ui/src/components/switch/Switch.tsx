@@ -2,7 +2,7 @@
 
 import { Switch as BaseSwitch } from "@base-ui/react/switch";
 import type { ComponentProps } from "react";
-import { cn } from "../../lib/cn";
+import { cn, cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { useMotionAnimate } from "../../lib/use-motion-animate";
 import { type PartRenderProp, useRenderPart } from "../../lib/use-render-part";
@@ -12,7 +12,7 @@ export type SwitchRootProps = ComponentProps<typeof BaseSwitch.Root>;
 function SwitchRoot({ className, ...props }: SwitchRootProps) {
   return (
     <BaseSwitch.Root
-      className={cn(
+      className={cnState(
         // The padding scales with --spacing, so the inner box is always two thumbs wide
         // (8 units for a 4-unit thumb) and the thumb travels exactly its own width.
         "peer inline-flex h-5 w-9 shrink-0 items-center rounded-full p-0.5",
