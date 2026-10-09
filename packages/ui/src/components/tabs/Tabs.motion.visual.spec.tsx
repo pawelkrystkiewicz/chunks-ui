@@ -7,6 +7,61 @@ import { waitForStable } from "../../VisualTest.utils";
 import { Tabs } from "./index";
 
 // Runs with reduced motion off, so Tabs.Contents slides and resizes with Motion
+const HEIGHTS = { short: 40, tall: 120 } as const;
+type Panel = keyof typeof HEIGHTS;
+
+/**
+ * Tabs.Contents with a short and a tall panel, showing `value`. `ref` is passed even when it is
+ * undefined: an explicit `ref={undefined}` must not switch the animation off either.
+ */
+const panelsOfTwoHeights = (value: Panel, ref?: Ref<HTMLDivElement>) => (
+  <Tabs.Root value={value}>
+    <Tabs.Contents data-testid="contents" ref={ref}>
+      <Tabs.Content value="short">
+        <div style={{ height: HEIGHTS.short, paddingTop: 20, boxSizing: "border-box" }}>
+          <span data-testid="marker">Short panel</span>
+        </div>
+      </Tabs.Content>
+      <Tabs.Content value="tall">
+        <div style={{ height: HEIGHTS.tall }}>Tall panel</div>
+      </Tabs.Content>
+    </Tabs.Contents>
+  </Tabs.Root>
+);
+
+/**
+ * Renders `from`, switches to `to`, and records the container height every frame until it
+ * settles, along with the tall panel's left edge before and after.
+ */
+async function switchPanels(from: Panel, to: Panel, ref?: Ref<HTMLDivElement>) {
+  await reloadMotion();
+  const { rerender, getByTestId } = render(panelsOfTwoHeights(from, ref));
+  const contents = getByTestId("contents");
+  const tallPanel = page.getByText("Tall panel").element();
+  const height = () => contents.getBoundingClientRect().height;
+  const start = await waitForStable(height);
+  const tallLeftBefore = tallPanel.getBoundingClientRect().left;
+
+  rerender(panelsOfTwoHeights(to, ref));
+  const heights: number[] = [];
+  const end = await waitForStable(() => {
+    heights.push(height());
+    return heights.at(-1) ?? 0;
+  });
+  return {
+    contents,
+    start,
+    end,
+    heights,
+    tallLeftBefore,
+    tallLeftAfter: tallPanel.getBoundingClientRect().left,
+  };
+}
+
+/** Some frame between `from` and `to` (exclusive, by more than 1px): it eased, not jumped. */
+const passedThrough = (heights: number[], from: number, to: number) =>
+  heights.some((h) => h > Math.min(from, to) + 1 && h < Math.max(from, to) - 1);
+
 describe("Tabs with Motion", () => {
   it("mounts a panel's children once when Motion has already loaded", async () => {
     await reloadMotion();
@@ -198,59 +253,6 @@ describe("Tabs animations that must stop", () => {
   });
 });
 
-const HEIGHTS = { short: 40, tall: 120 } as const;
-type Panel = keyof typeof HEIGHTS;
-
-/**
- * Tabs.Contents with a short and a tall panel, showing `value`. `ref` is passed even when it is
- * undefined: an explicit `ref={undefined}` must not switch the animation off either.
- */
-const panelsOfTwoHeights = (value: Panel, ref?: Ref<HTMLDivElement>) => (
-  <Tabs.Root value={value}>
-    <Tabs.Contents data-testid="contents" ref={ref}>
-      <Tabs.Content value="short">
-        <div style={{ height: HEIGHTS.short }}>Short panel</div>
-      </Tabs.Content>
-      <Tabs.Content value="tall">
-        <div style={{ height: HEIGHTS.tall }}>Tall panel</div>
-      </Tabs.Content>
-    </Tabs.Contents>
-  </Tabs.Root>
-);
-
-/**
- * Renders `from`, switches to `to`, and records the container height every frame until it
- * settles, along with the tall panel's left edge before and after.
- */
-async function switchPanels(from: Panel, to: Panel, ref?: Ref<HTMLDivElement>) {
-  await reloadMotion();
-  const { rerender, getByTestId } = render(panelsOfTwoHeights(from, ref));
-  const contents = getByTestId("contents");
-  const tallPanel = page.getByText("Tall panel").element();
-  const height = () => contents.getBoundingClientRect().height;
-  const start = await waitForStable(height);
-  const tallLeftBefore = tallPanel.getBoundingClientRect().left;
-
-  rerender(panelsOfTwoHeights(to, ref));
-  const heights: number[] = [];
-  const end = await waitForStable(() => {
-    heights.push(height());
-    return heights.at(-1) ?? 0;
-  });
-  return {
-    contents,
-    start,
-    end,
-    heights,
-    tallLeftBefore,
-    tallLeftAfter: tallPanel.getBoundingClientRect().left,
-  };
-}
-
-/** Some frame between `from` and `to` (exclusive, by more than 1px): it eased, not jumped. */
-const passedThrough = (heights: number[], from: number, to: number) =>
-  heights.some((h) => h > Math.min(from, to) + 1 && h < Math.max(from, to) - 1);
-
 describe("Tabs.Contents height with Motion", () => {
   it.each([
     ["short", "tall"],
@@ -261,6 +263,18 @@ describe("Tabs.Contents height with Motion", () => {
     expect(Math.abs(start - HEIGHTS[from])).toBeLessThanOrEqual(1);
     expect(Math.abs(end - HEIGHTS[to])).toBeLessThanOrEqual(1);
     expect(passedThrough(heights, start, end)).toBe(true);
+  });
+
+  it("keeps the active panel's top in view when part of it is scrolled into view", async () => {
+    await reloadMotion();
+    // The short panel is active; the tall one next to it makes the track taller than the container
+    const { getByTestId } = render(panelsOfTwoHeights("short"));
+    const contents = getByTestId("contents");
+    await waitForStable(() => contents.getBoundingClientRect().height);
+
+    // The marker sits 20px down the short panel
+    getByTestId("marker").scrollIntoView();
+    expect(contents.scrollTop).toBe(0);
   });
 });
 

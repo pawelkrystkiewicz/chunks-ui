@@ -290,7 +290,13 @@ function TabsContents({ className, children, transition, ref, ...props }: TabsCo
   );
 
   return (
-    <div ref={mergedContainerRef} className={cn("overflow-hidden", className)} {...props}>
+    <div
+      ref={mergedContainerRef}
+      // With Motion the track can be taller than the container. overflow:hidden would leave it
+      // scrollable, so scrollIntoView or focus could scroll the active panel's top out of view.
+      className={cn(motion ? "overflow-clip" : "overflow-hidden", className)}
+      {...props}
+    >
       {/* items-start: each panel keeps its own height, so the container can follow the active one */}
       <div ref={trackRef} className={motion ? "flex items-start" : undefined}>
         {childrenArray.map((child, i) => (
