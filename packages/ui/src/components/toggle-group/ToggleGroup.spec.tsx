@@ -160,6 +160,34 @@ describe("ToggleGroup", () => {
     expect(container.querySelector("span.absolute.z-0")).toBeInTheDocument();
   });
 
+  it("renders Root through a consumer's render element", () => {
+    render(
+      <ToggleGroup.Root render={<nav data-probe="" />}>
+        <ToggleGroup.Item value="a">A</ToggleGroup.Item>
+      </ToggleGroup.Root>,
+    );
+    const group = screen.getByRole("group");
+    expect(group.tagName).toBe("NAV");
+    expect(group).toHaveAttribute("data-probe");
+    // role="group" doesn't support aria-orientation, so it is still dropped
+    expect(group).not.toHaveAttribute("aria-orientation");
+  });
+
+  it("passes Root's state to a consumer's render function", () => {
+    render(
+      <ToggleGroup.Root
+        multiple
+        render={(props, state) => <nav {...props} data-multiple={String(state.multiple)} />}
+      >
+        <ToggleGroup.Item value="a">A</ToggleGroup.Item>
+      </ToggleGroup.Root>,
+    );
+    const group = screen.getByRole("group");
+    expect(group.tagName).toBe("NAV");
+    expect(group).toHaveAttribute("data-multiple", "true");
+    expect(group).not.toHaveAttribute("aria-orientation");
+  });
+
   it("deregisters Item on unmount", () => {
     const { rerender } = render(
       <ToggleGroup.Root>

@@ -171,3 +171,41 @@ describe.each([
     expect(await settledIndicatorOver(group, beta)).toEqual(COVERS);
   });
 });
+
+describe("ToggleGroup.Root with a consumer render, CSS path", () => {
+  beforeAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
+  afterAll(() => commands.emulateMedia({ reducedMotion: "no-preference" }));
+
+  it.each([
+    ["an element", <nav key="element" data-probe="" />],
+    [
+      "a function",
+      ((props, state) => (
+        <nav {...props} data-probe={state.multiple ? "multiple" : "single"} />
+      )) satisfies ToggleGroupRootProps["render"],
+    ],
+  ] as const)(
+    "renders %s, keeps the ref, and the indicator still follows",
+    async (_, consumerRender) => {
+      const ref = createRef<HTMLDivElement>();
+      const { getByRole } = render(
+        <ToggleGroup.Root defaultValue={["a"]} ref={ref} render={consumerRender}>
+          <ToggleGroup.Item value="a">Alpha</ToggleGroup.Item>
+          <ToggleGroup.Item value="b">Beta, a longer item</ToggleGroup.Item>
+        </ToggleGroup.Root>,
+      );
+      const group = getByRole("group");
+      expect(group.tagName).toBe("NAV");
+      expect(group.hasAttribute("data-probe")).toBe(true);
+      expect(group.hasAttribute("aria-orientation")).toBe(false);
+      expect(ref.current).toBe(group);
+
+      expect(await settledIndicatorOver(group, getByRole("button", { name: "Alpha" }))).toEqual(
+        COVERS,
+      );
+      const beta = getByRole("button", { name: "Beta, a longer item" });
+      await userEvent.click(beta);
+      expect(await settledIndicatorOver(group, beta)).toEqual(COVERS);
+    },
+  );
+});

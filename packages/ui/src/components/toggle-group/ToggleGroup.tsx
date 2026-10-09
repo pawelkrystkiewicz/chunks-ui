@@ -2,6 +2,8 @@
 
 import { Toggle as BaseToggle } from "@base-ui/react/toggle";
 import { ToggleGroup as BaseToggleGroup } from "@base-ui/react/toggle-group";
+import type { HTMLProps } from "@base-ui/react/types";
+import { useRender } from "@base-ui/react/use-render";
 import {
   type ComponentProps,
   createContext,
@@ -16,6 +18,7 @@ import { cn } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { useHeldWhileDriving, useMotionAnimate } from "../../lib/use-motion-animate";
+import type { PartRenderProp } from "../../lib/use-render-part";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -47,6 +50,7 @@ function ToggleGroupRoot({
   multiple = false,
   children,
   ref,
+  render,
   ...props
 }: ToggleGroupRootProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -138,12 +142,9 @@ function ToggleGroupRoot({
         defaultValue={defaultValue}
         onValueChange={handleValueChange}
         {...props}
-        // Base UI v1.4+ adds aria-orientation but role="group" doesn't support it per ARIA spec.
-        // Strip it via render prop to pass a11y checks.
-        render={(renderProps) => {
-          const { "aria-orientation": _ariaOrientation, ...rest } = renderProps;
-          return <div {...rest} />;
-        }}
+        render={(renderProps, state) => (
+          <ToggleGroupRootElement {...renderProps} state={state} render={render} />
+        )}
       >
         {/* Single-select sliding indicator */}
         {!multiple && bounds && (
@@ -161,6 +162,26 @@ function ToggleGroupRoot({
       </BaseToggleGroup>
     </ToggleGroupContext.Provider>
   );
+}
+
+// Renders the root through a consumer's `render`, as Base UI would, minus aria-orientation:
+// Base UI v1.4+ adds it, but role="group" doesn't support it per ARIA spec.
+function ToggleGroupRootElement({
+  state,
+  render,
+  ref,
+  "aria-orientation": _ariaOrientation,
+  ...props
+}: HTMLProps & {
+  state: BaseToggleGroup.State;
+  render: PartRenderProp<BaseToggleGroup.State>;
+}) {
+  return useRender({
+    defaultTagName: "div",
+    render: typeof render === "function" ? (renderProps) => render(renderProps, state) : render,
+    ref,
+    props,
+  });
 }
 
 // ---------------------------------------------------------------------------
