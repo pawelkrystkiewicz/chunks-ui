@@ -17,14 +17,10 @@ export async function renderFixture(children: ReactNode) {
 }
 
 /**
- * `toMatchScreenshot` options for components whose regressions can be small or faint, such as
- * Tabs.Indicator: a white pill on the 97% grey list. The config's defaults miss it. At their 0.1
- * colour threshold only the pill's shadow counts (56 px of 48,285 with the pill at 0×0), far
- * under the 5% allowed.
- * - `threshold: 0.02` counts a change of about 5 grey levels; the pill differs from the list by
- *   10. The 0×0 pill then differs by 1,848 px.
- * - `allowedMismatchedPixels: 24` is 4× the most the committed Linux baselines of these specs
- *   differ from a Docker run (6 px). The config's 5% ratio still applies; the lower limit wins.
+ * `toMatchScreenshot` options for small or faint features, such as the Tabs.Indicator pill (white
+ * on a 97% grey list). The config's 0.1 colour threshold can't see a pill that differs from the list
+ * by ~10 grey levels, so a 0×0 pill passed; 0.02 counts ~5 levels. The 24 px budget leaves headroom
+ * for renderer drift. The config's 5% ratio still applies; the lower limit wins.
  */
 export const SMALL_FEATURE_SCREENSHOT = {
   comparatorName: "pixelmatch",
