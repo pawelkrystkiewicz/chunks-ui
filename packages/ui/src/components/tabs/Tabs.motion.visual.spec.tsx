@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { commands, page } from "vitest/browser";
 import { reloadMotion } from "../../lib/use-motion";
+import { waitForStable } from "../../VisualTest.utils";
 import { Tabs } from "./index";
 
 // Runs with reduced motion off, so Tabs.Contents slides and resizes with Motion
@@ -194,5 +195,68 @@ describe("Tabs animations that must stop", () => {
       await nextFrame();
       expect(track.style.transform).toBe(transform);
     }
+  });
+});
+
+const HEIGHTS = { short: 40, tall: 120 } as const;
+type Panel = keyof typeof HEIGHTS;
+
+/** Tabs.Contents with a short and a tall panel, showing `value`. */
+const panelsOfTwoHeights = (value: Panel) => (
+  <Tabs.Root value={value}>
+    <Tabs.Contents data-testid="contents">
+      <Tabs.Content value="short">
+        <div style={{ height: HEIGHTS.short }}>Short panel</div>
+      </Tabs.Content>
+      <Tabs.Content value="tall">
+        <div style={{ height: HEIGHTS.tall }}>Tall panel</div>
+      </Tabs.Content>
+    </Tabs.Contents>
+  </Tabs.Root>
+);
+
+/**
+ * Renders `from`, switches to `to`, and records the container height every frame until it
+ * settles, along with the tall panel's left edge before and after.
+ */
+async function switchPanels(from: Panel, to: Panel) {
+  await reloadMotion();
+  const { rerender, getByTestId } = render(panelsOfTwoHeights(from));
+  const contents = getByTestId("contents");
+  const tallPanel = page.getByText("Tall panel").element();
+  const height = () => contents.getBoundingClientRect().height;
+  const start = await waitForStable(height);
+  const tallLeftBefore = tallPanel.getBoundingClientRect().left;
+
+  rerender(panelsOfTwoHeights(to));
+  const heights: number[] = [];
+  const end = await waitForStable(() => {
+    heights.push(height());
+    return heights.at(-1) ?? 0;
+  });
+  return {
+    contents,
+    start,
+    end,
+    heights,
+    tallLeftBefore,
+    tallLeftAfter: tallPanel.getBoundingClientRect().left,
+  };
+}
+
+/** Some frame between `from` and `to` (exclusive, by more than 1px): it eased, not jumped. */
+const passedThrough = (heights: number[], from: number, to: number) =>
+  heights.some((h) => h > Math.min(from, to) + 1 && h < Math.max(from, to) - 1);
+
+describe("Tabs.Contents height with Motion", () => {
+  it.each([
+    ["short", "tall"],
+    ["tall", "short"],
+  ] as const)("animates from the %s panel's height to the %s panel's", async (from, to) => {
+    const { start, end, heights } = await switchPanels(from, to);
+
+    expect(Math.abs(start - HEIGHTS[from])).toBeLessThanOrEqual(1);
+    expect(Math.abs(end - HEIGHTS[to])).toBeLessThanOrEqual(1);
+    expect(passedThrough(heights, start, end)).toBe(true);
   });
 });

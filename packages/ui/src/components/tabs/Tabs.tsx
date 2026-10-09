@@ -289,7 +289,8 @@ function TabsContents({ className, children, transition, ...props }: TabsContent
 
   return (
     <div ref={containerRef} className={cn("overflow-hidden", className)} {...props}>
-      <div ref={trackRef} className={motion ? "flex" : undefined}>
+      {/* items-start: each panel keeps its own height, so the container can follow the active one */}
+      <div ref={trackRef} className={motion ? "flex items-start" : undefined}>
         {childrenArray.map((child, i) => (
           <div
             key={String(childValue(child) ?? i)}
