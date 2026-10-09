@@ -36,6 +36,7 @@ export default {
     },
   },
   theme: { title: "Theme" },
+  utilities: { title: "Utilities" },
   "llm-separator": { type: "separator", title: "For LLMs" },
   "llm-txt": { title: "llm.txt", href: "/llm.txt" },
   "llm-full-txt": { title: "llm-full.txt", href: "/llm-full.txt" },
