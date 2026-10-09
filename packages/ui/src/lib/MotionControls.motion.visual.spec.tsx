@@ -247,6 +247,20 @@ describe("controls when Motion loads", () => {
     if (fallbackClass) expect(element()).not.toHaveClass(fallbackClass);
   });
 
+  // Motion never arrives: the CSS transition alone brings the indicator over the new tab
+  it("places a Tabs.Indicator over the new tab with the CSS transition alone", async () => {
+    const subject = control("Tabs.Indicator");
+    motionLoading();
+    render(subject.ui());
+    await expect.poll(subject.element).not.toBeNull();
+    const start = left(subject.element());
+    subject.change();
+    await expect.poll(() => left(subject.element())).not.toBe(start);
+    await settled(() => left(subject.element()));
+    expect(subject.element()).toHaveClass("micro-interactions");
+    expectOver(subject);
+  });
+
   it("hands N controls over to Motion in one commit", async () => {
     const motion = motionLoading();
     let commits = 0;
