@@ -487,4 +487,50 @@ describe("Tabs.Indicator with Motion", () => {
     // In-between frames: it slides rather than jumping
     expect(lefts.some((left) => left > start + 1 && left < end - 1)).toBe(true);
   });
+
+  describe("and reduced motion toggled while hidden", () => {
+    afterEach(async () => {
+      await commands.emulateMedia({ reducedMotion: "no-preference" });
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+    });
+
+    /** Waits until the CSS fallback or Motion has finished handing the indicator over */
+    const handedOver = (indicator: Element) =>
+      waitForStable(() => `${indicator.className}|${indicator.getAttribute("style")}`);
+
+    // The CSS fallback removed Motion's inline values while Motion still holds them. Back with
+    // Motion, the jump must write them all, not only the ones that changed since.
+    it.each([
+      ["turned on and off while hidden", true],
+      ["turned on while shown and off while hidden", false],
+    ] as const)(
+      "shows the indicator over the tab again with reduced motion %s",
+      async (_, onWhileHidden) => {
+        await reloadMotion();
+        const { rerender, getByTestId, getByRole } = render(tabs({ hidden: false, value: "a" }));
+        const indicator = getByTestId("indicator");
+        const tab = getByRole("tab", { name: "Alpha" });
+        await waitForStable(() => indicator.getBoundingClientRect().width);
+        expect(offBy(tab, indicator)).toBeLessThanOrEqual(1);
+
+        if (!onWhileHidden) {
+          await commands.emulateMedia({ reducedMotion: "reduce" });
+          await handedOver(indicator);
+        }
+        rerender(tabs({ hidden: true, value: "a" }));
+        await waitForStable(() => indicator.getAttribute("style"));
+        if (onWhileHidden) {
+          await commands.emulateMedia({ reducedMotion: "reduce" });
+          await handedOver(indicator);
+        }
+        await commands.emulateMedia({ reducedMotion: "no-preference" });
+        await handedOver(indicator);
+
+        rerender(tabs({ hidden: false, value: "a" }));
+        await handedOver(indicator);
+        expect(indicator.checkVisibility()).toBe(true);
+        expect(offBy(tab, indicator)).toBeLessThanOrEqual(1);
+      },
+    );
+  });
 });
