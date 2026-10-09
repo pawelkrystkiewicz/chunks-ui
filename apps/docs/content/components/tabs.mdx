@@ -85,6 +85,24 @@ The `Tabs.Indicator` component renders a pill behind the active tab. With Motion
 
 Without Motion, or with reduced motion, it takes its position and size from the CSS variables Base UI sets on it (`--active-tab-left`, `--active-tab-top`, `--active-tab-width`, `--active-tab-height`). It slides with a CSS transition, which reduced motion turns off.
 
+### Restyling the indicator
+
+The indicator box always covers the active tab. While Motion moves it, Motion writes `left`, `top`, `width` and `height` as inline styles, and they win over classes. Position and size classes on `Tabs.Indicator`, such as `top-auto bottom-0 h-0.5`, therefore have no effect with Motion. The CSS fallback applies them, so the indicator would look different with and without Motion.
+
+To change the look, keep the box and change what is drawn in it. For an underline, remove the pill's background and shadow, and draw the line with a pseudo-element at the bottom of the box:
+
+```tsx
+<Tabs.Root defaultValue="tab-1">
+  <Tabs.List className="rounded-none border-border border-b bg-transparent p-0">
+    <Tabs.Tab value="tab-1">General</Tabs.Tab>
+    <Tabs.Tab value="tab-2">Advanced settings</Tabs.Tab>
+    <Tabs.Indicator className="rounded-none bg-transparent shadow-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-primary" />
+  </Tabs.List>
+</Tabs.Root>
+```
+
+The line then sits along the bottom of the active tab and moves with it, with Motion and with the CSS fallback.
+
 ## Routed Tabs (single panel)
 
 `Tabs.Contents` mounts every panel in a flex track and slides between them on the x-axis. That works great for tabbed UIs where every panel coexists -- but it doesn't fit a router-driven setup, where only one panel is rendered at a time (typically through a single outlet) and the previous panel has already unmounted by the time the new one appears.
