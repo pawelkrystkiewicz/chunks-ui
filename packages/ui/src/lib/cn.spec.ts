@@ -48,4 +48,23 @@ describe("cnState", () => {
     expect(className({ open: true })).toBe("text-sm p-4");
     expect(className({ open: false })).toBe("p-2 text-sm");
   });
+
+  // clsx types its dictionaries as Record<string, any>, which a function matches. cn and cnState
+  // narrow that, so a function anywhere but cnState's last argument fails to type-check.
+  it("rejects functions it would drop", () => {
+    // @ts-expect-error cn has no state to call a function with
+    expect(cn("p-2", () => "p-4")).toBe("p-2");
+    // @ts-expect-error nor inside an array
+    expect(cn(["p-2", () => "p-4"])).toBe("p-2");
+    // @ts-expect-error only cnState's last argument may be a function
+    expect(cnState(() => "p-4", "p-2")).toBe("p-2");
+  });
+
+  it("still takes dictionaries, interface-typed ones included", () => {
+    interface Flags {
+      "p-4": boolean;
+    }
+    const flags: Flags = { "p-4": true };
+    expect(cn("p-2", { hidden: false }, flags)).toBe("p-4");
+  });
 });

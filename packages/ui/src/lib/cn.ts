@@ -1,4 +1,4 @@
-import { type ClassValue, clsx } from "clsx";
+import { type ClassDictionary, type ClassValue, clsx } from "clsx";
 import { extendTailwindMerge } from "tailwind-merge";
 
 // Custom theme.css tokens; cn.spec.ts fails when theme.css gains one that is missing here
@@ -29,21 +29,36 @@ const twMerge = extendTailwindMerge({
   },
 });
 
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
+/**
+ * What `cn` accepts: clsx's `ClassValue` without functions. clsx types a dictionary as
+ * `Record<string, any>`, which a function also matches, and then drops the function silently.
+ * Functions and arrays both have a numeric `length`, so a dictionary here may not: functions
+ * fail to type-check and arrays take the `ClassInput[]` branch, where each item is checked.
+ */
+export type ClassInput =
+  | Exclude<ClassValue, ClassDictionary | ClassValue[]>
+  | ClassInput[]
+  | (ClassDictionary & { length?: never });
+
+/** Merges class names with clsx, then resolves Tailwind conflicts (the last class wins). */
+export function cn(...inputs: ClassInput[]) {
+  return twMerge(clsx(inputs as ClassValue[]));
 }
 
 /** A Base UI part's `className`: a string, or a function of the part's state. */
-type StateClassName<State> = string | ((state: State) => string | undefined) | undefined;
+export type StateClassName<State> = string | ((state: State) => string | undefined) | undefined;
 
 /**
- * `cn` for a Base UI part. The last argument is the consumer's `className`, which Base UI also
- * accepts as a function of the part's state; `cn` alone would drop that function. A string
- * merges like `cn`; a function becomes a function of the state that merges its result.
+ * `cn` for a Base UI part: the last argument is the consumer's `className`, which Base UI also
+ * accepts as a function of the part's state. A string merges like `cn`. A function becomes a
+ * function of the state that merges its result with the other arguments.
+ *
+ * @example
+ * <BaseSelect.Item className={cnState("px-2 data-highlighted:bg-accent", className)} {...props} />
  */
-export function cnState<State>(...inputs: [...ClassValue[], StateClassName<State>]) {
+export function cnState<State>(...inputs: [...ClassInput[], StateClassName<State>]) {
   const className = inputs[inputs.length - 1];
-  if (typeof className !== "function") return cn(inputs as ClassValue[]);
-  const base = inputs.slice(0, -1) as ClassValue[];
+  if (typeof className !== "function") return cn(...(inputs as ClassInput[]));
+  const base = inputs.slice(0, -1) as ClassInput[];
   return (state: State) => cn(base, className(state));
 }

@@ -8,6 +8,11 @@ import { inputVariants } from "./Input.Variants";
 export type InputProps = ComponentProps<typeof BaseInput> &
   VariantProps<typeof inputVariants> & {
     /**
+     * Classes for the input, or a function of its state. With adornments, a string goes on the
+     * wrapper that positions them, and a function on the input inside it.
+     */
+    className?: ComponentProps<typeof BaseInput>["className"];
+    /**
      * Element rendered before the input text (e.g. a search icon).
      */
     startAdornment?: ReactNode;
@@ -32,17 +37,23 @@ export function Input({ startAdornment, endAdornment, onClear, className, ...pro
     typeof onClear === "function" && props.value != null && String(props.value).length > 0;
 
   return (
-    <div className={cn("relative inline-flex items-center", className)}>
+    <div
+      className={cn(
+        "relative inline-flex items-center",
+        typeof className === "string" && className,
+      )}
+    >
       {startAdornment && (
         <span className="pointer-events-none absolute left-3 flex items-center text-muted-foreground">
           {startAdornment}
         </span>
       )}
       <BaseInput
-        className={cn(
+        className={cnState(
           inputVariants(),
           startAdornment && "pl-9",
           (endAdornment || onClear) && "pr-9",
+          typeof className === "function" ? className : undefined,
         )}
         {...props}
       />

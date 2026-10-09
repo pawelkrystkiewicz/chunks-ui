@@ -481,3 +481,31 @@ describe("className on Base UI parts", () => {
     expect(classes).toEqual(expect.arrayContaining(base));
   });
 });
+
+// Wrappers whose className can land on a plain element, which has no Base UI state
+describe("className on composite wrappers", () => {
+  it("passes an Input's className function to the input when adornments wrap it", () => {
+    render(<Input aria-label="Search" disabled startAdornment="@" className={fromState} />);
+    const input = screen.getByRole("textbox", { name: "Search" });
+    expect(input).toHaveClass("from-state", "state-disabled-true", "pl-9");
+    expect(input.parentElement).not.toHaveClass("from-state");
+  });
+
+  it("keeps an Input's string className on the wrapper when adornments wrap it", () => {
+    render(<Input aria-label="Search" startAdornment="@" className="w-64" />);
+    const input = screen.getByRole("textbox", { name: "Search" });
+    expect(input.parentElement).toHaveClass("relative", "w-64");
+    expect(input).not.toHaveClass("w-64");
+  });
+
+  it("puts a Radio.Item's string className on its label", () => {
+    render(
+      <Radio.Group aria-label="Size" defaultValue="s">
+        <Radio.Item value="s" className="gap-4">
+          Small
+        </Radio.Item>
+      </Radio.Group>,
+    );
+    expect(screen.getByText("Small").closest("label")).toHaveClass("cursor-pointer", "gap-4");
+  });
+});

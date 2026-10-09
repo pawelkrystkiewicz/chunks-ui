@@ -83,11 +83,16 @@ function RadioIndicatorElement({
   });
 }
 
-export type RadioItemProps = Omit<RadioRootProps, "children"> & {
+export type RadioItemProps = Omit<RadioRootProps, "children" | "className"> & {
   /**
    * Label text displayed next to the radio indicator.
    */
   children: ReactNode;
+  /**
+   * Classes for the item's `<label>`. A string only: the label has no Base UI state to pass
+   * to a function. Style the radio itself with `Radio.Root`.
+   */
+  className?: string;
 };
 
 function RadioItem({ children, className, disabled, ...props }: RadioItemProps) {
