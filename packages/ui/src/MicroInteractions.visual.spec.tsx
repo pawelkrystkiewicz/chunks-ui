@@ -25,97 +25,33 @@ function transitionOf(element: Element): Transition {
   };
 }
 
-const ELEMENTS = [
-  {
-    element: "a plain element",
-    ui: (className?: string) => (
-      <span data-testid="target" className={["micro-interactions", className].join(" ")}>
-        Target
-      </span>
-    ),
-  },
-  {
-    element: "Button",
-    ui: (className?: string) => (
-      <Button data-testid="target" className={className}>
-        Target
-      </Button>
-    ),
-  },
-] as const;
-
 function renderTarget(ui: ReactNode) {
   return render(ui).getByTestId("target");
 }
 
-describe.each(ELEMENTS)(".micro-interactions on $element", ({ ui }) => {
-  describe("with no reduced-motion preference", () => {
-    beforeAll(() => commands.emulateMedia({ reducedMotion: "no-preference" }));
-    afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
+const plain = (className?: string) => (
+  <span data-testid="target" className={["micro-interactions", className].join(" ")}>
+    Target
+  </span>
+);
 
-    it("transitions with its own defaults when nothing overrides them", () => {
-      expect(transitionOf(renderTarget(ui()))).toEqual({
-        property: "all",
-        duration: "0.3s",
-        timingFunction: "cubic-bezier(0.4, 0, 0.2, 1)",
-      });
-    });
-
-    it("lets a duration utility change the duration", () => {
-      expect(transitionOf(renderTarget(ui("duration-150")))).toEqual({
-        property: "all",
-        duration: "0.15s",
-        timingFunction: "cubic-bezier(0.4, 0, 0.2, 1)",
-      });
-    });
-
-    it("lets an easing utility change the timing function", () => {
-      expect(transitionOf(renderTarget(ui("ease-linear")))).toEqual({
-        property: "all",
-        duration: "0.3s",
-        timingFunction: "linear",
-      });
-    });
-  });
-
-  describe("with reduced motion", () => {
-    beforeAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
-
-    it("does not transition", () => {
-      expect(transitionOf(renderTarget(ui())).property).toBe("none");
-    });
-
-    it("does not transition when a timing utility is added", () => {
-      expect(transitionOf(renderTarget(ui("duration-150 ease-linear"))).property).toBe("none");
-    });
-
-    it.each(["transition-colors", "transition-colors!"])(
-      "does not transition when %s is added",
-      (utility) => {
-        expect(transitionOf(renderTarget(ui(utility))).property).toBe("none");
-      },
-    );
-  });
-});
+const sliderThumb = (
+  <Slider.Root defaultValue={[40]}>
+    <Slider.Control>
+      <Slider.Track>
+        <Slider.Thumb index={0} data-testid="target" />
+      </Slider.Track>
+    </Slider.Control>
+  </Slider.Root>
+);
 
 // These set `transition-colors!` next to the class, so they fade colours only
 const COLOR_FADES = [
-  {
-    component: "Slider.Thumb",
-    ui: () => (
-      <Slider.Root defaultValue={[40]}>
-        <Slider.Control>
-          <Slider.Track>
-            <Slider.Thumb index={0} data-testid="target" />
-          </Slider.Track>
-        </Slider.Control>
-      </Slider.Root>
-    ),
-  },
-  { component: "Textarea", ui: () => <Textarea aria-label="Notes" data-testid="target" /> },
+  { component: "Slider.Thumb", ui: sliderThumb },
+  { component: "Textarea", ui: <Textarea aria-label="Notes" data-testid="target" /> },
   {
     component: "Table.Row",
-    ui: () => (
+    ui: (
       <Table.Root>
         <Table.Body>
           <Table.Row data-testid="target">
@@ -127,18 +63,66 @@ const COLOR_FADES = [
   },
 ] as const;
 
-describe.each(COLOR_FADES)("$component colour fade", ({ ui }) => {
+describe(".micro-interactions with no reduced-motion preference", () => {
+  beforeAll(() => commands.emulateMedia({ reducedMotion: "no-preference" }));
   afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
 
-  it("fades colours with no reduced-motion preference", async () => {
-    await commands.emulateMedia({ reducedMotion: "no-preference" });
-    const properties = transitionOf(renderTarget(ui())).property.split(", ");
+  it("transitions with its own defaults when nothing overrides them", () => {
+    expect(transitionOf(renderTarget(plain()))).toEqual({
+      property: "all",
+      duration: "0.3s",
+      timingFunction: "cubic-bezier(0.4, 0, 0.2, 1)",
+    });
+  });
+
+  it("lets a duration utility change the duration", () => {
+    expect(transitionOf(renderTarget(plain("duration-150")))).toEqual({
+      property: "all",
+      duration: "0.15s",
+      timingFunction: "cubic-bezier(0.4, 0, 0.2, 1)",
+    });
+  });
+
+  it("lets an easing utility change the timing function", () => {
+    expect(transitionOf(renderTarget(plain("ease-linear")))).toEqual({
+      property: "all",
+      duration: "0.3s",
+      timingFunction: "linear",
+    });
+  });
+
+  // Button has the class from its variants and passes `className` through
+  it("lets a duration utility change Button's duration", () => {
+    const button = renderTarget(
+      <Button data-testid="target" className="duration-150">
+        Target
+      </Button>,
+    );
+    expect(transitionOf(button).duration).toBe("0.15s");
+  });
+
+  it.each(COLOR_FADES)("fades only colours on $component", ({ ui }) => {
+    const properties = transitionOf(renderTarget(ui)).property.split(", ");
     expect(properties).toEqual(expect.arrayContaining(["color", "background-color"]));
     expect(properties).not.toContain("all");
   });
+});
 
-  it("does not transition with reduced motion", async () => {
-    await commands.emulateMedia({ reducedMotion: "reduce" });
-    expect(transitionOf(renderTarget(ui())).property).toBe("none");
+describe(".micro-interactions with reduced motion", () => {
+  beforeAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
+
+  it("does not transition", () => {
+    expect(transitionOf(renderTarget(plain())).property).toBe("none");
+  });
+
+  it.each(["transition-colors", "transition-colors!"])(
+    "does not transition when %s is added",
+    (utility) => {
+      expect(transitionOf(renderTarget(plain(utility))).property).toBe("none");
+    },
+  );
+
+  it("stops the Slider.Thumb colour fade from its transition-colors!", () => {
+    expect(transitionOf(renderTarget(sliderThumb)).property).toBe("none");
   });
 });

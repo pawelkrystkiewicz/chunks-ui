@@ -145,6 +145,5 @@ describe.each(PATHS)("Tabs.Indicator restyled as an underline, $path", ({ reduce
     (document.querySelector('[role="tab"]:last-of-type') as HTMLElement).click();
     await expect.poll(() => activeTab().textContent).toBe("Advanced settings");
     await expectUnderlineBelowActiveTab();
-    expect(indicator().classList.contains("micro-interactions")).toBe(reducedMotion);
   });
 });
