@@ -131,3 +131,14 @@ export function useMotionAnimate<E extends HTMLElement | SVGElement>(
 
   return [ref, driving];
 }
+
+/**
+ * `value` while the CSS fallback renders; while Motion drives the element, the value from when
+ * it took over. Render it into attributes that Motion animates: React then leaves what Motion
+ * writes alone, instead of resetting it on a change or removing it when Motion takes over.
+ */
+export function useHeldWhileDriving<T>(driving: boolean, value: T): T {
+  const [held, setHeld] = useState(value);
+  if (!driving && held !== value) setHeld(value);
+  return driving ? held : value;
+}

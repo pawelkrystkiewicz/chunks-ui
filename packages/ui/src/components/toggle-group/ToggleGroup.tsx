@@ -14,7 +14,7 @@ import {
 } from "react";
 import { cn } from "../../lib/cn";
 import { springs } from "../../lib/motion";
-import { useMotion, useReducedMotion } from "../../lib/use-motion";
+import { useHeldWhileDriving, useMotionAnimate } from "../../lib/use-motion-animate";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -50,10 +50,6 @@ function ToggleGroupRoot({
   const containerRef = useRef<HTMLDivElement>(null);
   const itemsRef = useRef(new Map<string, HTMLElement>());
   const [trackedValue, setTrackedValue] = useState<readonly unknown[]>(value ?? defaultValue ?? []);
-
-  const m = useMotion();
-  const reduced = useReducedMotion();
-  const useSpring = !!m && !reduced;
 
   // Sync controlled value
   useEffect(() => {
@@ -117,6 +113,12 @@ function ToggleGroupRoot({
     return () => ro.disconnect();
   }, [measureBounds]);
 
+  // The same span with and without Motion, so it isn't remounted when Motion loads
+  const [indicatorRef, driven] = useMotionAnimate<HTMLSpanElement>(bounds, {
+    transition: springs.indicator,
+  });
+  const indicatorStyle = useHeldWhileDriving(driven, bounds);
+
   return (
     <ToggleGroupContext.Provider value={{ registerItem, multiple }}>
       <BaseToggleGroup
@@ -139,21 +141,17 @@ function ToggleGroupRoot({
         }}
       >
         {/* Single-select sliding indicator */}
-        {!multiple &&
-          bounds &&
-          (useSpring && m ? (
-            <m.motion.span
-              className="absolute z-0 rounded-md bg-background shadow-sm"
-              initial={false}
-              animate={bounds}
-              transition={springs.indicator}
-            />
-          ) : (
-            <span
-              className="micro-interactions absolute z-0 rounded-md bg-background shadow-sm duration-200 ease-snappy"
-              style={bounds}
-            />
-          ))}
+        {!multiple && bounds && (
+          <span
+            ref={indicatorRef}
+            className={
+              driven
+                ? "absolute z-0 rounded-md bg-background shadow-sm"
+                : "micro-interactions absolute z-0 rounded-md bg-background shadow-sm duration-200 ease-snappy"
+            }
+            style={indicatorStyle ?? undefined}
+          />
+        )}
         {children}
       </BaseToggleGroup>
     </ToggleGroupContext.Provider>

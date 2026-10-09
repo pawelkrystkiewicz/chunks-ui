@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { commands } from "vitest/browser";
 import { Switch } from "../components/switch";
+import { ToggleGroup } from "../components/toggle-group";
 import { reloadMotion } from "./use-motion";
 
 // Runs with reduced motion off. These controls stay mounted, so Motion must animate their
@@ -33,6 +34,18 @@ const controls: Record<string, Control> = {
     ),
     element: byTestId,
     change: () => click('[role="switch"]'),
+    measure: left,
+    cssTransition: true,
+  },
+  ToggleGroup: {
+    ui: (
+      <ToggleGroup.Root defaultValue={["a"]}>
+        <ToggleGroup.Item value="a">Alpha</ToggleGroup.Item>
+        <ToggleGroup.Item value="b">Beta, a longer item</ToggleGroup.Item>
+      </ToggleGroup.Root>
+    ),
+    element: () => document.querySelector<HTMLElement>('[role="group"] > span'),
+    change: () => click('[role="group"] > button:last-of-type'),
     measure: left,
     cssTransition: true,
   },
