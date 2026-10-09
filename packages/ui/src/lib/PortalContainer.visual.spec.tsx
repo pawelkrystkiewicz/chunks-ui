@@ -9,7 +9,7 @@ import { Drawer } from "../components/drawer";
 import { Popover } from "../components/popover";
 import { Select } from "../components/select";
 import { Tooltip } from "../components/tooltip";
-import { waitForStable } from "../VisualTest.utils";
+import { AppBars, expectAboveAppBars, inside, overlays, waitForStable } from "../VisualTest.utils";
 import { PortalContainerProvider } from "./portal-container";
 
 // Lives in the browser (visual) suite, not jsdom: real clicks respect a modal's `inert` and the
@@ -130,46 +130,6 @@ describe("popups nested in a modal", () => {
   });
 });
 
-type OverlayProps = {
-  name: string;
-  side?: "left" | "right";
-  defaultOpen?: boolean;
-  children?: ReactNode;
-};
-
-const overlays = {
-  Dialog: ({ name, defaultOpen, children }) => (
-    <Dialog.Root defaultOpen={defaultOpen}>
-      <Dialog.Trigger>Open {name}</Dialog.Trigger>
-      <Dialog.Portal>
-        <Dialog.Backdrop data-testid={`${name} backdrop`} />
-        <Dialog.Popup>
-          <Dialog.Title>{name}</Dialog.Title>
-          {/* Its own line, so a parent is taller than its child and shows around it */}
-          <div>{children}</div>
-          <Dialog.Close>Close {name}</Dialog.Close>
-        </Dialog.Popup>
-      </Dialog.Portal>
-    </Dialog.Root>
-  ),
-  Drawer: ({ name, side, defaultOpen, children }) => (
-    <Drawer.Root defaultOpen={defaultOpen}>
-      <Drawer.Trigger>Open {name}</Drawer.Trigger>
-      <Drawer.Portal>
-        <Drawer.Backdrop data-testid={`${name} backdrop`} />
-        <Drawer.Popup side={side}>
-          <Drawer.Title>{name}</Drawer.Title>
-          <div>{children}</div>
-          <Drawer.Close>Close {name}</Drawer.Close>
-        </Drawer.Popup>
-      </Drawer.Portal>
-    </Drawer.Root>
-  ),
-} satisfies Record<string, (props: OverlayProps) => ReactNode>;
-
-const inside = (box: DOMRect, [x, y]: [number, number]) =>
-  x > box.left && x < box.right && y > box.top && y < box.bottom;
-
 describe("overlays opened from an overlay", () => {
   it.each([
     ["Dialog", "Dialog"],
@@ -256,35 +216,6 @@ describe("overlays opened from an overlay", () => {
   );
 });
 
-// An overlay opened straight from the page portals to <body>, so only its Portal's z-layer
-// (drawers 600, modals 700) lifts it above the app's own layers. The fixed bar (40-50% of the
-// viewport height) crosses a centred Dialog's top edge; the sticky bar, a trigger line below
-// 50vh, crosses its bottom edge. Both run under the full-height Drawer.
-function AppBars() {
-  return (
-    <>
-      <div
-        data-testid="fixed bar"
-        style={{ position: "fixed", insetInline: 0, top: "40%", height: "10%", zIndex: 50 }}
-      />
-      <div style={{ height: "50vh" }} />
-      <div
-        data-testid="sticky bar"
-        style={{ position: "sticky", top: 0, height: "10vh", zIndex: 100 }}
-      />
-      <div style={{ height: "60vh" }} />
-    </>
-  );
-}
-
-const overlap = (a: DOMRect, b: DOMRect): [number, number] | undefined => {
-  const left = Math.max(a.left, b.left);
-  const right = Math.min(a.right, b.right);
-  const top = Math.max(a.top, b.top);
-  const bottom = Math.min(a.bottom, b.bottom);
-  return right > left && bottom > top ? [(left + right) / 2, (top + bottom) / 2] : undefined;
-};
-
 describe("overlays opened from the page", () => {
   it.each(["Dialog", "Drawer"] as const)(
     "puts a %s above fixed and sticky app bars",
@@ -301,32 +232,8 @@ describe("overlays opened from the page", () => {
       await expect.element(popupLocator).toBeVisible();
       const popup = popupLocator.element();
       const backdrop = page.getByTestId(`${name} backdrop`).element();
-      const box = await waitForStable(() => popup.getBoundingClientRect());
-
-      for (const bar of ["fixed bar", "sticky bar"]) {
-        const barBox = page.getByTestId(bar).element().getBoundingClientRect();
-        const onPopup = overlap(box, barBox);
-        if (!onPopup)
-          throw new Error(`The ${name} must cover part of the ${bar}, or this proves nothing`);
-        expect(
-          popup.contains(document.elementFromPoint(...onPopup)),
-          `${name} over the ${bar}`,
-        ).toBe(true);
-
-        // Where the bar shows past the popup, the backdrop covers it
-        const pastPopup = (
-          [
-            [barBox.left + 4, barBox.top + 4],
-            [barBox.left + 4, barBox.bottom - 4],
-            [barBox.right - 4, barBox.top + 4],
-            [barBox.right - 4, barBox.bottom - 4],
-          ] as [number, number][]
-        ).find((point) => !inside(box, point));
-        if (!pastPopup) throw new Error(`The ${bar} must show past the ${name}`);
-        expect(document.elementFromPoint(...pastPopup), `${name} backdrop over the ${bar}`).toBe(
-          backdrop,
-        );
-      }
+      await waitForStable(() => popup.getBoundingClientRect());
+      expectAboveAppBars(name, popup, backdrop);
     },
   );
 });
