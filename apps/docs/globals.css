@@ -10,7 +10,6 @@
   --l-bg: #eef1f8;
   --l-fg: #0b1020;
   --l-muted: #5a6176;
-  --l-faint: #9aa2b8;
   --l-line: #d9deea;
   --l-card: #f7f8fc;
   --l-ill: #8d96b0;
@@ -39,7 +38,6 @@
   --l-bg: oklch(0.16 0.02 265);
   --l-fg: oklch(0.97 0 0);
   --l-muted: oklch(0.72 0.02 265);
-  --l-faint: oklch(0.55 0.02 265);
   --l-line: oklch(0.28 0.03 265);
   --l-card: oklch(0.2 0.03 265);
   --l-ill: oklch(0.55 0.04 265);
