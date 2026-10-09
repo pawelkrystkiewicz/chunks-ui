@@ -7,6 +7,7 @@ import { cn } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { useMotion, useReducedMotion } from "../../lib/use-motion";
 import { useMotionAnimate } from "../../lib/use-motion-animate";
+import { type PartRenderProp, useRenderPart } from "../../lib/use-render-part";
 
 export type RadioGroupProps = ComponentProps<typeof BaseRadioGroup>;
 
@@ -39,46 +40,47 @@ function RadioRoot({ className, ...props }: RadioRootProps) {
 
 export type RadioIndicatorProps = ComponentProps<typeof BaseRadio.Indicator>;
 
-function RadioIndicator({ className, ...props }: RadioIndicatorProps) {
+function RadioIndicator({ className, render, ...props }: RadioIndicatorProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
   return (
     <BaseRadio.Indicator
       // With Motion it stays mounted while unchecked, so it can animate out
       keepMounted={(m !== null && !reduced) || undefined}
+      {...props}
       render={(renderProps, state) => (
         <RadioIndicatorElement
           {...renderProps}
-          checked={state.checked}
+          state={state}
+          render={render}
           className={typeof className === "function" ? className(state) : className}
         />
       )}
-      {...props}
     />
   );
 }
 
-// The same span with and without Motion, so it isn't remounted when Motion loads
+// The same element with and without Motion, so it isn't remounted when Motion loads
 function RadioIndicatorElement({
-  checked,
+  state,
+  render,
   className,
   ref,
   ...props
-}: ComponentProps<"span"> & { checked: boolean }) {
-  const [indicatorRef] = useMotionAnimate<HTMLSpanElement>(
-    { scale: checked ? 1 : 0, opacity: checked ? 1 : 0 },
+}: ComponentProps<"span"> & {
+  state: BaseRadio.Indicator.State;
+  render: PartRenderProp<BaseRadio.Indicator.State>;
+}) {
+  const [indicatorRef] = useMotionAnimate<HTMLElement>(
+    { scale: state.checked ? 1 : 0, opacity: state.checked ? 1 : 0 },
     { transition: springs.micro, clear: ["transform", "opacity"] },
     ref,
   );
-  return (
-    <span
-      {...props}
-      ref={indicatorRef}
-      className={cn("flex items-center justify-center", className)}
-    >
-      <span className="size-2 rounded-full bg-primary" />
-    </span>
-  );
+  return useRenderPart(render, state, indicatorRef, {
+    ...props,
+    className: cn("flex items-center justify-center", className),
+    children: <span className="size-2 rounded-full bg-primary" />,
+  });
 }
 
 export type RadioItemProps = Omit<RadioRootProps, "children"> & {

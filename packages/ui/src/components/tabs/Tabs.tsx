@@ -19,6 +19,7 @@ import { springs } from "../../lib/motion";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { useMotion, useReducedMotion } from "../../lib/use-motion";
 import { useMotionAnimate } from "../../lib/use-motion-animate";
+import { type PartRenderProp, useRenderPart } from "../../lib/use-render-part";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -151,53 +152,49 @@ function TabsPanel({ className, ...props }: TabsPanelProps) {
   );
 }
 
-function TabsIndicator({ className, ...props }: TabsIndicatorProps) {
+function TabsIndicator({ className, render, ...props }: TabsIndicatorProps) {
   return (
     <BaseTabs.Indicator
+      {...props}
       render={(renderProps, state) => (
         <TabsIndicatorElement
           {...renderProps}
-          position={state.activeTabPosition}
-          size={state.activeTabSize}
+          state={state}
+          render={render}
           className={typeof className === "function" ? className(state) : className}
         />
       )}
-      {...props}
     />
   );
 }
 
-type TabsIndicatorState = BaseTabs.Indicator.State;
-
-// The same span with and without Motion, so it isn't remounted when Motion loads
+// The same element with and without Motion, so it isn't remounted when Motion loads
 function TabsIndicatorElement({
-  position,
-  size,
+  state,
+  render,
   className,
   ref,
   ...props
 }: ComponentProps<"span"> & {
-  position: TabsIndicatorState["activeTabPosition"];
-  size: TabsIndicatorState["activeTabSize"];
+  state: BaseTabs.Indicator.State;
+  render: PartRenderProp<BaseTabs.Indicator.State>;
 }) {
-  const [indicatorRef, driven] = useMotionAnimate<HTMLSpanElement>(
+  const { activeTabPosition: position, activeTabSize: size } = state;
+  const [indicatorRef, driven] = useMotionAnimate<HTMLElement>(
     position && size
       ? { left: position.left, top: position.top, width: size.width, height: size.height }
       : null,
     { transition: springs.indicator, clear: ["left", "top", "width", "height"] },
     ref,
   );
-  return (
-    <span
-      {...props}
-      ref={indicatorRef}
-      className={cn(
-        "absolute rounded-md bg-background shadow-sm",
-        !driven && "micro-interactions duration-200 ease-snappy",
-        className,
-      )}
-    />
-  );
+  return useRenderPart(render, state, indicatorRef, {
+    ...props,
+    className: cn(
+      "absolute rounded-md bg-background shadow-sm",
+      !driven && "micro-interactions duration-200 ease-snappy",
+      className,
+    ),
+  });
 }
 
 // ---------------------------------------------------------------------------

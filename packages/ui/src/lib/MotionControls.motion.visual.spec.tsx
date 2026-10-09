@@ -1,5 +1,6 @@
+import type { HTMLProps } from "@base-ui/react/types";
 import { render } from "@testing-library/react";
-import { Profiler, type ReactNode, StrictMode } from "react";
+import { Profiler, type ReactElement, type ReactNode, StrictMode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { commands } from "vitest/browser";
 import { Checkbox } from "../components/checkbox";
@@ -20,8 +21,11 @@ const left = (element: HTMLElement | null) => element?.getBoundingClientRect().l
 const opacity = (element: HTMLElement | null) =>
   element ? Number(getComputedStyle(element).opacity) : Number.NaN;
 
+/** A consumer's `render` prop for the part Motion animates */
+type ConsumerRender = (props: HTMLProps) => ReactElement;
+
 type Control = {
-  ui: ReactNode;
+  ui: (consumerRender?: ConsumerRender) => ReactNode;
   element: () => HTMLElement | null;
   /** Changes the control with a plain DOM click, so it happens before any await */
   change: () => void;
@@ -31,13 +35,15 @@ type Control = {
   fallbackClass?: string;
   /** The CSS fallback animates the change with a transition */
   cssTransition?: boolean;
+  /** A class the element always has, also under a consumer's `render` */
+  baseClass: string;
 };
 
 const controls: Record<string, Control> = {
   Switch: {
-    ui: (
+    ui: (consumerRender) => (
       <Switch.Root aria-label="Notifications">
-        <Switch.Thumb data-testid="moving" />
+        <Switch.Thumb data-testid="moving" render={consumerRender} />
       </Switch.Root>
     ),
     element: byTestId,
@@ -45,9 +51,10 @@ const controls: Record<string, Control> = {
     measure: left,
     fallbackClass: "micro-interactions",
     cssTransition: true,
+    baseClass: "rounded-full",
   },
   ToggleGroup: {
-    ui: (
+    ui: () => (
       <ToggleGroup.Root defaultValue={["a"]}>
         <ToggleGroup.Item value="a">Alpha</ToggleGroup.Item>
         <ToggleGroup.Item value="b">Beta, a longer item</ToggleGroup.Item>
@@ -58,14 +65,15 @@ const controls: Record<string, Control> = {
     measure: left,
     fallbackClass: "micro-interactions",
     cssTransition: true,
+    baseClass: "rounded-md",
   },
   "Tabs.Indicator": {
-    ui: (
+    ui: (consumerRender) => (
       <Tabs.Root defaultValue="a">
         <Tabs.List>
           <Tabs.Tab value="a">Alpha</Tabs.Tab>
           <Tabs.Tab value="b">Beta, a longer tab</Tabs.Tab>
-          <Tabs.Indicator data-testid="moving" />
+          <Tabs.Indicator data-testid="moving" render={consumerRender} />
         </Tabs.List>
       </Tabs.Root>
     ),
@@ -73,12 +81,13 @@ const controls: Record<string, Control> = {
     change: () => click('[role="tab"]:last-of-type'),
     measure: left,
     fallbackClass: "micro-interactions",
+    baseClass: "rounded-md",
   },
   Radio: {
-    ui: (
+    ui: (consumerRender) => (
       <Radio.Group defaultValue="a">
         <Radio.Root value="a" aria-label="A">
-          <Radio.Indicator data-testid="moving" />
+          <Radio.Indicator data-testid="moving" render={consumerRender} />
         </Radio.Root>
         <Radio.Root value="b" aria-label="B">
           <Radio.Indicator />
@@ -88,22 +97,25 @@ const controls: Record<string, Control> = {
     element: byTestId,
     change: () => click('[aria-label="B"]'),
     measure: opacity,
+    baseClass: "justify-center",
   },
   Checkbox: {
-    ui: (
+    ui: (consumerRender) => (
       <Checkbox.Root aria-label="Subscribe" defaultChecked>
-        <Checkbox.Indicator data-testid="moving" />
+        <Checkbox.Indicator data-testid="moving" render={consumerRender} />
       </Checkbox.Root>
     ),
     element: byTestId,
     change: () => click('[role="checkbox"]'),
     measure: opacity,
+    baseClass: "justify-center",
   },
 };
 
 const names = Object.keys(controls);
 const control = (name: string) => controls[name] as Control;
 const transitioned = names.filter((name) => control(name).cssTransition);
+const withRenderProp = names.filter((name) => name !== "ToggleGroup");
 
 async function sample(measure: () => number, frames: number) {
   const values: number[] = [];
@@ -162,7 +174,7 @@ describe("controls when Motion loads", () => {
   it.each(names)("keeps the %s element and animates it once Motion arrives", async (name) => {
     const { ui, element, change, measure, fallbackClass } = control(name);
     const motion = motionLoading();
-    render(ui);
+    render(ui());
     await expect.poll(element).not.toBeNull();
     const before = element();
 
@@ -180,7 +192,7 @@ describe("controls when Motion loads", () => {
   it.each(transitioned)("slides a %s changed while Motion loads", async (name) => {
     const { ui, element, change, measure, fallbackClass } = control(name);
     const motion = motionLoading();
-    render(ui);
+    render(ui());
     await expect.poll(element).not.toBeNull();
     await wait(100);
     const start = measure(element());
@@ -230,15 +242,28 @@ describe("controls once Motion has loaded", () => {
 
   it.each(names)("animates a %s change through in-between values", async (name) => {
     const { ui, element, change, measure } = control(name);
-    await renderSettled(ui);
+    await renderSettled(ui());
     const start = measure(element());
     change();
     expectInBetween(start, await sample(() => measure(element()), 40));
   });
 
+  it.each(withRenderProp)(
+    "keeps the %s classes and animation under a consumer's render prop",
+    async (name) => {
+      const { ui, element, change, measure, baseClass } = control(name);
+      await renderSettled(ui((props) => <span {...props} data-consumer="" />));
+      expect(element()).toHaveAttribute("data-consumer");
+      expect(element()).toHaveClass(baseClass);
+      const start = measure(element());
+      change();
+      expectInBetween(start, await sample(() => measure(element()), 40));
+    },
+  );
+
   it.each(names)("stops writing to a %s element unmounted mid-animation", async (name) => {
     const { ui, element, change } = control(name);
-    const { unmount } = await renderSettled(ui);
+    const { unmount } = await renderSettled(ui());
     change();
     await nextFrame();
     await nextFrame();
@@ -257,7 +282,7 @@ describe("controls once Motion has loaded", () => {
     "finishes a %s animation when reduced motion turns on, as the CSS fallback renders it",
     async (name) => {
       const subject = control(name);
-      const { unmount } = await renderSettled(subject.ui);
+      const { unmount } = await renderSettled(subject.ui());
       subject.change();
       await nextFrame();
       await nextFrame();
@@ -265,7 +290,7 @@ describe("controls once Motion has loaded", () => {
       const finished = snapshot(subject);
       unmount();
 
-      render(subject.ui);
+      render(subject.ui());
       subject.change();
       await wait(100);
       expect(finished).toEqual(snapshot(subject));
@@ -276,7 +301,7 @@ describe("controls once Motion has loaded", () => {
     "keeps an unchecked %s indicator mounted only while Motion drives it",
     async (name) => {
       const { ui, element, change } = control(name);
-      await renderSettled(ui);
+      await renderSettled(ui());
       change();
       await wait(300);
       expect(element()).not.toBeNull();
