@@ -91,6 +91,8 @@ export function useMotionAnimate<E extends HTMLElement | SVGElement>(
   });
   const controls = useRef<{ complete(): void; stop(): void } | null>(null);
   const animated = useRef<E | null>(null);
+  // A cancelled hand-off's undo, waiting for Motion's next post-render step
+  const pendingUndo = useRef<(() => void) | null>(null);
 
   // Motion arrived (or reduced motion turned off): take over once no CSS transition runs
   useLayoutEffect(() => {
@@ -109,6 +111,9 @@ export function useMotionAnimate<E extends HTMLElement | SVGElement>(
       }
       const { target } = latest.current;
       if (node && target) {
+        // A hand-off cancelled earlier in this frame must not strip the values written now
+        if (pendingUndo.current) m.cancelFrame(pendingUndo.current);
+        pendingUndo.current = null;
         controls.current = m.animate(node, JSON.parse(target), { duration: 0 });
         animated.current = node;
         instant = node;
@@ -129,7 +134,12 @@ export function useMotionAnimate<E extends HTMLElement | SVGElement>(
       controls.current?.stop();
       controls.current = null;
       animated.current = null;
-      m.frame.postRender(() => clearProperties(m, node, latest.current.clear));
+      const undo = () => {
+        pendingUndo.current = null;
+        clearProperties(m, node, latest.current.clear);
+      };
+      pendingUndo.current = undo;
+      m.frame.postRender(undo);
     };
   }, [available, driving, m]);
 

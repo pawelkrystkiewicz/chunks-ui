@@ -1,6 +1,6 @@
 import type { HTMLProps } from "@base-ui/react/types";
 import { render } from "@testing-library/react";
-import { Profiler, type ReactElement, type ReactNode, StrictMode } from "react";
+import { Activity, Profiler, type ReactElement, type ReactNode, StrictMode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { commands } from "vitest/browser";
 import { Checkbox } from "../components/checkbox";
@@ -389,5 +389,28 @@ describe("controls once Motion has loaded", () => {
     await reducedMotion(false);
     await wait(400);
     expect(at()).toEqual(before);
+  });
+
+  // <Activity> hidden and shown again in the frame Motion arrives: the first hand-off is
+  // cancelled and a second one starts before Motion writes
+  it("keeps a Switch thumb in place when its hand-off is cancelled and restarted", async () => {
+    const motion = motionLoading();
+    const ui = (mode: "visible" | "hidden") => (
+      <Activity mode={mode}>
+        <Switch.Root aria-label="Notifications" defaultChecked>
+          <Switch.Thumb data-testid="moving" />
+        </Switch.Root>
+      </Activity>
+    );
+    const { rerender } = render(ui("visible"));
+    await wait(100);
+    const resting = left(byTestId());
+
+    await motion.arrive();
+    rerender(ui("hidden"));
+    rerender(ui("visible"));
+    await wait(300);
+    expect(byTestId()).not.toHaveClass("micro-interactions");
+    expect(left(byTestId())).toBe(resting);
   });
 });
