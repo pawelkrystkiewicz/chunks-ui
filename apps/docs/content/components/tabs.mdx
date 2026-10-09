@@ -81,9 +81,9 @@ Set `orientation="vertical"` on the root. The list switches to a vertical flex c
 
 ## Animated Indicator
 
-The `Tabs.Indicator` component renders an absolutely-positioned bar at the bottom of the active tab. It uses Base UI's built-in CSS variables (`--active-tab-left`, `--active-tab-width`) and transitions with `ease-snappy` for smooth sliding between tabs.
+The `Tabs.Indicator` component renders a pill behind the active tab. With Motion installed, a spring moves it between tabs.
 
-The indicator works without JavaScript animation -- it relies purely on CSS transitions.
+Without Motion, or with reduced motion, it takes its position and size from the CSS variables Base UI sets on it (`--active-tab-left`, `--active-tab-top`, `--active-tab-width`, `--active-tab-height`). It slides with a CSS transition, which reduced motion turns off.
 
 ## Routed Tabs (single panel)
 

@@ -191,7 +191,10 @@ function TabsIndicatorElement({
     ...props,
     className: cn(
       "absolute rounded-md bg-background shadow-sm",
-      !driven && "micro-interactions duration-200 ease-snappy",
+      // The CSS fallback places the indicator from the variables Base UI sets on it. Motion
+      // writes inline values instead, and they are removed when it hands back.
+      !driven &&
+        "top-(--active-tab-top) left-(--active-tab-left) h-(--active-tab-height) w-(--active-tab-width) micro-interactions duration-200 ease-snappy",
       className,
     ),
   });

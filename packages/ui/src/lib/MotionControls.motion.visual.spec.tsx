@@ -9,6 +9,7 @@ import { Radio } from "../components/radio";
 import { Switch } from "../components/switch";
 import { Tabs } from "../components/tabs";
 import { ToggleGroup } from "../components/toggle-group";
+import { insetsWithin } from "../VisualTest.utils";
 import { reloadMotion } from "./use-motion";
 
 // Runs with reduced motion off. These controls stay mounted, so Motion must animate their
@@ -43,6 +44,8 @@ type Control = {
    * it, so a test can catch it animating in
    */
   toChecked?: () => void;
+  /** For indicators placed by the CSS fallback: the element the indicator sits over */
+  over?: () => Element | null;
 };
 
 const controls: Record<string, Control> = {
@@ -87,7 +90,9 @@ const controls: Record<string, Control> = {
     change: () => click('[role="tab"]:last-of-type'),
     measure: left,
     fallbackClass: "micro-interactions",
+    cssTransition: true,
     baseClass: "rounded-md",
+    over: () => document.querySelector('[role="tab"][aria-selected="true"]'),
   },
   Radio: {
     ui: (consumerRender) => (
@@ -156,6 +161,13 @@ async function settled(read: () => number) {
     previous = value;
   }
   throw new Error(`Still changing after 120 frames, at ${previous}`);
+}
+
+/** The element covers the one it sits over, every edge within a pixel */
+function expectOver({ element, over }: Control) {
+  if (!over) return;
+  const insets = insetsWithin(over() as Element, element() as Element);
+  expect(Math.max(...Object.values(insets).map(Math.abs))).toBeLessThanOrEqual(1);
 }
 
 /** What the CSS fallback leaves on the element, compared between two renders */
@@ -320,6 +332,7 @@ describe("controls once Motion has loaded", () => {
       await reducedMotion(true);
       const finished = snapshot(subject);
       expect(finished.present).toBe(true);
+      expectOver(subject);
       unmount();
 
       render(subject.ui());
@@ -344,6 +357,7 @@ describe("controls once Motion has loaded", () => {
       rerender(ui("visible"));
       await wait(100);
       const shown = snapshot(subject);
+      expectOver(subject);
       unmount();
 
       render(subject.ui());
@@ -420,13 +434,14 @@ describe("controls once Motion has loaded", () => {
   });
 
   // Turning reduced motion off again hands the element back to Motion, which must put back
-  // the values it removed when the CSS fallback took over. Only these two end up somewhere
-  // the CSS fallback does not put them: Radio and Checkbox end at the fallback's opacity, and
-  // React keeps ToggleGroup's style.
+  // the values it removed when the CSS fallback took over. Only these two lose their place
+  // without those values, as Motion's path drops the classes that place them: Radio and
+  // Checkbox end at the fallback's opacity, and React keeps ToggleGroup's style.
   it.each(["Switch", "Tabs.Indicator"])(
     "puts a %s back when reduced motion turns off again",
     async (name) => {
-      const { ui, element, change, measure, fallbackClass = "" } = control(name);
+      const subject = control(name);
+      const { ui, element, change, measure, fallbackClass = "" } = subject;
       await renderSettled(ui());
       const start = measure(element());
       change();
@@ -436,6 +451,7 @@ describe("controls once Motion has loaded", () => {
 
       await reducedMotion(true);
       await expect.poll(element).toHaveClass(fallbackClass);
+      expectOver(subject);
       await reducedMotion(false);
       await expect.poll(element).not.toHaveClass(fallbackClass);
       expect(Math.round(await settled(() => measure(element())))).toBe(before);
