@@ -135,6 +135,9 @@ export function useMotionAnimate<E extends HTMLElement | SVGElement>(
       controls.current = null;
       animated.current = null;
       const undo = () => {
+        // Stale: a hand-off started since. cancelFrame misses this callback when that hand-off
+        // ran from an earlier callback in the same post-render step
+        if (pendingUndo.current !== undo) return;
         pendingUndo.current = null;
         clearProperties(m, node, latest.current.clear);
       };

@@ -1,5 +1,6 @@
 import type { HTMLProps } from "@base-ui/react/types";
 import { render } from "@testing-library/react";
+import { frame } from "motion/react";
 import { Activity, Profiler, type ReactElement, type ReactNode, StrictMode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { commands } from "vitest/browser";
@@ -420,5 +421,28 @@ describe("controls once Motion has loaded", () => {
     await wait(300);
     expect(byTestId()).not.toHaveClass("micro-interactions");
     expect(left(byTestId())).toBe(resting);
+  });
+
+  // Shown again from a post-render callback that runs before the cancelled hand-off's undo in
+  // the same step: cancelling the undo is too late there, so it must see it is stale and skip
+  it("keeps a Switch thumb in place when a cancelled hand-off's undo runs after the next one", async () => {
+    const motion = motionLoading();
+    const ui = (mode: "visible" | "hidden") => (
+      <Activity mode={mode}>
+        <Switch.Root aria-label="Notifications" defaultChecked>
+          <Switch.Thumb data-testid="moving" />
+        </Switch.Root>
+      </Activity>
+    );
+    const { rerender } = render(ui("visible"));
+    await wait(100);
+    const resting = left(byTestId());
+
+    await motion.arrive();
+    frame.postRender(() => rerender(ui("visible")));
+    rerender(ui("hidden"));
+    const values = await sample(() => left(byTestId()), 20);
+    expect(byTestId()).not.toHaveClass("micro-interactions");
+    expect(new Set(values)).toEqual(new Set([resting]));
   });
 });
