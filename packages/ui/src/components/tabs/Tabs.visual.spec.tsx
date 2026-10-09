@@ -102,6 +102,12 @@ const PATHS = [
   { path: "CSS fallback", reducedMotion: true },
 ] as const;
 
+/** Waits until the indicator is on the path: Motion drops the CSS fallback's transition class */
+const onPath = (reducedMotion: boolean) =>
+  expect
+    .poll(() => indicator().classList.contains("micro-interactions"), { timeout: 5000 })
+    .toBe(reducedMotion);
+
 /** Where the indicator's `::after` line is drawn, in viewport px */
 function underline() {
   const box = indicator().getBoundingClientRect();
@@ -147,10 +153,7 @@ describe.each(PATHS)("Tabs.Indicator restyled as an underline, $path", ({ reduce
         </Tabs.List>
       </Tabs.Root>,
     );
-    // The CSS fallback's transition class goes once Motion drives the indicator
-    await expect
-      .poll(() => indicator().classList.contains("micro-interactions"), { timeout: 5000 })
-      .toBe(reducedMotion);
+    await onPath(reducedMotion);
     await expectUnderlineBelowActiveTab();
 
     (document.querySelector('[role="tab"]:last-of-type') as HTMLElement).click();
@@ -167,12 +170,6 @@ describe.each(PATHS)("Tabs.Indicator over the active tab, $path", ({ reducedMoti
     commands.emulateMedia({ reducedMotion: reducedMotion ? "reduce" : "no-preference" }),
   );
   afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
-
-  /** Waits until this path places the indicator: Motion drops the CSS fallback's class */
-  const onThisPath = () =>
-    expect
-      .poll(() => indicator().classList.contains("micro-interactions"), { timeout: 5000 })
-      .toBe(reducedMotion);
 
   // Base UI measures `--active-tab-left` from physical rects. Placing the indicator with an
   // inline-start property, or from `--active-tab-right`, would mirror it here.
@@ -194,7 +191,7 @@ describe.each(PATHS)("Tabs.Indicator over the active tab, $path", ({ reducedMoti
     const second = getByRole("tab", { name: "Advanced settings" });
     // Right to left: the first tab is on the right
     expect(first.getBoundingClientRect().left).toBeGreaterThan(second.getBoundingClientRect().left);
-    await onThisPath();
+    await onPath(reducedMotion);
     await expectIndicatorOverActiveTab();
 
     await userEvent.click(second);
@@ -221,7 +218,7 @@ describe.each(PATHS)("Tabs.Indicator over the active tab, $path", ({ reducedMoti
     const last = getByRole("tab", { name: MANY_TABS.at(-1) });
     // Off-screen: past the list's right edge
     expect(last.getBoundingClientRect().left).toBeGreaterThan(list.getBoundingClientRect().right);
-    await onThisPath();
+    await onPath(reducedMotion);
     await expectIndicatorOverActiveTab();
 
     last.scrollIntoView({ block: "nearest", inline: "nearest" });
