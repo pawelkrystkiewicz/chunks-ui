@@ -29,11 +29,11 @@ import { Tooltip } from "../components/tooltip";
 import { reloadMotion } from "./use-motion";
 
 // Base UI accepts `className` as a function of the part's state. This one turns each boolean
-// and string field into a class (`state-open-true`, `state-orientation-vertical`...) and adds a
-// marker that it ran.
+// and string field into a class (`state-open-true`, `state-orientation-vertical`...) and adds
+// `fn-called`, which tailwind-merge leaves alone (`from-*` would read as a gradient class).
 const fromState = <State extends object>(state: State) =>
   [
-    "from-state",
+    "fn-called",
     ...Object.entries(state)
       .filter(([, value]) => typeof value === "boolean" || (typeof value === "string" && value))
       .map(([key, value]) => `state-${key}-${value}`),
@@ -45,13 +45,22 @@ type Part = (name: string) => { className: ClassNameProp; "data-testid": string 
 const items = ["apple", "banana"];
 
 // Each fixture renders a component in a state that shows on every part through `fromState`.
-// `stateless` lists parts whose Base UI state is an empty object, so only the marker shows.
+// `parts` maps each part to the class its state must produce, or `null` when its Base UI state is
+// an empty object and only the marker shows. NumberField.ScrubAreaCursor (only while scrubbing)
+// and ScrollArea.Corner (only when both scrollbars overflow) got the same one-word fix but do not
+// render in jsdom.
 const fixtures: Record<
   string,
-  { parts: string[]; stateless?: string[]; ui: (part: Part) => ReactNode }
+  { parts: Record<string, string | null>; ui: (part: Part) => ReactNode }
 > = {
   Accordion: {
-    parts: ["Root", "Item", "Header", "Trigger", "Panel"],
+    parts: {
+      Root: "state-disabled-true",
+      Item: "state-open-true",
+      Header: "state-open-true",
+      Trigger: "state-open-true",
+      Panel: "state-open-true",
+    },
     ui: (p) => (
       <Accordion.Root defaultValue={["a"]} disabled {...p("Root")}>
         <Accordion.Item value="a" {...p("Item")}>
@@ -63,17 +72,21 @@ const fixtures: Record<
       </Accordion.Root>
     ),
   },
-  Button: { parts: ["Root"], ui: (p) => <Button disabled {...p("Root")} /> },
+  Button: { parts: { Root: "state-disabled-true" }, ui: (p) => <Button disabled {...p("Root")} /> },
   IconButton: {
-    parts: ["Root"],
+    parts: { Root: "state-disabled-true" },
     ui: (p) => <IconButton aria-label="Icon" disabled {...p("Root")} />,
   },
   Checkbox: {
-    parts: ["Root"],
-    ui: (p) => <Checkbox.Root aria-label="Check" defaultChecked {...p("Root")} />,
+    parts: { Root: "state-checked-true", Indicator: "state-checked-true" },
+    ui: (p) => (
+      <Checkbox.Root aria-label="Check" defaultChecked {...p("Root")}>
+        <Checkbox.Indicator {...p("Indicator")} />
+      </Checkbox.Root>
+    ),
   },
   Collapsible: {
-    parts: ["Trigger", "Panel"],
+    parts: { Trigger: "state-open-true", Panel: "state-open-true" },
     ui: (p) => (
       <Collapsible.Root defaultOpen>
         <Collapsible.Trigger {...p("Trigger")}>Toggle</Collapsible.Trigger>
@@ -82,18 +95,17 @@ const fixtures: Record<
     ),
   },
   Combobox: {
-    stateless: ["Icon", "GroupLabel"],
-    parts: [
-      "Input",
-      "Trigger",
-      "Icon",
-      "Clear",
-      "Positioner",
-      "Popup",
-      "GroupLabel",
-      "Item",
-      "ItemIndicator",
-    ],
+    parts: {
+      Input: "state-open-true",
+      Trigger: "state-open-true",
+      Icon: null,
+      Clear: "state-visible-true",
+      Positioner: "state-open-true",
+      Popup: "state-open-true",
+      GroupLabel: null,
+      Item: "state-selected-true",
+      ItemIndicator: "state-selected-true",
+    },
     ui: (p) => (
       <Combobox.Root open items={items} defaultValue="apple">
         <Combobox.Input aria-label="Fruit" {...p("Input")} />
@@ -121,8 +133,7 @@ const fixtures: Record<
     ),
   },
   "Combobox (empty)": {
-    parts: ["Empty"],
-    stateless: ["Empty"],
+    parts: { Empty: null },
     ui: (p) => (
       <Combobox.Root open items={[]}>
         <Combobox.Input aria-label="Fruit" />
@@ -137,9 +148,9 @@ const fixtures: Record<
     ),
   },
   "Combobox (chips)": {
-    parts: ["Chip", "ChipRemove"],
+    parts: { Chip: "state-disabled-true", ChipRemove: "state-disabled-true" },
     ui: (p) => (
-      <Combobox.Root multiple items={items} defaultValue={["apple"]}>
+      <Combobox.Root multiple items={items} defaultValue={["apple"]} disabled>
         <Combobox.Chips>
           <Combobox.Value>
             {(value: string[]) =>
@@ -157,8 +168,13 @@ const fixtures: Record<
     ),
   },
   Dialog: {
-    parts: ["Portal", "Backdrop", "Popup", "Title", "Description"],
-    stateless: ["Portal", "Title", "Description"],
+    parts: {
+      Portal: null,
+      Backdrop: "state-open-true",
+      Popup: "state-open-true",
+      Title: null,
+      Description: null,
+    },
     ui: (p) => (
       <Dialog.Root open>
         <Dialog.Portal {...p("Portal")}>
@@ -172,8 +188,13 @@ const fixtures: Record<
     ),
   },
   Drawer: {
-    parts: ["Portal", "Backdrop", "Popup", "Title", "Description"],
-    stateless: ["Portal", "Title", "Description"],
+    parts: {
+      Portal: null,
+      Backdrop: "state-open-true",
+      Popup: "state-open-true",
+      Title: null,
+      Description: null,
+    },
     ui: (p) => (
       <Drawer.Root open>
         <Drawer.Portal {...p("Portal")}>
@@ -187,7 +208,12 @@ const fixtures: Record<
     ),
   },
   Field: {
-    parts: ["Root", "Label", "Description", "Error"],
+    parts: {
+      Root: "state-disabled-true",
+      Label: "state-disabled-true",
+      Description: "state-disabled-true",
+      Error: "state-disabled-true",
+    },
     ui: (p) => (
       <Field.Root disabled {...p("Root")}>
         <Field.Label {...p("Label")}>Name</Field.Label>
@@ -199,20 +225,22 @@ const fixtures: Record<
       </Field.Root>
     ),
   },
-  Input: { parts: ["Root"], ui: (p) => <Input aria-label="Name" disabled {...p("Root")} /> },
+  Input: {
+    parts: { Root: "state-disabled-true" },
+    ui: (p) => <Input aria-label="Name" disabled {...p("Root")} />,
+  },
   Menu: {
-    stateless: ["GroupLabel"],
-    parts: [
-      "Content",
-      "Arrow",
-      "GroupLabel",
-      "Item",
-      "Separator",
-      "RadioItem",
-      "RadioItemIndicator",
-      "CheckboxItem",
-      "CheckboxItemIndicator",
-    ],
+    parts: {
+      Content: "state-open-true",
+      Arrow: "state-open-true",
+      GroupLabel: null,
+      Item: "state-disabled-true",
+      Separator: "state-orientation-horizontal",
+      RadioItem: "state-checked-true",
+      RadioItemIndicator: "state-checked-true",
+      CheckboxItem: "state-checked-true",
+      CheckboxItemIndicator: "state-checked-true",
+    },
     ui: (p) => (
       <Menu.Root open>
         <Menu.Trigger>Menu</Menu.Trigger>
@@ -238,7 +266,14 @@ const fixtures: Record<
     ),
   },
   NumberField: {
-    parts: ["Root", "ScrubArea", "Group", "Decrement", "Input", "Increment"],
+    parts: {
+      Root: "state-disabled-true",
+      ScrubArea: "state-disabled-true",
+      Group: "state-disabled-true",
+      Decrement: "state-disabled-true",
+      Input: "state-disabled-true",
+      Increment: "state-disabled-true",
+    },
     ui: (p) => (
       <NumberField.Root defaultValue={1} disabled {...p("Root")}>
         <NumberField.ScrubArea {...p("ScrubArea")}>
@@ -253,8 +288,7 @@ const fixtures: Record<
     ),
   },
   Popover: {
-    parts: ["Content", "Arrow", "Title", "Description"],
-    stateless: ["Title", "Description"],
+    parts: { Content: "state-open-true", Arrow: "state-open-true", Title: null, Description: null },
     ui: (p) => (
       <Popover.Root open>
         <Popover.Trigger>Open</Popover.Trigger>
@@ -267,7 +301,11 @@ const fixtures: Record<
     ),
   },
   Progress: {
-    parts: ["Root", "Track", "Indicator"],
+    parts: {
+      Root: "state-status-complete",
+      Track: "state-status-complete",
+      Indicator: "state-status-complete",
+    },
     ui: (p) => (
       <Progress.Root value={100} aria-label="Done" {...p("Root")}>
         <Progress.Track {...p("Track")}>
@@ -277,15 +315,27 @@ const fixtures: Record<
     ),
   },
   Radio: {
-    parts: ["Group", "Root"],
+    parts: {
+      Group: "state-disabled-true",
+      Root: "state-checked-true",
+      Indicator: "state-checked-true",
+    },
     ui: (p) => (
       <Radio.Group defaultValue="a" disabled aria-label="Choice" {...p("Group")}>
-        <Radio.Root value="a" aria-label="A" {...p("Root")} />
+        <Radio.Root value="a" aria-label="A" {...p("Root")}>
+          <Radio.Indicator {...p("Indicator")} />
+        </Radio.Root>
       </Radio.Group>
     ),
   },
   ScrollArea: {
-    parts: ["Root", "Viewport", "Content", "Scrollbar", "Thumb"],
+    parts: {
+      Root: "state-scrolling-false",
+      Viewport: "state-scrolling-false",
+      Content: "state-scrolling-false",
+      Scrollbar: "state-orientation-vertical",
+      Thumb: "state-orientation-vertical",
+    },
     ui: (p) => (
       <ScrollArea.Root {...p("Root")}>
         <ScrollArea.Viewport {...p("Viewport")}>
@@ -298,8 +348,15 @@ const fixtures: Record<
     ),
   },
   Select: {
-    parts: ["Trigger", "Icon", "Positioner", "Popup", "GroupLabel", "Item", "ItemIndicator"],
-    stateless: ["GroupLabel"],
+    parts: {
+      Trigger: "state-value-apple",
+      Icon: "state-open-true",
+      Positioner: "state-open-true",
+      Popup: "state-open-true",
+      GroupLabel: null,
+      Item: "state-selected-true",
+      ItemIndicator: "state-selected-true",
+    },
     ui: (p) => (
       <Select.Root open defaultValue="apple">
         <Select.Trigger aria-label="Fruit" {...p("Trigger")}>
@@ -323,11 +380,18 @@ const fixtures: Record<
     ),
   },
   Separator: {
-    parts: ["Root"],
+    parts: { Root: "state-orientation-vertical" },
     ui: (p) => <Separator orientation="vertical" {...p("Root")} />,
   },
   Slider: {
-    parts: ["Root", "Value", "Control", "Track", "Indicator", "Thumb"],
+    parts: {
+      Root: "state-disabled-true",
+      Value: "state-disabled-true",
+      Control: "state-disabled-true",
+      Track: "state-disabled-true",
+      Indicator: "state-disabled-true",
+      Thumb: "state-disabled-true",
+    },
     ui: (p) => (
       <Slider.Root defaultValue={50} disabled {...p("Root")}>
         <Slider.Value {...p("Value")} />
@@ -341,17 +405,28 @@ const fixtures: Record<
     ),
   },
   Switch: {
-    parts: ["Root"],
-    ui: (p) => <Switch.Root aria-label="On" defaultChecked {...p("Root")} />,
+    parts: { Root: "state-checked-true", Thumb: "state-checked-true" },
+    ui: (p) => (
+      <Switch.Root aria-label="On" defaultChecked {...p("Root")}>
+        <Switch.Thumb {...p("Thumb")} />
+      </Switch.Root>
+    ),
   },
   Tabs: {
-    parts: ["Root", "List", "Tab", "Panel"],
+    parts: {
+      Root: "state-orientation-horizontal",
+      List: "state-orientation-horizontal",
+      Tab: "state-active-true",
+      Indicator: "state-orientation-horizontal",
+      Panel: "state-hidden-false",
+    },
     ui: (p) => (
       <Tabs.Root defaultValue="a" {...p("Root")}>
         <Tabs.List {...p("List")}>
           <Tabs.Tab value="a" {...p("Tab")}>
             A
           </Tabs.Tab>
+          <Tabs.Indicator {...p("Indicator")} />
         </Tabs.List>
         <Tabs.Panel value="a" {...p("Panel")}>
           Body
@@ -360,7 +435,7 @@ const fixtures: Record<
     ),
   },
   "Toast (viewport)": {
-    parts: ["Viewport"],
+    parts: { Viewport: "state-expanded-false" },
     ui: (p) => (
       <Toast.Provider>
         <ToastAdder />
@@ -369,7 +444,13 @@ const fixtures: Record<
     ),
   },
   Toast: {
-    parts: ["Root", "Title", "Description", "Action", "Close"],
+    parts: {
+      Root: "state-type-success",
+      Title: "state-type-success",
+      Description: "state-type-success",
+      Action: "state-type-success",
+      Close: "state-type-success",
+    },
     ui: (p) => (
       <Toast.Provider>
         <ToastAdder />
@@ -389,7 +470,7 @@ const fixtures: Record<
     ),
   },
   ToggleGroup: {
-    parts: ["Root", "Item"],
+    parts: { Root: "state-disabled-true", Item: "state-pressed-true" },
     ui: (p) => (
       <ToggleGroup.Root defaultValue={["a"]} disabled {...p("Root")}>
         <ToggleGroup.Item value="a" {...p("Item")}>
@@ -399,7 +480,7 @@ const fixtures: Record<
     ),
   },
   Tooltip: {
-    parts: ["Positioner", "Popup", "Arrow"],
+    parts: { Positioner: "state-open-true", Popup: "state-open-true", Arrow: "state-open-true" },
     ui: (p) => (
       <Tooltip.Root open>
         <Tooltip.Trigger>Hint</Tooltip.Trigger>
@@ -436,7 +517,7 @@ async function classesOf(name: string, className: (part: string) => ClassNamePro
   if (!fixture) throw new Error(`No fixture ${name}`);
   render(fixture.ui((part) => ({ className: className(part), "data-testid": part })));
   const classes = new Map<string, string[]>();
-  for (const part of fixture.parts) {
+  for (const part of Object.keys(fixture.parts)) {
     const element = await screen.findByTestId(part);
     classes.set(part, [...element.classList]);
   }
@@ -460,19 +541,20 @@ beforeAll(async () => {
 afterEach(cleanup);
 
 const rows = Object.entries(fixtures).flatMap(([name, { parts }]) =>
-  parts.map((part) => [name, part] as const),
+  Object.entries(parts).map(([part, stateClass]) => [name, part, stateClass] as const),
 );
 
 describe("className on Base UI parts", () => {
-  it.each(rows)("%s.%s calls a className function with its state", async (name, part) => {
-    const base = (await classesOf(name, () => undefined)).get(part) ?? [];
-    const classes = (await classesOf(name, () => fromState)).get(part) ?? [];
-    expect(classes).toContain("from-state");
-    if (!fixtures[name]?.stateless?.includes(part)) {
-      expect(classes.some((c) => c.startsWith("state-"))).toBe(true);
-    }
-    expect(classes).toEqual(expect.arrayContaining(base));
-  });
+  it.each(rows)(
+    "%s.%s calls a className function with its state",
+    async (name, part, stateClass) => {
+      const base = (await classesOf(name, () => undefined)).get(part) ?? [];
+      const classes = (await classesOf(name, () => fromState)).get(part) ?? [];
+      expect(classes).toContain("fn-called");
+      if (stateClass) expect(classes).toContain(stateClass);
+      expect(classes).toEqual(expect.arrayContaining(base));
+    },
+  );
 
   it.each(rows)("%s.%s still takes a string className", async (name, part) => {
     const base = (await classesOf(name, () => undefined)).get(part) ?? [];
@@ -487,8 +569,8 @@ describe("className on composite wrappers", () => {
   it("passes an Input's className function to the input when adornments wrap it", () => {
     render(<Input aria-label="Search" disabled startAdornment="@" className={fromState} />);
     const input = screen.getByRole("textbox", { name: "Search" });
-    expect(input).toHaveClass("from-state", "state-disabled-true", "pl-9");
-    expect(input.parentElement).not.toHaveClass("from-state");
+    expect(input).toHaveClass("fn-called", "state-disabled-true", "pl-9");
+    expect(input.parentElement).not.toHaveClass("fn-called");
   });
 
   it("keeps an Input's string className on the wrapper when adornments wrap it", () => {
