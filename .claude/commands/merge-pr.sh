@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Merge PRs one after another once required checks are green and CodeRabbit has reviewed with no unresolved threads.
+# Merge PRs one after another: branch up to date, all required checks green, a CodeRabbit verdict on the
+# latest code (asked for when skipped), no unresolved CodeRabbit threads, exact checked sha. Never the release PR.
 # Usage: .claude/commands/merge-pr.sh <pr> [<pr>...]   — one call, PRs in merge order.
 # Exit 0 = all merged. Exit 1 = stopped; the last line says why.
 set -uo pipefail
@@ -7,18 +8,19 @@ die() { echo "$*"; exit 1; }
 repo=$(gh repo view --json nameWithOwner -q .nameWithOwner) || die "cannot resolve the repo"
 R=repos/$repo
 need=$(gh api "$R/branches/master/protection/required_status_checks" --jq '.contexts | length') || die "cannot read branch protection"
+[ "$need" -gt 0 ] || die "master has no required checks configured"
 
-# CodeRabbit's commit status from the last non-merge commit onward: reviewed | pending | rate-limited | skipped | none.
+# CodeRabbit's commit status from the last commit with code in it (anything but an update-branch merge by web-flow) onward: reviewed | pending | rate-limited | skipped | none.
 coderabbit() {
   local s d=""
-  for s in $(gh api "$R/pulls/$1/commits" --paginate --jq '.[] | "\(.sha) \(.parents | length)"' |
-    awk '{ s[NR] = $1 } $2 == 1 { c = NR } END { for (i = c; i <= NR; i++) print s[i] }'); do
+  for s in $(gh api "$R/pulls/$1/commits" --paginate --jq '.[] | "\(.sha) \((.parents | length) == 1 or .committer.login != "web-flow")"' |
+    awk '{ s[NR] = $1 } $2 == "true" { c = NR } END { for (i = c; i <= NR; i++) print s[i] }'); do
     d+=$(gh api "$R/commits/$s/status" --jq '.statuses[] | select(.context == "CodeRabbit") | .state + " " + .description')$'\n'
   done
   case $d in
     *"Review completed"*) echo reviewed ;;
-    *pending*) echo pending ;;
     *"rate limited"*) echo rate-limited ;;
+    *"Review in progress"*) echo pending ;;
     *"Review skipped"*) echo skipped ;;
     *) echo none ;;
   esac
@@ -26,7 +28,7 @@ coderabbit() {
 
 # ponytail: first 100 threads only; paginate if a PR ever collects more.
 open_threads() {
-  gh api graphql -F n="$1" -F owner="${repo%/*}" -F name="${repo#*/}" -f query='
+  gh api graphql -F n="$1" -f owner="${repo%/*}" -f name="${repo#*/}" -f query='
     query($owner: String!, $name: String!, $n: Int!) { repository(owner: $owner, name: $name) { pullRequest(number: $n) {
       reviewThreads(first: 100) { nodes { isResolved comments(first: 1) { nodes { author { login } } } } } } } }' \
     --jq '[.data.repository.pullRequest.reviewThreads.nodes[] | select((.isResolved | not) and .comments.nodes[0].author.login == "coderabbitai")] | length'
@@ -42,9 +44,10 @@ for n in "$@"; do
     echo "$(date +%H:%M) #$n round $round: $state $mstate ${head:0:7}"
     case "$state $mstate" in
       MERGED*) break ;;
+      *DRAFT) die "#$n is a draft" ;;
       CLOSED*) die "#$n is closed" ;;
       *DIRTY) die "#$n conflicts with master — merge origin/master in the worktree, run the gates, push, rerun" ;;
-      *BEHIND) gh api -X PUT "$R/pulls/$n/update-branch" >/dev/null && echo "#$n branch updated"; sleep 60; continue ;;
+      *BEHIND) gh api -X PUT "$R/pulls/$n/update-branch" >/dev/null || die "#$n update-branch failed"; echo "#$n branch updated"; sleep 60; continue ;;
     esac
 
     # Required checks: wait up to 30 min until every one has reported, then require all green.
@@ -58,21 +61,25 @@ for n in "$@"; do
       gh pr checks "$n" --required; die "#$n required checks not green after 30 min ($total/$need reported, $bad not passing)"
     fi
 
-    # CodeRabbit: ask for a review when the push was skipped (no auto-review on this repo), wait up to 30 min for a verdict.
+    # CodeRabbit: ask for a review when the push was skipped (no auto-review on this repo) or no status shows up within 5 min.
+    # Wait up to 30 min for a verdict.
     verdict=none
-    for _ in $(seq 60); do
+    for i in $(seq 60); do
       verdict=$(coderabbit "$n")
       case $verdict in reviewed | rate-limited) break ;; esac
-      if [ "$verdict" = skipped ] && [ "$asked" != "$head" ]; then
+      if { [ "$verdict" = skipped ] || { [ "$verdict" = none ] && [ "$i" -gt 10 ]; }; } && [ "$asked" != "$head" ]; then
         gh pr comment "$n" --body "@coderabbitai review" >/dev/null && asked=$head && echo "#$n asked CodeRabbit to review ${head:0:7}"
       fi
       sleep 30
     done
     case $verdict in reviewed | rate-limited) ;; *) die "#$n no CodeRabbit verdict after 30 min (status: $verdict)" ;; esac
+    sleep 20 # let inline threads land after the status flips
     threads=$(open_threads "$n") || die "#$n cannot read review threads"
     [ "$threads" -eq 0 ] || die "#$n has $threads unresolved CodeRabbit threads — triage, fix, reply, resolve each, rerun"
 
     # Merge only the commit that was checked, and only while it is up to date with master.
+    # UNSTABLE = a non-required check (e.g. the docs preview) failed; required ones are green.
+    # ponytail: master can still move between this read and the PUT (admin merge skips strict mode); window is seconds.
     read -r mstate now < <(gh pr view "$n" --json mergeStateStatus,headRefOid -q '"\(.mergeStateStatus) \(.headRefOid)"')
     if [ "$now" = "$head" ] && { [ "$mstate" = CLEAN ] || [ "$mstate" = UNSTABLE ]; } &&
       gh api -X PUT "$R/pulls/$n/merge" -f merge_method=merge -f sha="$head" --jq .message; then
