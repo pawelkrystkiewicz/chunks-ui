@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { useEffect, useRef } from "react";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, onTestFinished } from "vitest";
 import { commands, page } from "vitest/browser";
 import { Toast } from "./index";
 
@@ -46,20 +46,24 @@ describe("Toast with motion allowed", () => {
 
   // `translate-x-full` sets the `translate` property, not `transform`
   it("slides and fades in", async () => {
+    // Every transition that starts, recorded from before the toast mounts
+    const runs: { target: EventTarget | null; property: string }[] = [];
+    const record = (event: TransitionEvent) => {
+      runs.push({ target: event.target, property: event.propertyName });
+    };
+    document.addEventListener("transitionrun", record, true);
+    onTestFinished(() => document.removeEventListener("transitionrun", record, true));
+
     render(
       <Toast.Provider>
         <AddToast title="File saved" />
         <Toast.Viewport />
       </Toast.Provider>,
     );
-    const toast = (await screen.findByText("File saved")).closest(".Toast") as HTMLElement;
-    const transitioned = new Set<string>();
-    for (let frame = 0; frame < 30; frame++) {
-      for (const animation of toast.getAnimations()) {
-        if (animation instanceof CSSTransition) transitioned.add(animation.transitionProperty);
-      }
-      await new Promise((resolve) => requestAnimationFrame(resolve));
-    }
-    expect([...transitioned].sort()).toEqual(["opacity", "translate"]);
+    const toast = (await screen.findByText("File saved")).closest(".Toast");
+    const transitioned = () =>
+      [...new Set(runs.filter((run) => run.target === toast).map((run) => run.property))].sort();
+    await expect.poll(transitioned).toEqual(expect.arrayContaining(["opacity", "translate"]));
+    expect(transitioned()).toEqual(["opacity", "translate"]);
   });
 });
