@@ -260,6 +260,8 @@ function TabsContents({ className, children, transition, ref, ...props }: TabsCo
   // The first animation jumps to the current state, as initial={false} did; without Motion
   // the inline style it set is cleared so the CSS layout applies again. stop() writes the value
   // it stopped at in Motion's next render step, so the style is cleared again in that step.
+  // That relies on our callback being queued after Motion's own write; the reduced-motion
+  // test in Tabs.motion.visual.spec.tsx guards it.
   const slide = useRef<{ stop(): void } | null>(null);
   useLayoutEffect(() => {
     const track = trackRef.current;

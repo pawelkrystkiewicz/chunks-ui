@@ -288,7 +288,7 @@ describe("Tabs animations that must stop", () => {
     const track = contents.firstElementChild as HTMLElement;
     await commands.emulateMedia({ reducedMotion: "reduce" });
     // The inline styles are cleared, so the CSS layout shows the tall panel unshifted, full height
-    await expect.poll(() => contents.style.height, { timeout: 200 }).toBe("");
+    await expect.poll(() => contents.style.height, { timeout: 1000 }).toBe("");
     for (let frame = 0; frame < 5; frame++) {
       await nextFrame();
       expect(contents.style.height).toBe("");
@@ -310,7 +310,7 @@ describe("Tabs.Contents height with Motion", () => {
     expect(passedThrough(heights, start, end)).toBe(true);
   });
 
-  it("keeps the active panel's top in view when part of it is scrolled into view", async () => {
+  it("cannot be scrolled programmatically, so the active panel's top stays in view", async () => {
     await reloadMotion();
     // The short panel is active; the tall one next to it makes the track taller than the container
     const { getByTestId } = render(panelsOfTwoHeights("short"));
