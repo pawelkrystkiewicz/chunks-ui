@@ -27,6 +27,8 @@ type Control = {
   change: () => void;
   /** The value Motion animates, read from layout or computed style */
   measure: (element: HTMLElement | null) => number;
+  /** A class the CSS fallback adds for its transition and Motion's path drops */
+  fallbackClass?: string;
   /** The CSS fallback animates the change with a transition */
   cssTransition?: boolean;
 };
@@ -41,6 +43,7 @@ const controls: Record<string, Control> = {
     element: byTestId,
     change: () => click('[role="switch"]'),
     measure: left,
+    fallbackClass: "micro-interactions",
     cssTransition: true,
   },
   ToggleGroup: {
@@ -53,6 +56,7 @@ const controls: Record<string, Control> = {
     element: () => document.querySelector<HTMLElement>('[role="group"] > span'),
     change: () => click('[role="group"] > button:last-of-type'),
     measure: left,
+    fallbackClass: "micro-interactions",
     cssTransition: true,
   },
   "Tabs.Indicator": {
@@ -68,6 +72,7 @@ const controls: Record<string, Control> = {
     element: byTestId,
     change: () => click('[role="tab"]:last-of-type'),
     measure: left,
+    fallbackClass: "micro-interactions",
   },
   Radio: {
     ui: (
@@ -109,11 +114,33 @@ async function sample(measure: () => number, frames: number) {
   return values;
 }
 
-afterEach(async () => {
-  await commands.emulateMedia({ reducedMotion: "no-preference" });
-  // Motion reads the preference from the media query's change event
+/** Some sampled values lie strictly between where the change started and where it ended */
+function expectInBetween(start: number, values: number[]) {
+  const end = values.at(-1) ?? start;
+  expect(Math.abs(end - start)).toBeGreaterThan(0.5);
+  expect(values.some((value) => (value - start) * (value - end) < 0)).toBe(true);
+}
+
+/** What the CSS fallback leaves on the element, compared between two renders */
+function snapshot({ element, measure }: Control) {
+  const node = element();
+  return {
+    present: node !== null,
+    // An emptied style attribute and no style attribute render the same
+    style: node?.getAttribute("style") || null,
+    className: node?.className ?? null,
+    position: measure === left ? measure(node) : null,
+  };
+}
+
+const reducedMotion = async (reduce: boolean) => {
+  await commands.emulateMedia({ reducedMotion: reduce ? "reduce" : "no-preference" });
+  // Motion and the components read the preference from the media query's change event
   await nextFrame();
-});
+  await nextFrame();
+};
+
+afterEach(() => reducedMotion(false));
 
 // Holds Motion back until the test lets it arrive
 function motionLoading() {
@@ -132,25 +159,30 @@ function motionLoading() {
 }
 
 describe("controls when Motion loads", () => {
-  it.each(names)("keeps the %s element when Motion finishes loading", async (name) => {
-    const { ui, element } = control(name);
+  it.each(names)("keeps the %s element and animates it once Motion arrives", async (name) => {
+    const { ui, element, change, measure, fallbackClass } = control(name);
     const motion = motionLoading();
     render(ui);
     await expect.poll(element).not.toBeNull();
     const before = element();
 
     await motion.arrive();
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await wait(100);
     expect(element()).toBe(before);
+    if (fallbackClass) expect(element()).not.toHaveClass(fallbackClass);
+    // Motion took over: a change now animates
+    const start = measure(element());
+    change();
+    expectInBetween(start, await sample(() => measure(element()), 40));
   });
 
   // Changed just before Motion arrives: the CSS transition runs to the end before Motion takes over
   it.each(transitioned)("slides a %s changed while Motion loads", async (name) => {
-    const { ui, element, change, measure } = control(name);
+    const { ui, element, change, measure, fallbackClass } = control(name);
     const motion = motionLoading();
     render(ui);
     await expect.poll(element).not.toBeNull();
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await wait(100);
     const start = measure(element());
     change();
     await nextFrame();
@@ -163,6 +195,7 @@ describe("controls when Motion loads", () => {
       Math.abs(value - (i === 0 ? start : (values[i - 1] ?? 0))),
     );
     expect(Math.max(...steps)).toBeLessThan(travel / 2);
+    expect(element()).not.toHaveClass(fallbackClass ?? "");
   });
 
   it("hands N controls over to Motion in one commit", async () => {
@@ -188,28 +221,24 @@ describe("controls when Motion loads", () => {
 });
 
 describe("controls once Motion has loaded", () => {
-  async function renderSettled(name: string) {
+  async function renderSettled(ui: ReactNode) {
     await reloadMotion();
-    const result = render(control(name).ui);
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    const result = render(ui);
+    await wait(300);
     return result;
   }
 
   it.each(names)("animates a %s change through in-between values", async (name) => {
-    const { element, change, measure } = control(name);
-    await renderSettled(name);
+    const { ui, element, change, measure } = control(name);
+    await renderSettled(ui);
     const start = measure(element());
     change();
-    const values = await sample(() => measure(element()), 40);
-    const end = values.at(-1) ?? start;
-    expect(Math.abs(end - start)).toBeGreaterThan(0.5);
-    const between = (value: number) => (value - start) * (value - end) < 0;
-    expect(values.some(between)).toBe(true);
+    expectInBetween(start, await sample(() => measure(element()), 40));
   });
 
-  it.each(transitioned)("stops writing to a %s element unmounted mid-animation", async (name) => {
-    const { element, change } = control(name);
-    const { unmount } = await renderSettled(name);
+  it.each(names)("stops writing to a %s element unmounted mid-animation", async (name) => {
+    const { ui, element, change } = control(name);
+    const { unmount } = await renderSettled(ui);
     change();
     await nextFrame();
     await nextFrame();
@@ -224,40 +253,52 @@ describe("controls once Motion has loaded", () => {
     }
   });
 
-  it.each(transitioned)(
-    "finishes a %s animation at once when reduced motion turns on",
+  it.each(names)(
+    "finishes a %s animation when reduced motion turns on, as the CSS fallback renders it",
     async (name) => {
-      const { element, change, measure } = control(name);
-      await renderSettled(name);
+      const subject = control(name);
+      const { unmount } = await renderSettled(subject.ui);
+      subject.change();
+      await nextFrame();
+      await nextFrame();
+      await reducedMotion(true);
+      const finished = snapshot(subject);
+      unmount();
+
+      render(subject.ui);
+      subject.change();
+      await wait(100);
+      expect(finished).toEqual(snapshot(subject));
+    },
+  );
+
+  it.each(["Radio", "Checkbox"])(
+    "keeps an unchecked %s indicator mounted only while Motion drives it",
+    async (name) => {
+      const { ui, element, change } = control(name);
+      await renderSettled(ui);
       change();
-      await nextFrame();
-      await nextFrame();
-      const midway = measure(element());
-      await commands.emulateMedia({ reducedMotion: "reduce" });
-      await nextFrame();
-      await nextFrame();
-      const settled = measure(element());
-      expect(settled).not.toBe(midway);
-      // At rest: nothing moves in the frames after
-      expect(await sample(() => measure(element()), 5)).toEqual([
-        settled,
-        settled,
-        settled,
-        settled,
-        settled,
-      ]);
+      await wait(300);
+      expect(element()).not.toBeNull();
+      expect(opacity(element())).toBe(0);
+
+      await reducedMotion(true);
+      expect(element()).toBeNull();
+
+      await reducedMotion(false);
+      await wait(100);
+      expect(element()).not.toBeNull();
+      expect(opacity(element())).toBe(0);
     },
   );
 
   it("morphs the Checkbox mark between check and minus", async () => {
-    await reloadMotion();
     const checkbox = (indeterminate: boolean) => (
       <Checkbox.Root aria-label="Subscribe" checked indeterminate={indeterminate}>
         <Checkbox.Indicator />
       </Checkbox.Root>
     );
-    const { rerender } = render(checkbox(false));
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    const { rerender } = await renderSettled(checkbox(false));
     const path = document.querySelector("path") as SVGPathElement;
     const check = path.getAttribute("d");
 
