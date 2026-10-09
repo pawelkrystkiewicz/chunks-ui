@@ -6,7 +6,7 @@ React 19+ component library built on [Base UI](https://base-ui.com) + [Tailwind 
 
 ```bash
 bun add chunks-ui
-# motion is optional but recommended
+# motion (12.43 or newer) is optional but recommended
 bun add motion
 ```
 

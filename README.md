@@ -43,7 +43,7 @@ Accordion, Toast, Menu, Progress, Calendar, DatePicker, Scroll Area, Number Fiel
 | ----------- | ---------------------------------------------- |
 | Headless    | `@base-ui/react` v1.2+ (includes Floating UI)  |
 | Styling     | Tailwind CSS v4 + CVA                          |
-| Animation   | Motion v12+ (optional peer dep)                |
+| Animation   | Motion 12.43+ (optional peer dep)              |
 | Build       | tsup (ESM + CJS + `.d.ts`)                     |
 | Test        | Vitest + Testing Library + jest-axe            |
 | Lint/Format | Biome                                          |
@@ -99,7 +99,7 @@ Use with Tailwind: `bg-primary text-primary-foreground`, `bg-destructive text-de
 
 ## Animation
 
-Motion is a first-class but optional peer dependency. Components detect it at runtime — if absent, they fall back to CSS transitions.
+Motion is a first-class but optional peer dependency (`^12.43.0`). Components detect it at runtime — if absent, they fall back to CSS transitions.
 
 Shared spring presets in `src/lib/motion.ts`:
 

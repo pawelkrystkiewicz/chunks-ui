@@ -6,7 +6,7 @@
 bun add chunks-ui motion
 ```
 
-`motion` is an optional peer dependency. Components work without it, but animations require it.
+`motion` is an optional peer dependency (`^12.43.0`). Components work without it, but animations require it.
 
 ## Setup
 
@@ -29,7 +29,7 @@ The theme CSS exposes OKLCH color tokens as CSS variables and registers them wit
 
 - **Headless layer:** `@base-ui/react` v1.2+ (includes Floating UI for positioning)
 - **Styling:** Tailwind CSS v4 + CVA + `clsx` + `tailwind-merge`
-- **Animation:** Motion v12+ (optional peer dependency)
+- **Animation:** Motion 12.43+ (optional peer dependency)
 - **Build:** tsup (ESM + CJS + `.d.ts`)
 - **Compound pattern:** Components use `<X.Root>`, `<X.Trigger>`, `<X.Content>` patterns
 - **Composition:** Base UI `render` prop, not `asChild`
