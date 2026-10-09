@@ -9,6 +9,7 @@ import { Drawer } from "../components/drawer";
 import { Popover } from "../components/popover";
 import { Select } from "../components/select";
 import { Tooltip } from "../components/tooltip";
+import { waitForStable } from "../VisualTest.utils";
 import { PortalContainerProvider } from "./portal-container";
 
 // Lives in the browser (visual) suite, not jsdom: real clicks respect a modal's `inert` and the
@@ -251,6 +252,118 @@ describe("overlays opened from an overlay", () => {
 
       await option.click();
       await expect.element(trigger).toHaveTextContent("banana");
+    },
+  );
+});
+
+// An overlay opened straight from the page portals to <body> (or a provider's container), so
+// only its Portal's z-layer (drawers 600, modals 700) lifts it above the app's own layers.
+// Both bars cross the middle of the viewport, where a Dialog sits and a Drawer spans.
+function AppBars() {
+  return (
+    <>
+      <div
+        data-testid="fixed bar"
+        style={{ position: "fixed", insetInline: 0, top: "40%", height: "10%", zIndex: 50 }}
+      />
+      <div style={{ height: "50vh" }} />
+      <div
+        data-testid="sticky bar"
+        style={{ position: "sticky", top: 0, height: "10vh", zIndex: 100 }}
+      />
+      <div style={{ height: "60vh" }} />
+    </>
+  );
+}
+
+const pageOverlays = {
+  Dialog: (
+    <Dialog.Root>
+      <Dialog.Trigger>Open Dialog</Dialog.Trigger>
+      <Dialog.Portal>
+        <Dialog.Backdrop data-testid="backdrop" />
+        <Dialog.Popup>
+          <Dialog.Title>Dialog</Dialog.Title>
+          <Dialog.Close>Close</Dialog.Close>
+        </Dialog.Popup>
+      </Dialog.Portal>
+    </Dialog.Root>
+  ),
+  Drawer: (
+    <Drawer.Root>
+      <Drawer.Trigger>Open Drawer</Drawer.Trigger>
+      <Drawer.Portal>
+        <Drawer.Backdrop data-testid="backdrop" />
+        <Drawer.Popup>
+          <Drawer.Title>Drawer</Drawer.Title>
+          <Drawer.Close>Close</Drawer.Close>
+        </Drawer.Popup>
+      </Drawer.Portal>
+    </Drawer.Root>
+  ),
+};
+
+const overlap = (a: DOMRect, b: DOMRect): [number, number] | undefined => {
+  const left = Math.max(a.left, b.left);
+  const right = Math.min(a.right, b.right);
+  const top = Math.max(a.top, b.top);
+  const bottom = Math.min(a.bottom, b.bottom);
+  return right > left && bottom > top ? [(left + right) / 2, (top + bottom) / 2] : undefined;
+};
+
+describe("overlays opened from the page", () => {
+  it.each([
+    ["Dialog", false],
+    ["Dialog", true],
+    ["Drawer", false],
+    ["Drawer", true],
+  ] as const)(
+    "puts a %s above fixed and sticky app bars (provider: %s)",
+    async (name, withProvider) => {
+      render(
+        <Harness withProvider={withProvider}>
+          {pageOverlays[name]}
+          <AppBars />
+        </Harness>,
+      );
+      await page.getByRole("button", { name: `Open ${name}` }).click();
+      const popupLocator = page.getByRole("dialog", { name });
+      await expect.element(popupLocator).toBeVisible();
+      const popup = popupLocator.element();
+      const backdrop = page.getByTestId("backdrop").element();
+      const box = DOMRect.fromRect(
+        await waitForStable(() => popup.getBoundingClientRect().toJSON()),
+      );
+      const clicks: EventTarget[] = [];
+      popup.addEventListener("click", (event) => event.target && clicks.push(event.target));
+
+      for (const bar of ["fixed bar", "sticky bar"]) {
+        const barBox = page.getByTestId(bar).element().getBoundingClientRect();
+        const onPopup = overlap(box, barBox);
+        if (!onPopup)
+          throw new Error(`The ${name} must cover part of the ${bar}, or this proves nothing`);
+        expect(popup.contains(document.elementFromPoint(...onPopup))).toBe(true);
+
+        // Where the bar shows past the popup, the backdrop covers it
+        const pastPopup = (
+          [
+            [barBox.left + 4, barBox.top + 4],
+            [barBox.left + 4, barBox.bottom - 4],
+            [barBox.right - 4, barBox.top + 4],
+            [barBox.right - 4, barBox.bottom - 4],
+          ] as [number, number][]
+        ).find((point) => !inside(box, point));
+        if (!pastPopup) throw new Error(`The ${bar} must show past the ${name}`);
+        expect(document.elementFromPoint(...pastPopup)).toBe(backdrop);
+
+        // A real click there lands in the popup; `force` skips Playwright's own hit test
+        await popupLocator.click({
+          position: { x: onPopup[0] - box.left, y: onPopup[1] - box.top },
+          force: true,
+        });
+      }
+      expect(clicks).toHaveLength(2);
+      await expect.element(popupLocator).toBeVisible();
     },
   );
 });
