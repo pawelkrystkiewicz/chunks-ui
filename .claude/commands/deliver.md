@@ -81,7 +81,7 @@ The builder's prompt starts with the System Prompt from `.claude/agents/builder.
 
 Pick the mode:
 
-- **Sequential** (the default): use it when the `review-sequential` skill is listed in your available skills. It runs at least 3 passes, opening on Opus, so it costs more.
+- **Sequential** (the default): use it when the `review-sequential` skill is listed in your available skills, unless the input says "quick review". It runs at least 3 passes, opening on Opus, so it costs more.
 - **Single:** use it when the input says "quick review", or when the skill is not listed.
 
 Both modes judge findings against the same rubric:
