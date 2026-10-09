@@ -81,8 +81,8 @@ The builder's prompt starts with the System Prompt from `.claude/agents/builder.
 
 Pick the mode:
 
-- **Sequential** (the default): use it when the `review-sequential` skill is available.
-- **Single:** use it when the input says "quick review", or when the skill is not available.
+- **Sequential** (the default): use it when the `review-sequential` skill is listed in your available skills. It runs at least 3 passes, opening on Opus, so it costs more.
+- **Single:** use it when the input says "quick review", or when the skill is not listed.
 
 Both modes judge findings against the same rubric:
 
@@ -94,15 +94,14 @@ Both modes judge findings against the same rubric:
 
 ### Sequential
 
-Invoke the `review-sequential` skill (Skill tool). Use `passes=N` from the input if given; otherwise use its default of 3. Its args name:
+Invoke the `review-sequential` skill (Skill tool). Use `passes=N` from the input if given (the skill raises anything below 3 to 3), otherwise its default of 3. Its args name:
 
-- the range `origin/master..HEAD` and the branch;
-- that the repo is `<wt>`, and every git and gate command runs inside it;
-- one paragraph on what the change is for;
-- the rubric above;
-- **do not push.**
+- `base=origin/master`, the branch, and that the repo is `<wt>`. Every git and gate command runs as `cd <wt> && …` or `git -C <wt> …`.
+- one paragraph on what the change is for, plus the rubric above;
+- **the fix waves:** each implementer gets the step-5 builder brief (the builder.md System Prompt, the file scope, TDD, gates, commit format with the co-author trailer). Only one implementer works in `<wt>` at a time.
+- **no push.** This overrides the skill's Finish. Step 7, not the skill's lint, is the final gate.
 
-The skill handles fresh reviewers, triage, fix waves and the ponytail sign-off. You still own the triage. Out-of-scope findings go on the Also possible list. Its final summary table feeds the PR body and the report.
+You still own the triage. Out-of-scope findings and the skill's leftovers go on the Also possible list. Its per-pass table gives the findings fixed and dropped (with reasons). Write them one line each for the PR body and the report.
 
 ### Single
 
