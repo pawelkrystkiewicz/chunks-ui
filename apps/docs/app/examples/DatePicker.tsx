@@ -53,3 +53,11 @@ export function DatePickerDisabledExample() {
     </Container>
   );
 }
+
+export function DatePickerWeekOptionsExample() {
+  return (
+    <Container>
+      <DatePicker weekStartsOn={1} showOutsideDays placeholder="Week starts on Monday" />
+    </Container>
+  );
+}
