@@ -22,6 +22,17 @@ if (typeof window !== "undefined") {
 }
 
 /**
+ * Tests only: forget the loaded module and load it again. A popup that opens before the
+ * returned promise settles mounts while Motion is still loading, as on a fresh page.
+ */
+export function reloadMotion(): Promise<unknown> {
+  _cache = undefined;
+  return import("motion/react").then((m) => {
+    _cache = m;
+  });
+}
+
+/**
  * Lazily loads motion/react. Returns the module when available, null otherwise.
  * Always returns null on the first render (SSR-safe), then upgrades after mount.
  */
@@ -43,6 +54,17 @@ export function useMotion(): MotionReact | null {
       });
   }, []);
 
+  return mod;
+}
+
+/**
+ * For popups: the Motion module if it has already loaded, otherwise null, fixed for the
+ * caller's lifetime. Switching an open popup to a `motion.div` would remount it and lose its
+ * focus and typed input, so one that opens before Motion loads keeps CSS until it closes.
+ * Popups render in client-only portals, so reading the cache on the first render is safe.
+ */
+export function useLoadedMotion(): MotionReact | null {
+  const [mod] = useState(() => _cache ?? null);
   return mod;
 }
 

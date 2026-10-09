@@ -6,7 +6,7 @@ import { cn } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
 import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
-import { useMotion, useReducedMotion } from "../../lib/use-motion";
+import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
 
 export type PopoverRootProps = ComponentProps<typeof BasePopover.Root>;
 export type PopoverTriggerProps = ComponentProps<typeof BasePopover.Trigger>;
@@ -38,7 +38,19 @@ export type PopoverContentProps = ComponentProps<typeof BasePopover.Popup> & {
   alignOffset?: ComponentProps<typeof BasePopover.Positioner>["alignOffset"];
 };
 
-function PopoverContent({
+function PopoverContent(props: PopoverContentProps) {
+  return (
+    <BasePopover.Portal container={usePortalContainer()}>
+      {/* A modal popover aria-hides nodes outside its portal, so popups opened inside portal in here */}
+      <PortalContainerProvider value={undefined}>
+        {/* Mounts only while open, so it picks Motion or CSS each time the popover opens */}
+        <PopoverContentPopup {...props} />
+      </PortalContainerProvider>
+    </BasePopover.Portal>
+  );
+}
+
+function PopoverContentPopup({
   className,
   sideOffset = 8,
   side,
@@ -46,8 +58,7 @@ function PopoverContent({
   alignOffset,
   ...props
 }: PopoverContentProps) {
-  const m = useMotion();
-  const container = usePortalContainer();
+  const m = useLoadedMotion();
   const reduced = useReducedMotion();
   const useSpring = !!m && !reduced;
   const render = useSpring
@@ -60,30 +71,25 @@ function PopoverContent({
     : undefined;
 
   return (
-    <BasePopover.Portal container={container}>
-      {/* A modal popover aria-hides nodes outside its portal, so popups opened inside portal in here */}
-      <PortalContainerProvider value={undefined}>
-        <BasePopover.Positioner
-          className="z-dropdowns"
-          sideOffset={sideOffset}
-          side={side}
-          align={align}
-          alignOffset={alignOffset}
-        >
-          <BasePopover.Popup
-            render={render}
-            className={cn(
-              "rounded-md border border-border bg-popover p-4 text-popover-foreground shadow-md",
-              !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
-              !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
-              !useSpring && "micro-interactions",
-              className,
-            )}
-            {...props}
-          />
-        </BasePopover.Positioner>
-      </PortalContainerProvider>
-    </BasePopover.Portal>
+    <BasePopover.Positioner
+      className="z-dropdowns"
+      sideOffset={sideOffset}
+      side={side}
+      align={align}
+      alignOffset={alignOffset}
+    >
+      <BasePopover.Popup
+        render={render}
+        className={cn(
+          "rounded-md border border-border bg-popover p-4 text-popover-foreground shadow-md",
+          !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
+          !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
+          !useSpring && "micro-interactions",
+          className,
+        )}
+        {...props}
+      />
+    </BasePopover.Positioner>
   );
 }
 

@@ -7,7 +7,7 @@ import { cn } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
 import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
-import { useMotion, useReducedMotion } from "../../lib/use-motion";
+import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
 import { drawerPopupVariants } from "./Drawer.Variants";
 
 export type DrawerProps = ComponentProps<typeof BaseDialog.Root>;
@@ -37,10 +37,12 @@ export type DrawerTitleProps = ComponentProps<typeof BaseDialog.Title>;
 export type DrawerDescriptionProps = ComponentProps<typeof BaseDialog.Description>;
 export type DrawerCloseProps = ComponentProps<typeof BaseDialog.Close>;
 
+// `transform` rather than x/y: Motion runs it as a browser animation, which Base UI waits for
+// (element.getAnimations()) before it unmounts a closing popup, so the drawer can slide out
 const slideDirections = {
-  left: { from: { x: "-100%" }, to: { x: "0%" } },
-  right: { from: { x: "100%" }, to: { x: "0%" } },
-  bottom: { from: { y: "100%" }, to: { y: "0%" } },
+  left: { from: { transform: "translateX(-100%)" }, to: { transform: "translateX(0%)" } },
+  right: { from: { transform: "translateX(100%)" }, to: { transform: "translateX(0%)" } },
+  bottom: { from: { transform: "translateY(100%)" }, to: { transform: "translateY(0%)" } },
 } as const;
 
 const motionPositionClasses = {
@@ -66,7 +68,7 @@ function DrawerPortal({ className, children, ...props }: DrawerPortalProps) {
 }
 
 function DrawerBackdrop({ className, forceRender = true, ...props }: DrawerBackdropProps) {
-  const m = useMotion();
+  const m = useLoadedMotion();
   const reduced = useReducedMotion();
   const useSpring = !!m && !reduced;
   const render = useSpring
@@ -95,7 +97,7 @@ function DrawerBackdrop({ className, forceRender = true, ...props }: DrawerBackd
 }
 
 function DrawerPopup({ side = "right", className, ...props }: DrawerPopupProps) {
-  const m = useMotion();
+  const m = useLoadedMotion();
   const reduced = useReducedMotion();
   const useSpring = !!m && !reduced;
   const resolvedSide = side ?? "right";

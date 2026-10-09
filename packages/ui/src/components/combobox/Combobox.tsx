@@ -7,7 +7,7 @@ import { cn } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
 import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
-import { useMotion, useReducedMotion } from "../../lib/use-motion";
+import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
 
 export type ComboboxRootProps = ComponentProps<typeof BaseCombobox.Root>;
 export type ComboboxInputProps = ComponentProps<typeof BaseCombobox.Input>;
@@ -113,7 +113,7 @@ function ComboboxPositioner({ className, ...props }: ComboboxPositionerProps) {
 }
 
 function ComboboxPopup({ className, ...props }: ComboboxPopupProps) {
-  const m = useMotion();
+  const m = useLoadedMotion();
   const reduced = useReducedMotion();
   const useSpring = !!m && !reduced;
   const render = useSpring
