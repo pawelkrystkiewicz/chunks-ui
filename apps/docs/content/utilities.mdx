@@ -1,0 +1,132 @@
+# Utilities
+
+Chunks UI exports the helpers its components use to merge class names: `cn` for plain class lists and `cnState` for Base UI parts whose `className` can be a function of their state.
+
+```tsx
+import { cn, cnState, type ClassInput, type StateClassName } from "chunks-ui";
+```
+
+## cn
+
+`cn` joins class names with [clsx](https://github.com/lukeed/clsx), then resolves Tailwind conflicts with [tailwind-merge](https://github.com/dcastil/tailwind-merge). When two classes set the same property, the last one wins:
+
+```tsx
+cn("px-4 py-2", "px-6"); // "py-2 px-6"
+```
+
+Use it to let a `className` prop override your defaults:
+
+```tsx
+import { cn } from "chunks-ui";
+import type { ComponentProps } from "react";
+
+export function Panel({ className, ...props }: ComponentProps<"section">) {
+  return <section className={cn("rounded-lg border border-border p-4", className)} {...props} />;
+}
+```
+
+`<Panel className="p-6" />` renders with `rounded-lg border border-border p-6`.
+
+### What it accepts
+
+Strings, numbers, arrays (readonly ones and `as const` tuples too) and dictionaries of class names to conditions. Booleans, `null`, `undefined` and `0` are skipped, so conditions can go inline:
+
+```tsx
+cn("text-sm", isActive && "font-semibold", ["rounded-md", { "opacity-50": disabled }]);
+// isActive true, disabled false: "text-sm font-semibold rounded-md"
+```
+
+Functions are a type error. clsx ignores them, so a function would never produce a class. For a `className` that may be a function of state, use [`cnState`](#cnstate).
+
+### Theme tokens
+
+`cn` knows the tokens from `chunks-ui/theme.css`, so an override of a token class replaces it instead of adding a second one:
+
+| Token | Classes | Example |
+|---|---|---|
+| Z-index layers | `z-base`, `z-dropdowns`, `z-tooltips`, `z-overlays`, `z-drawers`, `z-modals`, `z-notifications`, `z-toasts` | `cn("z-dropdowns", "z-50")` → `"z-50"` |
+| Component sizing | `ui-height`, `ui-icon-height` in any spacing utility (`h-`, `size-`, `min-h-`, `p-`…) | `cn("h-ui-height", "h-8")` → `"h-8"` |
+| Heading font | `font-heading` | `cn("font-heading", "font-mono")` → `"font-mono"` |
+| Easing curves | `ease-fluid`, `ease-snappy` | `cn("ease-fluid", "ease-in")` → `"ease-in"` |
+
+The z-index, sizing and easing values are on the [Theme](/theme) page. `font-heading` reads `--font-heading`, which has no default, so titles inherit their font until you set it.
+
+## cnState
+
+Base UI parts accept `className` as a string or as a function of the part's state. `cnState` is `cn` for those parts: pass your classes first and the consumer's `className` last.
+
+- A string (or `undefined`) merges like `cn` and returns a string.
+- A function returns a new function of the state that merges your classes with its result.
+
+Use it when you wrap a Base UI part yourself:
+
+```tsx
+import { Toggle } from "@base-ui/react/toggle";
+import { cnState } from "chunks-ui";
+import type { ComponentProps } from "react";
+
+export function FavoriteToggle({ className, ...props }: ComponentProps<typeof Toggle>) {
+  return (
+    <Toggle
+      className={cnState(
+        "inline-flex size-9 items-center justify-center rounded-md text-muted-foreground",
+        "data-pressed:text-primary",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+```
+
+Consumers of `FavoriteToggle` can then pass either form, and both keep your base classes:
+
+```tsx
+<FavoriteToggle aria-label="Favorite" className="size-8" />
+
+<FavoriteToggle
+  aria-label="Favorite"
+  className={(state) => (state.pressed ? "bg-primary/10" : undefined)}
+/>
+```
+
+`cn(base, className)` does not compile here, because `cn` takes no functions. In `cnState` only the last argument may be one.
+
+## className functions on components
+
+Every chunks-ui part built on a Base UI part takes a `className` function and calls it with that part's state. Its result merges with the part's own classes:
+
+```tsx
+import { Tabs } from "chunks-ui";
+
+<Tabs.Tab value="activity" className={(state) => (state.active ? "font-semibold" : undefined)}>
+  Activity
+</Tabs.Tab>;
+```
+
+Most of that state is also on the element as `data-*` attributes, so a plain string often does the same job: `className="data-active:font-semibold"`.
+
+Two components put `className` on an element that has no Base UI state:
+
+- **`Radio.Item`** puts it on its `<label>`, so it takes a string only. Style the radio itself with `Radio.Root`.
+- **`Input`** with `startAdornment`, `endAdornment` or `onClear` (and `InputCopy`, which always has an end adornment) puts a string on the wrapper that positions the adornments, and a function on the input inside it:
+
+```tsx
+import { Input } from "chunks-ui";
+import { Search } from "lucide-react";
+
+<Input
+  aria-label="Search"
+  startAdornment={<Search className="size-4" />}
+  className={(state) => (state.focused ? "border-primary" : undefined)}
+/>;
+```
+
+Components that render plain HTML elements, such as `Card`, `Empty`, `Skeleton` and `Table`, take a string `className`.
+
+## Types
+
+| Type | Description |
+|---|---|
+| `ClassInput` | What `cn` accepts: a string, number, boolean or nullish value, an array of `ClassInput`, or a dictionary of class names to conditions. clsx's `ClassValue` without functions. |
+| `StateClassName<State>` | A Base UI part's `className`: `string \| ((state: State) => string \| undefined) \| undefined`. The last argument of `cnState`. |
