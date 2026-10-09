@@ -64,7 +64,7 @@ function ControlledSwitch() {
 | Part | Description |
 |---|---|
 | `Switch.Root` | The switch track. Manages checked state and keyboard interaction. Changes background color when checked. |
-| `Switch.Thumb` | The sliding circle that moves between unchecked (`translate-x-0`) and checked (`translate-x-4`) positions. |
+| `Switch.Thumb` | The sliding circle. When checked it moves by its own width (`translate-x-full`), so it fits any `--spacing`. If you resize the switch, keep the track's inner width at twice the thumb's, e.g. `h-6 w-11` on `Switch.Root` with `size-5` on `Switch.Thumb`. |
 
 ## Props
 

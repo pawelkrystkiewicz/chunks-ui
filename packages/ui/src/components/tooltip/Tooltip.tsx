@@ -36,7 +36,11 @@ function TooltipPopup({ className, ...props }: TooltipPopupProps) {
     <BaseTooltip.Popup
       render={render}
       className={cn(
-        "rounded-md bg-foreground px-2.5 py-1 text-background text-xs shadow-md",
+        "relative rounded-md bg-foreground px-2.5 py-1 text-background text-xs shadow-md",
+        // The gap to the trigger is a margin, not a px `sideOffset`, so it scales with the
+        // arrow and the tip clears the trigger at any --spacing.
+        "data-[side=top]:mb-2 data-[side=bottom]:mt-2 data-[side=left]:mr-2 data-[side=right]:ml-2",
+        "data-[side=inline-start]:me-2 data-[side=inline-end]:ms-2",
         !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
         !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
         // !useSpring && "micro-interactions",
@@ -52,10 +56,11 @@ function TooltipArrow({ className, ...props }: TooltipArrowProps) {
     <BaseTooltip.Arrow
       className={cn(
         "absolute size-2.5 rotate-45 bg-foreground",
-        "data-[side=top]:-bottom-[5px]",
-        "data-[side=bottom]:-top-[5px]",
-        "data-[side=left]:-right-[5px]",
-        "data-[side=right]:-left-[5px]",
+        // Half the arrow's size, so its centre sits on the popup edge at any --spacing.
+        "data-[side=top]:-bottom-1.25",
+        "data-[side=bottom]:-top-1.25",
+        "data-[side=left]:-right-1.25",
+        "data-[side=right]:-left-1.25",
         className,
       )}
       {...props}
@@ -64,9 +69,7 @@ function TooltipArrow({ className, ...props }: TooltipArrowProps) {
 }
 
 function TooltipPositioner({ className, ...props }: TooltipPositionerProps) {
-  return (
-    <BaseTooltip.Positioner sideOffset={6} className={cn("z-tooltips", className)} {...props} />
-  );
+  return <BaseTooltip.Positioner className={cn("z-tooltips", className)} {...props} />;
 }
 
 function TooltipTrigger({ delay = 50, ...props }: TooltipTriggerProps) {

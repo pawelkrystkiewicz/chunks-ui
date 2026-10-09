@@ -49,6 +49,24 @@ const isWeekend = (date: Date) => date.getDay() === 0 || date.getDay() === 6;
 
 <CalendarDisabledDatesExample />
 
+## Keyboard
+
+The day grid follows the keyboard pattern of the [WAI-ARIA date picker example](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/examples/datepicker-dialog/). It has one Tab stop: the selected day if it is in the shown month, else today, else the 1st of the month. After you move with the keys, the day you moved to becomes the Tab stop. Days from neighbouring months (`showOutsideDays`) are never Tab stops.
+
+| Key | Moves focus to |
+| --- | --- |
+| <kbd>←</kbd> / <kbd>→</kbd> | The previous / next day |
+| <kbd>↑</kbd> / <kbd>↓</kbd> | The same weekday in the previous / next week |
+| <kbd>Home</kbd> / <kbd>End</kbd> | The first / last day of the week, following `weekStartsOn` |
+| <kbd>Page Up</kbd> / <kbd>Page Down</kbd> | The same day in the previous / next month |
+| <kbd>Shift</kbd> + <kbd>Page Up</kbd> / <kbd>Page Down</kbd> | The same day in the previous / next year |
+
+<kbd>Enter</kbd> or <kbd>Space</kbd> selects the focused day. When focus moves past the shown month, the calendar shows the new month. If the target month is shorter, focus goes to its last day: Page Up from March 31 goes to February 28.
+
+Disabled days (`min`, `max`, `isDateDisabled`) can take focus, and screen readers announce them as unavailable. Arrow keys do not skip them, but Enter, Space and clicks do not select them.
+
+The left and right arrows are not mirrored in right-to-left layouts.
+
 ## Calendar Props
 
 <TSDoc
