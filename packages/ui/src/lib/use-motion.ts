@@ -1,20 +1,20 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 
 type MotionReact = typeof import("motion/react");
 
 let _cache: MotionReact | null | undefined;
+const motionListeners = new Set<() => void>();
+
+function setMotion(m: MotionReact | null) {
+  _cache = m;
+  for (const notify of motionListeners) notify();
+}
 
 function loadMotion() {
   if (_cache !== undefined) return;
-  import("motion/react")
-    .then((m) => {
-      _cache = m;
-    })
-    .catch(() => {
-      _cache = null;
-    });
+  import("motion/react").then(setMotion, () => setMotion(null));
 }
 
 if (typeof window !== "undefined") {
@@ -27,34 +27,28 @@ if (typeof window !== "undefined") {
  */
 export function reloadMotion(): Promise<unknown> {
   _cache = undefined;
-  return import("motion/react").then((m) => {
-    _cache = m;
-  });
+  return import("motion/react").then(setMotion);
+}
+
+function subscribeToMotion(onLoad: () => void) {
+  motionListeners.add(onLoad);
+  return () => {
+    motionListeners.delete(onLoad);
+  };
 }
 
 /**
  * Lazily loads motion/react. Returns the module when available, null otherwise.
- * Always returns null on the first render (SSR-safe), then upgrades after mount.
+ * Null on the server and while hydrating, so server markup matches. A component that mounts
+ * after Motion has loaded gets it on its first render, so it never swaps in Motion elements
+ * later; one mounted earlier re-renders with it once it loads.
  */
 export function useMotion(): MotionReact | null {
-  const [mod, setMod] = useState<MotionReact | null>(null);
-
-  useEffect(() => {
-    if (_cache !== undefined) {
-      setMod(_cache);
-      return;
-    }
-    import("motion/react")
-      .then((m) => {
-        _cache = m;
-        setMod(m);
-      })
-      .catch(() => {
-        _cache = null;
-      });
-  }, []);
-
-  return mod;
+  return useSyncExternalStore(
+    subscribeToMotion,
+    () => _cache ?? null,
+    () => null,
+  );
 }
 
 /**
