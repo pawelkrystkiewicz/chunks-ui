@@ -71,8 +71,10 @@ describe("Tabs", () => {
       );
       await expect.poll(offset).toBeLessThanOrEqual(1);
 
-      (document.querySelector('[role="tab"]:last-of-type') as HTMLElement).click();
+      const clicked = document.querySelector('[role="tab"]:last-of-type') as HTMLElement;
+      clicked.click();
       await nextFrame();
+      expect(clicked).toHaveAttribute("aria-selected", "true");
       expect(indicator().getAnimations()).toHaveLength(0);
       expect(offset()).toBeLessThanOrEqual(1);
     },
