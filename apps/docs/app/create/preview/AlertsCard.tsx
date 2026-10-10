@@ -4,19 +4,19 @@ import { AlertTriangle, CheckCircle2, X, XCircle } from "lucide-react";
 const ALERTS = [
   {
     Icon: CheckCircle2,
-    tone: "text-success",
+    tone: "text-success-text",
     title: "Deployment ready",
     text: "acme-dashboard is live on production.",
   },
   {
     Icon: AlertTriangle,
-    tone: "text-warning",
+    tone: "text-warning-text",
     title: "Build is slow",
     text: "Running 3 minutes longer than usual.",
   },
   {
     Icon: XCircle,
-    tone: "text-destructive",
+    tone: "text-destructive-text",
     title: "Payment failed",
     text: "Update your card to keep the Pro plan.",
     action: "Update card",

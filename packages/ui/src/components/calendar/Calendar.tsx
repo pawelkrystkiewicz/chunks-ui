@@ -376,7 +376,9 @@ export function Calendar({
                           "micro-interactions focus-visible:outline-2 focus-visible:outline-ring",
                           !isSelected && !isToday && "hover:bg-accent hover:text-accent-foreground",
                           isSelected && "bg-primary text-primary-foreground",
-                          isToday && !isSelected && "font-medium text-primary ring-1 ring-primary",
+                          isToday &&
+                            !isSelected &&
+                            "font-medium text-primary-text ring-1 ring-primary",
                           !isCurrentMonth && !isSelected && "text-muted-foreground opacity-50",
                           disabled && "pointer-events-none opacity-40",
                         )}

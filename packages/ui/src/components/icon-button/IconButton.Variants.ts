@@ -57,22 +57,22 @@ export const iconButtonVariants = cva(
       {
         variant: "outlined",
         color: "primary",
-        className: "border-primary text-primary hover:bg-primary/10",
+        className: "border-primary text-primary-text hover:bg-primary/10",
       },
       {
         variant: "outlined",
         color: "destructive",
-        className: "border-destructive text-destructive hover:bg-destructive/10",
+        className: "border-destructive text-destructive-text hover:bg-destructive/10",
       },
       {
         variant: "outlined",
         color: "success",
-        className: "border-success text-success hover:bg-success/10",
+        className: "border-success text-success-text hover:bg-success/10",
       },
       {
         variant: "outlined",
         color: "warning",
-        className: "border-warning text-warning hover:bg-warning/10",
+        className: "border-warning text-warning-text hover:bg-warning/10",
       },
       {
         variant: "outlined",
@@ -83,22 +83,22 @@ export const iconButtonVariants = cva(
       {
         variant: "text",
         color: "primary",
-        className: "text-primary hover:bg-primary/10",
+        className: "text-primary-text hover:bg-primary/10",
       },
       {
         variant: "text",
         color: "destructive",
-        className: "text-destructive hover:bg-destructive/10",
+        className: "text-destructive-text hover:bg-destructive/10",
       },
       {
         variant: "text",
         color: "success",
-        className: "text-success hover:bg-success/10",
+        className: "text-success-text hover:bg-success/10",
       },
       {
         variant: "text",
         color: "warning",
-        className: "text-warning hover:bg-warning/10",
+        className: "text-warning-text hover:bg-warning/10",
       },
       {
         variant: "text",

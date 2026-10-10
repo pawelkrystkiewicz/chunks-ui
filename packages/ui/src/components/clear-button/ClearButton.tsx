@@ -23,7 +23,7 @@ export function ClearButton({ className, label, ...props }: ClearButtonProps) {
         "text-muted-foreground hover:bg-destructive/5 hover:text-foreground",
         "focus-visible:outline-2 focus-visible:outline-ring",
         "disabled:pointer-events-none disabled:opacity-50",
-        "hover:text-destructive",
+        "hover:text-destructive-text",
         "cursor-pointer",
         ...BUTTON_ANIMATION_CLASSES,
         "hover:scale-105",

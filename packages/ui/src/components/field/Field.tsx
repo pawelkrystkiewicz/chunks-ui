@@ -37,7 +37,9 @@ function FieldDescription({ className, ...props }: FieldDescriptionProps) {
 export type FieldErrorProps = ComponentProps<typeof BaseField.Error>;
 
 function FieldError({ className, ...props }: FieldErrorProps) {
-  return <BaseField.Error className={cnState("text-destructive text-xs", className)} {...props} />;
+  return (
+    <BaseField.Error className={cnState("text-destructive-text text-xs", className)} {...props} />
+  );
 }
 
 export const Field = {

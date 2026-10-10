@@ -17,16 +17,46 @@ This single file provides all CSS variables for light mode, dark mode, and Tailw
 
 ### Semantic Colors (OKLCH)
 
-| Token | Light Value | Purpose |
+These values are the same in light and dark mode. Each foreground has at least 4.5:1 contrast (WCAG 2 AA) with its fill.
+
+| Token | Value | Purpose |
 |---|---|---|
-| `--primary` | `oklch(60.48% 0.2165 257.21)` | Brand blue |
+| `--primary` | `oklch(0.56 0.2165 257.21)` | Brand blue |
 | `--primary-foreground` | `oklch(0.985 0 0)` | Text on primary |
 | `--success` | `oklch(75.14% 0.1514 166.5)` | Positive actions |
-| `--success-foreground` | `oklch(0.985 0 0)` | Text on success |
+| `--success-foreground` | `oklch(0.145 0 0)` | Text on success |
 | `--warning` | `oklch(77.97% 0.1665 72.45)` | Caution states |
 | `--warning-foreground` | `oklch(0.145 0 0)` | Text on warning |
-| `--destructive` | `oklch(66.16% 0.2249 25.88)` | Errors, deletions |
+| `--destructive` | `oklch(0.582 0.2249 25.88)` | Errors, deletions |
 | `--destructive-foreground` | `oklch(0.985 0 0)` | Text on destructive |
+
+### Coloured Text
+
+Text in a semantic colour needs 4.5:1 contrast with the background. Some fills do not have it: success text on white is about 2:1. So coloured text uses its own colours: `primary-text`, `success-text`, `warning-text` and `destructive-text`, for example `text-destructive-text`. The `outlined` and `text` variants of `Button` and `IconButton`, `Chip`, `Field.Error`, the current day in `Calendar` and the hover colour of `ClearButton` use them.
+
+Each colour keeps the hue and chroma of its fill and changes only the lightness, with CSS relative colour syntax:
+
+| Mode | Lightness | Example |
+|---|---|---|
+| Light | `min(l, 0.51)`: at most 0.51 | `oklch(from var(--primary) min(l, 0.51) c h)` |
+| Dark | `max(l, 0.63)`: at least 0.63 | `oklch(from var(--primary) max(l, 0.63) c h)` |
+
+With these limits the default colours keep 4.5:1 on the background and on the `/10` tint that `Chip` uses. The `--colored-text-lightness` variable holds the rule for each mode.
+
+Only `.dark` redefines `--colored-text-lightness`. A light-styled subtree inside `.dark` should set `--colored-text-lightness: min(l, 0.51)` itself, and a dark surface without `.dark` should set `max(l, 0.63)`.
+
+The limits are tuned for the default fills. Very saturated teal or cyan custom fills (hue about 185 to 190, chroma 0.15 or more) can land below 4.5:1, so set `--primary-text` (or the matching `--X-text`) for them.
+
+The colour is computed on the element that uses it. If you set `--primary` on `:root` or on a nested element, the text shade inside follows it. To use a different shade, set `--primary-text`, `--success-text`, `--warning-text` or `--destructive-text`. These tokens have no default value.
+
+```css
+.brand-section {
+  --primary: oklch(0.55 0.2 293); /* fills, and the text shade derived from them */
+  --primary-text: oklch(0.45 0.2 293); /* optional: a shade of your choice */
+}
+```
+
+Relative colour syntax needs Chrome 119+, Safari 18+ or Firefox 128+. Older browsers show this text in the inherited text colour.
 
 ### Surface Colors
 
@@ -46,7 +76,7 @@ This single file provides all CSS variables for light mode, dark mode, and Tailw
 | `--secondary` | `oklch(0.97 0 0)` | `oklch(0.269 0 0)` |
 | `--secondary-foreground` | `oklch(0.205 0 0)` | `oklch(0.985 0 0)` |
 | `--muted` | `oklch(0.97 0 0)` | `oklch(0.269 0 0)` |
-| `--muted-foreground` | `oklch(0.556 0 0)` | `oklch(0.708 0 0)` |
+| `--muted-foreground` | `oklch(0.53 0 0)` | `oklch(0.708 0 0)` |
 | `--accent` | `oklch(0.97 0 0)` | `oklch(0.269 0 0)` |
 | `--accent-foreground` | `oklch(0.205 0 0)` | `oklch(0.985 0 0)` |
 
@@ -56,7 +86,7 @@ This single file provides all CSS variables for light mode, dark mode, and Tailw
 |---|---|---|
 | `--border` | `oklch(0.922 0 0)` | `oklch(0.269 0 0)` |
 | `--input` | `oklch(0.922 0 0)` | `oklch(0.269 0 0)` |
-| `--ring` | `oklch(0.708 0 0)` | `oklch(0.556 0 0)` |
+| `--ring` | `oklch(0.62 0 0)` | `oklch(0.556 0 0)` |
 | `--radius` | `0.625rem` | `0.625rem` |
 
 ## Tailwind Usage
@@ -69,6 +99,10 @@ Variables are mapped to Tailwind utilities via `@theme inline`:
   --color-primary-foreground: var(--primary-foreground);
   --color-success: var(--success);
   --color-destructive: var(--destructive);
+  --color-primary-text: var(
+    --primary-text,
+    oklch(from var(--primary) var(--colored-text-lightness) c h)
+  );
   /* ... */
 }
 ```
@@ -79,6 +113,7 @@ This means you can use them directly in Tailwind classes:
 <div className="bg-primary text-primary-foreground" />
 <div className="bg-destructive text-destructive-foreground" />
 <div className="border-border text-muted-foreground" />
+<p className="text-destructive-text">Something went wrong.</p>
 ```
 
 ## Dark Mode
@@ -89,7 +124,8 @@ Dark mode is toggled by adding the `.dark` class to the `<html>` element (same c
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
-  --primary: oklch(60.48% 0.2165 257.21);
+  --primary: oklch(0.56 0.2165 257.21);
+  --colored-text-lightness: max(l, 0.63);
   /* ... */
 }
 ```
@@ -149,7 +185,7 @@ The z-index system provides ordered layers to prevent stacking conflicts:
 | `--radius-sm` | `calc(var(--radius) - 4px)` |
 | `--radius-md` | `calc(var(--radius) - 2px)` |
 | `--radius-lg` | `var(--radius)` (0.625rem) |
-| `--radius-xl` | `calc(var(--radius) + 4px)` |
+| `--radius-xl` | `calc(var(--radius) + min(var(--radius), 4px))` |
 
 ## Chart Colors
 
