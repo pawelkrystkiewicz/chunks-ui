@@ -1,12 +1,13 @@
 import { DirectionProvider } from "@base-ui/react/direction-provider";
 import { render, screen } from "@testing-library/react";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { commands, userEvent } from "vitest/browser";
 import { Button } from "../components/button";
 import { Menu } from "../components/menu";
 import { Popover } from "../components/popover";
 import { describeMotionPaths, eachPaintedFrame, waitForStable } from "../VisualTest.utils";
+import { PortalContainerProvider } from "./portal-container";
 import { reloadMotion } from "./use-motion";
 
 /*
@@ -58,8 +59,28 @@ const REACH_PX = 1.75 * 4;
  */
 const TIP_GAP_PAST_OFFSET_PX = REACH_PX - ((2.5 * 4) / Math.SQRT2 - 1);
 
-/** An arrowed popup of `kind` on `side`, opened by default or by clicking "Trigger". */
-function arrowed(kind: Kind, side: Side, dir: Direction, defaultOpen: boolean): ReactNode {
+/** A section in `dir` that keeps the popups opened in it inside it, so they take its direction */
+function Section({ dir, children }: { dir: Direction; children: ReactNode }) {
+  const [container, setContainer] = useState<HTMLElement | null>(null);
+  return (
+    <div dir={dir}>
+      <PortalContainerProvider value={container}>{children}</PortalContainerProvider>
+      <div ref={setContainer} />
+    </div>
+  );
+}
+
+/**
+ * An arrowed popup of `kind` on `side`, opened by default or by clicking "Trigger". On a `page`
+ * of the other direction, it sits in a section in `dir`.
+ */
+function arrowed(
+  kind: Kind,
+  side: Side,
+  dir: Direction,
+  defaultOpen: boolean,
+  page: Direction = dir,
+): ReactNode {
   const trigger = <Button variant="outlined" />;
   const popup =
     kind === "Popover" ? (
@@ -85,10 +106,13 @@ function arrowed(kind: Kind, side: Side, dir: Direction, defaultOpen: boolean): 
     );
   // Base UI needs the direction to resolve logical sides, and the CSS needs it on the root
   // element, because the popup is portalled to <body>.
-  document.documentElement.dir = dir;
+  document.documentElement.dir = page;
+  const centred = (
+    <div style={{ padding: 120, display: "flex", justifyContent: "center" }}>{popup}</div>
+  );
   return (
     <DirectionProvider direction={dir}>
-      <div style={{ padding: 120, display: "flex", justifyContent: "center" }}>{popup}</div>
+      {page === dir ? centred : <Section dir={dir}>{centred}</Section>}
     </DirectionProvider>
   );
 }
@@ -134,8 +158,8 @@ function arrowShows(arrow: Element, side: PhysicalSide, toward: boolean) {
   return document.elementFromPoint(x, y) === arrow;
 }
 
-async function measure(kind: Kind, side: Side, dir: Direction) {
-  render(arrowed(kind, side, dir, true));
+async function measure(kind: Kind, side: Side, dir: Direction, page: Direction = dir) {
+  render(arrowed(kind, side, dir, true, page));
   const physical = physicalSide(side, dir);
   const arrow = await screen.findByTestId("arrow");
   const measured = await waitForStable(() => {
@@ -174,6 +198,25 @@ describe.each(CASES)("$kind arrow, side $side ($dir)", ({ kind, side, dir }) => 
     expect(arrowShows(arrow, physical, false)).toBe(false);
   });
 });
+
+// An `rtl:` variant also matches inside an LTR section of an RTL page, and would turn the arrow
+// the RTL way there
+describe.each(KINDS.flatMap((kind) => LOGICAL_SIDES.map((side) => ({ kind, side }))))(
+  "$kind arrow, side $side, in an ltr section of an rtl page",
+  ({ kind, side }) => {
+    it("ends `sideOffset` from the trigger and draws its tip half, toward the trigger", async () => {
+      const { tipGap } = await measure(kind, side, "ltr", "rtl");
+      const sideOffset = SIDE_OFFSET_PX[kind];
+      expect(Math.abs(tipGap - sideOffset - TIP_GAP_PAST_OFFSET_PX)).toBeLessThanOrEqual(
+        POSITION_ROUNDING_PX,
+      );
+      const arrow = screen.getByTestId("arrow");
+      const physical = physicalSide(side, "ltr");
+      expect(arrowShows(arrow, physical, true)).toBe(true);
+      expect(arrowShows(arrow, physical, false)).toBe(false);
+    });
+  },
+);
 
 describe.each(KINDS)("%s.Arrow colours", (kind) => {
   it("fills with the popup's background and edges two sides with its border", async () => {
