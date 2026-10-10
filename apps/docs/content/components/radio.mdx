@@ -30,7 +30,7 @@ function ControlledRadio() {
   const [value, setValue] = useState('a')
 
   return (
-    <Radio.Group value={value} onValueChange={setValue}>
+    <Radio.Group value={value} onValueChange={(next) => setValue(next as string)}>
       <Radio.Item value="a">Option A</Radio.Item>
       <Radio.Item value="b">Option B</Radio.Item>
     </Radio.Group>
@@ -69,13 +69,13 @@ All props are forwarded to the underlying Base UI [`RadioGroup`](https://base-ui
   definition={generateDefinition({
     code: `
 import type { RadioItemProps } from 'chunks-ui'
-type Props = Pick<RadioItemProps, 'children'>
+type Props = Pick<RadioItemProps, 'children' | 'className'>
 export default Props
 `
   })}
 />
 
-All other props are forwarded to the underlying Base UI [`Radio.Root`](https://base-ui.com/react/components/radio-group#api-reference).
+All other props are forwarded to the underlying Base UI [`Radio.Root`](https://base-ui.com/react/components/radio-group#api-reference). `className` is the exception: it goes on the item's `<label>`, and it takes a string only. To style the radio itself, build the item from `Radio.Root` and `Radio.Indicator`.
 
 ## Radio.Root Props
 

@@ -66,17 +66,19 @@ Pass an array to `defaultValue` and render a `Slider.Thumb` with `index` for eac
 
 ## Vertical Orientation
 
-Set `orientation="vertical"` on the root. The track and indicator switch to a vertical layout automatically:
+Set `orientation="vertical"` on the root. The track and indicator switch to a vertical layout. A vertical slider fills its parent's height (`h-full`), so give the parent a height, or it collapses:
 
 ```tsx
-<Slider.Root defaultValue={50} orientation="vertical">
-  <Slider.Control>
-    <Slider.Track>
-      <Slider.Indicator />
-      <Slider.Thumb aria-label="Value" />
-    </Slider.Track>
-  </Slider.Control>
-</Slider.Root>
+<div className="flex h-40">
+  <Slider.Root defaultValue={50} orientation="vertical">
+    <Slider.Control>
+      <Slider.Track>
+        <Slider.Indicator />
+        <Slider.Thumb aria-label="Value" />
+      </Slider.Track>
+    </Slider.Control>
+  </Slider.Root>
+</div>
 ```
 
 <SliderVerticalExample />
@@ -88,7 +90,7 @@ function ControlledSlider() {
   const [value, setValue] = useState(50);
 
   return (
-    <Slider.Root value={value} onValueChange={setValue}>
+    <Slider.Root value={value} onValueChange={(next) => setValue(next as number)}>
       <Slider.Control>
         <Slider.Track>
           <Slider.Indicator />

@@ -12,7 +12,7 @@ bun add @tanstack/react-table
 
 ## Full Example
 
-This example shows sorting, filtering, pagination, and row selection — all composed from chunks-ui primitives (`Table`, `Button`, `Input`, `Checkbox`).
+This example shows sorting, filtering, pagination (5 rows per page) and row selection, all composed from chunks-ui primitives (`Table`, `Button`, `Input`, `Checkbox`).
 
 <DataTableExample />
 
@@ -99,6 +99,8 @@ const table = useReactTable({
   onSortingChange: setSorting,
   onColumnFiltersChange: setColumnFilters,
   onRowSelectionChange: setRowSelection,
+  // TanStack shows 10 rows per page by default
+  initialState: { pagination: { pageSize: 5 } },
 });
 ```
 
@@ -146,12 +148,14 @@ Filter with `Input`, paginate with `Button` — no special wrapper needed:
 ```tsx
 <Input
   placeholder="Filter emails..."
+  aria-label="Filter emails"
   value={(table.getColumn("email")?.getFilterValue() as string) ?? ""}
   onChange={(e) => table.getColumn("email")?.setFilterValue(e.target.value)}
 />
 
 <Button
   variant="outlined"
+  color="secondary"
   onClick={() => table.previousPage()}
   disabled={!table.getCanPreviousPage()}
 >

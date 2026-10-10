@@ -7,7 +7,7 @@ import { Container } from "@/components";
 export function CheckboxBasicExample() {
   return (
     <Container>
-      <Checkbox.Root>
+      <Checkbox.Root aria-label="Accept terms">
         <Checkbox.Indicator />
       </Checkbox.Root>
     </Container>
@@ -55,6 +55,7 @@ export function CheckboxIndeterminateExample() {
         indeterminate={state === "indeterminate"}
         checked={state === "checked"}
         onCheckedChange={onChange}
+        aria-label="Select all"
       >
         <Checkbox.Indicator />
       </Checkbox.Root>
@@ -65,10 +66,10 @@ export function CheckboxIndeterminateExample() {
 export function CheckboxDisabledExample() {
   return (
     <Container className="rounded-lg bg-card p-8">
-      <Checkbox.Root disabled>
+      <Checkbox.Root disabled aria-label="Unavailable option">
         <Checkbox.Indicator />
       </Checkbox.Root>
-      <Checkbox.Root disabled checked>
+      <Checkbox.Root disabled checked aria-label="Unavailable checked option">
         <Checkbox.Indicator />
       </Checkbox.Root>
     </Container>

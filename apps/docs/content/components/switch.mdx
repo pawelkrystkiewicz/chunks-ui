@@ -13,10 +13,12 @@ import { Switch } from "chunks-ui";
 ## Basic Usage
 
 ```tsx
-<Switch.Root>
+<Switch.Root aria-label="Airplane mode">
   <Switch.Thumb />
 </Switch.Root>
 ```
+
+A switch without a visible label needs an `aria-label`. To show a label, use `Field` as below.
 
 <SwitchBasicExample />
 
@@ -42,7 +44,7 @@ function ControlledSwitch() {
   const [enabled, setEnabled] = useState(false);
 
   return (
-    <Switch.Root checked={enabled} onCheckedChange={setEnabled}>
+    <Switch.Root checked={enabled} onCheckedChange={setEnabled} aria-label="Dark mode">
       <Switch.Thumb />
     </Switch.Root>
   );
@@ -52,7 +54,7 @@ function ControlledSwitch() {
 ## Disabled
 
 ```tsx
-<Switch.Root disabled>
+<Switch.Root disabled aria-label="Unavailable setting">
   <Switch.Thumb />
 </Switch.Root>
 ```

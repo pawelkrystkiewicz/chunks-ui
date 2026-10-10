@@ -6,7 +6,7 @@ import { Container } from "@/components";
 export function SwitchBasicExample() {
   return (
     <Container>
-      <Switch.Root>
+      <Switch.Root aria-label="Airplane mode">
         <Switch.Thumb />
       </Switch.Root>
     </Container>
@@ -31,10 +31,10 @@ export function SwitchWithLabelExample() {
 export function SwitchDisabledExample() {
   return (
     <Container className="rounded-lg bg-card p-8">
-      <Switch.Root disabled>
+      <Switch.Root disabled aria-label="Unavailable setting">
         <Switch.Thumb />
       </Switch.Root>
-      <Switch.Root disabled checked>
+      <Switch.Root disabled checked aria-label="Unavailable checked setting">
         <Switch.Thumb />
       </Switch.Root>
     </Container>

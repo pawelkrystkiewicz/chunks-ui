@@ -37,6 +37,7 @@ export const InputWithClearButton = () => {
       onChange={(e) => setValue(e.target.value)}
       onClear={() => setValue("")}
       placeholder="Search..."
+      aria-label="Search"
     />
   );
 };
