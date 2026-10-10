@@ -59,7 +59,7 @@ Use with Tailwind: `bg-primary text-primary-foreground`, `bg-destructive text-de
 
 ## Animation
 
-Motion is optional — components detect it at runtime and fall back to CSS transitions if absent. All components respect `prefers-reduced-motion`.
+Motion is optional — components detect it at runtime and fall back to CSS transitions if absent. All motion respects `prefers-reduced-motion` except the `Loader` spinner (also shown by `Button loading`). It is an essential status indicator, so it keeps spinning.
 
 ## Docs
 
