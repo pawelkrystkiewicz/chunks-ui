@@ -5,6 +5,10 @@ on:
   pull_request:
 permissions:
   contents: read
+# A newer push to the same PR cancels this run; master pushes and manual runs never share a group.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
 env:
   LANG: en_US.UTF-8
   LC_ALL: en_US.UTF-8
