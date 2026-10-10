@@ -300,8 +300,9 @@ const BUILT_ON = [
   { label: "Floating UI", href: "https://floating-ui.com" },
 ];
 
-// The hero, the get-started band and the footer are dark in both modes. `dark` scopes the theme to
-// them, so chunks-ui tokens inside (text-*-text, ring, foreground) resolve to their dark values.
+// The hero, the get-started band and the footer are dark in both modes. The `dark` class scopes the
+// theme to them, so any chunks-ui token inside resolves to its dark value. Today that is only
+// ThemeToggle's focus ring; the scope stays so a future `text-*-text` here keeps 4.5:1.
 function Hero() {
   return (
     <section className="dark relative overflow-hidden bg-(image:--l-hero-bg) text-white">
@@ -621,6 +622,7 @@ const LINK_ROWS = [
   { label: "// for agents", href: "/llms.txt", value: "ui-kit.chunk-creations.com/llms.txt" },
 ];
 
+// `dark`: see the note above Hero.
 function GetStarted() {
   return (
     <section
@@ -680,6 +682,7 @@ const FOOTER_NAV = [
   },
 ];
 
+// `dark`: see the note above Hero.
 function Footer() {
   return (
     <footer className="dark bg-black text-[14px] text-white/70">
