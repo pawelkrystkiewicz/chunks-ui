@@ -128,7 +128,7 @@ const WRAP = "mx-auto max-w-[1200px] px-[clamp(22px,4vw,40px)]";
 const CELL =
   "flex min-w-0 flex-col gap-3 border-(--l-line) border-r border-b px-7 pt-6 pb-8 text-(--l-fg) transition-colors duration-300 ease-in-out hover:bg-(--l-card)";
 const TEXT_LINK =
-  "inline-flex items-center gap-2 font-semibold text-(--l-fg) text-[14px] transition-colors duration-250 hover:text-primary";
+  "inline-flex items-center gap-2 font-semibold text-(--l-fg) text-[14px] transition-colors duration-250 hover:text-primary-text";
 
 /** Internal routes go through next/link; files and external URLs stay plain anchors. */
 function Href({ href, ...props }: ComponentProps<"a"> & { href: string }) {
@@ -177,7 +177,7 @@ function SectionHead({
           {eyebrow}
         </span>
         <h2 className="mt-2.5 text-balance font-display font-semibold text-(--l-fg) text-[clamp(36px,5vw,56px)] leading-[1.02] tracking-[-.045em]">
-          {title} <em className="text-primary not-italic">{accent}</em>
+          {title} <em className="text-primary-text not-italic">{accent}</em>
         </h2>
       </div>
       {link}
@@ -300,9 +300,11 @@ const BUILT_ON = [
   { label: "Floating UI", href: "https://floating-ui.com" },
 ];
 
+// The hero, the get-started band and the footer are dark in both modes. `dark` scopes the theme to
+// them, so chunks-ui tokens inside (text-*-text, ring, foreground) resolve to their dark values.
 function Hero() {
   return (
-    <section className="relative overflow-hidden bg-(image:--l-hero-bg) text-white">
+    <section className="dark relative overflow-hidden bg-(image:--l-hero-bg) text-white">
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[200px] bg-linear-to-b from-transparent to-(--l-bg)" />
       <Header />
       <div
@@ -352,7 +354,7 @@ function Hero() {
 }
 
 const Kw = ({ children }: { children: ReactNode }) => (
-  <span className="text-primary">{children}</span>
+  <span className="text-primary-text">{children}</span>
 );
 
 const STEPS = [
@@ -534,7 +536,7 @@ function Principles() {
 }
 
 const STATEMENT = "flex min-w-0 flex-col border-(--l-line) border-r border-b px-7 py-8";
-const STATEMENT_LABEL = "font-mono text-primary text-[12px]";
+const STATEMENT_LABEL = "font-mono text-primary-text text-[12px]";
 const STATEMENT_TEXT = "text-pretty text-(--l-fg) text-[20px] leading-normal tracking-[-.01em]";
 
 function MotionSection() {
@@ -621,7 +623,7 @@ function GetStarted() {
   return (
     <section
       id="get-started"
-      className="relative mt-24 overflow-hidden bg-(image:--l-cta-bg) text-white"
+      className="dark relative mt-24 overflow-hidden bg-(image:--l-cta-bg) text-white"
     >
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[140px] bg-linear-to-b from-(--l-bg) to-transparent" />
       <div
@@ -678,7 +680,7 @@ const FOOTER_NAV = [
 
 function Footer() {
   return (
-    <footer className="bg-black text-[14px] text-white/70">
+    <footer className="dark bg-black text-[14px] text-white/70">
       <div className={WRAP}>
         <div className="grid grid-cols-1 gap-10 border-white/10 border-b pt-14 pb-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
           <div className="flex flex-col items-start">
