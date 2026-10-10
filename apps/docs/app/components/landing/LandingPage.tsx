@@ -608,8 +608,10 @@ function CreateSection() {
   );
 }
 
+// Hover text is the hero stack's top-layer shade, not --l-brand-soft: over the brightest part of the
+// gradient, --l-brand-soft drops to 3.6:1 (390px wide) and 4.2:1 (1920px); this shade keeps 5:1.
 const ROW =
-  "flex flex-col gap-1 border-white/15 border-b py-[18px] text-left text-white transition-colors duration-300 hover:text-(--l-brand-soft)";
+  "flex flex-col gap-1 border-white/15 border-b py-[18px] text-left text-white transition-colors duration-300 hover:text-[oklch(80%_.1_257)]";
 const ROW_LABEL = "font-mono text-[11px] text-white/55 tracking-[.06em]";
 const ROW_VALUE = "font-semibold text-[20px] tracking-[-.015em]";
 
