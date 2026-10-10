@@ -26,7 +26,7 @@ Pass `value` and `max` to show a determinate progress bar:
 
 ## Indeterminate
 
-Pass `value={null}` to activate the indeterminate pulse animation. An `animate-*` class on the indicator, such as `data-[indeterminate]:animate-none`, replaces the pulse:
+Pass `value={null}` to activate the indeterminate pulse animation:
 
 ```tsx
 <Progress.Root value={null}>
@@ -37,6 +37,8 @@ Pass `value={null}` to activate the indeterminate pulse animation. An `animate-*
 ```
 
 <ProgressIndeterminateExample />
+
+To replace the pulse, add a `data-[indeterminate]:animate-*` class to the indicator, such as `data-[indeterminate]:animate-none`. An `animate-*` class without the `data-[indeterminate]:` prefix does not replace it.
 
 ### Reduced motion
 

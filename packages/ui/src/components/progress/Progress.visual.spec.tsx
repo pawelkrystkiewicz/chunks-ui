@@ -47,8 +47,9 @@ const emulateReducedMotion = async (reducedMotion: "reduce" | "no-preference") =
 
 /*
  * The indeterminate pulse is an essential status indicator, like the Loader spinner, so it
- * keeps running with reduced motion. A consumer's `animate-*` class on the indicator replaces
- * it. The determinate width transition is decoration and stops with reduced motion.
+ * keeps running with reduced motion. A `data-[indeterminate]:animate-*` class on the indicator
+ * replaces it; an `animate-*` class without that prefix does not. The determinate width
+ * transition is decoration and stops with reduced motion.
  */
 describe("Progress.Indicator motion", () => {
   afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
