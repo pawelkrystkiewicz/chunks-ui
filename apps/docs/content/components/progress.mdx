@@ -26,7 +26,7 @@ Pass `value` and `max` to show a determinate progress bar:
 
 ## Indeterminate
 
-Pass `value={null}` to activate the indeterminate pulse animation. The pulse does not run when the user has reduced motion enabled, and neither does an `animate-*` class you add to the indicator:
+Pass `value={null}` to activate the indeterminate pulse animation. An `animate-*` class on the indicator, such as `data-[indeterminate]:animate-none`, replaces the pulse:
 
 ```tsx
 <Progress.Root value={null}>
@@ -37,6 +37,10 @@ Pass `value={null}` to activate the indeterminate pulse animation. The pulse doe
 ```
 
 <ProgressIndeterminateExample />
+
+### Reduced motion
+
+With `prefers-reduced-motion: reduce`, the indeterminate pulse keeps running. It is an essential status indicator, like the [Loader](/components/loader) spinner: without it, an indeterminate bar is a static block that gives no sign of activity. To stop the pulse with reduced motion, add `data-[indeterminate]:motion-reduce:animate-none` to the indicator. The determinate bar does not transition its width, so it jumps to each new value.
 
 ## Animated
 
