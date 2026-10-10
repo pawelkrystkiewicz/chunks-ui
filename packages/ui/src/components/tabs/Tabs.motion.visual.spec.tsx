@@ -174,7 +174,7 @@ describe("Tabs with Motion", () => {
 describe("Tabs animations that must stop", () => {
   // Slow and linear, so each check below happens mid-animation, even in a loaded run where a
   // few frames can take seconds
-  const slow = { type: "tween", duration: 10 } as const;
+  const slow = { type: "tween", ease: "linear", duration: 10 } as const;
   const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
 
   afterEach(async () => {
