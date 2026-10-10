@@ -1,9 +1,9 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { Tabs, useTabsValue } from "./Tabs";
+import { Tabs, type TabsRootProps, useTabsValue } from "./Tabs";
 
 beforeAll(() => {
   globalThis.ResizeObserver = class {
@@ -18,6 +18,11 @@ afterEach(cleanup);
 /** Returns true if the panel wrapper is hidden via CSS fallback or motion-mode inert. */
 function isHiddenPanel(wrapper: HTMLElement): boolean {
   return wrapper.style.display === "none" || wrapper.hasAttribute("inert");
+}
+
+function ValueProbe() {
+  const value = useTabsValue();
+  return <span data-testid="value">{String(value)}</span>;
 }
 
 describe("Tabs", () => {
@@ -224,12 +229,95 @@ describe("Tabs", () => {
   });
 });
 
-describe("useTabsValue", () => {
-  function ValueProbe() {
-    const value = useTabsValue();
-    return <span data-testid="value">{String(value)}</span>;
+// Base UI keeps the selected tab when onValueChange calls eventDetails.cancel(); every part
+// that follows the tab value (Contents, Animate, useTabsValue) must stay with it
+describe("cancelling a change in onValueChange", () => {
+  function Harness({
+    controlled = false,
+    cancel = false,
+    disableA = false,
+  }: {
+    controlled?: boolean;
+    cancel?: boolean;
+    disableA?: boolean;
+  }) {
+    const [value, setValue] = useState<unknown>("a");
+    const onValueChange: TabsRootProps["onValueChange"] = (next, details) => {
+      if (cancel) details.cancel();
+      else setValue(next);
+    };
+    return (
+      <Tabs.Root
+        {...(controlled ? { value } : { defaultValue: "a" })}
+        onValueChange={onValueChange}
+      >
+        <Tabs.List>
+          <Tabs.Tab value="a" disabled={disableA}>
+            A
+          </Tabs.Tab>
+          <Tabs.Tab value="b">B</Tabs.Tab>
+        </Tabs.List>
+        <ValueProbe />
+        <Tabs.Contents>
+          <Tabs.Content value="a" data-testid="content-a">
+            Content A
+          </Tabs.Content>
+          <Tabs.Content value="b" data-testid="content-b">
+            Content B
+          </Tabs.Content>
+        </Tabs.Contents>
+        <Tabs.Animate data-testid="animate">
+          <Tabs.Panel value="a">Panel A</Tabs.Panel>
+          <Tabs.Panel value="b">Panel B</Tabs.Panel>
+        </Tabs.Animate>
+      </Tabs.Root>
+    );
   }
 
+  function expectSelected(value: "a" | "b") {
+    const other = value === "a" ? "b" : "a";
+    expect(screen.getByRole("tab", { name: value.toUpperCase() })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(screen.getByTestId("value")).toHaveTextContent(value);
+    expect(isHiddenPanel(screen.getByTestId(`content-${value}`).parentElement!)).toBe(false);
+    expect(isHiddenPanel(screen.getByTestId(`content-${other}`).parentElement!)).toBe(true);
+  }
+
+  it.each([
+    ["uncontrolled", false],
+    ["controlled", true],
+  ])("keeps every part on the selected tab (%s)", async (_mode, controlled) => {
+    const user = userEvent.setup();
+    render(<Harness controlled={controlled} cancel />);
+    const pane = screen.getByTestId("animate");
+    await user.click(screen.getByRole("tab", { name: "B" }));
+    expectSelected("a");
+    // Tabs.Animate re-keys (remounts its pane) only when the value changes
+    expect(screen.getByTestId("animate")).toBe(pane);
+  });
+
+  it.each([
+    ["uncontrolled", false],
+    ["controlled", true],
+  ])("switches every part when the change is not cancelled (%s)", async (_mode, controlled) => {
+    const user = userEvent.setup();
+    render(<Harness controlled={controlled} />);
+    const pane = screen.getByTestId("animate");
+    await user.click(screen.getByRole("tab", { name: "B" }));
+    expectSelected("b");
+    expect(screen.getByTestId("animate")).not.toBe(pane);
+  });
+
+  it("follows Base UI off a tab that becomes disabled, which cancel() can't stop", () => {
+    const { rerender } = render(<Harness cancel />);
+    rerender(<Harness cancel disableA />);
+    expectSelected("b");
+  });
+});
+
+describe("useTabsValue", () => {
   it("returns the active value from context", () => {
     render(
       <Tabs.Root value="a">
