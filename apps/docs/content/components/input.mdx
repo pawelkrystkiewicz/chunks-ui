@@ -51,7 +51,7 @@ Use `startAdornment` and `endAdornment` to place icons or text at the edges of t
 
 ## Clear Button
 
-Pass an `onClear` callback to show a built-in clear button (uses the `ClearButton` component internally). The button shows while the input has text, controlled or uncontrolled. Clearing moves focus back to the input. While the button is visible it takes the place of `endAdornment`, so the two don't show together.
+Pass an `onClear` callback to show a built-in clear button (uses the `ClearButton` component internally). The button shows while the input has text, controlled or uncontrolled, and not on a `disabled` or `readOnly` input. Clearing moves focus back to the input. While the button is visible it takes the place of `endAdornment`, so the two don't show together.
 
 A controlled input keeps its `value` until your `onClear` sets it to `''`:
 

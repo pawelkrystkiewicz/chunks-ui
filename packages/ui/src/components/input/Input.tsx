@@ -24,9 +24,9 @@ export type InputProps = ComponentProps<typeof BaseInput> &
     /**
      * Callback fired when the built-in clear button is activated. Passing this prop enables the
      * clear button, which shows while the input has text, controlled (`value`) or uncontrolled
-     * (`defaultValue`). A controlled input stays as it is until `onClear` sets its `value`; an
-     * uncontrolled one is emptied for you. Focus moves to the input. While the button shows, it
-     * takes the place of `endAdornment`.
+     * (`defaultValue`), and is not `disabled` or `readOnly`. A controlled input stays as it is
+     * until `onClear` sets its `value`; an uncontrolled one is emptied for you. Focus moves to the
+     * input. While the button shows, it takes the place of `endAdornment`.
      */
     onClear?: () => void;
   };
@@ -63,7 +63,10 @@ export function Input({
   }
 
   const clearable =
-    typeof onClear === "function" && (isControlled ? !isEmpty(props.value) : hasUncontrolledText);
+    typeof onClear === "function" &&
+    !props.disabled &&
+    !props.readOnly &&
+    (isControlled ? !isEmpty(props.value) : hasUncontrolledText);
 
   const handleValueChange: InputProps["onValueChange"] = (value, eventDetails) => {
     if (!isControlled) setHasUncontrolledText(value.length > 0);
@@ -72,6 +75,8 @@ export function Input({
 
   const handleClear = () => {
     const input = inputRef.current as HTMLInputElement | null;
+    // The user can't edit it, e.g. inside a disabled Field.Root, which sets the attribute
+    if (input?.disabled || input?.readOnly) return;
     // Focus the input before the clear button unmounts, or focus falls to <body>
     input?.focus();
     if (!isControlled && input) {

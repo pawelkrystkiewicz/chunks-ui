@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { type ChangeEvent, createRef, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { Field } from "../field";
 import { Input } from "./Input";
 
 afterEach(cleanup);
@@ -127,6 +128,32 @@ describe("Input", () => {
       expect(screen.queryByRole("button", { name: "Clear" })).not.toBeInTheDocument();
     });
   }
+
+  it("hides the clear button on a disabled input", () => {
+    render(<Input aria-label="Search" defaultValue="abc" disabled onClear={vi.fn()} />);
+    expect(screen.queryByRole("button", { name: "Clear" })).not.toBeInTheDocument();
+  });
+
+  it("hides the clear button on a read-only input", () => {
+    render(<Input aria-label="Search" defaultValue="abc" readOnly onClear={vi.fn()} />);
+    expect(screen.queryByRole("button", { name: "Clear" })).not.toBeInTheDocument();
+  });
+
+  it("leaves an input in a disabled Field as it is when Clear is clicked", async () => {
+    const user = userEvent.setup();
+    const onClear = vi.fn();
+    const onValueChange = vi.fn();
+    render(
+      <Field.Root disabled>
+        <Field.Label>Search</Field.Label>
+        <Input defaultValue="abc" onClear={onClear} onValueChange={onValueChange} />
+      </Field.Root>,
+    );
+    await user.click(screen.getByRole("button", { name: "Clear" }));
+    expect(screen.getByRole("textbox")).toHaveValue("abc");
+    expect(onValueChange).not.toHaveBeenCalled();
+    expect(onClear).not.toHaveBeenCalled();
+  });
 
   it("takes new text after an uncontrolled input is cleared", async () => {
     const user = userEvent.setup();
