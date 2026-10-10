@@ -29,7 +29,7 @@ import { Popover } from "chunks-ui";
 
 ## With Arrow
 
-`Popover.Arrow` draws a small arrow on the popup edge that faces the trigger, filled with the popup's `--popover` background and edged with its `--border` colour. Place it inside `Popover.Content`. The popup moves out by the arrow's length, so `sideOffset` stays the gap between the trigger and the arrow's tip.
+`Popover.Arrow` draws a small arrow on the popup edge that faces the trigger, filled with the popup's `--popover` background and edged with its `--border` colour. Place it inside `Popover.Content`. The popup moves out by the arrow's length, so `sideOffset` stays the gap between the trigger and the arrow's tip. In RTL, set `dir="rtl"` on `<html>` or `<body>`: the popup is portalled there, so a `dir` on a wrapper element doesn't reach the arrow.
 
 ```tsx
 <Popover.Root>
