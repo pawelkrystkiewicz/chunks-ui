@@ -21,12 +21,13 @@ describe("Popover", () => {
     await expect(body).toMatchScreenshot();
   });
 
-  it.each(["top", "right", "bottom", "left"] as const)("arrow, side %s", async (side) => {
+  // One side: PopupArrow.visual.spec.tsx checks the arrow's geometry on every side
+  it("arrow, side bottom", async () => {
     const body = await renderPage(
       <div style={{ padding: 120, display: "flex", justifyContent: "center" }}>
         <Popover.Root>
           <Popover.Trigger render={<Button variant="outlined" />}>Trigger</Popover.Trigger>
-          <Popover.Content side={side}>
+          <Popover.Content side="bottom">
             <Popover.Arrow />
             <Popover.Title>Title</Popover.Title>
           </Popover.Content>

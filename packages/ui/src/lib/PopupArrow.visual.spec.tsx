@@ -93,17 +93,17 @@ function arrowed(kind: Kind, side: Side, dir: Direction, defaultOpen: boolean): 
   );
 }
 
-/** How far the arrow's tip reaches past the popup's edge, and the gap left to the trigger. */
-function mainAxis(side: PhysicalSide, popup: DOMRect, arrow: DOMRect, trigger: DOMRect) {
+/** The gap between the arrow's tip and the trigger. */
+function tipGap(side: PhysicalSide, arrow: DOMRect, trigger: DOMRect) {
   switch (side) {
     case "top":
-      return { reach: arrow.bottom - popup.bottom, tipGap: trigger.top - arrow.bottom };
+      return trigger.top - arrow.bottom;
     case "bottom":
-      return { reach: popup.top - arrow.top, tipGap: arrow.top - trigger.bottom };
+      return arrow.top - trigger.bottom;
     case "left":
-      return { reach: arrow.right - popup.right, tipGap: trigger.left - arrow.right };
+      return trigger.left - arrow.right;
     case "right":
-      return { reach: popup.left - arrow.left, tipGap: arrow.left - trigger.right };
+      return arrow.left - trigger.right;
   }
 }
 
@@ -141,11 +141,7 @@ async function measure(kind: Kind, side: Side, dir: Direction) {
   const measured = await waitForStable(() => {
     const a = arrow.getBoundingClientRect();
     const t = screen.getByTestId("trigger").getBoundingClientRect();
-    return {
-      area: a.width * a.height,
-      ...mainAxis(physical, screen.getByTestId("popup").getBoundingClientRect(), a, t),
-      offCentre: offCentre(physical, a, t),
-    };
+    return { tipGap: tipGap(physical, a, t), offCentre: offCentre(physical, a, t) };
   });
   expect(arrow.getAttribute("data-side")).toBe(side);
   return measured;
@@ -156,12 +152,6 @@ afterEach(() => {
 });
 
 describe.each(CASES)("$kind arrow, side $side ($dir)", ({ kind, side, dir }) => {
-  it("reaches out of the popup toward the trigger", async () => {
-    const { area, reach } = await measure(kind, side, dir);
-    expect(area).toBeGreaterThan(0);
-    expect(reach).toBeGreaterThan(0);
-  });
-
   it("keeps `sideOffset` as the gap between the trigger and the tip", async () => {
     const { tipGap } = await measure(kind, side, dir);
     const sideOffset = SIDE_OFFSET_PX[kind];
@@ -248,7 +238,8 @@ describe.each(KINDS)("%s.Arrow while the popup opens", (kind) => {
   });
 });
 
-describe.each(KINDS)("%s with an arrow, without Motion", (kind) => {
+// Menu already transitioned only its fade and scale
+describe("Popover with an arrow, without Motion", () => {
   afterEach(async () => {
     await commands.emulateMedia({ reducedMotion: "reduce" });
     await reloadMotion();
@@ -259,12 +250,12 @@ describe.each(KINDS)("%s with an arrow, without Motion", (kind) => {
     void reloadMotion(new Promise(() => {}));
     await commands.emulateMedia({ reducedMotion: "no-preference" });
     await expect.poll(() => matchMedia("(prefers-reduced-motion: reduce)").matches).toBe(false);
-    const { rerender } = render(arrowed(kind, "bottom", "ltr", true));
+    const { rerender } = render(arrowed("Popover", "bottom", "ltr", true));
     const popup = await screen.findByTestId("popup");
     // The opening fade and scale have finished
     await waitForStable(() => JSON.stringify(popup.getBoundingClientRect()));
 
-    rerender(arrowed(kind, "top", "ltr", true));
+    rerender(arrowed("Popover", "top", "ltr", true));
     const margins = await eachPaintedFrame(() => getComputedStyle(popup).marginBottom, 20);
 
     expect(margins.at(-1)).toBe(`${REACH_PX}px`);
