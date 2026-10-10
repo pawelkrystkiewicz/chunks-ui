@@ -20,7 +20,7 @@ Interactive button with variants, colors, loading state, and icon support.
 - **File**: `src/components/button/Button.tsx`
 
 ### Card
-Container with border, shadow, and structured sections.
+Container with border and structured sections.
 
 - **Compound**: `Card.Root`, `Card.Header`, `Card.Title`, `Card.Description`, `Card.Content`, `Card.Footer`
 - **File**: `src/components/card/Card.tsx`
