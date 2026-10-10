@@ -3,11 +3,11 @@ import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { commands, userEvent } from "vitest/browser";
-import { reloadMotion } from "../../lib/use-motion";
-import { describeMotionPaths, eachPaintedFrame, waitForStable } from "../../VisualTest.utils";
-import { Button } from "../button";
-import { Menu } from "../menu";
-import { Popover } from "./index";
+import { Button } from "../components/button";
+import { Menu } from "../components/menu";
+import { Popover } from "../components/popover";
+import { describeMotionPaths, eachPaintedFrame, waitForStable } from "../VisualTest.utils";
+import { reloadMotion } from "./use-motion";
 
 /*
  * Popover.Arrow and Menu.Arrow draw the same arrow: a square in the popup's colours, turned so

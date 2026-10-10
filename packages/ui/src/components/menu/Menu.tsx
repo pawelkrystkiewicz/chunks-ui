@@ -5,9 +5,9 @@ import type { ComponentProps } from "react";
 import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
+import { arrowClasses, arrowPopupClasses } from "../../lib/popup-arrow";
 import { usePortalContainer } from "../../lib/portal-container";
 import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
-import { arrowClasses, arrowPopupClasses } from "../popover/Popover.Variants";
 
 export type MenuRootProps = ComponentProps<typeof BaseMenu.Root>;
 export type MenuTriggerProps = ComponentProps<typeof BaseMenu.Trigger>;

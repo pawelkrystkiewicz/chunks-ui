@@ -5,9 +5,9 @@ import type { ComponentProps } from "react";
 import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
+import { arrowClasses, arrowPopupClasses } from "../../lib/popup-arrow";
 import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
 import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
-import { arrowClasses, arrowPopupClasses } from "./Popover.Variants";
 
 export type PopoverRootProps = ComponentProps<typeof BasePopover.Root>;
 export type PopoverTriggerProps = ComponentProps<typeof BasePopover.Trigger>;
