@@ -1,5 +1,5 @@
 import { describe, it } from "vitest";
-import { renderFixture } from "../../VisualTest.utils";
+import { renderFixture, SMALL_FEATURE_SCREENSHOT } from "../../VisualTest.utils";
 import { Radio } from "./index";
 
 describe("Radio", () => {
@@ -15,6 +15,6 @@ describe("Radio", () => {
         </div>
       </Radio.Group>,
     );
-    await expect(fixture).toMatchScreenshot();
+    await expect(fixture).toMatchScreenshot(SMALL_FEATURE_SCREENSHOT);
   });
 });

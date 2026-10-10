@@ -11,9 +11,13 @@ import { useReducedMotion } from "./use-motion";
 const restore: (() => void)[] = [];
 
 function emulateReducedMotion(reduce: boolean) {
-  const query = Object.assign(new EventTarget(), {
+  const target = new EventTarget();
+  const query = Object.assign(target, {
     matches: reduce,
     media: "(prefers-reduced-motion: reduce)",
+    // The deprecated pair, which Motion below 12.20.4 subscribes with
+    addListener: (listener: EventListener) => target.addEventListener("change", listener),
+    removeListener: (listener: EventListener) => target.removeEventListener("change", listener),
   });
   const matchMedia = window.matchMedia;
   window.matchMedia = () => query as unknown as MediaQueryList;

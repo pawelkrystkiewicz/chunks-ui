@@ -1,5 +1,5 @@
 import { describe, it } from "vitest";
-import { renderFixture } from "../../VisualTest.utils";
+import { renderFixture, SMALL_FEATURE_SCREENSHOT } from "../../VisualTest.utils";
 import { ToggleGroup } from "./index";
 
 describe("ToggleGroup", () => {
@@ -11,7 +11,7 @@ describe("ToggleGroup", () => {
         <ToggleGroup.Item value="right">Right</ToggleGroup.Item>
       </ToggleGroup.Root>,
     );
-    await expect(fixture).toMatchScreenshot();
+    await expect(fixture).toMatchScreenshot(SMALL_FEATURE_SCREENSHOT);
   });
 
   it("with disabled item", async () => {
@@ -24,6 +24,6 @@ describe("ToggleGroup", () => {
         <ToggleGroup.Item value="c">C</ToggleGroup.Item>
       </ToggleGroup.Root>,
     );
-    await expect(fixture).toMatchScreenshot();
+    await expect(fixture).toMatchScreenshot(SMALL_FEATURE_SCREENSHOT);
   });
 });

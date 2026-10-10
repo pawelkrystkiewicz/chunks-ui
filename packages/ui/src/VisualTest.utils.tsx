@@ -1,6 +1,6 @@
 import { render } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { page } from "vitest/browser";
+import { page, type ScreenshotMatcherOptions } from "vitest/browser";
 
 /** Renders children in a padded fixture wrapper. Returns the wrapper element for screenshotting. */
 export async function renderFixture(children: ReactNode) {
@@ -15,6 +15,17 @@ export async function renderFixture(children: ReactNode) {
   await document.fonts.ready;
   return { ...result, fixture: result.getByTestId("fixture") };
 }
+
+/**
+ * `toMatchScreenshot` options for small or faint features, such as the Tabs.Indicator pill (white
+ * on a 97% grey list). The config's 0.1 colour threshold can't see a pill that differs from the list
+ * by ~10 grey levels, so a 0×0 pill passed; 0.02 counts ~5 levels. The 24 px budget leaves headroom
+ * for renderer drift. The config's 5% ratio still applies; the lower limit wins.
+ */
+export const SMALL_FEATURE_SCREENSHOT = {
+  comparatorName: "pixelmatch",
+  comparatorOptions: { threshold: 0.02, allowedMismatchedPixels: 24 },
+} satisfies ScreenshotMatcherOptions<"pixelmatch">;
 
 /** For portal-based components (Dialog, Drawer, Tooltip, etc.) that render fixed-position content. */
 export async function renderPage(children: ReactNode) {
