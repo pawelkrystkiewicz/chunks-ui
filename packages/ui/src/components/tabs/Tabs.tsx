@@ -90,8 +90,11 @@ function TabsRoot({ className, value, defaultValue, onValueChange, ...props }: T
 
   const handleValueChange = useCallback(
     (...args: Parameters<NonNullable<TabsRootProps["onValueChange"]>>) => {
-      setTrackedValue(args[0]);
       onValueChange?.(...args);
+      const [next, details] = args;
+      // Base UI drops a cancelled change from a tab. Its automatic fallbacks (initial, disabled,
+      // missing tab) go through even when cancelled, so the tracked value follows them too.
+      if (!details.isCanceled || details.reason !== "none") setTrackedValue(next);
     },
     [onValueChange],
   );

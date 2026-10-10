@@ -1,7 +1,9 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
+import { createRef } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { Tooltip } from "../tooltip";
 import { ThemeToggle } from "./ThemeToggle";
 
 afterEach(cleanup);
@@ -56,6 +58,76 @@ describe("ThemeToggle", () => {
   it("merges custom className", () => {
     render(<ThemeToggle theme="light" className="custom-class" />);
     expect(screen.getByRole("button")).toHaveClass("custom-class");
+  });
+
+  it("forwards ref and button props", () => {
+    const ref = createRef<HTMLButtonElement>();
+    render(
+      <ThemeToggle
+        theme="dark"
+        ref={ref}
+        id="toggle"
+        aria-describedby="hint"
+        data-state="on"
+        disabled
+      />,
+    );
+    const button = screen.getByRole("button");
+    expect(ref.current).toBe(button);
+    expect(button).toHaveAttribute("id", "toggle");
+    expect(button).toHaveAttribute("aria-describedby", "hint");
+    expect(button).toHaveAttribute("data-state", "on");
+    expect(button).toBeDisabled();
+  });
+
+  it("lets aria-label override the default name", () => {
+    render(<ThemeToggle theme="light" aria-label="Toggle theme" />);
+    expect(screen.getByRole("button", { name: "Toggle theme" })).toBeInTheDocument();
+  });
+
+  it("keeps its default name and type when aria-label and type are undefined", () => {
+    render(<ThemeToggle theme="light" aria-label={undefined} type={undefined} />);
+    expect(screen.getByRole("button", { name: "Switch to dark mode" })).toHaveAttribute(
+      "type",
+      "button",
+    );
+  });
+
+  it("opens a tooltip on focus as a Tooltip.Trigger render target", async () => {
+    const user = userEvent.setup();
+    render(
+      <Tooltip.Root>
+        <Tooltip.Trigger render={<ThemeToggle theme="light" />} />
+        <Tooltip.Portal>
+          <Tooltip.Positioner>
+            <Tooltip.Popup>Toggle theme</Tooltip.Popup>
+          </Tooltip.Positioner>
+        </Tooltip.Portal>
+      </Tooltip.Root>,
+    );
+    await user.tab();
+    expect(screen.getByRole("button", { name: "Switch to dark mode" })).toHaveFocus();
+    expect(await screen.findByText("Toggle theme")).toBeInTheDocument();
+  });
+
+  it("opens a tooltip on hover and keeps its onClick as a Tooltip.Trigger render target", async () => {
+    const user = userEvent.setup();
+    const handleClick = vi.fn();
+    render(
+      <Tooltip.Root>
+        <Tooltip.Trigger render={<ThemeToggle theme="light" onClick={handleClick} />} />
+        <Tooltip.Portal>
+          <Tooltip.Positioner>
+            <Tooltip.Popup>Toggle theme</Tooltip.Popup>
+          </Tooltip.Positioner>
+        </Tooltip.Portal>
+      </Tooltip.Root>,
+    );
+    const button = screen.getByRole("button", { name: "Switch to dark mode" });
+    await user.hover(button);
+    expect(await screen.findByText("Toggle theme")).toBeInTheDocument();
+    await user.click(button);
+    expect(handleClick).toHaveBeenCalledTimes(1);
   });
 
   it("has no a11y violations", async () => {

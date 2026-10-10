@@ -27,6 +27,8 @@ import { Button, Tabs, Input } from 'chunks-ui'
 
 `theme.css` registers its CSS variables with Tailwind CSS v4 through `@theme`, and its `@source` makes Tailwind generate the classes the components use — no plugin needed.
 
+`chunks-ui` is a client bundle (`"use client"`). To call `cn`, `cnState` or a `*Variants` function such as `buttonVariants` in a React Server Component, import it from `chunks-ui/utils`.
+
 ## Components
 
 ### Tier 1 — Core (v0.1.0)
@@ -109,7 +111,7 @@ Shared spring presets in `src/lib/motion.ts`:
 - **overlay** — gentle fade for dialogs/drawers
 - **micro** — fast response for hover/focus
 
-All motion respects `prefers-reduced-motion` except the `Loader` spinner (also shown by `Button loading`). It is an essential status indicator, so it keeps spinning.
+All motion respects `prefers-reduced-motion` except the `Loader` spinner (also shown by `Button loading`) and the indeterminate `Progress` pulse. They are essential status indicators, so they keep running.
 
 ## Design Principles
 
