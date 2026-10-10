@@ -181,27 +181,46 @@ describe.each(MODES)("theme contrast, %s mode", (mode) => {
 describe("text shades follow the fill", () => {
   // Light mode caps the fill's lightness at 0.51, dark mode raises it to at least 0.63.
   it.each([
-    ["light", "oklch(0.7 0.15 150)", "oklch(0.51 0.15 150)"],
-    ["dark", "oklch(0.45 0.15 150)", "oklch(0.63 0.15 150)"],
-  ] as const)("a --primary set on a nested element, %s mode", (mode, primary, expected) => {
+    {
+      name: "a --primary set on a nested element, light mode",
+      mode: "light",
+      style: { "--primary": "oklch(0.7 0.15 150)" },
+      expected: "oklch(0.51 0.15 150)",
+    },
+    {
+      name: "a --primary set on a nested element, dark mode",
+      mode: "dark",
+      style: { "--primary": "oklch(0.45 0.15 150)" },
+      expected: "oklch(0.63 0.15 150)",
+    },
+    {
+      name: "--primary-text when it is set",
+      mode: "light",
+      style: { "--primary-text": "oklch(0.4 0.1 30)" },
+      expected: "oklch(0.4 0.1 30)",
+    },
+  ] as const)("$name", ({ mode, style, expected }) => {
     const { getByRole } = renderIn(
       mode,
-      <div style={{ "--primary": primary } as CSSProperties}>
-        <Button variant="text">Nested</Button>
+      <div style={style as CSSProperties}>
+        <Button variant="text">Subject</Button>
       </div>,
     );
-    const color = getComputedStyle(getByRole("button", { name: "Nested" })).color;
+    const color = getComputedStyle(getByRole("button", { name: "Subject" })).color;
     expect(paint(color)).toEqual(paint(expected));
   });
 
-  it("uses --primary-text when it is set", () => {
+  it("a dark subtree inside a light render gets the dark cap", () => {
     const { getByRole } = renderIn(
       "light",
-      <div style={{ "--primary-text": "oklch(0.4 0.1 30)" } as CSSProperties}>
-        <Button variant="text">Pinned</Button>
+      <div className="dark bg-background p-4">
+        <Button variant="text" color="primary">
+          Inside dark
+        </Button>
       </div>,
     );
-    const color = getComputedStyle(getByRole("button", { name: "Pinned" })).color;
-    expect(paint(color)).toEqual(paint("oklch(0.4 0.1 30)"));
+    const button = getByRole("button", { name: "Inside dark" });
+    expect(textContrast(button)).toBeGreaterThanOrEqual(4.5);
+    expect(paint(getComputedStyle(button).color)).toEqual(paint("oklch(0.63 0.2165 257.21)"));
   });
 });
