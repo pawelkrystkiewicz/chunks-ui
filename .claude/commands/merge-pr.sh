@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Merge PRs one after another: branch up to date, all required checks green, a CodeRabbit verdict on the
-# latest code (asked for when skipped), no unresolved CodeRabbit threads, exact checked sha. Never the release PR.
+# Merge PRs one after another: branch up to date, all required checks green, no unresolved CodeRabbit threads,
+# exact checked sha. Never the release PR. Never asks for or waits on a CodeRabbit review; its status is info only.
 # Usage: .claude/commands/merge-pr.sh <pr> [<pr>...]   — one call, PRs in merge order.
 # Exit 0 = all merged. Exit 1 = stopped; the last line says why.
 set -uo pipefail
@@ -37,7 +37,6 @@ open_threads() {
 for n in "$@"; do
   ref=$(gh pr view "$n" --json headRefName -q .headRefName) || die "#$n not found"
   [ "$ref" != "changeset-release/master" ] || die "#$n is the Version Packages release PR — the maintainer merges it"
-  asked=""
   for round in 1 2 3 4 5; do
     read -r state mstate head < <(gh pr view "$n" --json state,mergeStateStatus,headRefOid -q '"\(.state) \(.mergeStateStatus) \(.headRefOid)"')
     [ -n "${state:-}" ] || die "#$n cannot read PR state"
@@ -61,19 +60,9 @@ for n in "$@"; do
       gh pr checks "$n" --required; die "#$n required checks not green after 30 min ($total/$need reported, $bad not passing)"
     fi
 
-    # CodeRabbit: ask for a review when the push was skipped (no auto-review on this repo) or no status shows up within 5 min.
-    # Wait up to 30 min for a verdict.
-    verdict=none
-    for i in $(seq 60); do
-      verdict=$(coderabbit "$n")
-      case $verdict in reviewed | rate-limited) break ;; esac
-      if { [ "$verdict" = skipped ] || { [ "$verdict" = none ] && [ "$i" -gt 10 ]; }; } && [ "$asked" != "$head" ]; then
-        gh pr comment "$n" --body "@coderabbitai review" >/dev/null && asked=$head && echo "#$n asked CodeRabbit to review ${head:0:7}"
-      fi
-      sleep 30
-    done
-    case $verdict in reviewed | rate-limited) ;; *) die "#$n no CodeRabbit verdict after 30 min (status: $verdict)" ;; esac
-    sleep 20 # let inline threads land after the status flips
+    # CodeRabbit is optional: any status passes, read once for the merge line. Threads it has posted by now still block.
+    # ponytail: no settle sleep; its inline comments land with the review, seconds before "Review completed".
+    verdict=$(coderabbit "$n")
     threads=$(open_threads "$n") || die "#$n cannot read review threads"
     [ "$threads" -eq 0 ] || die "#$n has $threads unresolved CodeRabbit threads — triage, fix, reply, resolve each, rerun"
 
