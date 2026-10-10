@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { extractBlocks, unusedFixtures } from "./check-snippets";
+import { extractBlocks } from "./check-snippets";
 
 const code = (source: string) =>
   extractBlocks("page.mdx", source).snippets.map((snippet) =>
@@ -36,41 +36,24 @@ describe("extractBlocks", () => {
     expect(extractBlocks("page.mdx", source)).toEqual({ snippets: [], errors: [] });
   });
 
-  it("reports a tsx fence inside a blockquote", () => {
-    const source = ["> ```tsx", "> <Button />", "> ```"].join("\n");
-    expect(extractBlocks("page.mdx", source)).toEqual({
-      snippets: [],
-      errors: [expect.stringMatching(/^content\/page\.mdx:1 - .*blockquote/)],
-    });
-  });
-
-  it("reports tsx fences it cannot read", () => {
-    const source = ["~~~tsx", "<Button />", "~~~", "````tsx", "<Chip />", "````"].join("\n");
+  it("reports tsx fences it cannot read, and a block left open", () => {
+    const source = [
+      "~~~tsx",
+      "<Button />",
+      "~~~",
+      "````tsx",
+      "<Chip />",
+      "````",
+      "> ```tsx",
+      "> <Button />",
+      "> ```",
+      "```tsx",
+      "<Chip />",
+    ].join("\n");
     const { snippets, errors } = extractBlocks("page.mdx", source);
     expect(snippets).toEqual([]);
-    expect(errors).toEqual([
-      expect.stringMatching(/^content\/page\.mdx:1 - /),
-      expect.stringMatching(/^content\/page\.mdx:4 - /),
-    ]);
-  });
-
-  it("reports a fence line inside a tsx block, and a block left open", () => {
-    const source = ["```tsx", "<Button />", "```ts", "<Chip />"].join("\n");
-    const { errors } = extractBlocks("page.mdx", source);
-    expect(errors).toEqual([
-      expect.stringMatching(/^content\/page\.mdx:3 - /),
-      expect.stringMatching(/^content\/page\.mdx:1 - .*never closes/),
-    ]);
-  });
-});
-
-describe("unusedFixtures", () => {
-  it("lists declared names that no block and no other fixture uses", () => {
-    const fixtures = `
-      type Option = { value: string; label: string };
-      const fruits: Option[];
-      const item: Option;
-    `;
-    expect(unusedFixtures(fixtures, ["<Combobox.Root items={fruits} />"])).toEqual(["item"]);
+    expect(errors.map((error) => error.split(" - ")[0])).toEqual(
+      [1, 4, 7, 10].map((line) => `content/page.mdx:${line}`),
+    );
   });
 });

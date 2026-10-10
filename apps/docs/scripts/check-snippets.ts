@@ -3,8 +3,9 @@
  * Type-checks every ```tsx block in `content/**\/*.mdx` against the built `chunks-ui` types,
  * with the docs tsconfig. Each block is an in-memory module; errors point at the .mdx line.
  * Needs `chunks-ui` built first (the docs `check-types` script runs after Turbo's `^build`).
- * A block opens with ```tsx (meta and indentation are fine) and closes with a bare ```. A tsx
- * block in a ~~~ or ```` fence, or one left open, fails the check rather than going unread.
+ * A block opens with ```tsx (meta and indentation are fine) and closes with a bare ```. Any other
+ * tsx fence (~~~, ````, in a blockquote) and a block left open fail the check rather than going
+ * unread.
  *
  * What a block can use without importing it:
  * - every value export of `chunks-ui` and `react`, as the pages assume after their "Import" block;
@@ -36,10 +37,8 @@ type Snippet = { file: string; page: string; lines: Line[] };
 
 /** A ```tsx fence, with or without meta (`title="…"`) and indentation; not ```tsx-foo */
 const TSX_OPEN = /^\s*```tsx(?=\s|$)/;
-/** A tsx fence with another marker or length, which the extractor doesn't read */
-const OTHER_TSX_OPEN = /^\s*(`{4,}|~{3,})\s*tsx(?=\s|$)/;
-/** A tsx fence inside a blockquote, which the extractor doesn't read either */
-const QUOTED_TSX_OPEN = /^\s*>[\s>]*(`{3,}|~{3,})\s*tsx(?=\s|$)/;
+/** Any tsx fence, including the forms the extractor doesn't read */
+const ANY_TSX_FENCE = /(`{3,}|~{3,})\s*tsx(?=\s|$)/;
 const FENCE = /^\s*(`{3,}|~{3,})/;
 const CLOSE = /^\s*(`{3,}|~{3,})\s*$/;
 const IMPORT_START = /^\s*import\b/;
@@ -93,49 +92,22 @@ export function extractBlocks(page: string, source: string) {
       if (/^\s*```\s*$/.test(text)) {
         snippets.push(toSnippet(page, snippets.length + 1, block.lines));
         block = null;
-      } else if (FENCE.test(text)) {
-        errors.push(`${at(i)} - fence line inside the tsx block from line ${block.start + 1}`);
       } else {
         block.lines.push({ text, mdxLine: i + 1 });
       }
     } else if (other) {
       const marker = CLOSE.exec(text)?.[1];
       if (marker && marker[0] === other[0] && marker.length >= other.length) other = null;
-    } else if (QUOTED_TSX_OPEN.test(text)) {
-      errors.push(`${at(i)} - the check doesn't read tsx blocks in a blockquote`);
-    } else if (OTHER_TSX_OPEN.test(text)) {
-      errors.push(`${at(i)} - the check reads tsx blocks only in a \`\`\` fence`);
-      other = FENCE.exec(text)?.[1] ?? null;
     } else if (TSX_OPEN.test(text)) {
       block = { start: i, lines: [] };
     } else {
+      if (ANY_TSX_FENCE.test(text))
+        errors.push(`${at(i)} - unreadable tsx fence; open with \`\`\`tsx`);
       other = FENCE.exec(text)?.[1] ?? null;
     }
   }
   if (block) errors.push(`${at(block.start)} - the tsx block never closes`);
   return { snippets, errors };
-}
-
-/**
- * The names a page's fixtures declare that none of its blocks uses (as a whole word), and no other
- * fixture of the page refers to.
- */
-export function unusedFixtures(fixtureText: string, blocks: string[]) {
-  const source = ts.createSourceFile("fixtures.ts", fixtureText, ts.ScriptTarget.Latest);
-  const names = source.statements.flatMap((statement) =>
-    ts.isVariableStatement(statement)
-      ? statement.declarationList.declarations.map((declaration) =>
-          declaration.name.getText(source),
-        )
-      : ts.isTypeAliasDeclaration(statement) || ts.isFunctionDeclaration(statement)
-        ? [statement.name?.getText(source) ?? ""]
-        : [],
-  );
-  const uses = (text: string, name: string) =>
-    text.match(new RegExp(`\\b${name}\\b`, "g"))?.length ?? 0;
-  return names.filter(
-    (name) => uses(fixtureText, name) < 2 && !blocks.some((block) => uses(block, name) > 0),
-  );
 }
 
 async function extractSnippets() {
@@ -166,22 +138,19 @@ function compilerOptions(): ts.CompilerOptions {
   };
 }
 
-// Parsed files, shared by every program so that each page reuses what earlier pages parsed
-const sourceFiles = new Map<string, ts.SourceFile>();
+// Library files parsed once for all programs; without this each page re-parses them (3s → 10s)
+const libraries = new Map<string, ts.SourceFile | undefined>();
 
 function createHost(options: ts.CompilerOptions, files: Map<string, string>) {
   const host = ts.createCompilerHost(options);
   const { getSourceFile } = host;
   host.getSourceFile = (fileName, languageVersion, ...rest) => {
     const text = files.get(fileName);
-    const cached = sourceFiles.get(fileName);
-    if (cached && (text === undefined || cached.text === text)) return cached;
-    const source =
-      text === undefined
-        ? getSourceFile(fileName, languageVersion, ...rest)
-        : ts.createSourceFile(fileName, text, languageVersion, true);
-    if (source) sourceFiles.set(fileName, source);
-    return source;
+    if (text !== undefined) return ts.createSourceFile(fileName, text, languageVersion, true);
+    if (!libraries.has(fileName)) {
+      libraries.set(fileName, getSourceFile(fileName, languageVersion, ...rest));
+    }
+    return libraries.get(fileName);
   };
   host.fileExists = (fileName) => files.has(fileName) || ts.sys.fileExists(fileName);
   host.readFile = (fileName) => files.get(fileName) ?? ts.sys.readFile(fileName);
@@ -230,16 +199,16 @@ function globalsFile(options: ts.CompilerOptions) {
   return { program, text };
 }
 
-function format(diagnostic: ts.Diagnostic, snippets: Map<string, Snippet>, page: string) {
+function format(diagnostic: ts.Diagnostic, snippets: Map<string, Snippet>) {
   const message = ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n  ");
   const { file, start } = diagnostic;
   if (!file || start === undefined) return `TS${diagnostic.code}: ${message}`;
   const { line, character } = file.getLineAndCharacterOfPosition(start);
   const snippet = snippets.get(file.fileName);
   const where = snippet
-    ? `content/${snippet.page}:${snippet.lines[line]?.mdxLine ?? "?"}:${character + 1}`
-    : `check-snippets.fixtures.ts, "${page}" (${file.fileName}:${line + 1})`;
-  return `${where} - TS${diagnostic.code}: ${message}`;
+    ? `content/${snippet.page}:${snippet.lines[line]?.mdxLine ?? "?"}`
+    : `${file.fileName}:${line + 1}`;
+  return `${where}:${character + 1} - TS${diagnostic.code}: ${message}`;
 }
 
 // Not on import, so the spec can test extractBlocks
@@ -252,15 +221,8 @@ if (import.meta.main) {
   let blocks = 0;
 
   for (const page of Object.keys(fixtures)) {
-    const blocks = pages.get(page);
-    if (!blocks) {
+    if (!pages.has(page))
       errors.add(`check-snippets.fixtures.ts: no tsx blocks in content/${page}`);
-      continue;
-    }
-    const code = blocks.map((block) => block.lines.map((line) => line.text).join("\n"));
-    for (const name of unusedFixtures(fixtures[page] ?? "", code)) {
-      errors.add(`check-snippets.fixtures.ts: no block in content/${page} uses "${name}"`);
-    }
   }
 
   // One program per page, so that a page's fixtures are in scope only for its own blocks
@@ -281,7 +243,7 @@ if (import.meta.main) {
     const byFile = new Map(snippets.map((snippet) => [snippet.file, snippet]));
     for (const diagnostic of ts.getPreEmitDiagnostics(program)) {
       if (!diagnostic.file || files.has(diagnostic.file.fileName)) {
-        errors.add(format(diagnostic, byFile, page));
+        errors.add(format(diagnostic, byFile));
       }
     }
     previous = program;

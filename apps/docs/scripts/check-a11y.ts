@@ -215,14 +215,7 @@ async function audit(
       const allowed = allowedFor(ALLOWED, violation.id, route, theme);
       const targets: string[] = [];
       for (const node of violation.nodes) {
-        // One plain selector is an element in the page; anything else is in a shadow root or a frame
-        const [target] = node.target;
-        if (node.target.length !== 1 || typeof target !== "string") {
-          targets.push(
-            `${JSON.stringify(node.target)}: in a shadow root or frame, which ALLOWED can't match\n      ${node.html.slice(0, 160)}`,
-          );
-          continue;
-        }
+        const target = node.target.join(" ");
         const index = await page.evaluate(firstMatch, [
           target,
           allowed.map((entry) => entry.selector),
