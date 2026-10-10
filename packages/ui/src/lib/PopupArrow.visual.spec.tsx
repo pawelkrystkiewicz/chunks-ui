@@ -23,13 +23,17 @@ type Side = PhysicalSide | (typeof LOGICAL_SIDES)[number];
 type Direction = "ltr" | "rtl";
 type Kind = "Popover" | "Menu";
 
-/** Physical sides once, logical sides in both directions (they resolve differently in each). */
-const SIDES: { side: Side; dir: Direction }[] = [
-  ...PHYSICAL_SIDES.map((side) => ({ side, dir: "ltr" as const })),
-  ...LOGICAL_SIDES.flatMap((side) => [
-    { side, dir: "ltr" as const },
-    { side, dir: "rtl" as const },
-  ]),
+/** The popup's direction, and the page's: they differ in a section of the other direction */
+type Layout = { layout: string; dir: Direction; page: Direction };
+const LTR: Layout = { layout: "ltr", dir: "ltr", page: "ltr" };
+const RTL: Layout = { layout: "rtl", dir: "rtl", page: "rtl" };
+// An `rtl:` variant would also match in here, and turn the arrow the RTL way
+const LTR_IN_RTL: Layout = { layout: "ltr section on an rtl page", dir: "ltr", page: "rtl" };
+
+/** Physical sides once, logical sides in each layout (they resolve differently in each). */
+const SIDES = [
+  ...PHYSICAL_SIDES.map((side) => ({ side, ...LTR })),
+  ...LOGICAL_SIDES.flatMap((side) => [LTR, RTL, LTR_IN_RTL].map((l) => ({ side, ...l }))),
 ];
 
 const KINDS: Kind[] = ["Popover", "Menu"];
@@ -158,7 +162,7 @@ function arrowShows(arrow: Element, side: PhysicalSide, toward: boolean) {
   return document.elementFromPoint(x, y) === arrow;
 }
 
-async function measure(kind: Kind, side: Side, dir: Direction, page: Direction = dir) {
+async function measure(kind: Kind, side: Side, dir: Direction, page: Direction) {
   render(arrowed(kind, side, dir, true, page));
   const physical = physicalSide(side, dir);
   const arrow = await screen.findByTestId("arrow");
@@ -175,9 +179,9 @@ afterEach(() => {
   document.documentElement.removeAttribute("dir");
 });
 
-describe.each(CASES)("$kind arrow, side $side ($dir)", ({ kind, side, dir }) => {
+describe.each(CASES)("$kind arrow, side $side ($layout)", ({ kind, side, dir, page }) => {
   it("keeps `sideOffset` as the gap between the trigger and the tip", async () => {
-    const { tipGap } = await measure(kind, side, dir);
+    const { tipGap } = await measure(kind, side, dir, page);
     const sideOffset = SIDE_OFFSET_PX[kind];
     expect(tipGap).toBeGreaterThanOrEqual(sideOffset);
     expect(Math.abs(tipGap - sideOffset - TIP_GAP_PAST_OFFSET_PX)).toBeLessThanOrEqual(
@@ -186,37 +190,18 @@ describe.each(CASES)("$kind arrow, side $side ($dir)", ({ kind, side, dir }) => 
   });
 
   it("points at the trigger's centre", async () => {
-    const { offCentre } = await measure(kind, side, dir);
+    const { offCentre } = await measure(kind, side, dir, page);
     expect(Math.abs(offCentre)).toBeLessThanOrEqual(POSITION_ROUNDING_PX);
   });
 
   it("draws its tip half, toward the trigger, and not the half inside the popup", async () => {
-    await measure(kind, side, dir);
+    await measure(kind, side, dir, page);
     const arrow = screen.getByTestId("arrow");
     const physical = physicalSide(side, dir);
     expect(arrowShows(arrow, physical, true)).toBe(true);
     expect(arrowShows(arrow, physical, false)).toBe(false);
   });
 });
-
-// An `rtl:` variant also matches inside an LTR section of an RTL page, and would turn the arrow
-// the RTL way there
-describe.each(KINDS.flatMap((kind) => LOGICAL_SIDES.map((side) => ({ kind, side }))))(
-  "$kind arrow, side $side, in an ltr section of an rtl page",
-  ({ kind, side }) => {
-    it("ends `sideOffset` from the trigger and draws its tip half, toward the trigger", async () => {
-      const { tipGap } = await measure(kind, side, "ltr", "rtl");
-      const sideOffset = SIDE_OFFSET_PX[kind];
-      expect(Math.abs(tipGap - sideOffset - TIP_GAP_PAST_OFFSET_PX)).toBeLessThanOrEqual(
-        POSITION_ROUNDING_PX,
-      );
-      const arrow = screen.getByTestId("arrow");
-      const physical = physicalSide(side, "ltr");
-      expect(arrowShows(arrow, physical, true)).toBe(true);
-      expect(arrowShows(arrow, physical, false)).toBe(false);
-    });
-  },
-);
 
 describe.each(KINDS)("%s.Arrow colours", (kind) => {
   it("fills with the popup's background and edges two sides with its border", async () => {
