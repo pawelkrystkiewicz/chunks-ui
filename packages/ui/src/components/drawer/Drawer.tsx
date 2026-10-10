@@ -8,7 +8,7 @@ import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
 import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
 import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
-import { drawerPopupVariants } from "./Drawer.Variants";
+import { drawerBase, drawerPopupVariants } from "./Drawer.Variants";
 
 export type DrawerProps = ComponentProps<typeof BaseDialog.Root>;
 export type DrawerTriggerProps = ComponentProps<typeof BaseDialog.Trigger>;
@@ -113,8 +113,7 @@ function DrawerPopup({ side = "right", className, ...props }: DrawerPopupProps) 
     <BaseDialog.Popup
       render={render}
       className={cnState(
-        useSpring &&
-          "fixed overflow-y-auto overscroll-contain border-border bg-background p-6 shadow-xl",
+        useSpring && drawerBase,
         useSpring && motionPositionClasses[resolvedSide],
         !useSpring && drawerPopupVariants({ side }),
         className,
