@@ -3,7 +3,10 @@
 import { Combobox } from "chunks-ui";
 import { useState } from "react";
 
-const fruits = [
+type Option = { value: string; label: string };
+type OptionGroup = { value: string; items: Option[] };
+
+const fruits: Option[] = [
   { value: "apple", label: "Apple" },
   { value: "banana", label: "Banana" },
   { value: "cherry", label: "Cherry" },
@@ -11,16 +14,26 @@ const fruits = [
   { value: "mango", label: "Mango" },
 ];
 
-const colors = [
-  { value: "red", label: "Red" },
-  { value: "orange", label: "Orange" },
-  { value: "yellow", label: "Yellow" },
-  { value: "blue", label: "Blue" },
-  { value: "green", label: "Green" },
-  { value: "purple", label: "Purple" },
+const colors: OptionGroup[] = [
+  {
+    value: "Warm",
+    items: [
+      { value: "red", label: "Red" },
+      { value: "orange", label: "Orange" },
+      { value: "yellow", label: "Yellow" },
+    ],
+  },
+  {
+    value: "Cool",
+    items: [
+      { value: "blue", label: "Blue" },
+      { value: "green", label: "Green" },
+      { value: "purple", label: "Purple" },
+    ],
+  },
 ];
 
-const frameworks = [
+const frameworks: Option[] = [
   { value: "react", label: "React" },
   { value: "vue", label: "Vue" },
   { value: "svelte", label: "Svelte" },
@@ -32,15 +45,15 @@ export function ComboboxBasicDemo() {
   return (
     <Combobox.Root items={fruits}>
       <div className="relative">
-        <Combobox.Input placeholder="Search a fruit..." />
+        <Combobox.Input placeholder="Search a fruit..." aria-label="Fruit" />
         <Combobox.Trigger />
       </div>
       <Combobox.Portal>
         <Combobox.Positioner>
           <Combobox.Popup>
             <Combobox.List>
-              {(item: { value: string; label: string }) => (
-                <Combobox.Item key={item.value} value={item.value}>
+              {(item: Option) => (
+                <Combobox.Item key={item.value} value={item}>
                   {item.label}
                   <Combobox.ItemIndicator />
                 </Combobox.Item>
@@ -58,7 +71,7 @@ export function ComboboxClearDemo() {
   return (
     <Combobox.Root items={fruits}>
       <div className="relative">
-        <Combobox.Input placeholder="Search a fruit..." />
+        <Combobox.Input placeholder="Search a fruit..." aria-label="Fruit" />
         <Combobox.Clear />
         <Combobox.Trigger />
       </div>
@@ -66,8 +79,8 @@ export function ComboboxClearDemo() {
         <Combobox.Positioner>
           <Combobox.Popup>
             <Combobox.List>
-              {(item: { value: string; label: string }) => (
-                <Combobox.Item key={item.value} value={item.value}>
+              {(item: Option) => (
+                <Combobox.Item key={item.value} value={item}>
                   {item.label}
                   <Combobox.ItemIndicator />
                 </Combobox.Item>
@@ -85,23 +98,25 @@ export function ComboboxGroupedDemo() {
   return (
     <Combobox.Root items={colors}>
       <div className="relative">
-        <Combobox.Input placeholder="Pick a color..." />
+        <Combobox.Input placeholder="Pick a color..." aria-label="Color" />
         <Combobox.Trigger />
       </div>
       <Combobox.Portal>
         <Combobox.Positioner>
           <Combobox.Popup>
-            <Combobox.Group>
-              <Combobox.GroupLabel>Warm</Combobox.GroupLabel>
-              <Combobox.List>
-                {(item: { value: string; label: string }) => (
-                  <Combobox.Item key={item.value} value={item.value}>
-                    {item.label}
-                    <Combobox.ItemIndicator />
-                  </Combobox.Item>
-                )}
-              </Combobox.List>
-            </Combobox.Group>
+            <Combobox.List>
+              {(group: OptionGroup) => (
+                <Combobox.Group key={group.value} items={group.items}>
+                  <Combobox.GroupLabel>{group.value}</Combobox.GroupLabel>
+                  {group.items.map((item) => (
+                    <Combobox.Item key={item.value} value={item}>
+                      {item.label}
+                      <Combobox.ItemIndicator />
+                    </Combobox.Item>
+                  ))}
+                </Combobox.Group>
+              )}
+            </Combobox.List>
             <Combobox.Empty>No results found.</Combobox.Empty>
           </Combobox.Popup>
         </Combobox.Positioner>
@@ -111,25 +126,23 @@ export function ComboboxGroupedDemo() {
 }
 
 export function ComboboxMultiDemo() {
-  const [value, setValue] = useState<string[]>([]);
+  const [value, setValue] = useState<Option[]>([]);
 
   return (
     <Combobox.Root multiple items={frameworks} value={value} onValueChange={setValue}>
       <Combobox.Control>
         <Combobox.Chips>
-          {value.map((v) => {
-            const item = frameworks.find((f) => f.value === v);
-            return (
-              <Combobox.Chip key={v}>
-                {item?.label ?? v}
-                <Combobox.ChipRemove />
-              </Combobox.Chip>
-            );
-          })}
+          {value.map((item) => (
+            <Combobox.Chip key={item.value}>
+              {item.label}
+              <Combobox.ChipRemove />
+            </Combobox.Chip>
+          ))}
         </Combobox.Chips>
         <Combobox.Input
           className="h-7 min-w-20 flex-1 border-0 bg-transparent px-0 focus-visible:outline-none"
           placeholder="Select frameworks..."
+          aria-label="Frameworks"
         />
         <Combobox.Clear />
         <Combobox.Trigger />
@@ -138,8 +151,8 @@ export function ComboboxMultiDemo() {
         <Combobox.Positioner>
           <Combobox.Popup>
             <Combobox.List>
-              {(item: { value: string; label: string }) => (
-                <Combobox.Item key={item.value} value={item.value}>
+              {(item: Option) => (
+                <Combobox.Item key={item.value} value={item}>
                   {item.label}
                   <Combobox.ItemIndicator />
                 </Combobox.Item>
