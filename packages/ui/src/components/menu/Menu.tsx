@@ -86,6 +86,8 @@ function MenuContentPopup({
         render={render}
         className={cnState(
           "min-w-[8rem] rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md",
+          // Fits the space Base UI measures between the trigger and the viewport edge, then scrolls
+          "max-h-[var(--available-height)] overflow-y-auto overscroll-contain scroll-py-1",
           !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
           !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
           !useSpring && "micro-interactions",
