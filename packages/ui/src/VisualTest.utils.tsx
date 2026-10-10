@@ -61,6 +61,8 @@ declare module "vitest/browser" {
   interface BrowserCommands {
     /** Playwright `page.emulateMedia`, registered in vitest.visual.config.ts. */
     emulateMedia: (options: EmulatedMedia) => Promise<void>;
+    /** Moves the mouse outside the viewport, registered in vitest.visual.config.ts. */
+    parkPointer: () => Promise<void>;
   }
 }
 
