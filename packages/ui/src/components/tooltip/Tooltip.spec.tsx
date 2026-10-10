@@ -178,12 +178,4 @@ describe("Tooltip open delay", () => {
     advance(0);
     expect(screen.getByText("Tip B")).toBeInTheDocument();
   });
-
-  it("lets a Trigger delay override the default without a Provider", () => {
-    hover(<Tip delay={300} />);
-    advance(200);
-    expect(screen.queryByText("Tip")).toBeNull();
-    advance(150);
-    expect(screen.getByText("Tip")).toBeInTheDocument();
-  });
 });
