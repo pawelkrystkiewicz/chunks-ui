@@ -14,8 +14,9 @@ const SERVER_SAFE_PACKAGES = ["class-variance-authority", "clsx", "tailwind-merg
 
 /** Runtime imports only: `import type` and `export type` are erased from the build. */
 function runtimeSpecifiers(source: string) {
+  // `;` stops a match at the end of its statement, so a type-only one can't swallow the next
   const statements = source.matchAll(
-    /^(?:import|export)\s+(type\s+)?(?:[^'"]*?\sfrom\s+)?["']([^"']+)["']/gm,
+    /^(?:import|export)\s+(type\s+)?(?:[^'";]*?\sfrom\s+)?["']([^"']+)["']/gm,
   );
   const dynamic = source.matchAll(/\bimport\(\s*["']([^"']+)["']\s*\)/g);
   return [
@@ -53,6 +54,14 @@ function importGraph(entry: string) {
   }
   return { files: [...files], packages: [...packages] };
 }
+
+describe("runtimeSpecifiers", () => {
+  it("follows a re-export that comes after a type-only statement", () => {
+    const source =
+      'export type Size = number;\nexport { Button } from "./components/button/Button";';
+    expect(runtimeSpecifiers(source)).toEqual(["./components/button/Button"]);
+  });
+});
 
 describe("chunks-ui/utils", () => {
   it("exports cn, cnState, the public *Variants, springs and the element constants", () => {
