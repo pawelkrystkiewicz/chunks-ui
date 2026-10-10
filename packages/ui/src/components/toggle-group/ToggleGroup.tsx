@@ -98,7 +98,9 @@ function ToggleGroupRoot({
     const r = el?.getBoundingClientRect();
     // While the group isn't rendered (display:none), the item measures as 0×0: no box to animate
     // to. The indicator unmounts; the one that mounts once the group shows and is measured again
-    // starts over the item, where a kept one would paint its old box until then.
+    // starts over the item, where a kept one would paint its old box until then. After a re-show
+    // there's about one frame with no indicator, until the ResizeObserver -> rAF measure mounts the
+    // new span: the same visible result as the old invisible 0×0 box.
     if (!r || r.width === 0 || r.height === 0) {
       setBounds(null);
       return;

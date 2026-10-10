@@ -259,16 +259,22 @@ describe("ToggleGroup indicator after display:none", () => {
     return { rerender, indicator, offBy, settled };
   }
 
-  /** The offsets of each painted frame with a visible indicator, for 30 frames */
+  /**
+   * The offsets of each painted frame with a visible indicator, for 30 frames. Asserts none is
+   * more than 1px off: no growing from 0×0, or sliding from where it was before it hid.
+   */
   async function visibleOffsets(offBy: () => number | null) {
     const offsets = (await eachPaintedFrame(offBy, 30)).filter((offset) => offset !== null);
     expect(offsets.length).toBeGreaterThan(0);
+    expect(Math.max(...offsets), JSON.stringify(offsets)).toBeLessThanOrEqual(1);
     return offsets;
   }
 
   /** Renders item "a", hides the group, presses `value`, then shows the group again */
-  async function reshow(value: Shown["value"]) {
-    const shown = await renderShown();
+  async function reshow({ value, withMotion }: { value: Shown["value"]; withMotion: boolean }) {
+    const shown = await renderShown(withMotion);
+    // Without Motion the CSS fallback drives it: its transition class is on the span
+    if (!withMotion) expect(shown.indicator()?.classList.contains("micro-interactions")).toBe(true);
     // Hidden, the item measures as 0×0
     shown.rerender(group({ hidden: true, value: "a" }));
     await shown.settled();
@@ -281,34 +287,19 @@ describe("ToggleGroup indicator after display:none", () => {
   }
 
   it.each([
-    ["the same item", "a"],
-    ["an item pressed while hidden", "b"],
+    ["the same item", "a", true],
+    ["an item pressed while hidden", "b", true],
+    ["the same item, without Motion", "a", false],
   ] as const)(
-    "shows the indicator over %s on its first visible frame after display:none",
-    async (_, value) => {
-      const { offBy } = await reshow(value);
-      const offsets = await visibleOffsets(() => offBy(value));
-      // No growing from 0×0, or sliding from where it was before it hid
-      expect(offsets[0], JSON.stringify(offsets)).toBeLessThanOrEqual(1);
-      expect(Math.max(...offsets), JSON.stringify(offsets)).toBeLessThanOrEqual(1);
+    "shows the indicator over %s on every frame after display:none",
+    async (_, value, withMotion) => {
+      const { offBy } = await reshow({ value, withMotion });
+      await visibleOffsets(() => offBy(value));
     },
   );
 
-  it("shows the indicator over the item on every frame after display:none without Motion", async () => {
-    const { indicator, offBy, rerender, settled } = await renderShown(false);
-    // The CSS fallback drives it: its transition class is on the span
-    expect(indicator()?.classList.contains("micro-interactions")).toBe(true);
-    rerender(group({ hidden: true, value: "a" }));
-    await settled();
-
-    rerender(group({ hidden: false, value: "a" }));
-    // No transition growing the pill from 0×0
-    const offsets = await visibleOffsets(() => offBy("a"));
-    expect(Math.max(...offsets), JSON.stringify(offsets)).toBeLessThanOrEqual(1);
-  });
-
   it("still slides the indicator to the next item after display:none", async () => {
-    const { indicator, offBy, rerender } = await reshow("a");
+    const { indicator, offBy, rerender } = await reshow({ value: "a", withMotion: true });
     const left = () => indicator()?.getBoundingClientRect().left ?? Number.NaN;
     const start = await waitForStable(left);
 
@@ -332,11 +323,11 @@ describe("ToggleGroup indicator after display:none", () => {
     });
 
     it.each([
-      ["turned on and off while hidden", true],
-      ["turned on while shown and off while hidden", false],
+      ["turned on and off while hidden", ["hide", "reduce", "normal"]],
+      ["turned on while shown and off while hidden", ["reduce", "hide", "normal"]],
     ] as const)(
       "shows the indicator over the item on every frame with reduced motion %s",
-      async (_, onWhileHidden) => {
+      async (_, steps) => {
         const { indicator, offBy, rerender, settled } = await renderShown();
         /** Waits until the CSS fallback or Motion has finished handing the indicator over */
         const handedOver = () =>
@@ -345,22 +336,20 @@ describe("ToggleGroup indicator after display:none", () => {
             return shown && `${shown.className}|${shown.getAttribute("style")}`;
           });
 
-        if (!onWhileHidden) {
-          await commands.emulateMedia({ reducedMotion: "reduce" });
-          await handedOver();
+        for (const step of steps) {
+          if (step === "hide") {
+            rerender(group({ hidden: true, value: "a" }));
+            await settled();
+          } else {
+            await commands.emulateMedia({
+              reducedMotion: step === "reduce" ? "reduce" : "no-preference",
+            });
+            await handedOver();
+          }
         }
-        rerender(group({ hidden: true, value: "a" }));
-        await settled();
-        if (onWhileHidden) {
-          await commands.emulateMedia({ reducedMotion: "reduce" });
-          await handedOver();
-        }
-        await commands.emulateMedia({ reducedMotion: "no-preference" });
-        await handedOver();
 
         rerender(group({ hidden: false, value: "a" }));
-        const offsets = await visibleOffsets(() => offBy("a"));
-        expect(Math.max(...offsets), JSON.stringify(offsets)).toBeLessThanOrEqual(1);
+        await visibleOffsets(() => offBy("a"));
       },
     );
   });
