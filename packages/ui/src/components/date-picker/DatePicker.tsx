@@ -187,7 +187,11 @@ export function DatePicker({
                     required={required}
                     disabled={state.disabled}
                     onChange={() => {}}
-                    onFocus={() => triggerRef.current?.focus()}
+                    // focusVisible shows the ring even after a mouse submit; TS's FocusOptions
+                    // lacks it
+                    onFocus={() =>
+                      triggerRef.current?.focus({ focusVisible: true } as FocusOptions)
+                    }
                     tabIndex={-1}
                     aria-hidden="true"
                     className="sr-only"
