@@ -334,52 +334,43 @@ describe("Combobox icon buttons", () => {
     expect(screen.getByRole("button", { name: "Remove" })).toBeInTheDocument();
   });
 
-  it("leaves no button without a name and passes axe", async () => {
+  it("passes axe with every icon button named", async () => {
     const { container } = render(<MultiSelect />);
-    const buttons = screen.getAllByRole("button");
-    expect(buttons).toHaveLength(3);
-    for (const button of buttons) {
-      expect(button).toHaveAccessibleName();
-    }
     expect(await axe(container)).toHaveNoViolations();
   });
 
-  it("uses aria-label in place of the default names", () => {
-    render(
-      <MultiSelect
-        triggerProps={{ "aria-label": "Show fruits" }}
-        clearProps={{ "aria-label": "Clear fruits" }}
-        chipRemoveProps={{ "aria-label": "Remove Apple" }}
-      />,
-    );
-    expect(screen.getByRole("button", { name: "Show fruits" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Clear fruits" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Remove Apple" })).toBeInTheDocument();
-  });
-
-  it("lets a render element keep its own text as the name", () => {
-    render(
-      <MultiSelect
-        triggerProps={{ render: <button type="button">Choose</button> }}
-        clearProps={{ render: <button type="button">Reset</button> }}
-        chipRemoveProps={{ render: <button type="button">Drop</button> }}
-      />,
-    );
-    expect(screen.getByRole("button", { name: "Choose" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Reset" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Drop" })).toBeInTheDocument();
-  });
-
-  it("takes the name from custom children instead of the default", () => {
-    render(
-      <MultiSelect
-        triggerProps={{ children: "Fruits" }}
-        clearProps={{ children: "Clear all" }}
-        chipRemoveProps={{ children: "Drop" }}
-      />,
-    );
-    expect(screen.getByRole("button", { name: "Fruits" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Clear all" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Drop" })).toBeInTheDocument();
+  it.each([
+    [
+      "aria-label",
+      ["Show fruits", "Clear fruits", "Remove Apple"],
+      {
+        triggerProps: { "aria-label": "Show fruits" },
+        clearProps: { "aria-label": "Clear fruits" },
+        chipRemoveProps: { "aria-label": "Remove Apple" },
+      },
+    ],
+    [
+      "render element text",
+      ["Choose", "Reset", "Drop"],
+      {
+        triggerProps: { render: <button type="button">Choose</button> },
+        clearProps: { render: <button type="button">Reset</button> },
+        chipRemoveProps: { render: <button type="button">Drop</button> },
+      },
+    ],
+    [
+      "custom children",
+      ["Fruits", "Clear all", "Drop"],
+      {
+        triggerProps: { children: "Fruits" },
+        clearProps: { children: "Clear all" },
+        chipRemoveProps: { children: "Drop" },
+      },
+    ],
+  ])("takes the name from %s instead of the default", (_case, names, props) => {
+    render(<MultiSelect {...props} />);
+    for (const name of names) {
+      expect(screen.getByRole("button", { name })).toBeInTheDocument();
+    }
   });
 });

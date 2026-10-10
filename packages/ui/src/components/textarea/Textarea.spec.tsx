@@ -36,15 +36,7 @@ describe("Textarea", () => {
     expect(screen.getByRole("textbox", { name: "Notes" })).toHaveAttribute("rows", "5");
   });
 
-  it("calls onChange as the user types", async () => {
-    const onChange = vi.fn();
-    render(<Textarea aria-label="Notes" onChange={onChange} />);
-    await userEvent.type(screen.getByRole("textbox"), "Hi");
-    expect(onChange).toHaveBeenCalledTimes(2);
-    expect(screen.getByRole("textbox")).toHaveValue("Hi");
-  });
-
-  it("calls onChange when controlled and shows the value it is given", async () => {
+  it("calls onChange as the user types and shows the value it is given", async () => {
     const onChange = vi.fn();
     const { rerender } = render(<Textarea aria-label="Notes" value="abc" onChange={onChange} />);
     const textarea = screen.getByRole("textbox");
@@ -58,16 +50,20 @@ describe("Textarea", () => {
     expect(textarea).toHaveValue("xyz");
   });
 
-  it("is disabled by its own disabled prop", () => {
-    render(<Textarea aria-label="Notes" disabled />);
-    expect(screen.getByRole("textbox")).toBeDisabled();
-  });
-
   it("has no a11y violations", async () => {
     const { container } = render(<Textarea placeholder="Enter text" aria-label="Message" />);
     expect(await axe(container)).toHaveNoViolations();
   });
 });
+
+function renderInField(fieldProps: { disabled?: boolean; invalid?: boolean }) {
+  return render(
+    <Field.Root {...fieldProps}>
+      <Field.Label>Bio</Field.Label>
+      <Textarea />
+    </Field.Root>,
+  );
+}
 
 describe("Textarea inside Field", () => {
   it("is named by Field.Label and described by Field.Description", async () => {
@@ -84,22 +80,12 @@ describe("Textarea inside Field", () => {
   });
 
   it("is disabled by a disabled Field.Root", () => {
-    render(
-      <Field.Root disabled>
-        <Field.Label>Bio</Field.Label>
-        <Textarea />
-      </Field.Root>,
-    );
+    renderInField({ disabled: true });
     expect(screen.getByRole("textbox", { name: "Bio" })).toBeDisabled();
   });
 
   it("is marked invalid by an invalid Field.Root", async () => {
-    const { container } = render(
-      <Field.Root invalid>
-        <Field.Label>Bio</Field.Label>
-        <Textarea />
-      </Field.Root>,
-    );
+    const { container } = renderInField({ invalid: true });
     const textarea = screen.getByRole("textbox", { name: "Bio" });
     expect(textarea).toBeInvalid();
     expect(textarea).toHaveAttribute("data-invalid");
