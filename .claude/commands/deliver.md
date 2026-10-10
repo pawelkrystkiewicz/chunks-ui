@@ -114,8 +114,11 @@ Run the gates and push as one chain, so a red gate never pushes:
 
 ```bash
 cd <wt> && bun run lint && bun run check-types && bun run test && git push -u origin <type>/<slug> \
-  && gh pr create --base master --head <type>/<slug> --title "<type>(<scope>): <summary>" --body-file <scratchpad>/pr.md
+  && gh pr create --base master --head <type>/<slug> --title "<type>(<scope>): <summary>" --body-file <scratchpad>/pr.md \
+  && { gh pr comment <type>/<slug> --body "@coderabbitai review" || true; }
 ```
+
+The last command asks CodeRabbit for a review once; a failure there is harmless. Do not wait for it. It is an extra reviewer: threads it posts before the required checks finish still block the merge.
 
 The PR body has:
 
@@ -127,7 +130,7 @@ The PR body has:
 
 ## 8. Merge
 
-Run `<wt>/.claude/commands/merge-pr.sh <pr> [<pr>…]` in the background, once, with the PRs in merge order. Its header says what it enforces.
+Run `<wt>/.claude/commands/merge-pr.sh <pr> [<pr>…]` in the background, once, with the PRs in merge order. Its header says what it enforces. It never waits for or requests a CodeRabbit review.
 
 The script gates on inline CodeRabbit threads only. Findings that appear only in the review body do not block the merge: nitpicks are non-blocking by CodeRabbit's own label, and "outside diff range" comments are about code the PR did not change. Once the script finishes, read the body anyway. A valid finding goes to a follow-up PR or the Also possible list.
 
@@ -135,11 +138,10 @@ Before any follow-up fix, run `git -C <wt> pull --no-rebase`, because the script
 
 - **Required checks not green:** read `gh run view <id> --log-failed`, fix in `<wt>`, push, rerun.
 - **Unresolved CodeRabbit threads:** read the review, including the "outside diff range" and nitpick sections in its body. Triage it like the reviewer's. Fix the valid findings and push once. Reply on every thread with the fix commit or the reason for dropping it, then resolve the thread (GraphQL `resolveReviewThread`). Never resolve a thread without that reply. Rerun.
-- **No CodeRabbit verdict after 30 min:** rerun once. If it stalls again, report the PR as green but not merged.
 - **Conflicts with master:** run `git -C <wt> merge origin/master`, rerun the gates, push, rerun.
 - **Not merged after 5 rounds:** report it.
 
-If the script merged while CodeRabbit was rate-limited (`CodeRabbit: rate-limited`), say so in the report: only the subagent review covered that PR.
+The merge line gives the CodeRabbit status (`#<n> merged (CodeRabbit: <status>)`). If it is anything other than `reviewed` (`pending`, `skipped`, `rate-limited` or `none`), say so in the report: only the subagent review covered that PR. If it is `pending`, check the PR again after the merge for late CodeRabbit threads. A valid one goes to a follow-up PR or the Also possible list.
 
 ## 9. Clean up and report
 
