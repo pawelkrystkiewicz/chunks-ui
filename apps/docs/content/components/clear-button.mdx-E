@@ -50,4 +50,4 @@ All other props are forwarded to the underlying `<button>` element.
 
 ## Styling
 
-The button renders at `size-6` (24px) with a rounded-full shape. It shows `text-muted-foreground` by default and transitions to `bg-accent text-destructive-text` on hover.
+The button renders at `size-6` (24px) with a rounded-full shape. It shows `text-muted-foreground` by default and transitions to `bg-accent text-destructive` on hover.

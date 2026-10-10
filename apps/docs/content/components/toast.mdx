@@ -68,7 +68,7 @@ import { CheckCircle2 } from 'lucide-react'
 add({
   title: "File saved",
   icon: CheckCircle2,
-  iconClassName: "text-success",
+  iconClassName: "text-success-text",
 })
 ```
 
@@ -85,10 +85,10 @@ import { Button, Toast } from 'chunks-ui'
 import { AlertTriangle, CheckCircle2, Info, XCircle } from 'lucide-react'
 
 const TYPE_STYLES = {
-  primary:     { icon: Info,          iconClassName: 'text-primary',     className: 'border-l-4 border-primary' },
-  success:     { icon: CheckCircle2,  iconClassName: 'text-success',     className: 'border-l-4 border-success' },
-  destructive: { icon: XCircle,       iconClassName: 'text-destructive', className: 'border-l-4 border-destructive' },
-  warning:     { icon: AlertTriangle, iconClassName: 'text-warning',     className: 'border-l-4 border-warning' },
+  primary:     { icon: Info,          iconClassName: 'text-primary-text',     className: 'border-l-4 border-primary' },
+  success:     { icon: CheckCircle2,  iconClassName: 'text-success-text',     className: 'border-l-4 border-success' },
+  destructive: { icon: XCircle,       iconClassName: 'text-destructive-text', className: 'border-l-4 border-destructive' },
+  warning:     { icon: AlertTriangle, iconClassName: 'text-warning-text',     className: 'border-l-4 border-warning' },
 } as const
 
 type ToastType = keyof typeof TYPE_STYLES
@@ -186,13 +186,13 @@ promise(uploadFile(), {
     title: "Upload complete",
     description: `Saved ${result.name} to your workspace.`,
     icon: CheckCircle2,
-    iconClassName: "text-success",
+    iconClassName: "text-success-text",
   }),
   error: (err) => ({
     title: "Upload failed",
     description: err.message,
     icon: XCircle,
-    iconClassName: "text-destructive",
+    iconClassName: "text-destructive-text",
   }),
 })
 ```

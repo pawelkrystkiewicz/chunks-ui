@@ -103,7 +103,7 @@ Labels dim to 50% opacity when the field is disabled:
 | `Field.Root` | Wrapper element. Vertical flex with `gap-1`. Manages `invalid` and `disabled` state. |
 | `Field.Label` | Form label. `text-sm font-medium`. Dims when disabled. |
 | `Field.Description` | Help text below the label. `text-xs text-muted-foreground`. |
-| `Field.Error` | Error message. `text-xs text-destructive-text`. Only visible when `invalid`. |
+| `Field.Error` | Error message. `text-xs text-destructive`. Only visible when `invalid`. |
 | `Field.Control` | Connects a form control to the field (for native validation). Uses `render` prop. |
 | `Field.Validity` | Render prop for accessing native validity state. |
 

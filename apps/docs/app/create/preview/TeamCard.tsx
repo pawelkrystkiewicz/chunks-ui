@@ -30,7 +30,7 @@ export function TeamCard() {
               size={36}
               className={
                 i === 0
-                  ? "bg-[color-mix(in_oklch,var(--primary)_14%,var(--card))] text-primary"
+                  ? "bg-[color-mix(in_oklch,var(--primary)_14%,var(--card))] text-primary-text"
                   : "bg-muted text-muted-foreground"
               }
             />

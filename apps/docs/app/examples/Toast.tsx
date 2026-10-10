@@ -9,22 +9,22 @@ type ToastType = Exclude<NonNullable<ButtonProps["color"]>, "secondary">;
 const TYPE_STYLES = {
   primary: {
     icon: Info,
-    iconClassName: "text-primary",
+    iconClassName: "text-primary-text",
     className: "border-l-4 border-primary",
   },
   success: {
     icon: CheckCircle2,
-    iconClassName: "text-success",
+    iconClassName: "text-success-text",
     className: "border-l-4 border-success",
   },
   destructive: {
     icon: XCircle,
-    iconClassName: "text-destructive",
+    iconClassName: "text-destructive-text",
     className: "border-l-4 border-destructive",
   },
   warning: {
     icon: AlertTriangle,
-    iconClassName: "text-warning",
+    iconClassName: "text-warning-text",
     className: "border-l-4 border-warning",
   },
 } as const satisfies Record<ToastType, { icon: unknown; iconClassName: string; className: string }>;
@@ -172,7 +172,7 @@ function ToastPromiseTrigger() {
             title: "Uploading file…",
             description: "Hold tight, this will only take a moment",
             icon: Loader,
-            iconClassName: "text-primary animate-spin",
+            iconClassName: "text-primary-text animate-spin",
             className: "border-l-4 border-primary",
           },
           success: (result) => ({
