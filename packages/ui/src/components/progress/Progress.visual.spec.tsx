@@ -1,5 +1,5 @@
 import { describe, it } from "vitest";
-import { pauseAnimations, renderFixture } from "../../VisualTest.utils";
+import { pauseAnimations, renderFixture, SMALL_FEATURE_SCREENSHOT } from "../../VisualTest.utils";
 import { Progress } from "./index";
 
 describe("Progress", () => {
@@ -11,7 +11,7 @@ describe("Progress", () => {
         </Progress.Track>
       </Progress.Root>,
     );
-    await expect(fixture).toMatchScreenshot();
+    await expect(fixture).toMatchScreenshot(SMALL_FEATURE_SCREENSHOT);
   });
 
   it("indeterminate", async () => {
@@ -23,6 +23,6 @@ describe("Progress", () => {
       </Progress.Root>,
     );
     pauseAnimations();
-    await expect(fixture).toMatchScreenshot();
+    await expect(fixture).toMatchScreenshot(SMALL_FEATURE_SCREENSHOT);
   });
 });

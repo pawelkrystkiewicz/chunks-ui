@@ -1,5 +1,5 @@
 import { describe, it } from "vitest";
-import { renderFixture } from "../../VisualTest.utils";
+import { renderFixture, SMALL_FEATURE_SCREENSHOT } from "../../VisualTest.utils";
 import { Separator } from "./index";
 
 describe("Separator", () => {
@@ -11,7 +11,7 @@ describe("Separator", () => {
         <p className="mt-2 text-sm">Below</p>
       </div>,
     );
-    await expect(fixture).toMatchScreenshot();
+    await expect(fixture).toMatchScreenshot(SMALL_FEATURE_SCREENSHOT);
   });
 
   it("vertical", async () => {
@@ -22,6 +22,6 @@ describe("Separator", () => {
         <span className="text-sm">Right</span>
       </div>,
     );
-    await expect(fixture).toMatchScreenshot();
+    await expect(fixture).toMatchScreenshot(SMALL_FEATURE_SCREENSHOT);
   });
 });

@@ -36,6 +36,22 @@
       platformAutomerge: true,
     },
     {
+      // Playwright packages and the CI image move together. The required visual-regression-test
+      // check stays red until update-screenshots.yml is dispatched on the Renovate branch (a
+      // Chromium bump moves pixels at zero tolerance). The image digest in
+      // .claude/commands/deliver.md is not managed by Renovate: bump it by hand in the same PR.
+      // automerge stays off because earlier patch/minor rules set it true.
+      groupName: "playwright",
+      matchPackageNames: [
+        "@playwright/test",
+        "playwright",
+        "playwright-core",
+        "mcr.microsoft.com/playwright",
+      ],
+      automerge: false,
+      platformAutomerge: false,
+    },
+    {
       matchUpdateTypes: ["major"],
       minimumReleaseAge: "3 days",
       dependencyDashboardApproval: true,

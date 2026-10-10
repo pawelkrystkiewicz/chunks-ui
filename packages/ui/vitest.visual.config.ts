@@ -43,7 +43,8 @@ export default defineConfig({
       expect: {
         toMatchScreenshot: {
           comparatorOptions: {
-            allowedMismatchedPixelRatio: 0.05,
+            // Pinned image renders repeat byte for byte, so no pixel may differ.
+            allowedMismatchedPixelRatio: 0,
           },
         },
       },
