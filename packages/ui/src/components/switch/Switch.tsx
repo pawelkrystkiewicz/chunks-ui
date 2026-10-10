@@ -90,7 +90,8 @@ function SwitchThumbElement({
       THUMB_CLASSES,
       !driven && "micro-interactions",
       !driven && "data-checked:translate-x-full data-unchecked:translate-x-0",
-      !driven && "rtl:data-checked:-translate-x-full",
+      // The thumb's own direction: `rtl:` also matches inside an LTR section of an RTL page
+      !driven && "[&:dir(rtl)]:data-checked:-translate-x-full",
       className,
     ),
   });

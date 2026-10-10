@@ -76,12 +76,16 @@ describe("Switch in both directions", () => {
 
   type State = "unchecked" | "checked";
 
-  function renderSwitch(dir: Dir, defaultChecked: boolean) {
-    const { getByRole, getByTestId } = renderIn(
-      dir,
+  /** Renders a switch in `dir`, in a section of that direction when the page's differs */
+  function renderSwitch(dir: Dir, defaultChecked: boolean, page: Dir = dir) {
+    const ui = (
       <Switch.Root aria-label="Wi-Fi" defaultChecked={defaultChecked}>
         <Switch.Thumb data-testid="thumb" />
-      </Switch.Root>,
+      </Switch.Root>
+    );
+    const { getByRole, getByTestId } = renderIn(
+      page,
+      page === dir ? ui : <div dir={dir}>{ui}</div>,
     );
     const track = getByRole("switch");
     const thumb = () => getByTestId("thumb");
@@ -107,15 +111,22 @@ describe("Switch in both directions", () => {
     );
     afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
 
+    const LAYOUTS = [
+      { layout: "ltr", dir: "ltr", page: "ltr" },
+      { layout: "rtl", dir: "rtl", page: "rtl" },
+      // An `rtl:` variant would also match here, inside the RTL page
+      { layout: "ltr section on an rtl page", dir: "ltr", page: "rtl" },
+    ] as const;
+
     it.each(
-      DIRS.flatMap((dir) => [
-        { dir, start: "unchecked" as const },
-        { dir, start: "checked" as const },
+      LAYOUTS.flatMap((layout) => [
+        { ...layout, start: "unchecked" as const },
+        { ...layout, start: "checked" as const },
       ]),
     )(
-      "rests off at the inline start and on at the inline end, $dir, starting $start",
-      async ({ dir, start }) => {
-        const { track, isCssThumb, expectRestsAt } = renderSwitch(dir, start === "checked");
+      "rests off at the inline start and on at the inline end, $layout, starting $start",
+      async ({ dir, page, start }) => {
+        const { track, isCssThumb, expectRestsAt } = renderSwitch(dir, start === "checked", page);
         await expect.poll(isCssThumb, { timeout: 5000 }).toBe(reducedMotion);
         const other: State = start === "checked" ? "unchecked" : "checked";
 
