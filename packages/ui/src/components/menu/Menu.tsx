@@ -159,7 +159,7 @@ function MenuCheckboxItem({ className, children, ...props }: MenuCheckboxItemPro
 function MenuRadioItemIndicator({ className, ...props }: MenuRadioItemIndicatorProps) {
   return (
     <BaseMenu.RadioItemIndicator
-      className={cnState("absolute inset-s-2 flex size-3.5 items-center justify-center", className)}
+      className={cnState("absolute start-2 flex size-3.5 items-center justify-center", className)}
       {...props}
     />
   );
@@ -168,7 +168,7 @@ function MenuRadioItemIndicator({ className, ...props }: MenuRadioItemIndicatorP
 function MenuCheckboxItemIndicator({ className, ...props }: MenuCheckboxItemIndicatorProps) {
   return (
     <BaseMenu.CheckboxItemIndicator
-      className={cnState("absolute inset-s-2 flex size-3.5 items-center justify-center", className)}
+      className={cnState("absolute start-2 flex size-3.5 items-center justify-center", className)}
       {...props}
     />
   );

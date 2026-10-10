@@ -91,7 +91,7 @@ function ComboboxTrigger({ className, children, ...props }: ComboboxTriggerProps
         </svg>,
       )}
       className={cnState(
-        "absolute inset-y-0 inset-e-0 flex items-center pe-2",
+        "absolute inset-y-0 end-0 flex items-center pe-2",
         "disabled:pointer-events-none disabled:opacity-50",
         className,
       )}
@@ -176,7 +176,7 @@ function ComboboxItem({ className, ...props }: ComboboxItemProps) {
 function ComboboxItemIndicator({ className, ...props }: ComboboxItemIndicatorProps) {
   return (
     <BaseCombobox.ItemIndicator
-      className={cnState("absolute inset-e-2 flex items-center", className)}
+      className={cnState("absolute end-2 flex items-center", className)}
       {...props}
     >
       {props.children ?? (
@@ -227,7 +227,7 @@ function ComboboxClear({ className, children, ...props }: ComboboxClearProps) {
         </svg>,
       )}
       className={cnState(
-        "absolute inset-y-0 inset-e-7 flex items-center text-muted-foreground hover:text-foreground",
+        "absolute inset-y-0 end-7 flex items-center text-muted-foreground hover:text-foreground",
         "micro-interactions",
         className,
       )}

@@ -121,7 +121,7 @@ export function Input({
       )}
     >
       {startAdornment && (
-        <span className="pointer-events-none absolute inset-s-3 flex items-center text-muted-foreground">
+        <span className="pointer-events-none absolute start-3 flex items-center text-muted-foreground">
           {startAdornment}
         </span>
       )}
@@ -138,7 +138,7 @@ export function Input({
       />
       {/* The clear button and endAdornment share one slot: while the button shows, it wins */}
       {(endAdornment || clearable) && (
-        <span className="absolute inset-e-3 flex items-center">
+        <span className="absolute end-3 flex items-center">
           {clearable ? <ClearButton onClick={handleClear} /> : endAdornment}
         </span>
       )}

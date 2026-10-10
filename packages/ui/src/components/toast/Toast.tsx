@@ -163,7 +163,7 @@ function ToastClose({ className, children, ...props }: ToastCloseProps) {
     <BaseToast.Close
       aria-label="Close"
       className={cnState(
-        "micro-interactions absolute inset-e-2 top-5 flex size-6 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground",
+        "micro-interactions absolute end-2 top-5 flex size-6 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground",
         "focus-visible:outline-2 focus-visible:outline-ring",
         className,
       )}

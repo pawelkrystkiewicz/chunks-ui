@@ -100,7 +100,7 @@ function SelectItem({ className, ...props }: SelectItemProps) {
 function SelectItemIndicator({ className, ...props }: SelectItemIndicatorProps) {
   return (
     <BaseSelect.ItemIndicator
-      className={cnState("absolute inset-e-2 flex items-center", className)}
+      className={cnState("absolute end-2 flex items-center", className)}
       {...props}
     >
       <svg
