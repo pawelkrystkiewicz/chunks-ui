@@ -154,7 +154,7 @@ add({
 })
 ```
 
-That toast gets a `×` button in the top-right corner that dismisses it via Base UI's `Toast.Close`. Other toasts in the same viewport are unaffected — dismissibility is a per-toast concern, not a viewport-wide setting.
+That toast gets a `×` button in its top-end corner (top-right in left-to-right layouts, top-left in right-to-left ones) that dismisses it via Base UI's `Toast.Close`. Other toasts in the same viewport are unaffected — dismissibility is a per-toast concern, not a viewport-wide setting.
 
 > **Note**: Early versions of this branch exposed the field as `dissmissable` (double-s typo). That name is kept as a `@deprecated` alias for backwards compatibility — if both are set, `dismissible` wins. Prefer `dismissible` in new code.
 

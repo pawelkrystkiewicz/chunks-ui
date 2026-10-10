@@ -63,8 +63,8 @@ function TooltipArrow({ className, ...props }: TooltipArrowProps) {
         "data-[side=left]:-right-1.25",
         "data-[side=right]:-left-1.25",
         // Logical sides: the arrow is on the popup edge that faces back toward the trigger.
-        "data-[side=inline-start]:-inset-e-1.25",
-        "data-[side=inline-end]:-inset-s-1.25",
+        "data-[side=inline-start]:-end-1.25",
+        "data-[side=inline-end]:-start-1.25",
         className,
       )}
       {...props}

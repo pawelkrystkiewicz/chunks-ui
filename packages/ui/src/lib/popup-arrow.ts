@@ -33,11 +33,12 @@ export const arrowClasses = [
   "data-[side=left]:-right-1.25 data-[side=left]:rotate-135",
   "data-[side=right]:-left-1.25 data-[side=right]:-rotate-45",
   // Logical sides: the arrow is on the popup edge that faces back toward the trigger, and turns
-  // the other way in RTL, where that edge is on the other side.
-  "data-[side=inline-start]:-inset-e-1.25 data-[side=inline-start]:rotate-135",
-  "rtl:data-[side=inline-start]:-rotate-45",
-  "data-[side=inline-end]:-inset-s-1.25 data-[side=inline-end]:-rotate-45",
-  "rtl:data-[side=inline-end]:rotate-135",
+  // the other way in RTL, where that edge is on the other side. The arrow's own direction, as
+  // for the inset: `rtl:` also matches inside an LTR section of an RTL page.
+  "data-[side=inline-start]:-end-1.25 data-[side=inline-start]:rotate-135",
+  "[&:dir(rtl)]:data-[side=inline-start]:-rotate-45",
+  "data-[side=inline-end]:-start-1.25 data-[side=inline-end]:-rotate-45",
+  "[&:dir(rtl)]:data-[side=inline-end]:rotate-135",
   // Base UI centres the arrow across the positioner, but it is placed inside the popup's 1px border
   "data-[side=top]:-ml-px data-[side=bottom]:-ml-px",
   "data-[side=left]:-mt-px data-[side=right]:-mt-px",
