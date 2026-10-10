@@ -122,7 +122,7 @@ With `required`, the form does not submit until a date is selected, and focus mo
 
 <DatePickerFormExample />
 
-Inside `Field.Root`, the field's `name` is used when the picker has none, and a disabled field disables the hidden input too.
+Inside `Field.Root`, the field's `name` is used when the picker has none, and a disabled field disables the hidden input too. For a picker outside its `<form>`, set `form` to the form's `id`.
 
 ## Keyboard
 
@@ -140,10 +140,10 @@ When the calendar opens, focus goes to the selected day, or to today if no date 
   definition={generateDefinition({
     code: `
 import type { DatePickerProps } from 'chunks-ui'
-type Props = Pick<DatePickerProps, 'value' | 'defaultValue' | 'onValueChange' | 'placeholder' | 'disabled' | 'min' | 'max' | 'isDateDisabled' | 'weekStartsOn' | 'showOutsideDays' | 'name' | 'required' | 'className'>
+type Props = Pick<DatePickerProps, 'value' | 'defaultValue' | 'onValueChange' | 'placeholder' | 'disabled' | 'min' | 'max' | 'isDateDisabled' | 'weekStartsOn' | 'showOutsideDays' | 'name' | 'required' | 'form' | 'className'>
 export default Props
 `
   })}
 />
 
-`DatePicker` also takes every other `<button>` prop and passes it to the trigger.
+`DatePicker` also takes every other `<button>` prop except `onChange` and passes it to the trigger. Use `onValueChange` to follow the date.

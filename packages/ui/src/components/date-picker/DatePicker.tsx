@@ -54,6 +54,10 @@ type DatePickerOwnProps = Pick<CalendarProps, "weekStartsOn" | "showOutsideDays"
    */
   required?: boolean;
   /**
+   * The `id` of the `<form>` the hidden input belongs to, for a picker placed outside it.
+   */
+  form?: string;
+  /**
    * Classes for the wrapper element around the trigger.
    */
   className?: string;
@@ -62,9 +66,10 @@ type DatePickerOwnProps = Pick<CalendarProps, "weekStartsOn" | "showOutsideDays"
 /**
  * Props for `DatePicker`. Every `<button>` prop not listed here (`id`, `aria-label`,
  * `aria-labelledby`, `aria-describedby`, `data-*`, event handlers, `ref`) goes to the trigger.
+ * There is no `onChange`: the trigger never fires it. Use `onValueChange`.
  */
 export type DatePickerProps = DatePickerOwnProps &
-  Omit<ComponentProps<"button">, keyof DatePickerOwnProps | "children" | "type">;
+  Omit<ComponentProps<"button">, keyof DatePickerOwnProps | "children" | "type" | "onChange">;
 
 // Local calendar date, not toISOString(), which shifts to UTC and can change the day
 function toIsoDate(date: Date): string {
@@ -93,6 +98,7 @@ export function DatePicker({
   showOutsideDays,
   name,
   required,
+  form,
   className,
   ref,
   ...triggerProps
@@ -176,6 +182,7 @@ export function DatePicker({
                   // the first invalid field, the trigger takes the focus.
                   <input
                     name={formName}
+                    form={form}
                     value={isoValue}
                     required={required}
                     disabled={state.disabled}

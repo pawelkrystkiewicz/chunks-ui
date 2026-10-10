@@ -327,6 +327,22 @@ describe("DatePicker in a form", () => {
     expect(form.elements.namedItem("due")).toBeInstanceOf(HTMLInputElement);
   });
 
+  it("submits with the form named by `form` when it is outside that form", () => {
+    render(
+      <>
+        <form id="task" aria-label="Task" />
+        <DatePicker name="due" form="task" defaultValue={new Date(2026, 2, 15)} />
+      </>,
+    );
+    expect(formData(screen.getByRole<HTMLFormElement>("form"))).toBe("2026-03-15");
+  });
+
+  it("takes onValueChange, not onChange, which the trigger never fires", () => {
+    // @ts-expect-error onChange is not a DatePicker prop
+    render(<DatePicker onChange={() => {}} />);
+    expect(screen.getByRole("button")).toBeInTheDocument();
+  });
+
   it("renders no form input without a name or required", () => {
     const { container } = render(<DatePicker defaultValue={new Date(2026, 2, 15)} />);
     expect(container.querySelector("input")).toBeNull();
