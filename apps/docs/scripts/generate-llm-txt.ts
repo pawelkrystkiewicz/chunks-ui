@@ -13,8 +13,8 @@ const CONTENT_DIR = join(DOCS_DIR, "content");
 const COMPONENTS_DIR = join(CONTENT_DIR, "components");
 const OUTPUT_DIR = join(DOCS_DIR, "public");
 
-export const INDEX_FILE = "llms.txt";
-export const FULL_FILE = "llms-full.txt";
+const INDEX_FILE = "llms.txt";
+const FULL_FILE = "llms-full.txt";
 const LEGACY_INDEX_FILE = "llm.txt";
 const LEGACY_FULL_FILE = "llm-full.txt";
 
@@ -194,7 +194,7 @@ if (import.meta.main) {
   generateLlmFiles()
     .then(({ index, full }) =>
       console.log(
-        `Generated ${INDEX_FILE} (${index.length} bytes) and ${FULL_FILE} (${full.length} bytes), plus ${LEGACY_INDEX_FILE} and ${LEGACY_FULL_FILE}`,
+        `Generated llms.txt (${index.length} bytes) and llms-full.txt (${full.length} bytes)`,
       ),
     )
     .catch((err) => {
