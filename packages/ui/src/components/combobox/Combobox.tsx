@@ -200,7 +200,12 @@ function ComboboxItemIndicator({ className, ...props }: ComboboxItemIndicatorPro
 function ComboboxEmpty({ className, ...props }: ComboboxEmptyProps) {
   return (
     <BaseCombobox.Empty
-      className={cnState("px-2 py-4 text-center text-muted-foreground text-sm", className)}
+      // Base UI keeps it mounted, without children, as a live region while items match: no
+      // padding then, or it leaves a gap under the items
+      className={cnState(
+        "px-2 py-4 text-center text-muted-foreground text-sm empty:p-0",
+        className,
+      )}
       {...props}
     />
   );
