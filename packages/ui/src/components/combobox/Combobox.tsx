@@ -91,7 +91,7 @@ function ComboboxTrigger({ className, children, ...props }: ComboboxTriggerProps
         </svg>,
       )}
       className={cnState(
-        "absolute inset-y-0 right-0 flex items-center pr-2",
+        "absolute inset-y-0 end-0 flex items-center pe-2",
         "disabled:pointer-events-none disabled:opacity-50",
         className,
       )}
@@ -102,7 +102,7 @@ function ComboboxTrigger({ className, children, ...props }: ComboboxTriggerProps
 
 function ComboboxIcon({ className, ...props }: ComboboxIconProps) {
   return (
-    <BaseCombobox.Icon className={cnState("ml-auto", className)} {...props}>
+    <BaseCombobox.Icon className={cnState("ms-auto", className)} {...props}>
       {props.children ?? (
         <svg
           viewBox="0 0 24 24"
@@ -163,7 +163,7 @@ function ComboboxItem({ className, ...props }: ComboboxItemProps) {
   return (
     <BaseCombobox.Item
       className={cnState(
-        "relative flex w-full cursor-default items-center rounded-sm py-1.5 pr-8 pl-2 text-sm outline-none",
+        "relative flex w-full cursor-default items-center rounded-sm py-1.5 ps-2 pe-8 text-sm outline-none",
         "data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground",
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         className,
@@ -176,7 +176,7 @@ function ComboboxItem({ className, ...props }: ComboboxItemProps) {
 function ComboboxItemIndicator({ className, ...props }: ComboboxItemIndicatorProps) {
   return (
     <BaseCombobox.ItemIndicator
-      className={cnState("absolute right-2 flex items-center", className)}
+      className={cnState("absolute end-2 flex items-center", className)}
       {...props}
     >
       {props.children ?? (
@@ -232,7 +232,7 @@ function ComboboxClear({ className, children, ...props }: ComboboxClearProps) {
         </svg>,
       )}
       className={cnState(
-        "absolute inset-y-0 right-7 flex items-center text-muted-foreground hover:text-foreground",
+        "absolute inset-y-0 end-7 flex items-center text-muted-foreground hover:text-foreground",
         "micro-interactions",
         className,
       )}
