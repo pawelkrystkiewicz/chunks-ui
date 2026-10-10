@@ -78,7 +78,7 @@ Components from `@creation-ui/react` that were not carried forward:
 | **TouchTarget**           | Too small to be a component                  | `touch-target` CSS utility (planned, #200)          |
 | **Overlay**               | Not useful on its own                        | Built into Dialog and Drawer                        |
 | **DropdownChevron**       | Internal detail                              | Internal to Select and Combobox                     |
-| **Autocomplete** (custom) | Semantically a combobox (pick from list)     | `Combobox`                                          |
+| **Autocomplete** (custom) | Behaved as a combobox, not free-form         | `Combobox`                                          |
 
 ## Component Anatomy
 

@@ -10,7 +10,7 @@ Scaffold a structured implementation brief for a new component. This is the Laye
 
 ## Instructions
 
-Given the component name `$ARGUMENTS`, produce a structured task brief in the following format:
+Given the component name `$ARGUMENTS`, produce a structured task brief in the following format. `$ARGUMENTS_lowercase` means the kebab-case name (`ToggleGroup` → `toggle-group`), matching component folders and docs pages.
 
 ---
 
