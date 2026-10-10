@@ -1,5 +1,5 @@
 import { describe, it } from "vitest";
-import { renderFixture } from "../../VisualTest.utils";
+import { renderFixture, SMALL_FEATURE_SCREENSHOT } from "../../VisualTest.utils";
 import { Slider } from "./index";
 
 describe("Slider", () => {
@@ -16,7 +16,7 @@ describe("Slider", () => {
         </Slider.Root>
       </div>,
     );
-    await expect(fixture).toMatchScreenshot();
+    await expect(fixture).toMatchScreenshot(SMALL_FEATURE_SCREENSHOT);
   });
 
   it("range", async () => {
@@ -33,7 +33,7 @@ describe("Slider", () => {
         </Slider.Root>
       </div>,
     );
-    await expect(fixture).toMatchScreenshot();
+    await expect(fixture).toMatchScreenshot(SMALL_FEATURE_SCREENSHOT);
   });
 
   it("disabled", async () => {
@@ -49,6 +49,6 @@ describe("Slider", () => {
         </Slider.Root>
       </div>,
     );
-    await expect(fixture).toMatchScreenshot();
+    await expect(fixture).toMatchScreenshot(SMALL_FEATURE_SCREENSHOT);
   });
 });

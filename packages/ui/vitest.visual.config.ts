@@ -43,7 +43,9 @@ export default defineConfig({
       expect: {
         toMatchScreenshot: {
           comparatorOptions: {
-            allowedMismatchedPixelRatio: 0.05,
+            // CI renders in the same pinned Playwright image as the local linux/amd64 recipe, and
+            // renders there repeat byte for byte, so no pixel may differ past the colour threshold
+            allowedMismatchedPixelRatio: 0,
           },
         },
       },
