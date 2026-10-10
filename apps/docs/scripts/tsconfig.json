@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "@chunks-ui/typescript-config/base.json",
+  "compilerOptions": {
+    "lib": ["ESNext", "DOM"],
+    "target": "ESNext",
+    "types": ["bun"],
+    "noEmit": true,
+    "declaration": false,
+    "declarationMap": false,
+    "noUncheckedIndexedAccess": true
+  },
+  "include": ["."]
+}
