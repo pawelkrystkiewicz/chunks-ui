@@ -56,9 +56,13 @@ function ComboboxInput({ className, ...props }: ComboboxInputProps) {
   );
 }
 
-function ComboboxTrigger({ className, ...props }: ComboboxTriggerProps) {
+// Trigger, Clear and ChipRemove render an aria-hidden icon by default, so they name themselves
+// with a default aria-label. Custom children name the button instead (a fixed label would hide
+// visible text such as <Combobox.Value />), and a consumer's aria-label always wins.
+function ComboboxTrigger({ className, children, ...props }: ComboboxTriggerProps) {
   return (
     <BaseCombobox.Trigger
+      aria-label={children == null ? "Show options" : undefined}
       className={cnState(
         "absolute inset-y-0 right-0 flex items-center pr-2",
         "disabled:pointer-events-none disabled:opacity-50",
@@ -66,7 +70,7 @@ function ComboboxTrigger({ className, ...props }: ComboboxTriggerProps) {
       )}
       {...props}
     >
-      {props.children ?? (
+      {children ?? (
         <svg
           viewBox="0 0 24 24"
           fill="none"
@@ -187,9 +191,10 @@ function ComboboxEmpty({ className, ...props }: ComboboxEmptyProps) {
   );
 }
 
-function ComboboxClear({ className, ...props }: ComboboxClearProps) {
+function ComboboxClear({ className, children, ...props }: ComboboxClearProps) {
   return (
     <BaseCombobox.Clear
+      aria-label={children == null ? "Clear selection" : undefined}
       className={cnState(
         "absolute inset-y-0 right-7 flex items-center text-muted-foreground hover:text-foreground",
         "micro-interactions",
@@ -197,7 +202,7 @@ function ComboboxClear({ className, ...props }: ComboboxClearProps) {
       )}
       {...props}
     >
-      {props.children ?? (
+      {children ?? (
         <svg
           viewBox="0 0 24 24"
           fill="none"
@@ -236,16 +241,17 @@ function ComboboxChip({ className, ...props }: ComboboxChipProps) {
   );
 }
 
-function ComboboxChipRemove({ className, ...props }: ComboboxChipRemoveProps) {
+function ComboboxChipRemove({ className, children, ...props }: ComboboxChipRemoveProps) {
   return (
     <BaseCombobox.ChipRemove
+      aria-label={children == null ? "Remove" : undefined}
       className={cnState(
         "micro-interactions inline-flex items-center text-muted-foreground hover:text-foreground",
         className,
       )}
       {...props}
     >
-      {props.children ?? (
+      {children ?? (
         <svg
           viewBox="0 0 24 24"
           fill="none"

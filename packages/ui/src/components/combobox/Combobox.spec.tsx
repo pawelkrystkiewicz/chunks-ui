@@ -1,7 +1,12 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { axe } from "jest-axe";
 import { afterEach, describe, expect, it } from "vitest";
-import { Combobox } from "./Combobox";
+import {
+  Combobox,
+  type ComboboxChipRemoveProps,
+  type ComboboxClearProps,
+  type ComboboxTriggerProps,
+} from "./Combobox";
 
 afterEach(cleanup);
 
@@ -282,10 +287,6 @@ describe("Combobox", () => {
     expect(screen.getByTestId("gl")).toHaveClass("custom");
   });
 
-  // Chip and ChipRemove are thin styling wrappers that require
-  // multi-select with active selections to render in Base UI context.
-  // They are covered by integration/Playwright CT tests.
-
   it("has no a11y violations", async () => {
     const { container } = render(
       <Combobox.Root>
@@ -293,5 +294,79 @@ describe("Combobox", () => {
       </Combobox.Root>,
     );
     expect(await axe(container)).toHaveNoViolations();
+  });
+});
+
+describe("Combobox icon buttons", () => {
+  const fruits = ["Apple", "Banana"];
+
+  // The documented multi-select pattern, with the icon buttons rendered as is
+  function MultiSelect({
+    triggerProps,
+    clearProps,
+    chipRemoveProps,
+  }: {
+    triggerProps?: ComboboxTriggerProps;
+    clearProps?: ComboboxClearProps;
+    chipRemoveProps?: ComboboxChipRemoveProps;
+  }) {
+    return (
+      <Combobox.Root multiple items={fruits} defaultValue={["Apple"]}>
+        <Combobox.Control>
+          <Combobox.Chips>
+            <Combobox.Chip>
+              Apple
+              <Combobox.ChipRemove {...chipRemoveProps} />
+            </Combobox.Chip>
+          </Combobox.Chips>
+          <Combobox.Input aria-label="Fruits" />
+          <Combobox.Clear {...clearProps} />
+          <Combobox.Trigger {...triggerProps} />
+        </Combobox.Control>
+      </Combobox.Root>
+    );
+  }
+
+  it("names the default Trigger, Clear and ChipRemove", () => {
+    render(<MultiSelect />);
+    expect(screen.getByRole("button", { name: "Show options" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Clear selection" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Remove" })).toBeInTheDocument();
+  });
+
+  it("leaves no button without a name and passes axe", async () => {
+    const { container } = render(<MultiSelect />);
+    const buttons = screen.getAllByRole("button");
+    expect(buttons).toHaveLength(3);
+    for (const button of buttons) {
+      expect(button).toHaveAccessibleName();
+    }
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it("uses aria-label in place of the default names", () => {
+    render(
+      <MultiSelect
+        triggerProps={{ "aria-label": "Show fruits" }}
+        clearProps={{ "aria-label": "Clear fruits" }}
+        chipRemoveProps={{ "aria-label": "Remove Apple" }}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Show fruits" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Clear fruits" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Remove Apple" })).toBeInTheDocument();
+  });
+
+  it("takes the name from custom children instead of the default", () => {
+    render(
+      <MultiSelect
+        triggerProps={{ children: "Fruits" }}
+        clearProps={{ children: "Clear all" }}
+        chipRemoveProps={{ children: "Drop" }}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Fruits" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Clear all" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Drop" })).toBeInTheDocument();
   });
 });

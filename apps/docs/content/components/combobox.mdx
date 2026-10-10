@@ -207,7 +207,7 @@ function ControlledCombobox() {
 | `Combobox.Root` | State container. Manages open/close, filtering, and selected value(s). |
 | `Combobox.Control` | Bordered wrapper for multi-select (chips + input). Uses `has-[:focus-visible]` for focus ring. |
 | `Combobox.Input` | Text input with built-in filtering. |
-| `Combobox.Trigger` | Button that toggles the popup. Renders a default chevron icon. |
+| `Combobox.Trigger` | Button that toggles the popup. Renders a default chevron icon and the default name "Show options". |
 | `Combobox.Icon` | Chevron icon, usable standalone outside the trigger. |
 | `Combobox.Portal` | Renders the popup in a portal. |
 | `Combobox.Positioner` | Handles Floating UI positioning. |
@@ -216,14 +216,24 @@ function ControlledCombobox() {
 | `Combobox.Item` | An individual selectable option. |
 | `Combobox.ItemIndicator` | Checkmark shown for the selected item. |
 | `Combobox.Empty` | Message displayed when no items match the filter. |
-| `Combobox.Clear` | Button that clears the current value. Renders a default X icon. |
+| `Combobox.Clear` | Button that clears the current value. Renders a default X icon and the default name "Clear selection". |
 | `Combobox.Group` | Groups related items together. |
 | `Combobox.GroupLabel` | Label for a group of items. |
 | `Combobox.Chips` | Container for selected chips in multi-select mode. Uses render-prop children. |
 | `Combobox.Chip` | A styled chip representing a selected value. |
-| `Combobox.ChipRemove` | Button to remove a chip. Renders a default X icon. |
+| `Combobox.ChipRemove` | Button to remove a chip. Renders a default X icon and the default name "Remove". |
 | `Combobox.Value` | Displays the selected value. |
 | `Combobox.Status` | Accessible status announcements for screen readers. |
+
+## Accessible Names
+
+`Combobox.Trigger`, `Combobox.Clear` and `Combobox.ChipRemove` show only an icon, so each one has a default `aria-label`: "Show options", "Clear selection" and "Remove". Pass `aria-label` to use a different name, for example one that says which chip the button removes:
+
+```tsx
+<Combobox.ChipRemove aria-label={`Remove ${item.label}`} />
+```
+
+If you pass `children`, the default name is not applied and the children name the button. Give icon-only children an `aria-label`.
 
 ## Props
 
