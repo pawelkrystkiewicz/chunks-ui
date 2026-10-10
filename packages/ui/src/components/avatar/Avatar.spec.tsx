@@ -1,5 +1,6 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { axe } from "jest-axe";
+import { renderToString } from "react-dom/server";
 import { afterEach, describe, expect, it } from "vitest";
 import { Avatar } from "./Avatar";
 
@@ -8,10 +9,16 @@ afterEach(cleanup);
 describe("Avatar", () => {
   // jsdom never loads images, so these cover the not-loaded state; the loaded image and a
   // failed load are covered in Avatar.visual.spec.tsx
-  it("shows the initials, not an image, while src loads", () => {
-    const { container } = render(<Avatar src="/photo.jpg" alt="John Doe" />);
-    expect(container.querySelector("img")).toBeNull();
+  it("shows the initials while src loads", () => {
+    render(<Avatar src="/photo.jpg" alt="John Doe" />);
     expect(screen.getByText("JD")).toBeInTheDocument();
+  });
+
+  it("puts the image in server HTML, named once by alt", () => {
+    const container = document.createElement("div");
+    container.innerHTML = renderToString(<Avatar src="/photo.jpg" alt="John Doe" />);
+    expect(container.querySelector("img")).toHaveAttribute("src", "/photo.jpg");
+    expect(within(container).getAllByRole("img", { name: "John Doe" })).toHaveLength(1);
   });
 
   it("renders initials from alt when no src", () => {

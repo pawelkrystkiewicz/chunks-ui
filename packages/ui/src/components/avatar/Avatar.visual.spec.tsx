@@ -10,15 +10,10 @@ const photo = `data:image/svg+xml,${encodeURIComponent(
 )}`;
 const missing = "/__missing_avatar__.png";
 
-/** Resolves once the browser has failed to load `src`. */
-function failedToLoad(src: string) {
-  return new Promise<void>((resolve, reject) => {
-    const img = new Image();
-    img.onerror = () => resolve();
-    img.onload = () => reject(new Error(`${src} loaded`));
-    img.src = src;
-  });
-}
+// Base UI marks the image `data-error` once it fails to load and drops `aria-hidden` once it loads
+const failed = (container: HTMLElement) => container.querySelectorAll("img[data-error]").length;
+const loaded = (container: HTMLElement) =>
+  container.querySelectorAll("img:not([aria-hidden])").length;
 
 describe("Avatar", () => {
   it("shapes", async () => {
@@ -52,14 +47,14 @@ describe("Avatar", () => {
         <Avatar src={missing} alt="Jane Doe" />
       </div>,
     );
-    await failedToLoad(missing);
-    await expect.poll(() => container.querySelectorAll("img").length).toBe(shapes.length);
+    await expect.poll(() => failed(container)).toBe(1);
+    await expect.poll(() => loaded(container)).toBe(shapes.length);
     await expect(fixture).toMatchScreenshot();
   });
 
   it("shows the loaded image, named once by alt", async () => {
     const { container, getAllByRole } = render(<Avatar src={photo} alt="Jane Doe" />);
-    await expect.poll(() => container.querySelector("img")).not.toBeNull();
+    await expect.poll(() => loaded(container)).toBe(1);
     expect(container.textContent).not.toContain("JD");
     const named = getAllByRole("img", { name: "Jane Doe" });
     expect(named).toHaveLength(1);
@@ -67,9 +62,12 @@ describe("Avatar", () => {
   });
 
   it("falls back to the initials when the image fails to load", async () => {
-    const { container, getByRole } = render(<Avatar src={missing} alt="Jane Doe" />);
-    await failedToLoad(missing);
-    expect(container.querySelector("img")).toBeNull();
-    expect(getByRole("img", { name: "Jane Doe" }).textContent).toBe("JD");
+    const { container, getAllByRole } = render(<Avatar src={missing} alt="Jane Doe" />);
+    await expect.poll(() => failed(container)).toBe(1);
+    const img = container.querySelector("img") as HTMLImageElement;
+    expect(getComputedStyle(img).display).toBe("none");
+    const named = getAllByRole("img", { name: "Jane Doe" });
+    expect(named).toHaveLength(1);
+    expect(named[0]?.textContent).toBe("JD");
   });
 });

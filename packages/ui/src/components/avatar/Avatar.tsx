@@ -56,8 +56,19 @@ export function Avatar({
       style={sizeStyle}
       {...props}
     >
-      {/* Base UI renders the image only once it has loaded, so a loading or broken one never shows */}
-      {src && <BaseAvatar.Image src={src} alt={alt ?? ""} className="size-full object-cover" />}
+      {/*
+        keepMounted puts the <img> in server HTML, so it loads before hydration and without JS.
+        Until it loads, Base UI hides it from assistive tech and sets data-loading or data-error,
+        which hide it here too. Once loaded it covers the initials until the fallback unmounts
+      */}
+      {src && (
+        <BaseAvatar.Image
+          keepMounted
+          src={src}
+          alt={alt ?? ""}
+          className="absolute inset-0 size-full object-cover data-[error]:hidden data-[loading]:invisible"
+        />
+      )}
       {/* Shown while there is no image: an image named by alt, or decorative without one */}
       <BaseAvatar.Fallback
         {...(alt ? { role: "img", "aria-label": alt } : { "aria-hidden": true })}
