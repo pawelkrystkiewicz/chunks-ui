@@ -79,6 +79,10 @@ function ControlledDialog() {
 
 <DialogControlledExample />
 
+## Long content
+
+Content taller than the popup scrolls inside it. With long content and actions only at the bottom, Base UI focuses the first tabbable element and scrolls to it. Pass `initialFocus` a ref to a top element, such as the Close button or the Title with `tabIndex={-1}`, to open at the top.
+
 ## Animation
 
 The popup enters with a scale-up + fade transition (`scale-95` to `scale-100`, `opacity-0` to `opacity-1`) over 200ms. The backdrop fades in/out independently.

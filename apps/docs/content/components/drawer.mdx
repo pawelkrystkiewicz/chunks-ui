@@ -51,6 +51,7 @@ The `side` prop on `Drawer.Popup` controls which edge the drawer slides from:
 - `left` and `right` drawers have a fixed width of `w-80`.
 - `bottom` drawer spans the full width with automatic height (up to `80dvh`) and rounded top corners.
 - Content taller than the drawer scrolls inside it.
+- With long content and actions only at the bottom, Base UI focuses the first tabbable element and scrolls to it. Pass `initialFocus` a ref to a top element, such as the Close button or the Title with `tabIndex={-1}`, to open at the top.
 
 ## Controlled
 
