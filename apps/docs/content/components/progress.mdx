@@ -26,7 +26,7 @@ Pass `value` and `max` to show a determinate progress bar:
 
 ## Indeterminate
 
-Omit `value` (or pass `null`) to activate the indeterminate pulse animation. The pulse does not run when the user has reduced motion enabled:
+Omit `value` (or pass `null`) to activate the indeterminate pulse animation. The pulse does not run when the user has reduced motion enabled, and neither does an `animate-*` class you add to the indicator:
 
 ```tsx
 <Progress.Root>

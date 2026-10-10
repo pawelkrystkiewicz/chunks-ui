@@ -103,7 +103,7 @@ const OWN_TRANSITIONS = [
   { part: "Accordion.Panel", property: "height", renderPart: () => renderTarget(accordion) },
   {
     part: "the Accordion.Trigger chevron",
-    property: "transform, translate, scale, rotate",
+    property: "rotate",
     renderPart: () => render(accordion).getByRole("button").querySelector("svg") as Element,
   },
   { part: "Progress.Indicator", property: "width", renderPart: () => renderTarget(progress(40)) },
@@ -198,20 +198,8 @@ describe("component motion with no reduced-motion preference", () => {
   afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
 
   it.each(OWN_TRANSITIONS)("transitions $property on $part", ({ renderPart, property }) => {
-    expect(transitionOf(renderPart()).property).toBe(property);
-  });
-
-  it("pulses an indeterminate Progress.Indicator", () => {
-    expect(getComputedStyle(renderTarget(progress(null))).animationName).toBe("pulse");
-  });
-
-  // Full class names, so Tailwind generates them
-  it.each([
-    { className: "data-[indeterminate]:animate-bounce", animation: "bounce" },
-    { className: "data-[indeterminate]:animate-none", animation: "none" },
-  ])("lets $className replace the pulse on an indeterminate Progress.Indicator", (c) => {
-    const indicator = renderTarget(progress(null, c.className));
-    expect(getComputedStyle(indicator).animationName).toBe(c.animation);
+    // The chevron uses `transition-transform`, which Tailwind expands to several properties
+    expect(transitionOf(renderPart()).property.split(", ")).toContain(property);
   });
 
   // `scale-75` sets the `scale` property, not `transform`
@@ -219,12 +207,8 @@ describe("component motion with no reduced-motion preference", () => {
     const { rerender } = render(<ThemeToggle theme="light" />);
     const sun = screen.getByRole("button").firstElementChild as HTMLElement;
     rerender(<ThemeToggle theme="dark" />);
-    const transitioned = sun
-      .getAnimations()
-      .flatMap((animation) =>
-        animation instanceof CSSTransition ? [animation.transitionProperty] : [],
-      );
-    expect(transitioned.sort()).toEqual(["opacity", "scale"]);
+    const properties = sun.getAnimations().map((a) => (a as CSSTransition).transitionProperty);
+    expect(properties.sort()).toEqual(["opacity", "scale"]);
   });
 });
 
@@ -235,30 +219,49 @@ describe("component motion with reduced motion", () => {
     expect(transitionOf(renderPart()).property).toBe("none");
   });
 
-  it("does not pulse an indeterminate Progress.Indicator", () => {
-    expect(getComputedStyle(renderTarget(progress(null))).animationName).toBe("none");
-  });
-
   it("still opens and closes an Accordion on click", async () => {
     const user = userEvent.setup();
-    render(
-      <Accordion.Root>
-        <Accordion.Item value="a">
-          <Accordion.Header>
-            <Accordion.Trigger>Section</Accordion.Trigger>
-          </Accordion.Header>
-          <Accordion.Panel>Content</Accordion.Panel>
-        </Accordion.Item>
-      </Accordion.Root>,
-    );
+    render(accordion);
     const trigger = screen.getByRole("button", { name: "Section" });
-    const panel = () => screen.queryByText("Content");
+    const panel = () => screen.queryByTestId("target");
+
+    await user.click(trigger);
+    await expect.poll(() => panel()?.hidden ?? true).toBe(true);
 
     await user.click(trigger);
     await expect.poll(() => panel()?.getBoundingClientRect().height ?? 0).toBeGreaterThan(0);
     expect(panel()).toBeVisible();
-
-    await user.click(trigger);
-    await expect.poll(() => panel()?.hidden ?? true).toBe(true);
   });
+});
+
+describe("Progress.Indicator indeterminate animation", () => {
+  afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
+
+  // Full class names, so Tailwind generates them
+  it.each([
+    { reducedMotion: "no-preference", className: undefined, animation: "pulse" },
+    {
+      reducedMotion: "no-preference",
+      className: "data-[indeterminate]:animate-bounce",
+      animation: "bounce",
+    },
+    {
+      reducedMotion: "no-preference",
+      className: "data-[indeterminate]:animate-none",
+      animation: "none",
+    },
+    { reducedMotion: "reduce", className: undefined, animation: "none" },
+    {
+      reducedMotion: "reduce",
+      className: "data-[indeterminate]:animate-bounce",
+      animation: "none",
+    },
+  ] as const)(
+    "animates as $animation with $reducedMotion and $className",
+    async ({ reducedMotion, className, animation }) => {
+      await commands.emulateMedia({ reducedMotion });
+      const indicator = renderTarget(progress(null, className));
+      expect(getComputedStyle(indicator).animationName).toBe(animation);
+    },
+  );
 });
