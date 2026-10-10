@@ -98,16 +98,16 @@ Browser specs (Vitest browser mode, Playwright Chromium) in `packages/ui`. They 
 
 - **Tolerance is 0.** `toMatchScreenshot` runs with `allowedMismatchedPixelRatio: 0` (`vitest.visual.config.ts`), so one changed pixel fails the spec.
 - **Only Linux baselines are committed** (`*-linux.png`), and CI compares against them. macOS baselines (`*-darwin.png`) are gitignored and exist only on your machine. With zero tolerance, a macOS baseline left over from an older checkout fails locally although nothing is wrong: refresh it with `bun run test:visual:update` (in `packages/ui`) before you treat a local failure as a regression.
-- **Regenerate Linux baselines in Docker** after you commit the change. CI renders on x86 in the same digest-pinned image, so force `linux/amd64`; an arm64 render can differ from the CI render. Under emulation on Apple silicon the run takes minutes, which is not a hang. `<wt>` is your checkout or worktree, `<scratchpad>` any scratch directory outside it:
+- **Regenerate Linux baselines in Docker** after you commit the change. CI renders on x86 in the same image, so force `linux/amd64`; an arm64 render can differ from the CI render. Under emulation on Apple silicon the run takes minutes, which is not a hang. `<wt>` is your checkout or worktree, `<scratchpad>` any scratch directory outside it:
 
   ```bash
   D=<scratchpad>/ui-visual; rm -rf $D && mkdir -p $D && git -C <wt> archive HEAD | tar -x -C $D
-  docker run --rm --platform linux/amd64 -v $D:/work -w /work mcr.microsoft.com/playwright:v1.64.0-noble@sha256:06a9939e57531807f8d5fd76ce44b53165ffb7d7501d87ab10e285c20b1e971f bash -lc \
+  docker run --rm --platform linux/amd64 -v $D:/work -w /work mcr.microsoft.com/playwright@sha256:bc72a8df40831ded821e3cbc79c318c21b44d6e51dff9fd89ace7a8249c5b462 bash -lc \
     'npm i -g bun@1.4.2 >/dev/null 2>&1 && bun install --frozen-lockfile >/dev/null 2>&1 && cd packages/ui && bun run test:visual:update'
   rsync -am --include='*/' --include='*-linux.png' --exclude='*' $D/packages/ui/src/ <wt>/packages/ui/src/
   ```
 
-  Keep the image tag equal to the `@playwright/test` version. `bun run update:screenshots` does the same on GitHub Actions for the current branch.
+  The digest is the `linux/amd64` manifest of `mcr.microsoft.com/playwright:v1.64.0-noble@sha256:06a9939e…`, the multi-arch index CI pins in the workflows' `container:`; Docker rejects an index digest with `--platform` ("cannot overwrite digest"). Bump both with `@playwright/test` (`docker buildx imagetools inspect mcr.microsoft.com/playwright:v<version>-noble` lists the manifests). `bun run update:screenshots` does the same on GitHub Actions for the current branch.
 - Look at every changed PNG before you commit it.
 
 ## Coverage Targets
