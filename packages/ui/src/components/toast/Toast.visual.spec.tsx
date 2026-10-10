@@ -1,18 +1,26 @@
 import { render, screen } from "@testing-library/react";
-import { useEffect, useRef } from "react";
+import { type ComponentPropsWithoutRef, useEffect, useRef } from "react";
 import { afterAll, beforeAll, describe, expect, it, onTestFinished } from "vitest";
 import { commands, page } from "vitest/browser";
 import { Toast } from "./index";
 
-function AddToast({ title, description }: { title: string; description?: string }) {
+function AddToast({
+  title,
+  description,
+  actionProps,
+}: {
+  title: string;
+  description?: string;
+  actionProps?: ComponentPropsWithoutRef<"button">;
+}) {
   const manager = Toast.useToast();
   const added = useRef(false);
   useEffect(() => {
     if (!added.current) {
       added.current = true;
-      manager.add({ title, description });
+      manager.add({ title, description, actionProps });
     }
-  }, [manager, title, description]);
+  }, [manager, title, description, actionProps]);
   return null;
 }
 
@@ -31,11 +39,15 @@ describe("Toast", () => {
   it("with action", async () => {
     render(
       <Toast.Provider>
-        <AddToast title="Connection lost" description="Reconnecting automatically." />
+        <AddToast
+          title="Connection lost"
+          description="Reconnecting automatically."
+          actionProps={{ children: "Retry now" }}
+        />
         <Toast.Viewport />
       </Toast.Provider>,
     );
-    await screen.findByText("Connection lost");
+    await screen.findByRole("button", { name: "Retry now" });
     await expect(page.elementLocator(document.body)).toMatchScreenshot();
   });
 });
