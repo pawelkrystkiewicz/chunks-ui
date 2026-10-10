@@ -1,6 +1,7 @@
 import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
+import { StrictMode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Calendar } from "./Calendar";
 
@@ -120,7 +121,7 @@ describe("Calendar", () => {
 
   it("navigates across year boundary (December -> January)", async () => {
     const user = userEvent.setup();
-    render(<Calendar value={new Date(2026, 11, 1)} />);
+    render(<Calendar value={new Date(2026, 11, 1)} />, { wrapper: StrictMode });
 
     expect(screen.getByText("December 2026")).toBeInTheDocument();
 
@@ -131,13 +132,31 @@ describe("Calendar", () => {
 
   it("navigates across year boundary (January -> December)", async () => {
     const user = userEvent.setup();
-    render(<Calendar value={new Date(2026, 0, 1)} />);
+    render(<Calendar value={new Date(2026, 0, 1)} />, { wrapper: StrictMode });
 
     expect(screen.getByText("January 2026")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Previous month" }));
 
     expect(screen.getByText("December 2025")).toBeInTheDocument();
+  });
+
+  it("Previous month from January 2026 shows December 2025 under StrictMode", async () => {
+    const user = userEvent.setup();
+    render(<Calendar defaultValue={new Date(2026, 0, 15)} />, { wrapper: StrictMode });
+
+    await user.click(screen.getByRole("button", { name: "Previous month" }));
+
+    expect(screen.getByRole("grid")).toHaveAccessibleName("December 2025");
+  });
+
+  it("Next month from December 2025 shows January 2026 under StrictMode", async () => {
+    const user = userEvent.setup();
+    render(<Calendar defaultValue={new Date(2025, 11, 15)} />, { wrapper: StrictMode });
+
+    await user.click(screen.getByRole("button", { name: "Next month" }));
+
+    expect(screen.getByRole("grid")).toHaveAccessibleName("January 2026");
   });
 
   it("disabled date is not clickable", async () => {
