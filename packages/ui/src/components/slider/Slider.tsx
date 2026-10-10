@@ -85,7 +85,8 @@ function SliderThumb({ className, ...props }: SliderThumbProps) {
         // animate only colors to avoid resize slugishness
         "micro-interactions transition-colors",
         "data-[dragging]:scale-110 data-[dragging]:shadow-md",
-        "focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
+        // Keyboard focus lands on the visually hidden range input inside the thumb
+        "has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ring has-[:focus-visible]:outline-offset-2",
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         className,
       )}
