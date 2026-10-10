@@ -88,6 +88,7 @@ describe("Card spacing", () => {
       );
       const root = getByTestId("root");
       const markers = Array.from(root.querySelectorAll("[data-marker]"));
+      expect(markers).toHaveLength(parts.length);
       const edge = SPACE + Number.parseFloat(getComputedStyle(root).borderTopWidth);
       const atEdge = expect.closeTo(edge, PRECISION);
 
