@@ -85,6 +85,14 @@ describe("ThemeToggle", () => {
     expect(screen.getByRole("button", { name: "Toggle theme" })).toBeInTheDocument();
   });
 
+  it("keeps its default name and type when aria-label and type are undefined", () => {
+    render(<ThemeToggle theme="light" aria-label={undefined} type={undefined} />);
+    expect(screen.getByRole("button", { name: "Switch to dark mode" })).toHaveAttribute(
+      "type",
+      "button",
+    );
+  });
+
   it("opens a tooltip on focus as a Tooltip.Trigger render target", async () => {
     const user = userEvent.setup();
     render(

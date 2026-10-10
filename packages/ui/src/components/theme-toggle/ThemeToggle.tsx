@@ -58,14 +58,22 @@ function MoonIcon() {
   );
 }
 
-export function ThemeToggle({ theme, lightIcon, darkIcon, className, ...props }: ThemeToggleProps) {
+export function ThemeToggle({
+  theme,
+  lightIcon,
+  darkIcon,
+  className,
+  type = "button",
+  "aria-label": ariaLabel,
+  ...props
+}: ThemeToggleProps) {
   const reduced = useReducedMotion();
 
   return (
     <button
-      type="button"
-      aria-label={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
       {...props}
+      type={type}
+      aria-label={ariaLabel ?? (theme === "light" ? "Switch to dark mode" : "Switch to light mode")}
       className={cn(
         "relative size-9 cursor-pointer rounded-md",
         "text-muted-foreground hover:bg-accent hover:text-foreground",
