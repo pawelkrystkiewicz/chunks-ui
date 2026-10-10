@@ -3,6 +3,8 @@
  * Type-checks every ```tsx block in `content/**\/*.mdx` against the built `chunks-ui` types,
  * with the docs tsconfig. Each block is an in-memory module; errors point at the .mdx line.
  * Needs `chunks-ui` built first (the docs `check-types` script runs after Turbo's `^build`).
+ * A block opens with ```tsx (meta and indentation are fine) and closes with a bare ```. A tsx
+ * block in a ~~~ or ```` fence, or one left open, fails the check rather than going unread.
  *
  * What a block can use without importing it:
  * - every value export of `chunks-ui` and `react`, as the pages assume after their "Import" block;
@@ -32,9 +34,14 @@ const FIXTURES_FILE = join(VIRTUAL_DIR, "fixtures.ts");
 type Line = { text: string; mdxLine: number | null };
 type Snippet = { file: string; page: string; lines: Line[] };
 
-const FENCE = /^```tsx\s*$/;
-const IMPORT_START = /^import\b/;
-const IMPORT_END = /(\bfrom\s+|^import\s+)["'][^"']+["'];?\s*$/;
+/** A ```tsx fence, with or without meta (`title="…"`) and indentation */
+const TSX_OPEN = /^\s*```tsx\b/;
+/** A tsx fence with another marker or length, which the extractor doesn't read */
+const OTHER_TSX_OPEN = /^\s*(`{4,}|~{3,})\s*tsx\b/;
+const FENCE = /^\s*(`{3,}|~{3,})/;
+const CLOSE = /^\s*(`{3,}|~{3,})\s*$/;
+const IMPORT_START = /^\s*import\b/;
+const IMPORT_END = /(\bfrom\s+|^\s*import\s+)["'][^"']+["'];?\s*$/;
 
 /** Splits a block into its leading `import` lines and the rest. */
 function splitImports(code: Line[]) {
@@ -67,25 +74,53 @@ function toSnippet(page: string, index: number, code: Line[]): Snippet {
   };
 }
 
+/**
+ * Finds the tsx blocks of one page. Fences of other languages are skipped whole, so a tsx fence
+ * shown inside a ````md block is not read. Reports what it can't read rather than skipping it.
+ */
+export function extractBlocks(page: string, source: string) {
+  const snippets: Snippet[] = [];
+  const errors: string[] = [];
+  const at = (index: number) => `content/${page}:${index + 1}`;
+  let block: { start: number; lines: Line[] } | null = null;
+  // The marker (``` or ~~~, any length) of the non-tsx fence we are in
+  let other: string | null = null;
+
+  for (const [i, text] of source.split("\n").entries()) {
+    if (block) {
+      if (/^\s*```\s*$/.test(text)) {
+        snippets.push(toSnippet(page, snippets.length + 1, block.lines));
+        block = null;
+      } else if (FENCE.test(text)) {
+        errors.push(`${at(i)} - fence line inside the tsx block from line ${block.start + 1}`);
+      } else {
+        block.lines.push({ text, mdxLine: i + 1 });
+      }
+    } else if (other) {
+      const marker = CLOSE.exec(text)?.[1];
+      if (marker && marker[0] === other[0] && marker.length >= other.length) other = null;
+    } else if (OTHER_TSX_OPEN.test(text)) {
+      errors.push(`${at(i)} - the check reads tsx blocks only in a \`\`\` fence`);
+      other = FENCE.exec(text)?.[1] ?? null;
+    } else if (TSX_OPEN.test(text)) {
+      block = { start: i, lines: [] };
+    } else {
+      other = FENCE.exec(text)?.[1] ?? null;
+    }
+  }
+  if (block) errors.push(`${at(block.start)} - the tsx block never closes`);
+  return { snippets, errors };
+}
+
 async function extractSnippets() {
   const pages = new Map<string, Snippet[]>();
+  const errors: string[] = [];
   for (const page of [...new Bun.Glob("**/*.mdx").scanSync(CONTENT_DIR)].sort()) {
-    const source = (await Bun.file(join(CONTENT_DIR, page)).text()).split("\n");
-    const snippets: Snippet[] = [];
-    let block: Line[] | null = null;
-    source.forEach((text, i) => {
-      if (block === null) {
-        if (FENCE.test(text)) block = [];
-      } else if (text.startsWith("```")) {
-        snippets.push(toSnippet(page, snippets.length + 1, block));
-        block = null;
-      } else {
-        block.push({ text, mdxLine: i + 1 });
-      }
-    });
-    if (snippets.length > 0) pages.set(page, snippets);
+    const blocks = extractBlocks(page, await Bun.file(join(CONTENT_DIR, page)).text());
+    errors.push(...blocks.errors);
+    if (blocks.snippets.length > 0) pages.set(page, blocks.snippets);
   }
-  return pages;
+  return { pages, errors };
 }
 
 function compilerOptions(): ts.CompilerOptions {
@@ -181,42 +216,47 @@ function format(diagnostic: ts.Diagnostic, snippets: Map<string, Snippet>, page:
   return `${where} - TS${diagnostic.code}: ${message}`;
 }
 
-const options = compilerOptions();
-const pages = await extractSnippets();
-const globals = globalsFile(options);
-const errors = new Set<string>();
-let previous = globals.program;
-let blocks = 0;
+// Not on import, so the spec can test extractBlocks
+if (import.meta.main) {
+  const options = compilerOptions();
+  const { pages, errors: fenceErrors } = await extractSnippets();
+  const globals = globalsFile(options);
+  const errors = new Set<string>(fenceErrors);
+  let previous = globals.program;
+  let blocks = 0;
 
-for (const page of Object.keys(fixtures)) {
-  if (!pages.has(page)) errors.add(`check-snippets.fixtures.ts: no tsx blocks in content/${page}`);
-}
-
-// One program per page, so that a page's fixtures are in scope only for its own blocks
-for (const [page, snippets] of pages) {
-  const files = new Map([
-    [GLOBALS_FILE, globals.text],
-    [FIXTURES_FILE, `declare global {\n${fixtures[page] ?? ""}\n}\nexport {};`],
-  ]);
-  for (const snippet of snippets) {
-    files.set(snippet.file, snippet.lines.map((line) => line.text).join("\n"));
-  }
-  const program = ts.createProgram(
-    [...files.keys()],
-    options,
-    createHost(options, files),
-    previous,
-  );
-  const byFile = new Map(snippets.map((snippet) => [snippet.file, snippet]));
-  for (const diagnostic of ts.getPreEmitDiagnostics(program)) {
-    if (!diagnostic.file || files.has(diagnostic.file.fileName)) {
-      errors.add(format(diagnostic, byFile, page));
+  for (const page of Object.keys(fixtures)) {
+    if (!pages.has(page)) {
+      errors.add(`check-snippets.fixtures.ts: no tsx blocks in content/${page}`);
     }
   }
-  previous = program;
-  blocks += snippets.length;
-}
 
-for (const error of errors) console.error(error);
-console.log(`Checked ${blocks} tsx blocks on ${pages.size} pages: ${errors.size} errors.`);
-process.exit(errors.size > 0 ? 1 : 0);
+  // One program per page, so that a page's fixtures are in scope only for its own blocks
+  for (const [page, snippets] of pages) {
+    const files = new Map([
+      [GLOBALS_FILE, globals.text],
+      [FIXTURES_FILE, `declare global {\n${fixtures[page] ?? ""}\n}\nexport {};`],
+    ]);
+    for (const snippet of snippets) {
+      files.set(snippet.file, snippet.lines.map((line) => line.text).join("\n"));
+    }
+    const program = ts.createProgram(
+      [...files.keys()],
+      options,
+      createHost(options, files),
+      previous,
+    );
+    const byFile = new Map(snippets.map((snippet) => [snippet.file, snippet]));
+    for (const diagnostic of ts.getPreEmitDiagnostics(program)) {
+      if (!diagnostic.file || files.has(diagnostic.file.fileName)) {
+        errors.add(format(diagnostic, byFile, page));
+      }
+    }
+    previous = program;
+    blocks += snippets.length;
+  }
+
+  for (const error of errors) console.error(error);
+  console.log(`Checked ${blocks} tsx blocks on ${pages.size} pages: ${errors.size} errors.`);
+  process.exit(errors.size > 0 ? 1 : 0);
+}
