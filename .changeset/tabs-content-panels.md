@@ -7,7 +7,7 @@
 This is a minor bump because of three changes you may notice:
 
 - The active panel is a new tab stop, as with `Tabs.Panel`. It shows a focus ring inside its edge.
-- `TabsContentProps` no longer has `hidden` (or `keepMounted`): `Tabs.Contents` decides which panel shows. They are now `Tabs.Panel`'s props, so `className` also accepts a function of the panel state.
+- `TabsContentProps` no longer accepts `hidden`, and doesn't take `keepMounted` either: `Tabs.Contents` decides which panel shows. They are now `Tabs.Panel`'s props, so `className` also accepts a function of the panel state.
 - Without Motion, or with reduced motion, `Tabs.Contents` no longer clips (before: `overflow: hidden`), so content wider than it shows past its edge. A panel child's margins still stay inside it.
 
 The 4px of room counts as overflow: when `Tabs.Contents` sits flush against the edge of a scroll container, that container can scroll 4px further (a stray scrollbar, or a sideways pan on touch screens). Give the scroll container at least 4px of padding, or the content an inset focus ring. Safari has no `overflow-clip-margin`, so it adds no overflow there but still clips a ring at the edge; the same padding or inset ring helps.
