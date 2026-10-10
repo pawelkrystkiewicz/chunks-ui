@@ -2,7 +2,11 @@
 /**
  * Runs axe (WCAG 2.2 A and AA rules) over every docs page of the production build, in light and
  * dark mode. Fails on any violation that ALLOWED does not list, and on any ALLOWED entry that
- * matched nothing.
+ * never matched on one of its pages or in one of its themes.
+ *
+ * Covers the pages built from content/**\/*.mdx only: no other app routes, no 404 page. axe's
+ * `incomplete` results (checks it could not decide, often contrast over images or gradients) are
+ * not failed.
  *
  * Build first (`bun run build --filter=@chunks-ui/docs`); the script starts `next start` itself.
  * Needs Playwright's Chromium (`bunx playwright install chromium`, or the Playwright image in CI).
@@ -14,7 +18,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { type Browser, chromium } from "playwright";
 
 const DOCS_DIR = join(import.meta.dirname, "..");
-const PORT = Number(process.env.PORT ?? 3105);
+const PORT = Number(process.env.PORT || 3105);
 const BASE_URL = `http://localhost:${PORT}`;
 const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22a", "wcag22aa"];
 const THEMES = ["light", "dark"] as const;
@@ -211,7 +215,14 @@ async function audit(
       const allowed = allowedFor(ALLOWED, violation.id, route, theme);
       const targets: string[] = [];
       for (const node of violation.nodes) {
-        const target = node.target.map(String).join(" ");
+        // One plain selector is an element in the page; anything else is in a shadow root or a frame
+        const [target] = node.target;
+        if (node.target.length !== 1 || typeof target !== "string") {
+          targets.push(
+            `${JSON.stringify(node.target)}: in a shadow root or frame, which ALLOWED can't match\n      ${node.html.slice(0, 160)}`,
+          );
+          continue;
+        }
         const index = await page.evaluate(firstMatch, [
           target,
           allowed.map((entry) => entry.selector),
@@ -270,7 +281,7 @@ if (import.meta.main) {
   const stale = staleEntries(ALLOWED, matched);
   for (const message of stale) console.error(message);
   console.log(
-    `axe checked ${routes.length} pages in ${THEMES.length} themes: ${problems.length} violations, ${stale.length} stale ALLOWED entries.`,
+    `axe checked ${routes.length} pages in ${THEMES.length} themes: ${problems.length} problems, ${stale.length} stale ALLOWED entries.`,
   );
   process.exit(problems.length + stale.length > 0 ? 1 : 0);
 }
