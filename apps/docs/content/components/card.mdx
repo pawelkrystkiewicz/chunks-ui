@@ -82,7 +82,7 @@ You can use any subset of compound parts. Each one gets the same padding from th
 
 - **No shadow.** `Card.Root` has a border and a background, and no shadow. To add one, pass a class: `<Card.Root className="shadow-md">`.
 - **Spacing comes from the root.** `Card.Root` is a flex column with `py-6` and `gap-6`. `Card.Header`, `Card.Content` and `Card.Footer` have only `px-6`. So the content of any subset of parts is 24px from every edge, with 24px between parts (6 spacing units at the default `--spacing`).
-- **Dividers.** A `Card.Header` with `border-b` gets `pb-6`, and a `Card.Footer` with `border-t` gets `pt-6`, so the border sits 24px from the text. To change that padding, use the same variant, for example `[.border-b]:pb-4`. A plain `pb-4` loses to it.
+- **Dividers.** A `Card.Header` with `border-b` gets `pb-6`, and a `Card.Footer` with `border-t` gets `pt-6`, so the border sits 24px from the text. To change that padding, use the same variant, for example `[.border-b]:pb-4`. A plain `pb-4` loses to it. Only the exact `border-b` and `border-t` classes trigger this; with `border-b-2`, `border-y` or `border`, add the padding yourself.
 - **Upgrading.** A card that starts with `Card.Header` looks the same as before. Every child of the root is now a flex item, and padding on the parts or `space-y-*` on the root adds to the root's `py-6` and `gap-6`. The changelog lists each case.
 
 To change the spacing, set the vertical padding and the gap on the root, and the horizontal padding on the parts:
