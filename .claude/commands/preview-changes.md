@@ -65,7 +65,7 @@ When colours are involved, compute the numbers before showing anything. `apps/do
 - coloured text on the background, in both modes;
 - APCA Lc when text-on-fill readability is the question. WCAG 2 is the compliance bar; APCA explains how it looks.
 
-Prefer options that pass WCAG 2 AA (4.5:1 for text, 3:1 for non-text), and say plainly when one doesn't.
+Prefer options that meet WCAG 2 AA: 4.5:1 for normal text, 3:1 for large text (≥ 24px, or ≥ 18.66px bold), and 3:1 for non-text indicators such as focus rings and control borders. Say plainly when an option misses its threshold.
 
 ## 4. Check in a browser
 
@@ -81,7 +81,7 @@ Screenshots saved by the maintainer may carry a wide-gamut ICC profile (e.g. Rec
 
 ## 5. Report and wait
 
-Before reporting, confirm `git diff --stat -- packages` is empty and that `git diff | grep -c THROWAWAY` counts every changed hunk you made.
+Before reporting, confirm `git status --porcelain -- packages` prints nothing, that `git diff HEAD -- apps/docs | grep -c THROWAWAY` counts every changed hunk you made, and that every new file from `git ls-files --others --exclude-standard -- apps/docs` carries the marker.
 
 Tell the maintainer:
 
