@@ -697,7 +697,7 @@ function Footer() {
           <nav aria-label="Footer" className="grid grid-cols-2 gap-6 lg:grid-cols-3">
             {FOOTER_NAV.map((col) => (
               <div key={col.label} className="flex flex-col gap-2">
-                <span className="mb-1 font-mono text-[11px] text-white/45">{col.label}</span>
+                <span className="mb-1 font-mono text-[11px] text-white/50">{col.label}</span>
                 {col.links.map(({ label, href }) => (
                   <Href
                     key={label}
@@ -711,7 +711,7 @@ function Footer() {
             ))}
           </nav>
         </div>
-        <div className="flex flex-wrap justify-between gap-4 pt-5 pb-8 font-mono text-white/45 text-[12px]">
+        <div className="flex flex-wrap justify-between gap-4 pt-5 pb-8 font-mono text-white/50 text-[12px]">
           <span>© 2026 Chunk Creations · MIT license</span>
           <span>
             Built with{" "}

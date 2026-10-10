@@ -107,7 +107,9 @@ export function HeroCopy({ text }: { text: string }) {
         title="Copy install command"
         className="inline-flex h-11 cursor-pointer items-center gap-2.5 rounded-lg border border-white/15 bg-black/30 pr-3 pl-3.5 font-mono text-[13px] text-white leading-[normal] transition duration-250 hover:border-white/40 active:scale-[.97]"
       >
-        <span className="text-white/45">$</span>
+        <span aria-hidden="true" className="text-white/60">
+          $
+        </span>
         <span>{text}</span>
         <span className="flex text-white/60">
           {copied ? (
