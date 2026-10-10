@@ -1,9 +1,8 @@
-import { DirectionProvider } from "@base-ui/react/direction-provider";
 import { render } from "@testing-library/react";
 import { cancelFrame, frame } from "motion/react";
 import { createRef, useEffect } from "react";
 import { afterEach, describe, expect, it } from "vitest";
-import { commands, page, userEvent } from "vitest/browser";
+import { commands, page } from "vitest/browser";
 import { reloadMotion } from "../../lib/use-motion";
 import { insetsWithin, waitForStable } from "../../VisualTest.utils";
 import { Tabs, type TabsContentsProps } from "./index";
@@ -476,55 +475,6 @@ describe("Tabs.Indicator with Motion", () => {
       expect(Math.max(...offsets)).toBeLessThanOrEqual(1);
     },
   );
-
-  // Right to left, a list scrolled toward its end has a negative `scrollLeft`. The indicator is
-  // placed in the list's scrolled content, so treating that offset as positive would misplace it.
-  it("covers the active tab in a right-to-left list scrolled to a tab that was offscreen", async () => {
-    await reloadMotion();
-    // Wide enough together to overflow the 240px list
-    const names = ["Overview", "Analytics", "Reports", "Notifications", "Integrations", "Billing"];
-    const { getByRole, getByTestId } = render(
-      <DirectionProvider direction="rtl">
-        <div dir="rtl">
-          <Tabs.Root defaultValue={names[0]} style={{ width: 240 }}>
-            <Tabs.List className="overflow-x-auto">
-              {names.map((name) => (
-                <Tabs.Tab key={name} value={name}>
-                  {name}
-                </Tabs.Tab>
-              ))}
-              <Tabs.Indicator data-testid="indicator" />
-            </Tabs.List>
-          </Tabs.Root>
-        </div>
-      </DirectionProvider>,
-    );
-    const list = getByRole("tablist");
-    const first = getByRole("tab", { name: names[0] });
-    const last = getByRole("tab", { name: names.at(-1) });
-    const indicator = getByTestId("indicator");
-    const expectOver = async (tab: Element) => {
-      await waitForStable(() => offBy(tab, indicator));
-      expect(offBy(tab, indicator)).toBeLessThanOrEqual(1);
-    };
-    // Offscreen: past the list's left edge
-    expect(last.getBoundingClientRect().right).toBeLessThan(list.getBoundingClientRect().left);
-    // On the Motion path: Motion drops the CSS fallback's transition class
-    await expect
-      .poll(() => indicator.classList.contains("micro-interactions"), { timeout: 5000 })
-      .toBe(false);
-    await expectOver(first);
-
-    last.scrollIntoView({ block: "nearest", inline: "nearest" });
-    await expect.poll(() => list.scrollLeft).toBeLessThan(0);
-    // The first tab, still active, scrolled out of view with the indicator over it
-    await expectOver(first);
-
-    await userEvent.click(last);
-    await expect.element(last).toHaveAttribute("aria-selected", "true");
-    expect(list.scrollLeft).toBeLessThan(0);
-    await expectOver(last);
-  });
 
   it("still slides the indicator to the next tab after display:none", async () => {
     const { indicator, rerender } = await reshow("a");

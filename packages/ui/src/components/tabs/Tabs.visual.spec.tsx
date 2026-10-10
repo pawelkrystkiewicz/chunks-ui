@@ -231,4 +231,41 @@ describe.each(PATHS)("Tabs.Indicator over the active tab, $path", ({ reducedMoti
     expect(list.scrollLeft).toBeGreaterThan(0);
     await expectIndicatorOverActiveTab();
   });
+
+  // Right to left, a list scrolled toward its end has a negative `scrollLeft`. Treating that
+  // offset as positive would misplace the indicator.
+  it("covers it in a right-to-left list scrolled to a tab that was offscreen", async () => {
+    const { getByRole } = await renderFixture(
+      <DirectionProvider direction="rtl">
+        <div dir="rtl">
+          <Tabs.Root defaultValue={MANY_TABS[0]} style={{ width: 240 }}>
+            <Tabs.List className="overflow-x-auto">
+              {MANY_TABS.map((name) => (
+                <Tabs.Tab key={name} value={name}>
+                  {name}
+                </Tabs.Tab>
+              ))}
+              <Tabs.Indicator data-testid="indicator" />
+            </Tabs.List>
+          </Tabs.Root>
+        </div>
+      </DirectionProvider>,
+    );
+    const list = getByRole("tablist");
+    const last = getByRole("tab", { name: MANY_TABS.at(-1) });
+    // Off-screen: past the list's left edge
+    expect(last.getBoundingClientRect().right).toBeLessThan(list.getBoundingClientRect().left);
+    await onPath(reducedMotion);
+    await expectIndicatorOverActiveTab();
+
+    last.scrollIntoView({ block: "nearest", inline: "nearest" });
+    await expect.poll(() => list.scrollLeft).toBeLessThan(0);
+    // The first tab, still active, scrolled out of view with the indicator over it
+    await expectIndicatorOverActiveTab();
+
+    await userEvent.click(last);
+    await expect.poll(activeTab).toBe(last);
+    expect(list.scrollLeft).toBeLessThan(0);
+    await expectIndicatorOverActiveTab();
+  });
 });
