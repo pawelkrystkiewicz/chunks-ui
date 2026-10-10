@@ -18,7 +18,9 @@ function CardRoot({ className, ...props }: CardProps) {
 export type CardHeaderProps = ComponentProps<"div">;
 
 function CardHeader({ className, ...props }: CardHeaderProps) {
-  return <div className={cn("flex flex-col gap-1.5 px-6", className)} {...props} />;
+  return (
+    <div className={cn("flex flex-col gap-1.5 px-6 [.border-b]:pb-6", className)} {...props} />
+  );
 }
 
 export type CardTitleProps = ComponentProps<"h3">;
@@ -47,7 +49,9 @@ function CardContent({ className, ...props }: CardContentProps) {
 export type CardFooterProps = ComponentProps<"div">;
 
 function CardFooter({ className, ...props }: CardFooterProps) {
-  return <div className={cn("flex items-center gap-2 px-6", className)} {...props} />;
+  return (
+    <div className={cn("flex items-center gap-2 px-6 [.border-t]:pt-6", className)} {...props} />
+  );
 }
 
 export const Card = {

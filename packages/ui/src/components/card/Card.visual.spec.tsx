@@ -107,3 +107,39 @@ describe("Card spacing", () => {
     },
   );
 });
+
+describe("Card dividers", () => {
+  const borderWidth = (el: Element, side: "Top" | "Bottom") =>
+    Number.parseFloat(getComputedStyle(el)[`border${side}Width`]);
+
+  it("keeps 24px between the Header text and a bottom border on the Header", () => {
+    const { getByTestId } = render(
+      <Card.Root style={{ width: 350 }}>
+        <Card.Header data-testid="header" className="border-b">
+          <Card.Title>Title</Card.Title>
+          <Card.Description data-testid="text">Description</Card.Description>
+        </Card.Header>
+        <Card.Content>Body</Card.Content>
+      </Card.Root>,
+    );
+    const header = getByTestId("header");
+    const border = header.getBoundingClientRect().bottom - borderWidth(header, "Bottom");
+    const text = getByTestId("text").getBoundingClientRect().bottom;
+    expect(border - text).toEqual(expect.closeTo(SPACE, PRECISION));
+  });
+
+  it("keeps 24px between a top border on the Footer and the Footer text", () => {
+    const { getByTestId } = render(
+      <Card.Root style={{ width: 350 }}>
+        <Card.Content>Body</Card.Content>
+        <Card.Footer data-testid="footer" className="border-t">
+          <span data-testid="text">Footer</span>
+        </Card.Footer>
+      </Card.Root>,
+    );
+    const footer = getByTestId("footer");
+    const border = footer.getBoundingClientRect().top + borderWidth(footer, "Top");
+    const text = getByTestId("text").getBoundingClientRect().top;
+    expect(text - border).toEqual(expect.closeTo(SPACE, PRECISION));
+  });
+});

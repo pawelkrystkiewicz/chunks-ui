@@ -82,6 +82,7 @@ You can use any subset of compound parts. Each one gets the same padding from th
 
 - **No shadow.** `Card.Root` has a border and a background, and no shadow. To add one, pass a class: `<Card.Root className="shadow-md">`.
 - **Spacing comes from the root.** `Card.Root` is a flex column with `py-6` and `gap-6`. `Card.Header`, `Card.Content` and `Card.Footer` have only `px-6`. So the content of any subset of parts is 24px from every edge, with 24px between parts (6 spacing units at the default `--spacing`).
+- **Dividers.** A `Card.Header` with `border-b` gets `pb-6`, and a `Card.Footer` with `border-t` gets `pt-6`, so the border sits 24px from the text. To change that padding, use the same variant, for example `[.border-b]:pb-4`. A plain `pb-4` loses to it.
 
 To change the spacing, set the vertical padding and the gap on the root, and the horizontal padding on the parts:
 
@@ -98,11 +99,11 @@ To change the spacing, set the vertical padding and the gap on the root, and the
 | Part | Description |
 |---|---|
 | `Card.Root` | Outer container. Rounded border and background, no shadow. Vertical flex with `gap-6 py-6`. |
-| `Card.Header` | Top section. Vertical flex with `gap-1.5 px-6`. |
+| `Card.Header` | Top section. Vertical flex with `gap-1.5 px-6`, and `pb-6` when it has `border-b`. |
 | `Card.Title` | Heading rendered as `<h3>`. Semibold, tight tracking. |
 | `Card.Description` | Subtext below the title. `text-muted-foreground`. |
 | `Card.Content` | Main body area. Padding `px-6`. |
-| `Card.Footer` | Bottom section. Horizontal flex with `gap-2 px-6`. |
+| `Card.Footer` | Bottom section. Horizontal flex with `gap-2 px-6`, and `pt-6` when it has `border-t`. |
 
 ## Props
 
