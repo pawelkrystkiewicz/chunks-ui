@@ -2,7 +2,7 @@ import type { CSSProperties } from "react";
 
 export type FontKind = "Sans" | "Grotesk" | "Serif" | "Mono";
 export type Font = { name: string; kind: FontKind; stack: string };
-type Oklch = { l: number; c: number; h: number };
+export type Oklch = { l: number; c: number; h: number };
 export type BaseId = "neutral" | "stone" | "zinc" | "slate" | "mauve";
 export type Mode = "light" | "dark";
 export type Shadow = "none" | "subtle" | "lifted";
@@ -47,11 +47,12 @@ export const FONTS_HREF = `https://fonts.googleapis.com/css2?${FONTS.filter(
   .map((f) => `family=${f.name.replaceAll(" ", "+")}:wght@400;500;600;700`)
   .join("&")}&display=swap`;
 
+/** Each one keeps 4.5:1 with its `primary-foreground`. Red sits at 0.605 so dark text reaches it. */
 export const PRIMARIES: (Oklch & { name: string })[] = [
-  { name: "Blue", l: 0.6048, c: 0.2165, h: 257.21 },
+  { name: "Blue", l: 0.56, c: 0.2165, h: 257.21 },
   { name: "Violet", l: 0.58, c: 0.22, h: 293 },
   { name: "Pink", l: 0.63, c: 0.22, h: 354 },
-  { name: "Red", l: 0.6, c: 0.22, h: 25 },
+  { name: "Red", l: 0.605, c: 0.22, h: 25 },
   { name: "Orange", l: 0.68, c: 0.19, h: 45 },
   { name: "Amber", l: 0.77, c: 0.165, h: 72 },
   { name: "Green", l: 0.63, c: 0.17, h: 150 },
@@ -72,10 +73,10 @@ const baseOf = (id: BaseId) =>
   BASES.find((b) => b.id === id) ?? (BASES[0] as (typeof BASES)[number]);
 
 export const DEFAULT_THEME: Theme = {
-  primary: { l: 0.6048, c: 0.2165, h: 257.21 },
+  primary: { l: 0.56, c: 0.2165, h: 257.21 },
   base: "neutral",
   mode: "light",
-  fontHeading: "Manrope",
+  fontHeading: "Outfit",
   fontBody: "Manrope",
   fontSize: 14,
   radius: 10,
@@ -204,27 +205,61 @@ export function chartList(t: Pick<Theme, "primary" | "chart">, mode: Mode): stri
   return DS_CHARTS[mode];
 }
 
+/** OKLCH to linear sRGB, clipped to the sRGB gamut the way browsers clip it. */
+function linearSrgb({ l, c, h }: Oklch): [number, number, number] {
+  const a = c * Math.cos((h * Math.PI) / 180);
+  const b = c * Math.sin((h * Math.PI) / 180);
+  const lms = [
+    (l + 0.3963377774 * a + 0.2158037573 * b) ** 3,
+    (l - 0.1055613458 * a - 0.0638541728 * b) ** 3,
+    (l - 0.0894841775 * a - 1.291485548 * b) ** 3,
+  ] as const;
+  const clip = (v: number) => Math.min(1, Math.max(0, v));
+  return [
+    clip(4.0767416621 * lms[0] - 3.3077115913 * lms[1] + 0.2309699292 * lms[2]),
+    clip(-1.2684380046 * lms[0] + 2.6097574011 * lms[1] - 0.3413193965 * lms[2]),
+    clip(-0.0041960863 * lms[0] - 0.7034186147 * lms[1] + 1.707614701 * lms[2]),
+  ];
+}
+
+/** WCAG 2 contrast ratio of two colours, from 1 to 21. */
+export function contrast(x: Oklch, y: Oklch): number {
+  const luminance = (o: Oklch) => {
+    const [r, g, b] = linearSrgb(o);
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const [hi, lo] = [luminance(x), luminance(y)].sort((m, n) => n - m) as [number, number];
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+/** Matches the semantic fills in `chunks-ui/theme.css`. */
+const FILLS = {
+  success: { l: 0.7514, c: 0.1514, h: 166.5 },
+  warning: { l: 0.7797, c: 0.1665, h: 72.45 },
+  destructive: { l: 0.582, c: 0.2249, h: 25.88 },
+} satisfies Record<string, Oklch>;
+
 export function palette(t: Theme, mode: Mode): Record<string, string> {
   const b = baseOf(t.base);
   const n = (l: number, k = 1) => ok(l, b.c * k, b.h);
   const d = mode === "dark";
   const p = t.primary;
   const ink = p.c < 0.01;
+  // White or dark text on a fill, whichever has more contrast. The two can't both reach 4.5:1.
+  const textOn = (f: Oklch) => {
+    const white = contrast({ l: 0.985, c: 0, h: 0 }, f);
+    return white >= contrast({ l: 0.145, c: b.c, h: b.h }, f) ? "oklch(0.985 0 0)" : n(0.145);
+  };
+  const primary = ink ? (d ? n(0.922) : n(0.205)) : ok(p.l, p.c, p.h);
   const out: Record<string, string> = {
-    primary: ink ? (d ? n(0.922) : n(0.205)) : ok(p.l, p.c, p.h),
-    "primary-foreground": ink
-      ? d
-        ? n(0.205)
-        : n(0.985)
-      : p.l > 0.72
-        ? n(0.145)
-        : "oklch(0.985 0 0)",
-    success: "oklch(75.14% 0.1514 166.5)",
-    "success-foreground": "oklch(0.985 0 0)",
-    warning: "oklch(77.97% 0.1665 72.45)",
-    "warning-foreground": "oklch(0.145 0 0)",
-    destructive: "oklch(66.16% 0.2249 25.88)",
-    "destructive-foreground": "oklch(0.985 0 0)",
+    primary,
+    "primary-foreground": ink ? (d ? n(0.205) : n(0.985)) : textOn(p),
+    success: ok(FILLS.success.l, FILLS.success.c, FILLS.success.h),
+    "success-foreground": textOn(FILLS.success),
+    warning: ok(FILLS.warning.l, FILLS.warning.c, FILLS.warning.h),
+    "warning-foreground": textOn(FILLS.warning),
+    destructive: ok(FILLS.destructive.l, FILLS.destructive.c, FILLS.destructive.h),
+    "destructive-foreground": textOn(FILLS.destructive),
     background: d ? n(0.145) : "oklch(1 0 0)",
     foreground: d ? n(0.985) : n(0.145),
     card: d ? n(0.145) : "oklch(1 0 0)",
@@ -234,12 +269,12 @@ export function palette(t: Theme, mode: Mode): Record<string, string> {
     secondary: d ? n(0.269) : n(0.97),
     "secondary-foreground": d ? n(0.985) : n(0.205),
     muted: d ? n(0.269) : n(0.97),
-    "muted-foreground": d ? n(0.708, 2) : n(0.556, 2),
+    "muted-foreground": d ? n(0.708, 2) : n(0.53, 2),
     accent: d ? n(0.269) : n(0.97),
     "accent-foreground": d ? n(0.985) : n(0.205),
     border: d ? n(0.269) : n(0.922),
     input: d ? n(0.3) : n(0.922),
-    ring: d ? n(0.556) : n(0.708),
+    ring: d ? n(0.556) : n(0.62),
   };
   chartList(t, mode).forEach((v, i) => {
     out[`chart-${i + 1}`] = v;
