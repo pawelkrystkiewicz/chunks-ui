@@ -27,6 +27,8 @@ import { Button, Tabs, Input } from 'chunks-ui'
 
 `theme.css` registers its CSS variables with Tailwind CSS v4 through `@theme`, and its `@source` makes Tailwind generate the classes the components use — no plugin needed.
 
+`chunks-ui` is a client bundle (`"use client"`). To call `cn`, `cnState` or a `*Variants` function such as `buttonVariants` in a React Server Component, import it from `chunks-ui/utils`.
+
 ## Components
 
 ### Tier 1 — Core (v0.1.0)
