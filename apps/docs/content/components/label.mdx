@@ -39,8 +39,6 @@ import { Label } from "chunks-ui";
 
 ## Next to a Disabled Control
 
-The label dims (50% opacity, `not-allowed` cursor) when the control right after it, its next sibling, is disabled. It reacts to that sibling, not to the control that `htmlFor` points at. This works for a native `<input>`, `<textarea>` or `<select>`, `Input` without adornments, `Textarea`, and Base UI parts that set `data-disabled`, such as `Checkbox.Root` and `Switch.Root`. Because only the next sibling counts, labels in a flat grid of label and control pairs each follow their own control.
-
 ```tsx
 <div className="flex items-center gap-2">
   <Label htmlFor="terms">Accept terms</Label>
@@ -59,7 +57,14 @@ The label dims (50% opacity, `not-allowed` cursor) when the control right after 
   </div>
 </Container>
 
-The label doesn't dim in other layouts: when the control comes first (a native input with the `peer` class is the one exception), when something else sits between the label and the control, when the label wraps the control, or when the two have different parents. An `Input` with adornments is one such case, because the label's next sibling is then the wrapper around the input. In these layouts, put each label and control pair in its own wrapper in the label-first order, or dim the label yourself, for example with `className={cn(disabled && "opacity-50")}`. Inside a `Field.Root`, use `Field.Label`, which dims when the field is disabled.
+The label dims when the element right after it, usually its control but any disabled element, is disabled.
+
+It doesn't dim when:
+
+- the control comes first (a native input with the `peer` class is the exception)
+- other elements sit in between, such as an `Input` with adornments. Wrap each pair, or dim the label yourself, for example with `className={cn(disabled && "opacity-50")}`.
+
+Inside a `Field.Root`, use `Field.Label`, which dims when the field is disabled.
 
 ## Props
 
