@@ -226,3 +226,30 @@ describe.each(KINDS)("%s.Arrow while the popup opens", (kind) => {
     });
   });
 });
+
+/** The arrow's reach at the default `--spacing` of 4px: 1.75 units. */
+const REACH_PX = 1.75 * 4;
+
+describe.each(KINDS)("%s with an arrow, without Motion", (kind) => {
+  afterEach(async () => {
+    await commands.emulateMedia({ reducedMotion: "reduce" });
+    await reloadMotion();
+  });
+
+  it("moves straight to a new side, without sliding its margin across", async () => {
+    // CSS transition fallback: Motion never arrives, and reduced motion is off
+    void reloadMotion(new Promise(() => {}));
+    await commands.emulateMedia({ reducedMotion: "no-preference" });
+    await expect.poll(() => matchMedia("(prefers-reduced-motion: reduce)").matches).toBe(false);
+    const { rerender } = render(arrowed(kind, "bottom", "ltr", true));
+    const popup = await screen.findByTestId("popup");
+    // The opening fade and scale have finished
+    await waitForStable(() => JSON.stringify(popup.getBoundingClientRect()));
+
+    rerender(arrowed(kind, "top", "ltr", true));
+    const margins = await eachPaintedFrame(() => getComputedStyle(popup).marginBottom, 20);
+
+    expect(margins.at(-1)).toBe(`${REACH_PX}px`);
+    expect(margins.filter((margin) => margin !== "0px" && margin !== `${REACH_PX}px`)).toEqual([]);
+  });
+});
