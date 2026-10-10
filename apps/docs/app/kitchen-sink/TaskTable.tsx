@@ -9,15 +9,15 @@ import { STATUS_OPTIONS, TASKS } from "./data";
 const priorityColors: Record<TaskPriority, string> = {
   low: "text-muted-foreground",
   medium: "text-foreground",
-  high: "text-warning",
-  critical: "text-destructive",
+  high: "text-warning-text",
+  critical: "text-destructive-text",
 };
 
 const statusColors: Record<TaskStatus, string> = {
   backlog: "bg-muted text-muted-foreground",
-  "in-progress": "bg-warning/15 text-warning",
-  "in-review": "bg-primary/15 text-primary",
-  done: "bg-success/15 text-success",
+  "in-progress": "bg-warning/15 text-warning-text",
+  "in-review": "bg-primary/15 text-primary-text",
+  done: "bg-success/15 text-success-text",
 };
 
 const statusLabels: Record<TaskStatus, string> = {

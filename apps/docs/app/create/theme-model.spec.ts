@@ -1,10 +1,15 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  BASES,
   buildCss,
   chartList,
+  contrast,
   DEFAULT_THEME,
   loadTheme,
+  type Mode,
+  type Oklch,
   PRESETS,
+  PRIMARIES,
   palette,
   previewColumnWidth,
   sameTheme,
@@ -12,13 +17,26 @@ import {
   toScopeStyle,
 } from "./theme-model";
 
+/** Reads an `oklch(l c h)` string as written by `palette()`. */
+function parseOklch(value: string): Oklch {
+  const parts = /^oklch\(([\d.]+)(%?) ([\d.]+) ([\d.]+)\)$/.exec(value);
+  if (!parts) throw new Error(`Not an oklch() colour: ${value}`);
+  const [, l = "", percent, c = "", h = ""] = parts;
+  return { l: Number(l) / (percent ? 100 : 1), c: Number(c), h: Number(h) };
+}
+
 const ink: Theme = { ...DEFAULT_THEME, primary: { l: 0.205, c: 0, h: 0 } };
 const amber: Theme = { ...DEFAULT_THEME, primary: { l: 0.77, c: 0.165, h: 72 } };
 
 describe("palette", () => {
   it("matches the library defaults for the default theme", () => {
     const light = palette(DEFAULT_THEME, "light");
-    expect(light.primary).toBe("oklch(0.6048 0.2165 257.21)");
+    expect(light.primary).toBe("oklch(0.56 0.2165 257.21)");
+    expect(light["primary-foreground"]).toBe("oklch(0.985 0 0)");
+    expect(light.destructive).toBe("oklch(0.582 0.2249 25.88)");
+    expect(light["success-foreground"]).toBe("oklch(0.145 0 0)");
+    expect(light["muted-foreground"]).toBe("oklch(0.53 0 0)");
+    expect(light.ring).toBe("oklch(0.62 0 0)");
     expect(light.background).toBe("oklch(1 0 0)");
     expect(light["chart-1"]).toBe("oklch(0.646 0.222 41.116)");
     expect(palette(DEFAULT_THEME, "dark").background).toBe("oklch(0.145 0 0)");
@@ -33,6 +51,38 @@ describe("palette", () => {
     expect(palette(amber, "light")["primary-foreground"]).toBe("oklch(0.145 0 0)");
   });
 
+  const pairs = (t: Theme, mode: Mode) => {
+    const pal = palette(t, mode);
+    return (["primary", "success", "warning", "destructive"] as const).map((role) => {
+      const fg = pal[`${role}-foreground`] ?? "";
+      return [role, contrast(parseOklch(fg), parseOklch(pal[role] ?? ""))] as const;
+    });
+  };
+
+  it("gives every primary swatch and fill a foreground with at least 4.5:1", () => {
+    for (const { name, ...primary } of PRIMARIES) {
+      for (const { id: base } of BASES) {
+        for (const mode of ["light", "dark"] as const) {
+          for (const [role, ratio] of pairs({ ...DEFAULT_THEME, primary, base }, mode)) {
+            expect(ratio, `${name} ${base} ${mode} ${role}`).toBeGreaterThanOrEqual(4.5);
+          }
+        }
+      }
+    }
+  });
+
+  it("puts dark text on a mid-light primary that white text fails on", () => {
+    const pink: Theme = { ...DEFAULT_THEME, primary: { l: 0.63, c: 0.22, h: 354 } };
+    expect(palette(pink, "light")["primary-foreground"]).toBe("oklch(0.145 0 0)");
+  });
+
+  it("does not throw on a stored primary with a negative hue and picks a passing foreground", () => {
+    const odd: Theme = { ...DEFAULT_THEME, primary: { l: 0.6, c: 0.2, h: -30 } };
+    const pal = palette(odd, "light");
+    const fg = parseOklch(pal["primary-foreground"] ?? "");
+    expect(contrast(fg, odd.primary)).toBeGreaterThanOrEqual(4.5);
+  });
+
   it("spreads vivid charts 72° apart", () => {
     expect(chartList({ ...DEFAULT_THEME, chart: "vivid" }, "light")).toEqual([
       "oklch(0.68 0.17 257.21)",
@@ -41,6 +91,18 @@ describe("palette", () => {
       "oklch(0.68 0.17 113.21)",
       "oklch(0.68 0.17 185.21)",
     ]);
+  });
+});
+
+describe("contrast", () => {
+  it("measures WCAG 2 ratios", () => {
+    expect(contrast({ l: 1, c: 0, h: 0 }, { l: 0, c: 0, h: 0 })).toBeCloseTo(21);
+    expect(contrast({ l: 0.5, c: 0, h: 0 }, { l: 0.5, c: 0, h: 0 })).toBe(1);
+    // #006cef under white text, as measured in the browser
+    expect(contrast({ l: 0.985, c: 0, h: 0 }, parseOklch("oklch(0.56 0.2165 257.21)"))).toBeCloseTo(
+      4.57,
+      1,
+    );
   });
 });
 
@@ -96,14 +158,20 @@ describe("buildCss", () => {
   it("exports light and dark blocks with the library's default values", () => {
     const css = buildCss(DEFAULT_THEME);
     expect(css.split("\n")[0]).toBe(
-      "/* Fonts: https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap */",
+      "/* Fonts: https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap */",
     );
     expect(css).toContain("\n:root {\n  --font-sans: 'Manrope'");
+    expect(css).toContain("\n  --font-heading: 'Outfit'");
     expect(css).toContain("  --text-sm: 0.875rem;\n");
     expect(css).toContain(
       "  --radius: 0.625rem;\n  --spacing: 0.25rem;\n  --spacing-ui-height: 35px;\n",
     );
-    expect(css).toContain("\n}\n\n.dark {\n  --primary: oklch(0.6048 0.2165 257.21);");
+    expect(css).toContain("\n}\n\n.dark {\n  --primary: oklch(0.56 0.2165 257.21);");
+  });
+
+  it("leaves the coloured-text tokens out", () => {
+    // Pasted on :root, `--X-text` would resolve against the root's `--X`; theme.css derives them where used.
+    expect(buildCss(DEFAULT_THEME)).not.toContain("-text:");
   });
 
   it("names both fonts when heading and body differ", () => {

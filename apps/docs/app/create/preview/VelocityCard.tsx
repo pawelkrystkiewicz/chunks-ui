@@ -15,7 +15,7 @@ export function VelocityCard() {
     <PreviewCard>
       <div className="flex items-start justify-between gap-3">
         <PreviewCardHeading title="Velocity" description="Story points, last 6 sprints" />
-        <span className="inline-flex items-center gap-1 font-semibold text-success text-xs">
+        <span className="inline-flex items-center gap-1 font-semibold text-success-text text-xs">
           <TrendingUp className="size-3.5" />
           12%
         </span>
