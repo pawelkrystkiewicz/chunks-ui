@@ -19,6 +19,16 @@ refactor/scope         # refactoring
 docs/topic             # documentation
 ```
 
+### Vercel deployments
+
+Only `master` and branches whose name ends in `-preview` (for example `feat/tabs-preview`) get a Vercel deployment.
+
+A deployment builds only when `apps/docs` or a workspace package it depends on changed since that branch's last successful deployment (`turbo-ignore` in `apps/docs/vercel.json`). Otherwise Vercel shows it as canceled by the Ignored Build Step. The first deployment of a branch always builds.
+
+`turbo-ignore` reads the HEAD commit message: `[vercel deploy]` forces a build and `[vercel skip]` skips it. `[skip ci]` and its variants also skip it, so a `[skip ci]` meant for GitHub Actions skips the docs deploy too.
+
+To watch a new package, add it as a dependency of `apps/docs`. To force a rebuild on a repo-root file, add it to `globalDependencies` in `turbo.json`.
+
 ## Commit Messages
 
 Follow Conventional Commits:
