@@ -101,12 +101,20 @@ describe("NumberField", () => {
       Reflect.deleteProperty(document, "exitPointerLock");
     });
 
-    function ScrubField({ cursor }: { cursor?: React.ReactNode }) {
+    function ScrubField({
+      cursor,
+      render: renderCursor,
+    }: {
+      cursor?: React.ReactNode;
+      render?: React.ComponentProps<typeof NumberField.ScrubAreaCursor>["render"];
+    }) {
       return (
         <NumberField.Root defaultValue={0}>
           <NumberField.ScrubArea>
             <span>Amount</span>
-            <NumberField.ScrubAreaCursor data-testid="cursor">{cursor}</NumberField.ScrubAreaCursor>
+            <NumberField.ScrubAreaCursor data-testid="cursor" render={renderCursor}>
+              {cursor}
+            </NumberField.ScrubAreaCursor>
           </NumberField.ScrubArea>
           <NumberField.Group>
             <NumberField.Input aria-label="Amount" />
@@ -138,6 +146,13 @@ describe("NumberField", () => {
       const cursor = await screen.findByTestId("cursor");
       expect(cursor).toHaveTextContent("drag");
       expect(cursor.querySelector("svg")).toBeNull();
+    });
+
+    it("adds no default icon to a render element, which may be a void element", async () => {
+      render(<ScrubField render={<img alt="" src="data:," />} />);
+      startScrub();
+      const cursor = await screen.findByTestId("cursor");
+      expect(cursor.tagName).toBe("IMG");
     });
 
     it("removes the cursor when the scrub ends", async () => {
