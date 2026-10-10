@@ -50,7 +50,7 @@ function ActionsMenu() {
             <Share2 className="mr-2 size-4" />
             Share Board
           </Menu.Item>
-          <Menu.Item className="text-destructive">
+          <Menu.Item className="text-destructive-text">
             <Trash2 className="mr-2 size-4" />
             Archive Project
           </Menu.Item>
