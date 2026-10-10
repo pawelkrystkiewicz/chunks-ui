@@ -243,6 +243,7 @@ export type {
   TooltipArrowProps,
   TooltipPopupProps,
   TooltipPositionerProps,
+  TooltipProviderProps,
   TooltipRootProps,
   TooltipTriggerProps,
 } from "./components/tooltip";
