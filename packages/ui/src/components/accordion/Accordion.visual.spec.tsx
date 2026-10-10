@@ -1,16 +1,11 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { userEvent } from "vitest/browser";
-import { renderFixture } from "../../VisualTest.utils";
+import { expectDimmed, renderFixture } from "../../VisualTest.utils";
 import { Accordion } from "./index";
 
-/** The element's rotation in degrees, from the `rotate` property or its transform matrix */
-function rotation(el: Element) {
-  const style = getComputedStyle(el);
-  if (style.rotate !== "none") return Number.parseFloat(style.rotate);
-  const m = new DOMMatrix(style.transform);
-  return Math.round((Math.atan2(m.b, m.a) * 180) / Math.PI);
-}
+/** The element's rotation in degrees, from the `rotate` property Tailwind v4 emits */
+const rotation = (el: Element) => Number.parseFloat(getComputedStyle(el).rotate) || 0;
 
 const chevron = (trigger: Element) => trigger.querySelector("svg") as SVGElement;
 
@@ -116,11 +111,9 @@ describe("Accordion", () => {
         </Accordion.Item>
       </Accordion.Root>,
     );
-    const style = (name: string) => {
-      const { opacity, pointerEvents } = getComputedStyle(getByRole("button", { name }));
-      return { opacity, pointerEvents };
-    };
-    expect(style("Disabled")).toEqual({ opacity: "0.5", pointerEvents: "none" });
-    expect(style("Enabled")).toEqual({ opacity: "1", pointerEvents: "auto" });
+    expectDimmed(
+      getByRole("button", { name: "Disabled" }),
+      getByRole("button", { name: "Enabled" }),
+    );
   });
 });

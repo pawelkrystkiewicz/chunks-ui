@@ -1,5 +1,6 @@
 import { render } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, it } from "vitest";
+import { expectDimmed } from "../../VisualTest.utils";
 import { Collapsible } from "./index";
 
 describe("Collapsible", () => {
@@ -20,11 +21,9 @@ describe("Collapsible", () => {
         </Collapsible.Root>
       </>,
     );
-    const style = (name: string) => {
-      const { opacity, pointerEvents } = getComputedStyle(getByRole("button", { name }));
-      return { opacity, pointerEvents };
-    };
-    expect(style("Disabled")).toEqual({ opacity: "0.5", pointerEvents: "none" });
-    expect(style("Enabled")).toEqual({ opacity: "1", pointerEvents: "auto" });
+    expectDimmed(
+      getByRole("button", { name: "Disabled" }),
+      getByRole("button", { name: "Enabled" }),
+    );
   });
 });

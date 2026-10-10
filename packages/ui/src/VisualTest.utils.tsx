@@ -1,6 +1,7 @@
 import { render } from "@testing-library/react";
 import { cancelFrame, frame } from "motion/react";
 import type { ReactNode } from "react";
+import { expect } from "vitest";
 import { page, type ScreenshotMatcherOptions } from "vitest/browser";
 
 /** Renders children in a padded fixture wrapper. Returns the wrapper element for screenshotting. */
@@ -31,6 +32,16 @@ export async function renderPage(children: ReactNode) {
   render(children);
   await document.fonts.ready;
   return page.elementLocator(document.body);
+}
+
+/** Asserts `disabledEl` is dimmed and ignores the pointer, and `enabledEl` is neither */
+export function expectDimmed(disabledEl: Element, enabledEl: Element) {
+  const style = (el: Element) => {
+    const { opacity, pointerEvents } = getComputedStyle(el);
+    return { opacity, pointerEvents };
+  };
+  expect(style(disabledEl)).toEqual({ opacity: "0.5", pointerEvents: "none" });
+  expect(style(enabledEl)).toEqual({ opacity: "1", pointerEvents: "auto" });
 }
 
 /** Pauses all CSS animations — use for components with loaders/spinners. */

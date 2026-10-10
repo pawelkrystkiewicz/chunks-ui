@@ -28,42 +28,30 @@ describe("Radio", () => {
     await expect(fixture).toMatchScreenshot(SMALL_FEATURE_SCREENSHOT);
   });
 
-  it("dims a disabled item, its radio and its label, once", () => {
+  // The radio and its text are each drawn at 0.5, never 0.25 from dimming both the item and its parts
+  it.each<[string, { group?: boolean; item?: boolean }]>([
+    ["a disabled item", { item: true }],
+    ["the items of a disabled group", { group: true }],
+    ["a disabled item of a disabled group", { group: true, item: true }],
+  ])("dims %s once", (_, disabled) => {
     const { getByRole, getByText } = render(
-      <Radio.Group defaultValue="a">
-        <Radio.Item value="a">Enabled</Radio.Item>
-        <Radio.Item value="b" disabled>
-          Disabled
-        </Radio.Item>
-      </Radio.Group>,
-    );
-    const drawn = (name: string) => ({
-      radio: drawnOpacity(getByRole("radio", { name })),
-      label: drawnOpacity(getByText(name)),
-    });
-    expect(drawn("Disabled")).toEqual({ radio: 0.5, label: 0.5 });
-    expect(drawn("Enabled")).toEqual({ radio: 1, label: 1 });
-  });
-
-  it("dims the items of a disabled group once", () => {
-    const { getByRole, getByText } = render(
-      <Radio.Group defaultValue="a" disabled>
-        <Radio.Item value="a">Option</Radio.Item>
-      </Radio.Group>,
-    );
-    expect(drawnOpacity(getByRole("radio", { name: "Option" }))).toBe(0.5);
-    expect(drawnOpacity(getByText("Option"))).toBe(0.5);
-  });
-
-  it("dims a disabled item of a disabled group once", () => {
-    const { getByRole, getByText } = render(
-      <Radio.Group defaultValue="a" disabled>
-        <Radio.Item value="a" disabled>
+      <Radio.Group defaultValue="a" disabled={disabled.group}>
+        <Radio.Item value="a" disabled={disabled.item}>
           Option
         </Radio.Item>
       </Radio.Group>,
     );
     expect(drawnOpacity(getByRole("radio", { name: "Option" }))).toBe(0.5);
     expect(drawnOpacity(getByText("Option"))).toBe(0.5);
+  });
+
+  it("leaves an enabled item undimmed", () => {
+    const { getByRole, getByText } = render(
+      <Radio.Group defaultValue="a">
+        <Radio.Item value="a">Option</Radio.Item>
+      </Radio.Group>,
+    );
+    expect(drawnOpacity(getByRole("radio", { name: "Option" }))).toBe(1);
+    expect(drawnOpacity(getByText("Option"))).toBe(1);
   });
 });

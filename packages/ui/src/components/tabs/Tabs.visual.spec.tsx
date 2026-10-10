@@ -2,6 +2,7 @@ import { DirectionProvider } from "@base-ui/react/direction-provider";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { commands, userEvent } from "vitest/browser";
 import {
+  expectDimmed,
   insetsWithin,
   renderFixture,
   SMALL_FEATURE_SCREENSHOT,
@@ -105,12 +106,7 @@ describe("Tabs", () => {
         </Tabs.List>
       </Tabs.Root>,
     );
-    const style = (name: string) => {
-      const { opacity, pointerEvents } = getComputedStyle(getByRole("tab", { name }));
-      return { opacity, pointerEvents };
-    };
-    expect(style("Disabled")).toEqual({ opacity: "0.5", pointerEvents: "none" });
-    expect(style("Enabled")).toEqual({ opacity: "1", pointerEvents: "auto" });
+    expectDimmed(getByRole("tab", { name: "Disabled" }), getByRole("tab", { name: "Enabled" }));
   });
 });
 

@@ -6,22 +6,11 @@ import { Input } from "../input";
 import { Switch } from "../switch";
 import { Label } from "./index";
 
-const checkbox = (disabled: boolean) => (
-  <Checkbox.Root id="control" disabled={disabled}>
-    <Checkbox.Indicator />
-  </Checkbox.Root>
+const label = (
+  <Label key="label" htmlFor="control">
+    Label
+  </Label>
 );
-const toggle = (disabled: boolean) => (
-  <Switch.Root id="control" disabled={disabled}>
-    <Switch.Thumb />
-  </Switch.Root>
-);
-const input = (disabled: boolean) => <input id="control" disabled={disabled} />;
-const peerInput = (disabled: boolean) => (
-  <input id="control" className="peer" disabled={disabled} />
-);
-
-const label = <Label htmlFor="control">Label</Label>;
 
 const dimmed = { opacity: "0.5", cursor: "not-allowed" };
 const normal = { opacity: "1", cursor: "default" };
@@ -32,47 +21,33 @@ const looks = (el: Element) => {
 };
 
 describe("Label", () => {
-  it.each<[string, (disabled: boolean) => ReactNode]>([
+  // `controlFirst` puts the control before the label, which only a `peer` control can dim
+  it.each<[string, (disabled: boolean) => ReactNode, boolean]>([
     [
       "placed right before a Checkbox",
       (disabled) => (
-        <>
-          {label}
-          {checkbox(disabled)}
-        </>
+        <Checkbox.Root id="control" disabled={disabled}>
+          <Checkbox.Indicator />
+        </Checkbox.Root>
       ),
-    ],
-    [
-      "placed right before a Switch",
-      (disabled) => (
-        <>
-          {label}
-          {toggle(disabled)}
-        </>
-      ),
+      false,
     ],
     [
       "placed right before a native input",
-      (disabled) => (
-        <>
-          {label}
-          {input(disabled)}
-        </>
-      ),
+      (disabled) => <input id="control" disabled={disabled} />,
+      false,
     ],
     [
       "placed after a native input marked peer",
-      (disabled) => (
-        <>
-          {peerInput(disabled)}
-          {label}
-        </>
-      ),
+      (disabled) => <input id="control" className="peer" disabled={disabled} />,
+      true,
     ],
-  ])("dims when %s that is disabled", (_, controls) => {
+  ])("dims when %s that is disabled", (_, control, controlFirst) => {
     const style = (disabled: boolean) => {
       const { getByText, unmount } = render(
-        <div className="flex items-center gap-2">{controls(disabled)}</div>,
+        <div className="flex items-center gap-2">
+          {controlFirst ? [control(disabled), label] : [label, control(disabled)]}
+        </div>,
       );
       const result = looks(getByText("Label"));
       unmount();

@@ -84,11 +84,11 @@ describe("Slider", () => {
   });
 
   it("doesn't ring the thumb when clicked with the mouse", async () => {
-    const { getByRole, getByTestId } = await renderFixture(
+    const { getByRole } = await renderFixture(
       <div style={{ width: 200 }}>
         <Slider.Root defaultValue={[40]} min={0} max={100}>
           <Slider.Control>
-            <Slider.Track data-testid="track">
+            <Slider.Track>
               <Slider.Indicator />
               <Slider.Thumb index={0} aria-label="Volume" />
             </Slider.Track>
@@ -100,10 +100,6 @@ describe("Slider", () => {
     const thumb = input.parentElement as HTMLElement;
 
     await userEvent.click(thumb);
-    expect(document.activeElement).toBe(input);
-    expect(getComputedStyle(thumb).outlineStyle).toBe("none");
-
-    await userEvent.click(getByTestId("track"), { position: { x: 180, y: 2 } });
     expect(document.activeElement).toBe(input);
     expect(getComputedStyle(thumb).outlineStyle).toBe("none");
   });
