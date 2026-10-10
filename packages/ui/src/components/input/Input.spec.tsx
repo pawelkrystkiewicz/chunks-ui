@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
-import { createRef, useState } from "react";
+import { type ChangeEvent, createRef, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Input } from "./Input";
 
@@ -104,11 +104,14 @@ describe("Input", () => {
       const user = userEvent.setup();
       const onClear = vi.fn();
       const onValueChange = vi.fn();
+      // Returns the value the event carried when it fired
+      const onChange = vi.fn((e: ChangeEvent<HTMLInputElement>) => e.target.value);
       render(
         <Input
           aria-label="Search"
           defaultValue="abc"
           onClear={onClear}
+          onChange={onChange}
           onValueChange={onValueChange}
         />,
       );
@@ -116,7 +119,10 @@ describe("Input", () => {
       const input = screen.getByRole("textbox");
       expect(onClear).toHaveBeenCalledOnce();
       expect(input).toHaveValue("");
-      expect(onValueChange).toHaveBeenLastCalledWith("", expect.anything());
+      expect(onValueChange).toHaveBeenCalledOnce();
+      expect(onValueChange).toHaveBeenCalledWith("", expect.anything());
+      expect(onChange).toHaveBeenCalledOnce();
+      expect(onChange).toHaveReturnedWith("");
       expect(document.activeElement).toBe(input);
       expect(screen.queryByRole("button", { name: "Clear" })).not.toBeInTheDocument();
     });
