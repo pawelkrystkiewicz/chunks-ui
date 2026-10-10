@@ -59,13 +59,17 @@ Override the color via `className`:
 Cover the page with a fixed overlay while something loads. The demo hides it after two seconds:
 
 ```tsx
-{loading && (
-  <div role="status" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-    <Loader className="text-white" />
-    <span className="sr-only">Loading…</span>
-  </div>
-)}
+<div role="status">
+  {loading && (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <Loader className="text-white" />
+      <span className="sr-only">Loading…</span>
+    </div>
+  )}
+</div>
 ```
+
+Keep the `role="status"` element mounted and change only its content. Screen readers often skip a status region that mounts together with its text.
 
 <LoaderFullPageExample />
 

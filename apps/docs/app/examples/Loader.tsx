@@ -20,15 +20,14 @@ export function LoaderFullPageExample() {
       <Button variant="outlined" onClick={() => setVisible(true)}>
         Show full-page loader
       </Button>
-      {visible && (
-        <div
-          role="status"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-        >
-          <Loader className="text-white" />
-          <span className="sr-only">Loading…</span>
-        </div>
-      )}
+      <div role="status">
+        {visible && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <Loader className="text-white" />
+            <span className="sr-only">Loading…</span>
+          </div>
+        )}
+      </div>
     </Container>
   );
 }
