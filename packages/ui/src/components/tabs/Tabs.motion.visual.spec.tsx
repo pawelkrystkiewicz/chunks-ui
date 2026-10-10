@@ -172,8 +172,9 @@ describe("Tabs with Motion", () => {
 });
 
 describe("Tabs animations that must stop", () => {
-  // Slow and linear, so each check below happens mid-animation
-  const slow = { type: "tween", duration: 2 } as const;
+  // Slow and linear, so each check below happens mid-animation, even in a loaded run where a
+  // few frames can take seconds
+  const slow = { type: "tween", duration: 10 } as const;
   const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
 
   afterEach(async () => {
@@ -261,13 +262,11 @@ describe("Tabs animations that must stop", () => {
     const contents = result.getByTestId("contents");
     await waitForStable(() => contents.offsetHeight);
     result.rerender(panelsOfTwoHeights("tall", { transition: slow }));
-    await nextFrame();
-    await nextFrame();
-    await nextFrame();
-    // Mid-resize: between the two panel heights
-    const height = Number.parseFloat(contents.style.height);
-    expect(height).toBeGreaterThan(HEIGHTS.short);
-    expect(height).toBeLessThan(HEIGHTS.tall);
+    // Mid-resize: between the two panel heights. Waits for the height to move rather than for a
+    // set number of frames, as Motion can start the resize a frame or two later under load
+    const height = () => Number.parseFloat(contents.style.height);
+    await expect.poll(height, { timeout: 5000 }).toBeGreaterThan(HEIGHTS.short);
+    expect(height()).toBeLessThan(HEIGHTS.tall);
     return { ...result, contents };
   }
 
