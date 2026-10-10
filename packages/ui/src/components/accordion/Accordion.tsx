@@ -27,9 +27,7 @@ function AccordionRoot({ className, ...props }: AccordionRootProps) {
   );
 }
 
-function AccordionItem(props: AccordionItemProps) {
-  return <BaseAccordion.Item {...props} />;
-}
+const AccordionItem = BaseAccordion.Item;
 
 function AccordionHeader({ className, ...props }: AccordionHeaderProps) {
   return <BaseAccordion.Header className={cnState("flex", className)} {...props} />;
