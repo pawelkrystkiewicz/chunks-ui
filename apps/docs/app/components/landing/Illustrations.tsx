@@ -28,7 +28,7 @@ export function HeroStack({ total }: { total: number }) {
           <span className={LAYER_LABEL}>MOTION · SPRINGS</span>
         </div>
         <div
-          className={`${LAYER} translate-z-[138px] border-[oklch(80%_.1_257)] bg-(--l-brand)/85 shadow-[0_0_80px_oklch(60%_.22_257)] group-hover/iso:translate-z-[192px]`}
+          className={`${LAYER} translate-z-[138px] border-(--l-brand-pale) bg-(--l-brand)/85 shadow-[0_0_80px_oklch(60%_.22_257)] group-hover/iso:translate-z-[192px]`}
         >
           <span className={LAYER_LABEL}>CHUNKS-UI · {total} COMPONENTS</span>
         </div>

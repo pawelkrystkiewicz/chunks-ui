@@ -20,8 +20,7 @@
   --l-ill: #8d96b0;
   --l-brand: oklch(60.48% 0.2165 257.21);
   --l-brand-soft: oklch(70% 0.15 257);
-  /* Label on --l-brand-soft; white is only 2.7:1 there */
-  --l-cta-fg: #0b1020;
+  --l-brand-pale: oklch(80% 0.1 257);
   --l-grid:
     repeating-linear-gradient(90deg, transparent 0 20px, var(--l-ill) 20px 21px),
     repeating-linear-gradient(0deg, transparent 0 20px, var(--l-ill) 20px 21px);

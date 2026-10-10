@@ -51,3 +51,19 @@ describe("DatePicker keyboard", () => {
     }
   });
 });
+
+// Only a real browser validates a form on submit and tracks :focus-visible. No screenshots.
+describe("DatePicker in a form", () => {
+  it("shows the trigger's focus ring when a mouse submit finds it required and empty", async () => {
+    render(
+      <form aria-label="Task" onSubmit={(event) => event.preventDefault()}>
+        <DatePicker aria-label="Due date" name="due" required />
+        <button type="submit">Save</button>
+      </form>,
+    );
+    await page.getByRole("button", { name: "Save" }).click();
+    const trigger = page.getByRole("button", { name: "Due date Pick a date" });
+    await expect.element(trigger).toHaveFocus();
+    expect(trigger.element().matches(":focus-visible")).toBe(true);
+  });
+});
