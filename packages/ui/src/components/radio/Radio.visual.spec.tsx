@@ -54,4 +54,16 @@ describe("Radio", () => {
     expect(drawnOpacity(getByRole("radio", { name: "Option" }))).toBe(0.5);
     expect(drawnOpacity(getByText("Option"))).toBe(0.5);
   });
+
+  it("dims a disabled item of a disabled group once", () => {
+    const { getByRole, getByText } = render(
+      <Radio.Group defaultValue="a" disabled>
+        <Radio.Item value="a" disabled>
+          Option
+        </Radio.Item>
+      </Radio.Group>,
+    );
+    expect(drawnOpacity(getByRole("radio", { name: "Option" }))).toBe(0.5);
+    expect(drawnOpacity(getByText("Option"))).toBe(0.5);
+  });
 });

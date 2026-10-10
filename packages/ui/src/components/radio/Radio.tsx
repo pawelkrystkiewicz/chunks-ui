@@ -14,7 +14,10 @@ export type RadioGroupProps = ComponentProps<typeof BaseRadioGroup>;
 function RadioGroup({ className, ...props }: RadioGroupProps) {
   return (
     <BaseRadioGroup
-      className={cnState("flex flex-col gap-2 data-[disabled]:opacity-50", className)}
+      className={cnState(
+        "group/radio-group flex flex-col gap-2 data-[disabled]:opacity-50",
+        className,
+      )}
       {...props}
     />
   );
@@ -100,9 +103,9 @@ function RadioItem({ children, className, disabled, ...props }: RadioItemProps) 
     <label
       className={cn(
         "flex cursor-pointer items-center gap-2",
-        // Dims the radio and its text together. A disabled Radio.Group dims itself instead, so
-        // this keys off the item's own prop and its items aren't dimmed twice.
-        disabled && "cursor-not-allowed opacity-50",
+        // Dims the radio and its text together. A disabled Radio.Group dims itself, so inside one
+        // the item drops its own dim and isn't dimmed twice.
+        disabled && "cursor-not-allowed opacity-50 group-data-[disabled]/radio-group:opacity-100",
         className,
       )}
     >
