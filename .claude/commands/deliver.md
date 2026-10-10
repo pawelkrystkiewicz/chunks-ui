@@ -63,17 +63,7 @@ The builder's prompt starts with the System Prompt from `.claude/agents/builder.
 - **Gates before committing:** `cd <wt>/packages/ui && bunx vitest run <spec>`, then `cd <wt> && bun run check-types && bun run lint`.
 - **Visual baselines,** when rendering changes:
   1. Commit first.
-  2. Regenerate the Linux baselines in Docker and copy them back. CI renders on x86, so force `linux/amd64`; an arm64 render can differ from the CI render. Under emulation on Apple silicon the run takes minutes, which is not a hang:
-
-     ```bash
-     D=<scratchpad>/ui-visual; rm -rf $D && mkdir -p $D && git -C <wt> archive HEAD | tar -x -C $D
-     docker run --rm --platform linux/amd64 -v $D:/work -w /work mcr.microsoft.com/playwright@sha256:bc72a8df40831ded821e3cbc79c318c21b44d6e51dff9fd89ace7a8249c5b462 bash -lc \
-       'npm i -g bun@1.4.2 >/dev/null 2>&1 && bun install --frozen-lockfile >/dev/null 2>&1 && cd packages/ui && bun run test:visual:update'
-     rsync -am --include='*/' --include='*-linux.png' --exclude='*' $D/packages/ui/src/ <wt>/packages/ui/src/
-     ```
-
-     The digest is the `linux/amd64` manifest of `v1.64.0-noble@sha256:06a9939e…`, the index CI pins; Docker rejects an index digest with `--platform`.
-
+  2. Regenerate the Linux baselines in Docker with the recipe in TESTING_STRATEGY.md › Visual Regression, then copy them back.
   3. Regenerate the Darwin baselines with `cd <wt>/packages/ui && bun run test:visual:update`.
   4. Look at every changed PNG before committing it.
 - **Commits:** `type(scope): message` with the co-author trailer, and **no push**. Commits never use a closing keyword (`Closes`, `Fixes`, `Resolves`); reference the issue as `Part of #<n>`. Only the PR body decides whether the issue closes.

@@ -159,12 +159,9 @@ Naming: `Component.spec.tsx` (not `.test.tsx`, not in `__tests__/`).
 ```bash
 bun run test               # unit tests
 bun run test:unit:coverage # with V8 coverage report
-bun run test:visual        # visual regression tests (needs Playwright browsers)
-bun run test:visual:update # refresh the local baselines
 ```
 
 ## CI
 
 - **Unit tests + coverage** run on every PR and master push (`unit.tests.yml`)
 - **Lint + typecheck** run on every PR and master push (`quality-gates.yml`)
-- **Visual regression** runs on every PR against the committed Linux baselines (`visual-regression.tests.yml`)
