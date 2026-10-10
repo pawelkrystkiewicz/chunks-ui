@@ -366,12 +366,9 @@ export function useTabsValue(): unknown {
 }
 
 // ---------------------------------------------------------------------------
-// Animate – wrapper that re-keys + animates its children on tab value change.
-// For routed tabs (single <Outlet>) where <Tabs.Contents>'s multi-panel slide
-// doesn't apply. It can also wrap several <Tabs.Panel>s: Base UI mounts only the
-// active one, so that panel animates in. A `keepMounted` panel inside still
-// remounts on every change, as the re-key remounts everything inside.
-// Bring-your-own initial/animate/transition with a fade+rise default.
+// Animate – re-keys and animates its children on tab value change (fade+rise
+// default, bring-your-own initial/animate/transition). For routed tabs or around
+// several <Tabs.Panel>s; a `keepMounted` panel inside remounts on every change.
 // ---------------------------------------------------------------------------
 
 const DEFAULT_ANIMATE_INITIAL: MotionTarget = { y: 8, opacity: 0 };
