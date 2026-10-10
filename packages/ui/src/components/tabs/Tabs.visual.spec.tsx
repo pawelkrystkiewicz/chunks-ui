@@ -92,6 +92,26 @@ describe("Tabs", () => {
       expect(offset()).toBeLessThanOrEqual(1);
     },
   );
+
+  // Base UI keeps a disabled tab focusable, so it is aria-disabled and never :disabled
+  it("dims a disabled tab", async () => {
+    const { getByRole } = await renderFixture(
+      <Tabs.Root defaultValue="tab-1">
+        <Tabs.List>
+          <Tabs.Tab value="tab-1">Enabled</Tabs.Tab>
+          <Tabs.Tab value="tab-2" disabled>
+            Disabled
+          </Tabs.Tab>
+        </Tabs.List>
+      </Tabs.Root>,
+    );
+    const style = (name: string) => {
+      const { opacity, pointerEvents } = getComputedStyle(getByRole("tab", { name }));
+      return { opacity, pointerEvents };
+    };
+    expect(style("Disabled")).toEqual({ opacity: "0.5", pointerEvents: "none" });
+    expect(style("Enabled")).toEqual({ opacity: "1", pointerEvents: "auto" });
+  });
 });
 
 const PATHS = [

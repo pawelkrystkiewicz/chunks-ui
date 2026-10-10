@@ -135,7 +135,8 @@ function TabsTab({ className, ...props }: TabsTabProps) {
         "hover:text-foreground",
         "data-active:text-foreground",
         "focus-visible:outline-2 focus-visible:outline-ring",
-        "disabled:pointer-events-none disabled:opacity-50",
+        // Base UI keeps a disabled tab focusable: aria-disabled, never the disabled attribute
+        "aria-disabled:pointer-events-none aria-disabled:opacity-50",
         className,
       )}
       {...props}
