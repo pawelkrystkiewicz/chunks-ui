@@ -1,17 +1,24 @@
-import { render } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { commands } from "vitest/browser";
+import { Accordion } from "./components/accordion";
 import { Button } from "./components/button";
+import { Progress } from "./components/progress";
+import { ScrollArea } from "./components/scroll-area";
 import { Slider } from "./components/slider";
 import { Table } from "./components/table";
 import { Textarea } from "./components/textarea";
+import { ThemeToggle } from "./components/theme-toggle";
 
 /*
  * `.micro-interactions` (theme.css) gives components their default transition. Timing
  * utilities from the consumer, such as `duration-150` or `ease-linear`, must win over it, the
  * same as any other utility does over a component's own styles. With reduced motion nothing
  * turns the transition back on, not even a `transition-*` utility.
+ *
+ * Components that set their own transition or animation outside the class turn it off with
+ * reduced motion as well.
  */
 
 type Transition = { property: string; duration: string; timingFunction: string };
@@ -35,31 +42,80 @@ const plain = (className?: string) => (
   </span>
 );
 
-const sliderThumb = (
-  <Slider.Root defaultValue={[40]}>
-    <Slider.Control>
-      <Slider.Track>
-        <Slider.Thumb index={0} data-testid="target" />
-      </Slider.Track>
-    </Slider.Control>
-  </Slider.Root>
-);
-
-// These set `transition-colors!` next to the class, so they fade colours only
+// These set `transition-colors` next to the class, so they fade colours only
 const COLOR_FADES = [
-  { component: "Slider.Thumb", ui: sliderThumb },
-  { component: "Textarea", ui: <Textarea aria-label="Notes" data-testid="target" /> },
+  {
+    component: "Slider.Thumb",
+    ui: (className?: string) => (
+      <Slider.Root defaultValue={[40]}>
+        <Slider.Control>
+          <Slider.Track>
+            <Slider.Thumb index={0} data-testid="target" className={className} />
+          </Slider.Track>
+        </Slider.Control>
+      </Slider.Root>
+    ),
+  },
+  {
+    component: "Textarea",
+    ui: (className?: string) => (
+      <Textarea aria-label="Notes" data-testid="target" className={className} />
+    ),
+  },
   {
     component: "Table.Row",
-    ui: (
+    ui: (className?: string) => (
       <Table.Root>
         <Table.Body>
-          <Table.Row data-testid="target">
+          <Table.Row data-testid="target" className={className}>
             <Table.Cell>Cell</Table.Cell>
           </Table.Row>
         </Table.Body>
       </Table.Root>
     ),
+  },
+] as const;
+
+const accordion = (
+  <Accordion.Root defaultValue={["a"]}>
+    <Accordion.Item value="a">
+      <Accordion.Header>
+        <Accordion.Trigger>Section</Accordion.Trigger>
+      </Accordion.Header>
+      <Accordion.Panel data-testid="target">Content</Accordion.Panel>
+    </Accordion.Item>
+  </Accordion.Root>
+);
+
+const progress = (value: number | null) => (
+  <Progress.Root value={value}>
+    <Progress.Track>
+      <Progress.Indicator data-testid="target" />
+    </Progress.Track>
+  </Progress.Root>
+);
+
+// Transitions these parts set themselves, without `.micro-interactions`
+const OWN_TRANSITIONS = [
+  { part: "Accordion.Panel", property: "height", renderPart: () => renderTarget(accordion) },
+  {
+    part: "the Accordion.Trigger chevron",
+    property: "transform, translate, scale, rotate",
+    renderPart: () => render(accordion).getByRole("button").querySelector("svg") as Element,
+  },
+  { part: "Progress.Indicator", property: "width", renderPart: () => renderTarget(progress(40)) },
+  {
+    part: "ScrollArea.Scrollbar",
+    property: "opacity",
+    renderPart: () =>
+      renderTarget(
+        <ScrollArea.Root>
+          <ScrollArea.Viewport>Content</ScrollArea.Viewport>
+          <ScrollArea.Scrollbar keepMounted data-testid="target">
+            <ScrollArea.Thumb />
+          </ScrollArea.Scrollbar>
+        </ScrollArea.Root>,
+      ),
   },
 ] as const;
 
@@ -102,10 +158,17 @@ describe(".micro-interactions with no reduced-motion preference", () => {
   });
 
   it.each(COLOR_FADES)("fades only colours on $component", ({ ui }) => {
-    const properties = transitionOf(renderTarget(ui)).property.split(", ");
+    const properties = transitionOf(renderTarget(ui())).property.split(", ");
     expect(properties).toEqual(expect.arrayContaining(["color", "background-color"]));
     expect(properties).not.toContain("all");
   });
+
+  it.each(COLOR_FADES)(
+    "lets a transition utility replace the colour fade on $component",
+    ({ ui }) => {
+      expect(transitionOf(renderTarget(ui("transition-opacity"))).property).toBe("opacity");
+    },
+  );
 });
 
 describe(".micro-interactions with reduced motion", () => {
@@ -122,7 +185,45 @@ describe(".micro-interactions with reduced motion", () => {
     },
   );
 
-  it("stops the Slider.Thumb colour fade from its transition-colors!", () => {
-    expect(transitionOf(renderTarget(sliderThumb)).property).toBe("none");
+  it.each(COLOR_FADES)("stops the colour fade on $component", ({ ui }) => {
+    expect(transitionOf(renderTarget(ui())).property).toBe("none");
+  });
+});
+
+describe("component motion with no reduced-motion preference", () => {
+  beforeAll(() => commands.emulateMedia({ reducedMotion: "no-preference" }));
+  afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
+
+  it.each(OWN_TRANSITIONS)("transitions $property on $part", ({ renderPart, property }) => {
+    expect(transitionOf(renderPart()).property).toBe(property);
+  });
+
+  it("pulses an indeterminate Progress.Indicator", () => {
+    expect(getComputedStyle(renderTarget(progress(null))).animationName).toBe("pulse");
+  });
+
+  // `scale-75` sets the `scale` property, not `transform`
+  it("scales and fades the ThemeToggle icon out", () => {
+    const { rerender } = render(<ThemeToggle theme="light" />);
+    const sun = screen.getByRole("button").firstElementChild as HTMLElement;
+    rerender(<ThemeToggle theme="dark" />);
+    const transitioned = sun
+      .getAnimations()
+      .flatMap((animation) =>
+        animation instanceof CSSTransition ? [animation.transitionProperty] : [],
+      );
+    expect(transitioned.sort()).toEqual(["opacity", "scale"]);
+  });
+});
+
+describe("component motion with reduced motion", () => {
+  beforeAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
+
+  it.each(OWN_TRANSITIONS)("does not transition $part", ({ renderPart }) => {
+    expect(transitionOf(renderPart()).property).toBe("none");
+  });
+
+  it("does not pulse an indeterminate Progress.Indicator", () => {
+    expect(getComputedStyle(renderTarget(progress(null))).animationName).toBe("none");
   });
 });
