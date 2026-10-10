@@ -1,6 +1,6 @@
 import { render } from "@testing-library/react";
 import type { CSSProperties, ReactNode } from "react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { Button } from "./components/button";
 import { Calendar } from "./components/calendar";
 import { Chip } from "./components/chip";
@@ -153,10 +153,16 @@ describe.each(MODES)("theme contrast, %s mode", (mode) => {
   });
 
   it("Calendar today ≥ 4.5", () => {
-    const { container } = renderIn(mode, <Calendar />);
-    const today = container.querySelector('[aria-current="date"]');
-    if (!today) throw new Error("No today cell");
-    expect(textContrast(today)).toBeGreaterThanOrEqual(4.5);
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 2, 15, 12, 0, 0));
+    try {
+      const { container } = renderIn(mode, <Calendar />);
+      const today = container.querySelector('[aria-current="date"]');
+      if (!today) throw new Error("No today cell");
+      expect(textContrast(today)).toBeGreaterThanOrEqual(4.5);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("muted-foreground on muted ≥ 4.5 and the ring on the background ≥ 3", () => {
