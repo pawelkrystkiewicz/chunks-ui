@@ -130,7 +130,7 @@ The PR body has:
 
 ## 8. Merge
 
-Run `<wt>/.claude/commands/merge-pr.sh <pr> [<pr>…]` in the background, once, with the PRs in merge order. Its header says what it enforces. It never waits for or requests a CodeRabbit review.
+Run `<wt>/.claude/commands/merge-pr.sh <pr> [<pr>…]` in the background, once, with the PRs in merge order. A run started while another is merging waits for it to finish, so you can also hand PRs over as they become ready. Its header says what it enforces. It never waits for or requests a CodeRabbit review.
 
 The script gates on inline CodeRabbit threads only. Findings that appear only in the review body do not block the merge: nitpicks are non-blocking by CodeRabbit's own label, and "outside diff range" comments are about code the PR did not change. Once the script finishes, read the body anyway. A valid finding goes to a follow-up PR or the Also possible list.
 
