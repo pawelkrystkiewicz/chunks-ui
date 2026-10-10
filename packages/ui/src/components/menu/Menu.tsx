@@ -126,7 +126,7 @@ function MenuRadioItem({ className, children, ...props }: MenuRadioItemProps) {
   return (
     <BaseMenu.RadioItem
       className={cnState(
-        "relative flex cursor-default select-none items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 text-sm outline-none",
+        "relative flex cursor-default select-none items-center gap-2 rounded-sm py-1.5 ps-8 pe-2 text-sm outline-none",
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         "data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground",
         "[&_svg]:size-4 [&_svg]:shrink-0",
@@ -143,7 +143,7 @@ function MenuCheckboxItem({ className, children, ...props }: MenuCheckboxItemPro
   return (
     <BaseMenu.CheckboxItem
       className={cnState(
-        "relative flex cursor-default select-none items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 text-sm outline-none",
+        "relative flex cursor-default select-none items-center gap-2 rounded-sm py-1.5 ps-8 pe-2 text-sm outline-none",
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         "data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground",
         "[&_svg]:size-4 [&_svg]:shrink-0",
@@ -159,7 +159,7 @@ function MenuCheckboxItem({ className, children, ...props }: MenuCheckboxItemPro
 function MenuRadioItemIndicator({ className, ...props }: MenuRadioItemIndicatorProps) {
   return (
     <BaseMenu.RadioItemIndicator
-      className={cnState("absolute left-2 flex size-3.5 items-center justify-center", className)}
+      className={cnState("absolute inset-s-2 flex size-3.5 items-center justify-center", className)}
       {...props}
     />
   );
@@ -168,7 +168,7 @@ function MenuRadioItemIndicator({ className, ...props }: MenuRadioItemIndicatorP
 function MenuCheckboxItemIndicator({ className, ...props }: MenuCheckboxItemIndicatorProps) {
   return (
     <BaseMenu.CheckboxItemIndicator
-      className={cnState("absolute left-2 flex size-3.5 items-center justify-center", className)}
+      className={cnState("absolute inset-s-2 flex size-3.5 items-center justify-center", className)}
       {...props}
     />
   );

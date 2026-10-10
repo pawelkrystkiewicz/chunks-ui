@@ -121,15 +121,15 @@ export function Input({
       )}
     >
       {startAdornment && (
-        <span className="pointer-events-none absolute left-3 flex items-center text-muted-foreground">
+        <span className="pointer-events-none absolute inset-s-3 flex items-center text-muted-foreground">
           {startAdornment}
         </span>
       )}
       <BaseInput
         className={cnState(
           inputVariants(),
-          startAdornment && "pl-9",
-          (endAdornment || onClear) && "pr-9",
+          startAdornment && "ps-9",
+          (endAdornment || onClear) && "pe-9",
           typeof className === "function" ? className : undefined,
         )}
         ref={mergedRef}
@@ -138,7 +138,7 @@ export function Input({
       />
       {/* The clear button and endAdornment share one slot: while the button shows, it wins */}
       {(endAdornment || clearable) && (
-        <span className="absolute right-3 flex items-center">
+        <span className="absolute inset-e-3 flex items-center">
           {clearable ? <ClearButton onClick={handleClear} /> : endAdornment}
         </span>
       )}

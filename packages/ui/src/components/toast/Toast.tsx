@@ -123,7 +123,7 @@ function ToastRoot({ className, toast, ...props }: ToastRootProps) {
       toast={toast}
       className={cnState(
         "Toast",
-        "group relative flex w-full items-center gap-3 overflow-hidden rounded-sm border border-border bg-popover p-4 pr-10 shadow-lg",
+        "group relative flex w-full items-center gap-3 overflow-hidden rounded-sm border border-border bg-popover p-4 pe-10 shadow-lg",
         // Past the provider's `limit`, Base UI makes a toast inert: it takes no space until newer
         // ones close. The opt-in stack fades its own out in place (theme.css).
         "not-[.toast-stack]:data-limited:hidden",
@@ -163,7 +163,7 @@ function ToastClose({ className, children, ...props }: ToastCloseProps) {
     <BaseToast.Close
       aria-label="Close"
       className={cnState(
-        "micro-interactions absolute top-5 right-2 flex size-6 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground",
+        "micro-interactions absolute inset-e-2 top-5 flex size-6 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground",
         "focus-visible:outline-2 focus-visible:outline-ring",
         className,
       )}

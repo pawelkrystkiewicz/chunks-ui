@@ -38,7 +38,7 @@ function SelectTrigger({ className, ...props }: SelectTriggerProps) {
 
 function SelectIcon({ className, ...props }: SelectIconProps) {
   return (
-    <BaseSelect.Icon className={cnState("ml-auto", className)} {...props}>
+    <BaseSelect.Icon className={cnState("ms-auto", className)} {...props}>
       <svg
         viewBox="0 0 24 24"
         fill="none"
@@ -86,7 +86,7 @@ function SelectItem({ className, ...props }: SelectItemProps) {
   return (
     <BaseSelect.Item
       className={cnState(
-        "relative flex w-full cursor-default items-center rounded-sm py-1.5 pr-8 pl-2 text-sm outline-none",
+        "relative flex w-full cursor-default items-center rounded-sm py-1.5 ps-2 pe-8 text-sm outline-none",
         "data-highlighted:bg-accent data-highlighted:text-accent-foreground",
         "data-disabled:pointer-events-none data-disabled:opacity-50",
         "cursor-pointer",
@@ -100,7 +100,7 @@ function SelectItem({ className, ...props }: SelectItemProps) {
 function SelectItemIndicator({ className, ...props }: SelectItemIndicatorProps) {
   return (
     <BaseSelect.ItemIndicator
-      className={cnState("absolute right-2 flex items-center", className)}
+      className={cnState("absolute inset-e-2 flex items-center", className)}
       {...props}
     >
       <svg

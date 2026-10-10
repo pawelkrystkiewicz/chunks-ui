@@ -60,7 +60,7 @@ function NumberFieldIncrement({ className, ...props }: NumberFieldIncrementProps
     <BaseNumberField.Increment
       className={cnState(
         "micro-interactions flex h-ui-height items-center justify-center px-2 text-muted-foreground hover:text-foreground",
-        "border-input border-l",
+        "border-input border-s",
         "disabled:pointer-events-none disabled:opacity-50",
         "data-[disabled]:opacity-50",
         className,
@@ -89,7 +89,7 @@ function NumberFieldDecrement({ className, ...props }: NumberFieldDecrementProps
     <BaseNumberField.Decrement
       className={cnState(
         "micro-interactions flex h-ui-height items-center justify-center px-2 text-muted-foreground hover:text-foreground",
-        "border-input border-r",
+        "border-input border-e",
         "disabled:pointer-events-none disabled:opacity-50",
         "data-[disabled]:opacity-50",
         className,
