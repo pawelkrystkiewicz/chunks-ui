@@ -115,6 +115,13 @@ describe("presets", () => {
 });
 
 describe("toScopeStyle", () => {
+  it("gives preview cards no shadow by default, like Card.Root", () => {
+    const style = toScopeStyle(DEFAULT_THEME) as Record<string, string>;
+    // A transparent zero shadow, not `none`: Tailwind puts the value in a comma-separated
+    // `box-shadow` list, and `none` there makes the whole declaration invalid.
+    expect(style["--preview-shadow"]).toBe("0 0 #0000");
+  });
+
   it("writes px tokens and scales text by base size", () => {
     const style = toScopeStyle({ ...DEFAULT_THEME, fontSize: 16, spacing: 1.1 }) as Record<
       string,
