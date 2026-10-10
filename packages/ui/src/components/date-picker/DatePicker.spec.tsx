@@ -1,7 +1,9 @@
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
+import { createRef } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { Field } from "../field";
 import { DatePicker } from "./DatePicker";
 
 const MARCH_15_LABEL = "Sunday, March 15, 2026";
@@ -135,6 +137,138 @@ describe("DatePicker", () => {
         rules: { "aria-command-name": { enabled: false } },
       }),
     ).toHaveNoViolations();
+  });
+});
+
+describe("DatePicker labelling", () => {
+  it("is named by aria-label", () => {
+    render(<DatePicker aria-label="Due date" />);
+    expect(screen.getByRole("button")).toHaveAccessibleName("Due date");
+  });
+
+  it("is named by a <label> whose htmlFor matches its id", () => {
+    render(
+      <>
+        <label htmlFor="due">Due date</label>
+        <DatePicker id="due" />
+      </>,
+    );
+    expect(screen.getByRole("button")).toHaveAccessibleName("Due date");
+  });
+
+  it("forwards aria-labelledby, aria-describedby, other props and ref to the trigger", () => {
+    const ref = createRef<HTMLButtonElement>();
+    render(
+      <>
+        <span id="due-label">Due date</span>
+        <span id="due-hint">Pick a weekday</span>
+        <DatePicker
+          ref={ref}
+          aria-labelledby="due-label"
+          aria-describedby="due-hint"
+          data-testid="due-trigger"
+        />
+      </>,
+    );
+    const trigger = screen.getByRole("button");
+    expect(trigger).toHaveAccessibleName("Due date");
+    expect(trigger).toHaveAccessibleDescription("Pick a weekday");
+    expect(trigger).toHaveAttribute("data-testid", "due-trigger");
+    expect(ref.current).toBe(trigger);
+  });
+
+  it("is named by Field.Label and described by Field.Description", () => {
+    render(
+      <Field.Root>
+        <Field.Label>Due date</Field.Label>
+        <DatePicker />
+        <Field.Description>Pick a weekday</Field.Description>
+      </Field.Root>,
+    );
+    const trigger = screen.getByRole("button");
+    expect(trigger).toHaveAccessibleName("Due date");
+    expect(trigger).toHaveAccessibleDescription("Pick a weekday");
+  });
+
+  it("has no a11y violations when labelled inside a Field in a form", async () => {
+    const { container } = render(
+      <form aria-label="Task">
+        <Field.Root>
+          <Field.Label>Due date</Field.Label>
+          <DatePicker name="due" defaultValue={new Date(2026, 2, 15)} required />
+        </Field.Root>
+      </form>,
+    );
+    expect(
+      await axe(container, {
+        rules: { "aria-command-name": { enabled: false } },
+      }),
+    ).toHaveNoViolations();
+  });
+});
+
+describe("DatePicker in a form", () => {
+  const formData = (form: HTMLFormElement) => new FormData(form).get("due");
+
+  it("submits the selected date as yyyy-mm-dd under its name", async () => {
+    render(
+      <form aria-label="Task">
+        <DatePicker name="due" defaultValue={new Date(2026, 9, 10, 23, 59)} />
+      </form>,
+    );
+    const form = screen.getByRole<HTMLFormElement>("form");
+    expect(formData(form)).toBe("2026-10-10");
+    await userEvent.click(screen.getByRole("button", { name: "October 10, 2026" }));
+    await userEvent.click(screen.getByRole("button", { name: "Friday, October 2, 2026" }));
+    expect(formData(form)).toBe("2026-10-02");
+  });
+
+  it("submits an empty value when no date is selected", () => {
+    render(
+      <form aria-label="Task">
+        <DatePicker name="due" />
+      </form>,
+    );
+    expect(formData(screen.getByRole<HTMLFormElement>("form"))).toBe("");
+  });
+
+  it("submits the controlled value", () => {
+    render(
+      <form aria-label="Task">
+        <DatePicker name="due" value={new Date(2026, 0, 5)} />
+      </form>,
+    );
+    expect(formData(screen.getByRole<HTMLFormElement>("form"))).toBe("2026-01-05");
+  });
+
+  it("blocks submission while required and empty, and sends focus to the trigger", async () => {
+    render(
+      <form aria-label="Task">
+        <DatePicker name="due" required />
+      </form>,
+    );
+    const form = screen.getByRole<HTMLFormElement>("form");
+    expect(form.checkValidity()).toBe(false);
+    // The browser focuses the first invalid control; the trigger takes that focus
+    form.querySelector<HTMLInputElement>("input[name='due']")?.focus();
+    expect(screen.getByRole("button", { name: "Pick a date" })).toHaveFocus();
+    await userEvent.click(screen.getByRole("button", { name: "Pick a date" }));
+    await userEvent.click(screen.getByRole("button", { name: MARCH_15_LABEL }));
+    expect(form.checkValidity()).toBe(true);
+  });
+
+  it("does not submit a value while disabled", () => {
+    render(
+      <form aria-label="Task">
+        <DatePicker name="due" defaultValue={new Date(2026, 2, 15)} disabled />
+      </form>,
+    );
+    expect(formData(screen.getByRole<HTMLFormElement>("form"))).toBeNull();
+  });
+
+  it("renders no form input without a name or required", () => {
+    const { container } = render(<DatePicker defaultValue={new Date(2026, 2, 15)} />);
+    expect(container.querySelector("input")).toBeNull();
   });
 });
 
