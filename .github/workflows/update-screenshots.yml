@@ -4,8 +4,6 @@ on:
   workflow_dispatch: # manual trigger only
 
 env:
-  LANG: en_US.UTF-8
-  LC_ALL: en_US.UTF-8
   AUTHOR_NAME: 'github-actions[bot]'
   AUTHOR_EMAIL: '41898282+github-actions[bot]@users.noreply.github.com'
   COMMIT_MESSAGE: |
@@ -14,6 +12,10 @@ env:
 jobs:
   update-screenshots:
     runs-on: ubuntu-24.04
+    # Render in the image the local linux/amd64 recipe uses, so OS, fonts and browser build match
+    # the committed baselines. Keep the tag equal to @playwright/test in packages/ui/package.json.
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.0-noble@sha256:06a9939e57531807f8d5fd76ce44b53165ffb7d7501d87ab10e285c20b1e971f
 
     # safety first: don't run on main
     if: github.ref_name != github.event.repository.default_branch
@@ -33,21 +35,24 @@ jobs:
           ref: ${{ github.ref_name }}
           persist-credentials: false
 
+      # The container runs as root, but the runner user owns the workspace
       - name: Configure Git
         run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git config --global user.name "$AUTHOR_NAME"
           git config --global user.email "$AUTHOR_EMAIL"
+
+      # setup-bun unzips its download, and the Playwright image has no unzip
+      - name: Install unzip
+        run: apt-get update && apt-get install -y --no-install-recommends unzip
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          bun-version: latest
+          bun-version-file: package.json
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
-
-      - name: Install Playwright Browsers
-        run: bunx playwright install --with-deps chromium
 
       - name: Update Visual Regression Screenshots
         run: cd packages/ui && bun run test:visual:update

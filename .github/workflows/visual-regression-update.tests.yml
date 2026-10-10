@@ -3,29 +3,35 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
-env:
-  LANG: en_US.UTF-8
-  LC_ALL: en_US.UTF-8
 jobs:
   visual-regression-update-test:
     timeout-minutes: 60
     runs-on: ubuntu-24.04
+    # Render in the image the local linux/amd64 recipe uses, so OS, fonts and browser build match
+    # the committed baselines. Keep the tag equal to @playwright/test in packages/ui/package.json.
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.0-noble@sha256:06a9939e57531807f8d5fd76ce44b53165ffb7d7501d87ab10e285c20b1e971f
     steps:
       - name: Checkout Repo
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           persist-credentials: false
 
+      # Turbo reads git, and the container runs as root while the runner user owns the workspace
+      - name: Trust the workspace for git
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      # setup-bun unzips its download, and the Playwright image has no unzip
+      - name: Install unzip
+        run: apt-get update && apt-get install -y --no-install-recommends unzip
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          bun-version: latest
+          bun-version-file: package.json
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
-
-      - name: Install Playwright browsers
-        run: bun x playwright install --with-deps chromium
 
       - name: Run Visual Regression Update Tests
         run: bun run test:visual:update
