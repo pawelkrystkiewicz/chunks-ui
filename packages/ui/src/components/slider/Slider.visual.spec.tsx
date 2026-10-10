@@ -82,4 +82,29 @@ describe("Slider", () => {
     expect(document.activeElement).toBe(input);
     await expect.poll(ring).toEqual({ outlineStyle: "solid", outlineWidth: "2px" });
   });
+
+  it("doesn't ring the thumb when clicked with the mouse", async () => {
+    const { getByRole, getByTestId } = await renderFixture(
+      <div style={{ width: 200 }}>
+        <Slider.Root defaultValue={[40]} min={0} max={100}>
+          <Slider.Control>
+            <Slider.Track data-testid="track">
+              <Slider.Indicator />
+              <Slider.Thumb index={0} aria-label="Volume" />
+            </Slider.Track>
+          </Slider.Control>
+        </Slider.Root>
+      </div>,
+    );
+    const input = getByRole("slider", { name: "Volume" });
+    const thumb = input.parentElement as HTMLElement;
+
+    await userEvent.click(thumb);
+    expect(document.activeElement).toBe(input);
+    expect(getComputedStyle(thumb).outlineStyle).toBe("none");
+
+    await userEvent.click(getByTestId("track"), { position: { x: 180, y: 2 } });
+    expect(document.activeElement).toBe(input);
+    expect(getComputedStyle(thumb).outlineStyle).toBe("none");
+  });
 });
