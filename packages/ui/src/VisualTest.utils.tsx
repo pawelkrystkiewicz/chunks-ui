@@ -35,6 +35,16 @@ export async function renderPage(children: ReactNode) {
   return page.elementLocator(document.body);
 }
 
+/** Asserts `disabledEl` is dimmed and ignores the pointer, and `enabledEl` is neither */
+export function expectDimmed(disabledEl: Element, enabledEl: Element) {
+  const style = (el: Element) => {
+    const { opacity, pointerEvents } = getComputedStyle(el);
+    return { opacity, pointerEvents };
+  };
+  expect(style(disabledEl)).toEqual({ opacity: "0.5", pointerEvents: "none" });
+  expect(style(enabledEl)).toEqual({ opacity: "1", pointerEvents: "auto" });
+}
+
 /** Pauses all CSS animations — use for components with loaders/spinners. */
 export function pauseAnimations() {
   for (const el of document.querySelectorAll("*")) {
@@ -52,6 +62,8 @@ declare module "vitest/browser" {
   interface BrowserCommands {
     /** Playwright `page.emulateMedia`, registered in vitest.visual.config.ts. */
     emulateMedia: (options: EmulatedMedia) => Promise<void>;
+    /** Moves the mouse outside the viewport, registered in vitest.visual.config.ts. */
+    parkPointer: () => Promise<void>;
   }
 }
 

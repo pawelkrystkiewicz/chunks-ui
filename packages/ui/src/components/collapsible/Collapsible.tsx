@@ -27,7 +27,8 @@ function CollapsibleTrigger({ className, ...props }: CollapsibleTriggerProps) {
         "flex w-full cursor-pointer items-center justify-between font-medium text-sm",
         "hover:text-foreground/80",
         "focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
-        "disabled:pointer-events-none disabled:opacity-50",
+        // Base UI keeps a disabled trigger focusable: aria-disabled, never the disabled attribute
+        "aria-disabled:pointer-events-none aria-disabled:opacity-50",
         className,
       )}
       {...props}
