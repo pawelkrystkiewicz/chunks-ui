@@ -13,6 +13,7 @@
     "lint": "biome check .",
     "check-types": "tsc --noEmit",
     "test": "vitest run --dir app",
+    "test:unit:coverage": "bun run test",
     "clean": "rm -rf .turbo node_modules .next"
   },
   "dependencies": {

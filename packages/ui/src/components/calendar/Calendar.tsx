@@ -170,14 +170,19 @@ export function Calendar({
   const selectedDate = isControlled ? (value ?? null) : internalValue;
 
   const initialViewDate = selectedDate ?? new Date();
-  const [viewYear, setViewYear] = useState(initialViewDate.getFullYear());
-  const [viewMonth, setViewMonth] = useState(initialViewDate.getMonth());
+  // Year and month live in one state so navigation updaters stay pure (StrictMode double-invokes them).
+  const [view, setView] = useState({
+    year: initialViewDate.getFullYear(),
+    month: initialViewDate.getMonth(),
+  });
+  const { year: viewYear, month: viewMonth } = view;
 
   // Sync visible month when controlled value changes to a different month
   useEffect(() => {
     if (isControlled && value) {
-      setViewYear(value.getFullYear());
-      setViewMonth(value.getMonth());
+      const year = value.getFullYear();
+      const month = value.getMonth();
+      setView((v) => (v.year === year && v.month === month ? v : { year, month }));
     }
   }, [isControlled, value]);
 
@@ -195,23 +200,15 @@ export function Calendar({
   const monthYearLabelId = useId();
 
   const prevMonth = useCallback(() => {
-    setViewMonth((m) => {
-      if (m === 0) {
-        setViewYear((y) => y - 1);
-        return 11;
-      }
-      return m - 1;
-    });
+    setView(({ year, month }) =>
+      month === 0 ? { year: year - 1, month: 11 } : { year, month: month - 1 },
+    );
   }, []);
 
   const nextMonth = useCallback(() => {
-    setViewMonth((m) => {
-      if (m === 11) {
-        setViewYear((y) => y + 1);
-        return 0;
-      }
-      return m + 1;
-    });
+    setView(({ year, month }) =>
+      month === 11 ? { year: year + 1, month: 0 } : { year, month: month + 1 },
+    );
   }, []);
 
   const weekRows = useMemo(
@@ -226,8 +223,7 @@ export function Calendar({
         setInternalValue(date);
       }
       if (date.getMonth() !== viewMonth || date.getFullYear() !== viewYear) {
-        setViewYear(date.getFullYear());
-        setViewMonth(date.getMonth());
+        setView({ year: date.getFullYear(), month: date.getMonth() });
       }
       onValueChange?.(date);
     },
@@ -250,8 +246,7 @@ export function Calendar({
     // Render the target's month synchronously so its button exists before it takes focus.
     flushSync(() => {
       setFocusedDate(target);
-      setViewYear(target.getFullYear());
-      setViewMonth(target.getMonth());
+      setView({ year: target.getFullYear(), month: target.getMonth() });
     });
     gridRef.current?.querySelector<HTMLButtonElement>('button[tabindex="0"]')?.focus();
   };
@@ -381,7 +376,9 @@ export function Calendar({
                           "micro-interactions focus-visible:outline-2 focus-visible:outline-ring",
                           !isSelected && !isToday && "hover:bg-accent hover:text-accent-foreground",
                           isSelected && "bg-primary text-primary-foreground",
-                          isToday && !isSelected && "font-medium text-primary ring-1 ring-primary",
+                          isToday &&
+                            !isSelected &&
+                            "font-medium text-primary-text ring-1 ring-primary",
                           !isCurrentMonth && !isSelected && "text-muted-foreground opacity-50",
                           disabled && "pointer-events-none opacity-40",
                         )}
