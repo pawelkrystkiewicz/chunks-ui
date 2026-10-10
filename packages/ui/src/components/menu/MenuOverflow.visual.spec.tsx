@@ -1,7 +1,8 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
-import { userEvent } from "vitest/browser";
-import { waitForStable } from "../../VisualTest.utils";
+import { afterEach, describe, expect, it } from "vitest";
+import { commands, userEvent } from "vitest/browser";
+import { reloadMotion } from "../../lib/use-motion";
+import { eachPaintedFrame, waitForStable } from "../../VisualTest.utils";
 import { Menu } from "./index";
 
 // More items than fit below the trigger in the test viewport. No screenshots are taken.
@@ -58,5 +59,44 @@ describe("Menu with many items", () => {
     expect(item.bottom).toBeLessThanOrEqual(box.bottom);
     expect(box.top).toBeGreaterThanOrEqual(0);
     expect(box.bottom).toBeLessThanOrEqual(window.innerHeight);
+  });
+});
+
+describe("Menu popup while it opens without Motion", () => {
+  afterEach(async () => {
+    await commands.emulateMedia({ reducedMotion: "reduce" });
+    await reloadMotion();
+  });
+
+  it("keeps its height from the first painted frame", async () => {
+    // CSS transition fallback: Motion never arrives, and reduced motion is off
+    void reloadMotion(new Promise(() => {}));
+    await commands.emulateMedia({ reducedMotion: "no-preference" });
+    await expect.poll(() => matchMedia("(prefers-reduced-motion: reduce)").matches).toBe(false);
+    render(<LongMenu />);
+
+    const heights = eachPaintedFrame(
+      // Layout height, so the opening scale doesn't count
+      () =>
+        (document.querySelector('[data-testid="popup"]') as HTMLElement | null)?.offsetHeight ??
+        null,
+      40,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Options" }));
+    const popup = document.querySelector('[data-testid="popup"]') as HTMLElement;
+    // Base UI rewrites --available-height as the space changes (viewport resize, scroll):
+    // the CSS fallback must not animate the max-height that follows it
+    const animated = getComputedStyle(popup)
+      .transitionProperty.split(",")
+      .map((p) => p.trim());
+    expect(animated).not.toContain("all");
+    expect(animated).not.toContain("max-height");
+
+    const painted = (await heights).filter((bottom) => bottom !== null);
+
+    expect(painted.length).toBeGreaterThan(0);
+    // Fits the viewport on every frame, and is not still resizing from another height
+    expect(Math.max(...painted)).toBeLessThanOrEqual(window.innerHeight);
+    expect(new Set(painted).size).toBe(1);
   });
 });
