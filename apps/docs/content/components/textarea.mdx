@@ -39,6 +39,8 @@ The textarea has a `min-h-20` minimum height by default.
 
 ## With Field
 
+`Textarea` is a field control, like `Input`. Inside `Field.Root`, `Field.Label` names it, `Field.Description` describes it, and `disabled` on the root disables it. When the field is invalid, the textarea gets `aria-invalid` and `data-invalid`, and the same red border as `Input`.
+
 ```tsx
 <Field.Root>
   <Field.Label>Bio</Field.Label>
@@ -71,4 +73,4 @@ export default Props
   })}
 />
 
-All other props are forwarded to the underlying `<textarea>` element.
+All other props are forwarded to the underlying `<textarea>` element. `className` can also be a function that gets the field state (`disabled`, `invalid`, and so on) and returns classes.
