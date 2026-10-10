@@ -2,6 +2,7 @@ import { DirectionProvider } from "@base-ui/react/direction-provider";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { commands, userEvent } from "vitest/browser";
 import {
+  expectDimmed,
   insetsWithin,
   renderFixture,
   SMALL_FEATURE_SCREENSHOT,
@@ -92,6 +93,21 @@ describe("Tabs", () => {
       expect(offset()).toBeLessThanOrEqual(1);
     },
   );
+
+  // Base UI keeps a disabled tab focusable, so it is aria-disabled and never :disabled
+  it("dims a disabled tab", async () => {
+    const { getByRole } = await renderFixture(
+      <Tabs.Root defaultValue="tab-1">
+        <Tabs.List>
+          <Tabs.Tab value="tab-1">Enabled</Tabs.Tab>
+          <Tabs.Tab value="tab-2" disabled>
+            Disabled
+          </Tabs.Tab>
+        </Tabs.List>
+      </Tabs.Root>,
+    );
+    expectDimmed(getByRole("tab", { name: "Disabled" }), getByRole("tab", { name: "Enabled" }));
+  });
 });
 
 const PATHS = [

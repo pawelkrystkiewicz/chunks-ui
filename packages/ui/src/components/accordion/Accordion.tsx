@@ -27,9 +27,7 @@ function AccordionRoot({ className, ...props }: AccordionRootProps) {
   );
 }
 
-function AccordionItem({ className, ...props }: AccordionItemProps) {
-  return <BaseAccordion.Item className={cnState("group/trigger", className)} {...props} />;
-}
+const AccordionItem = BaseAccordion.Item;
 
 function AccordionHeader({ className, ...props }: AccordionHeaderProps) {
   return <BaseAccordion.Header className={cnState("flex", className)} {...props} />;
@@ -39,10 +37,12 @@ function AccordionTrigger({ className, children, ...props }: AccordionTriggerPro
   return (
     <BaseAccordion.Trigger
       className={cnState(
-        "flex flex-1 cursor-pointer items-center justify-between py-4 text-left font-medium text-sm",
+        // The trigger, not the item, gets data-panel-open, so the chevron rotates off it
+        "group/trigger flex flex-1 cursor-pointer items-center justify-between py-4 text-left font-medium text-sm",
         "hover:text-foreground/80",
         "focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
-        "disabled:pointer-events-none disabled:opacity-50",
+        // Base UI keeps a disabled trigger focusable: aria-disabled, never the disabled attribute
+        "aria-disabled:pointer-events-none aria-disabled:opacity-50",
         className,
       )}
       {...props}

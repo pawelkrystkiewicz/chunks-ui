@@ -1,4 +1,4 @@
-import { Label } from 'chunks-ui'
+import { Checkbox, Label } from 'chunks-ui'
 import { Container } from '@/components'
 
 # Label
@@ -37,6 +37,35 @@ import { Label } from "chunks-ui";
   </div>
 </Container>
 
+## Next to a Disabled Control
+
+```tsx
+<div className="flex items-center gap-2">
+  <Label htmlFor="terms">Accept terms</Label>
+  <Checkbox.Root id="terms" disabled>
+    <Checkbox.Indicator />
+  </Checkbox.Root>
+</div>
+```
+
+<Container>
+  <div className="flex items-center gap-2">
+    <Label htmlFor="terms">Accept terms</Label>
+    <Checkbox.Root id="terms" disabled>
+      <Checkbox.Indicator />
+    </Checkbox.Root>
+  </div>
+</Container>
+
+The label dims when the element right after it, usually its control but any disabled element, is disabled.
+
+It doesn't dim when:
+
+- the control comes first (a native input with the `peer` class is the exception)
+- other elements sit in between, such as an `Input` with adornments. Wrap each pair, or dim the label yourself, for example with `className={cn(disabled && "opacity-50")}`.
+
+Inside a `Field.Root`, use `Field.Label`, which dims when the field is disabled.
+
 ## Props
 
 This component accepts all props from the native `<label>` element.
@@ -44,4 +73,5 @@ This component accepts all props from the native `<label>` element.
 ## Styling
 
 - `font-medium text-sm leading-none` — matches `Field.Label` typography
-- `peer-disabled:cursor-not-allowed peer-disabled:opacity-50` — dims when the associated input has the `peer` + `disabled` classes
+- `has-[+:disabled]:` and `has-[+[data-disabled]]:` set `opacity-50` and `cursor-not-allowed` when the control right after the label is disabled (see [Next to a Disabled Control](#next-to-a-disabled-control))
+- `peer-disabled:cursor-not-allowed peer-disabled:opacity-50` — dims after a disabled native input with the `peer` class

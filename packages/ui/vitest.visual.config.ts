@@ -9,6 +9,11 @@ const emulateMedia: BrowserCommand<[options: EmulatedMedia]> = async ({ page }, 
   await page.emulateMedia(options);
 };
 
+/** Moves the mouse outside the viewport, where it hovers nothing. */
+const parkPointer: BrowserCommand<[]> = async ({ page }) => {
+  await page.mouse.move(-1, -1);
+};
+
 export default defineConfig({
   plugins: [react()],
   css: {
@@ -24,7 +29,7 @@ export default defineConfig({
       enabled: true,
       headless: true,
       provider: playwright(),
-      commands: { emulateMedia },
+      commands: { emulateMedia, parkPointer },
       instances: [
         // Reduced motion: components skip Motion springs, so screenshots never catch one mid-way
         {
