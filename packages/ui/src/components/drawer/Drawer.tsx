@@ -48,7 +48,7 @@ const slideDirections = {
 const motionPositionClasses = {
   left: "inset-y-0 left-0 w-80 border-r",
   right: "inset-y-0 right-0 w-80 border-l",
-  bottom: "inset-x-0 bottom-0 h-auto border-t rounded-t-xl",
+  bottom: "inset-x-0 bottom-0 h-auto max-h-[80dvh] border-t rounded-t-xl",
 } as const;
 
 function DrawerPortal({ className, children, ...props }: DrawerPortalProps) {
@@ -113,7 +113,8 @@ function DrawerPopup({ side = "right", className, ...props }: DrawerPopupProps) 
     <BaseDialog.Popup
       render={render}
       className={cnState(
-        useSpring && "fixed border-border bg-background p-6 shadow-xl",
+        useSpring &&
+          "fixed overflow-y-auto overscroll-contain border-border bg-background p-6 shadow-xl",
         useSpring && motionPositionClasses[resolvedSide],
         !useSpring && drawerPopupVariants({ side }),
         className,

@@ -1,7 +1,9 @@
 import { cva } from "class-variance-authority";
 
 export const drawerPopupVariants = cva(
-  ["fixed border-border bg-background p-6 shadow-xl micro-interactions"],
+  [
+    "fixed overflow-y-auto overscroll-contain border-border bg-background p-6 shadow-xl micro-interactions",
+  ],
   {
     variants: {
       side: {
@@ -16,7 +18,7 @@ export const drawerPopupVariants = cva(
           "data-[ending-style]:translate-x-full",
         ],
         bottom: [
-          "inset-x-0 bottom-0 h-auto border-t rounded-t-xl",
+          "inset-x-0 bottom-0 h-auto max-h-[80dvh] border-t rounded-t-xl",
           "data-[starting-style]:translate-y-full",
           "data-[ending-style]:translate-y-full",
         ],
