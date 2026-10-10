@@ -9,12 +9,11 @@ export function Label({ className, ...props }: LabelProps) {
     <label
       className={cn(
         "font-medium text-sm leading-none",
-        // Dims next to a disabled control. Before the label, the control needs the `peer` class
-        // (Checkbox, Switch and Radio.Root have it): a native input is :disabled, a Base UI part
-        // gets data-disabled.
         "peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
-        "peer-data-disabled:cursor-not-allowed peer-data-disabled:opacity-50",
-        // After the label, the control must be its next sibling
+        // Dims when the control right after it (its next sibling) is disabled, whatever `htmlFor`
+        // points at: a native control is :disabled, a Base UI part gets data-disabled. No
+        // `peer-data-disabled:`, because Checkbox, Switch and Radio.Root carry `peer` and it would
+        // dim every later label in the same parent.
         "has-[+:disabled]:cursor-not-allowed has-[+:disabled]:opacity-50",
         "has-[+[data-disabled]]:cursor-not-allowed has-[+[data-disabled]]:opacity-50",
         className,

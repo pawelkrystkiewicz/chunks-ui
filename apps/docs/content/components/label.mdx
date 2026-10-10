@@ -39,30 +39,27 @@ import { Label } from "chunks-ui";
 
 ## Next to a Disabled Control
 
-The label dims (50% opacity, `not-allowed` cursor) next to a disabled control, in two layouts:
-
-- **Label first:** the control is the label's next sibling. This works for a native `<input>`, `<textarea>` or `<select>`, `Input` without adornments, `Textarea`, and Base UI parts that set `data-disabled`, such as `Checkbox.Root` and `Switch.Root`.
-- **Control first:** the control is an earlier sibling with the `peer` class. `Checkbox.Root`, `Switch.Root` and `Radio.Root` have it already. Add `className="peer"` to other controls.
+The label dims (50% opacity, `not-allowed` cursor) when the control right after it, its next sibling, is disabled. It reacts to that sibling, not to the control that `htmlFor` points at. This works for a native `<input>`, `<textarea>` or `<select>`, `Input` without adornments, `Textarea`, and Base UI parts that set `data-disabled`, such as `Checkbox.Root` and `Switch.Root`. Because only the next sibling counts, labels in a flat grid of label and control pairs each follow their own control.
 
 ```tsx
 <div className="flex items-center gap-2">
+  <Label htmlFor="terms">Accept terms</Label>
   <Checkbox.Root id="terms" disabled>
     <Checkbox.Indicator />
   </Checkbox.Root>
-  <Label htmlFor="terms">Accept terms</Label>
 </div>
 ```
 
 <Container>
   <div className="flex items-center gap-2">
+    <Label htmlFor="terms">Accept terms</Label>
     <Checkbox.Root id="terms" disabled>
       <Checkbox.Indicator />
     </Checkbox.Root>
-    <Label htmlFor="terms">Accept terms</Label>
   </div>
 </Container>
 
-The label doesn't dim in other layouts: when it wraps the control, when the two have different parents, or when something else sits between them in the label-first layout. An `Input` with adornments is one such case, because the label's next sibling is then the wrapper around the input. Inside a `Field.Root`, use `Field.Label`, which dims when the field is disabled.
+The label doesn't dim in other layouts: when the control comes first (a native input with the `peer` class is the one exception), when something else sits between the label and the control, when the label wraps the control, or when the two have different parents. An `Input` with adornments is one such case, because the label's next sibling is then the wrapper around the input. In these layouts, put each label and control pair in its own wrapper in the label-first order, or dim the label yourself, for example with `className={cn(disabled && "opacity-50")}`. Inside a `Field.Root`, use `Field.Label`, which dims when the field is disabled.
 
 ## Props
 
@@ -71,4 +68,5 @@ This component accepts all props from the native `<label>` element.
 ## Styling
 
 - `font-medium text-sm leading-none` — matches `Field.Label` typography
-- `opacity-50` and `cursor-not-allowed` next to a disabled control (see [Next to a Disabled Control](#next-to-a-disabled-control)), through `peer-disabled:` and `peer-data-disabled:` for a control before the label, and `has-[+:disabled]:` and `has-[+[data-disabled]]:` for a control right after it
+- `has-[+:disabled]:` and `has-[+[data-disabled]]:` set `opacity-50` and `cursor-not-allowed` when the control right after the label is disabled (see [Next to a Disabled Control](#next-to-a-disabled-control))
+- `peer-disabled:cursor-not-allowed peer-disabled:opacity-50` — dims after a disabled native input with the `peer` class
