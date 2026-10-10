@@ -11,6 +11,9 @@ beforeAll(() => {
     unobserve() {}
     disconnect() {}
   };
+  // jsdom has no layout, so every element measures 0×0, as in a group hidden with display:none,
+  // where the indicator unmounts. Give elements a box, as a browser shows them.
+  HTMLElement.prototype.getBoundingClientRect = () => new DOMRect(0, 0, 40, 24);
 });
 
 afterEach(cleanup);
