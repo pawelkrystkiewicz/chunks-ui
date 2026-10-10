@@ -20,6 +20,11 @@ function isHiddenPanel(wrapper: HTMLElement): boolean {
   return wrapper.style.display === "none" || wrapper.hasAttribute("inert");
 }
 
+function ValueProbe() {
+  const value = useTabsValue();
+  return <span data-testid="value">{String(value)}</span>;
+}
+
 describe("Tabs", () => {
   it("renders all sub-components", () => {
     render(
@@ -227,10 +232,6 @@ describe("Tabs", () => {
 // Base UI keeps the selected tab when onValueChange calls eventDetails.cancel(); every part
 // that follows the tab value (Contents, Animate, useTabsValue) must stay with it
 describe("cancelling a change in onValueChange", () => {
-  function ValueProbe() {
-    return <output data-testid="value">{String(useTabsValue())}</output>;
-  }
-
   function Harness({
     controlled = false,
     cancel = false,
@@ -317,11 +318,6 @@ describe("cancelling a change in onValueChange", () => {
 });
 
 describe("useTabsValue", () => {
-  function ValueProbe() {
-    const value = useTabsValue();
-    return <span data-testid="value">{String(value)}</span>;
-  }
-
   it("returns the active value from context", () => {
     render(
       <Tabs.Root value="a">
