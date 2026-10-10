@@ -35,19 +35,21 @@ import { Field } from "chunks-ui";
 
 ## Validation Error
 
-Set `invalid` on `Field.Root` to activate error styling. The `Field.Error` message appears and the input receives `data-[invalid]` for red border styling:
+Set `invalid` on `Field.Root` to activate error styling. The input receives `aria-invalid` and `data-[invalid]` for red border styling. `invalid` alone does not show `Field.Error`: it renders only for a failed validation (see Native Validation), a server error passed to `Form`, or `match={true}`. To show a message for the `invalid` prop, add `match`:
 
 ```tsx
 <Field.Root invalid>
   <Field.Label>Email</Field.Label>
   <Input type="email" placeholder="you@example.com" />
-  <Field.Error>Please enter a valid email address.</Field.Error>
+  <Field.Error match>Please enter a valid email address.</Field.Error>
 </Field.Root>
 ```
 
 <FieldErrorExample />
 
 ## With Textarea
+
+`Textarea` works in a field the same way as `Input`: the label names it, the description describes it, and the field's `disabled` and `invalid` state apply to it.
 
 ```tsx
 <Field.Root>
@@ -103,7 +105,7 @@ Labels dim to 50% opacity when the field is disabled:
 | `Field.Root` | Wrapper element. Vertical flex with `gap-1`. Manages `invalid` and `disabled` state. |
 | `Field.Label` | Form label. `text-sm font-medium`. Dims when disabled. |
 | `Field.Description` | Help text below the label. `text-xs text-muted-foreground`. |
-| `Field.Error` | Error message. `text-xs text-destructive-text`. Only visible when `invalid`. |
+| `Field.Error` | Error message. `text-xs text-destructive-text`. Renders on a failed validation, a server error, or with `match`. |
 | `Field.Control` | Connects a form control to the field (for native validation). Uses `render` prop. |
 | `Field.Validity` | Render prop for accessing native validity state. |
 

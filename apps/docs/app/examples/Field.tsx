@@ -32,7 +32,7 @@ export function FieldErrorExample() {
       <Field.Root invalid>
         <Field.Label>Email</Field.Label>
         <Input type="email" placeholder="you@example.com" />
-        <Field.Error>Please enter a valid email address.</Field.Error>
+        <Field.Error match>Please enter a valid email address.</Field.Error>
       </Field.Root>
     </Container>
   );

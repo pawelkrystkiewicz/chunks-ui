@@ -238,7 +238,7 @@ function ControlledCombobox() {
 | `Combobox.Icon` | Chevron icon, usable standalone outside the trigger. |
 | `Combobox.Portal` | Renders the popup in a portal. |
 | `Combobox.Positioner` | Handles Floating UI positioning. |
-| `Combobox.Popup` | The dropdown panel containing items. |
+| `Combobox.Popup` | The dropdown panel containing items. Scrolls when the items need more than the space between the input and the viewport edge. |
 | `Combobox.List` | List container. Takes a function child that renders each matching item (or each group, when `items` holds groups). |
 | `Combobox.Item` | An individual selectable option. |
 | `Combobox.ItemIndicator` | Checkmark shown for the selected item. |
@@ -251,6 +251,22 @@ function ControlledCombobox() {
 | `Combobox.ChipRemove` | Button to remove a chip. Renders a default X icon. |
 | `Combobox.Value` | Displays the selected value. |
 | `Combobox.Status` | Accessible status announcements for screen readers. |
+
+## Accessible Names
+
+`Combobox.Trigger`, `Combobox.Clear` and `Combobox.ChipRemove` show only an icon, so each one has a default `aria-label`: "Show options", "Clear selection" and "Remove". Pass `aria-label` to use a different name, for example one that says which chip the button removes:
+
+```tsx
+<Combobox.ChipRemove aria-label={`Remove ${item.label}`} />
+```
+
+If you pass `children` or a `render` element, the default name and the default icon are not applied. The content you pass names the button, so give icon-only content an `aria-label`:
+
+```tsx
+<Combobox.Trigger render={<button type="button">Choose</button>} />
+```
+
+Inside `Field.Root`, Base UI sets `aria-labelledby` on `Combobox.Trigger` to the field label. That label takes precedence over `aria-label`, so the default "Show options" name does not apply there.
 
 ## Props
 
