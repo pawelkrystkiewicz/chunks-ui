@@ -12,17 +12,16 @@ need=$(gh api "$R/branches/master/protection/required_status_checks" --jq '.cont
 [ "$need" -gt 0 ] || die "master has no required checks configured"
 
 # One run at a time: a lock dir in the git common dir (shared by worktrees) with the holder's pid; a dead holder's lock is taken over.
-# Released on every exit, die included. The INT trap also stops a run sent SIGINT alone, which bash otherwise ignores mid-sleep.
+# Released on every exit, die included.
 # ponytail: takeover is check-then-remove, so two waiters on one dead lock in the same millisecond can both get in.
-# ponytail: a holder killed between mkdir and its pid write, or a dead holder's pid reused, looks alive; rm -r the lock by hand.
+# ponytail: a holder killed between mkdir and its pid write (pid shows as ?), or a dead holder's pid reused, looks alive; rm -r the lock by hand.
 lock=$(git rev-parse --path-format=absolute --git-common-dir)/merge-pr.lock || die "cannot find the git dir"
 trap '[ "$(cat "$lock/pid" 2>/dev/null)" = "$$" ] && rm -rf "$lock"' EXIT
-trap 'exit 130' INT
-ahead=""
+ahead=-
 until mkdir "$lock" 2>/dev/null; do
   pid=$(cat "$lock/pid" 2>/dev/null)
   if [ -n "$pid" ] && ! kill -0 "$pid" 2>/dev/null; then echo "merge-pr.sh pid $pid is gone; taking over its lock"; rm -rf "$lock"; continue; fi
-  [ "$pid" = "$ahead" ] || { echo "waiting for merge-pr.sh pid $pid to finish"; ahead=$pid; }
+  [ "$pid" = "$ahead" ] || { echo "waiting for merge-pr.sh pid ${pid:-?} to finish (lock: $lock)"; ahead=$pid; }
   sleep 15
 done
 echo "$$" >"$lock/pid"
