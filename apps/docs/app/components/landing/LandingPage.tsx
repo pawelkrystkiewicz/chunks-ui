@@ -2,7 +2,8 @@
 // chunks-ui is a client bundle, so only its components render here; `cn` and `springs` can't run here.
 
 import { CopyButton } from "chunks-ui";
-import { ArrowRight, Box } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
 import {
@@ -138,9 +139,7 @@ function Href({ href, ...props }: ComponentProps<"a"> & { href: string }) {
 
 function Logo() {
   return (
-    <span className="flex size-7 flex-none items-center justify-center rounded-full bg-white text-black">
-      <Box className="size-[15px]" strokeWidth={2.25} />
-    </span>
+    <Image src="/logo-dark-mode.svg" alt="" width={28} height={28} className="size-7 flex-none" />
   );
 }
 
