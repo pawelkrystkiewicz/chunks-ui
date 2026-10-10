@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { commands } from "vitest/browser";
@@ -17,8 +18,10 @@ import { ThemeToggle } from "./components/theme-toggle";
  * same as any other utility does over a component's own styles. With reduced motion nothing
  * turns the transition back on, not even a `transition-*` utility.
  *
- * Components that set their own transition or animation outside the class turn it off with
- * reduced motion as well.
+ * The parts that set their own transition or animation outside the class turn it off with
+ * reduced motion as well: the Accordion panel and chevron, the Progress indicator (width and
+ * the indeterminate pulse) and the ScrollArea scrollbar. A consumer's `animate-*` class on the
+ * Progress indicator replaces the pulse.
  */
 
 type Transition = { property: string; duration: string; timingFunction: string };
@@ -87,10 +90,10 @@ const accordion = (
   </Accordion.Root>
 );
 
-const progress = (value: number | null) => (
+const progress = (value: number | null, className?: string) => (
   <Progress.Root value={value}>
     <Progress.Track>
-      <Progress.Indicator data-testid="target" />
+      <Progress.Indicator data-testid="target" className={className} />
     </Progress.Track>
   </Progress.Root>
 );
@@ -202,6 +205,15 @@ describe("component motion with no reduced-motion preference", () => {
     expect(getComputedStyle(renderTarget(progress(null))).animationName).toBe("pulse");
   });
 
+  // Full class names, so Tailwind generates them
+  it.each([
+    { className: "data-[indeterminate]:animate-bounce", animation: "bounce" },
+    { className: "data-[indeterminate]:animate-none", animation: "none" },
+  ])("lets $className replace the pulse on an indeterminate Progress.Indicator", (c) => {
+    const indicator = renderTarget(progress(null, c.className));
+    expect(getComputedStyle(indicator).animationName).toBe(c.animation);
+  });
+
   // `scale-75` sets the `scale` property, not `transform`
   it("scales and fades the ThemeToggle icon out", () => {
     const { rerender } = render(<ThemeToggle theme="light" />);
@@ -225,5 +237,28 @@ describe("component motion with reduced motion", () => {
 
   it("does not pulse an indeterminate Progress.Indicator", () => {
     expect(getComputedStyle(renderTarget(progress(null))).animationName).toBe("none");
+  });
+
+  it("still opens and closes an Accordion on click", async () => {
+    const user = userEvent.setup();
+    render(
+      <Accordion.Root>
+        <Accordion.Item value="a">
+          <Accordion.Header>
+            <Accordion.Trigger>Section</Accordion.Trigger>
+          </Accordion.Header>
+          <Accordion.Panel>Content</Accordion.Panel>
+        </Accordion.Item>
+      </Accordion.Root>,
+    );
+    const trigger = screen.getByRole("button", { name: "Section" });
+    const panel = () => screen.queryByText("Content");
+
+    await user.click(trigger);
+    await expect.poll(() => panel()?.getBoundingClientRect().height ?? 0).toBeGreaterThan(0);
+    expect(panel()).toBeVisible();
+
+    await user.click(trigger);
+    await expect.poll(() => panel()?.hidden ?? true).toBe(true);
   });
 });
