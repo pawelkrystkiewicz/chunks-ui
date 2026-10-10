@@ -138,10 +138,10 @@ function pages() {
   return routes.sort();
 }
 
-/** Whether anything answers HTTP on the port, whatever the status */
+/** Whether anything answers HTTP on the port within 2s, whatever the status */
 async function answers() {
   try {
-    await fetch(BASE_URL);
+    await fetch(BASE_URL, { signal: AbortSignal.timeout(2000) });
     return true;
   } catch {
     return false;
@@ -243,7 +243,18 @@ if (import.meta.main) {
     const queue = routes.flatMap((route) => THEMES.map((theme) => ({ route, theme })));
     const workers = Array.from({ length: PARALLEL }, async () => {
       for (let job = queue.shift(); job; job = queue.shift()) {
-        problems.push(...(await audit(launched, job.route, job.theme, matched)));
+        // One page failing to load or audit is a problem to report, not a reason to stop the run
+        try {
+          problems.push(...(await audit(launched, job.route, job.theme, matched)));
+        } catch (error) {
+          problems.push({
+            page: job.route,
+            theme: job.theme,
+            rule: "navigation",
+            help: "The page could not be loaded or audited",
+            targets: [String(error)],
+          });
+        }
       }
     });
     await Promise.all(workers);
