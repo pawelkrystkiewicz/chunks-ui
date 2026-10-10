@@ -1,10 +1,9 @@
 import { render } from "@testing-library/react";
-import { cancelFrame, frame } from "motion/react";
 import { createRef, type RefObject } from "react";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { commands, userEvent } from "vitest/browser";
 import { reloadMotion } from "../../lib/use-motion";
-import { insetsWithin, waitForStable } from "../../VisualTest.utils";
+import { eachPaintedFrame, insetsWithin, waitForStable } from "../../VisualTest.utils";
 import { ToggleGroup, type ToggleGroupRootProps } from "./index";
 
 // Runs with reduced motion off, so Motion drives the indicator; the CSS-path cases turn reduced
@@ -218,7 +217,7 @@ describe("ToggleGroup.Root with a consumer render, CSS path", () => {
   );
 });
 
-describe("ToggleGroup indicator with Motion after display:none", () => {
+describe("ToggleGroup indicator after display:none", () => {
   type Shown = { hidden: boolean; value: "a" | "b" };
 
   const group = ({ hidden, value }: Shown) => (
@@ -231,27 +230,14 @@ describe("ToggleGroup indicator with Motion after display:none", () => {
   );
 
   /**
-   * Calls `read` once a frame for `frames` frames, after Motion's render step: the values that
-   * frame paints, Motion's writes for it included
-   */
-  const eachPaintedFrame = <T,>(read: () => T, frames: number) =>
-    new Promise<T[]>((resolve) => {
-      const values: T[] = [];
-      const step = () => {
-        values.push(read());
-        if (values.length < frames) return;
-        cancelFrame(step);
-        resolve(values);
-      };
-      frame.postRender(step, true);
-    });
-
-  /**
    * Renders the group on Alpha and returns its elements. Read before it hides: Testing Library
-   * doesn't find hidden elements by role.
+   * doesn't find hidden elements by role. Motion loads unless `withMotion` is false: then it never
+   * arrives and the CSS fallback drives the indicator.
    */
-  async function renderShown() {
-    await reloadMotion();
+  async function renderShown(withMotion = true) {
+    // reloadMotion(never) doesn't settle, so it isn't awaited
+    if (withMotion) await reloadMotion();
+    else void reloadMotion(new Promise(() => {}));
     const { rerender, getByRole } = render(group({ hidden: false, value: "a" }));
     const root = getByRole("group");
     const items = {
@@ -307,6 +293,19 @@ describe("ToggleGroup indicator with Motion after display:none", () => {
       expect(Math.max(...offsets), JSON.stringify(offsets)).toBeLessThanOrEqual(1);
     },
   );
+
+  it("shows the indicator over the item on every frame after display:none without Motion", async () => {
+    const { indicator, offBy, rerender, settled } = await renderShown(false);
+    // The CSS fallback drives it: its transition class is on the span
+    expect(indicator()?.classList.contains("micro-interactions")).toBe(true);
+    rerender(group({ hidden: true, value: "a" }));
+    await settled();
+
+    rerender(group({ hidden: false, value: "a" }));
+    // No transition growing the pill from 0×0
+    const offsets = await visibleOffsets(() => offBy("a"));
+    expect(Math.max(...offsets), JSON.stringify(offsets)).toBeLessThanOrEqual(1);
+  });
 
   it("still slides the indicator to the next item after display:none", async () => {
     const { indicator, offBy, rerender } = await reshow("a");
