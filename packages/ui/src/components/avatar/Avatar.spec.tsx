@@ -1,19 +1,45 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { axe } from "jest-axe";
+import { renderToString } from "react-dom/server";
 import { afterEach, describe, expect, it } from "vitest";
 import { Avatar } from "./Avatar";
 
 afterEach(cleanup);
 
 describe("Avatar", () => {
-  it("renders an image when src is provided", () => {
+  // jsdom never loads images, so these cover the not-loaded state; the loaded image and a
+  // failed load are covered in Avatar.visual.spec.tsx
+  it("shows the initials while src loads", () => {
     render(<Avatar src="/photo.jpg" alt="John Doe" />);
-    expect(screen.getByRole("img", { name: "John Doe" })).toHaveAttribute("src", "/photo.jpg");
+    expect(screen.getByText("JD")).toBeInTheDocument();
+  });
+
+  it("puts the image in server HTML, named once by alt", () => {
+    const container = document.createElement("div");
+    container.innerHTML = renderToString(<Avatar src="/photo.jpg" alt="John Doe" />);
+    expect(container.querySelector("img")).toHaveAttribute("src", "/photo.jpg");
+    expect(within(container).getAllByRole("img", { name: "John Doe" })).toHaveLength(1);
   });
 
   it("renders initials from alt when no src", () => {
     render(<Avatar alt="John Doe" />);
     expect(screen.getByText("JD")).toBeInTheDocument();
+  });
+
+  it("is an image named by alt without src", () => {
+    render(<Avatar alt="John Doe" />);
+    expect(screen.getByRole("img", { name: "John Doe" })).toHaveTextContent("JD");
+  });
+
+  it("is named once by alt while src loads", () => {
+    render(<Avatar src="/photo.jpg" alt="John Doe" />);
+    expect(screen.getAllByRole("img", { name: "John Doe" })).toHaveLength(1);
+  });
+
+  it("keeps an avatar without alt out of the accessibility tree", () => {
+    render(<Avatar fallback="AB" />);
+    expect(screen.getByText("AB")).toBeInTheDocument();
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
   });
 
   it("uses fallback over alt-derived initials", () => {
@@ -49,13 +75,6 @@ describe("Avatar", () => {
     expect(screen.getByTestId("av")).toHaveClass("rounded-none");
   });
 
-  it("renders img with empty alt when alt is not provided", () => {
-    const { container } = render(<Avatar src="/photo.jpg" />);
-    const img = container.querySelector("img");
-    expect(img).toHaveAttribute("alt", "");
-    expect(img).toHaveAttribute("src", "/photo.jpg");
-  });
-
   it("merges custom className", () => {
     render(<Avatar alt="T" className="custom" data-testid="av" />);
     expect(screen.getByTestId("av")).toHaveClass("custom");
@@ -67,7 +86,13 @@ describe("Avatar", () => {
   });
 
   it("has no a11y violations", async () => {
-    const { container } = render(<Avatar src="https://example.com/avatar.jpg" alt="John Doe" />);
+    const { container } = render(
+      <>
+        <Avatar src="https://example.com/avatar.jpg" alt="John Doe" />
+        <Avatar alt="Jane Doe" />
+        <Avatar fallback="AB" />
+      </>,
+    );
     expect(await axe(container)).toHaveNoViolations();
   });
 });
