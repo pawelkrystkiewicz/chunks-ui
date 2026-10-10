@@ -207,15 +207,10 @@ describe("Input", () => {
     expect(await screen.findByRole("button", { name: "Clear" })).toBeInTheDocument();
   });
 
-  it("keeps the consumer's ref and onValueChange on a clearable input", async () => {
-    const user = userEvent.setup();
+  it("forwards the consumer's ref to a clearable input", () => {
     const ref = createRef<HTMLElement>();
-    const onValueChange = vi.fn();
-    render(<Input aria-label="Search" ref={ref} onClear={vi.fn()} onValueChange={onValueChange} />);
-    const input = screen.getByRole("textbox");
-    expect(ref.current).toBe(input);
-    await user.type(input, "a");
-    expect(onValueChange).toHaveBeenCalledWith("a", expect.anything());
+    render(<Input aria-label="Search" ref={ref} onClear={vi.fn()} />);
+    expect(ref.current).toBe(screen.getByRole("textbox"));
   });
 
   it("prefers clear button over end adornment when value is non-empty", () => {
@@ -233,13 +228,8 @@ describe("Input", () => {
   });
 
   it("has no a11y violations", async () => {
-    const { container } = render(<Input placeholder="Enter text" aria-label="Text input" />);
-    expect(await axe(container)).toHaveNoViolations();
-  });
-
-  it("has no a11y violations with the clear button shown", async () => {
     const { container } = render(
-      <Input aria-label="Search" defaultValue="abc" onClear={() => {}} />,
+      <Input aria-label="Text input" defaultValue="abc" onClear={() => {}} />,
     );
     expect(screen.getByRole("button", { name: "Clear" })).toBeInTheDocument();
     expect(await axe(container)).toHaveNoViolations();

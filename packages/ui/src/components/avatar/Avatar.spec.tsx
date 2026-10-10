@@ -86,14 +86,10 @@ describe("Avatar", () => {
   });
 
   it("has no a11y violations", async () => {
-    const { container } = render(<Avatar src="https://example.com/avatar.jpg" alt="John Doe" />);
-    expect(await axe(container)).toHaveNoViolations();
-  });
-
-  it("has no a11y violations without src", async () => {
     const { container } = render(
       <>
-        <Avatar alt="John Doe" />
+        <Avatar src="https://example.com/avatar.jpg" alt="John Doe" />
+        <Avatar alt="Jane Doe" />
         <Avatar fallback="AB" />
       </>,
     );

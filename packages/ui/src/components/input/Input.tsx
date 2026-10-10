@@ -104,8 +104,7 @@ export function Input({
       // onChange, Base UI's field state and the consumer's handlers all see the change
       Object.getOwnPropertyDescriptor(Object.getPrototypeOf(input), "value")?.set?.call(input, "");
       input.dispatchEvent(new Event("input", { bubbles: true }));
-      // The same value again through the element's own setter, a no-op in browsers, tells tools
-      // that wrap it (Testing Library's user-event) that the text changed
+      // A no-op in browsers; tells user-event, which wraps this setter, that the text changed
       input.value = "";
       // Don't rely on React seeing a change: if the value was already emptied without an event,
       // the writes above change nothing and no onChange fires
