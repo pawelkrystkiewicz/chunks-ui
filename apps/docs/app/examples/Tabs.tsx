@@ -53,6 +53,20 @@ export function TabsVerticalExample() {
   );
 }
 
+export function TabsUnderlineExample() {
+  return (
+    <Container>
+      <Tabs.Root defaultValue="tab-1">
+        <Tabs.List className="rounded-none border-border border-b bg-transparent p-0">
+          <Tabs.Tab value="tab-1">General</Tabs.Tab>
+          <Tabs.Tab value="tab-2">Advanced settings</Tabs.Tab>
+          <Tabs.Indicator className="rounded-none bg-transparent shadow-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-primary" />
+        </Tabs.List>
+      </Tabs.Root>
+    </Container>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Routed-tab pattern #1 — `<Tabs.Animate>` (component)
 //
