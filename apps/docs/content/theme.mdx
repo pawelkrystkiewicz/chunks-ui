@@ -114,7 +114,7 @@ Use in Tailwind: `font-sans`, `font-mono`.
 
 Use in Tailwind: `ease-fluid`, `ease-snappy`.
 
-Most components that animate with a CSS transition use the `micro-interactions` class from `theme.css`: 300ms, `cubic-bezier(0.4, 0, 0.2, 1)`. With reduced motion the class turns the transition off, and no `transition-*` utility turns it back on. A few parts have their own transitions, which the class and its reduced-motion rule do not cover: the Accordion panel and chevron, the Progress indicator, and the fade-in of the ScrollArea scrollbar track. The ScrollArea thumb uses the class.
+Most components that animate with a CSS transition use the `micro-interactions` class from `theme.css`: 300ms, `cubic-bezier(0.4, 0, 0.2, 1)`. With reduced motion the class turns the transition off, and no `transition-*` utility turns it back on. A few parts have their own transitions instead: the Accordion panel and chevron, the Progress indicator, and the fade-in of the ScrollArea scrollbar track. These turn their own transitions off with reduced motion, and an indeterminate Progress does not pulse. The ScrollArea thumb uses the class.
 
 The class sits in the `components` layer, so timing utilities in `className` override it on parts that keep their CSS transition, for example `<Button className="duration-150 ease-snappy">`. Parts that Motion drives, such as `Tabs.Indicator`, the `Switch` thumb and popups that open with a Motion spring, drop the class while Motion runs. Do not put timing utilities on them: a `duration-*` class on its own makes the browser transition `all` properties, on top of the values Motion writes.
 
