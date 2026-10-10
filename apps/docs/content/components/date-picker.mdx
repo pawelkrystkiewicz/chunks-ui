@@ -1,4 +1,4 @@
-import { DatePickerBasicExample, DatePickerControlledExample, DatePickerConstrainedExample, DatePickerDisabledExample, DatePickerWeekOptionsExample } from '@/examples/DatePicker'
+import { DatePickerBasicExample, DatePickerControlledExample, DatePickerConstrainedExample, DatePickerDisabledExample, DatePickerFieldExample, DatePickerFormExample, DatePickerWeekOptionsExample } from '@/examples/DatePicker'
 import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
 # DatePicker
@@ -68,6 +68,62 @@ const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, today.getD
 
 <DatePickerDisabledExample />
 
+## Labelling
+
+The trigger is a button. Without a label, its accessible name is its text: the placeholder or the selected date. Every `<button>` prop that `DatePicker` does not use itself goes to the trigger: `id`, `aria-label`, `aria-labelledby`, `aria-describedby`, `data-*`, event handlers and `ref`. Use one of these to label it.
+
+With `aria-label`:
+
+```tsx
+<DatePicker aria-label="Due date" />
+```
+
+With a `<label>`: give the picker an `id` and set `htmlFor` on the label to the same value.
+
+```tsx
+<label htmlFor="due">Due date</label>
+<DatePicker id="due" />
+```
+
+Inside `Field.Root`: `Field.Label` names the trigger and `Field.Description` describes it.
+
+```tsx
+<Field.Root>
+  <Field.Label>Due date</Field.Label>
+  <DatePicker />
+  <Field.Description>The task is overdue after this day.</Field.Description>
+</Field.Root>
+```
+
+<DatePickerFieldExample />
+
+A click on a `<label>` or a `Field.Label` clicks the trigger, so it opens the calendar.
+
+## Forms
+
+Give the picker a `name` to send the selected date with a `<form>`. A hidden input holds the date as `yyyy-mm-dd`, or an empty string when no date is selected. A disabled picker sends nothing.
+
+With `required`, the form does not submit until a date is selected, and focus moves to the trigger. A button has no required state for screen readers, so put it in the label, for example "Due date (required)".
+
+```tsx
+<form
+  onSubmit={(event) => {
+    event.preventDefault();
+    new FormData(event.currentTarget).get("due"); // "2026-10-10"
+  }}
+>
+  <Field.Root>
+    <Field.Label>Due date (required)</Field.Label>
+    <DatePicker name="due" required />
+  </Field.Root>
+  <Button type="submit">Save</Button>
+</form>
+```
+
+<DatePickerFormExample />
+
+Put `name` on the `DatePicker`. A `name` on `Field.Root` does not reach the hidden input.
+
 ## Keyboard
 
 | Key | Action |
@@ -84,8 +140,10 @@ When the calendar opens, focus goes to the selected day, or to today if no date 
   definition={generateDefinition({
     code: `
 import type { DatePickerProps } from 'chunks-ui'
-type Props = Pick<DatePickerProps, 'value' | 'defaultValue' | 'onValueChange' | 'placeholder' | 'disabled' | 'min' | 'max' | 'isDateDisabled' | 'weekStartsOn' | 'showOutsideDays'>
+type Props = Pick<DatePickerProps, 'value' | 'defaultValue' | 'onValueChange' | 'placeholder' | 'disabled' | 'min' | 'max' | 'isDateDisabled' | 'weekStartsOn' | 'showOutsideDays' | 'name' | 'required' | 'className'>
 export default Props
 `
   })}
 />
+
+`DatePicker` also takes every other `<button>` prop and passes it to the trigger.
