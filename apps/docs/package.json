@@ -12,7 +12,8 @@
     "start": "next start -p 3005",
     "lint": "biome check .",
     "check-types": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "vitest run app scripts",
+    "test:unit:coverage": "bun run test",
     "clean": "rm -rf .turbo node_modules .next"
   },
   "dependencies": {
