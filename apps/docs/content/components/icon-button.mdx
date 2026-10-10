@@ -1,7 +1,6 @@
 import { IconButton } from 'chunks-ui'
 import { PlusIcon, TrashIcon, CheckIcon, SearchIcon, SettingsIcon } from 'lucide-react'
 import { Container } from '@/components'
-import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
 # IconButton
 
@@ -89,14 +88,9 @@ Because the button has no visible text, you **must** provide an `aria-label` des
 
 ## Props
 
-<TSDoc
-  definition={generateDefinition({
-    code: `
-import type { IconButtonProps } from 'chunks-ui'
-type Props = Pick<IconButtonProps, 'variant' | 'color'>
-export default Props
-`
-  })}
-/>
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `variant` | `"contained" \| "outlined" \| "text"` | `"text"` | Visual style. |
+| `color` | `"primary" \| "secondary" \| "success" \| "warning" \| "destructive"` | `"secondary"` | Semantic color. |
 
 All other props are forwarded to the underlying Base UI [`Button`](https://base-ui.com/react/components/button#api-reference).

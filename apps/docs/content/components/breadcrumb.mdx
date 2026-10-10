@@ -69,10 +69,10 @@ Use the `render` prop on `Breadcrumb.Link` to render a framework-specific link (
 |---|---|
 | `Breadcrumb.Root` | `<nav>` wrapper with `aria-label="Breadcrumb"`. |
 | `Breadcrumb.List` | Ordered list (`<ol>`) containing items. |
-| `Breadcrumb.Item` | List item (`<li>`) wrapping a link, page, or separator. |
+| `Breadcrumb.Item` | List item (`<li>`) wrapping a link or page. |
 | `Breadcrumb.Link` | Clickable anchor. Accepts `render` prop for custom link components. |
 | `Breadcrumb.Page` | Current page indicator with `aria-current="page"`. |
-| `Breadcrumb.Separator` | Decorative separator. Defaults to a chevron icon. |
+| `Breadcrumb.Separator` | Decorative separator. Renders its own `<li>`, so place it between items, not inside one. Defaults to a chevron icon. |
 | `Breadcrumb.Ellipsis` | Collapsed state indicator (three dots). |
 
 ## Breadcrumb.Link Props
