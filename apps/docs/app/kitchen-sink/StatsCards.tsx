@@ -50,8 +50,8 @@ export function StatsCards() {
           {stats.map((s) => (
             <Tooltip.Root key={s.label}>
               <Tooltip.Trigger>
-                <Card.Root className="cursor-default">
-                  <Card.Content className="p-4">
+                <Card.Root className="cursor-default py-4">
+                  <Card.Content className="px-4">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-muted-foreground text-xs">{s.label}</p>
