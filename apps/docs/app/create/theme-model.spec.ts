@@ -122,6 +122,17 @@ describe("toScopeStyle", () => {
     expect(style["--preview-shadow"]).toBe("0 0 #0000");
   });
 
+  it("shades coloured text for the preview's mode, not the page's", () => {
+    // theme.css clamps the lightness of text-primary-text and co. on :root (light) and .dark.
+    // The scope must set its own, or a light preview on a dark page gets the light dark-mode shades.
+    const lightness = (mode: Mode) =>
+      (toScopeStyle({ ...DEFAULT_THEME, mode }) as Record<string, string>)[
+        "--colored-text-lightness"
+      ];
+    expect(lightness("light")).toBe("min(l, 0.51)");
+    expect(lightness("dark")).toBe("max(l, 0.63)");
+  });
+
   it("writes px tokens and scales text by base size", () => {
     const style = toScopeStyle({ ...DEFAULT_THEME, fontSize: 16, spacing: 1.1 }) as Record<
       string,

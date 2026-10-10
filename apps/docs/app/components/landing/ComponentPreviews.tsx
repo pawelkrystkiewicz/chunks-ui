@@ -162,13 +162,13 @@ export function FeedbackPreview() {
       </div>
       <div className="flex items-center justify-between gap-2">
         <span className="flex">
-          <span className={`${AVATAR} bg-primary/16 text-primary`}>AK</span>
+          <span className={`${AVATAR} bg-primary/10 text-primary-text`}>AK</span>
           <span className={`${AVATAR} -ml-[7px] bg-muted text-muted-foreground`}>BR</span>
           <span className={`${AVATAR} -ml-[7px] bg-muted text-muted-foreground`}>+3</span>
         </span>
         <span className="flex gap-1">
-          <span className={`${CHIP} border-primary/30 bg-primary/10 text-primary`}>New</span>
-          <span className={`${CHIP} border-success/30 bg-success/12 text-[oklch(55%_.14_166)]`}>
+          <span className={`${CHIP} border-primary/30 bg-primary/10 text-primary-text`}>New</span>
+          <span className={`${CHIP} border-success/30 bg-success/10 text-success-text`}>
             Active
           </span>
         </span>

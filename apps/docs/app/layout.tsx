@@ -15,7 +15,8 @@ const LOGO_SIZE = 30;
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" dir="ltr" suppressHydrationWarning>
-      <Head />
+      {/* The theme's --background, so the demos sit on the surface their colours are tuned for */}
+      <Head backgroundColor={{ light: "rgb(255,255,255)", dark: "rgb(10,10,10)" }} />
       <body>
         <link
           rel="stylesheet"

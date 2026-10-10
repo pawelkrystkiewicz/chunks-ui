@@ -15,7 +15,7 @@ import { Progress } from "chunks-ui";
 Pass `value` and `max` to show a determinate progress bar:
 
 ```tsx
-<Progress.Root value={65} max={100}>
+<Progress.Root value={65} max={100} aria-label="Upload progress">
   <Progress.Track>
     <Progress.Indicator />
   </Progress.Track>
@@ -29,7 +29,7 @@ Pass `value` and `max` to show a determinate progress bar:
 Pass `value={null}` to activate the indeterminate pulse animation:
 
 ```tsx
-<Progress.Root value={null}>
+<Progress.Root value={null} aria-label="Loading">
   <Progress.Track>
     <Progress.Indicator />
   </Progress.Track>

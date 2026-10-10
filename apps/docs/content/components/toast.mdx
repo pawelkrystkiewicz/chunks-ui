@@ -22,7 +22,7 @@ import { Toast } from "chunks-ui"
 Wrap your app (or the relevant subtree) with `Toast.Provider` and place `Toast.Viewport` where the toasts should render:
 
 ```tsx
-export default function RootLayout({ children }) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <Toast.Provider>
       {children}
@@ -178,6 +178,8 @@ const id = add({
 `toast.promise(promise, { loading, success, error })` wires a single toast through the lifecycle of an async operation. It starts with the `loading` options, then swaps to `success` or `error` once the promise settles. `success` and `error` can be static options or functions that receive the resolved value / rejection reason:
 
 ```tsx
+import { CheckCircle2, XCircle } from 'lucide-react'
+
 const { promise } = Toast.useToast()
 
 promise(uploadFile(), {
@@ -215,8 +217,11 @@ By default `Toast.Viewport` renders toasts as a flex column. For the "stacked de
   <TriggerButton />
   <Toast.Viewport className="toast-stack-viewport" />
 </Toast.Provider>
+```
 
-// …trigger:
+Then give each toast the `toast-stack` class when you add it:
+
+```tsx
 add({
   title: "Notification",
   description: "Hover the stack to expand.",

@@ -31,9 +31,15 @@ import { AlignLeftIcon, AlignCenterIcon, AlignRightIcon } from 'lucide-react'
 Base UI allows deselecting the active item by clicking it again. To enforce that one item is always selected, reject empty values:
 
 ```tsx
-onValueChange={(newValue) => {
-  if (newValue.length > 0) setValue(newValue);
-}}
+<ToggleGroup.Root
+  aria-label="Text alignment"
+  value={value}
+  onValueChange={(newValue) => {
+    if (newValue.length > 0) setValue(newValue);
+  }}
+>
+  {/* items */}
+</ToggleGroup.Root>
 ```
 
 <ToggleGroupRequiredExample />

@@ -15,9 +15,9 @@ const priorityColors: Record<TaskPriority, string> = {
 
 const statusColors: Record<TaskStatus, string> = {
   backlog: "bg-muted text-muted-foreground",
-  "in-progress": "bg-warning/15 text-warning-text",
-  "in-review": "bg-primary/15 text-primary-text",
-  done: "bg-success/15 text-success-text",
+  "in-progress": "bg-warning/10 text-warning-text",
+  "in-review": "bg-primary/10 text-primary-text",
+  done: "bg-success/10 text-success-text",
 };
 
 const statusLabels: Record<TaskStatus, string> = {

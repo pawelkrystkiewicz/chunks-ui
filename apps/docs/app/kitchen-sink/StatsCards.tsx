@@ -79,7 +79,7 @@ export function StatsCards() {
 
       <div className="flex items-center gap-3">
         <div className="min-w-0 flex-1">
-          <Progress.Root value={progressPercent} max={100}>
+          <Progress.Root value={progressPercent} max={100} aria-label="Sprint progress">
             <Progress.Track>
               <Progress.Indicator />
             </Progress.Track>

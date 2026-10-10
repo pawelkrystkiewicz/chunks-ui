@@ -149,7 +149,7 @@ function SplitCta({ href, children }: { href: string; children: ReactNode }) {
       href={href}
       className="group/cta inline-flex overflow-hidden rounded-lg font-semibold text-[14px] text-white transition-transform duration-200 active:scale-[.97]"
     >
-      <span className="bg-(--l-brand-soft) px-[18px] py-3 transition-colors duration-250 group-hover/cta:bg-[oklch(74%_.14_257)]">
+      <span className="bg-(--l-brand-soft) px-[18px] py-3 text-(--l-cta-fg) transition-colors duration-250 group-hover/cta:bg-[oklch(74%_.14_257)]">
         {children}
       </span>
       <span className="flex items-center bg-(--l-brand) px-4 py-3">
@@ -352,7 +352,7 @@ function Hero() {
 }
 
 const Kw = ({ children }: { children: ReactNode }) => (
-  <span className="text-primary">{children}</span>
+  <span className="text-primary-text">{children}</span>
 );
 
 const STEPS = [
@@ -534,7 +534,7 @@ function Principles() {
 }
 
 const STATEMENT = "flex min-w-0 flex-col border-(--l-line) border-r border-b px-7 py-8";
-const STATEMENT_LABEL = "font-mono text-primary text-[12px]";
+const STATEMENT_LABEL = "font-mono text-[12px] text-primary-text";
 const STATEMENT_TEXT = "text-pretty text-(--l-fg) text-[20px] leading-normal tracking-[-.01em]";
 
 function MotionSection() {
@@ -714,7 +714,10 @@ function Footer() {
           <span>© 2026 Chunk Creations · MIT license</span>
           <span>
             Built with{" "}
-            <Link href={DOCS} className="text-white/70 hover:text-white">
+            <Link
+              href={DOCS}
+              className="text-white/70 underline underline-offset-2 hover:text-white"
+            >
               chunks-ui
             </Link>
           </span>
