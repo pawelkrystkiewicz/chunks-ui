@@ -3,7 +3,7 @@ import type { ComponentProps } from "react";
 import { cnState } from "../../lib/cn";
 
 export type TextareaProps = Omit<ComponentProps<"textarea">, "className"> & {
-  /** Classes for the textarea, or a function of its field state (`disabled`, `invalid`, …). */
+  /** Classes for the textarea, or a function of its field state (`disabled`, `valid`, …). */
   className?: BaseField.Control.Props["className"];
   /** Enable auto-resize via CSS `field-sizing: content`.
    * @default false
@@ -14,6 +14,7 @@ export type TextareaProps = Omit<ComponentProps<"textarea">, "className"> & {
 /**
  * A multi-line text input. It is a Base UI field control, so inside `Field.Root` the label and
  * description name and describe it, and the field's disabled and invalid state apply to it.
+ * `value` must be controlled from the first render (use `value={bio ?? ""}`), as with `Input`.
  */
 export function Textarea({ autoResize, className, ...props }: TextareaProps) {
   return (

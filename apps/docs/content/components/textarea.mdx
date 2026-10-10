@@ -35,7 +35,7 @@ When `autoResize` is `true`, the textarea grows vertically to fit its content us
   <Textarea autoResize placeholder="Start typing..." />
 </Container>
 
-The textarea has a `min-h-20` minimum height by default.
+The textarea has a minimum height of `min-h-ui-height` by default.
 
 ## With Field
 
@@ -50,6 +50,14 @@ The textarea has a `min-h-20` minimum height by default.
 ```
 
 <TextareaWithFieldExample />
+
+## Controlled Value
+
+`Textarea` passes `value` and `defaultValue` through Base UI, like `Input`. A controlled `value` must be controlled from the first render, so never start with `undefined`. Use `value={bio ?? ""}`. Switching between controlled and uncontrolled after mount leaves the textarea empty and logs a warning in development, and changing `defaultValue` after mount logs an error.
+
+```tsx
+<Textarea value={bio ?? ""} onChange={(event) => setBio(event.target.value)} />
+```
 
 ## Disabled
 
@@ -73,4 +81,4 @@ export default Props
   })}
 />
 
-All other props are forwarded to the underlying `<textarea>` element. `className` can also be a function that gets the field state (`disabled`, `invalid`, and so on) and returns classes.
+All other props are forwarded to the underlying `<textarea>` element. `className` can also be a function that gets the field state (`disabled`, `valid`, `touched`, `dirty`, `filled`, `focused`) and returns classes. `valid` is `false` when the field is invalid and `null` before validation.
