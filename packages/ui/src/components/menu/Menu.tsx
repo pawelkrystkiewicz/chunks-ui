@@ -5,6 +5,7 @@ import type { ComponentProps } from "react";
 import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
+import { arrowClasses, arrowPopupClasses } from "../../lib/popup-arrow";
 import { usePortalContainer } from "../../lib/portal-container";
 import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
 
@@ -56,6 +57,7 @@ function MenuContent(props: MenuContentProps) {
 
 function MenuContentPopup({
   className,
+  children,
   sideOffset = 4,
   side,
   align,
@@ -85,8 +87,9 @@ function MenuContentPopup({
       <BaseMenu.Popup
         render={render}
         className={cnState(
-          "min-w-[8rem] rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md",
-          "max-h-[var(--available-height)] overflow-y-auto overscroll-contain scroll-py-1",
+          "flex min-w-[8rem] flex-col rounded-md border border-border bg-popover text-popover-foreground shadow-md",
+          arrowPopupClasses,
+          "max-h-[calc(var(--available-height)-var(--popup-arrow-reach))]",
           !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
           !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
           // Only the fade and scale: `all` would also animate the max-height that --available-height drives
@@ -94,7 +97,12 @@ function MenuContentPopup({
           className,
         )}
         {...props}
-      />
+      >
+        {/* The items scroll in here, so the popup clips nothing: Menu.Arrow sits outside its box */}
+        <div className="min-h-0 overflow-y-auto overscroll-contain scroll-py-1 rounded-[inherit] p-1">
+          {children}
+        </div>
+      </BaseMenu.Popup>
     </BaseMenu.Positioner>
   );
 }
@@ -182,7 +190,7 @@ function MenuGroupLabel({ className, ...props }: MenuGroupLabelProps) {
 }
 
 function MenuArrow({ className, ...props }: MenuArrowProps) {
-  return <BaseMenu.Arrow className={cnState("fill-popover stroke-border", className)} {...props} />;
+  return <BaseMenu.Arrow className={cnState(arrowClasses, className)} {...props} />;
 }
 
 export const Menu = {

@@ -1,5 +1,6 @@
 import { describe, it } from "vitest";
-import { renderFixture, renderPage } from "../../VisualTest.utils";
+import { commands, page, userEvent } from "vitest/browser";
+import { renderFixture, renderPage, SMALL_FEATURE_SCREENSHOT } from "../../VisualTest.utils";
 import { Button } from "../button";
 import { Popover } from "./index";
 
@@ -18,6 +19,26 @@ describe("Popover", () => {
       </div>,
     );
     await expect(body).toMatchScreenshot();
+  });
+
+  // One side: PopupArrow.visual.spec.tsx checks the arrow's geometry on every side
+  it("arrow, side bottom", async () => {
+    const body = await renderPage(
+      <div style={{ padding: 120, display: "flex", justifyContent: "center" }}>
+        <Popover.Root>
+          <Popover.Trigger render={<Button variant="outlined" />}>Trigger</Popover.Trigger>
+          <Popover.Content side="bottom">
+            <Popover.Arrow />
+            <Popover.Title>Title</Popover.Title>
+          </Popover.Content>
+        </Popover.Root>
+      </div>,
+    );
+    // Opened with the mouse, so the focused popup shows no focus ring for the arrow's base to cover
+    await userEvent.click(page.getByRole("button", { name: "Trigger" }));
+    await commands.parkPointer();
+    // The arrow's border is faint against the page, so compare colours closely
+    await expect(body).toMatchScreenshot(SMALL_FEATURE_SCREENSHOT);
   });
 
   it("trigger", async () => {
