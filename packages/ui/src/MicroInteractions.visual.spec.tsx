@@ -89,10 +89,10 @@ const accordion = (
   </Accordion.Root>
 );
 
-const progress = (value: number | null, className?: string) => (
-  <Progress.Root value={value}>
+const progress = (
+  <Progress.Root value={40}>
     <Progress.Track>
-      <Progress.Indicator data-testid="target" className={className} />
+      <Progress.Indicator data-testid="target" />
     </Progress.Track>
   </Progress.Root>
 );
@@ -105,7 +105,7 @@ const OWN_TRANSITIONS = [
     property: "rotate",
     renderPart: () => render(accordion).getByRole("button").querySelector("svg") as Element,
   },
-  { part: "Progress.Indicator", property: "width", renderPart: () => renderTarget(progress(40)) },
+  { part: "Progress.Indicator", property: "width", renderPart: () => renderTarget(progress) },
   {
     part: "ScrollArea.Scrollbar",
     property: "opacity",

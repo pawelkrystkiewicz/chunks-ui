@@ -29,9 +29,9 @@ describe("Progress", () => {
   });
 });
 
-const renderIndicator = (value: number | null, className?: string) =>
+const renderIndeterminate = (className?: string) =>
   render(
-    <Progress.Root value={value}>
+    <Progress.Root value={null}>
       <Progress.Track>
         <Progress.Indicator data-testid="indicator" className={className} />
       </Progress.Track>
@@ -48,10 +48,9 @@ const emulateReducedMotion = async (reducedMotion: "reduce" | "no-preference") =
 /*
  * The indeterminate pulse is an essential status indicator, like the Loader spinner, so it
  * keeps running with reduced motion. A `data-[indeterminate]:animate-*` class on the indicator
- * replaces it; an `animate-*` class without that prefix does not. The determinate width
- * transition is decoration and stops with reduced motion.
+ * replaces it; an `animate-*` class without that prefix does not.
  */
-describe("Progress.Indicator motion", () => {
+describe("Progress.Indicator indeterminate animation", () => {
   afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
 
   // Full class names, so Tailwind generates them
@@ -90,15 +89,10 @@ describe("Progress.Indicator motion", () => {
       animation: "none",
     },
   ] as const)(
-    "animates as $animation when indeterminate, with $reducedMotion and $className",
+    "animates as $animation with $reducedMotion and $className",
     async ({ reducedMotion, className, animation }) => {
       await emulateReducedMotion(reducedMotion);
-      expect(getComputedStyle(renderIndicator(null, className)).animationName).toBe(animation);
+      expect(getComputedStyle(renderIndeterminate(className)).animationName).toBe(animation);
     },
   );
-
-  it("does not transition the determinate width with reduced motion", async () => {
-    await emulateReducedMotion("reduce");
-    expect(getComputedStyle(renderIndicator(40)).transitionProperty).toBe("none");
-  });
 });
