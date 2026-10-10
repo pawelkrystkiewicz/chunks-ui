@@ -180,7 +180,9 @@ export function Calendar({
   // Sync visible month when controlled value changes to a different month
   useEffect(() => {
     if (isControlled && value) {
-      setView({ year: value.getFullYear(), month: value.getMonth() });
+      const year = value.getFullYear();
+      const month = value.getMonth();
+      setView((v) => (v.year === year && v.month === month ? v : { year, month }));
     }
   }, [isControlled, value]);
 
