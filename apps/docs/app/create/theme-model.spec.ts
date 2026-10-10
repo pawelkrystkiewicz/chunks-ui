@@ -7,15 +7,23 @@ import {
   DEFAULT_THEME,
   loadTheme,
   type Mode,
+  type Oklch,
   PRESETS,
   PRIMARIES,
   palette,
-  parseOklch,
   previewColumnWidth,
   sameTheme,
   type Theme,
   toScopeStyle,
 } from "./theme-model";
+
+/** Reads an `oklch(l c h)` string as written by `palette()`. */
+function parseOklch(value: string): Oklch {
+  const parts = /^oklch\(([\d.]+)(%?) ([\d.]+) ([\d.]+)\)$/.exec(value);
+  if (!parts) throw new Error(`Not an oklch() colour: ${value}`);
+  const [, l = "", percent, c = "", h = ""] = parts;
+  return { l: Number(l) / (percent ? 100 : 1), c: Number(c), h: Number(h) };
+}
 
 const ink: Theme = { ...DEFAULT_THEME, primary: { l: 0.205, c: 0, h: 0 } };
 const amber: Theme = { ...DEFAULT_THEME, primary: { l: 0.77, c: 0.165, h: 72 } };

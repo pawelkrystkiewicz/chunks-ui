@@ -232,26 +232,12 @@ export function contrast(x: Oklch, y: Oklch): number {
   return (hi + 0.05) / (lo + 0.05);
 }
 
-/** Reads an `oklch(l c h)` string as written by this module and `theme.css`. */
-export function parseOklch(value: string): Oklch {
-  const parts = /^oklch\(([\d.]+)(%?) ([\d.]+) ([\d.]+)\)$/.exec(value);
-  if (!parts) throw new Error(`Not an oklch() colour: ${value}`);
-  const [, l = "", percent, c = "", h = ""] = parts;
-  return { l: Number(l) / (percent ? 100 : 1), c: Number(c), h: Number(h) };
-}
-
 /** Matches the semantic fills in `chunks-ui/theme.css`. */
 const FILLS = {
-  success: "oklch(75.14% 0.1514 166.5)",
-  warning: "oklch(77.97% 0.1665 72.45)",
-  destructive: "oklch(0.582 0.2249 25.88)",
-};
-
-const FILL_COLORS = {
-  success: parseOklch(FILLS.success),
-  warning: parseOklch(FILLS.warning),
-  destructive: parseOklch(FILLS.destructive),
-};
+  success: { l: 0.7514, c: 0.1514, h: 166.5 },
+  warning: { l: 0.7797, c: 0.1665, h: 72.45 },
+  destructive: { l: 0.582, c: 0.2249, h: 25.88 },
+} satisfies Record<string, Oklch>;
 
 export function palette(t: Theme, mode: Mode): Record<string, string> {
   const b = baseOf(t.base);
@@ -268,12 +254,12 @@ export function palette(t: Theme, mode: Mode): Record<string, string> {
   const out: Record<string, string> = {
     primary,
     "primary-foreground": ink ? (d ? n(0.205) : n(0.985)) : textOn(p),
-    success: FILLS.success,
-    "success-foreground": textOn(FILL_COLORS.success),
-    warning: FILLS.warning,
-    "warning-foreground": textOn(FILL_COLORS.warning),
-    destructive: FILLS.destructive,
-    "destructive-foreground": textOn(FILL_COLORS.destructive),
+    success: ok(FILLS.success.l, FILLS.success.c, FILLS.success.h),
+    "success-foreground": textOn(FILLS.success),
+    warning: ok(FILLS.warning.l, FILLS.warning.c, FILLS.warning.h),
+    "warning-foreground": textOn(FILLS.warning),
+    destructive: ok(FILLS.destructive.l, FILLS.destructive.c, FILLS.destructive.h),
+    "destructive-foreground": textOn(FILLS.destructive),
     background: d ? n(0.145) : "oklch(1 0 0)",
     foreground: d ? n(0.985) : n(0.145),
     card: d ? n(0.145) : "oklch(1 0 0)",
