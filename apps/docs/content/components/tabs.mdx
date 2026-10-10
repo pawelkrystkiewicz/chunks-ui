@@ -96,6 +96,22 @@ The `Tabs.Indicator` component renders a pill behind the active tab. With Motion
 
 Without Motion, or with reduced motion, it takes its position and size from the CSS variables Base UI sets on it (`--active-tab-left`, `--active-tab-top`, `--active-tab-width`, `--active-tab-height`). It slides with a CSS transition, which reduced motion turns off.
 
+### Server rendering
+
+The pill is in the server-rendered page before React hydrates. `Tabs.Indicator` sets Base UI's `renderBeforeHydration` by default: Base UI renders a small inline `<script>` after the indicator that measures the active tab and shows the pill over it. Set `renderBeforeHydration={false}` to leave the script out. The pill then shows once React has hydrated.
+
+A Content Security Policy without `'unsafe-inline'` in `script-src` blocks that script. Pass your per-request nonce to Base UI's `CSPProvider`, so the script carries it:
+
+```tsx
+import { CSPProvider } from "@base-ui/react/csp-provider";
+
+<CSPProvider nonce={nonce}>
+  <App />
+</CSPProvider>
+```
+
+Or opt out with `renderBeforeHydration={false}`.
+
 ### Restyling the indicator
 
 The indicator box always covers the active tab. While Motion drives it, Motion writes `left`, `top`, `width` and `height` as inline styles, and they win over classes. Position and size classes on `Tabs.Indicator`, such as `top-auto bottom-0 h-0.5`, therefore have no effect with Motion. The CSS fallback applies them, so the indicator would look different with and without Motion.
@@ -239,7 +255,7 @@ function DirectionAwarePanel({ order, children }) {
 | `Tabs.List` | Horizontal (or vertical) container for tab triggers. Renders a rounded, muted background behind the tabs. |
 | `Tabs.Tab` | Individual tab trigger button. Shows muted text by default, foreground text when active. |
 | `Tabs.Panel` | Content panel associated with a tab value. Mounted only while its tab is active, unless `keepMounted` is set. No animation. |
-| `Tabs.Indicator` | Pill behind the active tab. Slides to a tab when it becomes active. |
+| `Tabs.Indicator` | Pill behind the active tab. Slides to a tab when it becomes active. Shows before hydration on a server-rendered page. |
 | `Tabs.Contents` | Container that keeps every `Tabs.Content` mounted. With Motion it slides between them and animates the height. Without Motion, or with reduced motion, it shows only the active one, with no animation. |
 | `Tabs.Content` | Individual content panel for use inside `Tabs.Contents`. Requires a `value` matching a `Tabs.Tab`. |
 | `Tabs.Animate` | Wrapper for routed tabs or for several `Tabs.Panel`s. Re-keys its children on tab change (so they remount) and accepts `initial` / `animate` / `transition`. |
@@ -252,7 +268,7 @@ function DirectionAwarePanel({ order, children }) {
 
 ## Props
 
-`Tabs.Root`, `Tabs.List`, `Tabs.Tab`, `Tabs.Panel`, and `Tabs.Indicator` are thin style wrappers. Props are forwarded to the underlying Base UI [`Tabs`](https://base-ui.com/react/components/tabs#api-reference).
+`Tabs.Root`, `Tabs.List`, `Tabs.Tab`, `Tabs.Panel`, and `Tabs.Indicator` are thin style wrappers. Props are forwarded to the underlying Base UI [`Tabs`](https://base-ui.com/react/components/tabs#api-reference). One default differs: `Tabs.Indicator` has `renderBeforeHydration` on (see [Server rendering](#server-rendering)).
 
 ### Tabs.Contents Props
 

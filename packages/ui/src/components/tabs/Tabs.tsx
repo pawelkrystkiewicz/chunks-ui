@@ -156,10 +156,18 @@ function TabsPanel({ className, ...props }: TabsPanelProps) {
   );
 }
 
-function TabsIndicator({ className, render, ...props }: TabsIndicatorProps) {
+function TabsIndicator({
+  className,
+  render,
+  // Base UI's script places the indicator over the active tab in server HTML, so a
+  // server-rendered page shows it before React hydrates
+  renderBeforeHydration = true,
+  ...props
+}: TabsIndicatorProps) {
   return (
     <BaseTabs.Indicator
       {...props}
+      renderBeforeHydration={renderBeforeHydration}
       render={(renderProps, state) => (
         <TabsIndicatorElement
           {...renderProps}
