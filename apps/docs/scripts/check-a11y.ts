@@ -1,7 +1,8 @@
 /// <reference types="@types/bun" />
 /**
  * Runs axe (WCAG 2.2 A and AA rules) over every docs page of the production build, in light and
- * dark mode, and fails on any violation that ALLOWED does not list.
+ * dark mode. Fails on any violation that ALLOWED does not list, and on any ALLOWED entry that
+ * matched nothing.
  *
  * Build first (`bun run build --filter=@chunks-ui/docs`); the script starts `next start` itself.
  * Needs Playwright's Chromium (`bunx playwright install chromium`, or the Playwright image in CI).
@@ -19,13 +20,24 @@ const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22a", "wcag22aa"]
 const THEMES = ["light", "dark"] as const;
 const PARALLEL = 4;
 
+export type Theme = (typeof THEMES)[number];
+
 /**
- * The only violations the check accepts. An entry allows one axe rule on the elements matching
- * its selector (or inside them), on every page and in both themes. Keep each one specific, and
- * say why it can't be fixed in this repo's docs content.
+ * An accepted violation: one axe rule on the elements matching `selector` (or inside them), on
+ * `pages` and in `themes` (every page and theme when left out). Keep entries specific, scope them
+ * to where they occur, and link the issue that removes them. An entry that matches nothing in a
+ * run fails the check, so fixed ones can't linger.
  */
-const ALLOWED: { rule: string; selector: string; why: string }[] = [
-  // Nextra's page chrome and default styling (W27)
+export type Allowed = {
+  rule: string;
+  selector: string;
+  why: string;
+  pages?: string[];
+  themes?: Theme[];
+};
+
+const ALLOWED: Allowed[] = [
+  // Upstream Nextra chrome and default styling, which the docs render but don't write
   {
     rule: "button-name",
     selector: 'button[id^="headlessui-listbox-button"]',
@@ -46,24 +58,48 @@ const ALLOWED: { rule: string; selector: string; why: string }[] = [
     selector: "a > code.nextra-code",
     why: "Nextra colours inline code in a link with its link colour on its code background, 4.45:1",
   },
-  // Pending maintainer decision (TODO W43/W44): remove once decided
+  // Pending maintainer decision: remove once the linked issue is decided
   {
     rule: "color-contrast",
     selector: "a.group\\/cta > span:first-child",
-    why: 'Landing CTA label ("Read the docs", "Open Create"): white on --l-brand-soft, 2.68:1',
+    why: '#253: landing CTA label ("Read the docs", "Open Create"), white on --l-brand-soft, 2.68:1',
+    pages: ["/"],
   },
   {
     rule: "color-contrast",
     selector: ".bg-success\\/10.text-success-text",
-    why: "success-text on a /10 tint over Nextra's #fafafa (Chip example, kitchen-sink badge), 4.47:1",
+    why: "#254: success-text on a /10 tint over Nextra's #fafafa (Chip, kitchen-sink badge), 4.47:1",
+    pages: ["/components/chip", "/kitchen-sink"],
+    themes: ["light"],
   },
   // chunks-ui defects, outside the docs: fix them in packages/ui, then delete the entry
   {
     rule: "color-contrast",
     selector: '[role="grid"] button.opacity-50',
-    why: "Calendar outside-month days, text-muted-foreground at opacity-50: 2:1 light, 2.69:1 dark",
+    why: "#252: Calendar outside-month days, muted text at opacity-50: 2:1 light, 2.69:1 dark",
+    pages: ["/components/calendar", "/components/date-picker", "/create"],
   },
 ];
+
+/** The entries that may excuse `rule` on `page` in `theme` */
+export function allowedFor(entries: Allowed[], rule: string, page: string, theme: Theme) {
+  return entries.filter(
+    (entry) =>
+      entry.rule === rule &&
+      (!entry.pages || entry.pages.includes(page)) &&
+      (!entry.themes || entry.themes.includes(theme)),
+  );
+}
+
+/** Entries that matched nothing in the run, or name a page that doesn't exist */
+export function staleEntries(entries: Allowed[], matched: Map<Allowed, number>, routes: string[]) {
+  return entries.flatMap((entry) => [
+    ...(matched.get(entry) ? [] : [`ALLOWED entry matched nothing: ${entry.why}`]),
+    ...(entry.pages ?? [])
+      .filter((page) => !routes.includes(page))
+      .map((page) => `ALLOWED entry names a page that doesn't exist (${page}): ${entry.why}`),
+  ]);
+}
 
 type Problem = { page: string; theme: string; rule: string; help: string; targets: string[] };
 
@@ -99,7 +135,7 @@ async function startServer() {
   throw new Error(`next start did not answer on ${BASE_URL}; run the docs build first`);
 }
 
-async function audit(browser: Browser, route: string, theme: (typeof THEMES)[number]) {
+async function audit(browser: Browser, route: string, theme: Theme, matched: Map<Allowed, number>) {
   const context = await browser.newContext({ colorScheme: theme });
   // Nextra (next-themes) reads the theme from localStorage before it paints
   await context.addInitScript((value) => localStorage.setItem("theme", value), theme);
@@ -120,18 +156,23 @@ async function audit(browser: Browser, route: string, theme: (typeof THEMES)[num
       problems.push({ page: route, theme, rule: "http", help: "Requests failed", targets: failed });
     }
     for (const violation of violations) {
-      const allowed = ALLOWED.filter((entry) => entry.rule === violation.id);
+      const allowed = allowedFor(ALLOWED, violation.id, route, theme);
       const targets: string[] = [];
       for (const node of violation.nodes) {
         const target = node.target.map(String).join(" ");
-        const isAllowed = await page.evaluate(
+        // The first allowed selector the element matches or sits inside, or -1
+        const index = await page.evaluate(
           ([selector, allowedSelectors]) => {
             const element = document.querySelector(selector);
-            return allowedSelectors.some((allowedSelector) => element?.closest(allowedSelector));
+            return allowedSelectors.findIndex((allowedSelector) =>
+              element?.closest(allowedSelector),
+            );
           },
           [target, allowed.map((entry) => entry.selector)] as const,
         );
-        if (!isAllowed) targets.push(`${target}\n      ${node.html.slice(0, 160)}`);
+        const entry = allowed[index];
+        if (entry) matched.set(entry, (matched.get(entry) ?? 0) + 1);
+        else targets.push(`${target}\n      ${node.html.slice(0, 160)}`);
       }
       if (targets.length > 0) {
         problems.push({ page: route, theme, rule: violation.id, help: violation.help, targets });
@@ -143,28 +184,34 @@ async function audit(browser: Browser, route: string, theme: (typeof THEMES)[num
   }
 }
 
-const routes = pages();
-const server = await startServer();
-const browser = await chromium.launch();
-const problems: Problem[] = [];
-try {
-  const queue = routes.flatMap((route) => THEMES.map((theme) => ({ route, theme })));
-  const workers = Array.from({ length: PARALLEL }, async () => {
-    for (let job = queue.shift(); job; job = queue.shift()) {
-      problems.push(...(await audit(browser, job.route, job.theme)));
-    }
-  });
-  await Promise.all(workers);
-} finally {
-  await browser.close();
-  server.kill();
-}
+// Not on import, so the spec can test allowedFor and staleEntries
+if (import.meta.main) {
+  const routes = pages();
+  const server = await startServer();
+  const browser = await chromium.launch();
+  const problems: Problem[] = [];
+  const matched = new Map<Allowed, number>();
+  try {
+    const queue = routes.flatMap((route) => THEMES.map((theme) => ({ route, theme })));
+    const workers = Array.from({ length: PARALLEL }, async () => {
+      for (let job = queue.shift(); job; job = queue.shift()) {
+        problems.push(...(await audit(browser, job.route, job.theme, matched)));
+      }
+    });
+    await Promise.all(workers);
+  } finally {
+    await browser.close();
+    server.kill();
+  }
 
-for (const { page, theme, rule, help, targets } of problems) {
-  console.error(`${page} (${theme}) ${rule}: ${help}`);
-  for (const target of targets) console.error(`    ${target}`);
+  for (const { page, theme, rule, help, targets } of problems) {
+    console.error(`${page} (${theme}) ${rule}: ${help}`);
+    for (const target of targets) console.error(`    ${target}`);
+  }
+  const stale = staleEntries(ALLOWED, matched, routes);
+  for (const message of stale) console.error(message);
+  console.log(
+    `axe checked ${routes.length} pages in ${THEMES.length} themes: ${problems.length} violations, ${stale.length} stale ALLOWED entries.`,
+  );
+  process.exit(problems.length + stale.length > 0 ? 1 : 0);
 }
-console.log(
-  `axe checked ${routes.length} pages in ${THEMES.length} themes: ${problems.length} violations.`,
-);
-process.exit(problems.length > 0 ? 1 : 0);
