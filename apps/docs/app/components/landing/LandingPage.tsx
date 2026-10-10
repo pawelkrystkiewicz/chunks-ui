@@ -33,7 +33,7 @@ const NAV = [
   { label: "Docs", href: DOCS },
   { label: "Components", href: COMPONENTS },
   { label: "Create", href: "/create" },
-  { label: "llm.txt", href: "/llm.txt" },
+  { label: "llms.txt", href: "/llms.txt" },
 ];
 
 type Tier = "core" | "extended";
@@ -506,7 +506,7 @@ const PRINCIPLES = [
     art: <ApiArt />,
     title: "LLM-friendly.",
     body: "Props over config objects. Conventional names an agent can guess without opening the source.",
-    meta: ["llm.txt", "AGENTS.md"],
+    meta: ["llms.txt", "AGENTS.md"],
   },
 ];
 
@@ -614,7 +614,7 @@ const ROW_VALUE = "font-semibold text-[20px] tracking-[-.015em]";
 const LINK_ROWS = [
   { label: "// docs", href: DOCS, value: "ui-kit.chunk-creations.com" },
   { label: "// source", href: GITHUB, value: "github.com/pawelkrystkiewicz/chunks-ui ↗" },
-  { label: "// for agents", href: "/llm.txt", value: "ui-kit.chunk-creations.com/llm.txt" },
+  { label: "// for agents", href: "/llms.txt", value: "ui-kit.chunk-creations.com/llms.txt" },
 ];
 
 function GetStarted() {
@@ -656,7 +656,7 @@ const FOOTER_NAV = [
     links: [
       { label: "Docs", href: DOCS },
       { label: "Components", href: COMPONENTS },
-      { label: "llm.txt", href: "/llm.txt" },
+      { label: "llms.txt", href: "/llms.txt" },
     ],
   },
   {
