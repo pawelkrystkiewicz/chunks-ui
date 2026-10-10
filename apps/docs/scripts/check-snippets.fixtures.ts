@@ -35,7 +35,12 @@ export const fixtures: Record<string, string> = {
   `,
   "components/loader.mdx": "const loading: boolean;",
   "components/menu.mdx": `${state("showGrid", "boolean")} ${state("theme", "string")}`,
-  "components/tabs.mdx": state("tab", "string"),
+  "components/tabs.mdx": `
+    ${state("tab", "string")}
+    /** The CSP block: the request's nonce and the app it wraps */
+    const nonce: string;
+    const App: () => React.ReactElement;
+  `,
   "components/textarea.mdx": state("bio", "string | undefined"),
   "components/theme-toggle.mdx": state("theme", `"light" | "dark"`),
   "components/toast.mdx": `
