@@ -82,7 +82,7 @@ export const DEFAULT_THEME: Theme = {
   radius: 10,
   height: 35,
   spacing: 1,
-  shadow: "subtle",
+  shadow: "none",
   chart: "default",
 };
 
@@ -283,7 +283,7 @@ export function palette(t: Theme, mode: Mode): Record<string, string> {
 }
 
 const SHADOWS: Record<Shadow, (dark: boolean) => string> = {
-  none: () => "none",
+  none: () => "0 0 #0000",
   subtle: (d) => (d ? "0 1px 2px 0 oklch(0 0 0 / 0.4)" : "0 1px 2px 0 oklch(0 0 0 / 0.05)"),
   lifted: (d) =>
     d

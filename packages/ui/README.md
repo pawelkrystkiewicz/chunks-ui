@@ -27,6 +27,8 @@ import { Button, Tabs, Input } from 'chunks-ui'
 
 `theme.css` registers its CSS variables with Tailwind CSS v4 through `@theme`, and its `@source` makes Tailwind generate the classes the components use — no plugin needed.
 
+`chunks-ui` is a client bundle (`"use client"`). To call `cn`, `cnState` or a `*Variants` function such as `buttonVariants` in a React Server Component, import it from `chunks-ui/utils`.
+
 ## Components
 
 Button, Input, Textarea, Checkbox, Radio, Switch, Select, Combobox, Tabs, Dialog, Drawer, Popover, Tooltip, Card, Avatar, Chip, ClearButton, Loader, Separator, Field, ToggleGroup
@@ -59,7 +61,7 @@ Use with Tailwind: `bg-primary text-primary-foreground`, `bg-destructive text-de
 
 ## Animation
 
-Motion is optional — components detect it at runtime and fall back to CSS transitions if absent. All motion respects `prefers-reduced-motion` except the `Loader` spinner (also shown by `Button loading`). It is an essential status indicator, so it keeps spinning.
+Motion is optional — components detect it at runtime and fall back to CSS transitions if absent. All motion respects `prefers-reduced-motion` except the `Loader` spinner (also shown by `Button loading`) and the indeterminate `Progress` pulse. They are essential status indicators, so they keep running.
 
 ## Docs
 

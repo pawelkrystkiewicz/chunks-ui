@@ -1,6 +1,7 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { axe } from "jest-axe";
-import { afterEach, describe, expect, it } from "vitest";
+import type { ReactNode } from "react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Tooltip } from "./Tooltip";
 
 afterEach(cleanup);
@@ -73,5 +74,108 @@ describe("Tooltip", () => {
         },
       }),
     ).toHaveNoViolations();
+  });
+});
+
+describe("Tooltip open delay", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const advance = (ms: number) =>
+    act(() => {
+      vi.advanceTimersByTime(ms);
+    });
+
+  // fireEvent, not user-event: user-event awaits a real setTimeout that fake timers never fire.
+  function hover(ui: ReactNode) {
+    render(ui);
+    const trigger = screen.getByText("Hover");
+    fireEvent.mouseEnter(trigger);
+    fireEvent.mouseMove(trigger);
+  }
+
+  function Tip({
+    delay,
+    label = "Hover",
+    tip = "Tip",
+  }: {
+    delay?: number;
+    label?: string;
+    tip?: string;
+  }) {
+    return (
+      <Tooltip.Root>
+        <Tooltip.Trigger delay={delay}>{label}</Tooltip.Trigger>
+        <Tooltip.Portal>
+          <Tooltip.Positioner>
+            <Tooltip.Popup>{tip}</Tooltip.Popup>
+          </Tooltip.Positioner>
+        </Tooltip.Portal>
+      </Tooltip.Root>
+    );
+  }
+
+  it("opens after 50ms without a Provider", () => {
+    hover(<Tip />);
+    advance(30);
+    expect(screen.queryByText("Tip")).toBeNull();
+    advance(30);
+    expect(screen.getByText("Tip")).toBeInTheDocument();
+  });
+
+  it("uses the Provider delay", () => {
+    hover(
+      <Tooltip.Provider delay={1000}>
+        <Tip />
+      </Tooltip.Provider>,
+    );
+    advance(300);
+    expect(screen.queryByText("Tip")).toBeNull();
+    advance(650);
+    expect(screen.queryByText("Tip")).toBeNull();
+    advance(100);
+    expect(screen.getByText("Tip")).toBeInTheDocument();
+  });
+
+  it("opens after 50ms inside a Provider with no delay", () => {
+    hover(
+      <Tooltip.Provider>
+        <Tip />
+      </Tooltip.Provider>,
+    );
+    advance(30);
+    expect(screen.queryByText("Tip")).toBeNull();
+    advance(30);
+    expect(screen.getByText("Tip")).toBeInTheDocument();
+  });
+
+  it("lets a Trigger delay override the Provider delay", () => {
+    hover(
+      <Tooltip.Provider delay={1000}>
+        <Tip delay={0} />
+      </Tooltip.Provider>,
+    );
+    advance(0);
+    expect(screen.getByText("Tip")).toBeInTheDocument();
+  });
+
+  it("opens the next tooltip in a Provider instantly once one is open", () => {
+    hover(
+      <Tooltip.Provider delay={1000}>
+        <Tip tip="Tip A" />
+        <Tip label="B" tip="Tip B" />
+      </Tooltip.Provider>,
+    );
+    advance(1000);
+    expect(screen.getByText("Tip A")).toBeInTheDocument();
+    fireEvent.mouseLeave(screen.getByText("Hover"));
+    fireEvent.mouseEnter(screen.getByText("B"));
+    fireEvent.mouseMove(screen.getByText("B"));
+    advance(0);
+    expect(screen.getByText("Tip B")).toBeInTheDocument();
   });
 });
