@@ -34,10 +34,12 @@ const FIXTURES_FILE = join(VIRTUAL_DIR, "fixtures.ts");
 type Line = { text: string; mdxLine: number | null };
 type Snippet = { file: string; page: string; lines: Line[] };
 
-/** A ```tsx fence, with or without meta (`title="…"`) and indentation */
-const TSX_OPEN = /^\s*```tsx\b/;
+/** A ```tsx fence, with or without meta (`title="…"`) and indentation; not ```tsx-foo */
+const TSX_OPEN = /^\s*```tsx(?=\s|$)/;
 /** A tsx fence with another marker or length, which the extractor doesn't read */
-const OTHER_TSX_OPEN = /^\s*(`{4,}|~{3,})\s*tsx\b/;
+const OTHER_TSX_OPEN = /^\s*(`{4,}|~{3,})\s*tsx(?=\s|$)/;
+/** A tsx fence inside a blockquote, which the extractor doesn't read either */
+const QUOTED_TSX_OPEN = /^\s*>[\s>]*(`{3,}|~{3,})\s*tsx(?=\s|$)/;
 const FENCE = /^\s*(`{3,}|~{3,})/;
 const CLOSE = /^\s*(`{3,}|~{3,})\s*$/;
 const IMPORT_START = /^\s*import\b/;
@@ -99,6 +101,8 @@ export function extractBlocks(page: string, source: string) {
     } else if (other) {
       const marker = CLOSE.exec(text)?.[1];
       if (marker && marker[0] === other[0] && marker.length >= other.length) other = null;
+    } else if (QUOTED_TSX_OPEN.test(text)) {
+      errors.push(`${at(i)} - the check doesn't read tsx blocks in a blockquote`);
     } else if (OTHER_TSX_OPEN.test(text)) {
       errors.push(`${at(i)} - the check reads tsx blocks only in a \`\`\` fence`);
       other = FENCE.exec(text)?.[1] ?? null;
@@ -110,6 +114,28 @@ export function extractBlocks(page: string, source: string) {
   }
   if (block) errors.push(`${at(block.start)} - the tsx block never closes`);
   return { snippets, errors };
+}
+
+/**
+ * The names a page's fixtures declare that none of its blocks uses (as a whole word), and no other
+ * fixture of the page refers to.
+ */
+export function unusedFixtures(fixtureText: string, blocks: string[]) {
+  const source = ts.createSourceFile("fixtures.ts", fixtureText, ts.ScriptTarget.Latest);
+  const names = source.statements.flatMap((statement) =>
+    ts.isVariableStatement(statement)
+      ? statement.declarationList.declarations.map((declaration) =>
+          declaration.name.getText(source),
+        )
+      : ts.isTypeAliasDeclaration(statement) || ts.isFunctionDeclaration(statement)
+        ? [statement.name?.getText(source) ?? ""]
+        : [],
+  );
+  const uses = (text: string, name: string) =>
+    text.match(new RegExp(`\\b${name}\\b`, "g"))?.length ?? 0;
+  return names.filter(
+    (name) => uses(fixtureText, name) < 2 && !blocks.some((block) => uses(block, name) > 0),
+  );
 }
 
 async function extractSnippets() {
@@ -226,8 +252,14 @@ if (import.meta.main) {
   let blocks = 0;
 
   for (const page of Object.keys(fixtures)) {
-    if (!pages.has(page)) {
+    const blocks = pages.get(page);
+    if (!blocks) {
       errors.add(`check-snippets.fixtures.ts: no tsx blocks in content/${page}`);
+      continue;
+    }
+    const code = blocks.map((block) => block.lines.map((line) => line.text).join("\n"));
+    for (const name of unusedFixtures(fixtures[page] ?? "", code)) {
+      errors.add(`check-snippets.fixtures.ts: no block in content/${page} uses "${name}"`);
     }
   }
 
