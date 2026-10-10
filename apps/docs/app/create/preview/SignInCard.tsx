@@ -14,7 +14,7 @@ export function SignInCard() {
         <Field.Root className="gap-2">
           <div className="flex items-center justify-between">
             <Field.Label>Password</Field.Label>
-            <button type="button" className="font-medium text-primary text-xs hover:underline">
+            <button type="button" className="font-medium text-primary-text text-xs hover:underline">
               Forgot?
             </button>
           </div>

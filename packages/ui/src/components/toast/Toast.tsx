@@ -26,7 +26,7 @@ export interface ToastStyleOptions {
   icon?: ComponentType<{ className?: string }>;
   /**
    * Extra classes applied to the rendered `icon`. Use this for color
-   * (e.g. `text-success`) without having to wrap the icon component.
+   * (e.g. `text-success-text`) without having to wrap the icon component.
    */
   iconClassName?: string;
   /**
