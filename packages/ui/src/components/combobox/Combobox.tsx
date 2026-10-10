@@ -130,6 +130,8 @@ function ComboboxPopup({ className, ...props }: ComboboxPopupProps) {
       render={render}
       className={cnState(
         "rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md",
+        // Fits the space Base UI measures between the input and the viewport edge, then scrolls
+        "max-h-[var(--available-height)] overflow-y-auto overscroll-contain scroll-py-1",
         !useSpring && "data-starting-style:opacity-0",
         !useSpring && "data-ending-style:opacity-0",
         !useSpring && "micro-interactions",
