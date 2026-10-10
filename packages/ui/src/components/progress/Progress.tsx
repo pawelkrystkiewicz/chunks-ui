@@ -35,7 +35,8 @@ function ProgressIndicator({ className, ...props }: ProgressIndicatorProps) {
       className={cnState(
         "h-full rounded-full bg-primary",
         "transition-[width] duration-300 ease-out motion-reduce:transition-none",
-        "data-[indeterminate]:w-full data-[indeterminate]:animate-pulse data-[indeterminate]:motion-reduce:animate-none data-[indeterminate]:opacity-75",
+        // Pulses with reduced motion too: an essential status indicator, like the Loader
+        "data-[indeterminate]:w-full data-[indeterminate]:animate-pulse data-[indeterminate]:opacity-75",
         className,
       )}
       {...props}
