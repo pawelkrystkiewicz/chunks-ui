@@ -122,7 +122,7 @@ With `required`, the form does not submit until a date is selected, and focus mo
 
 <DatePickerFormExample />
 
-Put `name` on the `DatePicker`. A `name` on `Field.Root` does not reach the hidden input.
+Inside `Field.Root`, the field's `name` is used when the picker has none, and a disabled field disables the hidden input too.
 
 ## Keyboard
 

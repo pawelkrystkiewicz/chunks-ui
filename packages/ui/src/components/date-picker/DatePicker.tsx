@@ -142,27 +142,51 @@ export function DatePicker({
           disabled={disabled}
           // The field reads its value from here, not from the button's empty value
           value={isoValue}
-          render={(controlProps) => {
+          render={(controlProps, state) => {
+            // Field.Root's name comes through here. It goes on the form input, not the button
+            const { name: fieldName, ...buttonProps } = controlProps as typeof controlProps & {
+              name?: string;
+            };
+            const formName = name ?? fieldName;
             // A label replaces a button's text as its name. The trigger has no other way to
             // expose the date, so name it by its label and then the date. The label comes from
             // aria-labelledby (the consumer's or Field.Label's), else aria-label (read through the
             // trigger's own id), else a <label htmlFor>. Without a label, the text names it.
             const labelledBy =
-              controlProps["aria-labelledby"] ??
-              (controlProps["aria-label"] ? controlProps.id : nativeLabelIds);
+              buttonProps["aria-labelledby"] ??
+              (buttonProps["aria-label"] ? buttonProps.id : nativeLabelIds);
             return (
-              <BasePopover.Trigger
-                {...controlProps}
-                aria-labelledby={labelledBy ? `${labelledBy} ${valueId}` : undefined}
-                className={cn(
-                  "flex h-ui-height w-full cursor-pointer items-center rounded-md border border-input bg-background px-3 text-left text-sm",
-                  "focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
-                  "disabled:pointer-events-none disabled:opacity-50",
-                  !displayValue && "text-muted-foreground",
+              <>
+                <BasePopover.Trigger
+                  {...buttonProps}
+                  aria-labelledby={labelledBy ? `${labelledBy} ${valueId}` : undefined}
+                  className={cn(
+                    "flex h-ui-height w-full cursor-pointer items-center rounded-md border border-input bg-background px-3 text-left text-sm",
+                    "focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
+                    "disabled:pointer-events-none disabled:opacity-50",
+                    !displayValue && "text-muted-foreground",
+                  )}
+                >
+                  <span id={valueId}>{displayValue || placeholder}</span>
+                </BasePopover.Trigger>
+                {(formName !== undefined || required) && (
+                  // Carries the date into the form. Not type="hidden" or readOnly: both skip
+                  // `required`. Disabled with the picker or its Field.Root, like a native control,
+                  // so it then submits nothing and blocks nothing. When the browser focuses it as
+                  // the first invalid field, the trigger takes the focus.
+                  <input
+                    name={formName}
+                    value={isoValue}
+                    required={required}
+                    disabled={state.disabled}
+                    onChange={() => {}}
+                    onFocus={() => triggerRef.current?.focus()}
+                    tabIndex={-1}
+                    aria-hidden="true"
+                    className="sr-only"
+                  />
                 )}
-              >
-                <span id={valueId}>{displayValue || placeholder}</span>
-              </BasePopover.Trigger>
+              </>
             );
           }}
         />
@@ -194,21 +218,6 @@ export function DatePicker({
           </BasePopover.Positioner>
         </BasePopover.Portal>
       </BasePopover.Root>
-      {(name !== undefined || required) && (
-        // Carries the date into the form. Not type="hidden" or readOnly: both skip `required`.
-        // When the browser focuses it as the first invalid field, the trigger takes the focus.
-        <input
-          name={name}
-          value={isoValue}
-          required={required}
-          disabled={disabled}
-          onChange={() => {}}
-          onFocus={() => triggerRef.current?.focus()}
-          tabIndex={-1}
-          aria-hidden="true"
-          className="sr-only"
-        />
-      )}
     </div>
   );
 }

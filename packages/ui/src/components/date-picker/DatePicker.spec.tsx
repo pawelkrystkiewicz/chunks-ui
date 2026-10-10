@@ -298,6 +298,35 @@ describe("DatePicker in a form", () => {
     expect(formData(screen.getByRole<HTMLFormElement>("form"))).toBeNull();
   });
 
+  it("submits nothing and does not block the form inside a disabled Field.Root", () => {
+    render(
+      <form aria-label="Task">
+        <Field.Root disabled>
+          <Field.Label>Due date</Field.Label>
+          <DatePicker name="due" required />
+        </Field.Root>
+      </form>,
+    );
+    const form = screen.getByRole<HTMLFormElement>("form");
+    expect(form.checkValidity()).toBe(true);
+    expect(new FormData(form).has("due")).toBe(false);
+  });
+
+  it("submits under the Field.Root name when it has none of its own", () => {
+    render(
+      <form aria-label="Task">
+        <Field.Root name="due">
+          <Field.Label>Due date</Field.Label>
+          <DatePicker defaultValue={new Date(2026, 2, 15)} />
+        </Field.Root>
+      </form>,
+    );
+    const form = screen.getByRole<HTMLFormElement>("form");
+    expect(formData(form)).toBe("2026-03-15");
+    // Only the input carries the name, so form.elements.due is the input, not a list
+    expect(form.elements.namedItem("due")).toBeInstanceOf(HTMLInputElement);
+  });
+
   it("renders no form input without a name or required", () => {
     const { container } = render(<DatePicker defaultValue={new Date(2026, 2, 15)} />);
     expect(container.querySelector("input")).toBeNull();
