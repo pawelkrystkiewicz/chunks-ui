@@ -3,6 +3,11 @@
 
 @source "./";
 
+/* Docs and landing headings (`font-display`) use Outfit; body text stays Manrope. */
+@theme {
+  --font-display: "Outfit", ui-sans-serif, system-ui, sans-serif;
+}
+
 /* Landing page surface tokens (app/components/landing). */
 .landing {
   /* System fallback (not bare sans-serif) so → and ↗, which Manrope lacks, match the design. */

@@ -19,7 +19,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&family=Fira+Code:wght@300..700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&family=Outfit:wght@400..800&family=Fira+Code:wght@300..700&display=swap"
           precedence="default"
         />
         <Layout
