@@ -27,11 +27,20 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <Navbar
               logo={
                 <div className="flex flex-nowrap items-center gap-2">
+                  {/* Nextra marks dark theme with a `dark` class on <html> */}
                   <Image
                     src="/logo.svg"
                     alt={metadata.title}
                     width={LOGO_SIZE}
                     height={LOGO_SIZE}
+                    className="[.dark_&]:hidden"
+                  />
+                  <Image
+                    src="/logo-dark-mode.svg"
+                    alt={metadata.title}
+                    width={LOGO_SIZE}
+                    height={LOGO_SIZE}
+                    className="hidden [.dark_&]:block"
                   />
                   <b>{metadata.title}</b>
                 </div>
