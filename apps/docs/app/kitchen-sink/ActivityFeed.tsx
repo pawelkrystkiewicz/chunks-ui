@@ -1,7 +1,7 @@
 "use client";
 
 import { Avatar, Separator } from "chunks-ui";
-import { ACTIVITIES, TEAM } from "./data";
+import { ACTIVITIES, initials, TEAM } from "./data";
 
 const avatarByName = new Map(TEAM.map((m) => [m.name, m.avatar]));
 
@@ -13,7 +13,7 @@ export function ActivityFeed() {
           <div className="flex items-start gap-3 py-3">
             <Avatar
               src={avatarByName.get(activity.user)}
-              alt={activity.user}
+              fallback={initials(activity.user)}
               size={28}
               className="mt-0.5 shrink-0"
             />

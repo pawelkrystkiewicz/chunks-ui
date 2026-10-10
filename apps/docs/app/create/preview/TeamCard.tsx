@@ -2,10 +2,10 @@ import { Avatar, Button, Input, Select } from "chunks-ui";
 import { PreviewCard, PreviewCardHeading } from "./PreviewCard";
 
 const MEMBERS = [
-  { name: "Alice Chen", email: "alice@acme.dev", role: "Owner" },
-  { name: "Bob Rivera", email: "bob@acme.dev", role: "Editor" },
-  { name: "Carl Zhang", email: "carl@acme.dev", role: "Editor" },
-  { name: "Eve Nakamura", email: "eve@acme.dev", role: "Viewer" },
+  { name: "Alice Chen", initials: "AC", email: "alice@acme.dev", role: "Owner" },
+  { name: "Bob Rivera", initials: "BR", email: "bob@acme.dev", role: "Editor" },
+  { name: "Carl Zhang", initials: "CZ", email: "carl@acme.dev", role: "Editor" },
+  { name: "Eve Nakamura", initials: "EN", email: "eve@acme.dev", role: "Viewer" },
 ];
 const ROLES = ["Editor", "Viewer"];
 
@@ -26,7 +26,7 @@ export function TeamCard() {
         {MEMBERS.map((m, i) => (
           <div key={m.email} className="flex items-center gap-3">
             <Avatar
-              alt={m.name}
+              fallback={m.initials}
               size={36}
               className={
                 i === 0
