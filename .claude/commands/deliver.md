@@ -115,10 +115,10 @@ Run the gates and push as one chain, so a red gate never pushes:
 ```bash
 cd <wt> && bun run lint && bun run check-types && bun run test && git push -u origin <type>/<slug> \
   && gh pr create --base master --head <type>/<slug> --title "<type>(<scope>): <summary>" --body-file <scratchpad>/pr.md \
-  && gh pr comment <type>/<slug> --body "@coderabbitai review"
+  && { gh pr comment <type>/<slug> --body "@coderabbitai review" || true; }
 ```
 
-The last command asks CodeRabbit for a review once. Do not wait for it. It is an extra reviewer: threads it posts before the required checks finish still block the merge.
+The last command asks CodeRabbit for a review once; a failure there is harmless. Do not wait for it. It is an extra reviewer: threads it posts before the required checks finish still block the merge.
 
 The PR body has:
 
@@ -141,7 +141,7 @@ Before any follow-up fix, run `git -C <wt> pull --no-rebase`, because the script
 - **Conflicts with master:** run `git -C <wt> merge origin/master`, rerun the gates, push, rerun.
 - **Not merged after 5 rounds:** report it.
 
-The merge line gives the CodeRabbit status (`#<n> merged (CodeRabbit: <status>)`). If it is anything other than `reviewed` (`pending`, `skipped`, `rate-limited` or `none`), say so in the report: only the subagent review covered that PR.
+The merge line gives the CodeRabbit status (`#<n> merged (CodeRabbit: <status>)`). If it is anything other than `reviewed` (`pending`, `skipped`, `rate-limited` or `none`), say so in the report: only the subagent review covered that PR. If it is `pending`, check the PR again after the merge for late CodeRabbit threads. A valid one goes to a follow-up PR or the Also possible list.
 
 ## 9. Clean up and report
 
