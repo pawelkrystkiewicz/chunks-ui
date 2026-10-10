@@ -1,8 +1,9 @@
 import { render } from "@testing-library/react";
 import { cancelFrame, frame } from "motion/react";
 import type { ReactNode } from "react";
-import { expect } from "vitest";
-import { page, type ScreenshotMatcherOptions } from "vitest/browser";
+import { afterAll, beforeAll, beforeEach, describe, expect } from "vitest";
+import { commands, page, type ScreenshotMatcherOptions } from "vitest/browser";
+import { reloadMotion } from "./lib/use-motion";
 
 /** Renders children in a padded fixture wrapper. Returns the wrapper element for screenshotting. */
 export async function renderFixture(children: ReactNode) {
@@ -78,6 +79,37 @@ export function insetsWithin(outer: Element, inner: Element): Insets {
     bottom: o.bottom - i.bottom,
     left: i.left - o.left,
   };
+}
+
+/** Viewport-relative edges of `el`. */
+export const boxOf = (el: Element) => {
+  const { top, bottom, left, right } = el.getBoundingClientRect();
+  return { top, bottom, left, right };
+};
+
+/**
+ * Runs `define` once per animation path: reduced motion (CSS variants) and no preference with
+ * Motion loaded before anything opens (spring path). Media is emulated before each test and
+ * reset to the config default afterwards.
+ */
+export function describeMotionPaths(
+  name: string,
+  define: (reducedMotion: "reduce" | "no-preference") => void,
+) {
+  describe.each(["reduce", "no-preference"] as const)(
+    `${name}, reduced motion: %s`,
+    (reducedMotion) => {
+      beforeAll(() => reloadMotion());
+      beforeEach(async () => {
+        await commands.emulateMedia({ reducedMotion });
+        await expect
+          .poll(() => matchMedia("(prefers-reduced-motion: reduce)").matches)
+          .toBe(reducedMotion === "reduce");
+      });
+      afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
+      define(reducedMotion);
+    },
+  );
 }
 
 const nextFrame = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
