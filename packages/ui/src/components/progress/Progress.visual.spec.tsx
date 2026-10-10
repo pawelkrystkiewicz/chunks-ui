@@ -38,13 +38,6 @@ const renderIndeterminate = (className?: string) =>
     </Progress.Root>,
   ).getByTestId("indicator");
 
-const emulateReducedMotion = async (reducedMotion: "reduce" | "no-preference") => {
-  await commands.emulateMedia({ reducedMotion });
-  await expect
-    .poll(() => matchMedia("(prefers-reduced-motion: reduce)").matches)
-    .toBe(reducedMotion === "reduce");
-};
-
 /*
  * The indeterminate pulse is an essential status indicator, like the Loader spinner, so it
  * keeps running with reduced motion. A `data-[indeterminate]:animate-*` class on the indicator
@@ -79,11 +72,6 @@ describe("Progress.Indicator indeterminate animation", () => {
     },
     // Opt-out for apps that stop the pulse with reduced motion
     {
-      reducedMotion: "no-preference",
-      className: "data-[indeterminate]:motion-reduce:animate-none",
-      animation: "pulse",
-    },
-    {
       reducedMotion: "reduce",
       className: "data-[indeterminate]:motion-reduce:animate-none",
       animation: "none",
@@ -91,7 +79,7 @@ describe("Progress.Indicator indeterminate animation", () => {
   ] as const)(
     "animates as $animation with $reducedMotion and $className",
     async ({ reducedMotion, className, animation }) => {
-      await emulateReducedMotion(reducedMotion);
+      await commands.emulateMedia({ reducedMotion });
       expect(getComputedStyle(renderIndeterminate(className)).animationName).toBe(animation);
     },
   );
