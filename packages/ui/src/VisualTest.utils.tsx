@@ -81,6 +81,24 @@ export function insetsWithin(outer: Element, inner: Element): Insets {
   };
 }
 
+/**
+ * The two paths of a Motion-driven part with no reduced-motion preference: Motion animates it,
+ * or Motion never arrives and the CSS fallback does. Pass `withMotion` to `enterMotionPath`.
+ */
+export const MOTION_PATHS = [
+  { path: "Motion", withMotion: true },
+  { path: "CSS fallback", withMotion: false },
+] as const;
+
+/**
+ * Loads Motion, or holds it back for good so parts that mount next keep the CSS fallback. A
+ * held-back load never settles, so it isn't awaited.
+ */
+export async function enterMotionPath(withMotion: boolean) {
+  if (withMotion) await reloadMotion();
+  else void reloadMotion(new Promise(() => {}));
+}
+
 /** Viewport-relative edges of `el`. */
 export const boxOf = (el: Element) => {
   const { top, bottom, left, right } = el.getBoundingClientRect();

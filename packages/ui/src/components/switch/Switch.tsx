@@ -1,9 +1,10 @@
 "use client";
 
 import { Switch as BaseSwitch } from "@base-ui/react/switch";
-import type { ComponentProps } from "react";
+import { type ComponentProps, useLayoutEffect, useRef, useState } from "react";
 import { cn, cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
+import { useMergedRef } from "../../lib/use-merged-ref";
 import { useMotionAnimate } from "../../lib/use-motion-animate";
 import { type PartRenderProp, useRenderPart } from "../../lib/use-render-part";
 
@@ -67,17 +68,31 @@ function SwitchThumbElement({
   state: BaseSwitch.Thumb.State;
   render: PartRenderProp<BaseSwitch.Thumb.State>;
 }) {
+  const element = useRef<HTMLElement>(null);
+  // Right to left, the thumb moves left to reach the inline end. Unknown until the thumb mounts:
+  // no values until then, so Motion's first ones jump into place instead of springing there.
+  const [rtl, setRtl] = useState<boolean | null>(null);
   const [thumbRef, driven] = useMotionAnimate<HTMLElement>(
-    { x: state.checked ? "100%" : "0%" },
+    rtl === null ? null : { x: state.checked ? (rtl ? "-100%" : "100%") : "0%" },
     { transition: springs.micro, clear: ["transform"] },
-    ref,
+    useMergedRef(element, ref),
   );
+  // Re-read after every render of the thumb. A `dir` change on an ancestor that doesn't re-render
+  // the thumb keeps the old direction until its next render, e.g. its next toggle. Set only on a
+  // change: a same-value update would still cost each switch a commit.
+  useLayoutEffect(() => {
+    if (!element.current) return;
+    const next = getComputedStyle(element.current).direction === "rtl";
+    if (next !== rtl) setRtl(next);
+  });
   return useRenderPart(render, state, thumbRef, {
     ...props,
     className: cn(
       THUMB_CLASSES,
       !driven && "micro-interactions",
       !driven && "data-checked:translate-x-full data-unchecked:translate-x-0",
+      // The thumb's own direction: `rtl:` also matches inside an LTR section of an RTL page
+      !driven && "[&:dir(rtl)]:data-checked:-translate-x-full",
       className,
     ),
   });

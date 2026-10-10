@@ -569,7 +569,7 @@ describe("className on composite wrappers", () => {
   it("passes an Input's className function to the input when adornments wrap it", () => {
     render(<Input aria-label="Search" disabled startAdornment="@" className={fromState} />);
     const input = screen.getByRole("textbox", { name: "Search" });
-    expect(input).toHaveClass("fn-called", "state-disabled-true", "pl-9");
+    expect(input).toHaveClass("fn-called", "state-disabled-true", "ps-9");
     expect(input.parentElement).not.toHaveClass("fn-called");
   });
 

@@ -1,7 +1,9 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
+import { hydrateRoot } from "react-dom/client";
+import { renderToString } from "react-dom/server";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { Tabs, type TabsRootProps, useTabsValue } from "./Tabs";
 
@@ -226,6 +228,87 @@ describe("Tabs", () => {
       const panelB = container.querySelector('[data-testid="panel-b"]');
       expect(panelB?.parentElement).not.toHaveStyle("display: none");
     });
+  });
+});
+
+describe("Tabs.Content", () => {
+  const tabs = (
+    <Tabs.Root defaultValue="a">
+      <Tabs.List>
+        <Tabs.Tab value="a">Alpha</Tabs.Tab>
+        <Tabs.Tab value="b">Beta</Tabs.Tab>
+      </Tabs.List>
+      <Tabs.Contents>
+        <Tabs.Content value="a">Panel A</Tabs.Content>
+        <Tabs.Content value="b">Panel B</Tabs.Content>
+      </Tabs.Contents>
+    </Tabs.Root>
+  );
+
+  it("is a tabpanel named by its tab, and the tab controls it", () => {
+    render(tabs);
+    for (const name of ["Alpha", "Beta"]) {
+      // The inactive panel is hidden from the accessibility tree
+      const panel = screen.getByRole("tabpanel", { name, hidden: true });
+      expect(screen.getByRole("tab", { name })).toHaveAttribute("aria-controls", panel.id);
+    }
+  });
+
+  it("has no a11y violations", async () => {
+    const { container } = render(tabs);
+    expect(await axe(container)).toHaveNoViolations();
+  });
+});
+
+describe("Tabs.Indicator in server HTML", () => {
+  const tabs = (indicator: ReactNode) => (
+    <Tabs.Root defaultValue="a">
+      <Tabs.List>
+        <Tabs.Tab value="a">Alpha</Tabs.Tab>
+        <Tabs.Tab value="b">Beta</Tabs.Tab>
+        {indicator}
+      </Tabs.List>
+    </Tabs.Root>
+  );
+
+  function serverHtml(ui: ReactNode) {
+    const container = document.createElement("div");
+    container.innerHTML = renderToString(ui);
+    return container;
+  }
+
+  // Base UI's script finds the indicator as its previous sibling, measures the active tab, and
+  // shows the indicator over it before React hydrates
+  it("is followed by the script that places it before hydration", () => {
+    const html = serverHtml(tabs(<Tabs.Indicator data-testid="indicator" />));
+    const script = html.querySelector('[data-testid="indicator"]')?.nextElementSibling;
+    expect(script?.tagName).toBe("SCRIPT");
+    expect(script?.textContent).toContain("--active-tab-");
+  });
+
+  it("has no script with renderBeforeHydration={false}", () => {
+    const html = serverHtml(
+      tabs(<Tabs.Indicator data-testid="indicator" renderBeforeHydration={false} />),
+    );
+    expect(html.querySelector('[data-testid="indicator"]')).not.toBeNull();
+    expect(html.querySelector("script")).toBeNull();
+  });
+
+  it("hydrates the server HTML without errors, and drops the script", async () => {
+    const ui = tabs(<Tabs.Indicator data-testid="indicator" />);
+    const container = serverHtml(ui);
+    document.body.append(container);
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const root = await act(async () => hydrateRoot(container, ui));
+      expect(consoleError).not.toHaveBeenCalled();
+      expect(container.querySelector('[data-testid="indicator"]')).not.toBeNull();
+      expect(container.querySelector("script")).toBeNull();
+      act(() => root.unmount());
+    } finally {
+      consoleError.mockRestore();
+      container.remove();
+    }
   });
 });
 
