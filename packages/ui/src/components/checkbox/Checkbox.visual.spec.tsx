@@ -5,7 +5,7 @@ import { Checkbox } from "./index";
 describe("Checkbox", () => {
   it("states", async () => {
     const { fixture } = await renderFixture(
-      <div style={{ display: "flex", gap: 24 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <Checkbox.Root>
             <Checkbox.Indicator />
