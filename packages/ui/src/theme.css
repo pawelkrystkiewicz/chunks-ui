@@ -6,17 +6,24 @@
 
 :root {
   /* Semantic colors (OKLCH) */
-  --primary: oklch(60.48% 0.2165 257.21);
+  --primary: oklch(0.56 0.2165 257.21);
   --primary-foreground: oklch(0.985 0 0);
 
   --success: oklch(75.14% 0.1514 166.5);
-  --success-foreground: oklch(0.985 0 0);
+  --success-foreground: oklch(0.145 0 0);
 
   --warning: oklch(77.97% 0.1665 72.45);
   --warning-foreground: oklch(0.145 0 0);
 
-  --destructive: oklch(66.16% 0.2249 25.88);
+  --destructive: oklch(0.582 0.2249 25.88);
   --destructive-foreground: oklch(0.985 0 0);
+
+  /*
+   * Lightness of coloured text (`text-primary-text` and co., see `@theme inline`), taken from
+   * its fill: at most 0.51, so it keeps 4.5:1 on the background and on a /10 tint of the fill.
+   * Success is the tightest: it is outside sRGB at this lightness, and browsers clip it lighter.
+   */
+  --colored-text-lightness: min(l, 0.51);
 
   /* Surface colors */
   --background: oklch(1 0 0);
@@ -30,14 +37,14 @@
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
+  --muted-foreground: oklch(0.53 0 0);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
 
   /* Utility */
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --ring: oklch(0.62 0 0);
   --radius: 0.625rem;
 
   /* Chart colors (shadcn compat) */
@@ -56,17 +63,20 @@
   --popover: oklch(0.145 0 0);
   --popover-foreground: oklch(0.985 0 0);
 
-  --primary: oklch(60.48% 0.2165 257.21);
+  --primary: oklch(0.56 0.2165 257.21);
   --primary-foreground: oklch(0.985 0 0);
 
   --success: oklch(75.14% 0.1514 166.5);
-  --success-foreground: oklch(0.985 0 0);
+  --success-foreground: oklch(0.145 0 0);
 
   --warning: oklch(77.97% 0.1665 72.45);
   --warning-foreground: oklch(0.145 0 0);
 
-  --destructive: oklch(66.16% 0.2249 25.88);
+  --destructive: oklch(0.582 0.2249 25.88);
   --destructive-foreground: oklch(0.985 0 0);
+
+  /* Raised to at least 0.63, so coloured text keeps 4.5:1 on the dark background. */
+  --colored-text-lightness: max(l, 0.63);
 
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
@@ -96,6 +106,28 @@
   --color-warning-foreground: var(--warning-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  /*
+   * Coloured text. `--primary-text` and co. are unset by default, so the shade is derived from
+   * the fill on the element that uses it. A custom property resolves its var() where it is
+   * declared: a `--primary-text` declared on :root would keep the root's `--primary` inside an
+   * element that sets its own. Set `--primary-text` to use a shade of your choice.
+   */
+  --color-primary-text: var(
+    --primary-text,
+    oklch(from var(--primary) var(--colored-text-lightness) c h)
+  );
+  --color-success-text: var(
+    --success-text,
+    oklch(from var(--success) var(--colored-text-lightness) c h)
+  );
+  --color-warning-text: var(
+    --warning-text,
+    oklch(from var(--warning) var(--colored-text-lightness) c h)
+  );
+  --color-destructive-text: var(
+    --destructive-text,
+    oklch(from var(--destructive) var(--colored-text-lightness) c h)
+  );
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
