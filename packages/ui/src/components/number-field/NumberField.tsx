@@ -122,8 +122,37 @@ function NumberFieldScrubArea({ className, ...props }: NumberFieldScrubAreaProps
   );
 }
 
-function NumberFieldScrubAreaCursor({ className, ...props }: NumberFieldScrubAreaCursorProps) {
-  return <BaseNumberField.ScrubAreaCursor className={cnState("hidden", className)} {...props} />;
+/**
+ * Base UI hides the system cursor with pointer lock while the user scrubs, and renders this part
+ * (only while scrubbing) as the stand-in. Without children it shows a left-right arrow.
+ */
+function NumberFieldScrubAreaCursor({
+  className,
+  children,
+  ...props
+}: NumberFieldScrubAreaCursorProps) {
+  return (
+    <BaseNumberField.ScrubAreaCursor
+      className={cnState("z-50 text-foreground drop-shadow-sm", className)}
+      {...props}
+    >
+      {children ?? (
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M2 12h20M6 8l-4 4 4 4M18 8l4 4-4 4" />
+        </svg>
+      )}
+    </BaseNumberField.ScrubAreaCursor>
+  );
 }
 
 // ---------------------------------------------------------------------------

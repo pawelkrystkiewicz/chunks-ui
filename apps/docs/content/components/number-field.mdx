@@ -56,7 +56,7 @@ Use `min` and `max` to constrain the value, and `step` to set how far the button
 
 ## Scrub Area
 
-Wrap a label with `NumberField.ScrubArea` to allow click-and-drag adjustment. The cursor hides during the scrub gesture via `NumberField.ScrubAreaCursor`:
+Wrap a label with `NumberField.ScrubArea` to allow click-and-drag adjustment. While you drag with a mouse, the browser locks and hides the system pointer. `NumberField.ScrubAreaCursor` shows in its place, as a left-right arrow by default; pass children to draw your own. Safari and touch input keep the system pointer, so the part does not render there:
 
 ```tsx
 <NumberField.Root defaultValue={100}>
@@ -98,7 +98,7 @@ Wrap a label with `NumberField.ScrubArea` to allow click-and-drag adjustment. Th
 | `NumberField.Decrement` | Button that decrements the value by `step`. |
 | `NumberField.Increment` | Button that increments the value by `step`. |
 | `NumberField.ScrubArea` | A region the user can click-drag to change the value. |
-| `NumberField.ScrubAreaCursor` | A virtual cursor shown during the scrub gesture (hidden by default). |
+| `NumberField.ScrubAreaCursor` | The cursor shown in place of the locked system pointer while the user scrubs. Renders a left-right arrow unless you pass children. |
 
 ## Props
 

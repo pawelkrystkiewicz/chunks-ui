@@ -1,8 +1,8 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import * as React from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NumberField } from "./NumberField";
 
 afterEach(cleanup);
@@ -87,6 +87,66 @@ describe("NumberField", () => {
       </NumberField.Root>,
     );
     expect(screen.getByTestId("scrub")).toBeInTheDocument();
+  });
+
+  describe("ScrubAreaCursor", () => {
+    // jsdom has no Pointer Lock API. Base UI asks for the lock when a mouse scrub starts and
+    // drops the virtual cursor when the request fails, so grant it.
+    beforeEach(() => {
+      document.body.requestPointerLock = () => Promise.resolve();
+      document.exitPointerLock = () => {};
+    });
+    afterEach(() => {
+      Reflect.deleteProperty(document.body, "requestPointerLock");
+      Reflect.deleteProperty(document, "exitPointerLock");
+    });
+
+    function ScrubField({ cursor }: { cursor?: React.ReactNode }) {
+      return (
+        <NumberField.Root defaultValue={0}>
+          <NumberField.ScrubArea>
+            <span>Amount</span>
+            <NumberField.ScrubAreaCursor data-testid="cursor">{cursor}</NumberField.ScrubAreaCursor>
+          </NumberField.ScrubArea>
+          <NumberField.Group>
+            <NumberField.Input aria-label="Amount" />
+          </NumberField.Group>
+        </NumberField.Root>
+      );
+    }
+
+    function startScrub() {
+      fireEvent.pointerDown(screen.getByText("Amount"), { pointerType: "mouse", button: 0 });
+    }
+
+    it("renders nothing until a scrub starts", () => {
+      render(<ScrubField />);
+      expect(screen.queryByTestId("cursor")).not.toBeInTheDocument();
+    });
+
+    it("shows a default cursor icon while scrubbing", async () => {
+      render(<ScrubField />);
+      startScrub();
+      const cursor = await screen.findByTestId("cursor");
+      expect(cursor).toBeVisible();
+      expect(cursor.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+    });
+
+    it("renders custom children in place of the default icon", async () => {
+      render(<ScrubField cursor={<span>drag</span>} />);
+      startScrub();
+      const cursor = await screen.findByTestId("cursor");
+      expect(cursor).toHaveTextContent("drag");
+      expect(cursor.querySelector("svg")).toBeNull();
+    });
+
+    it("removes the cursor when the scrub ends", async () => {
+      render(<ScrubField />);
+      startScrub();
+      await screen.findByTestId("cursor");
+      fireEvent.pointerUp(window);
+      await waitFor(() => expect(screen.queryByTestId("cursor")).not.toBeInTheDocument());
+    });
   });
 
   it("respects max constraint (does not increment beyond max)", async () => {
