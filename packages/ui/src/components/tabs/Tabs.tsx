@@ -55,10 +55,7 @@ export type TabsContentsProps = Omit<ComponentProps<"div">, "children"> & {
   transition?: MotionTransition;
 };
 
-export type TabsContentProps = ComponentProps<"div"> & {
-  /** Tab value that must match a corresponding `<Tabs.Tab value>`. */
-  value: unknown;
-};
+export type TabsContentProps = Omit<TabsPanelProps, "keepMounted" | "hidden">;
 
 /** Loose target type for motion `initial` / `animate` — keeps `Tabs.Animate` decoupled
  *  from motion's exported types since motion is an optional peer. */
@@ -156,10 +153,18 @@ function TabsPanel({ className, ...props }: TabsPanelProps) {
   );
 }
 
-function TabsIndicator({ className, render, ...props }: TabsIndicatorProps) {
+function TabsIndicator({
+  className,
+  render,
+  // Base UI's script places the indicator over the active tab in server HTML, so a
+  // server-rendered page shows it before React hydrates
+  renderBeforeHydration = true,
+  ...props
+}: TabsIndicatorProps) {
   return (
     <BaseTabs.Indicator
       {...props}
+      renderBeforeHydration={renderBeforeHydration}
       render={(renderProps, state) => (
         <TabsIndicatorElement
           {...renderProps}
@@ -169,6 +174,29 @@ function TabsIndicator({ className, render, ...props }: TabsIndicatorProps) {
         />
       )}
     />
+  );
+}
+
+const BOX_EDGES = ["left", "top", "width", "height"] as const;
+type IndicatorBox = Record<(typeof BOX_EDGES)[number], number>;
+
+/** Moves the indicator at once: Motion writes the values in its next frame */
+const SNAP = { duration: 0 };
+
+/**
+ * Whether the indicator is still sliding: the CSS fallback runs a transition, or Motion has not
+ * written `box` inline yet. A Motion spring ends exactly on its target.
+ */
+function isSliding(node: HTMLElement, box: IndicatorBox | null) {
+  if (typeof node.getAnimations === "function" && typeof CSSTransition !== "undefined") {
+    if (node.getAnimations().some((animation) => animation instanceof CSSTransition)) return true;
+  }
+  return (
+    box !== null &&
+    BOX_EDGES.some((edge) => {
+      const written = node.style[edge];
+      return written !== "" && Math.abs(Number.parseFloat(written) - box[edge]) > 0.5;
+    })
   );
 }
 
@@ -184,23 +212,54 @@ function TabsIndicatorElement({
   render: PartRenderProp<BaseTabs.Indicator.State>;
 }) {
   const { activeTabPosition: position, activeTabSize: size } = state;
-  const [indicatorRef, driven] = useMotionAnimate<HTMLElement>(
-    // While the tabs aren't rendered (display:none), Base UI measures the active tab as 0×0 and
-    // hides the indicator. That is no box to animate to: shown again, it jumps to the tab.
+  // While the tabs aren't rendered (display:none), Base UI measures the active tab as 0×0 and
+  // hides the indicator. That is no box to animate to: shown again, it jumps to the tab.
+  const box =
     position && size && size.width > 0 && size.height > 0
       ? { left: position.left, top: position.top, width: size.width, height: size.height }
-      : null,
-    { transition: springs.indicator, clear: ["left", "top", "width", "height"] },
-    ref,
+      : null;
+
+  // Only a change of the selected tab slides the indicator. Base UI measures the tab again when
+  // it or the list resizes (a font or padding change, a narrower container), and the indicator
+  // then jumps to it instead of trailing behind. A resize during a slide retargets the slide.
+  const selected = useContext(TabsContext)?.value;
+  const [slideTarget, setSlideTarget] = useState(selected);
+  const [sliding, setSliding] = useState(false);
+  if (selected !== slideTarget) {
+    setSlideTarget(selected);
+    setSliding(true);
+  }
+
+  const element = useRef<HTMLElement | null>(null);
+  const latestBox = useRef(box);
+  useLayoutEffect(() => {
+    latestBox.current = box;
+  });
+  useEffect(() => {
+    if (!sliding) return;
+    let frame = requestAnimationFrame(function settle() {
+      const node = element.current;
+      if (node && isSliding(node, latestBox.current)) frame = requestAnimationFrame(settle);
+      else setSliding(false);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [sliding]);
+
+  const [indicatorRef, driven] = useMotionAnimate<HTMLElement>(
+    box,
+    { transition: sliding ? springs.indicator : SNAP, clear: [...BOX_EDGES] },
+    useMergedRef(element, ref),
   );
   return useRenderPart(render, state, indicatorRef, {
     ...props,
     className: cn(
       "absolute rounded-md bg-background shadow-sm",
-      // The CSS fallback places the indicator from the variables Base UI sets on it. Motion
-      // writes inline values instead, and they are removed when it hands back.
+      // The CSS fallback places the indicator from the variables Base UI sets on it, and slides
+      // it with a transition, which is off unless it slides to another tab. Motion writes inline
+      // values instead, and they are removed when it hands back.
       !driven &&
         "top-(--active-tab-top) left-(--active-tab-left) h-(--active-tab-height) w-(--active-tab-width) micro-interactions",
+      !driven && !sliding && "transition-none",
       className,
     ),
   });
@@ -326,20 +385,30 @@ function TabsContents({ className, children, transition, ref, ...props }: TabsCo
   return (
     <div
       ref={mergedContainerRef}
-      // With Motion the track can be taller than the container. overflow:hidden would leave it
-      // scrollable, so scrollIntoView or focus could scroll the active panel's top out of view.
-      className={cn(motion ? "overflow-clip" : "overflow-hidden", className)}
+      // With Motion the track can be taller than the container, and the other panels sit beside
+      // it, so the container clips them. overflow:hidden would leave it scrollable, so
+      // scrollIntoView or focus could scroll the active panel's top out of view. The clip margin
+      // keeps a focus ring of up to 4px around the content whole; Safari has no
+      // overflow-clip-margin and clips it at the edge. Without Motion only the active panel shows,
+      // so nothing needs clipping. flow-root keeps a panel child's margins inside, as the Motion
+      // path's flex track does, so the content doesn't move when Motion loads.
+      className={cn(
+        motion ? "overflow-clip [overflow-clip-margin:--spacing(1)]" : "flow-root",
+        className,
+      )}
       {...props}
     >
-      {/* items-start: each panel keeps its own height, so the container can follow the active one */}
-      <div ref={trackRef} className={motion ? "flex items-start" : undefined}>
+      {/* items-start: each panel keeps its own height, so the container can follow the active one.
+          -mx-1 with the panels' px-1 puts 8px between panels and keeps each panel's content where
+          the container is, so the clip margin shows none of the panels beside it. */}
+      <div ref={trackRef} className={motion ? "-mx-1 flex items-start" : undefined}>
         {childrenArray.map((child, i) => (
           <div
             key={String(childValue(child) ?? i)}
             ref={(el) => {
               itemRefs.current[i] = el;
             }}
-            className={motion ? "w-full shrink-0" : undefined}
+            className={motion ? "w-full shrink-0 px-1" : undefined}
             style={!motion && i !== safeIndex ? { display: "none" } : undefined}
             inert={motion && i !== safeIndex ? true : undefined}
           >
@@ -355,8 +424,22 @@ function TabsContents({ className, children, transition, ref, ...props }: TabsCo
 // Content panel for use inside <Tabs.Contents>
 // ---------------------------------------------------------------------------
 
-function TabsContent({ className, value: _value, ...props }: TabsContentProps) {
-  return <div role="tabpanel" className={cn("outline-none", className)} {...props} />;
+// A Base UI panel, so it is a tabpanel labelled by its tab, and the tab's aria-controls points
+// to it. Tabs.Contents keeps every panel mounted and decides which shows, so the panel never
+// gets the `hidden` attribute: Motion slides the inactive ones into view.
+function TabsContent({ className, ...props }: TabsContentProps) {
+  return (
+    <BaseTabs.Panel
+      className={cnState(
+        // Inset, so Tabs.Contents never clips it, in browsers without overflow-clip-margin too
+        "focus-visible:-outline-offset-2 focus-visible:outline-2 focus-visible:outline-ring",
+        className,
+      )}
+      {...props}
+      keepMounted
+      hidden={false}
+    />
+  );
 }
 
 // ---------------------------------------------------------------------------
