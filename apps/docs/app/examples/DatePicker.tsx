@@ -1,6 +1,6 @@
 "use client";
 
-import { DatePicker } from "chunks-ui";
+import { Button, DatePicker, Field } from "chunks-ui";
 import { useState } from "react";
 import { Container } from "@/components";
 
@@ -58,6 +58,43 @@ export function DatePickerWeekOptionsExample() {
   return (
     <Container>
       <DatePicker weekStartsOn={1} showOutsideDays placeholder="Week starts on Monday" />
+    </Container>
+  );
+}
+
+export function DatePickerFieldExample() {
+  return (
+    <Container>
+      <Field.Root className="w-64">
+        <Field.Label>Due date</Field.Label>
+        <DatePicker />
+        <Field.Description>The task is overdue after this day.</Field.Description>
+      </Field.Root>
+    </Container>
+  );
+}
+
+export function DatePickerFormExample() {
+  const [submitted, setSubmitted] = useState<string | null>(null);
+
+  return (
+    <Container>
+      <form
+        className="flex w-64 flex-col gap-3"
+        onSubmit={(event) => {
+          event.preventDefault();
+          setSubmitted(String(new FormData(event.currentTarget).get("due")));
+        }}
+      >
+        <Field.Root>
+          <Field.Label>Due date (required)</Field.Label>
+          <DatePicker name="due" required />
+        </Field.Root>
+        <Button type="submit">Save</Button>
+        {submitted !== null && (
+          <p className="text-muted-foreground text-sm">Submitted: due={submitted}</p>
+        )}
+      </form>
     </Container>
   );
 }
