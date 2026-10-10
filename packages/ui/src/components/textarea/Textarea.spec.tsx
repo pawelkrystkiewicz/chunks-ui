@@ -44,6 +44,20 @@ describe("Textarea", () => {
     expect(screen.getByRole("textbox")).toHaveValue("Hi");
   });
 
+  it("calls onChange when controlled and shows the value it is given", async () => {
+    const onChange = vi.fn();
+    const { rerender } = render(<Textarea aria-label="Notes" value="abc" onChange={onChange} />);
+    const textarea = screen.getByRole("textbox");
+    expect(textarea).toHaveValue("abc");
+
+    await userEvent.type(textarea, "d");
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(textarea).toHaveValue("abc");
+
+    rerender(<Textarea aria-label="Notes" value="xyz" onChange={onChange} />);
+    expect(textarea).toHaveValue("xyz");
+  });
+
   it("is disabled by its own disabled prop", () => {
     render(<Textarea aria-label="Notes" disabled />);
     expect(screen.getByRole("textbox")).toBeDisabled();
