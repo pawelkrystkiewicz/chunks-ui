@@ -124,6 +124,9 @@ function ToastRoot({ className, toast, ...props }: ToastRootProps) {
       className={cnState(
         "Toast",
         "group relative flex w-full items-center gap-3 overflow-hidden rounded-sm border border-border bg-popover p-4 pr-10 shadow-lg",
+        // Past the provider's `limit`, Base UI makes a toast inert: it takes no space until newer
+        // ones close. The opt-in stack fades its own out in place (theme.css).
+        "not-[.toast-stack]:data-limited:hidden",
         !reduced && [
           "micro-interactions",
           "data-starting-style:translate-x-full data-starting-style:opacity-0",

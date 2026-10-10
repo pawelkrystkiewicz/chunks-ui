@@ -232,7 +232,7 @@ The stacking CSS respects `prefers-reduced-motion: reduce` — users with that s
 
 | Part | Description |
 |---|---|
-| `Toast.Provider` | Context provider. Must wrap any component that calls `useToast`. Accepts `timeout` and `limit`. |
+| `Toast.Provider` | Context provider. Must wrap any component that calls `useToast`. Accepts `timeout` and `limit` (default `3`). Toasts past the limit stay hidden until newer ones close. |
 | `Toast.Viewport` | Fixed-position container that renders all active toasts. |
 | `Toast.Root` | Individual toast wrapper with slide/fade enter/exit transitions. |
 | `Toast.Title` | Bold toast heading. |
