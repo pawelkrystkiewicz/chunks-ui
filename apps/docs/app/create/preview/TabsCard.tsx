@@ -32,7 +32,8 @@ export function TabsCard() {
           <Tabs.Tab value="notes" className={tabClass}>
             Notes
           </Tabs.Tab>
-          <Tabs.Indicator />
+          {/* renderBeforeHydration: /create is server-rendered, so the pill is in the first paint */}
+          <Tabs.Indicator renderBeforeHydration />
         </Tabs.List>
         {/* Tabs.Animate rather than Tabs.Contents: Contents clips the Note field's focus outline,
             and its Tabs.Content panels aren't labelled by their tabs as Tabs.Panel is */}

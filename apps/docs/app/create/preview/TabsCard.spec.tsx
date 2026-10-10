@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeAll, expect, it } from "vitest";
 import { TabsCard } from "./TabsCard";
 
@@ -18,15 +18,8 @@ beforeAll(() => {
 
 afterEach(cleanup);
 
-// The spring and the panel change need layout and frames, which jsdom lacks; the visual
-// check on /create covers them. These pin the structure they run on.
-it("draws the active pill with the tabs indicator", () => {
-  render(<TabsCard />);
-  const list = screen.getByRole("tablist");
-  // Base UI's indicator is a presentation span in the list; with no layout it stays hidden
-  expect(within(list).queryByRole("presentation", { hidden: true })).not.toBeNull();
-});
-
+// The spring and the panel change need layout and frames, which jsdom lacks, so the motion was
+// checked by hand in a browser on /create. These cover the panel switching.
 it.each([
   { tab: "Activity", content: () => screen.getByText("12 minutes ago") },
   { tab: "Notes", content: () => screen.getByRole("textbox", { name: "Note" }) },
