@@ -48,6 +48,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             />
           }
           pageMap={await getPageMap()}
+          // Base of the "Edit this page" and feedback links; Nextra appends the file path
+          docsRepositoryBase="https://github.com/pawelkrystkiewicz/chunks-ui/tree/master/apps/docs"
           footer={<Footer />}
         >
           {children}
