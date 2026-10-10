@@ -1,18 +1,17 @@
 import { render } from "@testing-library/react";
 import type { CSSProperties } from "react";
 import { describe, expect, it } from "vitest";
-import { reloadMotion } from "../../lib/use-motion";
-import { eachPaintedFrame, insetsWithin, waitForStable } from "../../VisualTest.utils";
+import {
+  eachPaintedFrame,
+  enterMotionPath,
+  insetsWithin,
+  MOTION_PATHS,
+  waitForStable,
+} from "../../VisualTest.utils";
 import { Tabs } from "./index";
 
 // Runs with reduced motion off: Motion springs the indicator, or without Motion the CSS
 // fallback slides it with a transition
-
-const PATHS = [
-  { path: "Motion", withMotion: true },
-  // Motion never arrives, so the CSS fallback drives the indicator
-  { path: "CSS fallback", withMotion: false },
-] as const;
 
 type Layout = {
   value?: "a" | "b";
@@ -43,12 +42,6 @@ const tabs = ({ value = "a", tabStyle, listPadding, width = 400, tabClassName }:
   </div>
 );
 
-/** Loads Motion, or holds it back for good. A held-back load never settles, so it isn't awaited */
-async function motion(withMotion: boolean) {
-  if (withMotion) await reloadMotion();
-  else void reloadMotion(new Promise(() => {}));
-}
-
 const boxOf = (el: Element) => {
   const { left, top, width, height } = el.getBoundingClientRect();
   return { left, top, width, height };
@@ -63,7 +56,7 @@ const offBy = (tab: Element, indicator: Element) =>
   Math.max(...Object.values(insetsWithin(tab, indicator)).map(Math.abs));
 
 async function renderTabs(withMotion: boolean, layout?: Layout) {
-  await motion(withMotion);
+  await enterMotionPath(withMotion);
   const result = render(tabs(layout));
   const indicator = result.getByTestId("indicator");
   // Motion drops the CSS fallback's position classes, which read Base UI's variables, once it
@@ -83,7 +76,7 @@ const RESIZES: [string, Layout][] = [
   ["the width of the box around the list", { width: 300 }],
 ];
 
-describe.each(PATHS)("Tabs.Indicator, $path", ({ withMotion }) => {
+describe.each(MOTION_PATHS)("Tabs.Indicator, $path", ({ withMotion }) => {
   it.each(RESIZES)(
     "follows a change to %s at once, with no frames in between",
     async (_, resized) => {

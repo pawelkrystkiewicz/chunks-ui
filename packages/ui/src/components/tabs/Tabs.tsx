@@ -55,10 +55,7 @@ export type TabsContentsProps = Omit<ComponentProps<"div">, "children"> & {
   transition?: MotionTransition;
 };
 
-export type TabsContentProps = Omit<TabsPanelProps, "value" | "keepMounted" | "hidden"> & {
-  /** Tab value that must match a corresponding `<Tabs.Tab value>`. */
-  value: TabsPanelProps["value"];
-};
+export type TabsContentProps = Omit<TabsPanelProps, "keepMounted" | "hidden">;
 
 /** Loose target type for motion `initial` / `animate` — keeps `Tabs.Animate` decoupled
  *  from motion's exported types since motion is an optional peer. */

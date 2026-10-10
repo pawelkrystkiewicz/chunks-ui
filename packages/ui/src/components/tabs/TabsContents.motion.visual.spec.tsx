@@ -1,8 +1,7 @@
 import { render } from "@testing-library/react";
 import { beforeAll, describe, expect, it } from "vitest";
 import { page, userEvent } from "vitest/browser";
-import { reloadMotion } from "../../lib/use-motion";
-import { waitForStable } from "../../VisualTest.utils";
+import { enterMotionPath, MOTION_PATHS, waitForStable } from "../../VisualTest.utils";
 import { Button } from "../button";
 import { Tabs } from "./index";
 
@@ -48,18 +47,6 @@ beforeAll(() => page.viewport(414, 600));
 
 const close = (a: Rgb, b: Rgb) => a.every((channel, i) => Math.abs(channel - (b[i] ?? 0)) <= 2);
 
-const PATHS = [
-  { path: "Motion", withMotion: true },
-  // Motion never arrives, so Tabs.Contents keeps the CSS fallback
-  { path: "CSS fallback", withMotion: false },
-] as const;
-
-/** Loads Motion, or holds it back for good. A held-back load never settles, so it isn't awaited */
-async function motion(withMotion: boolean) {
-  if (withMotion) await reloadMotion();
-  else void reloadMotion(new Promise(() => {}));
-}
-
 /** Waits until Tabs.Contents has settled on the path: Motion sets its height inline */
 async function settled(contents: HTMLElement, withMotion: boolean) {
   await expect.poll(() => contents.style.height !== "").toBe(withMotion);
@@ -69,11 +56,11 @@ async function settled(contents: HTMLElement, withMotion: boolean) {
   });
 }
 
-describe.each(PATHS)("Tabs.Contents, $path", ({ withMotion }) => {
+describe.each(MOTION_PATHS)("Tabs.Contents, $path", ({ withMotion }) => {
   // Button's ring is a 2px outline 2px outside it. A full-width button in the panel puts the
   // ring 2–4px outside Tabs.Contents on every side.
   it("shows the whole focus ring of content at its edges", async () => {
-    await motion(withMotion);
+    await enterMotionPath(withMotion);
     const { getByRole, getByTestId } = render(
       <div style={{ padding: 40 }}>
         <Tabs.Root defaultValue="a">
@@ -121,7 +108,7 @@ describe("Tabs.Contents with Motion, beside the active panel", () => {
   // The panels on either side fill their whole box with colour. Room left for focus rings
   // around the active panel must not show any of them.
   it("shows none of the panels next to it", async () => {
-    await motion(true);
+    await enterMotionPath(true);
     const block = <div className="h-20 bg-destructive" />;
     const { getByTestId } = render(
       <div style={{ padding: 40 }}>
@@ -159,8 +146,8 @@ describe("Tabs.Contents layout", () => {
   // moves when Motion loads.
   it("keeps a panel child's margins inside it, with and without Motion", async () => {
     const layout: Record<string, { offset: number; height: number }> = {};
-    for (const { path, withMotion } of PATHS) {
-      await motion(withMotion);
+    for (const { path, withMotion } of MOTION_PATHS) {
+      await enterMotionPath(withMotion);
       const { getByTestId, unmount } = render(
         <div style={{ padding: 40 }}>
           <Tabs.Root defaultValue="a">
