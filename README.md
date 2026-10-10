@@ -111,7 +111,7 @@ Shared spring presets in `src/lib/motion.ts`:
 - **overlay** — gentle fade for dialogs/drawers
 - **micro** — fast response for hover/focus
 
-All motion respects `prefers-reduced-motion` except the `Loader` spinner (also shown by `Button loading`). It is an essential status indicator, so it keeps spinning.
+All motion respects `prefers-reduced-motion` except the `Loader` spinner (also shown by `Button loading`) and the indeterminate `Progress` pulse. They are essential status indicators, so they keep running.
 
 ## Design Principles
 
