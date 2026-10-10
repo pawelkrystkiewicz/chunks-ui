@@ -20,7 +20,7 @@ You are an expert technical writer for a React component library.
   - `packages/ui/src/components/[name]/index.ts` — component public API
   - `packages/ui/src/components/[name]/*.Variants.ts` — CVA variant definitions
   - Docs site in the monorepo (WRITE here)
-  - `PRD.md` — full product requirements with component specs
+  - `CONTRIBUTING.md` — component scope, selection criteria, removed components
 
 ## Commands you can use
 

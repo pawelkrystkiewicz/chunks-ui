@@ -30,10 +30,55 @@ feat(tabs): add indicator animation
 fix(select): correct dropdown positioning
 refactor(button): extract loading state logic
 test(checkbox): add a11y violation checks
-docs(prd): update component tier list
+docs(contributing): update component scope
 ```
 
 Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `perf`
+
+## Component Scope
+
+Chunks UI is a personal design system, not a kitchen sink. If Tailwind or plain React does the job inline, it does not need a component.
+
+### Selection criteria
+
+A component earns its place if it meets **at least two** of:
+
+1. Used in 2+ personal projects
+2. Non-trivial to implement from scratch (accessibility, positioning, state)
+3. Provides meaningful animation choreography via Motion
+
+### One component, one job
+
+If a component needs a config prop to switch between different interaction models (`mode="select" | "combobox" | "search"`), make separate components instead. Shared logic lives in Base UI's headless layer, so the styled components stay small and testable on their own.
+
+The classic case is the "dropdown" god component that tries to be Select, Combobox and search box at once: every fix in one mode breaks the others. Chunks keeps them apart:
+
+| Component        | Input                         | Must pick from list? | Use case                        |
+| ---------------- | ----------------------------- | -------------------- | ------------------------------- |
+| **Select**       | No text input (click to open) | Yes                  | Country picker, status dropdown |
+| **Combobox**     | Text input filters the list   | Yes                  | User picker, tag selector       |
+| **Autocomplete** | Text input is the value       | No (free-form)       | Search box, address field       |
+
+Select and Combobox ship. Autocomplete (Base UI's free-form pattern) gets added only when a real use case appears.
+
+### Removed components
+
+Components from `@creation-ui/react` that were not carried forward:
+
+| Component                 | Why removed                                  | Use instead                                         |
+| ------------------------- | -------------------------------------------- | --------------------------------------------------- |
+| **Flex**                  | Tailwind does it in a few classes            | `<div className="flex gap-4 items-center">`         |
+| **Show**                  | Plain React syntax                           | `{condition && <X />}`                              |
+| **For**                   | Plain React syntax                           | `{items.map(item => ...)}`                          |
+| **Link**                  | Empty shell                                  | `Link` from Next.js or React Router                 |
+| **DarkModeToggle**        | Theme logic belongs to the app               | `ThemeToggle` (presentation-only, icon slots)       |
+| **LoadingOverlay**        | Trivial composition                          | Position a `Loader` over the content with Tailwind  |
+| **Highlighter**           | Niche search highlighting                    | App code                                            |
+| **Icon** (built-in paths) | Hardcoded SVG paths lock users in            | Pass any icon (e.g. Lucide) as `ReactNode`          |
+| **TouchTarget**           | Too small to be a component                  | `touch-target` CSS utility (planned, #200)          |
+| **Overlay**               | Not useful on its own                        | Built into Dialog and Drawer                        |
+| **DropdownChevron**       | Internal detail                              | Internal to Select and Combobox                     |
+| **Autocomplete** (custom) | Semantically a combobox (pick from list)     | `Combobox`                                          |
 
 ## Component Anatomy
 
