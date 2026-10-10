@@ -118,7 +118,9 @@ describe("toScopeStyle", () => {
   it("gives preview cards no shadow by default, like Card.Root", () => {
     for (const mode of ["light", "dark"] as const) {
       const style = toScopeStyle({ ...DEFAULT_THEME, mode }) as Record<string, string>;
-      expect(style["--preview-shadow"]).toBe("none");
+      // A transparent zero shadow, not `none`: Tailwind puts the value in a comma-separated
+      // `box-shadow` list, and `none` there makes the whole declaration invalid.
+      expect(style["--preview-shadow"]).toBe("0 0 #0000");
     }
   });
 
