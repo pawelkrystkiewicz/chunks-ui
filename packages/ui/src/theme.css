@@ -20,7 +20,7 @@
 
   /*
    * Lightness of coloured text (`text-primary-text` and co., see `@theme inline`), taken from
-   * its fill: at most 0.51, so it keeps 4.5:1 on the background and on a /10 tint of the fill.
+   * its fill: at most 0.51, so the default fills keep 4.5:1 on the background and on a /10 tint of the fill.
    * Success is the tightest: it is outside sRGB at this lightness, and browsers clip it lighter.
    */
   --colored-text-lightness: min(l, 0.51);

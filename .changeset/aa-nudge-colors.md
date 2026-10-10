@@ -9,7 +9,7 @@ Changed tokens, in both modes unless noted:
 | Token | Before | After |
 |---|---|---|
 | `--primary` | `oklch(60.48% 0.2165 257.21)` (#007bff) | `oklch(0.56 0.2165 257.21)` (#006cef) |
-| `--destructive` | `oklch(66.16% 0.2249 25.88)` (#ff4242) | `oklch(0.582 0.2249 25.88)` (#e11b28) |
+| `--destructive` | `oklch(66.16% 0.2249 25.88)` (#ff4242) | `oklch(0.582 0.2249 25.88)` (#e21c28) |
 | `--success-foreground` | `oklch(0.985 0 0)` (white) | `oklch(0.145 0 0)` (dark) |
 | `--muted-foreground` (light) | `oklch(0.556 0 0)` | `oklch(0.53 0 0)` |
 | `--ring` (light) | `oklch(0.708 0 0)` | `oklch(0.62 0 0)` |
