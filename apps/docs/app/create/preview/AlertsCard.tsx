@@ -29,7 +29,7 @@ export function AlertsCard() {
       {ALERTS.map(({ Icon, tone, title, text, action }) => (
         <Card.Root
           key={title}
-          className="flex items-start gap-3 rounded-lg px-4 py-3 shadow-[var(--preview-shadow)]"
+          className="flex-row items-start gap-3 rounded-lg px-4 py-3 shadow-[shadow:var(--preview-shadow)]"
         >
           <Icon size={18} className={`mt-px shrink-0 ${tone}`} aria-hidden="true" />
           <div className={`flex flex-1 flex-col ${action ? "gap-2" : ""}`}>

@@ -82,7 +82,7 @@ export const DEFAULT_THEME: Theme = {
   radius: 10,
   height: 35,
   spacing: 1,
-  shadow: "subtle",
+  shadow: "none",
   chart: "default",
 };
 

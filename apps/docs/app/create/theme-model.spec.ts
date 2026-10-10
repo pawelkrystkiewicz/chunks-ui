@@ -115,6 +115,13 @@ describe("presets", () => {
 });
 
 describe("toScopeStyle", () => {
+  it("gives preview cards no shadow by default, like Card.Root", () => {
+    for (const mode of ["light", "dark"] as const) {
+      const style = toScopeStyle({ ...DEFAULT_THEME, mode }) as Record<string, string>;
+      expect(style["--preview-shadow"]).toBe("none");
+    }
+  });
+
   it("writes px tokens and scales text by base size", () => {
     const style = toScopeStyle({ ...DEFAULT_THEME, fontSize: 16, spacing: 1.1 }) as Record<
       string,
