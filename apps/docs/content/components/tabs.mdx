@@ -46,6 +46,10 @@ import { Tabs } from "chunks-ui";
 
 `Tabs.Contents` keeps every `Tabs.Content` mounted. With Motion it slides between them and animates the height. For plain panels without animation, use `Tabs.Panel` instead, as in the Controlled example below. Only the active `Tabs.Panel` is mounted, unless you set `keepMounted`.
 
+Each `Tabs.Content` is a Base UI `Tabs.Panel` that stays mounted. It has `role="tabpanel"`, its tab names it, and the tab's `aria-controls` points to it. The active panel is in the tab order, as `Tabs.Panel` is, and shows a focus ring inside its edge.
+
+With Motion, `Tabs.Contents` clips the panels beside the active one. The clip leaves 4px of room around the content (`overflow-clip-margin`), so a focus ring of up to 4px outside an element at the edge shows in full. Safari does not support `overflow-clip-margin` and clips the ring at the edge; give such content some padding if that matters. Without Motion, or with reduced motion, nothing is clipped.
+
 ## Controlled
 
 ```tsx
@@ -257,7 +261,7 @@ function DirectionAwarePanel({ order, children }) {
 | `Tabs.Panel` | Content panel associated with a tab value. Mounted only while its tab is active, unless `keepMounted` is set. No animation. |
 | `Tabs.Indicator` | Pill behind the active tab. Slides to a tab when it becomes active. Shows before hydration on a server-rendered page. |
 | `Tabs.Contents` | Container that keeps every `Tabs.Content` mounted. With Motion it slides between them and animates the height. Without Motion, or with reduced motion, it shows only the active one, with no animation. |
-| `Tabs.Content` | Individual content panel for use inside `Tabs.Contents`. Requires a `value` matching a `Tabs.Tab`. |
+| `Tabs.Content` | Individual content panel for use inside `Tabs.Contents`. Requires a `value` matching a `Tabs.Tab`. A Base UI `Tabs.Panel` that stays mounted, labelled by its tab. |
 | `Tabs.Animate` | Wrapper for routed tabs or for several `Tabs.Panel`s. Re-keys its children on tab change (so they remount) and accepts `initial` / `animate` / `transition`. |
 
 ## Hooks
@@ -296,7 +300,7 @@ export default Props
   })}
 />
 
-All other props are forwarded to the underlying `<div>` element.
+All other props are forwarded to the underlying Base UI `Tabs.Panel`, except `keepMounted` and `hidden`: `Tabs.Contents` keeps every panel mounted and decides which one shows.
 
 ### Tabs.Animate Props
 

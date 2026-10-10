@@ -231,6 +231,35 @@ describe("Tabs", () => {
   });
 });
 
+describe("Tabs.Content", () => {
+  const tabs = (
+    <Tabs.Root defaultValue="a">
+      <Tabs.List>
+        <Tabs.Tab value="a">Alpha</Tabs.Tab>
+        <Tabs.Tab value="b">Beta</Tabs.Tab>
+      </Tabs.List>
+      <Tabs.Contents>
+        <Tabs.Content value="a">Panel A</Tabs.Content>
+        <Tabs.Content value="b">Panel B</Tabs.Content>
+      </Tabs.Contents>
+    </Tabs.Root>
+  );
+
+  it("is a tabpanel named by its tab, and the tab controls it", () => {
+    render(tabs);
+    for (const name of ["Alpha", "Beta"]) {
+      // The inactive panel is hidden from the accessibility tree
+      const panel = screen.getByRole("tabpanel", { name, hidden: true });
+      expect(screen.getByRole("tab", { name })).toHaveAttribute("aria-controls", panel.id);
+    }
+  });
+
+  it("has no a11y violations", async () => {
+    const { container } = render(tabs);
+    expect(await axe(container)).toHaveNoViolations();
+  });
+});
+
 describe("Tabs.Indicator in server HTML", () => {
   const tabs = (indicator: ReactNode) => (
     <Tabs.Root defaultValue="a">

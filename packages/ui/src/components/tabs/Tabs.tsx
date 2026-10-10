@@ -55,9 +55,9 @@ export type TabsContentsProps = Omit<ComponentProps<"div">, "children"> & {
   transition?: MotionTransition;
 };
 
-export type TabsContentProps = ComponentProps<"div"> & {
+export type TabsContentProps = Omit<TabsPanelProps, "value" | "keepMounted" | "hidden"> & {
   /** Tab value that must match a corresponding `<Tabs.Tab value>`. */
-  value: unknown;
+  value: TabsPanelProps["value"];
 };
 
 /** Loose target type for motion `initial` / `animate` — keeps `Tabs.Animate` decoupled
@@ -334,20 +334,26 @@ function TabsContents({ className, children, transition, ref, ...props }: TabsCo
   return (
     <div
       ref={mergedContainerRef}
-      // With Motion the track can be taller than the container. overflow:hidden would leave it
-      // scrollable, so scrollIntoView or focus could scroll the active panel's top out of view.
-      className={cn(motion ? "overflow-clip" : "overflow-hidden", className)}
+      // With Motion the track can be taller than the container, and the other panels sit beside
+      // it, so the container clips them. overflow:hidden would leave it scrollable, so
+      // scrollIntoView or focus could scroll the active panel's top out of view. The clip margin
+      // keeps a focus ring of up to 4px around the content whole; Safari has no
+      // overflow-clip-margin and clips it at the edge. Without Motion only the active panel shows,
+      // so nothing needs clipping.
+      className={cn(motion && "overflow-clip [overflow-clip-margin:--spacing(1)]", className)}
       {...props}
     >
-      {/* items-start: each panel keeps its own height, so the container can follow the active one */}
-      <div ref={trackRef} className={motion ? "flex items-start" : undefined}>
+      {/* items-start: each panel keeps its own height, so the container can follow the active one.
+          -mx-1 with the panels' px-1 puts 8px between panels and keeps each panel's content where
+          the container is, so the clip margin shows none of the panels beside it. */}
+      <div ref={trackRef} className={motion ? "-mx-1 flex items-start" : undefined}>
         {childrenArray.map((child, i) => (
           <div
             key={String(childValue(child) ?? i)}
             ref={(el) => {
               itemRefs.current[i] = el;
             }}
-            className={motion ? "w-full shrink-0" : undefined}
+            className={motion ? "w-full shrink-0 px-1" : undefined}
             style={!motion && i !== safeIndex ? { display: "none" } : undefined}
             inert={motion && i !== safeIndex ? true : undefined}
           >
@@ -363,8 +369,22 @@ function TabsContents({ className, children, transition, ref, ...props }: TabsCo
 // Content panel for use inside <Tabs.Contents>
 // ---------------------------------------------------------------------------
 
-function TabsContent({ className, value: _value, ...props }: TabsContentProps) {
-  return <div role="tabpanel" className={cn("outline-none", className)} {...props} />;
+// A Base UI panel, so it is a tabpanel labelled by its tab, and the tab's aria-controls points
+// to it. Tabs.Contents keeps every panel mounted and decides which shows, so the panel never
+// gets the `hidden` attribute: Motion slides the inactive ones into view.
+function TabsContent({ className, ...props }: TabsContentProps) {
+  return (
+    <BaseTabs.Panel
+      className={cnState(
+        // Inset, so Tabs.Contents never clips it, in browsers without overflow-clip-margin too
+        "focus-visible:-outline-offset-2 focus-visible:outline-2 focus-visible:outline-ring",
+        className,
+      )}
+      {...props}
+      keepMounted
+      hidden={false}
+    />
+  );
 }
 
 // ---------------------------------------------------------------------------
