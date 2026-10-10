@@ -23,7 +23,9 @@ it("writes the index to llms.txt and the full docs to llms-full.txt", async () =
   expect(index).toMatch(/^# chunks-ui\n/);
   expect(index).toMatch(/\/components\/button\)/);
   expect(index).toMatch(/\[Full documentation\]\(https:\/\/[^)]+\/llms-full\.txt\)/);
-  expect(await read("llms-full.txt")).toMatch(/^# chunks-ui — Full Documentation\n/);
+  const full = await read("llms-full.txt");
+  expect(full).toMatch(/^# chunks-ui — Full Documentation\n/);
+  expect(full).toContain("A styled button component built on Base UI's `Button` primitive.");
 });
 
 it("keeps the old llm.txt and llm-full.txt names as copies", async () => {
