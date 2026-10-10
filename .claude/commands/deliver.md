@@ -63,7 +63,7 @@ The builder's prompt starts with the System Prompt from `.claude/agents/builder.
 - **Gates before committing:** `cd <wt>/packages/ui && bunx vitest run <spec>`, then `cd <wt> && bun run check-types && bun run lint`.
 - **Visual baselines,** when rendering changes:
   1. Commit first.
-  2. Regenerate the Linux baselines in Docker and copy them back. CI renders on x86, so force `linux/amd64`; an arm64 render can differ from the CI render:
+  2. Regenerate the Linux baselines in Docker and copy them back. CI renders on x86, so force `linux/amd64`; an arm64 render can differ from the CI render. Under emulation on Apple silicon the run takes minutes, which is not a hang:
 
      ```bash
      D=<scratchpad>/ui-visual; rm -rf $D && mkdir -p $D && git -C <wt> archive HEAD | tar -x -C $D
@@ -74,7 +74,7 @@ The builder's prompt starts with the System Prompt from `.claude/agents/builder.
 
   3. Regenerate the Darwin baselines with `cd <wt>/packages/ui && bun run test:visual:update`.
   4. Look at every changed PNG before committing it.
-- **Commits:** `type(scope): message` with the co-author trailer, and **no push**. When the PR delivers only part of the issue, reference it as `Part of #<n>`, never with a closing keyword (`Closes`, `Fixes`, `Resolves`).
+- **Commits:** `type(scope): message` with the co-author trailer, and **no push**. Commits never use a closing keyword (`Closes`, `Fixes`, `Resolves`); reference the issue as `Part of #<n>`. Only the PR body decides whether the issue closes.
 - **Report back:** the commits, the test results, and anything left undone.
 
 ## 6. Review
@@ -128,7 +128,7 @@ cd <wt> && bun run lint && bun run check-types && bun run test && git push -u or
 The PR body has:
 
 - a Summary of what changed and why;
-- `Closes #<n>` when the PR meets every acceptance criterion. Otherwise write `Part of #<n>` and list the criteria still open, so the merge leaves the issue open;
+- `Closes #<n>` when the PR meets every acceptance criterion; check the diff against the issue's `- [ ]` list yourself, not the builder's report. Otherwise write `Part of #<n>` and list the criteria still open, so the merge leaves the issue open;
 - one line for each review finding, fixed or dropped;
 - a Test plan;
 - the Claude Code attribution line.
@@ -157,15 +157,15 @@ Run cleanup from the main checkout; this is the one exception to the worktree ru
 git worktree remove <wt> && git branch -D <type>/<slug>
 ```
 
-Tick the acceptance criteria the merged PR met, in the issue body:
+After a merge, tick the acceptance criteria the PR met in each issue's body. A closed issue still accepts the edit. Skip this when the input said not to merge, because nothing is delivered yet.
 
 ```bash
 gh issue view <n> --json body --jq .body > <scratchpad>/issue-<n>.md
-# change each met criterion from "- [ ]" to "- [x]" in that file
+# with the Edit tool, change each met criterion from "- [ ]" to "- [x]"
 gh issue edit <n> --body-file <scratchpad>/issue-<n>.md
 ```
 
-Set the board item to Done if closing the issue did not already move it. After a `Part of` PR, leave the issue open and In Progress.
+Then set the board item: after a `Closes` PR, Done (if closing the issue did not already move it); after a `Part of` PR, leave the issue open and In Progress.
 
 The final report covers:
 
