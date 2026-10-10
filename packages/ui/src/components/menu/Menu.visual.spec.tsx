@@ -1,5 +1,6 @@
 import { describe, it } from "vitest";
-import { renderFixture, renderPage } from "../../VisualTest.utils";
+import { commands, page, userEvent } from "vitest/browser";
+import { renderFixture, renderPage, SMALL_FEATURE_SCREENSHOT } from "../../VisualTest.utils";
 import { Menu } from "./index";
 
 describe("Menu", () => {
@@ -27,5 +28,25 @@ describe("Menu", () => {
       </div>,
     );
     await expect(body).toMatchScreenshot();
+  });
+
+  it("open with arrow", async () => {
+    const body = await renderPage(
+      <div style={{ padding: 40 }}>
+        <Menu.Root>
+          <Menu.Trigger>Options</Menu.Trigger>
+          <Menu.Content>
+            <Menu.Arrow />
+            <Menu.Item>Edit</Menu.Item>
+            <Menu.Item>Copy</Menu.Item>
+          </Menu.Content>
+        </Menu.Root>
+      </div>,
+    );
+    // Opened with the mouse, so the focused popup draws no focus ring over the arrow's base
+    await userEvent.click(page.getByRole("button", { name: "Options" }));
+    await commands.parkPointer();
+    // The arrow's border is faint against the page, so compare colours closely
+    await expect(body).toMatchScreenshot(SMALL_FEATURE_SCREENSHOT);
   });
 });

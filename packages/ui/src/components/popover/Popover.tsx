@@ -7,6 +7,7 @@ import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
 import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
 import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
+import { arrowClasses, arrowPopupClasses } from "./Popover.Variants";
 
 export type PopoverRootProps = ComponentProps<typeof BasePopover.Root>;
 export type PopoverTriggerProps = ComponentProps<typeof BasePopover.Trigger>;
@@ -82,6 +83,7 @@ function PopoverContentPopup({
         render={render}
         className={cnState(
           "rounded-md border border-border bg-popover p-4 text-popover-foreground shadow-md",
+          arrowPopupClasses,
           !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
           !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
           !useSpring && "micro-interactions",
@@ -94,9 +96,7 @@ function PopoverContentPopup({
 }
 
 function PopoverArrow({ className, ...props }: PopoverArrowProps) {
-  return (
-    <BasePopover.Arrow className={cnState("fill-popover stroke-border", className)} {...props} />
-  );
+  return <BasePopover.Arrow className={cnState(arrowClasses, className)} {...props} />;
 }
 
 function PopoverTitle({ className, ...props }: PopoverTitleProps) {
