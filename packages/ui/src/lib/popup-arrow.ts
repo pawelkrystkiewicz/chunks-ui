@@ -6,18 +6,20 @@
 /**
  * For a popup that can hold an arrow. `relative` makes the popup the arrow's containing block at
  * all times, not only while a scale animation transforms it. With an arrow inside, the popup moves
- * away from the trigger by the arrow's reach (2.5/√2 units, less the 1px border, rounded up to
- * 1.75 units: whole pixels at the default spacing), so `sideOffset` stays the gap between the
- * trigger and the tip.
+ * away from the trigger by `--popup-arrow-reach`, the arrow's reach (2.5/√2 units, less the 1px
+ * border, rounded up to 1.75 units: whole pixels at the default spacing), so `sideOffset` stays
+ * the gap between the trigger and the tip. Base UI measures `--available-height` from the
+ * positioner, before that move, so a popup that caps its height takes the reach off it too.
  */
 export const arrowPopupClasses = [
   "relative",
-  "has-[.PopupArrow]:data-[side=top]:mb-1.75",
-  "has-[.PopupArrow]:data-[side=bottom]:mt-1.75",
-  "has-[.PopupArrow]:data-[side=left]:mr-1.75",
-  "has-[.PopupArrow]:data-[side=right]:ml-1.75",
-  "has-[.PopupArrow]:data-[side=inline-start]:me-1.75",
-  "has-[.PopupArrow]:data-[side=inline-end]:ms-1.75",
+  "[--popup-arrow-reach:0px] has-[.PopupArrow]:[--popup-arrow-reach:calc(var(--spacing)*1.75)]",
+  "has-[.PopupArrow]:data-[side=top]:mb-(--popup-arrow-reach)",
+  "has-[.PopupArrow]:data-[side=bottom]:mt-(--popup-arrow-reach)",
+  "has-[.PopupArrow]:data-[side=left]:mr-(--popup-arrow-reach)",
+  "has-[.PopupArrow]:data-[side=right]:ml-(--popup-arrow-reach)",
+  "has-[.PopupArrow]:data-[side=inline-start]:me-(--popup-arrow-reach)",
+  "has-[.PopupArrow]:data-[side=inline-end]:ms-(--popup-arrow-reach)",
 ];
 
 export const arrowClasses = [

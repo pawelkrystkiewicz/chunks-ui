@@ -88,8 +88,8 @@ function MenuContentPopup({
         render={render}
         className={cnState(
           "flex min-w-[8rem] flex-col rounded-md border border-border bg-popover text-popover-foreground shadow-md",
-          "max-h-[var(--available-height)]",
           arrowPopupClasses,
+          "max-h-[calc(var(--available-height)-var(--popup-arrow-reach))]",
           !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
           !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
           // Only the fade and scale: `all` would also animate the max-height that --available-height drives

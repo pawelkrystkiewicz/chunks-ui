@@ -54,7 +54,28 @@ const CASES = [
     itemRole: "menuitem",
     key: "{End}",
   },
+  {
+    // The arrow moves the popup out from the trigger, past the edge Base UI measures from
+    name: "Menu with Menu.Arrow",
+    node: ui(
+      <Menu.Root>
+        <Menu.Trigger>Options</Menu.Trigger>
+        <Menu.Content data-testid="popup">
+          <Menu.Arrow />
+          {items.map((item) => (
+            <Menu.Item key={item}>{item}</Menu.Item>
+          ))}
+        </Menu.Content>
+      </Menu.Root>,
+    ),
+    trigger: () => screen.getByRole("button", { name: "Options" }),
+    itemRole: "menuitem",
+    key: "{End}",
+  },
 ];
+
+/** Base UI's default `collisionPadding`: the popup stays this far inside the viewport. */
+const COLLISION_PADDING_PX = 5;
 
 describe.each(CASES)("$name with many items", ({ name, node, trigger, itemRole, key }) => {
   describeMotionPaths(name, () => {
@@ -74,7 +95,7 @@ describe.each(CASES)("$name with many items", ({ name, node, trigger, itemRole, 
       expect(item.top).toBeGreaterThanOrEqual(box.top);
       expect(item.bottom).toBeLessThanOrEqual(box.bottom);
       expect(box.top).toBeGreaterThanOrEqual(0);
-      expect(box.bottom).toBeLessThanOrEqual(window.innerHeight);
+      expect(box.bottom).toBeLessThanOrEqual(window.innerHeight - COLLISION_PADDING_PX);
     });
   });
 
