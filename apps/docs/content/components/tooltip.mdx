@@ -45,7 +45,7 @@ import { Button, Tooltip } from "chunks-ui";
 
 ## Tooltip Provider
 
-Use `Tooltip.Provider` to share delay settings across multiple tooltips. This avoids delays when moving between nearby tooltips:
+Use `Tooltip.Provider` to share delay settings across multiple tooltips. Every `Tooltip.Trigger` inside it opens after the Provider's `delay`, and once one tooltip is open, moving to a nearby one opens it instantly:
 
 ```tsx
 <Tooltip.Provider delay={200} closeDelay={0}>
@@ -71,6 +71,8 @@ Use `Tooltip.Provider` to share delay settings across multiple tooltips. This av
 
 <TooltipProviderExample />
 
+A `delay` on a `Tooltip.Trigger` overrides the Provider's for that trigger.
+
 ## Positioning
 
 The popup sits 2 spacing units (8px at the default `--spacing`) from the trigger, so the arrow tip clears the trigger at any spacing. A `sideOffset` on the positioner adds to that gap. Override placement with `side` and `align`:
@@ -93,8 +95,8 @@ The popup sits 2 spacing units (8px at the default `--spacing`) from the trigger
 | `Tooltip.Positioner` | Floating UI positioner. `z-tooltips` (400). No default `sideOffset`; the gap to the trigger is a 2-spacing-unit margin on `Tooltip.Popup`, and a `sideOffset` adds to it. |
 | `Tooltip.Popup` | The tooltip content. Dark background (`bg-foreground`), light text (`text-background`). |
 | `Tooltip.Arrow` | A rotated square (`bg-foreground`) absolutely positioned at the popup edge. Aligned to the anchor via Base UI CSS variables. |
-| `Tooltip.Provider` | Shared delay configuration for grouped tooltips. |
+| `Tooltip.Provider` | Shared delay configuration for grouped tooltips. `delay` defaults to `50`. |
 
 ## Props
 
-All compound parts are thin style wrappers. Props are forwarded to the underlying Base UI [`Tooltip`](https://base-ui.com/react/components/tooltip#api-reference). Note that `Tooltip.Trigger` defaults `delay` to `50` (Base UI default is `600`).
+All compound parts are thin style wrappers. Props are forwarded to the underlying Base UI [`Tooltip`](https://base-ui.com/react/components/tooltip#api-reference). The open delay is `50`ms by default (Base UI's default is `600`). A `Tooltip.Trigger` uses its own `delay` if set, then the nearest `Tooltip.Provider`'s `delay`, then `50`.

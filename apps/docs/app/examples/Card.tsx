@@ -47,14 +47,14 @@ export function CardCustomContentExample() {
         <Card.Content>
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-3">
-              <Avatar alt="Alice Johnson" size={32} />
+              <Avatar fallback="AJ" size={32} />
               <div>
                 <p className="font-medium text-sm">Alice Johnson</p>
                 <p className="text-muted-foreground text-xs">Admin</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Avatar alt="Bob Smith" size={32} />
+              <Avatar fallback="BS" size={32} />
               <div>
                 <p className="font-medium text-sm">Bob Smith</p>
                 <p className="text-muted-foreground text-xs">Member</p>

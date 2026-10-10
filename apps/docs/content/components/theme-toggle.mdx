@@ -45,6 +45,23 @@ Replace the default sun/moon icons via `lightIcon` and `darkIcon`:
 
 <ThemeToggleCustomIconsExample />
 
+## With a Tooltip
+
+`ThemeToggle` forwards its `ref` and props to the `<button>`, so it works as a `Tooltip.Trigger` render target:
+
+```tsx
+<Tooltip.Root>
+  <Tooltip.Trigger
+    render={<ThemeToggle theme={theme} onClick={() => setTheme(theme === "light" ? "dark" : "light")} />}
+  />
+  <Tooltip.Portal>
+    <Tooltip.Positioner>
+      <Tooltip.Popup>Toggle theme</Tooltip.Popup>
+    </Tooltip.Positioner>
+  </Tooltip.Portal>
+</Tooltip.Root>
+```
+
 ## Props
 
 <TSDoc
@@ -57,4 +74,4 @@ export default Props
   })}
 />
 
-All other props are forwarded to the underlying `<button>` element.
+All other `<button>` props, including `ref`, are forwarded to the underlying `<button>` element. Pass `aria-label` to replace the default name ("Switch to dark mode" / "Switch to light mode").

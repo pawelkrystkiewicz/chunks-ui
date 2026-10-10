@@ -1,7 +1,7 @@
 "use client";
 
 import { Tooltip as BaseTooltip } from "@base-ui/react/tooltip";
-import type { ComponentProps } from "react";
+import { type ComponentProps, createContext, useContext } from "react";
 import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
@@ -9,6 +9,7 @@ import { usePortalContainer } from "../../lib/portal-container";
 import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
 
 export type TooltipRootProps = ComponentProps<typeof BaseTooltip.Root>;
+export type TooltipProviderProps = ComponentProps<typeof BaseTooltip.Provider>;
 export type TooltipTriggerProps = ComponentProps<typeof BaseTooltip.Trigger>;
 export type TooltipPortalProps = ComponentProps<typeof BaseTooltip.Portal>;
 export type TooltipPositionerProps = ComponentProps<typeof BaseTooltip.Positioner>;
@@ -75,8 +76,24 @@ function TooltipPositioner({ className, ...props }: TooltipPositionerProps) {
   return <BaseTooltip.Positioner className={cnState("z-tooltips", className)} {...props} />;
 }
 
-function TooltipTrigger({ delay = 50, ...props }: TooltipTriggerProps) {
-  return <BaseTooltip.Trigger delay={delay} {...props} />;
+// Base UI's own default open delay is 600ms; chunks-ui opens after 50ms.
+const DEFAULT_DELAY = 50;
+
+// Base UI resolves a Trigger's `delay` before the Provider's, so the Trigger can't default it
+// itself. It reads the nearest Provider's delay from here, or 50ms when there's no Provider.
+const TooltipDelayContext = createContext(DEFAULT_DELAY);
+
+function TooltipProvider({ delay = DEFAULT_DELAY, ...props }: TooltipProviderProps) {
+  return (
+    <TooltipDelayContext.Provider value={delay}>
+      <BaseTooltip.Provider delay={delay} {...props} />
+    </TooltipDelayContext.Provider>
+  );
+}
+
+function TooltipTrigger({ delay, ...props }: TooltipTriggerProps) {
+  const providerDelay = useContext(TooltipDelayContext);
+  return <BaseTooltip.Trigger delay={delay ?? providerDelay} {...props} />;
 }
 
 export const Tooltip = {
@@ -86,5 +103,5 @@ export const Tooltip = {
   Positioner: TooltipPositioner,
   Popup: TooltipPopup,
   Arrow: TooltipArrow,
-  Provider: BaseTooltip.Provider,
+  Provider: TooltipProvider,
 };

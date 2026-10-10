@@ -18,10 +18,9 @@ import { ThemeToggle } from "./components/theme-toggle";
  * same as any other utility does over a component's own styles. With reduced motion nothing
  * turns the transition back on, not even a `transition-*` utility.
  *
- * The parts that set their own transition or animation outside the class turn it off with
- * reduced motion as well: the Accordion panel and chevron, the Progress indicator (width and
- * the indeterminate pulse) and the ScrollArea scrollbar. A consumer's `animate-*` class on the
- * Progress indicator replaces the pulse.
+ * The parts that set their own transition outside the class turn it off with reduced motion
+ * as well: the Accordion panel and chevron, the Progress indicator width and the ScrollArea
+ * scrollbar. The indeterminate Progress pulse keeps running (Progress.visual.spec.tsx).
  */
 
 type Transition = { property: string; duration: string; timingFunction: string };
@@ -90,10 +89,10 @@ const accordion = (
   </Accordion.Root>
 );
 
-const progress = (value: number | null, className?: string) => (
-  <Progress.Root value={value}>
+const progress = (
+  <Progress.Root value={40}>
     <Progress.Track>
-      <Progress.Indicator data-testid="target" className={className} />
+      <Progress.Indicator data-testid="target" />
     </Progress.Track>
   </Progress.Root>
 );
@@ -106,7 +105,7 @@ const OWN_TRANSITIONS = [
     property: "rotate",
     renderPart: () => render(accordion).getByRole("button").querySelector("svg") as Element,
   },
-  { part: "Progress.Indicator", property: "width", renderPart: () => renderTarget(progress(40)) },
+  { part: "Progress.Indicator", property: "width", renderPart: () => renderTarget(progress) },
   {
     part: "ScrollArea.Scrollbar",
     property: "opacity",
@@ -232,36 +231,4 @@ describe("component motion with reduced motion", () => {
     await expect.poll(() => panel()?.getBoundingClientRect().height ?? 0).toBeGreaterThan(0);
     expect(panel()).toBeVisible();
   });
-});
-
-describe("Progress.Indicator indeterminate animation", () => {
-  afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
-
-  // Full class names, so Tailwind generates them
-  it.each([
-    { reducedMotion: "no-preference", className: undefined, animation: "pulse" },
-    {
-      reducedMotion: "no-preference",
-      className: "data-[indeterminate]:animate-bounce",
-      animation: "bounce",
-    },
-    {
-      reducedMotion: "no-preference",
-      className: "data-[indeterminate]:animate-none",
-      animation: "none",
-    },
-    { reducedMotion: "reduce", className: undefined, animation: "none" },
-    {
-      reducedMotion: "reduce",
-      className: "data-[indeterminate]:animate-bounce",
-      animation: "none",
-    },
-  ] as const)(
-    "animates as $animation with $reducedMotion and $className",
-    async ({ reducedMotion, className, animation }) => {
-      await commands.emulateMedia({ reducedMotion });
-      const indicator = renderTarget(progress(null, className));
-      expect(getComputedStyle(indicator).animationName).toBe(animation);
-    },
-  );
 });

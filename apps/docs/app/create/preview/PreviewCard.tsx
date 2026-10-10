@@ -1,12 +1,15 @@
 import { Card, cn } from "chunks-ui";
 import type { ComponentProps } from "react";
 
-/** Masonry card shell. The Shadow knob drives `--preview-shadow` on the scope. */
+/**
+ * Masonry card shell. The Shadow knob drives `--preview-shadow` on the scope. The `shadow:` type
+ * hint lets `cn` see a shadow class, so a card's own `shadow-*` class replaces it.
+ */
 export function PreviewCard({ className, ...props }: ComponentProps<"div">) {
   return (
     <Card.Root
       className={cn(
-        "mb-5 flex break-inside-avoid flex-col gap-5 p-6 shadow-[var(--preview-shadow)]",
+        "mb-5 flex break-inside-avoid flex-col gap-5 p-6 shadow-[shadow:var(--preview-shadow)]",
         className,
       )}
       {...props}

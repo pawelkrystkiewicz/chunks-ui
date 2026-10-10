@@ -1,23 +1,22 @@
 "use client";
 
-import type React from "react";
+import type { ComponentProps, MouseEventHandler, ReactNode } from "react";
 import { cn } from "../../lib/cn";
 import { useReducedMotion } from "../../lib/use-motion";
 
 export type Theme = "light" | "dark";
 
-export interface ThemeToggleProps {
+export interface ThemeToggleProps extends Omit<ComponentProps<"button">, "children"> {
   /** Current active theme.
    * @remarks `"light" | "dark"`
    */
   theme: Theme;
   /** Called when the toggle button is clicked. */
-  onClick?: React.MouseEventHandler<HTMLButtonElement>;
+  onClick?: MouseEventHandler<HTMLButtonElement>;
   /** Custom icon shown when the theme is light. */
-  lightIcon?: React.ReactNode;
+  lightIcon?: ReactNode;
   /** Custom icon shown when the theme is dark. */
-  darkIcon?: React.ReactNode;
-  className?: string;
+  darkIcon?: ReactNode;
 }
 
 function SunIcon() {
@@ -59,14 +58,22 @@ function MoonIcon() {
   );
 }
 
-export function ThemeToggle({ theme, onClick, lightIcon, darkIcon, className }: ThemeToggleProps) {
+export function ThemeToggle({
+  theme,
+  lightIcon,
+  darkIcon,
+  className,
+  type = "button",
+  "aria-label": ariaLabel,
+  ...props
+}: ThemeToggleProps) {
   const reduced = useReducedMotion();
 
   return (
     <button
-      type="button"
-      onClick={onClick}
-      aria-label={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
+      {...props}
+      type={type}
+      aria-label={ariaLabel ?? (theme === "light" ? "Switch to dark mode" : "Switch to light mode")}
       className={cn(
         "relative size-9 cursor-pointer rounded-md",
         "text-muted-foreground hover:bg-accent hover:text-foreground",

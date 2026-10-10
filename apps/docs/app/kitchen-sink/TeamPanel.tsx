@@ -10,8 +10,8 @@ export function TeamPanel() {
       {TEAM.map((member) => {
         const pct = Math.round((member.tasksCompleted / member.tasksTotal) * 100);
         return (
-          <Card.Root key={member.id}>
-            <Card.Content className="p-4">
+          <Card.Root key={member.id} className="py-4">
+            <Card.Content className="px-4">
               <div className="flex items-start gap-3">
                 <Avatar src={member.avatar} alt={member.name} size={40} />
                 <div className="min-w-0 flex-1">

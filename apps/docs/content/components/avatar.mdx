@@ -4,7 +4,7 @@ import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
 # Avatar
 
-Displays a user avatar image with automatic fallback to initials. Supports numeric sizing and multiple shapes.
+Displays a user avatar image with automatic fallback to initials. Supports numeric sizing and multiple shapes. Built on Base UI's [`Avatar`](https://base-ui.com/react/components/avatar).
 
 ## Import
 
@@ -32,6 +32,8 @@ Without an image (shows initials derived from `alt`):
 </Container>
 
 This renders "JD" as fallback initials.
+
+The initials also show while the image loads and if it fails to load (a 404, a blocked or expired URL), so a broken image never shows.
 
 ## Custom Fallback
 
@@ -78,11 +80,22 @@ The `size` prop accepts a numeric value in pixels:
 
 ## Initials Generation
 
-When no `src` is provided and no `fallback` is set, initials are automatically generated from the `alt` text:
+When there is no image to show (no `src`, or it is loading or failed) and no `fallback` is set, initials are automatically generated from the `alt` text:
 
 - `"Jane Doe"` produces `"JD"`
 - `"Alice B. Charlie"` produces `"AB"` (first two initials)
 - Single word `"Admin"` produces `"A"`
+
+## Accessibility
+
+`alt` names the avatar. With a loaded image, the name is the image's alt text. Without one, the initials are exposed as an image (`role="img"`) labelled with `alt`, so screen readers announce "Jane Doe", not "JD". Without `alt`, the avatar is decorative and hidden from assistive technology.
+
+Next to a visible name, omit `alt` and pass the initials as `fallback`, so the name isn't announced twice:
+
+```tsx
+<Avatar fallback="JD" />
+<span>Jane Doe</span>
+```
 
 ## Props
 
