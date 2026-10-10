@@ -46,9 +46,9 @@ import { Tabs } from "chunks-ui";
 
 `Tabs.Contents` keeps every `Tabs.Content` mounted. With Motion it slides between them and animates the height. For plain panels without animation, use `Tabs.Panel` instead, as in the Controlled example below. Only the active `Tabs.Panel` is mounted, unless you set `keepMounted`.
 
-Each `Tabs.Content` is a Base UI `Tabs.Panel` that stays mounted. It has `role="tabpanel"`, its tab names it, and the tab's `aria-controls` points to it. The active panel is in the tab order, as `Tabs.Panel` is, and shows a focus ring inside its edge.
+Each `Tabs.Content` is a Base UI `Tabs.Panel` that stays mounted. It has `role="tabpanel"`, its tab names it, and the tab's `aria-controls` points to it. The active panel is in the tab order, as `Tabs.Panel` is, and shows a focus ring inside its edge. Outside `Tabs.Contents`, every `Tabs.Content` shows, and the inactive ones are inert; for plain panels that show and hide, use `Tabs.Panel`.
 
-With Motion, `Tabs.Contents` clips the panels beside the active one. The clip leaves 4px of room around the content (`overflow-clip-margin`), so a focus ring of up to 4px outside an element at the edge shows in full. Safari does not support `overflow-clip-margin` and clips the ring at the edge; give such content some padding if that matters. Without Motion, or with reduced motion, nothing is clipped.
+With Motion, `Tabs.Contents` clips the panels beside the active one. The clip leaves 4px of room around the content (`overflow-clip-margin`), so a focus ring of up to 4px outside an element at the edge shows in full. That room counts as overflow too: when `Tabs.Contents` sits flush against the edge of a scroll container, the container can scroll 4px further, which can show a scrollbar or let a touch screen pan sideways. Give that scroll container at least 4px of padding, or give the content an inset focus ring. Safari does not support `overflow-clip-margin`, so it adds no overflow there, but it clips a ring at the edge; the same padding or inset ring helps. Without Motion, or with reduced motion, nothing is clipped.
 
 ## Controlled
 
