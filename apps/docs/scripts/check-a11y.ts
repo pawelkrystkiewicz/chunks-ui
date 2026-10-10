@@ -108,16 +108,21 @@ function pages() {
     const route = file.replace(/\.mdx$/, "").replace(/(^|\/)index$/, "");
     return `/${route}`;
   });
+  if (routes.length === 0) throw new Error(`No .mdx pages under ${join(DOCS_DIR, "content")}`);
   return routes.sort();
 }
 
+/** Whether anything answers HTTP on the port, whatever the status */
 async function answers() {
   try {
-    return (await fetch(BASE_URL)).ok;
+    await fetch(BASE_URL);
+    return true;
   } catch {
     return false;
   }
 }
+
+const STARTUP_MS = 60_000;
 
 async function startServer() {
   // A server left on the port would serve an older build
@@ -127,16 +132,25 @@ async function startServer() {
     stdout: "ignore",
     stderr: "inherit",
   });
-  for (let attempt = 0; attempt < 120; attempt++) {
-    if (await answers()) return server;
-    await Bun.sleep(500);
+  const deadline = Date.now() + STARTUP_MS;
+  while (!(await answers())) {
+    if (server.exitCode !== null) {
+      throw new Error(
+        `next start exited with code ${server.exitCode} before answering on ${BASE_URL}; see its output above (no docs build is the usual cause)`,
+      );
+    }
+    if (Date.now() > deadline) {
+      server.kill();
+      throw new Error(`next start did not answer on ${BASE_URL} within ${STARTUP_MS / 1000}s`);
+    }
+    // Wake early if the server dies
+    await Promise.race([Bun.sleep(500), server.exited]);
   }
-  server.kill();
-  throw new Error(`next start did not answer on ${BASE_URL}; run the docs build first`);
+  return server;
 }
 
 async function audit(browser: Browser, route: string, theme: Theme, matched: Map<Allowed, number>) {
-  const context = await browser.newContext({ colorScheme: theme });
+  const context = await browser.newContext({ colorScheme: theme, reducedMotion: "reduce" });
   // Nextra (next-themes) reads the theme from localStorage before it paints
   await context.addInitScript((value) => localStorage.setItem("theme", value), theme);
   const page = await context.newPage();
@@ -150,6 +164,13 @@ async function audit(browser: Browser, route: string, theme: Theme, matched: Map
   try {
     const response = await page.goto(BASE_URL + route, { waitUntil: "networkidle" });
     if (!response?.ok()) throw new Error(`${route} answered ${response?.status()}`);
+    // next-themes puts the theme's name on <html>; without it the page was audited in the other one
+    const htmlClass = await page.evaluate(() => document.documentElement.className);
+    if (!htmlClass.split(" ").includes(theme)) {
+      throw new Error(
+        `${route} did not switch to the ${theme} theme (<html class="${htmlClass}">)`,
+      );
+    }
     const { violations } = await new AxeBuilder({ page }).withTags(TAGS).analyze();
     const problems: Problem[] = [];
     if (failed.length > 0) {
@@ -188,19 +209,21 @@ async function audit(browser: Browser, route: string, theme: Theme, matched: Map
 if (import.meta.main) {
   const routes = pages();
   const server = await startServer();
-  const browser = await chromium.launch();
   const problems: Problem[] = [];
   const matched = new Map<Allowed, number>();
+  let browser: Browser | undefined;
   try {
+    browser = await chromium.launch();
+    const launched = browser;
     const queue = routes.flatMap((route) => THEMES.map((theme) => ({ route, theme })));
     const workers = Array.from({ length: PARALLEL }, async () => {
       for (let job = queue.shift(); job; job = queue.shift()) {
-        problems.push(...(await audit(browser, job.route, job.theme, matched)));
+        problems.push(...(await audit(launched, job.route, job.theme, matched)));
       }
     });
     await Promise.all(workers);
   } finally {
-    await browser.close();
+    await browser?.close();
     server.kill();
   }
 
