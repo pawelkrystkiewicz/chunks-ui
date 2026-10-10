@@ -68,13 +68,11 @@ describe("palette", () => {
     expect(palette(pink, "light")["primary-foreground"]).toBe("oklch(0.145 0 0)");
   });
 
-  it("derives coloured text from each fill, darker in light mode and lighter in dark mode", () => {
-    expect(palette(DEFAULT_THEME, "light")["primary-text"]).toBe(
-      "oklch(from var(--primary) min(l, 0.51) c h)",
-    );
-    expect(palette(DEFAULT_THEME, "dark")["destructive-text"]).toBe(
-      "oklch(from var(--destructive) max(l, 0.63) c h)",
-    );
+  it("does not throw on a stored primary with a negative hue and picks a passing foreground", () => {
+    const odd: Theme = { ...DEFAULT_THEME, primary: { l: 0.6, c: 0.2, h: -30 } };
+    const pal = palette(odd, "light");
+    const fg = parseOklch(pal["primary-foreground"] ?? "");
+    expect(contrast(fg, odd.primary)).toBeGreaterThanOrEqual(4.5);
   });
 
   it("spreads vivid charts 72° apart", () => {
@@ -163,12 +161,9 @@ describe("buildCss", () => {
     expect(css).toContain("\n}\n\n.dark {\n  --primary: oklch(0.56 0.2165 257.21);");
   });
 
-  it("exports the coloured-text tokens for both modes", () => {
-    const [light = "", dark = ""] = buildCss(DEFAULT_THEME).split("\n.dark {");
-    for (const role of ["primary", "success", "warning", "destructive"]) {
-      expect(light).toContain(`  --${role}-text: oklch(from var(--${role}) min(l, 0.51) c h);`);
-      expect(dark).toContain(`  --${role}-text: oklch(from var(--${role}) max(l, 0.63) c h);`);
-    }
+  it("leaves the coloured-text tokens out", () => {
+    // Pasted on :root, `--X-text` would resolve against the root's `--X`; theme.css derives them where used.
+    expect(buildCss(DEFAULT_THEME)).not.toContain("-text:");
   });
 
   it("names both fonts when heading and body differ", () => {

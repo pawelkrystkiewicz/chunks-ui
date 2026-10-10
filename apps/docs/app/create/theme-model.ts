@@ -247,12 +247,11 @@ const FILLS = {
   destructive: "oklch(0.582 0.2249 25.88)",
 };
 
-/**
- * Coloured text (`--primary-text` and co.) keeps the fill's hue and chroma and moves its
- * lightness: at most 0.51 in light mode, at least 0.63 in dark mode. `theme.css` leaves these
- * tokens unset and derives the same shade where it is used; "Get code" writes them out.
- */
-const TEXT_LIGHTNESS: Record<Mode, string> = { light: "min(l, 0.51)", dark: "max(l, 0.63)" };
+const FILL_COLORS = {
+  success: parseOklch(FILLS.success),
+  warning: parseOklch(FILLS.warning),
+  destructive: parseOklch(FILLS.destructive),
+};
 
 export function palette(t: Theme, mode: Mode): Record<string, string> {
   const b = baseOf(t.base);
@@ -261,27 +260,20 @@ export function palette(t: Theme, mode: Mode): Record<string, string> {
   const p = t.primary;
   const ink = p.c < 0.01;
   // White or dark text on a fill, whichever has more contrast. The two can't both reach 4.5:1.
-  const textOn = (fill: string) => {
-    const f = parseOklch(fill);
+  const textOn = (f: Oklch) => {
     const white = contrast({ l: 0.985, c: 0, h: 0 }, f);
     return white >= contrast({ l: 0.145, c: b.c, h: b.h }, f) ? "oklch(0.985 0 0)" : n(0.145);
   };
   const primary = ink ? (d ? n(0.922) : n(0.205)) : ok(p.l, p.c, p.h);
   const out: Record<string, string> = {
     primary,
-    "primary-foreground": ink ? (d ? n(0.205) : n(0.985)) : textOn(primary),
+    "primary-foreground": ink ? (d ? n(0.205) : n(0.985)) : textOn(p),
     success: FILLS.success,
-    "success-foreground": textOn(FILLS.success),
+    "success-foreground": textOn(FILL_COLORS.success),
     warning: FILLS.warning,
-    "warning-foreground": textOn(FILLS.warning),
+    "warning-foreground": textOn(FILL_COLORS.warning),
     destructive: FILLS.destructive,
-    "destructive-foreground": textOn(FILLS.destructive),
-    ...Object.fromEntries(
-      (["primary", "success", "warning", "destructive"] as const).map((role) => [
-        `${role}-text`,
-        `oklch(from var(--${role}) ${TEXT_LIGHTNESS[mode]} c h)`,
-      ]),
-    ),
+    "destructive-foreground": textOn(FILL_COLORS.destructive),
     background: d ? n(0.145) : "oklch(1 0 0)",
     foreground: d ? n(0.985) : n(0.145),
     card: d ? n(0.145) : "oklch(1 0 0)",
