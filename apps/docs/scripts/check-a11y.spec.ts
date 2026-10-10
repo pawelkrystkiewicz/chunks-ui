@@ -1,5 +1,6 @@
+// @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
-import { type Allowed, allowedFor, staleEntries } from "./check-a11y";
+import { type Allowed, allowedFor, firstMatch, staleEntries } from "./check-a11y";
 
 const everywhere: Allowed = { rule: "link-name", selector: "a", why: "everywhere" };
 const onChip: Allowed = {
@@ -53,5 +54,21 @@ describe("staleEntries", () => {
       expect.stringContaining("/kitchen-sink"),
       expect.stringContaining("dark"),
     ]);
+  });
+});
+
+describe("firstMatch", () => {
+  document.body.innerHTML = '<p class="tint"><span class="label">Done</span></p>';
+
+  it("matches the flagged element itself", () => {
+    expect(firstMatch(["span.label", [".other", "span"]])).toBe(1);
+  });
+
+  it("does not match an ancestor of the flagged element", () => {
+    expect(firstMatch(["span.label", [".tint"]])).toBe(-1);
+  });
+
+  it("matches nothing when the target is not in the page", () => {
+    expect(firstMatch(["#missing", ["span"]])).toBe(-1);
   });
 });

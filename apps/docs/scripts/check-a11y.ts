@@ -23,7 +23,7 @@ const PARALLEL = 4;
 export type Theme = (typeof THEMES)[number];
 
 /**
- * An accepted violation: one axe rule on the elements matching `selector` (or inside them), on
+ * An accepted violation: one axe rule on the flagged elements that match `selector`, on
  * `pages` and in `themes` (every page and theme when left out). Keep entries specific, scope them
  * to where they occur, and link the issue that removes them. The run fails when an entry matches
  * nothing, or never matches on one of its pages or in one of its themes, so fixed ones can't linger.
@@ -50,13 +50,21 @@ const ALLOWED: Allowed[] = [
   },
   {
     rule: "color-contrast",
-    selector: 'pre code span[style*="--shiki-"]',
-    why: "Nextra's default Shiki themes: github-light parameters 3.48:1, github-dark comments 4.36:1",
+    selector: 'pre code span[style*="--shiki-light:#E36209"]',
+    why: "Nextra's default Shiki theme github-light: parameters #E36209 on white, 3.48:1",
+    themes: ["light"],
+  },
+  {
+    rule: "color-contrast",
+    selector: 'pre code span[style*="--shiki-dark:#6A737D"]',
+    why: "Nextra's default Shiki theme github-dark: comments #6A737D on black, 4.36:1",
+    themes: ["dark"],
   },
   {
     rule: "color-contrast",
     selector: "a > code.nextra-code",
     why: "Nextra colours inline code in a link with its link colour on its code background, 4.45:1",
+    themes: ["light"],
   },
   // Pending maintainer decision: remove once the linked issue is decided
   {
@@ -108,6 +116,15 @@ export function staleEntries(entries: Allowed[], matched: Map<Allowed, Set<strin
         .map((theme) => `ALLOWED entry never matched in ${theme} mode: ${entry.why}`),
     ];
   });
+}
+
+/**
+ * The index of the first selector the flagged element itself matches, or -1. Runs in the page
+ * (Playwright serialises it), so it uses nothing from this module.
+ */
+export function firstMatch([target, selectors]: readonly [string, readonly string[]]) {
+  const element = document.querySelector(target);
+  return element ? selectors.findIndex((selector) => element.matches(selector)) : -1;
 }
 
 type Problem = { page: string; theme: string; rule: string; help: string; targets: string[] };
@@ -195,16 +212,10 @@ async function audit(
       const targets: string[] = [];
       for (const node of violation.nodes) {
         const target = node.target.map(String).join(" ");
-        // The first allowed selector the element matches or sits inside, or -1
-        const index = await page.evaluate(
-          ([selector, allowedSelectors]) => {
-            const element = document.querySelector(selector);
-            return allowedSelectors.findIndex((allowedSelector) =>
-              element?.closest(allowedSelector),
-            );
-          },
-          [target, allowed.map((entry) => entry.selector)] as const,
-        );
+        const index = await page.evaluate(firstMatch, [
+          target,
+          allowed.map((entry) => entry.selector),
+        ] as const);
         const entry = allowed[index];
         if (entry) matched.set(entry, (matched.get(entry) ?? new Set()).add(`${route}|${theme}`));
         else targets.push(`${target}\n      ${node.html.slice(0, 160)}`);
