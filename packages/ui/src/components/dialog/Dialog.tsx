@@ -89,6 +89,7 @@ function DialogPopup({ className, ...props }: DialogPopupProps) {
       className={cnState(
         "fixed top-1/2 left-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2",
         "rounded-xl border border-border bg-background p-6 shadow-lg",
+        "max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain",
         !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
         !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
         !useSpring && "micro-interactions",

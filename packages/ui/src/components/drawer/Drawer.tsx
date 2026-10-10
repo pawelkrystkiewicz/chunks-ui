@@ -8,7 +8,7 @@ import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
 import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
 import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
-import { drawerPopupVariants } from "./Drawer.Variants";
+import { drawerBase, drawerPopupVariants } from "./Drawer.Variants";
 
 export type DrawerProps = ComponentProps<typeof BaseDialog.Root>;
 export type DrawerTriggerProps = ComponentProps<typeof BaseDialog.Trigger>;
@@ -48,7 +48,7 @@ const slideDirections = {
 const motionPositionClasses = {
   left: "inset-y-0 left-0 w-80 border-r",
   right: "inset-y-0 right-0 w-80 border-l",
-  bottom: "inset-x-0 bottom-0 h-auto border-t rounded-t-xl",
+  bottom: "inset-x-0 bottom-0 h-auto max-h-[80dvh] border-t rounded-t-xl",
 } as const;
 
 function DrawerPortal({ className, children, ...props }: DrawerPortalProps) {
@@ -113,7 +113,7 @@ function DrawerPopup({ side = "right", className, ...props }: DrawerPopupProps) 
     <BaseDialog.Popup
       render={render}
       className={cnState(
-        useSpring && "fixed border-border bg-background p-6 shadow-xl",
+        useSpring && drawerBase,
         useSpring && motionPositionClasses[resolvedSide],
         !useSpring && drawerPopupVariants({ side }),
         className,
