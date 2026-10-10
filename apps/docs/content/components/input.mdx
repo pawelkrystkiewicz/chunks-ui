@@ -70,7 +70,7 @@ export const InputWithClearButton = () => {
 
 ## Error State
 
-The input styles change when the `data-invalid` attribute is present (set automatically by `Field.Root` with `invalid` prop, or manually). `Field.Error` shows only when the field fails validation, so add `match` to show it whenever you set `invalid` yourself:
+The input styles change when the `data-invalid` attribute is present (set automatically by `Field.Root` with `invalid` prop, or manually). `Field.Error` shows only when the field fails validation, so add `match` to show it whenever you set `invalid` yourself. `match={true}` shows the error regardless of `invalid`, so pass `match={hasError}` (or render `Field.Error` only while the field is invalid). This example is always invalid, so `match` can stay:
 
 ```tsx
 <Field.Root invalid>
