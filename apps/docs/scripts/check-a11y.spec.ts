@@ -24,27 +24,34 @@ describe("allowedFor", () => {
 });
 
 describe("staleEntries", () => {
-  const routes = ["/", "/components/chip"];
+  const twoPages: Allowed = {
+    rule: "color-contrast",
+    selector: ".tint",
+    why: "two pages, both themes",
+    pages: ["/components/chip", "/kitchen-sink"],
+    themes: ["light", "dark"],
+  };
 
-  it("passes entries that matched something on pages that exist", () => {
+  it("passes entries that matched on every declared page and theme", () => {
     const matched = new Map([
-      [everywhere, 2],
-      [onChip, 1],
+      [everywhere, new Set(["/|dark"])],
+      [onChip, new Set(["/components/chip|light"])],
     ]);
-    expect(staleEntries([everywhere, onChip], matched, routes)).toEqual([]);
+    expect(staleEntries([everywhere, onChip], matched)).toEqual([]);
   });
 
   it("reports an entry that matched nothing", () => {
-    const matched = new Map([[everywhere, 3]]);
-    expect(staleEntries([everywhere, onChip], matched, routes)).toEqual([
+    const matched = new Map([[everywhere, new Set(["/|light"])]]);
+    expect(staleEntries([everywhere, onChip], matched)).toEqual([
       expect.stringContaining("chip page, light only"),
     ]);
   });
 
-  it("reports an entry naming a page that doesn't exist", () => {
-    const moved = { ...onChip, pages: ["/components/tag"] };
-    expect(staleEntries([moved], new Map([[moved, 1]]), routes)).toEqual([
-      expect.stringContaining("/components/tag"),
+  it("reports each declared page and theme an entry never matched on", () => {
+    const matched = new Map([[twoPages, new Set(["/components/chip|light"])]]);
+    expect(staleEntries([twoPages], matched)).toEqual([
+      expect.stringContaining("/kitchen-sink"),
+      expect.stringContaining("dark"),
     ]);
   });
 });

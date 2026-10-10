@@ -25,8 +25,8 @@ export type Theme = (typeof THEMES)[number];
 /**
  * An accepted violation: one axe rule on the elements matching `selector` (or inside them), on
  * `pages` and in `themes` (every page and theme when left out). Keep entries specific, scope them
- * to where they occur, and link the issue that removes them. An entry that matches nothing in a
- * run fails the check, so fixed ones can't linger.
+ * to where they occur, and link the issue that removes them. The run fails when an entry matches
+ * nothing, or never matches on one of its pages or in one of its themes, so fixed ones can't linger.
  */
 export type Allowed = {
   rule: string;
@@ -77,7 +77,7 @@ const ALLOWED: Allowed[] = [
     rule: "color-contrast",
     selector: '[role="grid"] button.opacity-50',
     why: "#252: Calendar outside-month days, muted text at opacity-50: 2:1 light, 2.69:1 dark",
-    pages: ["/components/calendar", "/components/date-picker", "/create"],
+    pages: ["/components/calendar", "/create"],
   },
 ];
 
@@ -91,14 +91,23 @@ export function allowedFor(entries: Allowed[], rule: string, page: string, theme
   );
 }
 
-/** Entries that matched nothing in the run, or name a page that doesn't exist */
-export function staleEntries(entries: Allowed[], matched: Map<Allowed, number>, routes: string[]) {
-  return entries.flatMap((entry) => [
-    ...(matched.get(entry) ? [] : [`ALLOWED entry matched nothing: ${entry.why}`]),
-    ...(entry.pages ?? [])
-      .filter((page) => !routes.includes(page))
-      .map((page) => `ALLOWED entry names a page that doesn't exist (${page}): ${entry.why}`),
-  ]);
+/**
+ * Entries that matched nothing in the run, or never matched on a page or in a theme they declare.
+ * `matched` holds the `${page}|${theme}` pairs where each entry excused a violation.
+ */
+export function staleEntries(entries: Allowed[], matched: Map<Allowed, Set<string>>) {
+  return entries.flatMap((entry) => {
+    const pairs = [...(matched.get(entry) ?? [])];
+    if (pairs.length === 0) return [`ALLOWED entry matched nothing: ${entry.why}`];
+    return [
+      ...(entry.pages ?? [])
+        .filter((page) => !pairs.some((pair) => pair.startsWith(`${page}|`)))
+        .map((page) => `ALLOWED entry never matched on ${page}: ${entry.why}`),
+      ...(entry.themes ?? [])
+        .filter((theme) => !pairs.some((pair) => pair.endsWith(`|${theme}`)))
+        .map((theme) => `ALLOWED entry never matched in ${theme} mode: ${entry.why}`),
+    ];
+  });
 }
 
 type Problem = { page: string; theme: string; rule: string; help: string; targets: string[] };
@@ -149,7 +158,12 @@ async function startServer() {
   return server;
 }
 
-async function audit(browser: Browser, route: string, theme: Theme, matched: Map<Allowed, number>) {
+async function audit(
+  browser: Browser,
+  route: string,
+  theme: Theme,
+  matched: Map<Allowed, Set<string>>,
+) {
   const context = await browser.newContext({ colorScheme: theme, reducedMotion: "reduce" });
   // Nextra (next-themes) reads the theme from localStorage before it paints
   await context.addInitScript((value) => localStorage.setItem("theme", value), theme);
@@ -192,7 +206,7 @@ async function audit(browser: Browser, route: string, theme: Theme, matched: Map
           [target, allowed.map((entry) => entry.selector)] as const,
         );
         const entry = allowed[index];
-        if (entry) matched.set(entry, (matched.get(entry) ?? 0) + 1);
+        if (entry) matched.set(entry, (matched.get(entry) ?? new Set()).add(`${route}|${theme}`));
         else targets.push(`${target}\n      ${node.html.slice(0, 160)}`);
       }
       if (targets.length > 0) {
@@ -210,7 +224,7 @@ if (import.meta.main) {
   const routes = pages();
   const server = await startServer();
   const problems: Problem[] = [];
-  const matched = new Map<Allowed, number>();
+  const matched = new Map<Allowed, Set<string>>();
   let browser: Browser | undefined;
   try {
     browser = await chromium.launch();
@@ -231,7 +245,7 @@ if (import.meta.main) {
     console.error(`${page} (${theme}) ${rule}: ${help}`);
     for (const target of targets) console.error(`    ${target}`);
   }
-  const stale = staleEntries(ALLOWED, matched, routes);
+  const stale = staleEntries(ALLOWED, matched);
   for (const message of stale) console.error(message);
   console.log(
     `axe checked ${routes.length} pages in ${THEMES.length} themes: ${problems.length} violations, ${stale.length} stale ALLOWED entries.`,
