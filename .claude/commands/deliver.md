@@ -63,18 +63,18 @@ The builder's prompt starts with the System Prompt from `.claude/agents/builder.
 - **Gates before committing:** `cd <wt>/packages/ui && bunx vitest run <spec>`, then `cd <wt> && bun run check-types && bun run lint`.
 - **Visual baselines,** when rendering changes:
   1. Commit first.
-  2. Regenerate the Linux baselines in Docker and copy them back:
+  2. Regenerate the Linux baselines in Docker and copy them back. CI renders on x86, so force `linux/amd64`; an arm64 render can differ from the CI render:
 
      ```bash
      D=<scratchpad>/ui-visual; rm -rf $D && mkdir -p $D && git -C <wt> archive HEAD | tar -x -C $D
-     docker run --rm -v $D:/work -w /work mcr.microsoft.com/playwright:v1.64.0-noble bash -lc \
+     docker run --rm --platform linux/amd64 -v $D:/work -w /work mcr.microsoft.com/playwright:v1.64.0-noble bash -lc \
        'npm i -g bun@1.4.2 >/dev/null 2>&1 && bun install --frozen-lockfile >/dev/null 2>&1 && cd packages/ui && bun run test:visual:update'
      rsync -am --include='*/' --include='*-linux.png' --exclude='*' $D/packages/ui/src/ <wt>/packages/ui/src/
      ```
 
   3. Regenerate the Darwin baselines with `cd <wt>/packages/ui && bun run test:visual:update`.
   4. Look at every changed PNG before committing it.
-- **Commits:** `type(scope): message` with the co-author trailer, and **no push**.
+- **Commits:** `type(scope): message` with the co-author trailer, and **no push**. When the PR delivers only part of the issue, reference it as `Part of #<n>`, never with a closing keyword (`Closes`, `Fixes`, `Resolves`).
 - **Report back:** the commits, the test results, and anything left undone.
 
 ## 6. Review
@@ -128,7 +128,7 @@ cd <wt> && bun run lint && bun run check-types && bun run test && git push -u or
 The PR body has:
 
 - a Summary of what changed and why;
-- `Closes #<n>`;
+- `Closes #<n>` when the PR meets every acceptance criterion. Otherwise write `Part of #<n>` and list the criteria still open, so the merge leaves the issue open;
 - one line for each review finding, fixed or dropped;
 - a Test plan;
 - the Claude Code attribution line.
@@ -157,7 +157,15 @@ Run cleanup from the main checkout; this is the one exception to the worktree ru
 git worktree remove <wt> && git branch -D <type>/<slug>
 ```
 
-Set the board item to Done if closing the issue did not already move it.
+Tick the acceptance criteria the merged PR met, in the issue body:
+
+```bash
+gh issue view <n> --json body --jq .body > <scratchpad>/issue-<n>.md
+# change each met criterion from "- [ ]" to "- [x]" in that file
+gh issue edit <n> --body-file <scratchpad>/issue-<n>.md
+```
+
+Set the board item to Done if closing the issue did not already move it. After a `Part of` PR, leave the issue open and In Progress.
 
 The final report covers:
 
