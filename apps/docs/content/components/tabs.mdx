@@ -100,6 +100,8 @@ The `Tabs.Indicator` component renders a pill behind the active tab. With Motion
 
 Without Motion, or with reduced motion, it takes its position and size from the CSS variables Base UI sets on it (`--active-tab-left`, `--active-tab-top`, `--active-tab-width`, `--active-tab-height`). It slides with a CSS transition, which reduced motion turns off.
 
+Only a change of tab slides the pill. When the active tab or the list changes size (for example a font size, padding or container width change), the pill moves to the tab at once, so it does not trail behind it. A size change during a slide changes where the slide ends.
+
 ### Server rendering
 
 The pill is in the server-rendered page before React hydrates. `Tabs.Indicator` sets Base UI's `renderBeforeHydration` by default: Base UI renders a small inline `<script>` after the indicator that measures the active tab and shows the pill over it. Set `renderBeforeHydration={false}` to leave the script out. The pill then shows once React has hydrated.
@@ -259,7 +261,7 @@ function DirectionAwarePanel({ order, children }) {
 | `Tabs.List` | Horizontal (or vertical) container for tab triggers. Renders a rounded, muted background behind the tabs. |
 | `Tabs.Tab` | Individual tab trigger button. Shows muted text by default, foreground text when active. |
 | `Tabs.Panel` | Content panel associated with a tab value. Mounted only while its tab is active, unless `keepMounted` is set. No animation. |
-| `Tabs.Indicator` | Pill behind the active tab. Slides to a tab when it becomes active. Shows before hydration on a server-rendered page. |
+| `Tabs.Indicator` | Pill behind the active tab. Slides to a tab when it becomes active, and follows a resize at once. Shows before hydration on a server-rendered page. |
 | `Tabs.Contents` | Container that keeps every `Tabs.Content` mounted. With Motion it slides between them and animates the height. Without Motion, or with reduced motion, it shows only the active one, with no animation. |
 | `Tabs.Content` | Individual content panel for use inside `Tabs.Contents`. Requires a `value` matching a `Tabs.Tab`. A Base UI `Tabs.Panel` that stays mounted, labelled by its tab. |
 | `Tabs.Animate` | Wrapper for routed tabs or for several `Tabs.Panel`s. Re-keys its children on tab change (so they remount) and accepts `initial` / `animate` / `transition`. |

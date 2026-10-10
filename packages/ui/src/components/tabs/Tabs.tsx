@@ -180,6 +180,29 @@ function TabsIndicator({
   );
 }
 
+const BOX_EDGES = ["left", "top", "width", "height"] as const;
+type IndicatorBox = Record<(typeof BOX_EDGES)[number], number>;
+
+/** Moves the indicator at once: Motion writes the values in its next frame */
+const SNAP = { duration: 0 };
+
+/**
+ * Whether the indicator is still sliding: the CSS fallback runs a transition, or Motion has not
+ * written `box` inline yet. A Motion spring ends exactly on its target.
+ */
+function isSliding(node: HTMLElement, box: IndicatorBox | null) {
+  if (typeof node.getAnimations === "function" && typeof CSSTransition !== "undefined") {
+    if (node.getAnimations().some((animation) => animation instanceof CSSTransition)) return true;
+  }
+  return (
+    box !== null &&
+    BOX_EDGES.some((edge) => {
+      const written = node.style[edge];
+      return written !== "" && Math.abs(Number.parseFloat(written) - box[edge]) > 0.5;
+    })
+  );
+}
+
 // The same element with and without Motion, so it isn't remounted when Motion loads
 function TabsIndicatorElement({
   state,
@@ -192,23 +215,54 @@ function TabsIndicatorElement({
   render: PartRenderProp<BaseTabs.Indicator.State>;
 }) {
   const { activeTabPosition: position, activeTabSize: size } = state;
-  const [indicatorRef, driven] = useMotionAnimate<HTMLElement>(
-    // While the tabs aren't rendered (display:none), Base UI measures the active tab as 0×0 and
-    // hides the indicator. That is no box to animate to: shown again, it jumps to the tab.
+  // While the tabs aren't rendered (display:none), Base UI measures the active tab as 0×0 and
+  // hides the indicator. That is no box to animate to: shown again, it jumps to the tab.
+  const box =
     position && size && size.width > 0 && size.height > 0
       ? { left: position.left, top: position.top, width: size.width, height: size.height }
-      : null,
-    { transition: springs.indicator, clear: ["left", "top", "width", "height"] },
-    ref,
+      : null;
+
+  // Only a change of the selected tab slides the indicator. Base UI measures the tab again when
+  // it or the list resizes (a font or padding change, a narrower container), and the indicator
+  // then jumps to it instead of trailing behind. A resize during a slide retargets the slide.
+  const selected = useContext(TabsContext)?.value;
+  const [slideTarget, setSlideTarget] = useState(selected);
+  const [sliding, setSliding] = useState(false);
+  if (selected !== slideTarget) {
+    setSlideTarget(selected);
+    setSliding(true);
+  }
+
+  const element = useRef<HTMLElement | null>(null);
+  const latestBox = useRef(box);
+  useLayoutEffect(() => {
+    latestBox.current = box;
+  });
+  useEffect(() => {
+    if (!sliding) return;
+    let frame = requestAnimationFrame(function settle() {
+      const node = element.current;
+      if (node && isSliding(node, latestBox.current)) frame = requestAnimationFrame(settle);
+      else setSliding(false);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [sliding]);
+
+  const [indicatorRef, driven] = useMotionAnimate<HTMLElement>(
+    box,
+    { transition: sliding ? springs.indicator : SNAP, clear: [...BOX_EDGES] },
+    useMergedRef(element, ref),
   );
   return useRenderPart(render, state, indicatorRef, {
     ...props,
     className: cn(
       "absolute rounded-md bg-background shadow-sm",
-      // The CSS fallback places the indicator from the variables Base UI sets on it. Motion
-      // writes inline values instead, and they are removed when it hands back.
+      // The CSS fallback places the indicator from the variables Base UI sets on it, and slides
+      // it with a transition, which is off unless it slides to another tab. Motion writes inline
+      // values instead, and they are removed when it hands back.
       !driven &&
         "top-(--active-tab-top) left-(--active-tab-left) h-(--active-tab-height) w-(--active-tab-width) micro-interactions",
+      !driven && !sliding && "transition-none",
       className,
     ),
   });
