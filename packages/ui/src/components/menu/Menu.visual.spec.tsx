@@ -43,7 +43,7 @@ describe("Menu", () => {
         </Menu.Root>
       </div>,
     );
-    // Opened with the mouse, so the focused popup draws no focus ring over the arrow's base
+    // Opened with the mouse, so the focused popup shows no focus ring for the arrow's base to cover
     await userEvent.click(page.getByRole("button", { name: "Options" }));
     await commands.parkPointer();
     // The arrow's border is faint against the page, so compare colours closely
