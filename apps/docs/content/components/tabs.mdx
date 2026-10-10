@@ -106,7 +106,7 @@ Only a change of tab slides the pill. When the active tab or the list changes si
 
 The pill is in the server-rendered page before React hydrates. `Tabs.Indicator` sets Base UI's `renderBeforeHydration` by default: Base UI renders a small inline `<script>` after the indicator that measures the active tab and shows the pill over it. Set `renderBeforeHydration={false}` to leave the script out. The pill then shows once React has hydrated.
 
-A Content Security Policy without `'unsafe-inline'` in `script-src` blocks that script. Pass your per-request nonce to Base UI's `CSPProvider`, so the script carries it:
+A CSP that doesn't allow inline scripts (no `'unsafe-inline'` in `script-src`, or `default-src` when `script-src` is absent, or a nonce, hash or `'strict-dynamic'`, which make browsers ignore `'unsafe-inline'`) blocks the script. Pass your per-request nonce to Base UI's `CSPProvider`, so the script carries it:
 
 ```tsx
 import { CSPProvider } from "@base-ui/react/csp-provider";
