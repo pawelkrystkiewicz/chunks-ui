@@ -28,19 +28,23 @@ import { Tabs } from "chunks-ui";
     <Tabs.Tab value="tab-3">Notifications</Tabs.Tab>
     <Tabs.Indicator />
   </Tabs.List>
-  <Tabs.Panel value="tab-1">
-    <p>Account settings content.</p>
-  </Tabs.Panel>
-  <Tabs.Panel value="tab-2">
-    <p>Security settings content.</p>
-  </Tabs.Panel>
-  <Tabs.Panel value="tab-3">
-    <p>Notification preferences.</p>
-  </Tabs.Panel>
+  <Tabs.Contents>
+    <Tabs.Content value="tab-1">
+      <p className="p-4">Account settings content.</p>
+    </Tabs.Content>
+    <Tabs.Content value="tab-2">
+      <p className="p-4">Security settings content.</p>
+    </Tabs.Content>
+    <Tabs.Content value="tab-3">
+      <p className="p-4">Notification preferences.</p>
+    </Tabs.Content>
+  </Tabs.Contents>
 </Tabs.Root>
 ```
 
 <TabsBasicExample />
+
+`Tabs.Contents` keeps every `Tabs.Content` mounted. With Motion it slides between them and animates the height. For plain panels without animation, use `Tabs.Panel` instead, as in the Controlled example below. Only the active `Tabs.Panel` is mounted, unless you set `keepMounted`.
 
 ## Controlled
 
@@ -64,7 +68,7 @@ function ControlledTabs() {
 
 ## Vertical Orientation
 
-Set `orientation="vertical"` on the root. The list switches to a vertical flex column with a right border:
+Set `orientation="vertical"` on the root. The list stacks its tabs in a column (`flex-col`), and the arrow keys move up and down:
 
 ```tsx
 <Tabs.Root defaultValue="tab-1" orientation="vertical">
@@ -73,8 +77,14 @@ Set `orientation="vertical"` on the root. The list switches to a vertical flex c
     <Tabs.Tab value="tab-2">Advanced</Tabs.Tab>
     <Tabs.Indicator />
   </Tabs.List>
-  <Tabs.Panel value="tab-1">General settings</Tabs.Panel>
-  <Tabs.Panel value="tab-2">Advanced settings</Tabs.Panel>
+  <Tabs.Contents>
+    <Tabs.Content value="tab-1">
+      <p className="p-4">General settings</p>
+    </Tabs.Content>
+    <Tabs.Content value="tab-2">
+      <p className="p-4">Advanced settings</p>
+    </Tabs.Content>
+  </Tabs.Contents>
 </Tabs.Root>
 ```
 
@@ -140,6 +150,18 @@ The simplest case. One outlet, one motion target. Pass `initial` / `animate` / `
 ```
 
 <TabsAnimateExample />
+
+`Tabs.Animate` can also wrap several `Tabs.Panel`s. Base UI mounts only the active panel, so that panel animates in on every tab change:
+
+```tsx
+<Tabs.Animate>
+  <Tabs.Panel value="home">Home</Tabs.Panel>
+  <Tabs.Panel value="profile">Profile</Tabs.Panel>
+  <Tabs.Panel value="settings">Settings</Tabs.Panel>
+</Tabs.Animate>
+```
+
+`Tabs.Animate` remounts everything inside it when the tab changes. A `keepMounted` panel inside it therefore still remounts and loses its state. To keep panel state, put `keepMounted` panels outside `Tabs.Animate`, or use `Tabs.Contents`.
 
 ### With `useTabsValue` (hook)
 
@@ -216,11 +238,11 @@ function DirectionAwarePanel({ order, children }) {
 | `Tabs.Root` | State container. Manages active tab value. |
 | `Tabs.List` | Horizontal (or vertical) container for tab triggers. Renders a rounded, muted background behind the tabs. |
 | `Tabs.Tab` | Individual tab trigger button. Shows muted text by default, foreground text when active. |
-| `Tabs.Panel` | Content panel associated with a tab value. Shown when its tab is active. |
+| `Tabs.Panel` | Content panel associated with a tab value. Mounted only while its tab is active, unless `keepMounted` is set. No animation. |
 | `Tabs.Indicator` | Pill behind the active tab. Slides to a tab when it becomes active. |
-| `Tabs.Contents` | Animated container that slides between panels and animates height using Motion (CSS fallback). |
+| `Tabs.Contents` | Container that keeps every `Tabs.Content` mounted. With Motion it slides between them and animates the height. Without Motion, or with reduced motion, it shows only the active one, with no animation. |
 | `Tabs.Content` | Individual content panel for use inside `Tabs.Contents`. Requires a `value` matching a `Tabs.Tab`. |
-| `Tabs.Animate` | Single-child wrapper for routed tabs. Re-keys on tab change, accepts `initial` / `animate` / `transition`. |
+| `Tabs.Animate` | Wrapper for routed tabs or for several `Tabs.Panel`s. Re-keys its children on tab change (so they remount) and accepts `initial` / `animate` / `transition`. |
 
 ## Hooks
 

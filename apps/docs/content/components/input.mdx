@@ -17,11 +17,11 @@ import { Input } from 'chunks-ui'
 ## Basic Usage
 
 ```tsx
-<Input placeholder="Enter your name" />
+<Input placeholder="Enter your name" aria-label="Name" />
 ```
 
 <Container>
-  <Input placeholder="Enter your name" />
+  <Input placeholder="Enter your name" aria-label="Name" />
 </Container>
 
 ## Adornments
@@ -29,24 +29,24 @@ import { Input } from 'chunks-ui'
 Use `startAdornment` and `endAdornment` to place icons or text at the edges of the input:
 
 ```tsx
-<Input startAdornment={<SearchIcon className="size-4" />} placeholder="Search..." />
+<Input startAdornment={<SearchIcon className="size-4" />} placeholder="Search..." aria-label="Search" />
 ```
 
 <Container>
-  <Input startAdornment={<SearchIcon className="size-4" />} placeholder="Search..." />
+  <Input startAdornment={<SearchIcon className="size-4" />} placeholder="Search..." aria-label="Search" />
 </Container>
 
 ```tsx
-<Input endAdornment={<span className="text-xs text-muted-foreground">USD</span>} placeholder="0.00" />
+<Input endAdornment={<span className="text-xs text-muted-foreground">USD</span>} placeholder="0.00" aria-label="Amount" />
 ```
 
 <Container>
-  <Input endAdornment={<span className="text-xs text-muted-foreground">USD</span>} placeholder="0.00" />
+  <Input endAdornment={<span className="text-xs text-muted-foreground">USD</span>} placeholder="0.00" aria-label="Amount" />
 </Container>
 
 ## Clear Button
 
-Pass an `onClear` callback to show a built-in clear button (uses the `ClearButton` component internally):
+Pass an `onClear` callback to show a built-in clear button (uses the `ClearButton` component internally). The button appears only while a controlled `value` is not empty, so pair `onClear` with `value` and `onChange`; an uncontrolled input (`defaultValue`) never shows it. While it is visible it takes the place of `endAdornment`, so the two don't show together:
 
 ```tsx
 export const InputWithClearButton = () => {
@@ -58,6 +58,7 @@ export const InputWithClearButton = () => {
       onChange={e => setValue(e.target.value)}
       onClear={() => setValue('')}
       placeholder="Search..."
+      aria-label="Search"
     />
   )
 }
@@ -69,13 +70,13 @@ export const InputWithClearButton = () => {
 
 ## Error State
 
-The input styles change when the `data-invalid` attribute is present (set automatically by `Field.Root` with `invalid` prop, or manually):
+The input styles change when the `data-invalid` attribute is present (set automatically by `Field.Root` with `invalid` prop, or manually). `Field.Error` shows only when the field fails validation, so add `match` to show it whenever you set `invalid` yourself. `match={true}` shows the error regardless of `invalid`, so pass `match={hasError}` (or render `Field.Error` only while the field is invalid). This example is always invalid, so `match` can stay:
 
 ```tsx
 <Field.Root invalid>
   <Field.Label>Email</Field.Label>
   <Input placeholder="user@example.com" />
-  <Field.Error>Invalid email address</Field.Error>
+  <Field.Error match>Invalid email address</Field.Error>
 </Field.Root>
 ```
 

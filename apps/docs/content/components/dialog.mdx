@@ -85,7 +85,7 @@ Content taller than the popup scrolls inside it. With long content and actions o
 
 ## Animation
 
-The popup enters with a scale-up + fade transition (`scale-95` to `scale-100`, `opacity-0` to `opacity-1`) over 200ms. The backdrop fades in/out independently.
+The popup enters with a scale-up and fade (from `scale-95` and `opacity-0`). With Motion installed it uses the `overlay` spring (`springs.overlay`). Without Motion it is a CSS transition (`micro-interactions`: 300ms, `cubic-bezier(0.4, 0, 0.2, 1)`). Reduced motion turns off both. The backdrop fades in and out independently.
 
 ## Compound Parts
 

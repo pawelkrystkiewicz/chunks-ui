@@ -7,16 +7,14 @@ A hover/focus tooltip built on Base UI's `Tooltip` primitive. Automatically posi
 ## Import
 
 ```tsx
-import { Tooltip } from "chunks-ui";
+import { Button, Tooltip } from "chunks-ui";
 ```
 
 ## Basic Usage
 
 ```tsx
 <Tooltip.Root>
-  <Tooltip.Trigger>
-    <button>Hover me</button>
-  </Tooltip.Trigger>
+  <Tooltip.Trigger render={<Button variant="outlined" />}>Hover me</Tooltip.Trigger>
   <Tooltip.Portal>
     <Tooltip.Positioner>
       <Tooltip.Popup>Helpful tip</Tooltip.Popup>
@@ -31,9 +29,7 @@ import { Tooltip } from "chunks-ui";
 
 ```tsx
 <Tooltip.Root>
-  <Tooltip.Trigger>
-    <button>Info</button>
-  </Tooltip.Trigger>
+  <Tooltip.Trigger render={<Button variant="outlined" />}>Info</Tooltip.Trigger>
   <Tooltip.Portal>
     <Tooltip.Positioner>
       <Tooltip.Popup>
@@ -54,7 +50,7 @@ Use `Tooltip.Provider` to share delay settings across multiple tooltips. This av
 ```tsx
 <Tooltip.Provider delay={200} closeDelay={0}>
   <Tooltip.Root>
-    <Tooltip.Trigger><button>A</button></Tooltip.Trigger>
+    <Tooltip.Trigger render={<Button variant="outlined" />}>A</Tooltip.Trigger>
     <Tooltip.Portal>
       <Tooltip.Positioner>
         <Tooltip.Popup>Tooltip A</Tooltip.Popup>
@@ -63,7 +59,7 @@ Use `Tooltip.Provider` to share delay settings across multiple tooltips. This av
   </Tooltip.Root>
 
   <Tooltip.Root>
-    <Tooltip.Trigger><button>B</button></Tooltip.Trigger>
+    <Tooltip.Trigger render={<Button variant="outlined" />}>B</Tooltip.Trigger>
     <Tooltip.Portal>
       <Tooltip.Positioner>
         <Tooltip.Popup>Tooltip B</Tooltip.Popup>
@@ -92,10 +88,10 @@ The popup sits 2 spacing units (8px at the default `--spacing`) from the trigger
 | Part | Description |
 |---|---|
 | `Tooltip.Root` | State container. Manages hover/focus open state. |
-| `Tooltip.Trigger` | The element that activates the tooltip on hover/focus. |
+| `Tooltip.Trigger` | The element that activates the tooltip on hover/focus. Renders a `<button>`, so don't nest another button inside it: pass `render={<Button />}` to use a chunks-ui `Button`. |
 | `Tooltip.Portal` | Renders children in a portal. |
-| `Tooltip.Positioner` | Floating UI positioner. No default `sideOffset`; the gap to the trigger is a 2-spacing-unit margin on `Tooltip.Popup`, and a `sideOffset` adds to it. |
-| `Tooltip.Popup` | The tooltip content. Dark background (`bg-foreground`), light text (`text-background`). `z-tooltips` (400). |
+| `Tooltip.Positioner` | Floating UI positioner. `z-tooltips` (400). No default `sideOffset`; the gap to the trigger is a 2-spacing-unit margin on `Tooltip.Popup`, and a `sideOffset` adds to it. |
+| `Tooltip.Popup` | The tooltip content. Dark background (`bg-foreground`), light text (`text-background`). |
 | `Tooltip.Arrow` | A rotated square (`bg-foreground`) absolutely positioned at the popup edge. Aligned to the anchor via Base UI CSS variables. |
 | `Tooltip.Provider` | Shared delay configuration for grouped tooltips. |
 

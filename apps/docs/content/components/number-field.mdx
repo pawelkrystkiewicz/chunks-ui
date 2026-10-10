@@ -16,7 +16,7 @@ import { NumberField } from "chunks-ui";
 <NumberField.Root defaultValue={10}>
   <NumberField.Group>
     <NumberField.Decrement />
-    <NumberField.Input />
+    <NumberField.Input aria-label="Quantity" />
     <NumberField.Increment />
   </NumberField.Group>
 </NumberField.Root>
@@ -26,16 +26,30 @@ import { NumberField } from "chunks-ui";
 
 ## Min, Max, and Step
 
-Use `min`, `max`, and `step` to constrain the value:
+Use `min` and `max` to constrain the value, and `step` to set how far the buttons and arrow keys move it. `Field.Label` names the input:
 
 ```tsx
-<NumberField.Root defaultValue={5} min={1} max={20}>
-  <NumberField.Group>
-    <NumberField.Decrement />
-    <NumberField.Input />
-    <NumberField.Increment />
-  </NumberField.Group>
-</NumberField.Root>
+<Field.Root>
+  <Field.Label>Quantity (1–20)</Field.Label>
+  <NumberField.Root defaultValue={5} min={1} max={20}>
+    <NumberField.Group>
+      <NumberField.Decrement />
+      <NumberField.Input />
+      <NumberField.Increment />
+    </NumberField.Group>
+  </NumberField.Root>
+</Field.Root>
+
+<Field.Root>
+  <Field.Label>Step by 5</Field.Label>
+  <NumberField.Root defaultValue={0} min={0} max={100} step={5}>
+    <NumberField.Group>
+      <NumberField.Decrement />
+      <NumberField.Input />
+      <NumberField.Increment />
+    </NumberField.Group>
+  </NumberField.Root>
+</Field.Root>
 ```
 
 <NumberFieldMinMaxExample />
@@ -52,7 +66,7 @@ Wrap a label with `NumberField.ScrubArea` to allow click-and-drag adjustment. Th
   </NumberField.ScrubArea>
   <NumberField.Group>
     <NumberField.Decrement />
-    <NumberField.Input />
+    <NumberField.Input aria-label="Amount" />
     <NumberField.Increment />
   </NumberField.Group>
 </NumberField.Root>
@@ -66,7 +80,7 @@ Wrap a label with `NumberField.ScrubArea` to allow click-and-drag adjustment. Th
 <NumberField.Root defaultValue={42} disabled>
   <NumberField.Group>
     <NumberField.Decrement />
-    <NumberField.Input />
+    <NumberField.Input aria-label="Quantity" />
     <NumberField.Increment />
   </NumberField.Group>
 </NumberField.Root>

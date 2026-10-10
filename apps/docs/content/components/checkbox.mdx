@@ -13,10 +13,12 @@ import { Checkbox } from "chunks-ui";
 ## Basic Usage
 
 ```tsx
-<Checkbox.Root>
+<Checkbox.Root aria-label="Accept terms">
   <Checkbox.Indicator />
 </Checkbox.Root>
 ```
+
+A checkbox without a visible label needs an `aria-label`. To show a label, use `Field` as below.
 
 <CheckboxBasicExample />
 
@@ -44,7 +46,7 @@ function ControlledCheckbox() {
   const [checked, setChecked] = useState(false);
 
   return (
-    <Checkbox.Root checked={checked} onCheckedChange={setChecked}>
+    <Checkbox.Root checked={checked} onCheckedChange={setChecked} aria-label="Subscribe">
       <Checkbox.Indicator />
     </Checkbox.Root>
   );
@@ -53,10 +55,10 @@ function ControlledCheckbox() {
 
 ## Indeterminate State
 
-The indeterminate state is used for "select all" patterns where some items are checked:
+The indeterminate state is used for "select all" patterns where some items are checked. Set the `indeterminate` prop (`checked` takes only a boolean):
 
 ```tsx
-<Checkbox.Root checked="indeterminate">
+<Checkbox.Root indeterminate aria-label="Select all">
   <Checkbox.Indicator />
 </Checkbox.Root>
 ```
@@ -66,7 +68,7 @@ The indeterminate state is used for "select all" patterns where some items are c
 ## Disabled
 
 ```tsx
-<Checkbox.Root disabled>
+<Checkbox.Root disabled aria-label="Unavailable option">
   <Checkbox.Indicator />
 </Checkbox.Root>
 ```

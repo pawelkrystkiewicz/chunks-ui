@@ -1,6 +1,6 @@
 "use client";
 
-import { NumberField } from "chunks-ui";
+import { Field, NumberField } from "chunks-ui";
 import { Container } from "@/components";
 
 export function NumberFieldBasicExample() {
@@ -9,7 +9,7 @@ export function NumberFieldBasicExample() {
       <NumberField.Root defaultValue={10}>
         <NumberField.Group>
           <NumberField.Decrement />
-          <NumberField.Input />
+          <NumberField.Input aria-label="Quantity" />
           <NumberField.Increment />
         </NumberField.Group>
       </NumberField.Root>
@@ -21,8 +21,8 @@ export function NumberFieldMinMaxExample() {
   return (
     <Container>
       <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1">
-          <span className="text-muted-foreground text-sm">Quantity (1–20)</span>
+        <Field.Root>
+          <Field.Label className="font-normal text-muted-foreground">Quantity (1–20)</Field.Label>
           <NumberField.Root defaultValue={5} min={1} max={20}>
             <NumberField.Group>
               <NumberField.Decrement />
@@ -30,9 +30,9 @@ export function NumberFieldMinMaxExample() {
               <NumberField.Increment />
             </NumberField.Group>
           </NumberField.Root>
-        </div>
-        <div className="flex flex-col gap-1">
-          <span className="text-muted-foreground text-sm">Step by 5</span>
+        </Field.Root>
+        <Field.Root>
+          <Field.Label className="font-normal text-muted-foreground">Step by 5</Field.Label>
           <NumberField.Root defaultValue={0} min={0} max={100} step={5}>
             <NumberField.Group>
               <NumberField.Decrement />
@@ -40,7 +40,7 @@ export function NumberFieldMinMaxExample() {
               <NumberField.Increment />
             </NumberField.Group>
           </NumberField.Root>
-        </div>
+        </Field.Root>
       </div>
     </Container>
   );
@@ -57,7 +57,7 @@ export function NumberFieldScrubExample() {
           </NumberField.ScrubArea>
           <NumberField.Group>
             <NumberField.Decrement />
-            <NumberField.Input />
+            <NumberField.Input aria-label="Amount" />
             <NumberField.Increment />
           </NumberField.Group>
         </NumberField.Root>
@@ -72,7 +72,7 @@ export function NumberFieldDisabledExample() {
       <NumberField.Root defaultValue={42} disabled>
         <NumberField.Group>
           <NumberField.Decrement />
-          <NumberField.Input />
+          <NumberField.Input aria-label="Quantity" />
           <NumberField.Increment />
         </NumberField.Group>
       </NumberField.Root>

@@ -3,7 +3,7 @@ import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
 # Drawer
 
-A side or bottom sheet overlay built on Base UI's `Dialog` primitive. Slides in from the left, right, or bottom edge with a snappy easing transition.
+A side or bottom sheet overlay built on Base UI's `Dialog` primitive. Slides in from the left, right, or bottom edge.
 
 ## Import
 
@@ -76,7 +76,7 @@ function ControlledDrawer() {
 
 ## Animation
 
-The drawer slides in from its designated edge using `translate-x` (left/right) or `translate-y` (bottom) with the `ease-snappy` easing curve over 200ms. The backdrop fades in independently.
+The drawer slides in from its edge: on the x-axis for `left` and `right`, on the y-axis for `bottom`. With Motion installed it uses the `overlay` spring (`springs.overlay`). Without Motion it is a CSS transition (`micro-interactions`: 300ms, `cubic-bezier(0.4, 0, 0.2, 1)`). Reduced motion turns off both. The backdrop fades in independently.
 
 ## Compound Parts
 

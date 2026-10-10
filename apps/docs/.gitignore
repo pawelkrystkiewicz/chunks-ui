@@ -1,0 +1,2 @@
+# generated llms.txt docs (scripts/generate-llm-txt.ts), including the legacy llm*.txt copies
+/public/llm*.txt

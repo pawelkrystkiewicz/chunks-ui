@@ -56,14 +56,23 @@ Override the color via `className`:
 
 ## Full-Page Loading
 
+Cover the page with a fixed overlay while something loads. The demo hides it after two seconds:
+
 ```tsx
-<div className="flex h-screen items-center justify-center">
-  <Loader />
+<div role="status">
+  {loading && (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <Loader className="text-white" />
+      <span className="sr-only">Loading…</span>
+    </div>
+  )}
 </div>
 ```
+
+Keep the `role="status"` element mounted and change only its content. Screen readers often skip a status region that mounts together with its text.
 
 <LoaderFullPageExample />
 
 ## Props
 
-This component accepts all props from the underlying `<svg>` element. The spinner uses `animate-spin` for rotation and is marked `aria-hidden="true"`.
+This component accepts all props from the underlying `<svg>` element. The spinner uses `animate-spin` for rotation and is marked `aria-hidden="true"`, so pair it with text or a `role="status"` region that says what is loading. It keeps spinning when the user prefers reduced motion, because it is an essential status indicator.

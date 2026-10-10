@@ -10,7 +10,7 @@ export function InputErrorExample() {
       <Field.Root invalid>
         <Field.Label>Email</Field.Label>
         <Input placeholder="user@example.com" />
-        <Field.Error>Invalid email address</Field.Error>
+        <Field.Error match>Invalid email address</Field.Error>
       </Field.Root>
     </Container>
   );
@@ -37,6 +37,7 @@ export const InputWithClearButton = () => {
       onChange={(e) => setValue(e.target.value)}
       onClear={() => setValue("")}
       placeholder="Search..."
+      aria-label="Search"
     />
   );
 };

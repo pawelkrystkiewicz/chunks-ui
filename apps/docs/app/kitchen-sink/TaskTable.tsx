@@ -101,6 +101,7 @@ export function TaskTable() {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <Input
           placeholder="Search tasks..."
+          aria-label="Search tasks"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           onClear={() => setSearch("")}
@@ -111,7 +112,7 @@ export function TaskTable() {
           value={statusFilter ?? undefined}
           onValueChange={(val) => setStatusFilter(val || null)}
         >
-          <Select.Trigger className="w-40">
+          <Select.Trigger className="w-40" aria-label="Status">
             <Select.Value placeholder="All statuses" />
             <Select.Icon />
           </Select.Trigger>

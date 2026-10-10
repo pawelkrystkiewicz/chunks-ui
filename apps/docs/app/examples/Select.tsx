@@ -7,7 +7,7 @@ export function SelectBasicExample() {
   return (
     <Container>
       <Select.Root>
-        <Select.Trigger>
+        <Select.Trigger aria-label="Fruit">
           <Select.Value placeholder="Choose a fruit" />
           <Select.Icon />
         </Select.Trigger>
@@ -42,7 +42,7 @@ export function SelectGroupedExample() {
   return (
     <Container>
       <Select.Root>
-        <Select.Trigger>
+        <Select.Trigger aria-label="Color">
           <Select.Value placeholder="Pick a color" />
           <Select.Icon />
         </Select.Trigger>

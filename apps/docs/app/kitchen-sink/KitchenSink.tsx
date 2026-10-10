@@ -19,7 +19,7 @@ export function KitchenSink() {
         <Breadcrumb.Root>
           <Breadcrumb.List>
             <Breadcrumb.Item>
-              <Breadcrumb.Link href="/">
+              <Breadcrumb.Link href="/" aria-label="Home">
                 <Home className="size-3.5" />
               </Breadcrumb.Link>
             </Breadcrumb.Item>

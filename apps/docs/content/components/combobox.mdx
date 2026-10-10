@@ -21,7 +21,7 @@ const fruits = [
 
 <Combobox.Root items={fruits}>
   <div className="relative">
-    <Combobox.Input placeholder="Search a fruit..." />
+    <Combobox.Input placeholder="Search a fruit..." aria-label="Fruit" />
     <Combobox.Trigger />
   </div>
   <Combobox.Portal>
@@ -29,7 +29,7 @@ const fruits = [
       <Combobox.Popup>
         <Combobox.List>
           {(item) => (
-            <Combobox.Item key={item.value} value={item.value}>
+            <Combobox.Item key={item.value} value={item}>
               {item.label}
               <Combobox.ItemIndicator />
             </Combobox.Item>
@@ -46,12 +46,14 @@ const fruits = [
   <ComboboxBasicDemo />
 </Container>
 
+Pass each item object as the `Combobox.Item` `value`. Base UI shows an object's `label` in the input and submits its `value` with a form, so picking "Banana" fills the input with "Banana". For other object shapes, set `itemToStringLabel` (and `itemToStringValue` for forms) on `Combobox.Root`. If you pass the selected value in from elsewhere (`value`/`defaultValue`) and it isn't the same object as the item, set `isItemEqualToValue`.
+
 ## With Clear Button
 
 ```tsx
 <Combobox.Root items={fruits}>
   <div className="relative">
-    <Combobox.Input placeholder="Search a fruit..." />
+    <Combobox.Input placeholder="Search a fruit..." aria-label="Fruit" />
     <Combobox.Clear />
     <Combobox.Trigger />
   </div>
@@ -60,7 +62,7 @@ const fruits = [
       <Combobox.Popup>
         <Combobox.List>
           {(item) => (
-            <Combobox.Item key={item.value} value={item.value}>
+            <Combobox.Item key={item.value} value={item}>
               {item.label}
               <Combobox.ItemIndicator />
             </Combobox.Item>
@@ -79,26 +81,49 @@ const fruits = [
 
 ## Grouped Options
 
+Pass groups (`{ value, items }`) as `items`. `Combobox.List` then calls its child once per group, with only the group's matching items, and hides empty groups while filtering:
+
 ```tsx
+const colors = [
+  {
+    value: "Warm",
+    items: [
+      { value: "red", label: "Red" },
+      { value: "orange", label: "Orange" },
+      { value: "yellow", label: "Yellow" },
+    ],
+  },
+  {
+    value: "Cool",
+    items: [
+      { value: "blue", label: "Blue" },
+      { value: "green", label: "Green" },
+      { value: "purple", label: "Purple" },
+    ],
+  },
+];
+
 <Combobox.Root items={colors}>
   <div className="relative">
-    <Combobox.Input placeholder="Pick a color..." />
+    <Combobox.Input placeholder="Pick a color..." aria-label="Color" />
     <Combobox.Trigger />
   </div>
   <Combobox.Portal>
     <Combobox.Positioner>
       <Combobox.Popup>
-        <Combobox.Group>
-          <Combobox.GroupLabel>Warm</Combobox.GroupLabel>
-          <Combobox.List>
-            {(item) => (
-              <Combobox.Item key={item.value} value={item.value}>
-                {item.label}
-                <Combobox.ItemIndicator />
-              </Combobox.Item>
-            )}
-          </Combobox.List>
-        </Combobox.Group>
+        <Combobox.List>
+          {(group) => (
+            <Combobox.Group key={group.value} items={group.items}>
+              <Combobox.GroupLabel>{group.value}</Combobox.GroupLabel>
+              {group.items.map((item) => (
+                <Combobox.Item key={item.value} value={item}>
+                  {item.label}
+                  <Combobox.ItemIndicator />
+                </Combobox.Item>
+              ))}
+            </Combobox.Group>
+          )}
+        </Combobox.List>
         <Combobox.Empty>No results found.</Combobox.Empty>
       </Combobox.Popup>
     </Combobox.Positioner>
@@ -113,26 +138,26 @@ const fruits = [
 ## Multi-Select with Chips
 
 ```tsx
+type Framework = { value: string; label: string };
+
 function MultiSelectCombobox() {
-  const [value, setValue] = useState<string[]>([]);
+  const [value, setValue] = useState<Framework[]>([]);
 
   return (
     <Combobox.Root multiple items={frameworks} value={value} onValueChange={setValue}>
       <Combobox.Control>
         <Combobox.Chips>
-          {value.map((v) => {
-            const item = frameworks.find((f) => f.value === v);
-            return (
-              <Combobox.Chip key={v}>
-                {item?.label ?? v}
-                <Combobox.ChipRemove />
-              </Combobox.Chip>
-            );
-          })}
+          {value.map((item) => (
+            <Combobox.Chip key={item.value}>
+              {item.label}
+              <Combobox.ChipRemove />
+            </Combobox.Chip>
+          ))}
         </Combobox.Chips>
         <Combobox.Input
           className="h-7 min-w-20 flex-1 border-0 bg-transparent px-0 focus-visible:outline-none"
           placeholder="Select frameworks..."
+          aria-label="Frameworks"
         />
         <Combobox.Clear />
         <Combobox.Trigger />
@@ -142,7 +167,7 @@ function MultiSelectCombobox() {
           <Combobox.Popup>
             <Combobox.List>
               {(item) => (
-                <Combobox.Item key={item.value} value={item.value}>
+                <Combobox.Item key={item.value} value={item}>
                   {item.label}
                   <Combobox.ItemIndicator />
                 </Combobox.Item>
@@ -164,19 +189,21 @@ function MultiSelectCombobox() {
 ## Controlled
 
 ```tsx
-function ControlledCombobox() {
-  const [value, setValue] = useState(null);
+type Status = { value: string; label: string };
 
-  const items = [
-    { value: "active", label: "Active" },
-    { value: "inactive", label: "Inactive" },
-    { value: "pending", label: "Pending" },
-  ];
+const statuses: Status[] = [
+  { value: "active", label: "Active" },
+  { value: "inactive", label: "Inactive" },
+  { value: "pending", label: "Pending" },
+];
+
+function ControlledCombobox() {
+  const [value, setValue] = useState<Status | null>(null);
 
   return (
-    <Combobox.Root items={items} value={value} onValueChange={setValue}>
+    <Combobox.Root items={statuses} value={value} onValueChange={setValue}>
       <div className="relative">
-        <Combobox.Input placeholder="Select status..." />
+        <Combobox.Input placeholder="Select status..." aria-label="Status" />
         <Combobox.Clear />
         <Combobox.Trigger />
       </div>
@@ -185,7 +212,7 @@ function ControlledCombobox() {
           <Combobox.Popup>
             <Combobox.List>
               {(item) => (
-                <Combobox.Item key={item.value} value={item.value}>
+                <Combobox.Item key={item.value} value={item}>
                   {item.label}
                   <Combobox.ItemIndicator />
                 </Combobox.Item>
@@ -212,14 +239,14 @@ function ControlledCombobox() {
 | `Combobox.Portal` | Renders the popup in a portal. |
 | `Combobox.Positioner` | Handles Floating UI positioning. |
 | `Combobox.Popup` | The dropdown panel containing items. Scrolls when the items need more than the space between the input and the viewport edge. |
-| `Combobox.List` | List container. Uses render-prop children. |
+| `Combobox.List` | List container. Takes a function child that renders each matching item (or each group, when `items` holds groups). |
 | `Combobox.Item` | An individual selectable option. |
 | `Combobox.ItemIndicator` | Checkmark shown for the selected item. |
 | `Combobox.Empty` | Message displayed when no items match the filter. |
 | `Combobox.Clear` | Button that clears the current value. Renders a default X icon. |
 | `Combobox.Group` | Groups related items together. |
 | `Combobox.GroupLabel` | Label for a group of items. |
-| `Combobox.Chips` | Container for selected chips in multi-select mode. Uses render-prop children. |
+| `Combobox.Chips` | Container for selected chips in multi-select mode. Takes ordinary children: map the selected values to `Combobox.Chip`s. |
 | `Combobox.Chip` | A styled chip representing a selected value. |
 | `Combobox.ChipRemove` | Button to remove a chip. Renders a default X icon. |
 | `Combobox.Value` | Displays the selected value. |

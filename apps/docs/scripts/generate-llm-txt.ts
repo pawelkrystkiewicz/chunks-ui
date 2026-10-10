@@ -1,6 +1,7 @@
 /// <reference types="@types/bun" />
 /**
- * Generates llm.txt and llm-full.txt from docs MDX content.
+ * Generates llms.txt and llms-full.txt (https://llmstxt.org) from docs MDX content.
+ * Also writes llm.txt and llm-full.txt, the names the site used first, so old links keep working.
  * Run: bun run apps/docs/scripts/generate-llm-txt.ts
  */
 
@@ -11,6 +12,11 @@ const DOCS_DIR = join(import.meta.dirname, "..");
 const CONTENT_DIR = join(DOCS_DIR, "content");
 const COMPONENTS_DIR = join(CONTENT_DIR, "components");
 const OUTPUT_DIR = join(DOCS_DIR, "public");
+
+const INDEX_FILE = "llms.txt";
+const FULL_FILE = "llms-full.txt";
+const LEGACY_INDEX_FILE = "llm.txt";
+const LEGACY_FULL_FILE = "llm-full.txt";
 
 const VERCEL_HOST =
   process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.VERCEL_URL ?? "chunks-ui.vercel.app";
@@ -101,7 +107,7 @@ async function readTopLevelPages(): Promise<Page[]> {
 }
 
 // ---------------------------------------------------------------------------
-// Generate llm.txt (concise index)
+// Generate llms.txt (concise index)
 // ---------------------------------------------------------------------------
 
 function generateIndex(topPages: Page[], components: Page[]): string {
@@ -131,13 +137,13 @@ function generateIndex(topPages: Page[], components: Page[]): string {
     lines.push(`- [${comp.title}](${SITE_URL}/components/${comp.slug})${desc}`);
   }
 
-  lines.push("", "## Optional", "", `- [Full documentation](${SITE_URL}/llm-full.txt)`, "");
+  lines.push("", "## Optional", "", `- [Full documentation](${SITE_URL}/${FULL_FILE})`, "");
 
   return lines.join("\n");
 }
 
 // ---------------------------------------------------------------------------
-// Generate llm-full.txt (comprehensive)
+// Generate llms-full.txt (comprehensive)
 // ---------------------------------------------------------------------------
 
 function generateFull(topPages: Page[], components: Page[]): string {
@@ -167,8 +173,9 @@ function generateFull(topPages: Page[], components: Page[]): string {
 // Main
 // ---------------------------------------------------------------------------
 
-async function main() {
-  await mkdir(OUTPUT_DIR, { recursive: true });
+/** Writes the index and the full docs, each under its llmstxt.org name and its legacy name. */
+export async function generateLlmFiles(outputDir = OUTPUT_DIR) {
+  await mkdir(outputDir, { recursive: true });
 
   const [topPages, components] = await Promise.all([readTopLevelPages(), readComponentDocs()]);
 
@@ -176,14 +183,22 @@ async function main() {
   const full = generateFull(topPages, components);
 
   await Promise.all([
-    writeFile(join(OUTPUT_DIR, "llm.txt"), index, "utf-8"),
-    writeFile(join(OUTPUT_DIR, "llm-full.txt"), full, "utf-8"),
+    ...[INDEX_FILE, LEGACY_INDEX_FILE].map((name) => writeFile(join(outputDir, name), index)),
+    ...[FULL_FILE, LEGACY_FULL_FILE].map((name) => writeFile(join(outputDir, name), full)),
   ]);
 
-  console.log(`Generated llm.txt (${index.length} bytes) and llm-full.txt (${full.length} bytes)`);
+  return { index, full };
 }
 
-main().catch((err) => {
-  console.error("Failed to generate llm.txt:", err);
-  process.exit(1);
-});
+if (import.meta.main) {
+  generateLlmFiles()
+    .then(({ index, full }) =>
+      console.log(
+        `Generated llms.txt (${index.length} bytes) and llms-full.txt (${full.length} bytes)`,
+      ),
+    )
+    .catch((err) => {
+      console.error(`Failed to generate ${INDEX_FILE}:`, err);
+      process.exit(1);
+    });
+}

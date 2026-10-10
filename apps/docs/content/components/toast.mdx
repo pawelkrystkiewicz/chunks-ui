@@ -160,13 +160,13 @@ That toast gets a `×` button in the top-right corner that dismisses it via Base
 
 ### Reacting to Close
 
-If you need to run a side effect when the user dismisses a toast — tracking analytics, offering an undo stack, syncing with a backend — pass `onClose`. It receives the close button's click event. Passing `onClose` also implicitly enables the close button, so you don't need to also set `dismissible`:
+If you need to run a side effect when the user dismisses a toast — tracking analytics, offering an undo stack, syncing with a backend — pass `onClose`. It receives the close button's click event. Passing `onClose` also implicitly enables the close button, so you don't need to also set `dismissible`. The event doesn't say which toast closed; to know that, keep the id that `add()` returns:
 
 ```tsx
-add({
+const id = add({
   title: "Message archived",
-  onClose: (event) => {
-    analytics.track('toast_dismissed', { id: event.currentTarget.dataset.toastId })
+  onClose: () => {
+    analytics.track('toast_dismissed', { id })
   },
 })
 ```
@@ -259,7 +259,7 @@ export default Props
 
 ### Toast.Viewport
 
-`Toast.Viewport` is a thin style wrapper — it forwards every prop directly to Base UI's [`Toast.Viewport`](https://base-ui.com/react/components/toast#api-reference). All per-toast behaviour (`icon`, `iconClassName`, `className`, `dissmissable`, `onClose`) lives on the individual `add()` call, not the container, so a single viewport can host a mix of dismissable and non-dismissable toasts, styled and unstyled ones, etc.
+`Toast.Viewport` is a thin style wrapper. It renders the toast list itself and forwards every other prop to Base UI's [`Toast.Viewport`](https://base-ui.com/react/components/toast#api-reference); `children` you pass are not rendered. All per-toast behaviour (`icon`, `iconClassName`, `className`, `dissmissable`, `onClose`) lives on the individual `add()` call, not the container, so a single viewport can host a mix of dismissable and non-dismissable toasts, styled and unstyled ones, etc.
 
 Only string-level overrides are worth knowing about here:
 

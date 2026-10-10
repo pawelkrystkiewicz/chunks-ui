@@ -33,7 +33,7 @@ const NAV = [
   { label: "Docs", href: DOCS },
   { label: "Components", href: COMPONENTS },
   { label: "Create", href: "/create" },
-  { label: "llm.txt", href: "/llm.txt" },
+  { label: "llms.txt", href: "/llms.txt" },
 ];
 
 type Tier = "core" | "extended";
@@ -176,7 +176,7 @@ function SectionHead({
         <span className="font-mono text-(--l-muted) text-[11px] uppercase tracking-[.1em]">
           {eyebrow}
         </span>
-        <h2 className="mt-2.5 text-balance font-semibold text-(--l-fg) text-[clamp(36px,5vw,56px)] leading-[1.02] tracking-[-.045em]">
+        <h2 className="mt-2.5 text-balance font-display font-semibold text-(--l-fg) text-[clamp(36px,5vw,56px)] leading-[1.02] tracking-[-.045em]">
           {title} <em className="text-primary not-italic">{accent}</em>
         </h2>
       </div>
@@ -218,7 +218,7 @@ function CellText({
     <>
       <h3
         id={id && `${id}-title`}
-        className="font-semibold text-(--l-fg) text-[20px] leading-tight tracking-[-.02em]"
+        className="font-display font-semibold text-(--l-fg) text-[20px] leading-tight tracking-[-.02em]"
       >
         {title}
       </h3>
@@ -317,7 +317,7 @@ function Hero() {
               {TOTAL.extended} extended
             </span>
           </div>
-          <h1 className="my-6 text-balance font-semibold text-[clamp(44px,7vw,88px)] text-white leading-none tracking-[-.05em]">
+          <h1 className="my-6 text-balance font-display font-semibold text-[clamp(44px,7vw,88px)] text-white leading-none tracking-[-.05em]">
             <em className="text-white/50 not-italic">Composed,</em> not configured.
           </h1>
           <p className="mb-[34px] max-w-[470px] text-pretty text-[18px] text-white/78 leading-normal">
@@ -506,7 +506,7 @@ const PRINCIPLES = [
     art: <ApiArt />,
     title: "LLM-friendly.",
     body: "Props over config objects. Conventional names an agent can guess without opening the source.",
-    meta: ["llm.txt", "AGENTS.md"],
+    meta: ["llms.txt", "AGENTS.md"],
   },
 ];
 
@@ -614,7 +614,7 @@ const ROW_VALUE = "font-semibold text-[20px] tracking-[-.015em]";
 const LINK_ROWS = [
   { label: "// docs", href: DOCS, value: "ui-kit.chunk-creations.com" },
   { label: "// source", href: GITHUB, value: "github.com/pawelkrystkiewicz/chunks-ui ↗" },
-  { label: "// for agents", href: "/llm.txt", value: "ui-kit.chunk-creations.com/llm.txt" },
+  { label: "// for agents", href: "/llms.txt", value: "ui-kit.chunk-creations.com/llms.txt" },
 ];
 
 function GetStarted() {
@@ -627,7 +627,7 @@ function GetStarted() {
       <div
         className={`${WRAP} relative grid grid-cols-1 items-end gap-14 pt-[180px] pb-24 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]`}
       >
-        <h2 className="text-balance font-semibold text-[clamp(36px,5vw,60px)] text-white leading-[1.02] tracking-[-.045em]">
+        <h2 className="text-balance font-display font-semibold text-[clamp(36px,5vw,60px)] text-white leading-[1.02] tracking-[-.045em]">
           Install once.
           <br />
           <em className="text-white/50 not-italic">Compose the rest.</em>
@@ -656,7 +656,7 @@ const FOOTER_NAV = [
     links: [
       { label: "Docs", href: DOCS },
       { label: "Components", href: COMPONENTS },
-      { label: "llm.txt", href: "/llm.txt" },
+      { label: "llms.txt", href: "/llms.txt" },
     ],
   },
   {

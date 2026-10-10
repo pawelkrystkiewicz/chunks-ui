@@ -105,6 +105,8 @@ export function DataTableExample() {
     getFilteredRowModel: getFilteredRowModel(),
     onRowSelectionChange: setRowSelection,
     state: { sorting, columnFilters, rowSelection },
+    // TanStack shows 10 rows per page by default; 5 gives the 8 rows two pages
+    initialState: { pagination: { pageSize: 5 } },
   });
 
   const emailCol = table.getColumn("email");
@@ -116,6 +118,7 @@ export function DataTableExample() {
       <div className="flex w-full flex-col gap-4">
         <Input
           placeholder="Filter emails..."
+          aria-label="Filter emails"
           value={search}
           onChange={(event) => emailCol?.setFilterValue(event.target.value)}
           onClear={onClear}

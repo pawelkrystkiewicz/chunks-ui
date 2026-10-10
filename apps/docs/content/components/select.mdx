@@ -14,12 +14,12 @@ import { Select } from "chunks-ui";
 
 ```tsx
 <Select.Root>
-  <Select.Trigger>
+  <Select.Trigger aria-label="Fruit">
     <Select.Value placeholder="Choose a fruit" />
     <Select.Icon />
   </Select.Trigger>
   <Select.Portal>
-    <Select.Positioner>
+    <Select.Positioner sideOffset={5} alignItemWithTrigger={false}>
       <Select.Popup>
         <Select.Item value="apple">
           <Select.ItemText>Apple</Select.ItemText>
@@ -45,12 +45,12 @@ import { Select } from "chunks-ui";
 
 ```tsx
 <Select.Root>
-  <Select.Trigger>
+  <Select.Trigger aria-label="Color">
     <Select.Value placeholder="Pick a color" />
     <Select.Icon />
   </Select.Trigger>
   <Select.Portal>
-    <Select.Positioner>
+    <Select.Positioner sideOffset={5} alignItemWithTrigger={false}>
       <Select.Popup>
         <Select.Group>
           <Select.GroupLabel>Warm</Select.GroupLabel>
@@ -86,16 +86,16 @@ import { Select } from "chunks-ui";
 
 ```tsx
 function ControlledSelect() {
-  const [value, setValue] = useState("");
+  const [value, setValue] = useState<string | null>(null);
 
   return (
     <Select.Root value={value} onValueChange={setValue}>
-      <Select.Trigger>
+      <Select.Trigger aria-label="Status">
         <Select.Value placeholder="Select status" />
         <Select.Icon />
       </Select.Trigger>
       <Select.Portal>
-        <Select.Positioner>
+        <Select.Positioner sideOffset={5} alignItemWithTrigger={false}>
           <Select.Popup>
             <Select.Item value="active">
               <Select.ItemText>Active</Select.ItemText>
@@ -122,7 +122,7 @@ function ControlledSelect() {
 | `Select.Value` | Displays the selected value or placeholder text. |
 | `Select.Icon` | Chevron icon inside the trigger. |
 | `Select.Portal` | Renders the popup in a portal. |
-| `Select.Positioner` | Handles Floating UI positioning. |
+| `Select.Positioner` | Handles Floating UI positioning. Base UI's default `alignItemWithTrigger` places the popup over the trigger, with the selected item on top of it; the examples pass `alignItemWithTrigger={false}` and `sideOffset={5}` to open it below the trigger instead. |
 | `Select.Popup` | The dropdown panel containing items. |
 | `Select.Item` | An individual selectable option. |
 | `Select.ItemText` | The text content of an item. |
