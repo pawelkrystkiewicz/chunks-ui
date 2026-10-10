@@ -11,8 +11,8 @@ import { reloadMotion } from "./use-motion";
 
 /*
  * Popover.Arrow and Menu.Arrow draw the same arrow: a square in the popup's colours, turned so
- * one corner points at the trigger. It must reach out of the popup toward the trigger without
- * touching it, and line up with the trigger's centre.
+ * one corner points at the trigger. It must reach out of the popup toward the trigger, end
+ * `sideOffset` from it, and line up with the trigger's centre.
  */
 
 const PHYSICAL_SIDES = ["top", "right", "bottom", "left"] as const;
@@ -44,6 +44,19 @@ function physicalSide(side: Side, dir: Direction): PhysicalSide {
 
 /** Floating UI rounds the popup position to whole device pixels (DPR 1 here). */
 const POSITION_ROUNDING_PX = 0.5;
+
+/** The documented default `sideOffset` of each popup. */
+const SIDE_OFFSET_PX: Record<Kind, number> = { Popover: 8, Menu: 4 };
+
+/** At the default `--spacing` of 4px: the popup moves out 1.75 units for the arrow. */
+const REACH_PX = 1.75 * 4;
+
+/**
+ * Past the popup's edge, the arrow (a 2.5-unit square on its corner, centred on the inside of the
+ * 1px border) reaches half its diagonal less the border. The popup's move rounds that up, so the
+ * tip ends this much further from the trigger than `sideOffset`.
+ */
+const TIP_GAP_PAST_OFFSET_PX = REACH_PX - ((2.5 * 4) / Math.SQRT2 - 1);
 
 /** An arrowed popup of `kind` on `side`, opened by default or by clicking "Trigger". */
 function arrowed(kind: Kind, side: Side, dir: Direction, defaultOpen: boolean): ReactNode {
@@ -143,11 +156,19 @@ afterEach(() => {
 });
 
 describe.each(CASES)("$kind arrow, side $side ($dir)", ({ kind, side, dir }) => {
-  it("reaches out of the popup toward the trigger without touching it", async () => {
-    const { area, reach, tipGap } = await measure(kind, side, dir);
+  it("reaches out of the popup toward the trigger", async () => {
+    const { area, reach } = await measure(kind, side, dir);
     expect(area).toBeGreaterThan(0);
     expect(reach).toBeGreaterThan(0);
-    expect(tipGap).toBeGreaterThanOrEqual(0);
+  });
+
+  it("keeps `sideOffset` as the gap between the trigger and the tip", async () => {
+    const { tipGap } = await measure(kind, side, dir);
+    const sideOffset = SIDE_OFFSET_PX[kind];
+    expect(tipGap).toBeGreaterThanOrEqual(sideOffset);
+    expect(Math.abs(tipGap - sideOffset - TIP_GAP_PAST_OFFSET_PX)).toBeLessThanOrEqual(
+      POSITION_ROUNDING_PX,
+    );
   });
 
   it("points at the trigger's centre", async () => {
@@ -226,9 +247,6 @@ describe.each(KINDS)("%s.Arrow while the popup opens", (kind) => {
     });
   });
 });
-
-/** The arrow's reach at the default `--spacing` of 4px: 1.75 units. */
-const REACH_PX = 1.75 * 4;
 
 describe.each(KINDS)("%s with an arrow, without Motion", (kind) => {
   afterEach(async () => {
