@@ -1,10 +1,9 @@
 import { render } from "@testing-library/react";
-import { cancelFrame, frame } from "motion/react";
 import { createRef, useEffect } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { commands, page } from "vitest/browser";
 import { reloadMotion } from "../../lib/use-motion";
-import { insetsWithin, waitForStable } from "../../VisualTest.utils";
+import { eachPaintedFrame, insetsWithin, waitForStable } from "../../VisualTest.utils";
 import { Tabs, type TabsContentsProps } from "./index";
 
 // Runs with reduced motion off, so Tabs.Contents slides and resizes with Motion
@@ -416,22 +415,6 @@ describe("Tabs.Indicator with Motion", () => {
       </Tabs.Root>
     </div>
   );
-
-  /**
-   * Calls `read` once a frame for `frames` frames, after Motion's render step: the values that
-   * frame paints, Motion's writes for it included
-   */
-  const eachPaintedFrame = <T,>(read: () => T, frames: number) =>
-    new Promise<T[]>((resolve) => {
-      const values: T[] = [];
-      const step = () => {
-        values.push(read());
-        if (values.length < frames) return;
-        cancelFrame(step);
-        resolve(values);
-      };
-      frame.postRender(step, true);
-    });
 
   /** The largest distance between an edge of the indicator and the same edge of the tab */
   const offBy = (tab: Element, indicator: Element) =>

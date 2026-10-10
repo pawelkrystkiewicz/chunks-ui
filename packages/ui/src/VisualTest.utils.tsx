@@ -1,4 +1,5 @@
 import { render } from "@testing-library/react";
+import { cancelFrame, frame } from "motion/react";
 import type { ReactNode } from "react";
 import { page, type ScreenshotMatcherOptions } from "vitest/browser";
 
@@ -90,3 +91,19 @@ export async function waitForStable<T>(
   }
   return value;
 }
+
+/**
+ * Calls `read` once a frame for `frames` frames, after Motion's render step: the values that
+ * frame paints, Motion's writes for it included
+ */
+export const eachPaintedFrame = <T,>(read: () => T, frames: number) =>
+  new Promise<T[]>((resolve) => {
+    const values: T[] = [];
+    const step = () => {
+      values.push(read());
+      if (values.length < frames) return;
+      cancelFrame(step);
+      resolve(values);
+    };
+    frame.postRender(step, true);
+  });
