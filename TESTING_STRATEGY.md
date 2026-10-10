@@ -92,6 +92,24 @@ it("has no a11y violations", async () => {
 
 Setup: `jest-axe` is globally configured in `vitest.setup.ts` — `toHaveNoViolations` is available on all `expect()` calls.
 
+## Visual Regression Tests (`*.visual.spec.tsx`)
+
+Browser specs (Vitest browser mode, Playwright Chromium) in `packages/ui`. They screenshot components and compare them with committed baselines, and they cover the geometry that jsdom can't measure (positions, sizes, overflow).
+
+- **Tolerance is 0.** `toMatchScreenshot` runs with `allowedMismatchedPixelRatio: 0` (`vitest.visual.config.ts`), so one changed pixel fails the spec.
+- **Only Linux baselines are committed** (`*-linux.png`), and CI compares against them. macOS baselines (`*-darwin.png`) are gitignored and exist only on your machine. With zero tolerance, a macOS baseline left over from an older checkout fails locally although nothing is wrong: refresh it with `bun run test:visual:update` (in `packages/ui`) before you treat a local failure as a regression.
+- **Regenerate Linux baselines in Docker** after you commit the change. CI renders on x86 in the same digest-pinned image, so force `linux/amd64`; an arm64 render can differ from the CI render. Under emulation on Apple silicon the run takes minutes, which is not a hang. `<wt>` is your checkout or worktree, `<scratchpad>` any scratch directory outside it:
+
+  ```bash
+  D=<scratchpad>/ui-visual; rm -rf $D && mkdir -p $D && git -C <wt> archive HEAD | tar -x -C $D
+  docker run --rm --platform linux/amd64 -v $D:/work -w /work mcr.microsoft.com/playwright:v1.64.0-noble@sha256:06a9939e57531807f8d5fd76ce44b53165ffb7d7501d87ab10e285c20b1e971f bash -lc \
+    'npm i -g bun@1.4.2 >/dev/null 2>&1 && bun install --frozen-lockfile >/dev/null 2>&1 && cd packages/ui && bun run test:visual:update'
+  rsync -am --include='*/' --include='*-linux.png' --exclude='*' $D/packages/ui/src/ <wt>/packages/ui/src/
+  ```
+
+  Keep the image tag equal to the `@playwright/test` version. `bun run update:screenshots` does the same on GitHub Actions for the current branch.
+- Look at every changed PNG before you commit it.
+
 ## Coverage Targets
 
 No hard thresholds enforced yet. Current baseline:
@@ -107,6 +125,7 @@ No hard thresholds enforced yet. Current baseline:
 Allowed:
 
 - `vi.fn()` for verifying user callbacks (e.g., `onClear`, `onRemove`)
+- jsdom shims for browser APIs that jsdom doesn't implement, such as layout (`getBoundingClientRect`), `ResizeObserver` or `matchMedia`. This is the one exception to "no stubs": jsdom has no layout, so assert behaviour on top of the shim and cover the real geometry in a browser spec (`*.visual.spec.tsx`).
 
 Not allowed:
 
@@ -138,11 +157,14 @@ Naming: `Component.spec.tsx` (not `.test.tsx`, not in `__tests__/`).
 ## Commands
 
 ```bash
-bun run test              # unit tests
+bun run test               # unit tests
 bun run test:unit:coverage # with V8 coverage report
+bun run test:visual        # visual regression tests (needs Playwright browsers)
+bun run test:visual:update # refresh the local baselines
 ```
 
 ## CI
 
 - **Unit tests + coverage** run on every PR and master push (`unit.tests.yml`)
 - **Lint + typecheck** run on every PR and master push (`quality-gates.yml`)
+- **Visual regression** runs on every PR against the committed Linux baselines (`visual-regression.tests.yml`)
