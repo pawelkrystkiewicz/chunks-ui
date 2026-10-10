@@ -57,12 +57,15 @@ function ComboboxInput({ className, ...props }: ComboboxInputProps) {
 }
 
 // Trigger, Clear and ChipRemove render an aria-hidden icon by default, so they name themselves
-// with a default aria-label. Custom children name the button instead (a fixed label would hide
-// visible text such as <Combobox.Value />), and a consumer's aria-label always wins.
+// with a default aria-label. Custom children or a `render` element own the content instead (a
+// fixed label would hide their visible text), so neither the label nor the icon is applied then.
+// A consumer's aria-label replaces the default; inside Field.Root, Base UI's aria-labelledby on
+// the Trigger still takes precedence over any aria-label.
 function ComboboxTrigger({ className, children, ...props }: ComboboxTriggerProps) {
+  const hasOwnContent = children != null || props.render != null;
   return (
     <BaseCombobox.Trigger
-      aria-label={children == null ? "Show options" : undefined}
+      aria-label={hasOwnContent ? undefined : "Show options"}
       className={cnState(
         "absolute inset-y-0 right-0 flex items-center pr-2",
         "disabled:pointer-events-none disabled:opacity-50",
@@ -70,7 +73,9 @@ function ComboboxTrigger({ className, children, ...props }: ComboboxTriggerProps
       )}
       {...props}
     >
-      {children ?? (
+      {hasOwnContent ? (
+        children
+      ) : (
         <svg
           viewBox="0 0 24 24"
           fill="none"
@@ -192,9 +197,10 @@ function ComboboxEmpty({ className, ...props }: ComboboxEmptyProps) {
 }
 
 function ComboboxClear({ className, children, ...props }: ComboboxClearProps) {
+  const hasOwnContent = children != null || props.render != null;
   return (
     <BaseCombobox.Clear
-      aria-label={children == null ? "Clear selection" : undefined}
+      aria-label={hasOwnContent ? undefined : "Clear selection"}
       className={cnState(
         "absolute inset-y-0 right-7 flex items-center text-muted-foreground hover:text-foreground",
         "micro-interactions",
@@ -202,7 +208,9 @@ function ComboboxClear({ className, children, ...props }: ComboboxClearProps) {
       )}
       {...props}
     >
-      {children ?? (
+      {hasOwnContent ? (
+        children
+      ) : (
         <svg
           viewBox="0 0 24 24"
           fill="none"
@@ -242,16 +250,19 @@ function ComboboxChip({ className, ...props }: ComboboxChipProps) {
 }
 
 function ComboboxChipRemove({ className, children, ...props }: ComboboxChipRemoveProps) {
+  const hasOwnContent = children != null || props.render != null;
   return (
     <BaseCombobox.ChipRemove
-      aria-label={children == null ? "Remove" : undefined}
+      aria-label={hasOwnContent ? undefined : "Remove"}
       className={cnState(
         "micro-interactions inline-flex items-center text-muted-foreground hover:text-foreground",
         className,
       )}
       {...props}
     >
-      {children ?? (
+      {hasOwnContent ? (
+        children
+      ) : (
         <svg
           viewBox="0 0 24 24"
           fill="none"

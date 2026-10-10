@@ -233,7 +233,13 @@ function ControlledCombobox() {
 <Combobox.ChipRemove aria-label={`Remove ${item.label}`} />
 ```
 
-If you pass `children`, the default name is not applied and the children name the button. Give icon-only children an `aria-label`.
+If you pass `children` or a `render` element, the default name and the default icon are not applied. The content you pass names the button, so give icon-only content an `aria-label`:
+
+```tsx
+<Combobox.Trigger render={<button type="button">Choose</button>} />
+```
+
+Inside `Field.Root`, Base UI sets `aria-labelledby` on `Combobox.Trigger` to the field label. That label takes precedence over `aria-label`, so the default "Show options" name does not apply there.
 
 ## Props
 

@@ -357,6 +357,19 @@ describe("Combobox icon buttons", () => {
     expect(screen.getByRole("button", { name: "Remove Apple" })).toBeInTheDocument();
   });
 
+  it("lets a render element keep its own text as the name", () => {
+    render(
+      <MultiSelect
+        triggerProps={{ render: <button type="button">Choose</button> }}
+        clearProps={{ render: <button type="button">Reset</button> }}
+        chipRemoveProps={{ render: <button type="button">Drop</button> }}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Choose" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Reset" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Drop" })).toBeInTheDocument();
+  });
+
   it("takes the name from custom children instead of the default", () => {
     render(
       <MultiSelect
