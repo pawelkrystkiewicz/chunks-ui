@@ -307,6 +307,9 @@ export function toScopeStyle(t: Theme): CSSProperties {
   const vars = {
     ...Object.fromEntries(Object.entries(palette(t, t.mode)).map(([k, v]) => [`--${k}`, v])),
     ...Object.fromEntries(textVars(t.fontSize, "px")),
+    // theme.css sets this on :root and .dark, so without it the page's mode would pick the
+    // preview's text-primary-text shades (too light in a light preview on a dark page)
+    "--colored-text-lightness": dark ? "max(l, 0.63)" : "min(l, 0.51)",
     "--canvas": ok(dark ? 0.105 : 0.975, b.c, b.h),
     "--radius": `${t.radius}px`,
     "--spacing": `${4 * t.spacing}px`,

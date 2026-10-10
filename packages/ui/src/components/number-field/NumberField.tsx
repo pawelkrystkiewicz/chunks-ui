@@ -122,8 +122,42 @@ function NumberFieldScrubArea({ className, ...props }: NumberFieldScrubAreaProps
   );
 }
 
-function NumberFieldScrubAreaCursor({ className, ...props }: NumberFieldScrubAreaCursorProps) {
-  return <BaseNumberField.ScrubAreaCursor className={cnState("hidden", className)} {...props} />;
+const SCRUB_CURSOR_ICON = (
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M2 12h20M6 8l-4 4 4 4M18 8l4 4-4 4" />
+  </svg>
+);
+
+/**
+ * Base UI hides the system cursor with pointer lock while the user scrubs, and renders this part
+ * (only while scrubbing) as the stand-in. With neither children nor `render` it shows a
+ * left-right arrow; a `render` element draws its own cursor and may be a void element like <img>.
+ */
+function NumberFieldScrubAreaCursor({
+  className,
+  children,
+  render,
+  ...props
+}: NumberFieldScrubAreaCursorProps) {
+  return (
+    <BaseNumberField.ScrubAreaCursor
+      className={cnState("z-cursor text-foreground drop-shadow-sm", className)}
+      render={render}
+      {...props}
+    >
+      {children == null && !render ? SCRUB_CURSOR_ICON : children}
+    </BaseNumberField.ScrubAreaCursor>
+  );
 }
 
 // ---------------------------------------------------------------------------

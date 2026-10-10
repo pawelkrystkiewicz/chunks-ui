@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   BASES,
@@ -120,6 +121,27 @@ describe("toScopeStyle", () => {
     // A transparent zero shadow, not `none`: Tailwind puts the value in a comma-separated
     // `box-shadow` list, and `none` there makes the whole declaration invalid.
     expect(style["--preview-shadow"]).toBe("0 0 #0000");
+  });
+
+  it("shades coloured text for the preview's mode, as theme.css does for the page's", () => {
+    // theme.css clamps the lightness of text-primary-text and co. on :root (light) and .dark.
+    // The scope must set its own, or a light preview on a dark page gets the dark-mode shades.
+    const themeCss = readFileSync(
+      new URL("../../../../packages/ui/src/theme.css", import.meta.url),
+      "utf8",
+    );
+    const inTheme = (selector: string) =>
+      new RegExp(`^${selector} \\{[^}]*?--colored-text-lightness: ([^;]+);`, "m").exec(
+        themeCss,
+      )?.[1];
+    const scoped = (mode: Mode) =>
+      (toScopeStyle({ ...DEFAULT_THEME, mode }) as Record<string, string>)[
+        "--colored-text-lightness"
+      ];
+    expect(inTheme(":root")).toBeDefined();
+    expect(inTheme("\\.dark")).toBeDefined();
+    expect(scoped("light")).toBe(inTheme(":root"));
+    expect(scoped("dark")).toBe(inTheme("\\.dark"));
   });
 
   it("writes px tokens and scales text by base size", () => {

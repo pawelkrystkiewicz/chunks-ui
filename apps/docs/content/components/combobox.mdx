@@ -112,7 +112,7 @@ const colors = [
     <Combobox.Positioner>
       <Combobox.Popup>
         <Combobox.List>
-          {(group) => (
+          {(group: (typeof colors)[number]) => (
             <Combobox.Group key={group.value} items={group.items}>
               <Combobox.GroupLabel>{group.value}</Combobox.GroupLabel>
               {group.items.map((item) => (

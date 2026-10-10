@@ -175,6 +175,7 @@ The z-index system provides ordered layers to prevent stacking conflicts:
 | `--z-index-modals` | `700` | `z-modals` | `Dialog.Portal` |
 | `--z-index-notifications` | `800` | `z-notifications` | Not used by components. Free for your own banners and notices |
 | `--z-index-toasts` | `810` | `z-toasts` | `Toast.Viewport` |
+| `--z-index-cursor` | `900` | `z-cursor` | `NumberField.ScrubAreaCursor`, which stands in for the pointer while scrubbing |
 
 `Dialog.Portal` and `Drawer.Portal` put their layer on the portal element, which is a stacking context. Their popup and backdrop stack inside it. Popups, dialogs and drawers opened from inside a dialog or drawer render into its portal, so they stack above it whatever their own layer. To move a dialog or drawer to another layer, set `className` on its `Portal`, for example `<Dialog.Portal className="z-notifications">`.
 

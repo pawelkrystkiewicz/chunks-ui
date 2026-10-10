@@ -11,7 +11,9 @@
     "postbuild": "bun run scripts/build-search-index.ts",
     "start": "next start -p 3005",
     "lint": "biome check .",
-    "check-types": "tsc --noEmit",
+    "check-types": "tsc --noEmit && tsc -p scripts && bun run check:snippets",
+    "check:snippets": "bun run scripts/check-snippets.ts",
+    "check:a11y": "bun run scripts/check-a11y.ts",
     "test": "vitest run app scripts",
     "test:unit:coverage": "bun run test",
     "clean": "rm -rf .turbo node_modules .next"
@@ -28,13 +30,16 @@
     "react-dom": "^19.3.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@chunks-ui/typescript-config": "workspace:*",
     "@tailwindcss/postcss": "^4.3.3",
     "@testing-library/react": "^16.3.3",
+    "@types/node": "^24",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "jsdom": "^28.1.0",
     "pagefind": "^1.5.2",
+    "playwright": "1.64.0",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3",
     "vitest": "^4.1.11"

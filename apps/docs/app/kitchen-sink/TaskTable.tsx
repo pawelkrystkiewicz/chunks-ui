@@ -4,7 +4,7 @@ import { Avatar, Button, Checkbox, Chip, Input, Select, Table, Tooltip } from "c
 import { ArrowUpDown, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { Task, TaskPriority, TaskStatus } from "./data";
-import { STATUS_OPTIONS, TASKS } from "./data";
+import { initials, STATUS_OPTIONS, TASKS } from "./data";
 
 const priorityColors: Record<TaskPriority, string> = {
   low: "text-muted-foreground",
@@ -15,9 +15,9 @@ const priorityColors: Record<TaskPriority, string> = {
 
 const statusColors: Record<TaskStatus, string> = {
   backlog: "bg-muted text-muted-foreground",
-  "in-progress": "bg-warning/15 text-warning-text",
-  "in-review": "bg-primary/15 text-primary-text",
-  done: "bg-success/15 text-success-text",
+  "in-progress": "bg-warning/10 text-warning-text",
+  "in-review": "bg-primary/10 text-primary-text",
+  done: "bg-success/10 text-success-text",
 };
 
 const statusLabels: Record<TaskStatus, string> = {
@@ -228,7 +228,11 @@ export function TaskTable() {
                     <Tooltip.Root>
                       <Tooltip.Trigger>
                         <div className="flex items-center gap-2">
-                          <Avatar src={task.assignee.avatar} alt={task.assignee.name} size={24} />
+                          <Avatar
+                            src={task.assignee.avatar}
+                            fallback={initials(task.assignee.name)}
+                            size={24}
+                          />
                           <span className="text-sm">{task.assignee.name.split(" ")[0]}</span>
                         </div>
                       </Tooltip.Trigger>

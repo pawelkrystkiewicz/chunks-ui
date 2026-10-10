@@ -165,6 +165,7 @@
   --z-index-modals: 700;
   --z-index-notifications: 800;
   --z-index-toasts: 810;
+  --z-index-cursor: 900;
 
   /* Border radius */
   --radius-sm: calc(var(--radius) - 4px);

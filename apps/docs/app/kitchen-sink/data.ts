@@ -21,6 +21,13 @@ export type TeamMember = {
   tasksTotal: number;
 };
 
+/** "Alice Chen" → "AC", for an avatar shown next to the person's name */
+export const initials = (name: string) =>
+  name
+    .split(" ")
+    .map((word) => word[0])
+    .join("");
+
 export type Activity = {
   id: string;
   user: string;

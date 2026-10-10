@@ -22,6 +22,7 @@ const twMerge = extendTailwindMerge({
             "modals",
             "notifications",
             "toasts",
+            "cursor",
           ],
         },
       ],

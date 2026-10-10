@@ -13,7 +13,7 @@ export function ProgressBasicExample() {
           <span className="text-muted-foreground">Upload progress</span>
           <span className="text-foreground">65%</span>
         </div>
-        <Progress.Root value={65} max={100}>
+        <Progress.Root value={65} max={100} aria-label="Upload progress">
           <Progress.Track>
             <Progress.Indicator />
           </Progress.Track>
@@ -28,7 +28,7 @@ export function ProgressIndeterminateExample() {
     <Container>
       <div className="w-full max-w-sm space-y-2">
         <span className="text-muted-foreground text-sm">Loading…</span>
-        <Progress.Root value={null}>
+        <Progress.Root value={null} aria-label="Loading">
           <Progress.Track>
             <Progress.Indicator />
           </Progress.Track>
@@ -48,7 +48,7 @@ export function ProgressValuesExample() {
               <span className="text-muted-foreground">Step {v / 25 + (v === 10 ? 0 : 0)}</span>
               <span className="text-foreground">{v}%</span>
             </div>
-            <Progress.Root value={v} max={100}>
+            <Progress.Root value={v} max={100} aria-label={`Step ${v / 25}`}>
               <Progress.Track>
                 <Progress.Indicator />
               </Progress.Track>
@@ -108,7 +108,7 @@ export function ProgressAnimatedExample() {
           <span className="text-muted-foreground">Processing…</span>
           <span className="text-foreground">{value}%</span>
         </div>
-        <Progress.Root value={value} max={100}>
+        <Progress.Root value={value} max={100} aria-label="Processing">
           <Progress.Track>
             <Progress.Indicator />
           </Progress.Track>

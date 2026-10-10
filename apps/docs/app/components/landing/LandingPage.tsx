@@ -721,7 +721,10 @@ function Footer() {
           <span>© 2026 Chunk Creations · MIT license</span>
           <span>
             Built with{" "}
-            <Link href={DOCS} className="text-white/70 hover:text-white">
+            <Link
+              href={DOCS}
+              className="text-white/70 underline underline-offset-2 hover:text-white"
+            >
               chunks-ui
             </Link>
           </span>

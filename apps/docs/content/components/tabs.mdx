@@ -166,7 +166,7 @@ The simplest case. One outlet, one motion target. Pass `initial` / `animate` / `
     animate={{ y: 0, opacity: 1 }}
     transition={{ duration: 0.2 }}
   >
-    {/* render content for the active tab */}
+    <p className="p-4">Content for the {tab} tab</p>
   </Tabs.Animate>
 </Tabs.Root>
 ```
@@ -193,7 +193,7 @@ When you need a motion feature that `Tabs.Animate` doesn't surface — here, an 
 import { useTabsValue } from "chunks-ui";
 import { AnimatePresence, motion } from "motion/react";
 
-function HookPanel({ children }) {
+function HookPanel({ children }: { children: React.ReactNode }) {
   const value = useTabsValue();
   return (
     <AnimatePresence mode="wait" initial={false}>
@@ -235,7 +235,13 @@ function useTabsDirection(order: readonly string[]): 1 | -1 {
   return direction;
 }
 
-function DirectionAwarePanel({ order, children }) {
+function DirectionAwarePanel({
+  order,
+  children,
+}: {
+  order: readonly string[];
+  children: React.ReactNode;
+}) {
   const direction = useTabsDirection(order);
   return (
     <Tabs.Animate

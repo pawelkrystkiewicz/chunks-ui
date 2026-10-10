@@ -50,17 +50,26 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      # Includes the docs snippet type-check (apps/docs check:snippets)
       - name: Typecheck
         run: bun run check-types
 
   docs-build:
-    timeout-minutes: 15
-    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    runs-on: ubuntu-24.04
+    # The axe check drives Chromium; this image has the browser for the pinned playwright.
+    # Same image as the visual tests; keep the tag equal to apps/docs' playwright version.
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.0-noble@sha256:06a9939e57531807f8d5fd76ce44b53165ffb7d7501d87ab10e285c20b1e971f
     steps:
       - name: Checkout Repo
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           persist-credentials: false
+
+      # setup-bun needs unzip; the image lacks it
+      - name: Install unzip
+        run: apt-get update && apt-get install -y --no-install-recommends unzip
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
@@ -72,3 +81,8 @@ jobs:
 
       - name: Build docs
         run: bun run build --filter=@chunks-ui/docs
+
+      # Run from apps/docs, not through Turbo: its strict env mode drops PLAYWRIGHT_BROWSERS_PATH
+      - name: Check docs pages with axe
+        working-directory: apps/docs
+        run: bun run check:a11y
