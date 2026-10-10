@@ -141,19 +141,51 @@ describe("DatePicker", () => {
 });
 
 describe("DatePicker labelling", () => {
-  it("is named by aria-label", () => {
-    render(<DatePicker aria-label="Due date" />);
-    expect(screen.getByRole("button")).toHaveAccessibleName("Due date");
+  const MARCH_15 = new Date(2026, 2, 15);
+
+  // A button has no value of its own, so a label must not hide the date: the name keeps both
+  it.each([
+    { mode: "aria-label", ui: <DatePicker aria-label="Due date" defaultValue={MARCH_15} /> },
+    {
+      mode: "aria-labelledby",
+      ui: (
+        <>
+          <span id="due-label">Due date</span>
+          <DatePicker aria-labelledby="due-label" defaultValue={MARCH_15} />
+        </>
+      ),
+    },
+    {
+      mode: "<label htmlFor>",
+      ui: (
+        <>
+          <label htmlFor="due">Due date</label>
+          <DatePicker id="due" defaultValue={MARCH_15} />
+        </>
+      ),
+    },
+    {
+      mode: "Field.Label",
+      ui: (
+        <Field.Root>
+          <Field.Label>Due date</Field.Label>
+          <DatePicker defaultValue={MARCH_15} />
+        </Field.Root>
+      ),
+    },
+  ])("is named by its $mode and the selected date", ({ ui }) => {
+    render(ui);
+    expect(screen.getByRole("button")).toHaveAccessibleName("Due date March 15, 2026");
   });
 
-  it("is named by a <label> whose htmlFor matches its id", () => {
-    render(
-      <>
-        <label htmlFor="due">Due date</label>
-        <DatePicker id="due" />
-      </>,
-    );
-    expect(screen.getByRole("button")).toHaveAccessibleName("Due date");
+  it("is named by the placeholder after its label when no date is selected", () => {
+    render(<DatePicker aria-label="Due date" />);
+    expect(screen.getByRole("button")).toHaveAccessibleName("Due date Pick a date");
+  });
+
+  it("is named by its date alone when it has no label", () => {
+    render(<DatePicker defaultValue={MARCH_15} />);
+    expect(screen.getByRole("button")).toHaveAccessibleName("March 15, 2026");
   });
 
   it("forwards aria-labelledby, aria-describedby, other props and ref to the trigger", () => {
@@ -171,7 +203,7 @@ describe("DatePicker labelling", () => {
       </>,
     );
     const trigger = screen.getByRole("button");
-    expect(trigger).toHaveAccessibleName("Due date");
+    expect(trigger).toHaveAccessibleName("Due date Pick a date");
     expect(trigger).toHaveAccessibleDescription("Pick a weekday");
     expect(trigger).toHaveAttribute("data-testid", "due-trigger");
     expect(ref.current).toBe(trigger);
@@ -186,7 +218,7 @@ describe("DatePicker labelling", () => {
       </Field.Root>,
     );
     const trigger = screen.getByRole("button");
-    expect(trigger).toHaveAccessibleName("Due date");
+    expect(trigger).toHaveAccessibleName("Due date Pick a date");
     expect(trigger).toHaveAccessibleDescription("Pick a weekday");
   });
 

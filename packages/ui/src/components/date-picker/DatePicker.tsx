@@ -2,7 +2,7 @@
 
 import { Field as BaseField } from "@base-ui/react/field";
 import { Popover as BasePopover } from "@base-ui/react/popover";
-import { type ComponentProps, useRef, useState } from "react";
+import { type ComponentProps, useId, useLayoutEffect, useRef, useState } from "react";
 import { cn } from "../../lib/cn";
 import { usePortalContainer } from "../../lib/portal-container";
 import { useMergedRef } from "../../lib/use-merged-ref";
@@ -114,6 +114,21 @@ export function DatePicker({
   const displayValue = selectedDate ? formatDate(selectedDate) : "";
   const isoValue = selectedDate ? toIsoDate(selectedDate) : "";
 
+  // A <label htmlFor> names the button by itself and drops the date, so collect the ids of the
+  // trigger's labels to name it by those and the date. As in Base UI's own controls, this reads
+  // the DOM after every commit and gives an id to a label that has none.
+  const valueId = useId();
+  const [nativeLabelIds, setNativeLabelIds] = useState<string>();
+  useLayoutEffect(() => {
+    const labels = Array.from(triggerRef.current?.labels ?? []);
+    const ids = labels.map((label, index) => {
+      if (!label.id) label.id = `${valueId}-label-${index}`;
+      return label.id;
+    });
+    const next = ids.join(" ") || undefined;
+    if (next !== nativeLabelIds) setNativeLabelIds(next);
+  });
+
   return (
     <div className={cn("relative", className)}>
       <BasePopover.Root open={open} onOpenChange={setOpen}>
@@ -127,18 +142,29 @@ export function DatePicker({
           disabled={disabled}
           // The field reads its value from here, not from the button's empty value
           value={isoValue}
-          render={
-            <BasePopover.Trigger
-              className={cn(
-                "flex h-ui-height w-full cursor-pointer items-center rounded-md border border-input bg-background px-3 text-left text-sm",
-                "focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
-                "disabled:pointer-events-none disabled:opacity-50",
-                !displayValue && "text-muted-foreground",
-              )}
-            >
-              {displayValue || placeholder}
-            </BasePopover.Trigger>
-          }
+          render={(controlProps) => {
+            // A label replaces a button's text as its name. The trigger has no other way to
+            // expose the date, so name it by its label and then the date. The label comes from
+            // aria-labelledby (the consumer's or Field.Label's), else aria-label (read through the
+            // trigger's own id), else a <label htmlFor>. Without a label, the text names it.
+            const labelledBy =
+              controlProps["aria-labelledby"] ??
+              (controlProps["aria-label"] ? controlProps.id : nativeLabelIds);
+            return (
+              <BasePopover.Trigger
+                {...controlProps}
+                aria-labelledby={labelledBy ? `${labelledBy} ${valueId}` : undefined}
+                className={cn(
+                  "flex h-ui-height w-full cursor-pointer items-center rounded-md border border-input bg-background px-3 text-left text-sm",
+                  "focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
+                  "disabled:pointer-events-none disabled:opacity-50",
+                  !displayValue && "text-muted-foreground",
+                )}
+              >
+                <span id={valueId}>{displayValue || placeholder}</span>
+              </BasePopover.Trigger>
+            );
+          }}
         />
         <BasePopover.Portal container={container}>
           <BasePopover.Positioner className="z-dropdowns" sideOffset={8}>
