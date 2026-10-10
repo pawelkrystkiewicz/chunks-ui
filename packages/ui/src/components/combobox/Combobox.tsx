@@ -61,21 +61,23 @@ function ComboboxInput({ className, ...props }: ComboboxInputProps) {
 // fixed label would hide their visible text), so neither the label nor the icon is applied then.
 // A consumer's aria-label replaces the default; inside Field.Root, Base UI's aria-labelledby on
 // the Trigger still takes precedence over any aria-label.
+function ownContent(
+  children: React.ReactNode,
+  render: unknown,
+  label: string,
+  icon: React.ReactNode,
+) {
+  const hasOwnContent = children != null || render != null;
+  return hasOwnContent ? { children } : { "aria-label": label, children: icon };
+}
+
 function ComboboxTrigger({ className, children, ...props }: ComboboxTriggerProps) {
-  const hasOwnContent = children != null || props.render != null;
   return (
     <BaseCombobox.Trigger
-      aria-label={hasOwnContent ? undefined : "Show options"}
-      className={cnState(
-        "absolute inset-y-0 right-0 flex items-center pr-2",
-        "disabled:pointer-events-none disabled:opacity-50",
-        className,
-      )}
-      {...props}
-    >
-      {hasOwnContent ? (
-        children
-      ) : (
+      {...ownContent(
+        children,
+        props.render,
+        "Show options",
         <svg
           viewBox="0 0 24 24"
           fill="none"
@@ -86,9 +88,15 @@ function ComboboxTrigger({ className, children, ...props }: ComboboxTriggerProps
           aria-hidden="true"
         >
           <path d="m6 9 6 6 6-6" />
-        </svg>
+        </svg>,
       )}
-    </BaseCombobox.Trigger>
+      className={cnState(
+        "absolute inset-y-0 right-0 flex items-center pr-2",
+        "disabled:pointer-events-none disabled:opacity-50",
+        className,
+      )}
+      {...props}
+    />
   );
 }
 
@@ -197,20 +205,12 @@ function ComboboxEmpty({ className, ...props }: ComboboxEmptyProps) {
 }
 
 function ComboboxClear({ className, children, ...props }: ComboboxClearProps) {
-  const hasOwnContent = children != null || props.render != null;
   return (
     <BaseCombobox.Clear
-      aria-label={hasOwnContent ? undefined : "Clear selection"}
-      className={cnState(
-        "absolute inset-y-0 right-7 flex items-center text-muted-foreground hover:text-foreground",
-        "micro-interactions",
-        className,
-      )}
-      {...props}
-    >
-      {hasOwnContent ? (
-        children
-      ) : (
+      {...ownContent(
+        children,
+        props.render,
+        "Clear selection",
         <svg
           viewBox="0 0 24 24"
           fill="none"
@@ -222,9 +222,15 @@ function ComboboxClear({ className, children, ...props }: ComboboxClearProps) {
         >
           <path d="M18 6 6 18" />
           <path d="m6 6 12 12" />
-        </svg>
+        </svg>,
       )}
-    </BaseCombobox.Clear>
+      className={cnState(
+        "absolute inset-y-0 right-7 flex items-center text-muted-foreground hover:text-foreground",
+        "micro-interactions",
+        className,
+      )}
+      {...props}
+    />
   );
 }
 
@@ -250,19 +256,12 @@ function ComboboxChip({ className, ...props }: ComboboxChipProps) {
 }
 
 function ComboboxChipRemove({ className, children, ...props }: ComboboxChipRemoveProps) {
-  const hasOwnContent = children != null || props.render != null;
   return (
     <BaseCombobox.ChipRemove
-      aria-label={hasOwnContent ? undefined : "Remove"}
-      className={cnState(
-        "micro-interactions inline-flex items-center text-muted-foreground hover:text-foreground",
-        className,
-      )}
-      {...props}
-    >
-      {hasOwnContent ? (
-        children
-      ) : (
+      {...ownContent(
+        children,
+        props.render,
+        "Remove",
         <svg
           viewBox="0 0 24 24"
           fill="none"
@@ -274,9 +273,14 @@ function ComboboxChipRemove({ className, children, ...props }: ComboboxChipRemov
         >
           <path d="M18 6 6 18" />
           <path d="m6 6 12 12" />
-        </svg>
+        </svg>,
       )}
-    </BaseCombobox.ChipRemove>
+      className={cnState(
+        "micro-interactions inline-flex items-center text-muted-foreground hover:text-foreground",
+        className,
+      )}
+      {...props}
+    />
   );
 }
 
