@@ -12,7 +12,7 @@ In a React Server Component, import them from [`chunks-ui/utils`](#server-compon
 
 ## Server components
 
-The `chunks-ui` bundle starts with `"use client"`, because its components need state, effects and Base UI. In a React Server Component (for example, a Next.js App Router page), each export of `chunks-ui` is a client reference. You can render the components, but you cannot call the functions. A call such as `buttonVariants(...)` throws:
+The `chunks-ui` bundle starts with `"use client"`, because its components need state, effects and Base UI. In a React Server Component (for example, a Next.js App Router page), each export of `chunks-ui` is a client reference. You can render top-level components such as `<Button>` directly, but compound parts such as `<Tabs.Root>` need a client component around them, and you cannot call the functions. A call such as `buttonVariants(...)` throws:
 
 ```txt
 Attempted to call buttonVariants() from the server but buttonVariants is on the client.
