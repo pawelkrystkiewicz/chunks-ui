@@ -1,15 +1,13 @@
 "use client";
 
-import { Tooltip } from "chunks-ui";
+import { Button, Tooltip } from "chunks-ui";
 import { Container } from "@/components";
 
 export function TooltipBasicExample() {
   return (
     <Container>
       <Tooltip.Root>
-        <Tooltip.Trigger>
-          <button type="button">Hover me</button>
-        </Tooltip.Trigger>
+        <Tooltip.Trigger render={<Button variant="outlined" />}>Hover me</Tooltip.Trigger>
         <Tooltip.Portal>
           <Tooltip.Positioner>
             <Tooltip.Popup>Helpful tip</Tooltip.Popup>
@@ -24,9 +22,7 @@ export function TooltipArrowExample() {
   return (
     <Container>
       <Tooltip.Root>
-        <Tooltip.Trigger>
-          <button type="button">Info</button>
-        </Tooltip.Trigger>
+        <Tooltip.Trigger render={<Button variant="outlined" />}>Info</Tooltip.Trigger>
         <Tooltip.Portal>
           <Tooltip.Positioner>
             <Tooltip.Popup>
@@ -47,8 +43,8 @@ export function TooltipPositioningExample() {
         <div className="grid grid-cols-2 gap-4">
           {(["top", "right", "bottom", "left"] as const).map((side) => (
             <Tooltip.Root key={side}>
-              <Tooltip.Trigger>
-                <button type="button">{side.charAt(0).toUpperCase() + side.slice(1)}</button>
+              <Tooltip.Trigger render={<Button variant="outlined" />}>
+                {side.charAt(0).toUpperCase() + side.slice(1)}
               </Tooltip.Trigger>
               <Tooltip.Portal>
                 <Tooltip.Positioner side={side}>
@@ -71,9 +67,7 @@ export function TooltipProviderExample() {
     <Container>
       <Tooltip.Provider delay={200} closeDelay={0}>
         <Tooltip.Root>
-          <Tooltip.Trigger>
-            <button type="button">A</button>
-          </Tooltip.Trigger>
+          <Tooltip.Trigger render={<Button variant="outlined" />}>A</Tooltip.Trigger>
           <Tooltip.Portal>
             <Tooltip.Positioner>
               <Tooltip.Popup>Tooltip A</Tooltip.Popup>
@@ -82,9 +76,7 @@ export function TooltipProviderExample() {
         </Tooltip.Root>
 
         <Tooltip.Root>
-          <Tooltip.Trigger>
-            <button type="button">B</button>
-          </Tooltip.Trigger>
+          <Tooltip.Trigger render={<Button variant="outlined" />}>B</Tooltip.Trigger>
           <Tooltip.Portal>
             <Tooltip.Positioner>
               <Tooltip.Popup>Tooltip B</Tooltip.Popup>
