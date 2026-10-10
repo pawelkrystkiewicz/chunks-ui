@@ -36,6 +36,20 @@
       platformAutomerge: true,
     },
     {
+      // Playwright npm packages and the CI image must move together, or the required
+      // visual-regression-test check breaks on a half-bump. A Chromium bump moves pixels at
+      // zero tolerance, so run update-screenshots.yml on the Renovate branch before merging.
+      groupName: "playwright",
+      matchPackageNames: [
+        "@playwright/test",
+        "playwright",
+        "playwright-core",
+        "mcr.microsoft.com/playwright",
+      ],
+      automerge: false,
+      platformAutomerge: false,
+    },
+    {
       matchUpdateTypes: ["major"],
       minimumReleaseAge: "3 days",
       dependencyDashboardApproval: true,
