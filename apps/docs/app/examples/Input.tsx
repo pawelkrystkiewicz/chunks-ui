@@ -41,3 +41,7 @@ export const InputWithClearButton = () => {
     />
   );
 };
+
+export const InputWithClearButtonUncontrolled = () => (
+  <Input defaultValue="Hello" onClear={() => {}} placeholder="Search..." aria-label="Search" />
+);

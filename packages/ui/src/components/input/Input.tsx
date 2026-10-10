@@ -1,7 +1,8 @@
 import { Input as BaseInput } from "@base-ui/react/input";
 import type { VariantProps } from "class-variance-authority";
-import type { ComponentProps, ReactNode } from "react";
+import { type ComponentProps, type ReactNode, useRef, useState } from "react";
 import { cn, cnState } from "../../lib/cn";
+import { useMergedRef } from "../../lib/use-merged-ref";
 import { ClearButton } from "../clear-button";
 import { inputVariants } from "./Input.Variants";
 
@@ -21,20 +22,69 @@ export type InputProps = ComponentProps<typeof BaseInput> &
      */
     endAdornment?: ReactNode;
     /**
-     * Callback fired when the built-in clear button is clicked. Passing this prop enables the clear button.
+     * Callback fired when the built-in clear button is activated. Passing this prop enables the
+     * clear button, which shows while the input has text, controlled (`value`) or uncontrolled
+     * (`defaultValue`). A controlled input stays as it is until `onClear` sets its `value`; an
+     * uncontrolled one is emptied for you. Focus moves to the input. While the button shows, it
+     * takes the place of `endAdornment`.
      */
     onClear?: () => void;
   };
 
-export function Input({ startAdornment, endAdornment, onClear, className, ...props }: InputProps) {
+const isEmpty = (value: unknown) => value == null || String(value).length === 0;
+
+export function Input({
+  startAdornment,
+  endAdornment,
+  onClear,
+  className,
+  ref,
+  onValueChange,
+  ...props
+}: InputProps) {
+  const inputRef = useRef<HTMLElement>(null);
+  const mergedRef = useMergedRef(inputRef, ref);
+  const isControlled = props.value !== undefined;
+  // An uncontrolled input has no `value` to read, so track whether it holds text
+  const [hasUncontrolledText, setHasUncontrolledText] = useState(
+    () => !isEmpty(props.defaultValue),
+  );
   const hasAdornments = startAdornment || endAdornment || onClear;
 
   if (!hasAdornments) {
-    return <BaseInput className={cnState(inputVariants(), className)} {...props} />;
+    return (
+      <BaseInput
+        className={cnState(inputVariants(), className)}
+        ref={ref}
+        onValueChange={onValueChange}
+        {...props}
+      />
+    );
   }
 
   const clearable =
-    typeof onClear === "function" && props.value != null && String(props.value).length > 0;
+    typeof onClear === "function" && (isControlled ? !isEmpty(props.value) : hasUncontrolledText);
+
+  const handleValueChange: InputProps["onValueChange"] = (value, eventDetails) => {
+    if (!isControlled) setHasUncontrolledText(value.length > 0);
+    onValueChange?.(value, eventDetails);
+  };
+
+  const handleClear = () => {
+    const input = inputRef.current as HTMLInputElement | null;
+    // Focus the input before the clear button unmounts, or focus falls to <body>
+    input?.focus();
+    if (!isControlled && input) {
+      // Empty it the way typing does, through the native setter and an input event, so React's
+      // onChange, Base UI's field state and the consumer's handlers all see the change
+      Object.getOwnPropertyDescriptor(Object.getPrototypeOf(input), "value")?.set?.call(input, "");
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      // The same value again through the element's own setter, a no-op in browsers, tells tools
+      // that wrap it (Testing Library's user-event) that the text changed
+      input.value = "";
+    }
+    onClear?.();
+  };
 
   return (
     <div
@@ -55,12 +105,14 @@ export function Input({ startAdornment, endAdornment, onClear, className, ...pro
           (endAdornment || onClear) && "pr-9",
           typeof className === "function" ? className : undefined,
         )}
+        ref={mergedRef}
+        onValueChange={handleValueChange}
         {...props}
       />
-      {/* caveat: can't have both clearable and suffix */}
+      {/* The clear button and endAdornment share one slot: while the button shows, it wins */}
       {(endAdornment || clearable) && (
         <span className="absolute right-3 flex items-center">
-          {clearable ? <ClearButton onClick={onClear} /> : endAdornment}
+          {clearable ? <ClearButton onClick={handleClear} /> : endAdornment}
         </span>
       )}
     </div>

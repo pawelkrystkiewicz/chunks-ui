@@ -1,7 +1,12 @@
 import { Input } from 'chunks-ui'
 import { SearchIcon } from 'lucide-react'
 import { Container } from '@/components'
-import { InputErrorExample, InputWithFieldExample, InputWithClearButton } from '@/examples/Input'
+import {
+  InputErrorExample,
+  InputWithFieldExample,
+  InputWithClearButton,
+  InputWithClearButtonUncontrolled,
+} from '@/examples/Input'
 import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
 # Input
@@ -46,7 +51,9 @@ Use `startAdornment` and `endAdornment` to place icons or text at the edges of t
 
 ## Clear Button
 
-Pass an `onClear` callback to show a built-in clear button (uses the `ClearButton` component internally). The button appears only while a controlled `value` is not empty, so pair `onClear` with `value` and `onChange`; an uncontrolled input (`defaultValue`) never shows it. While it is visible it takes the place of `endAdornment`, so the two don't show together:
+Pass an `onClear` callback to show a built-in clear button (uses the `ClearButton` component internally). The button shows while the input has text, controlled or uncontrolled. Clearing moves focus back to the input. While the button is visible it takes the place of `endAdornment`, so the two don't show together.
+
+A controlled input keeps its `value` until your `onClear` sets it to `''`:
 
 ```tsx
 export const InputWithClearButton = () => {
@@ -66,6 +73,16 @@ export const InputWithClearButton = () => {
 
 <Container>
   <InputWithClearButton />
+</Container>
+
+An uncontrolled input (`defaultValue`) is emptied for you, and `onChange` and `onValueChange` fire with the empty value. `onClear` only tells you that it happened:
+
+```tsx
+<Input defaultValue="Hello" onClear={() => {}} placeholder="Search..." aria-label="Search" />
+```
+
+<Container>
+  <InputWithClearButtonUncontrolled />
 </Container>
 
 ## Error State
