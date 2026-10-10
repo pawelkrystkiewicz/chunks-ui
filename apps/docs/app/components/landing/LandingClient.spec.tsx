@@ -83,5 +83,5 @@ it("clears the pending timer on unmount", async () => {
 
 it("HeroCopy keeps the visible command in its accessible name", () => {
   render(<HeroCopy text={CMD} />);
-  expect(screen.getByRole("button", { name: new RegExp(CMD) })).toBeTruthy();
+  expect(screen.getByRole("button", { name: CMD })).toBeTruthy();
 });

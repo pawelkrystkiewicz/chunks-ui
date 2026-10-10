@@ -59,7 +59,7 @@ function AccordionTrigger({ className, children, ...props }: AccordionTriggerPro
         strokeLinecap="round"
         strokeLinejoin="round"
         aria-hidden="true"
-        className="shrink-0 transition-transform duration-200 group-data-[panel-open]/trigger:rotate-180"
+        className="shrink-0 transition-transform duration-200 motion-reduce:transition-none group-data-[panel-open]/trigger:rotate-180"
       >
         <path d="m6 9 6 6 6-6" />
       </svg>
@@ -72,7 +72,7 @@ function AccordionPanel({ className, ...props }: AccordionPanelProps) {
     <BaseAccordion.Panel
       className={cnState(
         "overflow-hidden text-muted-foreground text-sm",
-        "h-[var(--accordion-panel-height)] transition-[height] duration-200 ease-out",
+        "h-[var(--accordion-panel-height)] transition-[height] duration-200 ease-out motion-reduce:transition-none",
         "data-ending-style:h-0 data-starting-style:h-0",
         className,
       )}

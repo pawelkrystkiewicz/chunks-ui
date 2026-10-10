@@ -34,8 +34,8 @@ function ProgressIndicator({ className, ...props }: ProgressIndicatorProps) {
     <BaseProgress.Indicator
       className={cnState(
         "h-full rounded-full bg-primary",
-        "transition-[width] duration-300 ease-out",
-        "data-[indeterminate]:w-full data-[indeterminate]:animate-pulse data-[indeterminate]:opacity-75",
+        "transition-[width] duration-300 ease-out motion-reduce:transition-none",
+        "data-[indeterminate]:w-full data-[indeterminate]:animate-pulse data-[indeterminate]:motion-reduce:animate-none data-[indeterminate]:opacity-75",
         className,
       )}
       {...props}

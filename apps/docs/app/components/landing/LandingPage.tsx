@@ -2,7 +2,8 @@
 // chunks-ui is a client bundle, so only its components render here; `cn` and `springs` can't run here.
 
 import { CopyButton } from "chunks-ui";
-import { ArrowRight, Box } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
 import {
@@ -138,9 +139,7 @@ function Href({ href, ...props }: ComponentProps<"a"> & { href: string }) {
 
 function Logo() {
   return (
-    <span className="flex size-7 flex-none items-center justify-center rounded-full bg-white text-black">
-      <Box className="size-[15px]" strokeWidth={2.25} />
-    </span>
+    <Image src="/logo-dark-mode.svg" alt="" width={28} height={28} className="size-7 flex-none" />
   );
 }
 
@@ -697,7 +696,7 @@ function Footer() {
           <nav aria-label="Footer" className="grid grid-cols-2 gap-6 lg:grid-cols-3">
             {FOOTER_NAV.map((col) => (
               <div key={col.label} className="flex flex-col gap-2">
-                <span className="mb-1 font-mono text-[11px] text-white/45">{col.label}</span>
+                <span className="mb-1 font-mono text-[11px] text-white/50">{col.label}</span>
                 {col.links.map(({ label, href }) => (
                   <Href
                     key={label}
@@ -711,7 +710,7 @@ function Footer() {
             ))}
           </nav>
         </div>
-        <div className="flex flex-wrap justify-between gap-4 pt-5 pb-8 font-mono text-white/45 text-[12px]">
+        <div className="flex flex-wrap justify-between gap-4 pt-5 pb-8 font-mono text-white/50 text-[12px]">
           <span>© 2026 Chunk Creations · MIT license</span>
           <span>
             Built with{" "}

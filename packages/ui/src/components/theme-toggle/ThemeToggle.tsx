@@ -77,7 +77,7 @@ export function ThemeToggle({ theme, onClick, lightIcon, darkIcon, className }: 
     >
       <span
         className={cn(
-          "absolute inset-0 flex items-center justify-center transition-[opacity,transform] duration-200",
+          "absolute inset-0 flex items-center justify-center transition-[opacity,scale] duration-200",
           theme === "light" ? "scale-100 opacity-100" : "scale-75 opacity-0",
           reduced && "transition-none",
         )}
@@ -86,7 +86,7 @@ export function ThemeToggle({ theme, onClick, lightIcon, darkIcon, className }: 
       </span>
       <span
         className={cn(
-          "absolute inset-0 flex items-center justify-center transition-[opacity,transform] duration-200",
+          "absolute inset-0 flex items-center justify-center transition-[opacity,scale] duration-200",
           theme === "dark" ? "scale-100 opacity-100" : "scale-75 opacity-0",
           reduced && "transition-none",
         )}
