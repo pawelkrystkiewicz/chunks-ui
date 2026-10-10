@@ -100,7 +100,9 @@ function RadioItem({ children, className, disabled, ...props }: RadioItemProps) 
     <label
       className={cn(
         "flex cursor-pointer items-center gap-2",
-        disabled && "cursor-not-allowed",
+        // Dims the radio and its text together. A disabled Radio.Group dims itself instead, so
+        // this keys off the item's own prop and its items aren't dimmed twice.
+        disabled && "cursor-not-allowed opacity-50",
         className,
       )}
     >
