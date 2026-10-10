@@ -1,3 +1,5 @@
+import { UtilitiesServerExample } from '@/examples/Utilities'
+
 # Utilities
 
 Chunks UI exports the helpers its components use to merge class names: `cn` for plain class lists and `cnState` for Base UI parts whose `className` can be a function of their state.
@@ -5,6 +7,43 @@ Chunks UI exports the helpers its components use to merge class names: `cn` for 
 ```tsx
 import { cn, cnState, type ClassInput, type StateClassName } from "chunks-ui";
 ```
+
+In a React Server Component, import them from [`chunks-ui/utils`](#server-components).
+
+## Server components
+
+The `chunks-ui` bundle starts with `"use client"`, because its components need state, effects and Base UI. In a React Server Component (for example, a Next.js App Router page), each export of `chunks-ui` is a client reference. You can render top-level components such as `<Button>` directly, but compound parts such as `<Tabs.Root>` need a client component around them, and you cannot call the functions. A call such as `buttonVariants(...)` throws:
+
+```txt
+Attempted to call buttonVariants() from the server but buttonVariants is on the client.
+```
+
+Import the helpers from `chunks-ui/utils`. This entry has no `"use client"` and no React code, so its functions run on the server:
+
+```tsx
+import { buttonVariants, cn } from "chunks-ui/utils";
+
+export function ButtonDocsLink() {
+  return (
+    <a href="/components/button" className={cn(buttonVariants({ variant: "outlined" }), "rounded-full")}>
+      Button docs
+    </a>
+  );
+}
+```
+
+This page is a server component, and it renders the link below with that code:
+
+<UtilitiesServerExample />
+
+`chunks-ui/utils` exports:
+
+- `cn` and `cnState`, with their `ClassInput` and `StateClassName` types;
+- `buttonVariants`, `chipVariants`, `iconButtonVariants` and `inputVariants`;
+- `springs`, the Motion spring presets;
+- the `ELEMENT_*` constants and the `Element*` types, such as `ElementColor`.
+
+`chunks-ui` exports the same names with the same behavior. In a client component, you can import them from either entry.
 
 ## cn
 
@@ -17,7 +56,7 @@ cn("px-4 py-2", "px-6"); // "py-2 px-6"
 Use it to let a `className` prop override your defaults:
 
 ```tsx
-import { cn } from "chunks-ui";
+import { cn } from "chunks-ui/utils";
 import type { ComponentProps } from "react";
 
 export function Panel({ className, ...props }: ComponentProps<"section">) {
@@ -25,7 +64,7 @@ export function Panel({ className, ...props }: ComponentProps<"section">) {
 }
 ```
 
-`<Panel className="p-6" />` renders with `rounded-lg border border-border p-6`.
+`<Panel className="p-6" />` renders with `rounded-lg border border-border p-6`. `Panel` has no `"use client"`, so it imports `cn` from `chunks-ui/utils`, and it works in server and client components.
 
 ### What it accepts
 
