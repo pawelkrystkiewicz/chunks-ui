@@ -61,5 +61,5 @@ Personal React 19+ component library. Single npm package (`chunks-ui`) replacing
 
 ## Reference
 
-- Full PRD with component list, color system, and architecture decisions: `PRD.md`
+- Component scope, selection criteria, and why components were removed: `CONTRIBUTING.md`
 - Testing patterns, what to test, and CI setup: `TESTING_STRATEGY.md`

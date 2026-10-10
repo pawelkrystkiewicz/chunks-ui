@@ -62,3 +62,6 @@ playwright-report
 **/__screenshots__/**/*.png
 !**/__screenshots__/**/*-linux.png
 /design/
+
+# personal follow-up notes
+/TODO.md

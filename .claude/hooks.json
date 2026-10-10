@@ -78,24 +78,6 @@
         ]
       },
       {
-        "matcher": "Write(PRD.md)",
-        "hooks": [
-          {
-            "type": "block",
-            "message": "PRD.md is a human-authored spec. Agents must not overwrite it."
-          }
-        ]
-      },
-      {
-        "matcher": "Edit(PRD.md)",
-        "hooks": [
-          {
-            "type": "block",
-            "message": "PRD.md is a human-authored spec. Agents must not modify it."
-          }
-        ]
-      },
-      {
         "matcher": "Write(.claude/hooks.json)",
         "hooks": [
           {
