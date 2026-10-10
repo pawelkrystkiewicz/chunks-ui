@@ -48,6 +48,10 @@ export const overlays = {
 export const inside = (box: DOMRect, [x, y]: [number, number]) =>
   x > box.left && x < box.right && y > box.top && y < box.bottom;
 
+/** `box` grown by `by` px on every side */
+const grow = (box: DOMRect, by: number) =>
+  new DOMRect(box.x - by, box.y - by, box.width + 2 * by, box.height + 2 * by);
+
 // An overlay opened straight from the page portals to <body>, so only its Portal's z-layer
 // (drawers 600, modals 700) lifts it above the app's own layers. The fixed bar (40-50% of the
 // viewport height) crosses a centred Dialog's top edge; the sticky bar, a trigger line below
@@ -93,6 +97,8 @@ export function expectAboveAppBars(name: string, popup: Element, backdrop: Eleme
       true,
     );
 
+    // At least 1px clear of the popup: Chromium hit-tests a scaled popup by its box rounded out
+    // to whole pixels, so mid-animation a point less than 1px past its edge still hits it
     const pastPopup = (
       [
         [barBox.left + 4, barBox.top + 4],
@@ -100,7 +106,7 @@ export function expectAboveAppBars(name: string, popup: Element, backdrop: Eleme
         [barBox.right - 4, barBox.top + 4],
         [barBox.right - 4, barBox.bottom - 4],
       ] as [number, number][]
-    ).find((point) => !inside(box, point));
+    ).find((point) => !inside(grow(box, 1), point));
     if (!pastPopup) throw new Error(`The ${bar} must show past the ${name}`);
     expect(document.elementFromPoint(...pastPopup), `${name} backdrop over the ${bar}`).toBe(
       backdrop,

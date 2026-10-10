@@ -36,12 +36,15 @@ jobs:
       - name: Run Visual Regression Tests
         run: cd packages/ui && bun run test:visual
 
+      # Vitest writes each failed screenshot's actual and diff PNGs to <root>/.vitest-attachments
       - name: Upload diff screenshots on failure
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: visual-regression-diffs
           path: packages/ui/.vitest-attachments
+          # The folder is hidden, and upload-artifact skips hidden files by default
+          include-hidden-files: true
           if-no-files-found: ignore
           retention-days: 7
 
