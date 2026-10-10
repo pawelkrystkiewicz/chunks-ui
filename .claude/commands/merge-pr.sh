@@ -2,6 +2,7 @@
 # Merge PRs one after another: branch up to date, all required checks green, no unresolved CodeRabbit threads,
 # exact checked sha. Never the release PR. Never asks for or waits on a CodeRabbit review; its status is info only.
 # Usage: .claude/commands/merge-pr.sh <pr> [<pr>...]   — one call, PRs in merge order.
+# Parallel runs queue: a run started while another is merging waits for it to exit, across all worktrees.
 # Exit 0 = all merged. Exit 1 = stopped; the last line says why.
 set -uo pipefail
 die() { echo "$*"; exit 1; }
@@ -9,6 +10,22 @@ repo=$(gh repo view --json nameWithOwner -q .nameWithOwner) || die "cannot resol
 R=repos/$repo
 need=$(gh api "$R/branches/master/protection/required_status_checks" --jq '.contexts | length') || die "cannot read branch protection"
 [ "$need" -gt 0 ] || die "master has no required checks configured"
+
+# One run at a time: a lock dir in the git common dir (shared by worktrees) with the holder's pid; a dead holder's lock is taken over.
+# Released on every exit, die included. The INT trap also stops a run sent SIGINT alone, which bash otherwise ignores mid-sleep.
+# ponytail: takeover is check-then-remove, so two waiters on one dead lock in the same millisecond can both get in.
+# ponytail: a holder killed between mkdir and its pid write, or a dead holder's pid reused, looks alive; rm -r the lock by hand.
+lock=$(git rev-parse --path-format=absolute --git-common-dir)/merge-pr.lock || die "cannot find the git dir"
+trap '[ "$(cat "$lock/pid" 2>/dev/null)" = "$$" ] && rm -rf "$lock"' EXIT
+trap 'exit 130' INT
+ahead=""
+until mkdir "$lock" 2>/dev/null; do
+  pid=$(cat "$lock/pid" 2>/dev/null)
+  if [ -n "$pid" ] && ! kill -0 "$pid" 2>/dev/null; then echo "merge-pr.sh pid $pid is gone; taking over its lock"; rm -rf "$lock"; continue; fi
+  [ "$pid" = "$ahead" ] || { echo "waiting for merge-pr.sh pid $pid to finish"; ahead=$pid; }
+  sleep 15
+done
+echo "$$" >"$lock/pid"
 
 # CodeRabbit's commit status from the last commit with code in it (anything but an update-branch merge by web-flow) onward: reviewed | pending | rate-limited | skipped | none.
 coderabbit() {
