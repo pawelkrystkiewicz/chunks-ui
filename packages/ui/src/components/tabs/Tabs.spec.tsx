@@ -299,13 +299,16 @@ describe("Tabs.Indicator in server HTML", () => {
     const container = serverHtml(ui);
     document.body.append(container);
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
-    const root = await act(async () => hydrateRoot(container, ui));
-    expect(consoleError).not.toHaveBeenCalled();
-    consoleError.mockRestore();
-    expect(container.querySelector('[data-testid="indicator"]')).not.toBeNull();
-    expect(container.querySelector("script")).toBeNull();
-    act(() => root.unmount());
-    container.remove();
+    try {
+      const root = await act(async () => hydrateRoot(container, ui));
+      expect(consoleError).not.toHaveBeenCalled();
+      expect(container.querySelector('[data-testid="indicator"]')).not.toBeNull();
+      expect(container.querySelector("script")).toBeNull();
+      act(() => root.unmount());
+    } finally {
+      consoleError.mockRestore();
+      container.remove();
+    }
   });
 });
 

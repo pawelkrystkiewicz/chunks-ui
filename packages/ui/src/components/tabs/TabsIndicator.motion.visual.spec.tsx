@@ -66,7 +66,8 @@ async function renderTabs(withMotion: boolean, layout?: Layout) {
   await motion(withMotion);
   const result = render(tabs(layout));
   const indicator = result.getByTestId("indicator");
-  // Motion drops the CSS fallback's transition class once it drives the indicator
+  // Motion drops the CSS fallback's position classes, which read Base UI's variables, once it
+  // drives the indicator
   await expect
     .poll(() => indicator.classList.contains("top-(--active-tab-top)"), { timeout: 5000 })
     .toBe(!withMotion);
