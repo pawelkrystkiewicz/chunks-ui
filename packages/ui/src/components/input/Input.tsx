@@ -1,6 +1,6 @@
 import { Input as BaseInput } from "@base-ui/react/input";
 import type { VariantProps } from "class-variance-authority";
-import { type ComponentProps, type ReactNode, useRef, useState } from "react";
+import { type ComponentProps, type ReactNode, useEffect, useRef, useState } from "react";
 import { cn, cnState } from "../../lib/cn";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { ClearButton } from "../clear-button";
@@ -50,6 +50,26 @@ export function Input({
     () => !isEmpty(props.defaultValue),
   );
   const hasAdornments = startAdornment || endAdornment || onClear;
+  const tracksText = typeof onClear === "function" && !isControlled;
+
+  // A form reset restores the default value without an input event. The reset event fires
+  // before the values change, so read the value in the next task
+  useEffect(() => {
+    const form = (inputRef.current as HTMLInputElement | null)?.form;
+    if (!tracksText || !form) return;
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    const onReset = () => {
+      timeout = setTimeout(() => {
+        const input = inputRef.current as HTMLInputElement | null;
+        if (input) setHasUncontrolledText(input.value.length > 0);
+      }, 0);
+    };
+    form.addEventListener("reset", onReset);
+    return () => {
+      form.removeEventListener("reset", onReset);
+      clearTimeout(timeout);
+    };
+  }, [tracksText]);
 
   if (!hasAdornments) {
     return (
@@ -87,6 +107,9 @@ export function Input({
       // The same value again through the element's own setter, a no-op in browsers, tells tools
       // that wrap it (Testing Library's user-event) that the text changed
       input.value = "";
+      // Don't rely on React seeing a change: if the value was already emptied without an event,
+      // the writes above change nothing and no onChange fires
+      setHasUncontrolledText(false);
     }
     onClear?.();
   };

@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { type ChangeEvent, createRef, useState } from "react";
@@ -164,6 +164,47 @@ describe("Input", () => {
     await user.keyboard("z");
     expect(input).toHaveValue("z");
     expect(screen.getByRole("button", { name: "Clear" })).toBeInTheDocument();
+  });
+
+  it("hides the clear button after a clear even when the value was emptied without an event", async () => {
+    const user = userEvent.setup();
+    const ref = createRef<HTMLInputElement>();
+    render(<Input aria-label="Search" ref={ref} defaultValue="abc" onClear={vi.fn()} />);
+    // A programmatic write fires no event, so the clear itself writes no change
+    if (ref.current) ref.current.value = "";
+    await user.click(screen.getByRole("button", { name: "Clear" }));
+    expect(screen.queryByRole("button", { name: "Clear" })).not.toBeInTheDocument();
+  });
+
+  it("hides the clear button after a form reset to an empty default", async () => {
+    const user = userEvent.setup();
+    render(
+      <form>
+        <Input aria-label="Search" defaultValue="" onClear={vi.fn()} />
+        <button type="reset">Reset</button>
+      </form>,
+    );
+    await user.type(screen.getByRole("textbox"), "abc");
+    expect(screen.getByRole("button", { name: "Clear" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Reset" }));
+    await waitFor(() =>
+      expect(screen.queryByRole("button", { name: "Clear" })).not.toBeInTheDocument(),
+    );
+  });
+
+  it("shows the clear button after a form reset to a non-empty default", async () => {
+    const user = userEvent.setup();
+    render(
+      <form>
+        <Input aria-label="Search" defaultValue="abc" onClear={vi.fn()} />
+        <button type="reset">Reset</button>
+      </form>,
+    );
+    await user.clear(screen.getByRole("textbox"));
+    expect(screen.queryByRole("button", { name: "Clear" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Reset" }));
+    expect(screen.getByRole("textbox")).toHaveValue("abc");
+    expect(await screen.findByRole("button", { name: "Clear" })).toBeInTheDocument();
   });
 
   it("keeps the consumer's ref and onValueChange on a clearable input", async () => {
