@@ -165,3 +165,35 @@ bun run test:unit:coverage # with V8 coverage report
 
 - **Unit tests + coverage** run on every PR and master push (`unit.tests.yml`)
 - **Lint + typecheck** run on every PR and master push (`quality-gates.yml`)
+- **Docs snippets and axe** run on every PR and master push (`quality-gates.yml`), see below
+
+### Docs checks
+
+Two gates check the docs site in `apps/docs`:
+
+- **Snippet type-check**, in the `typecheck` job. The docs `check-types` runs `tsc` on the app and on `scripts/`, then `check:snippets`. That compiles every ` ```tsx ` block in `apps/docs/content` against the built `chunks-ui` types and reports errors at the `.mdx` line. A block can use the `chunks-ui` and React exports, and lucide icons by their `XxxIcon` name, without an import. If a block uses a name from the code around it (state, or data from an earlier block on the page), declare that name with its real type in `apps/docs/scripts/check-snippets.fixtures.ts`, under the page's path.
+- **axe**, in the `docs-build` job after the build. `check:a11y` serves the build with `next start` and runs axe (WCAG 2.2 A and AA) on every page, in light and dark mode.
+
+To run them locally:
+
+```bash
+bun run build --filter=@chunks-ui/docs  # builds chunks-ui (the snippets need its types) and the docs
+cd apps/docs
+bun run check:snippets
+bunx playwright install chromium         # once, for check:a11y
+bun run check:a11y                       # starts next start on port 3105; set PORT to change it
+```
+
+When axe flags something you can't fix in the docs, open an issue for the fix, then add an entry to `ALLOWED` in `apps/docs/scripts/check-a11y.ts`:
+
+```ts
+{
+  rule: "color-contrast", // the axe rule id
+  selector: '[role="grid"] button.opacity-50', // the flagged element, or an ancestor of it
+  why: "#252: Calendar outside-month days, 2:1 light", // the issue, and the measured ratio
+  pages: ["/components/calendar"], // optional: only on these routes
+  themes: ["light"], // optional: only in this theme
+},
+```
+
+Scope the entry to the pages and themes where the violation occurs. The run fails when an entry matches nothing, so remove the entry in the change that fixes its cause.
