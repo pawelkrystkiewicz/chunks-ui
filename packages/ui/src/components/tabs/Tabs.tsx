@@ -393,8 +393,12 @@ function TabsContents({ className, children, transition, ref, ...props }: TabsCo
       // scrollIntoView or focus could scroll the active panel's top out of view. The clip margin
       // keeps a focus ring of up to 4px around the content whole; Safari has no
       // overflow-clip-margin and clips it at the edge. Without Motion only the active panel shows,
-      // so nothing needs clipping.
-      className={cn(motion && "overflow-clip [overflow-clip-margin:--spacing(1)]", className)}
+      // so nothing needs clipping. flow-root keeps a panel child's margins inside, as the Motion
+      // path's flex track does, so the content doesn't move when Motion loads.
+      className={cn(
+        motion ? "overflow-clip [overflow-clip-margin:--spacing(1)]" : "flow-root",
+        className,
+      )}
       {...props}
     >
       {/* items-start: each panel keeps its own height, so the container can follow the active one.

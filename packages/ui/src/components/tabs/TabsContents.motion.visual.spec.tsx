@@ -152,3 +152,44 @@ describe("Tabs.Contents with Motion, beside the active panel", () => {
     for (const rgb of beside) expect(rgb).toEqual(background);
   });
 });
+
+describe("Tabs.Contents layout", () => {
+  // The Motion path's flex track keeps a panel child's margins inside Tabs.Contents. Without
+  // Motion they must stay inside too, or they collapse with the margin above, and the content
+  // moves when Motion loads.
+  it("keeps a panel child's margins inside it, with and without Motion", async () => {
+    const layout: Record<string, { offset: number; height: number }> = {};
+    for (const { path, withMotion } of PATHS) {
+      await motion(withMotion);
+      const { getByTestId, unmount } = render(
+        <div style={{ padding: 40 }}>
+          <Tabs.Root defaultValue="a">
+            <div data-testid="above" style={{ height: 10, marginBottom: 8 }} />
+            <Tabs.Contents data-testid="contents">
+              <Tabs.Content value="a">
+                <p data-testid="child" style={{ margin: "16px 0", height: 20 }}>
+                  Panel A
+                </p>
+              </Tabs.Content>
+              <Tabs.Content value="b">Panel B</Tabs.Content>
+            </Tabs.Contents>
+          </Tabs.Root>
+        </div>,
+      );
+      const contents = getByTestId("contents");
+      await settled(contents, withMotion);
+      layout[path] = {
+        offset:
+          getByTestId("child").getBoundingClientRect().top -
+          getByTestId("above").getBoundingClientRect().bottom,
+        height: contents.getBoundingClientRect().height,
+      };
+      unmount();
+    }
+    // 8px below the element above, then the child's 16px; 16px + 20px + 16px tall
+    expect(layout).toEqual({
+      Motion: { offset: 24, height: 52 },
+      "CSS fallback": { offset: 24, height: 52 },
+    });
+  });
+});
