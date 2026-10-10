@@ -103,7 +103,9 @@ A click on a `<label>` or a `Field.Label` clicks the trigger, so it opens the ca
 
 Give the picker a `name` to send the selected date with a `<form>`. A hidden input holds the date as `yyyy-mm-dd`, or an empty string when no date is selected. A disabled picker sends nothing.
 
-With `required`, the form does not submit until a date is selected, and focus moves to the trigger. A button has no required state for screen readers, so put it in the label, for example "Due date (required)".
+To turn the value back into a local `Date`, split it: `const [y, m, d] = value.split("-").map(Number); new Date(y, m - 1, d)`. Do not use `new Date("2026-10-10")`: it reads the string as midnight UTC, which is the day before in time zones west of UTC.
+
+With `required`, the form does not submit until a date is selected, and focus moves to the trigger. A button has no required state for screen readers, so put it in the label, for example "Due date (required)". `required` only blocks a native submit: `Field.Validity` and `Field.Error` with `match="valueMissing"` do not see it yet.
 
 ```tsx
 <form
