@@ -1,9 +1,9 @@
 import { render } from "@testing-library/react";
 import { createRef, type RefObject } from "react";
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { commands, userEvent } from "vitest/browser";
 import { reloadMotion } from "../../lib/use-motion";
-import { insetsWithin, waitForStable } from "../../VisualTest.utils";
+import { eachPaintedFrame, insetsWithin, waitForStable } from "../../VisualTest.utils";
 import { ToggleGroup, type ToggleGroupRootProps } from "./index";
 
 // Runs with reduced motion off, so Motion drives the indicator; the CSS-path cases turn reduced
@@ -215,4 +215,142 @@ describe("ToggleGroup.Root with a consumer render, CSS path", () => {
       expect(await settledIndicatorOver(group, beta)).toEqual(COVERS);
     },
   );
+});
+
+describe("ToggleGroup indicator after display:none", () => {
+  type Shown = { hidden: boolean; value: "a" | "b" };
+
+  const group = ({ hidden, value }: Shown) => (
+    <div style={hidden ? { display: "none" } : undefined}>
+      <ToggleGroup.Root value={[value]}>
+        <ToggleGroup.Item value="a">Alpha</ToggleGroup.Item>
+        <ToggleGroup.Item value="b">Beta, a longer item</ToggleGroup.Item>
+      </ToggleGroup.Root>
+    </div>
+  );
+
+  /**
+   * Renders the group on Alpha and returns its elements. Read before it hides: Testing Library
+   * doesn't find hidden elements by role. Motion loads unless `withMotion` is false: then it never
+   * arrives and the CSS fallback drives the indicator.
+   */
+  async function renderShown(withMotion = true) {
+    // reloadMotion(never) doesn't settle, so it isn't awaited
+    if (withMotion) await reloadMotion();
+    else void reloadMotion(new Promise(() => {}));
+    const { rerender, getByRole } = render(group({ hidden: false, value: "a" }));
+    const root = getByRole("group");
+    const items = {
+      a: getByRole("button", { name: "Alpha" }),
+      b: getByRole("button", { name: "Beta, a longer item" }),
+    };
+    const indicator = () => root.querySelector<HTMLElement>(":scope > span");
+    await waitForStable(() => indicator()?.getBoundingClientRect().width ?? null);
+    /**
+     * The largest distance between an edge of the indicator and the same edge of `value`'s item;
+     * null while no indicator shows
+     */
+    const offBy = (value: Shown["value"]) => {
+      const shown = indicator();
+      if (!shown?.checkVisibility()) return null;
+      return Math.max(...Object.values(insetsWithin(items[value], shown)).map(Math.abs));
+    };
+    const settled = () => waitForStable(() => indicator()?.getAttribute("style") ?? null);
+    return { rerender, indicator, offBy, settled };
+  }
+
+  /**
+   * The offsets of each painted frame with a visible indicator, for 30 frames. Asserts none is
+   * more than 1px off: no growing from 0×0, or sliding from where it was before it hid.
+   */
+  async function visibleOffsets(offBy: () => number | null) {
+    const offsets = (await eachPaintedFrame(offBy, 30)).filter((offset) => offset !== null);
+    expect(offsets.length).toBeGreaterThan(0);
+    expect(Math.max(...offsets), JSON.stringify(offsets)).toBeLessThanOrEqual(1);
+    return offsets;
+  }
+
+  /** Renders item "a", hides the group, presses `value`, then shows the group again */
+  async function reshow({ value, withMotion }: { value: Shown["value"]; withMotion: boolean }) {
+    const shown = await renderShown(withMotion);
+    // Without Motion the CSS fallback drives it: its transition class is on the span
+    if (!withMotion) expect(shown.indicator()?.classList.contains("micro-interactions")).toBe(true);
+    // Hidden, the item measures as 0×0
+    shown.rerender(group({ hidden: true, value: "a" }));
+    await shown.settled();
+    // A separate step, so the item is pressed while the group is hidden
+    shown.rerender(group({ hidden: true, value }));
+    await shown.settled();
+
+    shown.rerender(group({ hidden: false, value }));
+    return shown;
+  }
+
+  it.each([
+    ["the same item", "a", true],
+    ["an item pressed while hidden", "b", true],
+    ["the same item, without Motion", "a", false],
+  ] as const)(
+    "shows the indicator over %s on every frame after display:none",
+    async (_, value, withMotion) => {
+      const { offBy } = await reshow({ value, withMotion });
+      await visibleOffsets(() => offBy(value));
+    },
+  );
+
+  it("still slides the indicator to the next item after display:none", async () => {
+    const { indicator, offBy, rerender } = await reshow({ value: "a", withMotion: true });
+    const left = () => indicator()?.getBoundingClientRect().left ?? Number.NaN;
+    const start = await waitForStable(left);
+
+    rerender(group({ hidden: false, value: "b" }));
+    const lefts = await eachPaintedFrame(left, 40);
+    const end = lefts.at(-1) ?? start;
+    expect(end).toBeGreaterThan(start + 1);
+    // In-between frames: it slides rather than jumping
+    expect(
+      lefts.some((l) => l > start + 1 && l < end - 1),
+      JSON.stringify(lefts),
+    ).toBe(true);
+    await waitForStable(left);
+    expect(offBy("b")).toBeLessThanOrEqual(1);
+  });
+
+  describe("and reduced motion toggled while hidden", () => {
+    afterEach(async () => {
+      await commands.emulateMedia({ reducedMotion: "no-preference" });
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+    });
+
+    it.each([
+      ["turned on and off while hidden", ["hide", "reduce", "normal"]],
+      ["turned on while shown and off while hidden", ["reduce", "hide", "normal"]],
+    ] as const)(
+      "shows the indicator over the item on every frame with reduced motion %s",
+      async (_, steps) => {
+        const { indicator, offBy, rerender, settled } = await renderShown();
+        /** Waits until the CSS fallback or Motion has finished handing the indicator over */
+        const handedOver = () =>
+          waitForStable(() => {
+            const shown = indicator();
+            return shown && `${shown.className}|${shown.getAttribute("style")}`;
+          });
+
+        for (const step of steps) {
+          if (step === "hide") {
+            rerender(group({ hidden: true, value: "a" }));
+            await settled();
+          } else {
+            await commands.emulateMedia({
+              reducedMotion: step === "reduce" ? "reduce" : "no-preference",
+            });
+            await handedOver();
+          }
+        }
+
+        rerender(group({ hidden: false, value: "a" }));
+        await visibleOffsets(() => offBy("a"));
+      },
+    );
+  });
 });
