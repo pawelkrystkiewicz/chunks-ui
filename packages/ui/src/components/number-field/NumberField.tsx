@@ -133,7 +133,7 @@ function NumberFieldScrubAreaCursor({
 }: NumberFieldScrubAreaCursorProps) {
   return (
     <BaseNumberField.ScrubAreaCursor
-      className={cnState("z-50 text-foreground drop-shadow-sm", className)}
+      className={cnState("z-cursor text-foreground drop-shadow-sm", className)}
       {...props}
     >
       {children ?? (
