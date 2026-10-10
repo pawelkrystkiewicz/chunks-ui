@@ -32,4 +32,5 @@ it.each([
   expect(screen.getByRole("tab", { name: tab }).getAttribute("aria-selected")).toBe("true");
   const panel = screen.getByRole("tabpanel", { name: tab });
   expect(panel.contains(content())).toBe(true);
+  expect(screen.getAllByRole("tabpanel", { hidden: true })).toHaveLength(1);
 });
