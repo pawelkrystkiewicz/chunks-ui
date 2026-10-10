@@ -17,10 +17,8 @@ export async function renderFixture(children: ReactNode) {
 }
 
 /**
- * `toMatchScreenshot` options for small or faint features, such as the Tabs.Indicator pill (white
- * on a 97% grey list). Pixelmatch's default 0.1 colour threshold can't see a pill that differs from
- * the list by ~10 grey levels, so a 0×0 pill passed; 0.02 counts ~5 levels. The config's zero
- * mismatch ratio still applies, so no pixel may differ past this threshold.
+ * `toMatchScreenshot` options for small or faint features: 0.02 per-pixel colour threshold instead
+ * of the default 0.1. The config's zero mismatch ratio still applies.
  */
 export const SMALL_FEATURE_SCREENSHOT = {
   comparatorName: "pixelmatch",

@@ -12,8 +12,7 @@ env:
 jobs:
   update-screenshots:
     runs-on: ubuntu-24.04
-    # Render in the image the local linux/amd64 recipe uses, so OS, fonts and browser build match
-    # the committed baselines. Keep the tag equal to @playwright/test in packages/ui/package.json.
+    # Same image as the local linux/amd64 recipe; keep the tag equal to @playwright/test.
     container:
       image: mcr.microsoft.com/playwright:v1.64.0-noble@sha256:06a9939e57531807f8d5fd76ce44b53165ffb7d7501d87ab10e285c20b1e971f
 
@@ -35,14 +34,13 @@ jobs:
           ref: ${{ github.ref_name }}
           persist-credentials: false
 
-      # The container runs as root, but the runner user owns the workspace
       - name: Configure Git
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git config --global user.name "$AUTHOR_NAME"
           git config --global user.email "$AUTHOR_EMAIL"
 
-      # setup-bun unzips its download, and the Playwright image has no unzip
+      # setup-bun needs unzip; the image lacks it
       - name: Install unzip
         run: apt-get update && apt-get install -y --no-install-recommends unzip
 
