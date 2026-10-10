@@ -77,8 +77,9 @@ function SwitchThumbElement({
     { transition: springs.micro, clear: ["transform"] },
     useMergedRef(element, ref),
   );
-  // Read after every render, so the thumb moves the right way after the direction changed.
-  // Set only on a change: a same-value update would still cost each switch a commit.
+  // Re-read after every render of the thumb. A `dir` change on an ancestor that doesn't re-render
+  // the thumb keeps the old direction until its next render, e.g. its next toggle. Set only on a
+  // change: a same-value update would still cost each switch a commit.
   useLayoutEffect(() => {
     if (!element.current) return;
     const next = getComputedStyle(element.current).direction === "rtl";
