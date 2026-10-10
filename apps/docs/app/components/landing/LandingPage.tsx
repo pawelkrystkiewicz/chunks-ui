@@ -249,7 +249,7 @@ function Header() {
         className="flex items-center gap-2.5 px-[clamp(22px,2.4vw,28px)] py-[18px] font-bold text-[17px] text-white tracking-[-.01em]"
       >
         <Logo />
-        Chunks
+        Chunks UI
       </Link>
       <nav
         aria-label="Primary"
@@ -687,7 +687,7 @@ function Footer() {
               className="flex items-center gap-2.5 font-bold text-[17px] text-white tracking-[-.01em]"
             >
               <Logo />
-              Chunks
+              Chunks UI
             </Link>
             <p className="mt-3.5 text-white/55">
               React components on Base UI. A Chunk Creations project.

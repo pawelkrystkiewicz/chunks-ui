@@ -6,7 +6,7 @@ import "../globals.css";
 import Image from "next/image";
 
 export const metadata = {
-  title: "Chunks",
+  title: "Chunks UI",
   description: "UI library",
 };
 
