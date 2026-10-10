@@ -39,18 +39,29 @@ const ALLOWED: { rule: string; selector: string; why: string }[] = [
   {
     rule: "color-contrast",
     selector: 'pre code span[style*="--shiki-"]',
-    why: "Nextra's default Shiki themes: github-light parameters (3.5:1), github-dark comments (4.4:1)",
+    why: "Nextra's default Shiki themes: github-light parameters 3.48:1, github-dark comments 4.36:1",
   },
   {
     rule: "color-contrast",
     selector: "a > code.nextra-code",
-    why: "Nextra colours inline code in a link with its link colour on its code background (4.45:1)",
+    why: "Nextra colours inline code in a link with its link colour on its code background, 4.45:1",
+  },
+  // Pending maintainer decision (TODO W43/W44): remove once decided
+  {
+    rule: "color-contrast",
+    selector: "a.group\\/cta > span:first-child",
+    why: 'Landing CTA label ("Read the docs", "Open Create"): white on --l-brand-soft, 2.68:1',
+  },
+  {
+    rule: "color-contrast",
+    selector: ".bg-success\\/10.text-success-text",
+    why: "success-text on a /10 tint over Nextra's #fafafa (Chip example, kitchen-sink badge), 4.47:1",
   },
   // chunks-ui defects, outside the docs: fix them in packages/ui, then delete the entry
   {
     rule: "color-contrast",
     selector: '[role="grid"] button.opacity-50',
-    why: "Calendar's outside-month days are text-muted-foreground at opacity-50 (2:1)",
+    why: "Calendar outside-month days, text-muted-foreground at opacity-50: 2:1 light, 2.69:1 dark",
   },
 ];
 

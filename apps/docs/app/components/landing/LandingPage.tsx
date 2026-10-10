@@ -149,7 +149,7 @@ function SplitCta({ href, children }: { href: string; children: ReactNode }) {
       href={href}
       className="group/cta inline-flex overflow-hidden rounded-lg font-semibold text-[14px] text-white transition-transform duration-200 active:scale-[.97]"
     >
-      <span className="bg-(--l-brand-soft) px-[18px] py-3 text-(--l-cta-fg) transition-colors duration-250 group-hover/cta:bg-[oklch(74%_.14_257)]">
+      <span className="bg-(--l-brand-soft) px-[18px] py-3 transition-colors duration-250 group-hover/cta:bg-[oklch(74%_.14_257)]">
         {children}
       </span>
       <span className="flex items-center bg-(--l-brand) px-4 py-3">
