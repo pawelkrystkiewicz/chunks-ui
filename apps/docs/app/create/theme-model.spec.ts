@@ -132,6 +132,14 @@ describe("contrast", () => {
       1,
     );
   });
+
+  it("measures the colours as painted, in 8-bit sRGB", () => {
+    // Paints as #757900. Unrounded, white text on it measures 4.50:1.
+    expect(contrast({ l: 0.985, c: 0, h: 0 }, { l: 0.546, c: 0.2165, h: 113 })).toBeCloseTo(
+      4.48,
+      2,
+    );
+  });
 });
 
 describe("presets", () => {

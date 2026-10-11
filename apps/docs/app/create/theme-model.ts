@@ -207,7 +207,10 @@ export function chartList(t: Pick<Theme, "primary" | "chart">, mode: Mode): stri
   return DS_CHARTS[mode];
 }
 
-/** OKLCH to linear sRGB, clipped to the sRGB gamut the way browsers clip it. */
+/**
+ * OKLCH to linear sRGB as the browser paints it: clipped to the sRGB gamut, then rounded to
+ * 8 bits per channel. Unrounded, a colour can measure 4.50:1 and paint at 4.47:1.
+ */
 function linearSrgb({ l, c, h }: Oklch): [number, number, number] {
   const a = c * Math.cos((h * Math.PI) / 180);
   const b = c * Math.sin((h * Math.PI) / 180);
@@ -216,15 +219,19 @@ function linearSrgb({ l, c, h }: Oklch): [number, number, number] {
     (l - 0.1055613458 * a - 0.0638541728 * b) ** 3,
     (l - 0.0894841775 * a - 1.291485548 * b) ** 3,
   ] as const;
-  const clip = (v: number) => Math.min(1, Math.max(0, v));
+  const paint = (v: number) => {
+    const x = Math.min(1, Math.max(0, v));
+    const s = Math.round(255 * (x <= 0.0031308 ? 12.92 * x : 1.055 * x ** (1 / 2.4) - 0.055)) / 255;
+    return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  };
   return [
-    clip(4.0767416621 * lms[0] - 3.3077115913 * lms[1] + 0.2309699292 * lms[2]),
-    clip(-1.2684380046 * lms[0] + 2.6097574011 * lms[1] - 0.3413193965 * lms[2]),
-    clip(-0.0041960863 * lms[0] - 0.7034186147 * lms[1] + 1.707614701 * lms[2]),
+    paint(4.0767416621 * lms[0] - 3.3077115913 * lms[1] + 0.2309699292 * lms[2]),
+    paint(-1.2684380046 * lms[0] + 2.6097574011 * lms[1] - 0.3413193965 * lms[2]),
+    paint(-0.0041960863 * lms[0] - 0.7034186147 * lms[1] + 1.707614701 * lms[2]),
   ];
 }
 
-/** WCAG 2 contrast ratio of two colours, from 1 to 21. */
+/** WCAG 2 contrast ratio of two colours as painted, from 1 to 21. */
 export function contrast(x: Oklch, y: Oklch): number {
   const luminance = (o: Oklch) => {
     const [r, g, b] = linearSrgb(o);
