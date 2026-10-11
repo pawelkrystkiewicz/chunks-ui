@@ -49,8 +49,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           }
           pageMap={await getPageMap()}
           // Nextra names the search box only by its placeholder, which not every screen reader
-          // reads as a label, and the theme switch by the current theme alone ("Light"), with its
-          // purpose only in a title. Neither has a prop for the name; these two props set it.
+          // reads as a label, and the theme switch by the current theme alone ("Light"). The
+          // Search `aria-label` passes through to the input. `themeSwitch` sets the visible text
+          // of the option and button ("Light theme" etc.), which also becomes the accessible name;
+          // the Select keeps its `title="Change theme"`.
           search={<Search aria-label="Search documentation" />}
           themeSwitch={{ light: "Light theme", dark: "Dark theme", system: "System theme" }}
           // Base of the "Edit this page" and feedback links; Nextra appends the file path
