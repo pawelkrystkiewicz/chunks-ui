@@ -347,6 +347,13 @@ describe("DatePicker in a form", () => {
 });
 
 describe("DatePicker keyboard", () => {
+  // Checks the focused element instead of querying every button by role and name: that query
+  // computes jsdom styles for each day button, over half of each test's time, and timed out on CI.
+  const expectFocused = (name: string) => {
+    expect(document.activeElement).toHaveRole("button");
+    expect(document.activeElement).toHaveAccessibleName(name);
+  };
+
   it.each([
     { stop: "the selected day", defaultValue: new Date(2026, 2, 15), expected: MARCH_15_LABEL },
     {
@@ -360,7 +367,7 @@ describe("DatePicker keyboard", () => {
     const trigger = screen.getByRole("button");
     for (const open of [() => user.click(trigger), () => user.keyboard("{Enter}")]) {
       await open();
-      await waitFor(() => expect(screen.getByRole("button", { name: expected })).toHaveFocus());
+      await waitFor(() => expectFocused(expected));
       await user.keyboard("{Escape}");
       await waitFor(() => expect(trigger).toHaveFocus());
     }
@@ -372,9 +379,9 @@ describe("DatePicker keyboard", () => {
     render(<DatePicker defaultValue={new Date(2026, 2, 15)} onValueChange={onValueChange} />);
     await user.tab();
     await user.keyboard("{Enter}");
-    await waitFor(() => expect(screen.getByRole("button", { name: MARCH_15_LABEL })).toHaveFocus());
+    await waitFor(() => expectFocused(MARCH_15_LABEL));
     await user.keyboard("{ArrowRight}{PageDown}");
-    expect(screen.getByRole("button", { name: "Thursday, April 16, 2026" })).toHaveFocus();
+    expectFocused("Thursday, April 16, 2026");
     await user.keyboard("{Enter}");
     expect(onValueChange).toHaveBeenCalledOnce();
     expect(onValueChange.mock.calls[0]?.[0]).toEqual(new Date(2026, 3, 16));
@@ -390,9 +397,9 @@ describe("DatePicker keyboard", () => {
     render(<DatePicker defaultValue={new Date(2026, 2, 15)} onValueChange={onValueChange} />);
     const trigger = screen.getByRole("button", { name: "March 15, 2026" });
     await user.click(trigger);
-    await waitFor(() => expect(screen.getByRole("button", { name: MARCH_15_LABEL })).toHaveFocus());
+    await waitFor(() => expectFocused(MARCH_15_LABEL));
     await user.keyboard("{ArrowDown}");
-    expect(screen.getByRole("button", { name: "Sunday, March 22, 2026" })).toHaveFocus();
+    expectFocused("Sunday, March 22, 2026");
     await user.keyboard("{Escape}");
     expect(trigger).toHaveAttribute("aria-expanded", "false");
     await waitFor(() => expect(trigger).toHaveFocus());
