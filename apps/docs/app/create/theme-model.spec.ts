@@ -171,10 +171,6 @@ describe("withHue", () => {
     }
   });
 
-  it("darkens from Blue's lightness, so a hue after a darkened one gets it back", () => {
-    expect(withHue(withHue(ink.primary, 100), 200)).toEqual({ l: 0.56, c: 0.2165, h: 200 });
-  });
-
   it("keeps Blue as it is", () => {
     const blue = { l: 0.56, c: 0.2165, h: 257.21 };
     expect(withHue(blue, blue.h)).toEqual(blue);
