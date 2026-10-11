@@ -2,7 +2,7 @@ import { render } from "@testing-library/react";
 import type { CSSProperties } from "react";
 import { describe, expect, it } from "vitest";
 import { ELEMENT_COLOR, ELEMENT_VARIANTS } from "../../types";
-import { pauseAnimations, renderFixture } from "../../VisualTest.utils";
+import { pauseAnimations, renderFixture, SMALL_FEATURE_SCREENSHOT } from "../../VisualTest.utils";
 import { IconButton } from "../icon-button";
 import { Button } from "./index";
 
@@ -25,7 +25,10 @@ describe("Button", () => {
             {color} {variant}
           </Button>,
         );
-        await expect(fixture).toMatchScreenshot();
+        // A border shade 3:1 instead of 2:1 on white is under the default 0.1 threshold
+        await expect(fixture).toMatchScreenshot(
+          variant === "outlined" ? SMALL_FEATURE_SCREENSHOT : undefined,
+        );
       });
     }
   }
