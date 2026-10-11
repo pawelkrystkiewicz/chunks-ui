@@ -583,16 +583,7 @@ function CreateSection() {
   return (
     <section id="create" className="pt-6">
       <div className={WRAP}>
-        <SectionHead
-          eyebrow="Create"
-          title="Theme it"
-          accent="in the browser."
-          link={
-            <Link href="/create" className={TEXT_LINK}>
-              Open Create →
-            </Link>
-          }
-        />
+        <SectionHead eyebrow="Create" title="Theme it" accent="in the browser." />
         <Grid className="lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)]">
           <div className={`${STATEMENT} gap-5`}>
             <span className={STATEMENT_LABEL}>{"// The configurator"}</span>
