@@ -56,29 +56,29 @@ const ALLOWED: Allowed[] = [
   {
     rule: "button-name",
     selector: 'button[id^="headlessui-listbox-button"]',
-    why: "Nextra's Copy page menu toggle is an icon-only Headless UI button without a label",
+    why: "#299: Nextra's Copy page menu toggle is an icon-only Headless UI button without a label",
   },
   {
     rule: "link-name",
     selector: 'td > a[href^="#"]:empty',
-    why: 'Nextra\'s <TSDoc> props table links each row with an empty <a> that shows "#" from CSS',
+    why: '#299: Nextra\'s <TSDoc> props table links each row with an empty <a> that shows "#" from CSS',
   },
   {
     rule: "color-contrast",
     selector: 'pre code span[style*="--shiki-light:#E36209"]',
-    why: "Nextra's default Shiki theme github-light: parameters #E36209 on white, 3.48:1",
+    why: "#299: Nextra's default Shiki theme github-light: parameters #E36209 on white, 3.48:1",
     themes: ["light"],
   },
   {
     rule: "color-contrast",
     selector: 'pre code span[style*="--shiki-dark:#6A737D"]',
-    why: "Nextra's default Shiki theme github-dark: comments #6A737D on black, 4.36:1",
+    why: "#299: Nextra's default Shiki theme github-dark: comments #6A737D on black, 4.36:1",
     themes: ["dark"],
   },
   {
     rule: "color-contrast",
     selector: "a > code.nextra-code",
-    why: "Nextra colours inline code in a link with its link colour on its code background, 4.45:1",
+    why: "#299: Nextra colours inline code in a link with its link colour on its code background, 4.45:1",
     themes: ["light"],
   },
   // Accepted by the maintainer (issue closed as not planned): keep until it stops matching
