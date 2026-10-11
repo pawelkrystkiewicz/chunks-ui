@@ -27,7 +27,7 @@ const CLASS = /\.(-?(?:[\w-]|\\[0-9a-fA-F]{1,6} ?|\\.)+)/g;
 export const MIN_CLASSES = 100;
 /** A class from Button's base variants, which stays in chunks-ui. */
 const KNOWN_CLASS = "disabled:pointer-events-none";
-const INPUT = `@import "tailwindcss" source(none);\n@import "${THEME}";\n`;
+const INPUT = `@import "tailwindcss" source(none);\n@import ${JSON.stringify(THEME.replaceAll("\\", "/"))};\n`;
 const ESCAPE = /\\([0-9a-fA-F]{1,6}) ?|\\(.)/g;
 
 /** The class names in the selectors of compiled CSS, unescaped. */
