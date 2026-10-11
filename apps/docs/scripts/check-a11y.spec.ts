@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   type Allowed,
   allowedFor,
+  appRoutes,
   firstMatch,
   fixedEntries,
   type IssueState,
@@ -54,6 +55,24 @@ describe("staleEntries", () => {
       expect.stringContaining("/kitchen-sink"),
       expect.stringContaining("dark"),
     ]);
+  });
+});
+
+describe("appRoutes", () => {
+  it("maps each app page to its URL, leaving route groups out", () => {
+    expect(appRoutes(["page.tsx", "kitchen/page.tsx", "(site)/about/page.mdx"])).toEqual([
+      "/",
+      "/kitchen",
+      "/about",
+    ]);
+  });
+
+  it("leaves out the MDX catch-all, whose pages come from content/", () => {
+    expect(appRoutes(["[[...mdxPath]]/page.tsx"])).toEqual([]);
+  });
+
+  it("throws on another dynamic segment, whose URLs it can't guess", () => {
+    expect(() => appRoutes(["blog/[slug]/page.tsx"])).toThrow("blog/[slug]/page.tsx");
   });
 });
 

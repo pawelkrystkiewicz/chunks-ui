@@ -5,9 +5,10 @@
  * matched on one of its pages or in one of its themes, and on any ALLOWED entry whose linked issue
  * (`#NNN` in its `why`) was closed as completed. An issue closed as not planned keeps its entry.
  *
- * Covers the pages built from content/**\/*.mdx only: no other app routes, no 404 page. axe's
- * `incomplete` results (checks it could not decide, often contrast over images or gradients) are
- * not failed.
+ * Covers the pages built from content/**\/*.mdx (the landing page, /create and /kitchen-sink
+ * among them), every other page under app/, and the 404 page, which it gets by requesting a URL
+ * no page answers on: that one must answer 404, every other page 200. axe's `incomplete` results
+ * (checks it could not decide, often contrast over images or gradients) are not failed.
  *
  * Reads the issue states from the GitHub API with GITHUB_TOKEN (CI passes it; locally run
  * `GITHUB_TOKEN=$(gh auth token) bun run check:a11y`). Without a token, or when the API can't be
@@ -153,13 +154,39 @@ export function firstMatch([target, selectors]: readonly [string, readonly strin
 
 type Problem = { page: string; theme: string; rule: string; help: string; targets: string[] };
 
+/** The app/ page that renders content/**\/*.mdx; pages() lists those from content/ instead */
+const MDX_CATCH_ALL = "[[...mdxPath]]/page.tsx";
+
+/**
+ * The URL of each app/ page file other than the MDX catch-all: `kitchen/page.tsx` is `/kitchen`,
+ * and a route group such as `(site)/` adds no segment. Throws on a dynamic segment, whose URLs
+ * this script can't guess.
+ */
+export function appRoutes(files: string[]) {
+  return files
+    .filter((file) => file !== MDX_CATCH_ALL)
+    .map((file) => {
+      if (file.includes("[")) {
+        throw new Error(`app/${file} is dynamic: list its URLs in check-a11y.ts pages()`);
+      }
+      const segments = file.split("/").slice(0, -1);
+      return `/${segments.filter((segment) => !/^\(.+\)$/.test(segment)).join("/")}`;
+    });
+}
+
+/** A URL no page answers on, so the server renders app/not-found.tsx with status 404 */
+const NOT_FOUND_ROUTE = "/this-page-does-not-exist";
+
 function pages() {
-  const routes = [...new Bun.Glob("**/*.mdx").scanSync(join(DOCS_DIR, "content"))].map((file) => {
+  const content = [...new Bun.Glob("**/*.mdx").scanSync(join(DOCS_DIR, "content"))].map((file) => {
     const route = file.replace(/\.mdx$/, "").replace(/(^|\/)index$/, "");
     return `/${route}`;
   });
-  if (routes.length === 0) throw new Error(`No .mdx pages under ${join(DOCS_DIR, "content")}`);
-  return routes.sort();
+  if (content.length === 0) throw new Error(`No .mdx pages under ${join(DOCS_DIR, "content")}`);
+  const app = appRoutes([
+    ...new Bun.Glob("**/page.{js,jsx,ts,tsx,md,mdx}").scanSync(join(DOCS_DIR, "app")),
+  ]);
+  return [...new Set([...content, ...app])].sort().concat(NOT_FOUND_ROUTE);
 }
 
 /** Whether anything answers HTTP on the port within 2s, whatever the status */
@@ -251,13 +278,18 @@ async function audit(
   // A stylesheet that fails to load would make the colour checks pass on unstyled text
   const failed: string[] = [];
   page.on("response", (response) => {
+    // The page's own status is checked after goto, as the 404 page answers 404 on purpose
+    if (response.request().isNavigationRequest() && response.frame() === page.mainFrame()) return;
     if (response.url().startsWith(BASE_URL) && response.status() >= 400) {
       failed.push(`${response.status()} ${response.url()}`);
     }
   });
   try {
     const response = await page.goto(BASE_URL + route, { waitUntil: "networkidle" });
-    if (!response?.ok()) throw new Error(`${route} answered ${response?.status()}`);
+    const expected = route === NOT_FOUND_ROUTE ? 404 : 200;
+    if (response?.status() !== expected) {
+      throw new Error(`${route} answered ${response?.status()} instead of ${expected}`);
+    }
     // next-themes puts the theme's name on <html>; without it the page was audited in the other one
     const htmlClass = await page.evaluate(() => document.documentElement.className);
     if (!htmlClass.split(" ").includes(theme)) {
