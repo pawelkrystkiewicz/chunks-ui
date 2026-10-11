@@ -46,6 +46,8 @@ const fruits = [
   <ComboboxBasicDemo />
 </Container>
 
+`Combobox.Empty` shows when no item matches the input. Set `items` (or `filteredItems`) on `Combobox.Root`, or it always shows.
+
 Pass each item object as the `Combobox.Item` `value`. Base UI shows an object's `label` in the input and submits its `value` with a form, so picking "Banana" fills the input with "Banana". For other object shapes, set `itemToStringLabel` (and `itemToStringValue` for forms) on `Combobox.Root`. If you pass the selected value in from elsewhere (`value`/`defaultValue`) and it isn't the same object as the item, set `isItemEqualToValue`.
 
 ## With Clear Button
@@ -242,7 +244,7 @@ function ControlledCombobox() {
 | `Combobox.List` | List container. Takes a function child that renders each matching item (or each group, when `items` holds groups). |
 | `Combobox.Item` | An individual selectable option. |
 | `Combobox.ItemIndicator` | Checkmark shown for the selected item. |
-| `Combobox.Empty` | Message displayed when no items match the filter. |
+| `Combobox.Empty` | Message displayed when no items match the filter. Needs `items` on Root. |
 | `Combobox.Clear` | Button that clears the current value. Renders a default X icon. |
 | `Combobox.Group` | Groups related items together. |
 | `Combobox.GroupLabel` | Label for a group of items. |

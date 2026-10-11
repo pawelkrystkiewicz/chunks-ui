@@ -15,7 +15,7 @@ export function DrawerBasicExample() {
             <Drawer.Description>Browse the app sections.</Drawer.Description>
             <nav className="mt-4 flex flex-col gap-2">
               <a href="/">Home</a>
-              <a href="/settings">Settings</a>
+              <a href="/theme">Theme</a>
             </nav>
             <Drawer.Close>Close</Drawer.Close>
           </Drawer.Popup>

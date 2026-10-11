@@ -73,6 +73,10 @@ Use `Tooltip.Provider` to share delay settings across multiple tooltips. Every `
 
 A `delay` on a `Tooltip.Trigger` overrides the Provider's for that trigger.
 
+Use the `Tooltip.Provider` from chunks-ui, not the one from `@base-ui/react/tooltip`: chunks-ui triggers ignore a Base UI Provider's `delay`.
+
+A nested `Tooltip.Provider` without a `delay` uses 50ms, not the outer Provider's `delay`, so repeat the outer `delay` on it.
+
 ## Positioning
 
 The popup sits 2 spacing units (8px at the default `--spacing`) from the trigger, so the arrow tip clears the trigger at any spacing. A `sideOffset` on the positioner adds to that gap. Override placement with `side` and `align`:

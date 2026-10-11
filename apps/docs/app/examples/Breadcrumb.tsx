@@ -1,7 +1,11 @@
 "use client";
 
 import { Breadcrumb } from "chunks-ui";
+import type { MouseEvent } from "react";
 import { Container } from "@/components";
+
+// The docs have no Collections or Paints pages, so these links stay on the page when clicked
+const stayOnPage = (event: MouseEvent) => event.preventDefault();
 
 export function BreadcrumbBasicExample() {
   return (
@@ -13,7 +17,9 @@ export function BreadcrumbBasicExample() {
           </Breadcrumb.Item>
           <Breadcrumb.Separator />
           <Breadcrumb.Item>
-            <Breadcrumb.Link href="/collections">Collections</Breadcrumb.Link>
+            <Breadcrumb.Link href="#" onClick={stayOnPage}>
+              Collections
+            </Breadcrumb.Link>
           </Breadcrumb.Item>
           <Breadcrumb.Separator />
           <Breadcrumb.Item>
@@ -39,7 +45,9 @@ export function BreadcrumbEllipsisExample() {
           </Breadcrumb.Item>
           <Breadcrumb.Separator />
           <Breadcrumb.Item>
-            <Breadcrumb.Link href="/collections">Collections</Breadcrumb.Link>
+            <Breadcrumb.Link href="#" onClick={stayOnPage}>
+              Collections
+            </Breadcrumb.Link>
           </Breadcrumb.Item>
           <Breadcrumb.Separator />
           <Breadcrumb.Item>
@@ -61,7 +69,9 @@ export function BreadcrumbCustomSeparatorExample() {
           </Breadcrumb.Item>
           <Breadcrumb.Separator>/</Breadcrumb.Separator>
           <Breadcrumb.Item>
-            <Breadcrumb.Link href="/paints">Paints</Breadcrumb.Link>
+            <Breadcrumb.Link href="#" onClick={stayOnPage}>
+              Paints
+            </Breadcrumb.Link>
           </Breadcrumb.Item>
           <Breadcrumb.Separator>/</Breadcrumb.Separator>
           <Breadcrumb.Item>
