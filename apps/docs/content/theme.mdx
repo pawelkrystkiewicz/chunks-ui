@@ -43,7 +43,7 @@ Each colour keeps the hue and chroma of its fill and changes only the lightness,
 
 With these limits the default colours keep 4.5:1 on the background and on the `/10` tint that `Chip` uses. The `--colored-text-lightness` variable holds the rule for each mode.
 
-Only `.dark` redefines `--colored-text-lightness`. A light-styled subtree inside `.dark` should set `--colored-text-lightness: min(l, 0.51)` itself, and a dark surface without `.dark` should set `max(l, 0.63)`. The same goes for `--success-border-lightness` and `--warning-border-lightness` (see the border paragraph below): set `min(l, 0.64)` and `min(l, 0.67)` in a light subtree inside `.dark`.
+Only `.dark` redefines `--colored-text-lightness`. A light-styled subtree inside `.dark` should set `--colored-text-lightness: min(l, 0.51)` itself, and a dark surface without `.dark` should set `max(l, 0.63)`.
 
 The limits are tuned for the default fills. Very saturated teal or cyan custom fills (hue about 185 to 190, chroma 0.15 or more) can land below 4.5:1, so set `--primary-text` (or the matching `--X-text`) for them.
 
@@ -56,7 +56,7 @@ The colour is computed on the element that uses it. If you set `--primary` on `:
 }
 ```
 
-The border of a control needs 3:1 contrast, and the success and warning fills have about 2:1 on white. So the `outlined` success and warning variants of `Button` and `IconButton` use `border-success-border` and `border-warning-border`. In light mode these cap the fill's lightness at 0.64 (success) and 0.67 (warning), which gives 3:1 on white, and a darker fill keeps its lightness. In dark mode they are the fill. `--success-border-lightness` and `--warning-border-lightness` hold the rule for each mode. To use a different shade, set `--success-border` or `--warning-border`.
+The border of a control needs 3:1 contrast, and the success and warning fills have about 2:1 on white. So the `outlined` success and warning variants of `Button` and `IconButton` use `border-success-border` and `border-warning-border`. In light mode these cap the fill's lightness at 0.64 (success) and 0.67 (warning), which gives 3:1 on white, and a darker fill keeps its lightness. In dark mode they are the fill. `--success-border-lightness` and `--warning-border-lightness` hold the rule for each mode; a light subtree inside `.dark` sets them to `min(l, 0.64)` and `min(l, 0.67)` itself. To use a different shade, set `--success-border` or `--warning-border`.
 
 Relative colour syntax needs Chrome 119+, Safari 18+ or Firefox 128+. Older browsers show this text, and these borders, in the inherited text colour.
 
