@@ -33,7 +33,8 @@ const pageChrome = () =>
     .join("||");
 
 // 47 full-page interactions. Measured on 18 cores: 0.6-1.3s idle, 2.5-3.9s at load 40-65,
-// 5.1-6.8s at load ~90 (turbo running the ui suite alongside, or 72 busy loops).
+// 5.1-6.8s at load ~90 (turbo running the ui suite alongside, or 72 busy loops). CI takes 8.8-9.8s
+// and went over 10s once another docs spec ran alongside.
 it("applies the theme to the preview only, never to <html> or <body>", () => {
   const before = pageChrome();
   render(<CreatePage />);
@@ -57,4 +58,4 @@ it("applies the theme to the preview only, never to <html> or <body>", () => {
     .getByRole("region", { name: "Preview" })
     .querySelector("[style*='--radius']");
   expect(scope).not.toBeNull();
-}, 10_000);
+}, 30_000);
