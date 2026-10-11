@@ -43,7 +43,7 @@ Each colour keeps the hue and chroma of its fill and changes only the lightness,
 
 With these limits the default colours keep 4.5:1 on the background and on the `/10` tint that `Chip` uses. The `--colored-text-lightness` variable holds the rule for each mode.
 
-Only `.dark` redefines `--colored-text-lightness`. A light-styled subtree inside `.dark` should set `--colored-text-lightness: min(l, 0.51)` itself, and a dark surface without `.dark` should set `max(l, 0.63)`.
+Only `.dark` redefines `--colored-text-lightness`. A light-styled subtree inside `.dark` should set `--colored-text-lightness: min(l, 0.51)` itself, and a dark surface without `.dark` should set `max(l, 0.63)`. The same goes for `--success-border-lightness` and `--warning-border-lightness` (see the border paragraph below): set `min(l, 0.64)` and `min(l, 0.67)` in a light subtree inside `.dark`.
 
 The limits are tuned for the default fills. Very saturated teal or cyan custom fills (hue about 185 to 190, chroma 0.15 or more) can land below 4.5:1, so set `--primary-text` (or the matching `--X-text`) for them.
 
