@@ -305,6 +305,48 @@ describe.each(KINDS)("%s.Content arrowPadding", (kind) => {
   });
 });
 
+type Ring = Pick<
+  CSSStyleDeclaration,
+  "outlineStyle" | "outlineWidth" | "outlineColor" | "outlineOffset"
+>;
+
+const ringOf = ({ outlineStyle, outlineWidth, outlineColor, outlineOffset }: Ring): Ring => ({
+  outlineStyle,
+  outlineWidth,
+  outlineColor,
+  outlineOffset,
+});
+
+/**
+ * The ring the browser draws around an element focused from the keyboard. The key press stays the
+ * last interaction, so an element focused next by script matches `:focus-visible` too.
+ */
+async function browserRing() {
+  const { unmount } = render(<div tabIndex={-1} data-testid="reference" />);
+  const reference = screen.getByTestId("reference");
+  reference.focus();
+  await userEvent.keyboard("{Shift}");
+  expect(reference.matches(":focus-visible")).toBe(true);
+  const ring = ringOf(getComputedStyle(reference));
+  unmount();
+  return ring;
+}
+
+describe.each(KINDS)("%s focused from the keyboard", (kind) => {
+  // The arrow, a positioned child, would paint over the popup's own ring where they meet. The
+  // screenshots in Popover.visual.spec.tsx and Menu.visual.spec.tsx show the overlay's ring above it.
+  it("draws the browser's ring on its overlay, and none on the popup itself", async () => {
+    const ring = await browserRing();
+    // Opens after the key press and takes focus, as when a shortcut opens it
+    render(arrowed(kind, "bottom", "ltr", true));
+    const popup = await screen.findByTestId("popup");
+    await expect.poll(() => popup.matches(":focus-visible")).toBe(true);
+
+    expect(getComputedStyle(popup).outlineStyle).toBe("none");
+    expect(ringOf(getComputedStyle(popup, "::after"))).toEqual(ring);
+  });
+});
+
 /**
  * Records, on each painted frame from the click on, whether the arrow's tip shows. Frames before
  * Base UI has placed the arrow (no inline position yet) are left out.

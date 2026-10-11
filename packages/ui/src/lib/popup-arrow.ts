@@ -18,6 +18,14 @@ export const ARROW_PADDING_PX = 10;
  * border, rounded up to 1.75 units: whole pixels at the default spacing), so `sideOffset` stays
  * the gap between the trigger and the tip. Base UI measures `--available-height` from the
  * positioner, before that move, so a popup that caps its height takes the reach off it too.
+ *
+ * The arrow is a positioned child, so it paints over the popup's own focus ring where they meet.
+ * The ring moves to an `::after` overlay instead: positioned, last in the popup and raised, it
+ * paints above the arrow. `relative` above anchors it on the popup's border box, and it takes the
+ * popup's radius and a clear border of the popup's width, because Chromium draws the ring of a
+ * bordered box partly over the border. It draws the browser's own ring (`outline: auto 1px
+ * -webkit-focus-ring-color`, as Chromium and Safari do; a browser without that colour keeps its
+ * default one), only while the popup is `:focus-visible`.
  */
 export const arrowPopupClasses = [
   "relative",
@@ -28,6 +36,10 @@ export const arrowPopupClasses = [
   "has-[.PopupArrow]:data-[side=right]:ml-(--popup-arrow-reach)",
   "has-[.PopupArrow]:data-[side=inline-start]:me-(--popup-arrow-reach)",
   "has-[.PopupArrow]:data-[side=inline-end]:ms-(--popup-arrow-reach)",
+  "focus-visible:outline-none",
+  "focus-visible:after:pointer-events-none focus-visible:after:absolute focus-visible:after:-inset-px focus-visible:after:z-10",
+  "focus-visible:after:rounded-[inherit] focus-visible:after:border focus-visible:after:border-transparent",
+  "focus-visible:after:[outline-style:auto] focus-visible:after:[outline-width:1px] focus-visible:after:[outline-color:-webkit-focus-ring-color]",
 ];
 
 export const arrowClasses = [
