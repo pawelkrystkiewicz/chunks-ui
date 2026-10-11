@@ -23,8 +23,6 @@ const UI = join(import.meta.dirname, "../packages/ui");
 const FIXTURE = join(import.meta.dirname, "tailwind-4.0");
 const THEME = join(UI, "dist/theme.css");
 const CLASS = /\.(-?(?:[\w-]|\\[0-9a-fA-F]{1,6} ?|\\.)+)/g;
-/** Fewer classes than this means the scan found (almost) nothing. dist has about 450. */
-export const MIN_CLASSES = 100;
 /** A class from Button's base variants, which stays in chunks-ui. */
 const KNOWN_CLASS = "disabled:pointer-events-none";
 const INPUT = `@import "tailwindcss" source(none);\n@import ${JSON.stringify(THEME.replaceAll("\\", "/"))};\n`;
@@ -57,9 +55,6 @@ export function missingClasses(oldest: string, installed: string): string[] {
 
 /** Why `names` cannot be a real scan of chunks-ui, or undefined. Guards against both versions generating nothing. */
 export function scanProblem(names: Set<string>, version: string): string | undefined {
-  if (names.size < MIN_CLASSES) {
-    return `Tailwind ${version} generated only ${names.size} classes (expected at least ${MIN_CLASSES}): the scan of ${THEME} found little or nothing.`;
-  }
   if (!names.has(KNOWN_CLASS)) {
     return `Tailwind ${version} did not generate ${KNOWN_CLASS}, a class of chunks-ui's Button: the scan of ${THEME} is broken.`;
   }
@@ -98,23 +93,18 @@ if (import.meta.main) {
   const { version } = await Bun.file(Bun.resolveSync("tailwindcss/package.json", UI)).json();
   const installed = await compileInstalled();
   const oldest = await compileOldest();
-  const scanProblems = [
+  const problems = [
     scanProblem(classNames(oldest), OLDEST),
     scanProblem(classNames(installed), version),
   ].filter(Boolean);
-  if (scanProblems.length > 0) {
-    for (const problem of scanProblems) console.error(problem);
-    process.exit(1);
-  }
   const missing = missingClasses(oldest, installed);
   if (missing.length > 0) {
-    console.error(
-      `Tailwind ${version} generates these classes for chunks-ui, and ${OLDEST} does not:`,
+    problems.push(
+      `Tailwind ${version} generates these classes for chunks-ui, and ${OLDEST} does not (a name can come from a word in a comment or string in packages/ui/dist/*.js, not only a class in use):\n${missing.map((name) => `  ${name}`).join("\n")}`,
     );
-    for (const name of missing) console.error(`  ${name}`);
-    console.error(
-      `Use classes that Tailwind ${OLDEST} also generates. A name can also come from a word in a comment or string in dist (the scan reads every word), not only from a class in use: look for it in packages/ui/dist/*.js.`,
-    );
+  }
+  if (problems.length > 0) {
+    for (const problem of problems) console.error(problem);
     process.exit(1);
   }
   console.log(

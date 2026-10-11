@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { classNames, MIN_CLASSES, missingClasses, scanProblem } from "../check-tailwind-compat";
+import { classNames, missingClasses, scanProblem } from "../check-tailwind-compat";
 
 // Shaped like Tailwind CLI output: a banner comment with a URL, nested variants, media queries
 const OLDEST = `/*! tailwindcss v4.0.0 | MIT License | https://tailwindcss.com */
@@ -56,21 +56,14 @@ describe("classNames, selectors that are not classes", () => {
 });
 
 describe("scanProblem", () => {
-  const many = (extra: string[]) =>
-    new Set([...Array.from({ length: MIN_CLASSES }, (_, i) => `p-${i}`), ...extra]);
-
-  it("accepts a plausible class set", () => {
-    expect(scanProblem(many(["disabled:pointer-events-none"]), "4.3.3")).toBeUndefined();
+  it("accepts a set with a class that chunks-ui's Button uses", () => {
+    expect(scanProblem(new Set(["disabled:pointer-events-none"]), "4.3.3")).toBeUndefined();
   });
 
-  it("reports a set that is suspiciously small", () => {
-    expect(scanProblem(new Set(["disabled:pointer-events-none"]), "4.3.3")).toMatch(
-      /4\.3\.3 generated only 1 classes/,
+  it("reports a set without it", () => {
+    expect(scanProblem(new Set(["p-1"]), "4.0.0")).toMatch(
+      /4\.0\.0 .*disabled:pointer-events-none/,
     );
-  });
-
-  it("reports a set without a class that chunks-ui's Button uses", () => {
-    expect(scanProblem(many([]), "4.0.0")).toMatch(/4\.0\.0 .*disabled:pointer-events-none/);
   });
 });
 

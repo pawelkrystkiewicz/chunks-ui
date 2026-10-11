@@ -4,7 +4,7 @@ This directory contains utility scripts for the project.
 
 ## check-playwright-version.ts
 
-Fails when the Playwright version differs between `@playwright/test` (packages/ui), `playwright` (apps/docs), the `mcr.microsoft.com/playwright` images in the workflows and the Docker recipe in `TESTING_STRATEGY.md`. Also fails on an image reference without a `v<version>` tag, on workflows that pin different digests, and when the recipe cites another digest than the workflows. It makes no network calls.
+Fails when the Playwright version differs between `@playwright/test` (packages/ui), `playwright` (apps/docs), the `mcr.microsoft.com/playwright` images in the workflows and the Docker recipe in `TESTING_STRATEGY.md`. Also fails on an image reference without a `v<version>` tag. It checks no digest: they are bumped with the tag by hand or by Renovate. It makes no network calls.
 
 ```bash
 bun run check:playwright

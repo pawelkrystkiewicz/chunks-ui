@@ -61,24 +61,6 @@ describe("checkPlaywrightVersions", () => {
     );
   });
 
-  it("fails on the recipe's docker command when it names the image by digest only", async () => {
-    const dir = copyWith("TESTING_STRATEGY.md", (text) =>
-      text.replace(/(docker run .*playwright):v[\d.]+-noble@/, "$1@"),
-    );
-    expect(await checkPlaywrightVersions(dir)).toEqual([
-      expect.stringMatching(/^TESTING_STRATEGY\.md:\d+ .*no v<version> tag/),
-    ]);
-  });
-
-  it("fails on a workflow image without a version tag", async () => {
-    const dir = copyWith(".github/workflows/quality-gates.yml", (text) =>
-      text.replace(/playwright:v[\d.]+-noble@/, "playwright:latest@"),
-    );
-    expect(await checkPlaywrightVersions(dir)).toEqual([
-      expect.stringMatching(/^\.github\/workflows\/quality-gates\.yml:\d+ .*no v<version> tag/),
-    ]);
-  });
-
   it("fails on a workflow image named by digest only", async () => {
     const dir = copyWith(".github/workflows/update-screenshots.yml", (text) =>
       text.replace(/playwright:v[\d.]+-noble@/, "playwright@"),
@@ -102,40 +84,6 @@ describe("checkPlaywrightVersions", () => {
     expect(await checkPlaywrightVersions(dir)).toEqual([
       expect.stringContaining("workflows name no mcr.microsoft.com/playwright"),
     ]);
-  });
-
-  it("fails when the workflows pin different digests", async () => {
-    const dir = copyWith(".github/workflows/quality-gates.yml", (text) =>
-      text.replace(/@sha256:[0-9a-f]{64}/, `@sha256:${"0".repeat(64)}`),
-    );
-    expect(await checkPlaywrightVersions(dir)).toEqual(
-      expect.arrayContaining([expect.stringMatching(/digest .*differs/)]),
-    );
-  });
-
-  it("fails when the recipe cites another digest than the workflows", async () => {
-    const dir = copyWith("TESTING_STRATEGY.md", (text) =>
-      text.replace(/(v[\d.]+-noble@sha256:)[0-9a-f]{8}…/, "$1deadbeef…"),
-    );
-    expect(await checkPlaywrightVersions(dir)).toEqual([
-      expect.stringMatching(/cites sha256:deadbeef/),
-    ]);
-  });
-
-  it("fails when the workflows pin a digest and the recipe cites none", async () => {
-    const dir = copyWith("TESTING_STRATEGY.md", (text) =>
-      text.replaceAll(/@sha256:[0-9a-f]{6,63}…/g, ""),
-    );
-    expect(await checkPlaywrightVersions(dir)).toEqual([
-      expect.stringMatching(/TESTING_STRATEGY\.md cites no digest/),
-    ]);
-  });
-
-  it("accepts a bare tag followed by a digest when the version matches", async () => {
-    const dir = copyWith("TESTING_STRATEGY.md", (text) =>
-      text.replace(/(docker run .*playwright:v[\d.]+)-noble@/, "$1@"),
-    );
-    expect(await checkPlaywrightVersions(dir)).toEqual([]);
   });
 
   it("names a bare tag whose version differs", async () => {

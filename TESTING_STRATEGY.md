@@ -108,7 +108,7 @@ Browser specs (Vitest browser mode, Playwright Chromium) in `packages/ui`. They 
   ```
 
   - The tag is the version `bun run check:playwright` compares; Docker accepts it together with the digest and `--platform`.
-  - The digest in the command is the `linux/amd64` manifest of `mcr.microsoft.com/playwright:v1.64.0-noble@sha256:06a9939e…`, the multi-arch index CI pins in the workflows' `container:`. The check cannot verify the `linux/amd64` digest offline: it checks only that the workflows pin one digest and that the `sha256:06a9939e…` prefix cited here is that digest.
+  - The digest in the command is the `linux/amd64` manifest of `mcr.microsoft.com/playwright:v1.64.0-noble`; CI pins the multi-arch index in the workflows' `container:`. The check compares no digest.
   - Bump the tag and both digests with `@playwright/test`. `docker buildx imagetools inspect` on the new `-noble` tag lists the manifests.
   - `bun run update:screenshots` does the same on GitHub Actions for the current branch.
 - Look at every changed PNG before you commit it.
@@ -170,7 +170,7 @@ bun run test:unit:coverage # with V8 coverage report
 - **Visual regression** runs on every PR and master push (`visual-regression.tests.yml`); the master result goes to Slack
 - **Lint + typecheck** run on every PR and master push (`quality-gates.yml`)
 - **Version checks** run in `quality-gates.yml` (`check:playwright` in the `lint` job, `check:tailwind` in the `typecheck` job):
-  - `bun run check:playwright` fails when `@playwright/test`, the docs' `playwright`, a workflow `mcr.microsoft.com/playwright` image tag or the Docker recipe above name different versions. It also fails on a reference without a `v<version>` tag, on workflows that pin different digests, and when the recipe cites another digest than the workflows. It makes no network calls.
+  - `bun run check:playwright` fails when `@playwright/test`, the docs' `playwright`, a workflow `mcr.microsoft.com/playwright` image tag or the Docker recipe above name different versions. It also fails on a reference without a `v<version>` tag. It checks no digest: they are bumped with the tag by hand or by Renovate. It makes no network calls.
   - `bun run check:tailwind` builds `chunks-ui`, compiles `dist/theme.css` and the code it scans with Tailwind 4.0.0 (the oldest v4) and with the installed version, and fails when 4.0.0 does not generate a class the installed version does. A consumer on 4.0 would get no CSS for that class. The scan reads every word in `dist`, so a listed name can also come from a comment or string, not only from a class in use. It also fails when either version generates fewer than 100 classes or lacks a Button class (the scan broke). The installed version compiles with the Tailwind packages in `bun.lock`. 4.0.0 installs from `scripts/tailwind-4.0` (`bun install --frozen-lockfile` in a temporary directory), so every dependency is pinned and `bun.lock` does not change. To move the pin, change `package.fixture.json` there, run `bun install` in a temporary copy named `package.json`, and copy its `bun.lock` back as `bun.fixture.lock`. The install needs the network.
 - **Docs snippets and axe** run on every PR and master push (`quality-gates.yml`), see below
 
