@@ -20,6 +20,7 @@ import {
   samePrimary,
   sameTheme,
   type Theme,
+  withHue,
 } from "./theme-model";
 
 const RING = "shadow-[0_0_0_1.5px_var(--foreground)]";
@@ -63,7 +64,8 @@ export function ThemeSidebar({
   onGetCode: () => void;
 }) {
   const p = theme.primary;
-  const hueColor = p.c < 0.01 ? ok(0.6048, 0.2165, p.h) : ok(p.l, p.c, p.h);
+  // The colour the slider gives the primary at this hue; for Ink, the colour leaving Ink gives
+  const thumb = withHue(p, p.h);
 
   return (
     <aside
@@ -187,17 +189,14 @@ export function ThemeSidebar({
               value={Math.round(p.h)}
               min={0}
               max={360}
-              onValueChange={(v) => {
-                const base = p.c < 0.01 ? { l: 0.6048, c: 0.2165 } : p;
-                onChange({ primary: { l: base.l, c: base.c, h: v as number } });
-              }}
+              onValueChange={(v) => onChange({ primary: withHue(p, v as number) })}
             >
               <Slider.Control className="py-0.5">
                 <Slider.Track className="h-2.5" style={{ background: HUE_GRADIENT }}>
                   <Slider.Thumb
                     getAriaLabel={() => "Primary hue"}
                     className="border-[2.5px] border-white shadow-[0_0_0_1px_oklch(0_0_0/0.15),0_1px_3px_oklch(0_0_0/0.2)]"
-                    style={{ background: hueColor }}
+                    style={{ background: ok(thumb.l, thumb.c, thumb.h) }}
                   />
                 </Slider.Track>
               </Slider.Control>

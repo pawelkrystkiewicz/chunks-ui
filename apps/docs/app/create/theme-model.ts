@@ -292,6 +292,22 @@ export function palette(t: Theme, mode: Mode): Record<string, string> {
   return out;
 }
 
+/**
+ * The primary the hue slider makes when it moves `p` to hue `h`. Ink and Blue-chroma primaries
+ * (Blue, or one the slider made) start from Blue's lightness and chroma every time, so moves
+ * never ratchet the lightness down. Where white text can't reach 4.5:1 there, and dark text
+ * can't on every base, it darkens in 0.001 steps until white text does. Other swatches keep theirs.
+ */
+export function withHue(p: Oklch, h: number): Oklch {
+  if (p.c >= 0.01 && p.c !== BLUE.c) return { l: p.l, c: p.c, h };
+  const at = (l: number) => ({ l, c: BLUE.c, h });
+  let l = BLUE.l;
+  if (BASES.some((b) => contrast({ l: 0.145, c: b.c, h: b.h }, at(l)) < 4.5)) {
+    while (contrast({ l: 0.985, c: 0, h: 0 }, at(l)) < 4.5) l = (Math.round(l * 1000) - 1) / 1000;
+  }
+  return at(l);
+}
+
 const SHADOWS: Record<Shadow, (dark: boolean) => string> = {
   none: () => "0 0 #0000",
   subtle: (d) => (d ? "0 1px 2px 0 oklch(0 0 0 / 0.4)" : "0 1px 2px 0 oklch(0 0 0 / 0.05)"),
@@ -417,7 +433,8 @@ const STORE_KEY = "chunks-create-theme-v1";
 
 /**
  * Blue before #214 deepened it. A theme stored with exactly it loads with today's Blue.
- * Matched exactly: the hue slider still builds `l: 0.6048` with integer hues, which must stay.
+ * Matched exactly: until #294 the hue slider built `l: 0.6048` at integer hues, and themes
+ * stored from it load as they are.
  */
 const OLD_BLUE: Oklch = { l: 0.6048, c: 0.2165, h: 257.21 };
 
