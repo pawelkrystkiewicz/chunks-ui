@@ -12,11 +12,9 @@
  * (checks it could not decide, often contrast over images or gradients) are not failed.
  *
  * Reads the issue states from the GitHub API with GITHUB_TOKEN (CI passes it; locally run
- * `GITHUB_TOKEN=$(gh auth token) bun run check:a11y`). Outside CI, without a token or when the API
- * can't be reached, it prints a notice and skips the issue check. In CI (GITHUB_ACTIONS=true) a
- * missing token, or a 401, a 403 (other than GitHub's rate limit), a 404 or a 410 for an issue,
- * fails the run, with a message that says how to fix it; timeouts, network errors, rate limits,
- * 429 and 5xx stay notices.
+ * `GITHUB_TOKEN=$(gh auth token) bun run check:a11y`). Outside CI, an issue whose state can't be
+ * read is a notice. In CI (GITHUB_ACTIONS=true) a missing token, or a 401, 403, 404 or 410 for an
+ * issue, fails the run; timeouts, network errors, 429 and 5xx stay notices.
  *
  * Build first (`bun run build --filter=@chunks-ui/docs`); the script starts `next start` itself.
  * Needs Playwright's Chromium (`bunx playwright install chromium`, or the Playwright image in CI).
@@ -113,44 +111,30 @@ export function linkedIssue(entry: Allowed) {
 }
 
 /**
- * Entries whose linked issue was closed other than as not planned: completed means the fix landed,
- * duplicate means the canonical issue should be linked instead. Either way the entry is out of
- * date. An entry stays when its issue is open, was closed as not planned (an accepted exception),
- * or its state wasn't read (`states` has no entry for it).
+ * Entries whose linked issue was closed other than as not planned (completed, or a duplicate): the
+ * entry is out of date. An entry stays when its issue is open, was closed as not planned (an
+ * accepted exception), or its state wasn't read (`states` has no entry for it).
  */
 export function fixedEntries(entries: Allowed[], states: Map<number, IssueState>) {
   return entries.flatMap((entry) => {
     const issue = linkedIssue(entry);
     const state = issue === undefined ? undefined : states.get(issue);
     if (state?.state !== "closed" || state.state_reason === "not_planned") return [];
-    if (state.state_reason === "duplicate") {
-      return [
-        `ALLOWED entry's issue #${issue} was closed as a duplicate: link the canonical issue instead: ${entry.why}`,
-      ];
-    }
     return [
-      `ALLOWED entry's issue #${issue} was closed as completed: remove the entry, or reopen the issue if the violation is still there, or merge master if your branch predates the fix: ${entry.why}`,
+      `ALLOWED entry's issue #${issue} was closed as ${state.state_reason}: remove the entry, link the open issue, or merge master if your branch predates the fix: ${entry.why}`,
     ];
   });
 }
 
 /** Why the state of an issue could not be read: no token, an HTTP status, or no answer at all */
-export type ReadCause = "no-token" | "network" | "rate-limit" | number;
+export type ReadCause = "no-token" | "network" | number;
 
 /** Whether the run is on GitHub Actions, where a broken issue check fails instead of only noticing */
 const IN_CI = process.env.GITHUB_ACTIONS === "true";
 
-/**
- * What an unreadable issue state means. In CI a missing token and a 401, 403, 404 or 410 are a
- * broken setup or a typo in `why`, so they fail the run. Timeouts, network errors, rate limits
- * (a 403 with a rate-limit header, or 429) and 5xx are GitHub's or the network's, and outside CI
- * nothing is worth failing for: those only get a notice.
- */
-export function readFailure(ci: boolean, cause: ReadCause): "fail" | "notice" {
-  if (!ci) return "notice";
-  return cause === "no-token" || cause === 401 || cause === 403 || cause === 404 || cause === 410
-    ? "fail"
-    : "notice";
+/** Whether an unreadable issue state fails the run in CI; the rule is in the header above */
+export function failsInCi(cause: ReadCause) {
+  return cause === "no-token" || [401, 403, 404, 410].includes(cause as number);
 }
 
 /**
@@ -183,26 +167,15 @@ export function firstMatch([target, selectors]: readonly [string, readonly strin
 
 type Problem = { page: string; theme: string; rule: string; help: string; targets: string[] };
 
-/** The app/ page that renders content/**\/*.mdx; pages() lists those from content/ instead */
+/** The one app/ page this script needs no URL for: it renders content/**\/*.mdx, which pages() lists */
 const MDX_CATCH_ALL = "[[...mdxPath]]/page.tsx";
 
-/**
- * The URL of each app/ page file other than the MDX catch-all: `kitchen/page.tsx` is `/kitchen`,
- * and a route group such as `(site)/` adds no segment. Throws on a dynamic segment, whose URLs
- * this script can't guess.
- */
-export function appRoutes(files: string[]) {
-  return files
-    .filter((file) => file !== MDX_CATCH_ALL)
-    .map((file) => {
-      if (file.includes("[")) {
-        throw new Error(
-          `app/${file} is dynamic: skip the file in appRoutes() and list its URLs in pages() in check-a11y.ts`,
-        );
-      }
-      const segments = file.split("/").slice(0, -1);
-      return `/${segments.filter((segment) => !/^\(.+\)$/.test(segment)).join("/")}`;
-    });
+/** Throws on an app/ page other than the MDX catch-all, as this script doesn't know its URLs */
+export function assertOnlyCatchAll(files: string[]) {
+  const other = files.filter((file) => file !== MDX_CATCH_ALL);
+  if (other.length > 0) {
+    throw new Error(`app/${other.join(", app/")}: add its URLs to pages() in check-a11y.ts`);
+  }
 }
 
 /** A URL no page answers on, so the server renders app/not-found.tsx with status 404 */
@@ -214,10 +187,10 @@ function pages() {
     return `/${route}`;
   });
   if (content.length === 0) throw new Error(`No .mdx pages under ${join(DOCS_DIR, "content")}`);
-  const app = appRoutes([
+  assertOnlyCatchAll([
     ...new Bun.Glob("**/page.{js,jsx,ts,tsx,md,mdx}").scanSync(join(DOCS_DIR, "app")),
   ]);
-  return [...new Set([...content, ...app])].sort().concat(NOT_FOUND_ROUTE);
+  return [...new Set(content)].sort().concat(NOT_FOUND_ROUTE);
 }
 
 /** Whether anything answers HTTP on the port within 2s, whatever the status */
@@ -230,56 +203,42 @@ async function answers() {
   }
 }
 
-/** The part of `fetch` readIssueStates uses; a spec passes a stub */
-export type Fetch = (url: string, init: RequestInit) => Promise<Response>;
-
-/** What to do about an unreadable issue state that fails the run in CI, by cause */
-function fixFor(cause: ReadCause, issue: number) {
-  if (cause === "no-token") {
-    // biome-ignore lint/suspicious/noTemplateCurlyInString: the text is a GitHub Actions expression
-    return "set `env: GITHUB_TOKEN: ${{ github.token }}` on the axe step in .github/workflows/quality-gates.yml";
-  }
-  if (cause === 404 || cause === 410) {
-    return `no issue #${issue}: check the \`#${issue}\` that starts \`why\`; if it isn't an issue number (e.g. a hex colour like #666666), don't start \`why\` with \`#\``;
-  }
-  return "the token lacks `issues: read` (job `permissions`)";
-}
-
 /**
  * The state of each issue, read from the GitHub API with GITHUB_TOKEN. An issue whose state
- * can't be read is left out, with a message that says why: a failure in CI for a missing token or
- * a 401, 403, 404 or 410 (see readFailure), a notice otherwise. `fetchIssue` and `env` are
- * injectable for the spec.
+ * can't be read is left out, with a message: a failure when failsInCi says so, a notice otherwise.
  */
-export async function readIssueStates(
-  issues: number[],
-  fetchIssue: Fetch = globalThis.fetch,
-  env: Record<string, string | undefined> = process.env,
-) {
+export async function readIssueStates(issues: number[]) {
   const states = new Map<number, IssueState>();
   const notices: string[] = [];
   const failures: string[] = [];
-  const ci = env.GITHUB_ACTIONS === "true";
-  const token = env.GITHUB_TOKEN;
-  const report = (cause: ReadCause, issue: number, message: string) => {
-    if (readFailure(ci, cause) === "fail") failures.push(`${message}: ${fixFor(cause, issue)}`);
-    else notices.push(message);
+  const token = process.env.GITHUB_TOKEN;
+  const report = (cause: ReadCause, subject: string, message: string) => {
+    if (IN_CI && failsInCi(cause)) {
+      failures.push(
+        `${subject} (${cause}): check GITHUB_TOKEN on the axe step in .github/workflows/quality-gates.yml, its \`issues: read\` permission, and the #NNN that starts \`why\``,
+      );
+    } else notices.push(message);
   };
-  const first = issues[0];
-  if (first === undefined) return { states, notices, failures };
+  if (issues.length === 0) return { states, notices, failures };
   if (!token) {
+    const all = issues.map((issue) => `#${issue}`).join(", ");
     report(
       "no-token",
-      first,
-      `GITHUB_TOKEN is not set, so the state of ${issues.map((issue) => `#${issue}`).join(", ")} was not read and ALLOWED entries were not checked for fixed issues`,
+      "Issue check failed for the linked issues",
+      `GITHUB_TOKEN is not set, so the state of ${all} was not read and ALLOWED entries were not checked for fixed issues`,
     );
     return { states, notices, failures };
   }
   await Promise.all(
     issues.map(async (issue) => {
-      let response: Response;
+      const fail = (cause: ReadCause, detail: string) =>
+        report(
+          cause,
+          `Issue check failed for #${issue}`,
+          `Could not read the state of #${issue} (${detail})`,
+        );
       try {
-        response = await fetchIssue(`https://api.github.com/repos/${REPO}/issues/${issue}`, {
+        const response = await fetch(`https://api.github.com/repos/${REPO}/issues/${issue}`, {
           headers: {
             Accept: "application/vnd.github+json",
             Authorization: `Bearer ${token}`,
@@ -287,32 +246,11 @@ export async function readIssueStates(
           },
           signal: AbortSignal.timeout(10_000),
         });
-      } catch (error) {
-        report(
-          "network",
-          issue,
-          `Could not read the state of #${issue} (${error}): its ALLOWED entries were not checked`,
-        );
-        return;
-      }
-      if (!response.ok) {
-        // GitHub answers 403 (or 429) with these headers when the rate limit is hit
-        const limited =
-          response.status === 403 &&
-          (response.headers.get("x-ratelimit-remaining") === "0" ||
-            response.headers.has("retry-after"));
-        report(
-          limited ? "rate-limit" : response.status,
-          issue,
-          `Could not read the state of #${issue} (GitHub answered ${response.status}${limited ? ", rate limited" : ""})`,
-        );
-        return;
-      }
-      try {
+        if (!response.ok) return fail(response.status, `GitHub answered ${response.status}`);
         const { state, state_reason } = (await response.json()) as IssueState;
         states.set(issue, { state, state_reason });
       } catch (error) {
-        report("network", issue, `Could not read the state of #${issue} (${error})`);
+        fail("network", String(error));
       }
     }),
   );
@@ -450,14 +388,6 @@ if (import.meta.main) {
   const { states, notices, failures } = await issueStates;
   // An annotation on the GitHub Actions run, so a check that was skipped there gets seen
   for (const notice of notices) console.log(`${IN_CI ? "::notice::" : "Notice: "}${notice}`);
-  if (states.size > 0) {
-    const read = [...states]
-      .sort(([a], [b]) => a - b)
-      .map(([issue, { state, state_reason }]) =>
-        state_reason ? `#${issue} ${state} as ${state_reason}` : `#${issue} ${state}`,
-      );
-    console.log(`Issues linked from ALLOWED: ${read.join(", ")}.`);
-  }
   const stale = [...staleEntries(ALLOWED, matched), ...fixedEntries(ALLOWED, states)];
   for (const message of stale) console.error(message);
   if (failures.length > 0) {
