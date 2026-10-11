@@ -345,7 +345,7 @@ function Hero() {
         </div>
       </div>
       <div className={`${WRAP} relative z-2 pb-[120px]`}>
-        <small className="font-mono text-[11px] text-white/60 tracking-[.1em]">BUILT ON</small>
+        <small className="font-mono text-[11px] text-white/70 tracking-[.1em]">BUILT ON</small>
         <div className="mt-3.5 flex flex-wrap gap-x-11 gap-y-4 font-bold text-[24px] tracking-[-.02em]">
           {BUILT_ON.map(({ label, href }) => (
             <Href
@@ -621,7 +621,7 @@ function CreateSection() {
 // oklch(70% .15 257) drops to 3.6:1 (390px wide) and 4.2:1 (1920px); --l-brand-pale keeps 5:1.
 const ROW =
   "flex flex-col gap-1 border-white/15 border-b py-[18px] text-left text-white transition-colors duration-300 hover:text-(--l-brand-pale)";
-const ROW_LABEL = "font-mono text-[11px] text-white/55 tracking-[.06em]";
+const ROW_LABEL = "font-mono text-[11px] text-white/70 tracking-[.06em]";
 const ROW_VALUE = "font-semibold text-[20px] tracking-[-.015em]";
 
 const LINK_ROWS = [
@@ -644,7 +644,7 @@ function GetStarted() {
         <h2 className="text-balance font-display font-semibold text-[clamp(36px,5vw,60px)] text-white leading-[1.02] tracking-[-.045em]">
           Install once.
           <br />
-          <em className="text-white/50 not-italic">Compose the rest.</em>
+          <em className="text-white/70 not-italic">Compose the rest.</em>
         </h2>
         <div className="flex flex-col border-white/15 border-t">
           <CopyRow
