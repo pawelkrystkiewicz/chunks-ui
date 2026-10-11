@@ -67,12 +67,12 @@ export const iconButtonVariants = cva(
       {
         variant: "outlined",
         color: "success",
-        className: "border-success text-success-text hover:bg-success/10",
+        className: "border-success-border text-success-text hover:bg-success/10",
       },
       {
         variant: "outlined",
         color: "warning",
-        className: "border-warning text-warning-text hover:bg-warning/10",
+        className: "border-warning-border text-warning-text hover:bg-warning/10",
       },
       {
         variant: "outlined",

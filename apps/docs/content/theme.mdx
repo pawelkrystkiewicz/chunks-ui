@@ -56,7 +56,9 @@ The colour is computed on the element that uses it. If you set `--primary` on `:
 }
 ```
 
-Relative colour syntax needs Chrome 119+, Safari 18+ or Firefox 128+. Older browsers show this text in the inherited text colour.
+The border of a control needs 3:1 contrast, and the success and warning fills have about 2:1 on white. So the `outlined` success and warning variants of `Button` and `IconButton` use `border-success-border` and `border-warning-border`. In light mode these cap the fill's lightness at 0.64 (success) and 0.67 (warning), which gives 3:1 on white, and a darker fill keeps its lightness. In dark mode they are the fill. `--success-border-lightness` and `--warning-border-lightness` hold the rule for each mode. To use a different shade, set `--success-border` or `--warning-border`.
+
+Relative colour syntax needs Chrome 119+, Safari 18+ or Firefox 128+. Older browsers show this text, and these borders, in the inherited text colour.
 
 ### Surface Colors
 
