@@ -102,12 +102,15 @@ Browser specs (Vitest browser mode, Playwright Chromium) in `packages/ui`. They 
 
   ```bash
   D=<scratchpad>/ui-visual; rm -rf $D && mkdir -p $D && git -C <wt> archive HEAD | tar -x -C $D
-  docker run --rm --platform linux/amd64 -v $D:/work -w /work mcr.microsoft.com/playwright@sha256:bc72a8df40831ded821e3cbc79c318c21b44d6e51dff9fd89ace7a8249c5b462 bash -lc \
+  docker run --rm --platform linux/amd64 -v $D:/work -w /work mcr.microsoft.com/playwright:v1.64.0-noble@sha256:bc72a8df40831ded821e3cbc79c318c21b44d6e51dff9fd89ace7a8249c5b462 bash -lc \
     'npm i -g bun@1.4.2 >/dev/null 2>&1 && bun install --frozen-lockfile >/dev/null 2>&1 && cd packages/ui && bun run test:visual:update'
   rsync -am --include='*/' --include='*-linux.png' --exclude='*' $D/packages/ui/src/ <wt>/packages/ui/src/
   ```
 
-  The digest is the `linux/amd64` manifest of `mcr.microsoft.com/playwright:v1.64.0-noble@sha256:06a9939e…`, the multi-arch index CI pins in the workflows' `container:`; Docker rejects an index digest with `--platform` ("cannot overwrite digest"). Bump both with `@playwright/test` (`docker buildx imagetools inspect mcr.microsoft.com/playwright:v<version>-noble` lists the manifests). `bun run update:screenshots` does the same on GitHub Actions for the current branch.
+  - The tag is the version `bun run check:playwright` compares; Docker accepts it together with the digest and `--platform`.
+  - The digest in the command is the `linux/amd64` manifest of `mcr.microsoft.com/playwright:v1.64.0-noble`; CI pins the multi-arch index in the workflows' `container:`. The check compares no digest.
+  - Bump the tag and both digests with `@playwright/test`. `docker buildx imagetools inspect` on the new `-noble` tag lists the manifests.
+  - `bun run update:screenshots` does the same on GitHub Actions for the current branch.
 - Look at every changed PNG before you commit it.
 
 ## Coverage Targets
@@ -163,8 +166,12 @@ bun run test:unit:coverage # with V8 coverage report
 
 ## CI
 
-- **Unit tests + coverage** run on every PR and master push (`unit.tests.yml`)
+- **Unit tests + coverage** run on every PR and master push (`unit.tests.yml`), and so do the tests of the root `scripts/` (`bun test ./scripts`)
+- **Visual regression** runs on every PR and master push (`visual-regression.tests.yml`); the master result goes to Slack
 - **Lint + typecheck** run on every PR and master push (`quality-gates.yml`)
+- **Version checks** run in `quality-gates.yml` (`check:playwright` in the `lint` job, `check:tailwind` in the `typecheck` job):
+  - `bun run check:playwright` fails when `@playwright/test`, the docs' `playwright`, a workflow `mcr.microsoft.com/playwright` image tag or the Docker recipe above name different versions. It also fails on a reference without a `v<version>` tag. It checks no digest: they are bumped with the tag by hand or by Renovate. It makes no network calls.
+  - `bun run check:tailwind` builds `chunks-ui`, compiles `dist/theme.css` and the code it scans with Tailwind 4.0.0 (the oldest v4) and with the installed version, and fails when 4.0.0 does not generate a class the installed version does. A consumer on 4.0 would get no CSS for that class. The scan reads every word in `dist`, so a listed name can also come from a comment or string, not only from a class in use. It also fails when either version generates fewer than 100 classes or lacks a Button class (the scan broke). The installed version compiles with the Tailwind packages in `bun.lock`. 4.0.0 installs from `scripts/tailwind-4.0` (`bun install --frozen-lockfile` in a temporary directory), so every dependency is pinned and `bun.lock` does not change. To move the pin, change `package.fixture.json` there, run `bun install` in a temporary copy named `package.json`, and copy its `bun.lock` back as `bun.fixture.lock`. The install needs the network.
 - **Docs snippets and axe** run on every PR and master push (`quality-gates.yml`), see below
 
 ### Docs checks
@@ -172,7 +179,7 @@ bun run test:unit:coverage # with V8 coverage report
 Two gates check the docs site in `apps/docs`:
 
 - **Snippet type-check**, in the `typecheck` job. The docs `check-types` runs `tsc` on the app and on `scripts/`, then `check:snippets`. That compiles every ` ```tsx ` block in `apps/docs/content` against the built `chunks-ui` types and reports errors at the `.mdx` line. A block can use the `chunks-ui` and React exports, and lucide icons by their `XxxIcon` name, without an import. If a block uses a name from the code around it (state, or data from an earlier block on the page), declare that name with its real type in `apps/docs/scripts/check-snippets.fixtures.ts`, under the page's path.
-- **axe**, in the `docs-build` job after the build. `check:a11y` serves the build with `next start` and runs axe (WCAG 2.2 A and AA) on every page built from `content/**/*.mdx`, in light and dark mode. It does not visit other app routes or the 404 page, and it does not fail on axe's `incomplete` results (checks axe could not decide).
+- **axe**, in the `docs-build` job after the build. `check:a11y` serves the build with `next start` and runs axe (WCAG 2.2 A and AA) in light and dark mode on every page built from `content/**/*.mdx` (the landing page, `/create` and `/kitchen-sink` among them), on every other `page.*` under `apps/docs/app/`, and on the 404 page. It gets the 404 page by requesting a URL that no page answers on, and fails if that URL does not answer 404. An app page other than the MDX catch-all stops the run until you add its URLs to `pages()` in the script. It does not fail on axe's `incomplete` results (checks axe could not decide).
 
 To run them locally:
 
@@ -197,5 +204,7 @@ When axe flags something you can't fix in the docs, open an issue for the fix, t
 ```
 
 Scope the entry to the pages and themes where the violation occurs. The run fails when an entry matches nothing, so remove the entry in the change that fixes its cause.
+
+The run also fails when the issue an entry links (the `#NNN` that starts `why`) is closed as completed or as a duplicate: for completed, the fix landed, so the entry must go, or the issue must be reopened if the violation is still there; for a duplicate, link the canonical issue instead. An issue closed as not planned is an accepted exception, and its entry stays. The issue state lives outside the commit, so closing an issue as completed turns every branch red until the entry is gone: remove the entry in the PR that fixes the issue, and merge master into older branches. The script reads the issue states from the GitHub API with `GITHUB_TOKEN` (CI passes the job's token; locally, run `GITHUB_TOKEN=$(gh auth token) bun run check:a11y`). Outside CI an unreadable state is a notice. In CI a missing token or a 401, 403, 404 or 410 fails the run; the status-code rule is in the header of the script.
 
 The docs also have unit specs (`bun run test` in `apps/docs`, jsdom), with shared shims and cleanup in `apps/docs/vitest.setup.ts`. The smoke specs render the example modules and the kitchen-sink page under StrictMode and fail on a throw or a `console.error`.

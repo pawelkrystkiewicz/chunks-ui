@@ -45,3 +45,6 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           working-directory: packages/ui
+
+      - name: Test the repo scripts
+        run: bun test ./scripts
