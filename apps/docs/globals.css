@@ -20,6 +20,9 @@
   --l-ill: #8d96b0;
   --l-brand: oklch(60.48% 0.2165 257.21);
   --l-brand-pale: oklch(80% 0.1 257);
+  /* Focus ring: the page's text colour, 16:1 or more on --l-bg and --l-card in both site themes.
+     The library's grey --ring is 3.2:1 on --l-bg (light). */
+  --ring: var(--l-fg);
   --l-grid:
     repeating-linear-gradient(90deg, transparent 0 20px, var(--l-ill) 20px 21px),
     repeating-linear-gradient(0deg, transparent 0 20px, var(--l-ill) 20px 21px);
@@ -46,6 +49,12 @@
   --l-line: oklch(0.28 0.03 265);
   --l-card: oklch(0.2 0.03 265);
   --l-ill: oklch(0.55 0.04 265);
+}
+
+/* The hero, the band and the footer carry `dark` (dark in both site themes): white ring, 11:1 or
+   more on their gradients. The library's dark --ring is 2.8:1 there. */
+.landing .dark {
+  --ring: #fff;
 }
 
 /*
