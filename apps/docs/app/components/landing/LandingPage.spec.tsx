@@ -32,7 +32,6 @@ it.each([
   ["Open Create", "/create"],
 ])("the %s CTA is a link with the contained primary Button colours", (name, href) => {
   render(<LandingPage />);
-  // The exact name also proves the arrow icon stays out of it
   const cta = screen.getByRole("link", { name });
   expect(cta.getAttribute("href")).toBe(href);
   expect([...cta.classList]).toEqual(

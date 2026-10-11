@@ -29,8 +29,9 @@ export type Theme = (typeof THEMES)[number];
 /**
  * An accepted violation: one axe rule on the flagged elements that match `selector`, on
  * `pages` and in `themes` (every page and theme when left out). Keep entries specific, scope them
- * to where they occur, and link the issue that removes them. The run fails when an entry matches
- * nothing, or never matches on one of its pages or in one of its themes, so fixed ones can't linger.
+ * to where they occur, and link the issue that removes or accepts them. The run fails when an entry
+ * matches nothing, or never matches on one of its pages or in one of its themes, so fixed ones can't
+ * linger.
  */
 export type Allowed = {
   rule: string;
@@ -70,12 +71,11 @@ const ALLOWED: Allowed[] = [
     why: "Nextra colours inline code in a link with its link colour on its code background, 4.45:1",
     themes: ["light"],
   },
-  // Accepted by the maintainer: not to be fixed
-  // Accepted in #254, closed as not planned: 0.03 short of 4.5:1, left as is
+  // Accepted by the maintainer (issue closed as not planned): keep until it stops matching
   {
     rule: "color-contrast",
     selector: ".bg-success\\/10.text-success-text",
-    why: "#254: success-text on a /10 tint over Nextra's #fafafa (Chip, kitchen-sink badge), 4.47:1",
+    why: "#254: success-text on a /10 tint over Nextra's #fafafa (Chip, kitchen-sink badge), 4.47:1, 0.03 short of 4.5:1",
     pages: ["/components/chip", "/kitchen-sink"],
     themes: ["light"],
   },
