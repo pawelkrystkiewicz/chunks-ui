@@ -4,11 +4,13 @@ import {
   type Allowed,
   allowedFor,
   appRoutes,
+  type Fetch,
   firstMatch,
   fixedEntries,
   type IssueState,
   linkedIssue,
   readFailure,
+  readIssueStates,
   staleEntries,
 } from "./check-a11y";
 
@@ -124,9 +126,7 @@ describe("fixedEntries", () => {
   });
 
   it("names the way out when it reports a completed issue", () => {
-    expect(fixedEntries([entry(1)], states)).toEqual([
-      expect.stringContaining("merge master if your branch predates the fix"),
-    ]);
+    expect(fixedEntries([entry(1)], states)).toEqual([expect.stringContaining("merge master")]);
   });
 
   it("keeps an entry whose issue was closed as not planned", () => {
@@ -148,6 +148,8 @@ describe("readFailure", () => {
     ["401", true, 401, "fail"],
     ["403", true, 403, "fail"],
     ["404", true, 404, "fail"],
+    ["410", true, 410, "fail"],
+    ["a rate-limited 403", true, "rate-limit", "notice"],
     ["429", true, 429, "notice"],
     ["500", true, 500, "notice"],
     ["503", true, 503, "notice"],
@@ -175,5 +177,58 @@ describe("firstMatch", () => {
 
   it("matches nothing when the target is not in the page", () => {
     expect(firstMatch(["#missing", ["span"]])).toBe(-1);
+  });
+});
+
+describe("readIssueStates", () => {
+  const ci = { GITHUB_ACTIONS: "true", GITHUB_TOKEN: "t" };
+  const answer = (status: number, headers: Record<string, string> = {}) =>
+    (async () => new Response("{}", { status, headers })) as Fetch;
+
+  it("fails in CI without a token, and says where to set it", async () => {
+    const never = (async () => {
+      throw new Error("no request without a token");
+    }) as Fetch;
+    const { failures, notices } = await readIssueStates([7], never, { GITHUB_ACTIONS: "true" });
+    expect(notices).toEqual([]);
+    expect(failures).toEqual([expect.stringContaining("quality-gates.yml")]);
+  });
+
+  it("only notices a missing token outside CI", async () => {
+    const { failures, notices } = await readIssueStates([7], answer(200), {});
+    expect(failures).toEqual([]);
+    expect(notices).toHaveLength(1);
+  });
+
+  it("only notices a 403 caused by the rate limit", async () => {
+    const limited = answer(403, { "x-ratelimit-remaining": "0" });
+    const { failures, notices } = await readIssueStates([7], limited, ci);
+    expect(failures).toEqual([]);
+    expect(notices).toHaveLength(1);
+    const retry = await readIssueStates([7], answer(403, { "retry-after": "60" }), ci);
+    expect(retry.failures).toEqual([]);
+  });
+
+  it("fails in CI on another 403, and says the token needs issues: read", async () => {
+    const { failures } = await readIssueStates(
+      [7],
+      answer(403, { "x-ratelimit-remaining": "9" }),
+      ci,
+    );
+    expect(failures).toEqual([expect.stringContaining("issues: read")]);
+  });
+
+  it("fails in CI on 404 and 410, and says to check the #NNN", async () => {
+    for (const status of [404, 410]) {
+      const { failures } = await readIssueStates([7], answer(status), ci);
+      expect(failures).toEqual([expect.stringContaining("no issue #7")]);
+    }
+  });
+
+  it("reads the state of an issue", async () => {
+    const ok = (async () =>
+      new Response(JSON.stringify({ state: "closed", state_reason: "completed" }))) as Fetch;
+    const { states } = await readIssueStates([7], ok, ci);
+    expect(states.get(7)).toEqual({ state: "closed", state_reason: "completed" });
   });
 });
