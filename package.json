@@ -12,7 +12,7 @@
     "lint:fix": "turbo run lint -- --fix",
     "check-types": "turbo run check-types",
     "clean": "turbo run clean && rm -rf node_modules",
-    "test": "turbo run test",
+    "test": "turbo run test && bun test ./scripts",
     "test:unit:coverage": "turbo run test:unit:coverage",
     "test:visual": "turbo run test:visual",
     "test:visual:update": "turbo run test:visual:update",
@@ -23,6 +23,7 @@
     "release": "turbo run build --filter=chunks-ui && changeset publish",
     "version:next": "bun run ./scripts/calculate-next-version.ts",
     "update:screenshots": "sh scripts/update-screenshots.sh",
+    "check:playwright": "bun scripts/check-playwright-version.ts",
     "generate:llm": "turbo run generate:llm --filter=@chunks-ui/docs"
   },
   "devDependencies": {
