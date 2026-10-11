@@ -111,7 +111,7 @@ describe("DatePicker", () => {
       "Saturday, April 4, 2026",
     ]) {
       const outsideDay = screen.getByRole("button", { name });
-      expect(outsideDay).toHaveClass("opacity-50");
+      expect(outsideDay).toHaveClass("text-muted-foreground");
       expect(outsideDay).toHaveAttribute("tabindex", "-1");
     }
     const tabStops = within(screen.getByRole("grid"))
