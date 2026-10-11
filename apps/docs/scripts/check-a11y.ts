@@ -79,13 +79,6 @@ const ALLOWED: Allowed[] = [
     pages: ["/components/chip", "/kitchen-sink"],
     themes: ["light"],
   },
-  // chunks-ui defects, outside the docs: fix them in packages/ui, then delete the entry
-  {
-    rule: "color-contrast",
-    selector: '[role="grid"] button.opacity-50',
-    why: "#252: Calendar outside-month days, muted text at opacity-50: 2:1 light, 2.69:1 dark",
-    pages: ["/components/calendar", "/create"],
-  },
 ];
 
 /** The entries that may excuse `rule` on `page` in `theme` */

@@ -59,8 +59,30 @@ describe("Calendar", () => {
     const { rerender } = render(<Calendar value={MARCH_15_2026} weekStartsOn={1} />);
     expect(screen.queryByRole("button", { name: feb23 })).not.toBeInTheDocument();
     rerender(<Calendar value={MARCH_15_2026} weekStartsOn={1} showOutsideDays />);
-    expect(screen.getByRole("button", { name: feb23 })).toHaveClass("opacity-50");
+    expect(screen.getByRole("button", { name: feb23 })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Saturday, April 4, 2026" })).toBeInTheDocument();
+  });
+
+  // The 4.5:1 itself is checked by the docs axe run (check:a11y)
+  it("dims outside days with the muted colour, not opacity", () => {
+    render(<Calendar value={MARCH_15_2026} weekStartsOn={1} showOutsideDays />);
+    const feb23 = screen.getByRole("button", { name: "Monday, February 23, 2026" });
+    expect(feb23).toHaveClass("text-muted-foreground");
+    expect(feb23.className).not.toMatch(/\bopacity-/);
+  });
+
+  it("keeps the disabled dimming on a disabled outside day", () => {
+    render(
+      <Calendar
+        value={MARCH_15_2026}
+        weekStartsOn={1}
+        showOutsideDays
+        min={new Date(2026, 2, 5)}
+      />,
+    );
+    const feb23 = screen.getByRole("button", { name: "Monday, February 23, 2026" });
+    expect(feb23).toHaveAttribute("aria-disabled", "true");
+    expect(feb23).toHaveClass("text-muted-foreground", "opacity-40");
   });
 
   it("keeps the selected colour on a selected outside day", async () => {
@@ -71,7 +93,6 @@ describe("Calendar", () => {
     expect(feb28).toHaveAttribute("data-selected", "true");
     expect(feb28).toHaveClass("text-primary-foreground");
     expect(feb28).not.toHaveClass("text-muted-foreground");
-    expect(feb28).not.toHaveClass("opacity-50");
   });
 
   it("moves the view to the month of a clicked outside day", async () => {
