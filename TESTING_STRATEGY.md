@@ -164,6 +164,7 @@ bun run test:unit:coverage # with V8 coverage report
 ## CI
 
 - **Unit tests + coverage** run on every PR and master push (`unit.tests.yml`)
+- **Visual regression** runs on every PR and master push (`visual-regression.tests.yml`); the master result goes to Slack
 - **Lint + typecheck** run on every PR and master push (`quality-gates.yml`)
 - **Docs snippets and axe** run on every PR and master push (`quality-gates.yml`), see below
 
