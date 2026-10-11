@@ -1,7 +1,6 @@
 import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
-import { StrictMode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Calendar } from "./Calendar";
 
@@ -142,7 +141,7 @@ describe("Calendar", () => {
 
   it("navigates across year boundary (December -> January) under StrictMode", async () => {
     const user = userEvent.setup();
-    render(<Calendar value={new Date(2026, 11, 1)} />, { wrapper: StrictMode });
+    render(<Calendar value={new Date(2026, 11, 1)} />);
 
     expect(screen.getByText("December 2026")).toBeInTheDocument();
 
@@ -153,7 +152,7 @@ describe("Calendar", () => {
 
   it("navigates across year boundary (January -> December) under StrictMode", async () => {
     const user = userEvent.setup();
-    render(<Calendar value={new Date(2026, 0, 1)} />, { wrapper: StrictMode });
+    render(<Calendar value={new Date(2026, 0, 1)} />);
 
     expect(screen.getByText("January 2026")).toBeInTheDocument();
 
