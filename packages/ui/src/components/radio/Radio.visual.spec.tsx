@@ -1,6 +1,6 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { renderFixture, SMALL_FEATURE_SCREENSHOT } from "../../VisualTest.utils";
+import { renderFixture } from "../../VisualTest.utils";
 import { Radio } from "./index";
 
 /** The opacity the element is drawn with: its own times every ancestor's */
@@ -25,7 +25,7 @@ describe("Radio", () => {
         </div>
       </Radio.Group>,
     );
-    await expect(fixture).toMatchScreenshot(SMALL_FEATURE_SCREENSHOT);
+    await expect(fixture).toMatchScreenshot();
   });
 
   // The radio and its text are each drawn at 0.5, never 0.25 from dimming both the item and its parts
