@@ -18,7 +18,7 @@ const PACKAGES = [
 ] as const;
 const RECIPE = "TESTING_STRATEGY.md";
 const IMAGE = /mcr\.microsoft\.com\/playwright(?<ref>[:@]\S*)/g;
-const TAG = /^:v(\d[\w.]*)-/;
+const TAG = /^:v(\d+(?:\.\d+)*)(?=[-@]|$)/;
 const DIGEST = /@sha256:([0-9a-f]{64})/;
 const CITED_DIGEST = /@sha256:([0-9a-f]{6,63})…/;
 
@@ -78,7 +78,11 @@ export async function checkPlaywrightVersions(root: string): Promise<string[]> {
     }
   }
   const cited = CITED_DIGEST.exec(recipeText)?.[1];
-  if (first && cited && !first.digest.startsWith(cited)) {
+  if (first && !cited) {
+    problems.push(
+      `${RECIPE} cites no digest prefix (@sha256:<hex>…), the workflows pin sha256:${first.digest}`,
+    );
+  } else if (first && cited && !first.digest.startsWith(cited)) {
     problems.push(`${RECIPE} cites sha256:${cited}…, the workflows pin sha256:${first.digest}`);
   }
   return problems;

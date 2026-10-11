@@ -107,7 +107,10 @@ Browser specs (Vitest browser mode, Playwright Chromium) in `packages/ui`. They 
   rsync -am --include='*/' --include='*-linux.png' --exclude='*' $D/packages/ui/src/ <wt>/packages/ui/src/
   ```
 
-  The tag is the version `bun run check:playwright` compares; Docker accepts it together with the digest and `--platform`. The digest in the command is the `linux/amd64` manifest of `mcr.microsoft.com/playwright:v1.64.0-noble@sha256:06a9939e…`, the multi-arch index CI pins in the workflows' `container:`. The command uses the `linux/amd64` digest so that it pins the platform. Bump both with `@playwright/test` (`docker buildx imagetools inspect mcr.microsoft.com/playwright:v1.64.0-noble` lists the manifests (use the new version)). `bun run update:screenshots` does the same on GitHub Actions for the current branch. `bun run check:playwright` fails while the tag in this command, a workflow image or either `package.json` names another version. It does not look the digests up: it checks only that the workflows pin one digest and that the `sha256:06a9939e…` prefix cited above is that digest, so the `linux/amd64` digest in the command is yours to bump.
+  - The tag is the version `bun run check:playwright` compares; Docker accepts it together with the digest and `--platform`.
+  - The digest in the command is the `linux/amd64` manifest of `mcr.microsoft.com/playwright:v1.64.0-noble@sha256:06a9939e…`, the multi-arch index CI pins in the workflows' `container:`. The check cannot verify the `linux/amd64` digest offline: it checks only that the workflows pin one digest and that the `sha256:06a9939e…` prefix cited here is that digest.
+  - Bump the tag and both digests with `@playwright/test`. `docker buildx imagetools inspect` on the new `-noble` tag lists the manifests.
+  - `bun run update:screenshots` does the same on GitHub Actions for the current branch.
 - Look at every changed PNG before you commit it.
 
 ## Coverage Targets

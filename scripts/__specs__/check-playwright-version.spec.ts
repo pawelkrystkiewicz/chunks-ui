@@ -1,4 +1,4 @@
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -8,13 +8,19 @@ const ROOT = join(import.meta.dirname, "../..");
 const READ = ["packages/ui/package.json", "apps/docs/package.json", "TESTING_STRATEGY.md"];
 const dirs: string[] = [];
 
-/** A copy of the files the check reads, with `edit` applied to `file`. */
-function copyWith(file: string, edit: (text: string) => string): string {
+/** A copy of the files the check reads. */
+function copyRoot(): string {
   const dir = mkdtempSync(join(tmpdir(), "playwright-version-"));
   dirs.push(dir);
   for (const path of [...READ, ".github/workflows"]) {
     cpSync(join(ROOT, path), join(dir, path), { recursive: true });
   }
+  return dir;
+}
+
+/** A copy of the files the check reads, with `edit` applied to `file`. */
+function copyWith(file: string, edit: (text: string) => string): string {
+  const dir = copyRoot();
   writeFileSync(join(dir, file), edit(readFileSync(join(dir, file), "utf8")));
   return dir;
 }
@@ -85,9 +91,9 @@ describe("checkPlaywrightVersions", () => {
   });
 
   it("fails when no workflow names a Playwright image", async () => {
-    const dir = copyWith(".github/workflows/quality-gates.yml", (text) => text);
-    for (const file of ["quality-gates", "update-screenshots", "visual-regression.tests"]) {
-      const path = join(dir, `.github/workflows/${file}.yml`);
+    const dir = copyRoot();
+    for (const file of readdirSync(join(dir, ".github/workflows"))) {
+      const path = join(dir, ".github/workflows", file);
       writeFileSync(
         path,
         readFileSync(path, "utf8").replaceAll("mcr.microsoft.com/playwright", "example.com/other"),
@@ -113,6 +119,31 @@ describe("checkPlaywrightVersions", () => {
     );
     expect(await checkPlaywrightVersions(dir)).toEqual([
       expect.stringMatching(/cites sha256:deadbeef/),
+    ]);
+  });
+
+  it("fails when the workflows pin a digest and the recipe cites none", async () => {
+    const dir = copyWith("TESTING_STRATEGY.md", (text) =>
+      text.replaceAll(/@sha256:[0-9a-f]{6,63}…/g, ""),
+    );
+    expect(await checkPlaywrightVersions(dir)).toEqual([
+      expect.stringMatching(/TESTING_STRATEGY\.md cites no digest/),
+    ]);
+  });
+
+  it("accepts a bare tag followed by a digest when the version matches", async () => {
+    const dir = copyWith("TESTING_STRATEGY.md", (text) =>
+      text.replace(/(docker run .*playwright:v[\d.]+)-noble@/, "$1@"),
+    );
+    expect(await checkPlaywrightVersions(dir)).toEqual([]);
+  });
+
+  it("names a bare tag whose version differs", async () => {
+    const dir = copyWith("TESTING_STRATEGY.md", (text) =>
+      text.replace(/(docker run .*playwright:)v[\d.]+-noble@/, "$1v0.0.1@"),
+    );
+    expect(await checkPlaywrightVersions(dir)).toEqual([
+      expect.stringMatching(/^TESTING_STRATEGY\.md:\d+ has 0\.0\.1, /),
     ]);
   });
 });
