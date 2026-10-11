@@ -2,6 +2,26 @@
 
 This directory contains utility scripts for the project.
 
+## check-playwright-version.ts
+
+Fails when the Playwright version differs between `@playwright/test` (packages/ui), `playwright` (apps/docs), the `mcr.microsoft.com/playwright` images in the workflows and the Docker recipe in `TESTING_STRATEGY.md`. Also fails on an image reference without a `v<version>` tag, on workflows that pin different digests, and when the recipe cites another digest than the workflows. It makes no network calls.
+
+```bash
+bun run check:playwright
+```
+
+Runs in the `lint` job of `quality-gates.yml`. Tests: `scripts/__specs__/check-playwright-version.spec.ts`.
+
+## check-tailwind-compat.ts
+
+Compiles `packages/ui/dist` with Tailwind 4.0.0 and with the installed version, and fails when 4.0.0 does not generate a class the installed version does. The installed version uses the Tailwind packages in `bun.lock`. 4.0.0 installs from the fixture in `tailwind-4.0/` with `bun install --frozen-lockfile` in a temporary directory. The fixture files are named `package.fixture.json` and `bun.fixture.lock` so that Renovate leaves them alone.
+
+```bash
+bun run check:tailwind   # builds chunks-ui first, needs the network
+```
+
+Runs in the `typecheck` job of `quality-gates.yml`. Tests: `scripts/__specs__/check-tailwind-compat.spec.ts`.
+
 ## calculate-next-version.ts
 
 Calculates the next semantic version based on changeset files. This script eliminates duplication in the GitHub Actions workflow by providing a single source of truth for version calculation logic.

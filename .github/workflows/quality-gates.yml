@@ -36,10 +36,6 @@ jobs:
       - name: Check the Playwright version matches everywhere
         run: bun run check:playwright
 
-      # Installs Tailwind 4.0 into a temporary directory; bun.lock stays as it is
-      - name: Check Tailwind 4.0 generates every class
-        run: bun run check:tailwind
-
   typecheck:
     timeout-minutes: 10
     runs-on: ubuntu-latest
@@ -60,6 +56,11 @@ jobs:
       # Includes the docs snippet type-check (apps/docs check:snippets)
       - name: Typecheck
         run: bun run check-types
+
+      # check-types builds chunks-ui, so the build here is a turbo cache hit. The Tailwind 4.0
+      # install is pinned by scripts/tailwind-4.0 (frozen lockfile); bun.lock stays as it is
+      - name: Check Tailwind 4.0 generates every class
+        run: bun run check:tailwind
 
   docs-build:
     timeout-minutes: 20
