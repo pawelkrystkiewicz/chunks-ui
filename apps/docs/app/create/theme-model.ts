@@ -406,6 +406,9 @@ export function shuffle(): Omit<Theme, "mode" | "fontSize"> {
 
 const STORE_KEY = "chunks-create-theme-v1";
 
+/** Blue before #214 deepened it. A theme stored with it loads with today's Blue, the default primary. */
+const OLD_BLUE: Oklch = { l: 0.6048, c: 0.2165, h: 257.21 };
+
 export const ENUMS = {
   mode: ["light", "dark"] as const,
   shadow: ["none", "subtle", "lifted"] as const,
@@ -432,7 +435,9 @@ export function loadTheme(): Theme | null {
     const out: Record<string, unknown> = { ...DEFAULT_THEME };
     const p = s.primary;
     if (p && ["l", "c", "h"].every((n) => Number.isFinite(p[n]))) {
-      out.primary = { l: p.l, c: p.c, h: p.h };
+      out.primary = samePrimary(p, OLD_BLUE)
+        ? { ...DEFAULT_THEME.primary }
+        : { l: p.l, c: p.c, h: p.h };
     }
     for (const [k, allowed] of Object.entries(ENUMS)) {
       if ((allowed as readonly string[]).includes(s[k])) out[k] = s[k];
