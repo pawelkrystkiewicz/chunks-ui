@@ -29,7 +29,7 @@ import { Popover } from "chunks-ui";
 
 ## With Arrow
 
-`Popover.Arrow` draws a small arrow on the popup edge that faces the trigger, filled with the popup's `--popover` background and edged with its `--border` colour. Place it inside `Popover.Content`. The popup moves out by the arrow's length, so `sideOffset` stays the gap between the trigger and the arrow's tip. In RTL, set `dir="rtl"` on `<html>` or `<body>`: the popup is portalled there, so a `dir` on a wrapper element doesn't reach the arrow.
+`Popover.Arrow` draws a small arrow on the popup edge that faces the trigger, filled with the popup's `--popover` background and edged with its `--border` colour. Place it inside `Popover.Content`. The popup moves out by the arrow's length, so `sideOffset` stays the gap between the trigger and the arrow's tip. The arrow stays at least `arrowPadding` (default `10`) pixels from the popup's ends, clear of the rounded corner; next to a smaller trigger, the popup shifts so the arrow still points at the trigger's centre. With a larger corner radius, raise `arrowPadding`. In RTL, set `dir="rtl"` on `<html>` or `<body>`: the popup is portalled there, so a `dir` on a wrapper element doesn't reach the arrow.
 
 ```tsx
 <Popover.Root>
@@ -81,7 +81,7 @@ The `Popover.Content` uses Base UI's built-in Floating UI integration. It has a 
 |---|---|
 | `Popover.Root` | State container. Manages open/close. |
 | `Popover.Trigger` | Element that toggles the popover. |
-| `Popover.Content` | Portal + positioner + popup panel. Default `sideOffset={8}`. Accepts `side`, `align`, `alignOffset` props. |
+| `Popover.Content` | Portal + positioner + popup panel. Default `sideOffset={8}`. Accepts `side`, `align`, `alignOffset`, `arrowPadding` props. |
 | `Popover.Arrow` | Arrow on the popup edge that faces the trigger, in the popup's `--popover` background and `--border` colour. Place it inside `Popover.Content`. |
 | `Popover.Title` | Popover heading. Semibold `text-sm`. |
 | `Popover.Description` | Supporting text. `text-muted-foreground`. |
@@ -97,7 +97,7 @@ All props are forwarded to the underlying Base UI [`Popover.Root`](https://base-
   definition={generateDefinition({
     code: `
 import type { PopoverContentProps } from 'chunks-ui'
-type Props = Pick<PopoverContentProps, 'sideOffset' | 'side' | 'align' | 'alignOffset'>
+type Props = Pick<PopoverContentProps, 'sideOffset' | 'side' | 'align' | 'alignOffset' | 'arrowPadding'>
 export default Props
 `
   })}

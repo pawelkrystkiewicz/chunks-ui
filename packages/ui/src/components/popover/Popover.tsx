@@ -5,7 +5,7 @@ import type { ComponentProps } from "react";
 import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
-import { arrowClasses, arrowPopupClasses } from "../../lib/popup-arrow";
+import { ARROW_PADDING_PX, arrowClasses, arrowPopupClasses } from "../../lib/popup-arrow";
 import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
 import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
 
@@ -37,6 +37,12 @@ export type PopoverContentProps = ComponentProps<typeof BasePopover.Popup> & {
    * @default 0
    */
   alignOffset?: ComponentProps<typeof BasePopover.Positioner>["alignOffset"];
+  /**
+   * How close the arrow may come to the popup's ends, in pixels. The default keeps the arrow's
+   * foot off the 8px rounded corner; raise it with a larger corner radius.
+   * @default 10
+   */
+  arrowPadding?: ComponentProps<typeof BasePopover.Positioner>["arrowPadding"];
 };
 
 function PopoverContent(props: PopoverContentProps) {
@@ -57,6 +63,7 @@ function PopoverContentPopup({
   side,
   align,
   alignOffset,
+  arrowPadding = ARROW_PADDING_PX,
   ...props
 }: PopoverContentProps) {
   const m = useLoadedMotion();
@@ -78,6 +85,7 @@ function PopoverContentPopup({
       side={side}
       align={align}
       alignOffset={alignOffset}
+      arrowPadding={arrowPadding}
     >
       <BasePopover.Popup
         render={render}

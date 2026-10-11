@@ -7,6 +7,7 @@ import { Button } from "../components/button";
 import { Menu } from "../components/menu";
 import { Popover } from "../components/popover";
 import { describeMotionPaths, eachPaintedFrame, waitForStable } from "../VisualTest.utils";
+import { ARROW_PADDING_PX } from "./popup-arrow";
 import { PortalContainerProvider } from "./portal-container";
 import { reloadMotion } from "./use-motion";
 
@@ -221,6 +222,86 @@ describe.each(KINDS)("%s.Arrow colours", (kind) => {
       { width: popup.borderTopWidth, color: popup.borderTopColor },
       { width: popup.borderTopWidth, color: popup.borderTopColor },
     ]);
+  });
+});
+
+type Align = "start" | "end";
+
+/**
+ * A popup of `kind` on `side` of a 20px trigger, aligned to its `align` edge. The trigger's centre
+ * is nearer that end of the popup than the arrow may come, so Base UI holds the arrow
+ * `arrowPadding` from the end. A fixed popup width, so no fraction of a pixel moves the arrow.
+ */
+function nearCorner(kind: Kind, side: PhysicalSide, align: Align, arrowPadding?: number) {
+  const trigger = { width: 20, height: 20, padding: 0 };
+  const content = { side, align, arrowPadding, "data-testid": "popup" };
+  const popup =
+    kind === "Popover" ? (
+      <Popover.Root defaultOpen>
+        <Popover.Trigger aria-label="Trigger" style={trigger} />
+        <Popover.Content {...content} className="w-40">
+          <Popover.Arrow data-testid="arrow" />
+          Popover
+        </Popover.Content>
+      </Popover.Root>
+    ) : (
+      <Menu.Root defaultOpen>
+        <Menu.Trigger aria-label="Trigger" style={trigger} />
+        <Menu.Content {...content}>
+          <Menu.Arrow data-testid="arrow" />
+          <Menu.Item>Item</Menu.Item>
+        </Menu.Content>
+      </Menu.Root>
+    );
+  return <div style={{ padding: 120, display: "flex", justifyContent: "center" }}>{popup}</div>;
+}
+
+/**
+ * Renders `nearCorner` and measures, along the edge the arrow stands on, the distance from the
+ * popup's `align` end to the nearer corner of the arrow's foot (its widest point, on the inner edge
+ * of the popup's border). Also returns the popup's corner radius.
+ */
+async function footNearCorner(kind: Kind, side: PhysicalSide, align: Align, arrowPadding?: number) {
+  const { unmount } = render(nearCorner(kind, side, align, arrowPadding));
+  const arrow = await screen.findByTestId("arrow");
+  const popup = screen.getByTestId("popup");
+  const foot = await waitForStable(() => {
+    const a = arrow.getBoundingClientRect();
+    const p = popup.getBoundingClientRect();
+    if (side === "top" || side === "bottom") {
+      return align === "start" ? a.left - p.left : p.right - a.right;
+    }
+    return align === "start" ? a.top - p.top : p.bottom - a.bottom;
+  });
+  const radius = Number.parseFloat(getComputedStyle(popup).borderTopLeftRadius);
+  unmount();
+  return { foot, radius };
+}
+
+const NEAR_CORNER = KINDS.flatMap((kind) =>
+  PHYSICAL_SIDES.flatMap((side) =>
+    (["start", "end"] as const).map((align) => ({ kind, side, align })),
+  ),
+);
+
+describe.each(NEAR_CORNER)(
+  "$kind arrow, side $side, align $align, small trigger",
+  ({ kind, side, align }) => {
+    it("keeps its foot off the popup's rounded corner", async () => {
+      const { foot, radius } = await footNearCorner(kind, side, align);
+      // The corner curves this far along the edge; past it, the edge is straight
+      expect(foot).toBeGreaterThanOrEqual(radius - POSITION_ROUNDING_PX);
+    });
+  },
+);
+
+describe.each(KINDS)("%s.Content arrowPadding", (kind) => {
+  it("moves an arrow held near the corner by the padding it is given", async () => {
+    const byDefault = await footNearCorner(kind, "bottom", "start");
+    const padded = await footNearCorner(kind, "bottom", "start", 16);
+    expect(Math.abs(padded.foot - byDefault.foot - (16 - ARROW_PADDING_PX))).toBeLessThanOrEqual(
+      POSITION_ROUNDING_PX,
+    );
   });
 });
 

@@ -4,6 +4,14 @@
  */
 
 /**
+ * The positioner's default `arrowPadding`: how close Base UI lets the arrow come to the popup's
+ * ends (by a small trigger, it shifts the popup instead). The arrow's foot, 2.5/√2 units either
+ * side of its centre, then starts 7.9px in, where the straight edge after the 8px `rounded-md`
+ * corner begins. At Base UI's 5 it stood out of the curve. A larger radius needs more padding.
+ */
+export const ARROW_PADDING_PX = 10;
+
+/**
  * For a popup that can hold an arrow. `relative` makes the popup the arrow's containing block at
  * all times, not only while a scale animation transforms it. With an arrow inside, the popup moves
  * away from the trigger by `--popup-arrow-reach`, the arrow's reach (2.5/√2 units, less the 1px
