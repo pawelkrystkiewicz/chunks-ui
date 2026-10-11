@@ -6,8 +6,8 @@ export default defineConfig({
     include: ["src/**/*.spec.{ts,tsx}"],
     exclude: ["src/**/*.visual.spec.tsx"],
     passWithNoTests: false,
-    // jsdom role queries over a calendar grid cost ~115ms each under coverage, and CI runs 10-20x
-    // slower than a laptop: DatePicker and Calendar tests reach 3-5s there, against the default 5s.
+    // jsdom role queries over a calendar grid cost ~115ms each under coverage on a laptop, and CI
+    // runs 10-20x slower: DatePicker and Calendar tests reach 3-5s there, against the default 5s.
     testTimeout: 15_000,
     setupFiles: ["./vitest.setup.ts"],
     // Vitest blanks CSS imports by default; cn.spec.ts reads the theme tokens as text

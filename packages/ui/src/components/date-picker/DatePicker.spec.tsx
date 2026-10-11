@@ -347,8 +347,8 @@ describe("DatePicker in a form", () => {
 });
 
 describe("DatePicker keyboard", () => {
-  // Checks the focused element instead of looking the day up by name: that role query computes
-  // jsdom styles for every day button, over half of each test's time, and timed out on CI.
+  // Checks the focused element instead of querying every button by role and name: that query
+  // computes jsdom styles for each day button, over half of each test's time, and timed out on CI.
   const expectFocused = (name: string) => {
     expect(document.activeElement).toHaveRole("button");
     expect(document.activeElement).toHaveAccessibleName(name);
