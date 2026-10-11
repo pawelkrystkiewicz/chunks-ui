@@ -70,7 +70,8 @@ const ALLOWED: Allowed[] = [
     why: "Nextra colours inline code in a link with its link colour on its code background, 4.45:1",
     themes: ["light"],
   },
-  // Pending maintainer decision: remove once the linked issue is decided
+  // Accepted by the maintainer: not to be fixed
+  // Accepted in #254, closed as not planned: 0.03 short of 4.5:1, left as is
   {
     rule: "color-contrast",
     selector: ".bg-success\\/10.text-success-text",
