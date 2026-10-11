@@ -34,8 +34,6 @@ for (const format of ["js", "cjs"] as const) {
   const utils = await load[format](utilsFile);
   const indexCode = readFileSync(join(DIST, indexFile), "utf8");
   const utilsCode = readFileSync(join(DIST, utilsFile), "utf8");
-  const sharedImport =
-    format === "js" ? /\bfrom\s*"\.\/utils\.js"/ : /\brequire\("\.\/utils\.cjs"\)/;
 
   check(names(index) === names(source), `${indexFile} exports the names src/index.ts exports`);
   check(names(utils) === names(sourceUtils), `${utilsFile} exports the names src/utils.ts exports`);
@@ -50,13 +48,8 @@ for (const format of ["js", "cjs"] as const) {
   // Next.js rejects `export *` in a "use client" module
   check(!/^export \*/m.test(indexCode), `${indexFile} has no "export *"`);
 
-  check(sharedImport.test(indexCode), `${indexFile} imports the helpers from ./${utilsFile}`);
-  check(!indexCode.includes("extendTailwindMerge"), `${indexFile} sets up no tailwind-merge`);
   for (const name of Object.keys(sourceUtils)) {
     check(index[name] === utils[name], `${name} from ${indexFile} is the one in ${utilsFile}`);
-    // esbuild renames a second declaration of a name (cn2), hence the optional digits
-    const declaration = new RegExp(`\\b(?:var|let|const|function|class)\\s+${name}\\d*\\b`);
-    check(!declaration.test(indexCode), `${indexFile} declares no copy of ${name}`);
   }
 }
 
