@@ -355,8 +355,19 @@ async function auditPopup(
   const id = await element.getAttribute("id");
   if (!id) throw new Error(`The open ${popup.popup} has no id to scope axe to`);
   const problems = await axe(page, popup.page, theme, matched, { selector: `[id="${id}"]`, label });
-  await page.keyboard.press("Escape");
-  await element.waitFor({ state: "hidden", timeout: POPUP_MS });
+  // The violations found above must survive a popup that won't close
+  try {
+    await page.keyboard.press("Escape");
+    await element.waitFor({ state: "hidden", timeout: POPUP_MS });
+  } catch (error) {
+    problems.push({
+      page: label,
+      theme,
+      rule: "popup",
+      help: "The popup could not be closed",
+      targets: [String(error)],
+    });
+  }
   return problems;
 }
 
