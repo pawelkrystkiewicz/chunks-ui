@@ -12,6 +12,7 @@ const shared: Options = {
 
 // The modules that src/utils.ts re-exports, as extensionless paths, each with the value names
 // utils.ts re-exports from it (or "*" for `export *`)
+// Read once at config load, so `tsup --watch` needs a restart after editing src/utils.ts
 const utilsSource = readFileSync("src/utils.ts", "utf8");
 const utilsModules = new Map<string, Set<string>>();
 for (const [, list, star, path] of utilsSource.matchAll(
@@ -27,20 +28,42 @@ for (const [, list, star, path] of utilsSource.matchAll(
   utilsModules.set(key, names);
 }
 
-// The value exports of a module: `export const|let|var|function|class|enum NAME` and
-// `export { a, b as c }` (type-only exports are erased, so they need no re-export)
-const valueExports = (source: string) => [
-  ...[...source.matchAll(/^export\s+(?:const|let|var|function\*?|class|enum)\s+(\w+)/gm)].map(
-    ([, name]) => name ?? "",
-  ),
-  ...[...source.matchAll(/^export\s+\{([^}]*)\}(?!\s*from)/gm)].flatMap(([, list]) =>
-    (list ?? "")
-      .split(",")
-      .map((item) => item.trim())
-      .filter((item) => item && !item.startsWith("type "))
-      .map((item) => item.split(/\s+as\s+/).pop() ?? item),
-  ),
-];
+// The value exports of a module: `export const|let|var|function|class|enum NAME` (also async,
+// abstract, const enum) and `export { a, b as c }`. Type-only exports are erased, so they need no
+// re-export. It throws on any other form it can't map to names, so the scan fails closed.
+const valueExports = (source: string, file: string) => {
+  const names: string[] = [];
+  for (const [line, keyword = "", rest = ""] of source.matchAll(/^export\s+(\w+|[{*])(.*)$/gm)) {
+    const unsupported = (why: string) => {
+      throw new Error(
+        `tsup.config.ts can't list the exports of ${file}: ${why} (\`${line.trim()}\`). ` +
+          "Write the exports as named declarations or a local `export { … }`, or keep this module out of src/utils.ts.",
+      );
+    };
+    if (keyword === "type" || keyword === "interface" || keyword === "declare") continue;
+    if (keyword === "default") unsupported("`export default` is not a named export");
+    if (keyword === "*") unsupported("`export * from` hides the names");
+    if (keyword === "{") {
+      if (/\}\s*from\b/.test(line)) unsupported("`export { … } from` is a re-export");
+      const list = /^export\s+\{([^}]*)\}/.exec(line)?.[1];
+      if (list === undefined) unsupported("a multi-line `export {` is not supported");
+      for (const item of (list ?? "").split(",")) {
+        const name = item.trim();
+        if (name && !name.startsWith("type ")) names.push(name.split(/\s+as\s+/).pop() ?? name);
+      }
+      continue;
+    }
+    const declaration = `${keyword} ${rest}`;
+    if (/^(?:const|let|var)\s*[{[]/.test(declaration)) unsupported("a destructured export");
+    const name =
+      /^(?:(?:async|abstract|const)\s+)*(?:const|let|var|function\*?|class|enum)\s*\*?\s*(\w+)/.exec(
+        declaration,
+      )?.[1];
+    if (!name) unsupported("this export form is not supported");
+    names.push(name ?? "");
+  }
+  return names;
+};
 
 // Build-time check of the rule the plugin relies on: utils.ts re-exports every value export of
 // each module it imports. A missing one fails to link in ESM and is undefined in CJS.
@@ -48,7 +71,7 @@ for (const [module, reexported] of utilsModules) {
   if (reexported.has("*")) continue;
   const file = [".ts", ".tsx"].map((ext) => module + ext).find((f) => existsSync(f));
   if (!file) throw new Error(`utils.ts re-exports ${module}, but no .ts or .tsx file is there`);
-  for (const name of valueExports(readFileSync(file, "utf8"))) {
+  for (const name of valueExports(readFileSync(file, "utf8"), relative(".", file))) {
     if (!reexported.has(name)) {
       throw new Error(
         `src/utils.ts must re-export every value export of ${relative(".", file)}, but "${name}" is missing. ` +
@@ -60,7 +83,7 @@ for (const [module, reexported] of utilsModules) {
 
 // In the main entry, an import of one of those modules becomes an import of the built utils file,
 // so an app that uses both entries loads cn, cnState and the variants once.
-// Rule: utils.ts must re-export every value export of those modules (checked above).
+// The rule for utils.ts exports is in the header of src/utils.ts.
 const importFromUtils: EsbuildPlugin = {
   name: "import-from-utils",
   setup(build) {

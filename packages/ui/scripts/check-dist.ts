@@ -40,6 +40,11 @@ for (const format of ["js", "cjs"] as const) {
   check(names(index) === names(source), `${indexFile} exports the names src/index.ts exports`);
   check(names(utils) === names(sourceUtils), `${utilsFile} exports the names src/utils.ts exports`);
 
+  // In CJS a missed re-export is `undefined`, but the key still exists
+  for (const [name, value] of Object.entries(index)) {
+    check(value !== undefined, `${name} from ${indexFile} is not undefined`);
+  }
+
   check(indexCode.startsWith('"use client";'), `${indexFile} starts with "use client"`);
   check(!utilsCode.includes("use client"), `${utilsFile} has no "use client"`);
   // Next.js rejects `export *` in a "use client" module
