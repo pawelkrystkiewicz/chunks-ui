@@ -1,7 +1,8 @@
 // Server component: interactive parts live in ./LandingClient.
-// chunks-ui is a client bundle, so only its components render here; `cn` and `springs` can't run here.
+// chunks-ui is a client bundle, so only its components render here; its helpers come from chunks-ui/utils.
 
 import { CopyButton } from "chunks-ui";
+import { buttonVariants, cn } from "chunks-ui/utils";
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -143,18 +144,21 @@ function Logo() {
   );
 }
 
-function SplitCta({ href, children }: { href: string; children: ReactNode }) {
+// A contained primary Button's classes on a link: Base UI's Button is for actions, not navigation.
+// Height and radius match HeroCopy, the CTA's neighbour in the hero.
+function Cta({
+  href,
+  className,
+  children,
+}: {
+  href: string;
+  className?: string;
+  children: ReactNode;
+}) {
   return (
-    <Link
-      href={href}
-      className="group/cta inline-flex overflow-hidden rounded-lg font-semibold text-[14px] text-white transition-transform duration-200 active:scale-[.97]"
-    >
-      <span className="bg-(--l-brand-soft) px-[18px] py-3 transition-colors duration-250 group-hover/cta:bg-[oklch(74%_.14_257)]">
-        {children}
-      </span>
-      <span className="flex items-center bg-(--l-brand) px-4 py-3">
-        <ArrowRight className="size-4" />
-      </span>
+    <Link href={href} className={cn(buttonVariants(), "h-11 rounded-lg", className)}>
+      {children}
+      <ArrowRight className="size-4" />
     </Link>
   );
 }
@@ -301,8 +305,9 @@ const BUILT_ON = [
 ];
 
 // The hero, the get-started band and the footer are dark in both modes. The `dark` class scopes the
-// theme to them, so any chunks-ui token inside resolves to its dark value. Today that is only
-// ThemeToggle's focus ring; the scope stays so a future `text-*-text` here keeps 4.5:1.
+// theme to them, so any chunks-ui token inside resolves to its dark value. Today that is the focus
+// ring of ThemeToggle and of the CTA (which overrides it in the hero, see below); the scope stays
+// so a future `text-*-text` here keeps 4.5:1.
 function Hero() {
   return (
     <section className="dark relative overflow-hidden bg-(image:--l-hero-bg) text-white">
@@ -328,7 +333,10 @@ function Hero() {
             Motion. One npm package, not a copy-paste registry.
           </p>
           <div className="flex flex-wrap items-center gap-3">
-            <SplitCta href={DOCS}>Read the docs</SplitCta>
+            {/* The dark scope's --ring is 2.8:1 on the hero gradient; white clears 3:1 (WCAG 1.4.11) */}
+            <Cta href={DOCS} className="focus-visible:outline-white">
+              Read the docs
+            </Cta>
             <HeroCopy text={INSTALL} />
           </div>
         </div>
@@ -597,7 +605,7 @@ function CreateSection() {
               across real screens. Copy one CSS block when it looks right.
             </p>
             <div className="mt-auto pt-2">
-              <SplitCta href="/create">Open Create</SplitCta>
+              <Cta href="/create">Open Create</Cta>
             </div>
           </div>
           <div className="min-w-0 overflow-hidden border-(--l-line) border-r border-b">
@@ -609,8 +617,8 @@ function CreateSection() {
   );
 }
 
-// Hover text is --l-brand-pale, not --l-brand-soft: over the brightest part of the gradient,
-// --l-brand-soft drops to 3.6:1 (390px wide) and 4.2:1 (1920px); --l-brand-pale keeps 5:1.
+// Hover text is --l-brand-pale: over the brightest part of the gradient, a mid blue such as
+// oklch(70% .15 257) drops to 3.6:1 (390px wide) and 4.2:1 (1920px); --l-brand-pale keeps 5:1.
 const ROW =
   "flex flex-col gap-1 border-white/15 border-b py-[18px] text-left text-white transition-colors duration-300 hover:text-(--l-brand-pale)";
 const ROW_LABEL = "font-mono text-[11px] text-white/55 tracking-[.06em]";
