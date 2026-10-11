@@ -180,6 +180,8 @@ describe("Tabs.Contents with Motion, under StrictMode", () => {
     };
     const frames = await eachPaintedFrame(place, 20);
     // Panel C where the container is, and the 40px of its h-10, from the first frame
+    // Motion owns the height inline; the CSS fallback would pass the checks above too
+    expect(contents.style.height).not.toBe("");
     expect(frames).toEqual(frames.map(() => ({ offset: 0, height: 40 })));
   });
 });
