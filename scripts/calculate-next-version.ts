@@ -187,11 +187,11 @@ if (import.meta.main) {
 }
 
 export {
-  calculateVersionInfo,
   calculateNextVersion,
+  calculateVersionInfo,
   determineBumpType,
-  hasChangesets,
-  parseVersion,
-  parseChangesetFrontMatter,
   getCurrentVersion,
+  hasChangesets,
+  parseChangesetFrontMatter,
+  parseVersion,
 };

@@ -33,6 +33,9 @@ jobs:
       - name: Lint
         run: bun run lint
 
+      - name: Check the Playwright version matches everywhere
+        run: bun run check:playwright
+
   typecheck:
     timeout-minutes: 10
     runs-on: ubuntu-latest
@@ -54,11 +57,16 @@ jobs:
       - name: Typecheck
         run: bun run check-types
 
+      # check-types builds chunks-ui, so the build here is a turbo cache hit. The Tailwind 4.0
+      # install is pinned by scripts/tailwind-4.0 (frozen lockfile); bun.lock stays as it is
+      - name: Check Tailwind 4.0 generates every class
+        run: bun run check:tailwind
+
   docs-build:
     timeout-minutes: 20
     runs-on: ubuntu-24.04
     # The axe check drives Chromium; this image has the browser for the pinned playwright.
-    # Same image as the visual tests; keep the tag equal to apps/docs' playwright version.
+    # Same image as the visual tests; check:playwright keeps the tag equal to apps/docs' playwright.
     container:
       image: mcr.microsoft.com/playwright:v1.64.0-noble@sha256:06a9939e57531807f8d5fd76ce44b53165ffb7d7501d87ab10e285c20b1e971f
     steps:
