@@ -145,13 +145,8 @@ function Logo() {
 }
 
 // A contained primary Button's classes on a link: Base UI's Button is for actions, not navigation.
-// Height and radius match HeroCopy, the CTA's neighbour in the hero. The Button's hover,
-// bg-primary/90, lets --l-bg through and drops the label to 3.97:1 in light mode; mixing the same
-// 10% of black keeps it above the 4.58:1 at rest on any backdrop.
-const CTA = cn(
-  buttonVariants(),
-  "h-11 rounded-lg hover:bg-[color-mix(in_oklab,var(--primary)_90%,black)]",
-);
+// Height and radius match HeroCopy, the CTA's neighbour in the hero.
+const CTA = cn(buttonVariants(), "h-11 rounded-lg");
 
 function Cta({ href, children }: { href: string; children: ReactNode }) {
   return (
@@ -612,8 +607,8 @@ function CreateSection() {
   );
 }
 
-// Hover text is --l-brand-pale, not --l-brand-soft: over the brightest part of the gradient,
-// --l-brand-soft drops to 3.6:1 (390px wide) and 4.2:1 (1920px); --l-brand-pale keeps 5:1.
+// Hover text is --l-brand-pale: over the brightest part of the gradient, a mid blue such as
+// oklch(70% .15 257) drops to 3.6:1 (390px wide) and 4.2:1 (1920px); --l-brand-pale keeps 5:1.
 const ROW =
   "flex flex-col gap-1 border-white/15 border-b py-[18px] text-left text-white transition-colors duration-300 hover:text-(--l-brand-pale)";
 const ROW_LABEL = "font-mono text-[11px] text-white/55 tracking-[.06em]";
