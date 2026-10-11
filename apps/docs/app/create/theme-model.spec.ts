@@ -26,6 +26,19 @@ function parseOklch(value: string): Oklch {
   return { l: Number(l) / (percent ? 100 : 1), c: Number(c), h: Number(h) };
 }
 
+const themeCss = readFileSync(
+  new URL("../../../../packages/ui/src/theme.css", import.meta.url),
+  "utf8",
+).replace(/\/\*[\s\S]*?\*\//g, "");
+
+/** The `--name: value` declarations of one top-level block of theme.css, without the `--`. */
+function themeTokens(selector: ":root" | ".dark"): Record<string, string> {
+  const escaped = selector.replace(".", "\\.");
+  const body = new RegExp(`^${escaped} \\{([^}]*)\\}`, "m").exec(themeCss)?.[1];
+  if (!body) throw new Error(`No ${selector} block in theme.css`);
+  return Object.fromEntries([...body.matchAll(/--([\w-]+): ([^;]+);/g)].map(([, k, v]) => [k, v]));
+}
+
 const ink: Theme = { ...DEFAULT_THEME, primary: { l: 0.205, c: 0, h: 0 } };
 const amber: Theme = { ...DEFAULT_THEME, primary: { l: 0.77, c: 0.165, h: 72 } };
 
@@ -41,6 +54,25 @@ describe("palette", () => {
     expect(light.background).toBe("oklch(1 0 0)");
     expect(light["chart-1"]).toBe("oklch(0.646 0.222 41.116)");
     expect(palette(DEFAULT_THEME, "dark").background).toBe("oklch(0.145 0 0)");
+  });
+
+  it.each([
+    ["light", ":root"],
+    ["dark", ".dark"],
+  ] as const)("emits theme.css's %s colour tokens for the default theme", (mode, selector) => {
+    // theme.css is the source of truth. It writes some lightness as a percentage
+    // (`75.14%`) and palette() as a number (`0.7514`), so the numbers are compared.
+    const css = Object.fromEntries(
+      Object.entries(themeTokens(selector)).filter(([, v]) => v.startsWith("oklch(")),
+    );
+    const pal = palette(DEFAULT_THEME, mode);
+    expect(Object.keys(pal).sort()).toEqual(Object.keys(css).sort());
+    const close = (a: Oklch, b: Oklch) =>
+      Math.abs(a.l - b.l) < 1e-4 && Math.abs(a.c - b.c) < 1e-4 && Math.abs(a.h - b.h) < 1e-2;
+    const drift = Object.entries(pal)
+      .filter(([k, v]) => !close(parseOklch(v), parseOklch(css[k] ?? "")))
+      .map(([k, v]) => `--${k}: ${v} in /create, ${css[k]} in theme.css`);
+    expect(drift).toEqual([]);
   });
 
   it("turns the Ink primary into the base neutral per mode", () => {
@@ -129,18 +161,13 @@ describe("toScopeStyle", () => {
       // theme.css clamps the lightness of text-primary-text and co., and of the outlined success
       // and warning borders, on :root (light) and .dark. The scope must set its own, or a light
       // preview on a dark page gets the dark-mode shades.
-      const themeCss = readFileSync(
-        new URL("../../../../packages/ui/src/theme.css", import.meta.url),
-        "utf8",
-      );
-      const inTheme = (selector: string) =>
-        new RegExp(`^${selector} \\{[^}]*?${name}: ([^;]+);`, "m").exec(themeCss)?.[1];
+      const token = name.slice(2);
       const scoped = (mode: Mode) =>
         (toScopeStyle({ ...DEFAULT_THEME, mode }) as Record<string, string>)[name];
-      expect(inTheme(":root")).toBeDefined();
-      expect(inTheme("\\.dark")).toBeDefined();
-      expect(scoped("light")).toBe(inTheme(":root"));
-      expect(scoped("dark")).toBe(inTheme("\\.dark"));
+      expect(themeTokens(":root")[token]).toBeDefined();
+      expect(themeTokens(".dark")[token]).toBeDefined();
+      expect(scoped("light")).toBe(themeTokens(":root")[token]);
+      expect(scoped("dark")).toBe(themeTokens(".dark")[token]);
     },
   );
 

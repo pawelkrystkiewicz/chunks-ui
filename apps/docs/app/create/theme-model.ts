@@ -239,6 +239,7 @@ const FILLS = {
   destructive: { l: 0.582, c: 0.2249, h: 25.88 },
 } satisfies Record<string, Oklch>;
 
+/** For the default theme, matches every colour token in `chunks-ui/theme.css` (the spec checks it). */
 export function palette(t: Theme, mode: Mode): Record<string, string> {
   const b = baseOf(t.base);
   const n = (l: number, k = 1) => ok(l, b.c * k, b.h);
@@ -273,7 +274,7 @@ export function palette(t: Theme, mode: Mode): Record<string, string> {
     accent: d ? n(0.269) : n(0.97),
     "accent-foreground": d ? n(0.985) : n(0.205),
     border: d ? n(0.269) : n(0.922),
-    input: d ? n(0.3) : n(0.922),
+    input: d ? n(0.269) : n(0.922),
     ring: d ? n(0.556) : n(0.62),
   };
   chartList(t, mode).forEach((v, i) => {
