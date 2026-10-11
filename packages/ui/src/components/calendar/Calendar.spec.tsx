@@ -140,6 +140,7 @@ describe("Calendar", () => {
   });
 
   it("navigates across year boundary (December -> January) under StrictMode", async () => {
+    // StrictMode comes from the global render config in vitest.setup.ts
     const user = userEvent.setup();
     render(<Calendar value={new Date(2026, 11, 1)} />);
 
@@ -151,6 +152,7 @@ describe("Calendar", () => {
   });
 
   it("navigates across year boundary (January -> December) under StrictMode", async () => {
+    // StrictMode comes from the global render config in vitest.setup.ts
     const user = userEvent.setup();
     render(<Calendar value={new Date(2026, 0, 1)} />);
 
