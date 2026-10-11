@@ -1,12 +1,17 @@
 /// <reference types="@types/bun" />
 /**
  * Runs axe (WCAG 2.2 A and AA rules) over every docs page of the production build, in light and
- * dark mode. Fails on any violation that ALLOWED does not list, and on any ALLOWED entry that
- * never matched on one of its pages or in one of its themes.
+ * dark mode. Fails on any violation that ALLOWED does not list, on any ALLOWED entry that never
+ * matched on one of its pages or in one of its themes, and on any ALLOWED entry whose linked issue
+ * (`#NNN` in its `why`) was closed as completed. An issue closed as not planned keeps its entry.
  *
  * Covers the pages built from content/**\/*.mdx only: no other app routes, no 404 page. axe's
  * `incomplete` results (checks it could not decide, often contrast over images or gradients) are
  * not failed.
+ *
+ * Reads the issue states from the GitHub API with GITHUB_TOKEN (CI passes it; locally run
+ * `GITHUB_TOKEN=$(gh auth token) bun run check:a11y`). Without a token, or when the API can't be
+ * reached, it prints a notice and skips the issue check instead of failing.
  *
  * Build first (`bun run build --filter=@chunks-ui/docs`); the script starts `next start` itself.
  * Needs Playwright's Chromium (`bunx playwright install chromium`, or the Playwright image in CI).
@@ -23,6 +28,8 @@ const BASE_URL = `http://localhost:${PORT}`;
 const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22a", "wcag22aa"];
 const THEMES = ["light", "dark"] as const;
 const PARALLEL = 4;
+// The repository the ALLOWED issue links point into, also when CI runs on a fork
+const REPO = "pawelkrystkiewicz/chunks-ui";
 
 export type Theme = (typeof THEMES)[number];
 
@@ -91,6 +98,31 @@ export function allowedFor(entries: Allowed[], rule: string, page: string, theme
   );
 }
 
+/** GitHub's state of an issue; `state_reason` says why a closed issue was closed */
+export type IssueState = { state: "open" | "closed"; state_reason: string | null };
+
+/** The issue an entry links in its `why` (`"#254: …"`), if it links one */
+export function linkedIssue(entry: Allowed) {
+  const match = /#(\d+)\b/.exec(entry.why);
+  return match ? Number(match[1]) : undefined;
+}
+
+/**
+ * Entries whose linked issue was closed as completed: the fix landed, so the entry should be
+ * gone. An entry stays when its issue is open, was closed as not planned (an accepted exception),
+ * or its state wasn't read (`states` has no entry for it).
+ */
+export function fixedEntries(entries: Allowed[], states: Map<number, IssueState>) {
+  return entries.flatMap((entry) => {
+    const issue = linkedIssue(entry);
+    const state = issue === undefined ? undefined : states.get(issue);
+    if (state?.state !== "closed" || state.state_reason !== "completed") return [];
+    return [
+      `ALLOWED entry's issue #${issue} was closed as completed: remove the entry, or reopen the issue if the violation is still there: ${entry.why}`,
+    ];
+  });
+}
+
 /**
  * Entries that matched nothing in the run, or never matched on a page or in a theme they declare.
  * `matched` holds the `${page}|${theme}` pairs where each entry excused a violation.
@@ -138,6 +170,45 @@ async function answers() {
   } catch {
     return false;
   }
+}
+
+/**
+ * The state of each issue, read from the GitHub API with GITHUB_TOKEN. An issue whose state
+ * can't be read (no token, offline, an API error) is left out, with a notice that says why.
+ */
+async function readIssueStates(issues: number[]) {
+  const states = new Map<number, IssueState>();
+  const notices: string[] = [];
+  const token = process.env.GITHUB_TOKEN;
+  if (issues.length === 0) return { states, notices };
+  if (!token) {
+    notices.push(
+      `GITHUB_TOKEN is not set, so the state of ${issues.map((issue) => `#${issue}`).join(", ")} was not read: ALLOWED entries were not checked for fixed issues`,
+    );
+    return { states, notices };
+  }
+  await Promise.all(
+    issues.map(async (issue) => {
+      try {
+        const response = await fetch(`https://api.github.com/repos/${REPO}/issues/${issue}`, {
+          headers: {
+            Accept: "application/vnd.github+json",
+            Authorization: `Bearer ${token}`,
+            "X-GitHub-Api-Version": "2022-11-28",
+          },
+          signal: AbortSignal.timeout(10_000),
+        });
+        if (!response.ok) throw new Error(`GitHub answered ${response.status}`);
+        const { state, state_reason } = (await response.json()) as IssueState;
+        states.set(issue, { state, state_reason });
+      } catch (error) {
+        notices.push(
+          `Could not read the state of #${issue} (${error}): its ALLOWED entries were not checked`,
+        );
+      }
+    }),
+  );
+  return { states, notices };
 }
 
 const STARTUP_MS = 60_000;
@@ -222,9 +293,13 @@ async function audit(
   }
 }
 
-// Not on import, so the spec can test allowedFor and staleEntries
+// Not on import, so the spec can test the pure functions above
 if (import.meta.main) {
   const routes = pages();
+  const issues = [...new Set(ALLOWED.flatMap((entry) => linkedIssue(entry) ?? []))].sort(
+    (a, b) => a - b,
+  );
+  const issueStates = readIssueStates(issues);
   const server = await startServer();
   const problems: Problem[] = [];
   const matched = new Map<Allowed, Set<string>>();
@@ -259,7 +334,19 @@ if (import.meta.main) {
     console.error(`${page} (${theme}) ${rule}: ${help}`);
     for (const target of targets) console.error(`    ${target}`);
   }
-  const stale = staleEntries(ALLOWED, matched);
+  const { states, notices } = await issueStates;
+  // An annotation on the GitHub Actions run, so a check that was skipped there gets seen
+  for (const notice of notices)
+    console.log(`${process.env.GITHUB_ACTIONS ? "::notice::" : "Notice: "}${notice}`);
+  if (states.size > 0) {
+    const read = [...states]
+      .sort(([a], [b]) => a - b)
+      .map(([issue, { state, state_reason }]) =>
+        state_reason ? `#${issue} ${state} as ${state_reason}` : `#${issue} ${state}`,
+      );
+    console.log(`Issues linked from ALLOWED: ${read.join(", ")}.`);
+  }
+  const stale = [...staleEntries(ALLOWED, matched), ...fixedEntries(ALLOWED, states)];
   for (const message of stale) console.error(message);
   console.log(
     `axe checked ${routes.length} pages in ${THEMES.length} themes: ${problems.length} problems, ${stale.length} stale ALLOWED entries.`,

@@ -1,6 +1,14 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
-import { type Allowed, allowedFor, firstMatch, staleEntries } from "./check-a11y";
+import {
+  type Allowed,
+  allowedFor,
+  firstMatch,
+  fixedEntries,
+  type IssueState,
+  linkedIssue,
+  staleEntries,
+} from "./check-a11y";
 
 const everywhere: Allowed = { rule: "link-name", selector: "a", why: "everywhere" };
 const onChip: Allowed = {
@@ -46,6 +54,50 @@ describe("staleEntries", () => {
       expect.stringContaining("/kitchen-sink"),
       expect.stringContaining("dark"),
     ]);
+  });
+});
+
+describe("linkedIssue", () => {
+  it("reads the issue number from the entry's why", () => {
+    expect(linkedIssue({ ...everywhere, why: "#254: success-text on a tint, 4.47:1" })).toBe(254);
+  });
+
+  it("is undefined when the why links no issue", () => {
+    expect(linkedIssue(everywhere)).toBeUndefined();
+  });
+
+  it("does not read a hex colour as an issue", () => {
+    expect(
+      linkedIssue({ ...everywhere, why: "comments #6A737D on black, 4.36:1" }),
+    ).toBeUndefined();
+  });
+});
+
+describe("fixedEntries", () => {
+  const entry = (issue: number): Allowed => ({ ...everywhere, why: `#${issue}: a violation` });
+  const states = new Map<number, IssueState>([
+    [1, { state: "closed", state_reason: "completed" }],
+    [2, { state: "closed", state_reason: "not_planned" }],
+    [3, { state: "open", state_reason: null }],
+    [4, { state: "open", state_reason: "reopened" }],
+  ]);
+
+  it("reports an entry whose issue was closed as completed", () => {
+    expect(fixedEntries([entry(1)], states)).toEqual([
+      expect.stringContaining("#1 was closed as completed"),
+    ]);
+  });
+
+  it("keeps an entry whose issue was closed as not planned", () => {
+    expect(fixedEntries([entry(2)], states)).toEqual([]);
+  });
+
+  it("keeps an entry whose issue is open", () => {
+    expect(fixedEntries([entry(3), entry(4)], states)).toEqual([]);
+  });
+
+  it("keeps an entry whose issue state was not read, or that links no issue", () => {
+    expect(fixedEntries([entry(5), everywhere], states)).toEqual([]);
   });
 });
 

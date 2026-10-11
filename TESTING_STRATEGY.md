@@ -197,3 +197,5 @@ When axe flags something you can't fix in the docs, open an issue for the fix, t
 ```
 
 Scope the entry to the pages and themes where the violation occurs. The run fails when an entry matches nothing, so remove the entry in the change that fixes its cause.
+
+The run also fails when the issue an entry links (the first `#NNN` in `why`) is closed as completed: the fix landed, so the entry must go, or the issue must be reopened if the violation is still there. An issue closed as not planned is an accepted exception, and its entry stays. The script reads the issue states from the GitHub API with `GITHUB_TOKEN`; CI passes the job's token (`issues: read`). Locally, run `GITHUB_TOKEN=$(gh auth token) bun run check:a11y`. Without a token, or when the API can't be reached, the run prints a notice and does not check the issue states.
