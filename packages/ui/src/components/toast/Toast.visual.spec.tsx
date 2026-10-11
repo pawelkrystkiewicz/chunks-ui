@@ -1,3 +1,4 @@
+import { Toast as BaseToast } from "@base-ui/react/toast";
 import { render, screen } from "@testing-library/react";
 import { type ComponentPropsWithoutRef, useEffect, useRef } from "react";
 import { afterAll, beforeAll, describe, expect, it, onTestFinished } from "vitest";
@@ -84,6 +85,41 @@ describe.each(["ltr", "rtl"] as const)("Toast action in %s", (dir) => {
     expect(box.width).toBeCloseTo(fitted, 0);
     if (dir === "ltr") expect(box.left).toBeCloseTo(area.left, 0);
     else expect(box.right).toBeCloseTo(area.right, 0);
+  });
+});
+
+function RootList() {
+  return (
+    <>
+      {Toast.useToast().toasts.map((toast) => (
+        <Toast.Root key={toast.id} toast={toast}>
+          <Toast.Description>{toast.description}</Toast.Description>
+          <Toast.Action>Undo</Toast.Action>
+        </Toast.Root>
+      ))}
+    </>
+  );
+}
+
+describe("Toast.Action placed directly in Toast.Root", () => {
+  it("stays vertically centred next to multi-line text", async () => {
+    render(
+      <Toast.Provider>
+        <AddToast
+          title="Saved"
+          description="A long description that wraps onto several lines so the row is clearly taller than the button."
+        />
+        <BaseToast.Viewport className="fixed top-4 left-4 w-[240px]">
+          <RootList />
+        </BaseToast.Viewport>
+      </Toast.Provider>,
+    );
+    const action = await screen.findByRole("button", { name: "Undo" });
+    const root = action.closest(".Toast") as HTMLElement;
+    const box = action.getBoundingClientRect();
+    const area = root.getBoundingClientRect();
+    // The action's `mt-1` shifts its box 2px below the exact centre
+    expect(Math.abs(box.top + box.height / 2 - (area.top + area.height / 2))).toBeLessThan(4);
   });
 });
 
