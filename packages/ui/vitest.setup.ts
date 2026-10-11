@@ -6,7 +6,8 @@ import { expect } from "vitest";
 expect.extend(toHaveNoViolations);
 
 // Consumers develop under StrictMode (Next.js turns it on), which double-renders and re-runs
-// effects. Every render and renderHook runs under it, so missing cleanup fails here first.
+// effects. Every RTL render and renderHook runs under it, so missing cleanup fails here first.
+// Specs that call hydrateRoot directly bypass it and wrap in StrictMode themselves.
 configure({ reactStrictMode: true });
 
 // jsdom does not implement window.matchMedia — provide a minimal stub. Motion below 12.20.4
