@@ -4,8 +4,8 @@ import { describe, expect, it } from "vitest";
 import {
   eachPaintedFrame,
   enterMotionPath,
-  insetsWithin,
   MOTION_PATHS,
+  offBy,
   waitForStable,
 } from "../../VisualTest.utils";
 import { Tabs } from "./index";
@@ -50,10 +50,6 @@ type Box = ReturnType<typeof boxOf>;
 
 const near = (a: Box, b: Box) =>
   (["left", "top", "width", "height"] as const).every((edge) => Math.abs(a[edge] - b[edge]) <= 1);
-
-/** The largest distance between an edge of the indicator and the same edge of the tab */
-const offBy = (tab: Element, indicator: Element) =>
-  Math.max(...Object.values(insetsWithin(tab, indicator)).map(Math.abs));
 
 async function renderTabs(withMotion: boolean, layout?: Layout) {
   await enterMotionPath(withMotion);
