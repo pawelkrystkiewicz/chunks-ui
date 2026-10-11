@@ -47,9 +47,11 @@ export const FONTS_HREF = `https://fonts.googleapis.com/css2?${FONTS.filter(
   .map((f) => `family=${f.name.replaceAll(" ", "+")}:wght@400;500;600;700`)
   .join("&")}&display=swap`;
 
+const BLUE: Oklch = { l: 0.56, c: 0.2165, h: 257.21 };
+
 /** Each one keeps 4.5:1 with its `primary-foreground`. Red sits at 0.605 so dark text reaches it. */
 export const PRIMARIES: (Oklch & { name: string })[] = [
-  { name: "Blue", l: 0.56, c: 0.2165, h: 257.21 },
+  { name: "Blue", ...BLUE },
   { name: "Violet", l: 0.58, c: 0.22, h: 293 },
   { name: "Pink", l: 0.63, c: 0.22, h: 354 },
   { name: "Red", l: 0.605, c: 0.22, h: 25 },
@@ -73,7 +75,7 @@ const baseOf = (id: BaseId) =>
   BASES.find((b) => b.id === id) ?? (BASES[0] as (typeof BASES)[number]);
 
 export const DEFAULT_THEME: Theme = {
-  primary: { l: 0.56, c: 0.2165, h: 257.21 },
+  primary: { ...BLUE },
   base: "neutral",
   mode: "light",
   fontHeading: "Outfit",
@@ -406,7 +408,10 @@ export function shuffle(): Omit<Theme, "mode" | "fontSize"> {
 
 const STORE_KEY = "chunks-create-theme-v1";
 
-/** Blue before #214 deepened it. A theme stored with it loads with today's Blue, the default primary. */
+/**
+ * Blue before #214 deepened it. A theme stored with exactly it loads with today's Blue.
+ * Matched exactly: the hue slider still builds `l: 0.6048` with integer hues, which must stay.
+ */
 const OLD_BLUE: Oklch = { l: 0.6048, c: 0.2165, h: 257.21 };
 
 export const ENUMS = {
@@ -435,9 +440,10 @@ export function loadTheme(): Theme | null {
     const out: Record<string, unknown> = { ...DEFAULT_THEME };
     const p = s.primary;
     if (p && ["l", "c", "h"].every((n) => Number.isFinite(p[n]))) {
-      out.primary = samePrimary(p, OLD_BLUE)
-        ? { ...DEFAULT_THEME.primary }
-        : { l: p.l, c: p.c, h: p.h };
+      out.primary =
+        p.l === OLD_BLUE.l && p.c === OLD_BLUE.c && p.h === OLD_BLUE.h
+          ? { ...BLUE }
+          : { l: p.l, c: p.c, h: p.h };
     }
     for (const [k, allowed] of Object.entries(ENUMS)) {
       if ((allowed as readonly string[]).includes(s[k])) out[k] = s[k];

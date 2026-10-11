@@ -18,7 +18,7 @@ import {
   toScopeStyle,
 } from "./theme-model";
 
-/** Reads an `oklch(l c h)` string as written by `palette()`. */
+/** Reads an `oklch(l c h)` string as written by `palette()` or theme.css, whose lightness may be a percentage. */
 function parseOklch(value: string): Oklch {
   const parts = /^oklch\(([\d.]+)(%?) ([\d.]+) ([\d.]+)\)$/.exec(value);
   if (!parts) throw new Error(`Not an oklch() colour: ${value}`);
@@ -34,8 +34,13 @@ const themeCss = readFileSync(
 /** The `--name: value` declarations of one top-level block of theme.css, without the `--`. */
 function themeTokens(selector: ":root" | ".dark"): Record<string, string> {
   const escaped = selector.replace(".", "\\.");
-  const body = new RegExp(`^${escaped} \\{([^}]*)\\}`, "m").exec(themeCss)?.[1];
-  if (!body) throw new Error(`No ${selector} block in theme.css`);
+  const blocks = [...themeCss.matchAll(new RegExp(`^${escaped} \\{([^}]*)\\}`, "gm"))];
+  if (blocks.length !== 1) {
+    throw new Error(
+      `Expected one top-level ${selector} block in theme.css, found ${blocks.length}`,
+    );
+  }
+  const body = blocks[0]?.[1] ?? "";
   return Object.fromEntries([...body.matchAll(/--([\w-]+): ([^;]+);/g)].map(([, k, v]) => [k, v]));
 }
 
@@ -43,27 +48,17 @@ const ink: Theme = { ...DEFAULT_THEME, primary: { l: 0.205, c: 0, h: 0 } };
 const amber: Theme = { ...DEFAULT_THEME, primary: { l: 0.77, c: 0.165, h: 72 } };
 
 describe("palette", () => {
-  it("matches the library defaults for the default theme", () => {
-    const light = palette(DEFAULT_THEME, "light");
-    expect(light.primary).toBe("oklch(0.56 0.2165 257.21)");
-    expect(light["primary-foreground"]).toBe("oklch(0.985 0 0)");
-    expect(light.destructive).toBe("oklch(0.582 0.2249 25.88)");
-    expect(light["success-foreground"]).toBe("oklch(0.145 0 0)");
-    expect(light["muted-foreground"]).toBe("oklch(0.53 0 0)");
-    expect(light.ring).toBe("oklch(0.62 0 0)");
-    expect(light.background).toBe("oklch(1 0 0)");
-    expect(light["chart-1"]).toBe("oklch(0.646 0.222 41.116)");
-    expect(palette(DEFAULT_THEME, "dark").background).toBe("oklch(0.145 0 0)");
-  });
-
   it.each([
     ["light", ":root"],
     ["dark", ".dark"],
   ] as const)("emits theme.css's %s colour tokens for the default theme", (mode, selector) => {
     // theme.css is the source of truth. It writes some lightness as a percentage
     // (`75.14%`) and palette() as a number (`0.7514`), so the numbers are compared.
+    // Only non-colour tokens are skipped, by name, so any other colour format fails in parseOklch.
     const css = Object.fromEntries(
-      Object.entries(themeTokens(selector)).filter(([, v]) => v.startsWith("oklch(")),
+      Object.entries(themeTokens(selector)).filter(
+        ([k]) => k !== "radius" && !k.endsWith("-lightness"),
+      ),
     );
     const pal = palette(DEFAULT_THEME, mode);
     expect(Object.keys(pal).sort()).toEqual(Object.keys(css).sort());
@@ -297,6 +292,7 @@ describe("loadTheme", () => {
     for (const primary of [
       { l: 0.56, c: 0.2165, h: 257.21 }, // the current Blue
       { l: 0.6048, c: 0.2165, h: 200 }, // the old Blue's lightness at another hue
+      { l: 0.6048, c: 0.2165, h: 257 }, // what the hue slider builds on leaving Ink
       { l: 0.58, c: 0.22, h: 293 }, // Violet
       { l: 0.5, c: 0.1, h: 20 },
     ]) {
