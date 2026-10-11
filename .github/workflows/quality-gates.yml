@@ -82,10 +82,10 @@ jobs:
       - name: Build docs
         run: bun run build --filter=@chunks-ui/docs
 
-      # The docs build built chunks-ui: check its typings per format (attw)
+      # The docs build built chunks-ui: check its typings per format (attw) and its dist/ layout
       - name: Check chunks-ui package
         working-directory: packages/ui
-        run: bun run check:exports
+        run: bun run check:exports && bun run check:dist
 
       # Run from apps/docs, not through Turbo: its strict env mode drops PLAYWRIGHT_BROWSERS_PATH
       - name: Check docs pages with axe

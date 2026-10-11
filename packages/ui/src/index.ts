@@ -253,4 +253,22 @@ export { type ClassInput, cn, cnState, type StateClassName } from "./lib/cn";
 export { springs } from "./lib/motion";
 export { PortalContainerProvider, usePortalContainer } from "./lib/portal-container";
 export { useMotion, useReducedMotion } from "./lib/use-motion";
-export * from "./types";
+// Named, not `export *`: the build turns this into an import of ./utils.js, and Next.js rejects
+// `export *` in a "use client" module
+export {
+  ELEMENT_BASE_VARIANTS,
+  ELEMENT_COLOR,
+  ELEMENT_ORIENTATION,
+  ELEMENT_PLACEMENT_HORIZONTAL,
+  ELEMENT_PLACEMENT_VERTICAL,
+  ELEMENT_POSITION,
+  ELEMENT_VARIANTS,
+  type ElementBaseVariant,
+  type ElementColor,
+  type ElementOrientation,
+  type ElementPlacement,
+  type ElementPlacementHorizontal,
+  type ElementPlacementVertical,
+  type ElementPosition,
+  type ElementVariant,
+} from "./types";
