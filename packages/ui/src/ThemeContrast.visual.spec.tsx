@@ -120,6 +120,36 @@ describe.each(MODES)("theme contrast, %s mode", (mode) => {
     }
   });
 
+  it("outlined success and warning borders ≥ 3 on the background", () => {
+    const colors = ["success", "warning"] as const;
+    const { getByRole } = renderIn(
+      mode,
+      colors.flatMap((c) => [
+        <Button key={`b-${c}`} variant="outlined" color={c}>
+          {`outlined ${c}`}
+        </Button>,
+        <IconButton key={`i-${c}`} variant="outlined" color={c} aria-label={`icon outlined ${c}`}>
+          <Icon />
+        </IconButton>,
+      ]),
+    );
+    for (const c of colors) {
+      for (const name of [`outlined ${c}`, `icon outlined ${c}`]) {
+        const button = getByRole("button", { name });
+        const background = backgroundOf(button);
+        expect
+          .soft(
+            ratio(
+              paint(...background, getComputedStyle(button).borderTopColor),
+              paint(...background),
+            ),
+            name,
+          )
+          .toBeGreaterThanOrEqual(3);
+      }
+    }
+  });
+
   it("chips ≥ 4.5 on their /10 tint and on the background", () => {
     const variants = ["contained", "outlined"] as const;
     const { getByText } = renderIn(
@@ -222,5 +252,80 @@ describe("text shades follow the fill", () => {
     const button = getByRole("button", { name: "Inside dark" });
     expect(textContrast(button)).toBeGreaterThanOrEqual(4.5);
     expect(paint(getComputedStyle(button).color)).toEqual(paint("oklch(0.63 0.2165 257.21)"));
+  });
+});
+
+describe("border shades follow the fill", () => {
+  // Light mode caps the fill's lightness at 0.64 (success) and 0.67 (warning), dark mode keeps it.
+  it.each([
+    {
+      name: "success, light mode: darkened to 0.64",
+      color: "success",
+      mode: "light",
+      expected: "oklch(0.64 0.1514 166.5)",
+    },
+    {
+      name: "warning, light mode: darkened to 0.67",
+      color: "warning",
+      mode: "light",
+      expected: "oklch(0.67 0.1665 72.45)",
+    },
+    {
+      name: "success, dark mode: the fill",
+      color: "success",
+      mode: "dark",
+      expected: "oklch(0.7514 0.1514 166.5)",
+    },
+    {
+      name: "warning, dark mode: the fill",
+      color: "warning",
+      mode: "dark",
+      expected: "oklch(0.7797 0.1665 72.45)",
+    },
+    {
+      name: "a lighter custom --success is darkened",
+      color: "success",
+      mode: "light",
+      style: { "--success": "oklch(0.8 0.1 150)" },
+      expected: "oklch(0.64 0.1 150)",
+    },
+    {
+      name: "a darker custom --warning is kept",
+      color: "warning",
+      mode: "light",
+      style: { "--warning": "oklch(0.5 0.12 60)" },
+      expected: "oklch(0.5 0.12 60)",
+    },
+    {
+      name: "--success-border when it is set",
+      color: "success",
+      mode: "light",
+      style: { "--success-border": "oklch(0.4 0.1 30)" },
+      expected: "oklch(0.4 0.1 30)",
+    },
+    {
+      name: "--warning-border when it is set",
+      color: "warning",
+      mode: "light",
+      style: { "--warning-border": "oklch(0.4 0.1 30)" },
+      expected: "oklch(0.4 0.1 30)",
+    },
+  ] as const)("$name", ({ mode, color, expected, ...rest }) => {
+    const style = "style" in rest ? rest.style : undefined;
+    const { getByRole } = renderIn(
+      mode,
+      <div style={style as CSSProperties | undefined}>
+        <Button variant="outlined" color={color}>
+          Subject
+        </Button>
+        <IconButton variant="outlined" color={color} aria-label="Icon subject">
+          <Icon />
+        </IconButton>
+      </div>,
+    );
+    for (const name of ["Subject", "Icon subject"]) {
+      const border = getComputedStyle(getByRole("button", { name })).borderTopColor;
+      expect(paint(border), name).toEqual(paint(expected));
+    }
   });
 });
