@@ -36,6 +36,10 @@ jobs:
       - name: Check the Playwright version matches everywhere
         run: bun run check:playwright
 
+      # Installs Tailwind 4.0 into a temporary directory; bun.lock stays as it is
+      - name: Check Tailwind 4.0 generates every class
+        run: bun run check:tailwind
+
   typecheck:
     timeout-minutes: 10
     runs-on: ubuntu-latest

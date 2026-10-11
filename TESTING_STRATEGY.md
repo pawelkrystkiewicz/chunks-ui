@@ -168,6 +168,7 @@ bun run test:unit:coverage # with V8 coverage report
 - **Lint + typecheck** run on every PR and master push (`quality-gates.yml`)
 - **Version checks** run in the `lint` job (`quality-gates.yml`):
   - `bun run check:playwright` fails when `@playwright/test`, the docs' `playwright`, a workflow `mcr.microsoft.com/playwright` image tag or the Docker recipe above name different versions.
+  - `bun run check:tailwind` builds `chunks-ui`, compiles `dist/theme.css` and the code it scans with Tailwind 4.0.0 (the oldest v4) and with the installed version, and fails when 4.0.0 does not generate a class the installed version does. A consumer on 4.0 would get no CSS for that class. It installs both versions into temporary directories, so `bun.lock` does not change, and it needs the network.
 - **Docs snippets and axe** run on every PR and master push (`quality-gates.yml`), see below
 
 ### Docs checks

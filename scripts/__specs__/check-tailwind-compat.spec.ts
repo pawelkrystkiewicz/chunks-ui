@@ -1,0 +1,49 @@
+import { describe, expect, it } from "vitest";
+import { classNames, missingClasses } from "../check-tailwind-compat";
+
+// Shaped like Tailwind CLI output: a banner comment with a URL, nested variants, media queries
+const OLDEST = `/*! tailwindcss v4.0.0 | MIT License | https://tailwindcss.com */
+@layer utilities {
+  .start-3 {
+    inset-inline-start: calc(var(--spacing) * 3);
+  }
+  .data-\\[open\\]\\:opacity-100 {
+    &[data-open] {
+      opacity: 100%;
+    }
+  }
+  .sm\\:flex {
+    @media (width >= 40rem) {
+      margin: 0.5rem;
+      display: flex;
+    }
+  }
+}
+`;
+
+const INSTALLED = `${OLDEST}
+@layer utilities {
+  .inset-s-3 {
+    inset-inline-start: calc(var(--spacing) * 3);
+  }
+  .\\32 xl\\:block {
+    display: block;
+  }
+}
+`;
+
+describe("classNames", () => {
+  it("reads the class selectors, unescaped, and nothing from comments or values", () => {
+    expect([...classNames(OLDEST)]).toEqual(["start-3", "data-[open]:opacity-100", "sm:flex"]);
+  });
+});
+
+describe("missingClasses", () => {
+  it("lists the classes the installed version generates and the oldest does not", () => {
+    expect(missingClasses(OLDEST, INSTALLED)).toEqual(["2xl:block", "inset-s-3"]);
+  });
+
+  it("is empty when the oldest version generates every class", () => {
+    expect(missingClasses(INSTALLED, OLDEST)).toEqual([]);
+  });
+});

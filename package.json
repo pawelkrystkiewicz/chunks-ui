@@ -24,6 +24,7 @@
     "version:next": "bun run ./scripts/calculate-next-version.ts",
     "update:screenshots": "sh scripts/update-screenshots.sh",
     "check:playwright": "bun scripts/check-playwright-version.ts",
+    "check:tailwind": "turbo run build --filter=chunks-ui && bun scripts/check-tailwind-compat.ts",
     "generate:llm": "turbo run generate:llm --filter=@chunks-ui/docs"
   },
   "devDependencies": {
