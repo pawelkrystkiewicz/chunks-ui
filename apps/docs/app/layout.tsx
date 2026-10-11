@@ -1,4 +1,4 @@
-import { Head } from "nextra/components";
+import { Head, Search } from "nextra/components";
 import { getPageMap } from "nextra/page-map";
 import { Footer, Layout, Navbar } from "nextra-theme-docs";
 import "nextra-theme-docs/style.css";
@@ -48,6 +48,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             />
           }
           pageMap={await getPageMap()}
+          // Nextra names the search box only by its placeholder, which not every screen reader
+          // reads as a label, and the theme switch by the current theme alone ("Light"), with its
+          // purpose only in a title. Neither has a prop for the name; these two props set it.
+          search={<Search aria-label="Search documentation" />}
+          themeSwitch={{ light: "Light theme", dark: "Dark theme", system: "System theme" }}
           // Base of the "Edit this page" and feedback links; Nextra appends the file path
           docsRepositoryBase="https://github.com/pawelkrystkiewicz/chunks-ui/tree/master/apps/docs"
           footer={<Footer />}
