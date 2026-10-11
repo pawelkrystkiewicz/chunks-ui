@@ -73,9 +73,9 @@ Use `Tooltip.Provider` to share delay settings across multiple tooltips. Every `
 
 A `delay` on a `Tooltip.Trigger` overrides the Provider's for that trigger.
 
-Use the `Tooltip.Provider` from chunks-ui, not the one from `@base-ui/react/tooltip`. A chunks-ui `Tooltip.Trigger` always passes Base UI a delay (50 by default), and Base UI prefers it over a Provider's, so a Base UI Provider's `delay` has no effect.
+Use the `Tooltip.Provider` from chunks-ui, not the one from `@base-ui/react/tooltip`: chunks-ui triggers ignore a Base UI Provider's `delay`.
 
-A nested `Tooltip.Provider` without a `delay` uses `50`, not the outer Provider's `delay`. To keep the outer delay, set the same `delay` on the inner Provider.
+A nested `Tooltip.Provider` without a `delay` uses 50ms, not the outer Provider's `delay`, so repeat the outer `delay` on it.
 
 ## Positioning
 
