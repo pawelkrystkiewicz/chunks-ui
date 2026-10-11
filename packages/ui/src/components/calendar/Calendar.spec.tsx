@@ -63,7 +63,8 @@ describe("Calendar", () => {
     expect(screen.getByRole("button", { name: "Saturday, April 4, 2026" })).toBeInTheDocument();
   });
 
-  it("dims outside days by colour alone, so their numbers keep 4.5:1 contrast", () => {
+  // The 4.5:1 itself is checked by the docs axe run (check:a11y)
+  it("dims outside days with the muted colour, not opacity", () => {
     render(<Calendar value={MARCH_15_2026} weekStartsOn={1} showOutsideDays />);
     const feb23 = screen.getByRole("button", { name: "Monday, February 23, 2026" });
     expect(feb23).toHaveClass("text-muted-foreground");
