@@ -46,6 +46,8 @@ const fruits = [
   <ComboboxBasicDemo />
 </Container>
 
+`Combobox.Empty` shows its message when no item matches the input. It needs `items` on `Combobox.Root`, because it checks the list that Base UI filters from `items`. Without `items` that list is always empty, so the message always shows, even below the options.
+
 Pass each item object as the `Combobox.Item` `value`. Base UI shows an object's `label` in the input and submits its `value` with a form, so picking "Banana" fills the input with "Banana". For other object shapes, set `itemToStringLabel` (and `itemToStringValue` for forms) on `Combobox.Root`. If you pass the selected value in from elsewhere (`value`/`defaultValue`) and it isn't the same object as the item, set `isItemEqualToValue`.
 
 ## With Clear Button
