@@ -52,6 +52,39 @@ describe("Toast", () => {
   });
 });
 
+describe.each(["ltr", "rtl"] as const)("Toast action in %s", (dir) => {
+  it("is as wide as its label and sits at the content's start edge", async () => {
+    document.documentElement.dir = dir;
+    onTestFinished(() => document.documentElement.removeAttribute("dir"));
+    render(
+      <Toast.Provider>
+        <AddToast
+          title="Connection lost"
+          description="Reconnecting automatically."
+          actionProps={{ children: "Retry now" }}
+        />
+        <Toast.Viewport />
+      </Toast.Provider>,
+    );
+    const action = await screen.findByRole("button", { name: "Retry now" });
+    const content = action.closest(".ToastContent") as HTMLElement;
+
+    const label = document.createRange();
+    label.selectNodeContents(action);
+    const style = getComputedStyle(action);
+    const chrome = ["paddingLeft", "paddingRight", "borderLeftWidth", "borderRightWidth"] as const;
+    const fitted =
+      label.getBoundingClientRect().width +
+      chrome.reduce((sum, side) => sum + Number.parseFloat(style[side]), 0);
+
+    const box = action.getBoundingClientRect();
+    const area = content.getBoundingClientRect();
+    expect(box.width).toBeCloseTo(fitted, 0);
+    if (dir === "ltr") expect(box.left).toBeCloseTo(area.left, 0);
+    else expect(box.right).toBeCloseTo(area.right, 0);
+  });
+});
+
 describe("Toast with motion allowed", () => {
   beforeAll(() => commands.emulateMedia({ reducedMotion: "no-preference" }));
   afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
