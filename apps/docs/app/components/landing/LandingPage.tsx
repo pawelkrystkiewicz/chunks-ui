@@ -146,8 +146,6 @@ function Logo() {
 
 // A contained primary Button's classes on a link: Base UI's Button is for actions, not navigation.
 // Height and radius match HeroCopy, the CTA's neighbour in the hero.
-const CTA = cn(buttonVariants(), "h-11 rounded-lg");
-
 function Cta({
   href,
   className,
@@ -158,7 +156,7 @@ function Cta({
   children: ReactNode;
 }) {
   return (
-    <Link href={href} className={cn(CTA, className)}>
+    <Link href={href} className={cn(buttonVariants(), "h-11 rounded-lg", className)}>
       {children}
       <ArrowRight className="size-4" />
     </Link>
