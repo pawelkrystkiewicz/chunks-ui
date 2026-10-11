@@ -8,6 +8,7 @@ import {
   fixedEntries,
   type IssueState,
   linkedIssue,
+  readFailure,
   staleEntries,
 } from "./check-a11y";
 
@@ -85,6 +86,12 @@ describe("linkedIssue", () => {
     expect(linkedIssue(everywhere)).toBeUndefined();
   });
 
+  it("reads only the issue that starts the why", () => {
+    expect(linkedIssue({ ...everywhere, why: "Nextra bug (shuding/nextra#4567)" })).toBeUndefined();
+    expect(linkedIssue({ ...everywhere, why: "#254: grey #666 on white" })).toBe(254);
+    expect(linkedIssue({ ...everywhere, why: "see #254" })).toBeUndefined();
+  });
+
   it("does not read a hex colour as an issue", () => {
     expect(
       linkedIssue({ ...everywhere, why: "comments #6A737D on black, 4.36:1" }),
@@ -107,6 +114,21 @@ describe("fixedEntries", () => {
     ]);
   });
 
+  it("reports an entry whose issue was closed as a duplicate, and says to link the canonical issue", () => {
+    const duplicate = new Map<number, IssueState>([
+      [6, { state: "closed", state_reason: "duplicate" }],
+    ]);
+    expect(fixedEntries([entry(6)], duplicate)).toEqual([
+      expect.stringMatching(/#6 was closed as a duplicate.*canonical issue/),
+    ]);
+  });
+
+  it("names the way out when it reports a completed issue", () => {
+    expect(fixedEntries([entry(1)], states)).toEqual([
+      expect.stringContaining("merge master if your branch predates the fix"),
+    ]);
+  });
+
   it("keeps an entry whose issue was closed as not planned", () => {
     expect(fixedEntries([entry(2)], states)).toEqual([]);
   });
@@ -117,6 +139,26 @@ describe("fixedEntries", () => {
 
   it("keeps an entry whose issue state was not read, or that links no issue", () => {
     expect(fixedEntries([entry(5), everywhere], states)).toEqual([]);
+  });
+});
+
+describe("readFailure", () => {
+  it.each([
+    ["no token", true, "no-token", "fail"],
+    ["401", true, 401, "fail"],
+    ["403", true, 403, "fail"],
+    ["404", true, 404, "fail"],
+    ["429", true, 429, "notice"],
+    ["500", true, 500, "notice"],
+    ["503", true, 503, "notice"],
+    ["a network error or timeout", true, "network", "notice"],
+    ["no token outside CI", false, "no-token", "notice"],
+    ["401 outside CI", false, 401, "notice"],
+    ["404 outside CI", false, 404, "notice"],
+    ["500 outside CI", false, 500, "notice"],
+    ["a network error outside CI", false, "network", "notice"],
+  ] as const)("%s -> %s", (_name, ci, cause, expected) => {
+    expect(readFailure(ci, cause)).toBe(expected);
   });
 });
 
