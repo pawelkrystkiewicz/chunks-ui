@@ -16,6 +16,9 @@ if (typeof window !== "undefined") {
     }
   } as never;
 
+  // Headless UI (via Nextra) warns on each call to its own fallback when getAnimations is missing
+  Element.prototype.getAnimations ??= () => [];
+
   // ToggleGroup and the popups measure their parts
   globalThis.ResizeObserver ??= class {
     observe() {}
