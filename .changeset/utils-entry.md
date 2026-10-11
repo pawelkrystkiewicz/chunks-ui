@@ -8,4 +8,4 @@ Added: a `chunks-ui/utils` entry for React Server Components. The `chunks-ui` bu
 import { buttonVariants, cn } from "chunks-ui/utils";
 ```
 
-It exports `cn`, `cnState`, `buttonVariants`, `chipVariants`, `iconButtonVariants`, `inputVariants`, `springs`, the `ELEMENT_*` constants, and the `ClassInput`, `StateClassName` and `Element*` types. `chunks-ui` still exports all of them, so existing imports do not change.
+It exports `cn`, `cnState`, `buttonVariants`, `chipVariants`, `iconButtonVariants`, `inputVariants`, `springs`, the `ELEMENT_*` constants, and the `ClassInput`, `StateClassName` and `Element*` types. `chunks-ui` still exports all of them, so existing imports do not change. `cn` from `chunks-ui` and from `chunks-ui/utils` is the same function, with one tailwind-merge cache.

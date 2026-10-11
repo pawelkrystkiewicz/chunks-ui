@@ -8,20 +8,37 @@
   "license": "MIT",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
     "./utils": {
-      "types": "./dist/utils.d.ts",
-      "import": "./dist/utils.js",
-      "require": "./dist/utils.cjs"
+      "import": {
+        "types": "./dist/utils.d.ts",
+        "default": "./dist/utils.js"
+      },
+      "require": {
+        "types": "./dist/utils.d.cts",
+        "default": "./dist/utils.cjs"
+      }
     },
     "./theme.css": "./dist/theme.css"
   },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "utils": [
+        "./dist/utils.d.ts"
+      ]
+    }
+  },
   "files": [
     "dist",
     "README.md",
@@ -36,7 +53,9 @@
     "test:visual": "vitest run --config vitest.visual.config.ts",
     "test:visual:update": "vitest run --config vitest.visual.config.ts --update",
     "lint": "biome check .",
-    "check-types": "tsc --noEmit && tsc --noEmit --project tsconfig.visual.json",
+    "check-types": "tsc --noEmit && tsc --noEmit --project tsconfig.visual.json && tsc -p scripts",
+    "check:dist": "bun run scripts/check-dist.ts",
+    "check:exports": "attw --pack . --exclude-entrypoints ./theme.css",
     "clean": "rm -rf .turbo node_modules dist coverage"
   },
   "peerDependencies": {
@@ -57,6 +76,7 @@
     "tailwind-merge": "^3.7.0"
   },
   "devDependencies": {
+    "@arethetypeswrong/cli": "0.18.5",
     "@base-ui/react": "^1.8.0",
     "@chunks-ui/typescript-config": "workspace:*",
     "class-variance-authority": "^0.7.1",

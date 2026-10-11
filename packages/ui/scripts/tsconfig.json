@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "@chunks-ui/typescript-config/react-library.json",
+  "compilerOptions": {
+    "types": ["bun"],
+    "noEmit": true,
+    "noUncheckedIndexedAccess": true
+  },
+  "include": [".", "../src/index.ts", "../src/utils.ts"]
+}

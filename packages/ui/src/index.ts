@@ -253,4 +253,16 @@ export { type ClassInput, cn, cnState, type StateClassName } from "./lib/cn";
 export { springs } from "./lib/motion";
 export { PortalContainerProvider, usePortalContainer } from "./lib/portal-container";
 export { useMotion, useReducedMotion } from "./lib/use-motion";
-export * from "./types";
+export type * from "./types";
+// Named values, not `export *`: the build turns this into an import of ./utils.js, and Next.js
+// rejects `export *` in a "use client" module. `export type *` is erased from the JS output, so
+// every type in types.ts reaches this entry too.
+export {
+  ELEMENT_BASE_VARIANTS,
+  ELEMENT_COLOR,
+  ELEMENT_ORIENTATION,
+  ELEMENT_PLACEMENT_HORIZONTAL,
+  ELEMENT_PLACEMENT_VERTICAL,
+  ELEMENT_POSITION,
+  ELEMENT_VARIANTS,
+} from "./types";
