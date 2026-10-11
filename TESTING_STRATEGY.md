@@ -198,4 +198,4 @@ When axe flags something you can't fix in the docs, open an issue for the fix, t
 
 Scope the entry to the pages and themes where the violation occurs. The run fails when an entry matches nothing, so remove the entry in the change that fixes its cause.
 
-The docs also have unit specs (`bun run test` in `apps/docs`, jsdom). `apps/docs/vitest.setup.ts` holds the shims jsdom lacks (`IntersectionObserver`, `ResizeObserver`, `matchMedia`) and the Testing Library cleanup, so a spec does not repeat them; in node specs it does nothing. Two smoke specs render the docs content under StrictMode: `Examples.smoke.spec.tsx` renders every exported component of the modules in `app/examples`, and `KitchenSink.smoke.spec.tsx` renders the kitchen-sink page. They fail on a throw or a `console.error`, also one raised after the render or on unmount, which is how React reports bad props and missing keys.
+The docs also have unit specs (`bun run test` in `apps/docs`, jsdom), with shared shims and cleanup in `apps/docs/vitest.setup.ts`. The smoke specs render the example modules and the kitchen-sink page under StrictMode and fail on a throw or a `console.error`.

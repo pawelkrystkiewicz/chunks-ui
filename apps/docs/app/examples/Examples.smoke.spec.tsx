@@ -12,11 +12,9 @@ type Glob = (
 const modules = (import.meta as unknown as { glob: Glob }).glob(["./*.tsx", "!./*.spec.tsx"], {
   eager: true,
 });
-/** A PascalCase export that is a function, or a memo/forwardRef component object */
+/** A PascalCase function export, which is how every example is written */
 const isComponent = (name: string, value: unknown): value is ComponentType =>
-  /^[A-Z]/.test(name) &&
-  (typeof value === "function" ||
-    (typeof value === "object" && value !== null && "$$typeof" in value));
+  /^[A-Z]/.test(name) && typeof value === "function";
 
 const files = Object.entries(modules).map(([path, exports]) => ({
   file: path.replace("./", ""),
