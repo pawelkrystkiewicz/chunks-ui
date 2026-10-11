@@ -296,7 +296,7 @@ export function palette(t: Theme, mode: Mode): Record<string, string> {
  * The primary the hue slider makes when it moves `p` to hue `h`. Ink and Blue-chroma primaries
  * (Blue, or one the slider made) start from Blue's lightness and chroma every time, so moves
  * never ratchet the lightness down. Where white text can't reach 4.5:1 there, and dark text
- * can't on every base, it darkens in 0.001 steps until white text does. Other swatches keep theirs.
+ * misses 4.5:1 on at least one base, it darkens in 0.001 steps until white text does. Other swatches keep theirs.
  */
 export function withHue(p: Oklch, h: number): Oklch {
   if (p.c >= 0.01 && p.c !== BLUE.c) return { l: p.l, c: p.c, h };

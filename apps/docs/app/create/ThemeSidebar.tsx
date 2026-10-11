@@ -64,8 +64,8 @@ export function ThemeSidebar({
   onGetCode: () => void;
 }) {
   const p = theme.primary;
-  // The colour the slider gives the primary at this hue; for Ink, the colour leaving Ink gives
-  const thumb = withHue(p, p.h);
+  // Ink shows the colour leaving Ink gives; any other primary shows itself, as the swatches do
+  const thumb = p.c < 0.01 ? withHue(p, p.h) : p;
 
   return (
     <aside
