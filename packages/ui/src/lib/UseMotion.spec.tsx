@@ -1,4 +1,5 @@
 import { act } from "@testing-library/react";
+import { StrictMode } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { renderToString } from "react-dom/server";
 import { expect, it, vi } from "vitest";
@@ -19,7 +20,7 @@ it("leaves Motion out of hydration, so server markup matches once it has loaded"
   await loading;
 
   const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
-  const root = await act(async () => hydrateRoot(container, ui));
+  const root = await act(async () => hydrateRoot(container, <StrictMode>{ui}</StrictMode>));
   expect(consoleError).not.toHaveBeenCalled();
   consoleError.mockRestore();
   act(() => root.unmount());
