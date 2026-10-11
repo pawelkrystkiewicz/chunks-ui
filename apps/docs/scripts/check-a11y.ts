@@ -8,7 +8,8 @@
  *
  * Covers the pages built from content/**\/*.mdx (the landing page, /create and /kitchen-sink
  * among them), every other page under app/, and the 404 page, which it gets by requesting a URL
- * no page answers on: that one must answer 404, every other page 200. axe's `incomplete` results
+ * no page answers on: that one must answer 404, every other page 200. On the pages POPUPS lists, it
+ * then opens the first example's popup and audits it alone, open. axe's `incomplete` results
  * (checks it could not decide, often contrast over images or gradients) are not failed.
  *
  * Reads the issue states from the GitHub API with GITHUB_TOKEN (CI passes it; locally run
@@ -23,7 +24,7 @@
  */
 import { join } from "node:path";
 import AxeBuilder from "@axe-core/playwright";
-import { type Browser, chromium } from "playwright";
+import { type Browser, chromium, type Page } from "playwright";
 
 const DOCS_DIR = join(import.meta.dirname, "..");
 const PORT = Number(process.env.PORT || 3105);
@@ -89,6 +90,24 @@ const ALLOWED: Allowed[] = [
     pages: ["/components/chip", "/kitchen-sink"],
     themes: ["light"],
   },
+];
+
+type Role = Parameters<Page["getByRole"]>[0];
+
+/**
+ * A popup the run opens and audits on its own, after its page, in every theme: it clicks the first
+ * element of role `trigger` named `name` (the page's first example), waits for the one element of
+ * role `popup`, runs axe on that element alone, and closes it with Escape. ALLOWED applies to the
+ * popup as to its page.
+ */
+type Popup = { page: string; trigger: Role; name: string; popup: Role };
+
+const POPUPS: Popup[] = [
+  { page: "/components/combobox", trigger: "button", name: "Show options", popup: "listbox" },
+  { page: "/components/date-picker", trigger: "button", name: "Pick a date", popup: "dialog" },
+  { page: "/components/menu", trigger: "button", name: "Options", popup: "menu" },
+  { page: "/components/popover", trigger: "button", name: "More info", popup: "dialog" },
+  { page: "/components/select", trigger: "combobox", name: "Fruit", popup: "listbox" },
 ];
 
 /** The entries that may excuse `rule` on `page` in `theme` */
@@ -284,6 +303,63 @@ async function startServer() {
   return server;
 }
 
+/**
+ * Runs axe on the page, or on the elements `scope.selector` matches alone, and returns the
+ * violations ALLOWED does not excuse, recording each entry that excused one in `matched`
+ */
+async function axe(
+  page: Page,
+  route: string,
+  theme: Theme,
+  matched: Map<Allowed, Set<string>>,
+  scope?: { selector: string; label: string },
+) {
+  const builder = new AxeBuilder({ page }).withTags(TAGS);
+  const { violations } = await (scope ? builder.include(scope.selector) : builder).analyze();
+  const problems: Problem[] = [];
+  for (const violation of violations) {
+    const allowed = allowedFor(ALLOWED, violation.id, route, theme);
+    const targets: string[] = [];
+    for (const node of violation.nodes) {
+      const target = node.target.join(" ");
+      const index = await page.evaluate(firstMatch, [
+        target,
+        allowed.map((entry) => entry.selector),
+      ] as const);
+      const entry = allowed[index];
+      if (entry) matched.set(entry, (matched.get(entry) ?? new Set()).add(`${route}|${theme}`));
+      else targets.push(`${target}\n      ${node.html.slice(0, 160)}`);
+    }
+    if (targets.length > 0) {
+      const where = scope?.label ?? route;
+      problems.push({ page: where, theme, rule: violation.id, help: violation.help, targets });
+    }
+  }
+  return problems;
+}
+
+const POPUP_MS = 10_000;
+
+/** Opens `popup` on its loaded page, runs axe on it alone, and closes it with Escape */
+async function auditPopup(
+  page: Page,
+  popup: Popup,
+  label: string,
+  theme: Theme,
+  matched: Map<Allowed, Set<string>>,
+) {
+  const trigger = page.getByRole(popup.trigger, { name: popup.name, exact: true }).first();
+  await trigger.click({ timeout: POPUP_MS });
+  const element = page.getByRole(popup.popup);
+  await element.waitFor({ timeout: POPUP_MS });
+  const id = await element.getAttribute("id");
+  if (!id) throw new Error(`The open ${popup.popup} has no id to scope axe to`);
+  const problems = await axe(page, popup.page, theme, matched, { selector: `[id="${id}"]`, label });
+  await page.keyboard.press("Escape");
+  await element.waitFor({ state: "hidden", timeout: POPUP_MS });
+  return problems;
+}
+
 async function audit(
   browser: Browser,
   route: string,
@@ -316,27 +392,25 @@ async function audit(
         `${route} did not switch to the ${theme} theme (<html class="${htmlClass}">)`,
       );
     }
-    const { violations } = await new AxeBuilder({ page }).withTags(TAGS).analyze();
-    const problems: Problem[] = [];
+    const problems = await axe(page, route, theme, matched);
+    for (const popup of POPUPS.filter((entry) => entry.page === route)) {
+      const label = `${route} with ${popup.name} open`;
+      // A popup that won't open or close is a problem of its own; the page's results still count
+      try {
+        problems.push(...(await auditPopup(page, popup, label, theme, matched)));
+      } catch (error) {
+        problems.push({
+          page: label,
+          theme,
+          rule: "popup",
+          help: "The popup could not be opened, audited or closed",
+          targets: [String(error)],
+        });
+      }
+    }
+    // Checked last, as opening a popup can load more
     if (failed.length > 0) {
       problems.push({ page: route, theme, rule: "http", help: "Requests failed", targets: failed });
-    }
-    for (const violation of violations) {
-      const allowed = allowedFor(ALLOWED, violation.id, route, theme);
-      const targets: string[] = [];
-      for (const node of violation.nodes) {
-        const target = node.target.join(" ");
-        const index = await page.evaluate(firstMatch, [
-          target,
-          allowed.map((entry) => entry.selector),
-        ] as const);
-        const entry = allowed[index];
-        if (entry) matched.set(entry, (matched.get(entry) ?? new Set()).add(`${route}|${theme}`));
-        else targets.push(`${target}\n      ${node.html.slice(0, 160)}`);
-      }
-      if (targets.length > 0) {
-        problems.push({ page: route, theme, rule: violation.id, help: violation.help, targets });
-      }
     }
     return problems;
   } finally {
@@ -347,6 +421,11 @@ async function audit(
 // Not on import, so the spec can test the pure functions above
 if (import.meta.main) {
   const routes = pages();
+  // A renamed page would otherwise drop its popup from the run without a word
+  const lost = POPUPS.filter((popup) => !routes.includes(popup.page)).map((popup) => popup.page);
+  if (lost.length > 0) {
+    throw new Error(`POPUPS names pages the docs don't have: ${lost.join(", ")}`);
+  }
   const issues = [...new Set(ALLOWED.flatMap((entry) => linkedIssue(entry) ?? []))].sort(
     (a, b) => a - b,
   );
@@ -395,7 +474,7 @@ if (import.meta.main) {
     for (const message of failures) console.error(`  ${message}`);
   }
   console.log(
-    `axe checked ${routes.length} pages in ${THEMES.length} themes: ${problems.length} problems, ${stale.length} stale ALLOWED entries, ${failures.length} unread ${failures.length === 1 ? "issue" : "issues"}.`,
+    `axe checked ${routes.length} pages and ${POPUPS.length} popups in ${THEMES.length} themes: ${problems.length} problems, ${stale.length} stale ALLOWED entries, ${failures.length} unread ${failures.length === 1 ? "issue" : "issues"}.`,
   );
   process.exit(problems.length + stale.length + failures.length > 0 ? 1 : 0);
 }
