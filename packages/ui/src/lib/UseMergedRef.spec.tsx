@@ -54,6 +54,7 @@ describe("useMergedRef", () => {
     const { own, unmount } = setup(consumer);
     unmount();
     // StrictMode attaches, detaches and re-attaches refs on mount: every attach gets one cleanup
+    expect(consumer).toHaveBeenCalled();
     expect(detach).toHaveBeenCalledTimes(consumer.mock.calls.length);
     expect(own()).toBeNull();
     expect(consumer).not.toHaveBeenCalledWith(null);
