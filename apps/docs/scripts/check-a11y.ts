@@ -73,12 +73,6 @@ const ALLOWED: Allowed[] = [
   // Pending maintainer decision: remove once the linked issue is decided
   {
     rule: "color-contrast",
-    selector: "a.group\\/cta > span:first-child",
-    why: '#253: landing CTA label ("Read the docs", "Open Create"), white on --l-brand-soft, 2.68:1',
-    pages: ["/"],
-  },
-  {
-    rule: "color-contrast",
     selector: ".bg-success\\/10.text-success-text",
     why: "#254: success-text on a /10 tint over Nextra's #fafafa (Chip, kitchen-sink badge), 4.47:1",
     pages: ["/components/chip", "/kitchen-sink"],

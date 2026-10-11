@@ -1,7 +1,8 @@
 // Server component: interactive parts live in ./LandingClient.
-// chunks-ui is a client bundle, so only its components render here; `cn` and `springs` can't run here.
+// chunks-ui is a client bundle, so only its components render here; its helpers come from chunks-ui/utils.
 
 import { CopyButton } from "chunks-ui";
+import { buttonVariants, cn } from "chunks-ui/utils";
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -143,18 +144,20 @@ function Logo() {
   );
 }
 
-function SplitCta({ href, children }: { href: string; children: ReactNode }) {
+// A contained primary Button's classes on a link: Base UI's Button is for actions, not navigation.
+// Height and radius match HeroCopy, the CTA's neighbour in the hero. The Button's hover,
+// bg-primary/90, lets --l-bg through and drops the label to 3.97:1 in light mode; mixing the same
+// 10% of black keeps it above the 4.58:1 at rest on any backdrop.
+const CTA = cn(
+  buttonVariants(),
+  "h-11 rounded-lg hover:bg-[color-mix(in_oklab,var(--primary)_90%,black)]",
+);
+
+function Cta({ href, children }: { href: string; children: ReactNode }) {
   return (
-    <Link
-      href={href}
-      className="group/cta inline-flex overflow-hidden rounded-lg font-semibold text-[14px] text-white transition-transform duration-200 active:scale-[.97]"
-    >
-      <span className="bg-(--l-brand-soft) px-[18px] py-3 transition-colors duration-250 group-hover/cta:bg-[oklch(74%_.14_257)]">
-        {children}
-      </span>
-      <span className="flex items-center bg-(--l-brand) px-4 py-3">
-        <ArrowRight className="size-4" />
-      </span>
+    <Link href={href} className={CTA}>
+      {children}
+      <ArrowRight aria-hidden className="size-4" />
     </Link>
   );
 }
@@ -328,7 +331,7 @@ function Hero() {
             Motion. One npm package, not a copy-paste registry.
           </p>
           <div className="flex flex-wrap items-center gap-3">
-            <SplitCta href={DOCS}>Read the docs</SplitCta>
+            <Cta href={DOCS}>Read the docs</Cta>
             <HeroCopy text={INSTALL} />
           </div>
         </div>
@@ -597,7 +600,7 @@ function CreateSection() {
               across real screens. Copy one CSS block when it looks right.
             </p>
             <div className="mt-auto pt-2">
-              <SplitCta href="/create">Open Create</SplitCta>
+              <Cta href="/create">Open Create</Cta>
             </div>
           </div>
           <div className="min-w-0 overflow-hidden border-(--l-line) border-r border-b">
