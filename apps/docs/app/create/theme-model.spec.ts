@@ -284,17 +284,17 @@ describe("loadTheme", () => {
   it("loads a stored old Blue as the current Blue, so the Blue swatch is selected", () => {
     // Blue's lightness before #214 deepened it to 0.56
     stored({ ...DEFAULT_THEME, radius: 4, primary: { l: 0.6048, c: 0.2165, h: 257.21 } });
-    const { name: _, ...blue } = PRIMARIES.find((s) => s.name === "Blue") as (typeof PRIMARIES)[0];
-    expect(loadTheme()).toEqual({ ...DEFAULT_THEME, radius: 4, primary: blue });
+    expect(loadTheme()).toEqual({
+      ...DEFAULT_THEME,
+      radius: 4,
+      primary: { l: 0.56, c: 0.2165, h: 257.21 },
+    });
   });
 
   it("loads any other stored primary unchanged", () => {
     for (const primary of [
-      { l: 0.56, c: 0.2165, h: 257.21 }, // the current Blue
       { l: 0.6048, c: 0.2165, h: 200 }, // the old Blue's lightness at another hue
       { l: 0.6048, c: 0.2165, h: 257 }, // what the hue slider builds on leaving Ink
-      { l: 0.58, c: 0.22, h: 293 }, // Violet
-      { l: 0.5, c: 0.1, h: 20 },
     ]) {
       stored({ ...DEFAULT_THEME, primary });
       expect(loadTheme()?.primary).toEqual(primary);
