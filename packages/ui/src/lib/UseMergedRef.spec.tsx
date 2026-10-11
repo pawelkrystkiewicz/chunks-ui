@@ -53,7 +53,9 @@ describe("useMergedRef", () => {
     const consumer = vi.fn(() => detach);
     const { own, unmount } = setup(consumer);
     unmount();
-    expect(detach).toHaveBeenCalledOnce();
+    // StrictMode attaches, detaches and re-attaches refs on mount: every attach gets one cleanup
+    expect(consumer).toHaveBeenCalled();
+    expect(detach).toHaveBeenCalledTimes(consumer.mock.calls.length);
     expect(own()).toBeNull();
     expect(consumer).not.toHaveBeenCalledWith(null);
   });
@@ -71,8 +73,10 @@ describe("useMergedRef", () => {
   it("does not call a stable consumer callback ref again on rerender", () => {
     const consumer = vi.fn();
     const { rerenderWith } = setup(consumer);
+    // StrictMode calls it three times on mount (element, null, element); count from there
+    const mountCalls = consumer.mock.calls.length;
     rerenderWith(consumer);
     rerenderWith(consumer);
-    expect(consumer).toHaveBeenCalledOnce();
+    expect(consumer).toHaveBeenCalledTimes(mountCalls);
   });
 });

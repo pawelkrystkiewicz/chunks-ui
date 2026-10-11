@@ -1,7 +1,7 @@
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, StrictMode, useEffect, useState } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { renderToString } from "react-dom/server";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
@@ -300,7 +300,7 @@ describe("Tabs.Indicator in server HTML", () => {
     document.body.append(container);
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
     try {
-      const root = await act(async () => hydrateRoot(container, ui));
+      const root = await act(async () => hydrateRoot(container, <StrictMode>{ui}</StrictMode>));
       expect(consoleError).not.toHaveBeenCalled();
       expect(container.querySelector('[data-testid="indicator"]')).not.toBeNull();
       expect(container.querySelector("script")).toBeNull();
