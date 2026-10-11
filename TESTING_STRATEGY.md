@@ -196,7 +196,7 @@ When axe flags something you can't fix in the docs, open an issue for the fix, t
 ```ts
 {
   rule: "color-contrast", // the axe rule id
-  selector: '[role="grid"] button.opacity-50', // the flagged element, or an ancestor of it
+  selector: '[role="grid"] button.opacity-50', // matched against the flagged element itself
   why: "#252: Calendar outside-month days, 2:1 light", // the issue, and the measured ratio
   pages: ["/components/calendar"], // optional: only on these routes
   themes: ["light"], // optional: only in this theme

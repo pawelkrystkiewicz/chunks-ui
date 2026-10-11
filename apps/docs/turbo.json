@@ -3,7 +3,7 @@
   "extends": ["//"],
   "tasks": {
     "build": {
-      "outputs": ["$TURBO_EXTENDS$", "public/llm*.txt"]
+      "outputs": ["$TURBO_EXTENDS$", "public/llm*.txt", "public/_pagefind/**"]
     }
   }
 }
