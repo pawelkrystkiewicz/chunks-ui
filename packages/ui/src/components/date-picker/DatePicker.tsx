@@ -19,10 +19,10 @@ type DatePickerOwnProps = Pick<CalendarProps, "weekStartsOn" | "showOutsideDays"
    */
   defaultValue?: Date | null;
   /**
-   * Called with the picked date (at local midnight) when the user picks an enabled day in the
-   * calendar, by click, Enter or Space, also when it is the day already selected. The calendar
-   * closes right after. It is never called with `null`, as the picker has no way to clear the
-   * date, and a change to `value` from outside does not call it.
+   * Called with the picked date, at local midnight, when the user picks an enabled day (click,
+   * Enter or Space). Picking the selected day again also calls it. The calendar then closes. It
+   * is never called with `null`: the picker cannot clear a date. A change to `value` from outside
+   * does not call it.
    */
   onValueChange?: (date: Date | null) => void;
   /**

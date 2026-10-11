@@ -2,4 +2,4 @@
 "chunks-ui": patch
 ---
 
-The hover docs for `DatePicker`'s `onValueChange`, `CopyButton`'s `timeout` and `Input`'s `onClear` now match what these props do.
+`DatePicker`'s `onValueChange` docs no longer say it fires when the date is cleared, and `CopyButton`'s `timeout` docs show the 2000ms default.
