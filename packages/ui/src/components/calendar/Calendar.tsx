@@ -379,7 +379,7 @@ export function Calendar({
                           isToday &&
                             !isSelected &&
                             "font-medium text-primary-text ring-1 ring-primary",
-                          !isCurrentMonth && !isSelected && "text-muted-foreground opacity-50",
+                          !isCurrentMonth && !isSelected && "text-muted-foreground",
                           disabled && "pointer-events-none opacity-40",
                         )}
                       >
