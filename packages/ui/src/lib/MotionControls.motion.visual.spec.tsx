@@ -9,7 +9,7 @@ import { Radio } from "../components/radio";
 import { Switch } from "../components/switch";
 import { Tabs } from "../components/tabs";
 import { ToggleGroup } from "../components/toggle-group";
-import { insetsWithin } from "../VisualTest.utils";
+import { offBy } from "../VisualTest.utils";
 import { reloadMotion } from "./use-motion";
 
 // Runs with reduced motion off. These controls stay mounted, so Motion must animate their
@@ -166,8 +166,7 @@ async function settled(read: () => number) {
 /** The element covers the one it sits over, every edge within a pixel */
 function expectOver({ element, over }: Control) {
   if (!over) return;
-  const insets = insetsWithin(over() as Element, element() as Element);
-  expect(Math.max(...Object.values(insets).map(Math.abs))).toBeLessThanOrEqual(1);
+  expect(offBy(over() as Element, element() as Element)).toBeLessThanOrEqual(1);
 }
 
 /** What the CSS fallback leaves on the element, compared between two renders */

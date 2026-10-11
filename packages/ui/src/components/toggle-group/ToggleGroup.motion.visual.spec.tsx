@@ -3,7 +3,7 @@ import { createRef, type RefObject } from "react";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { commands, userEvent } from "vitest/browser";
 import { reloadMotion } from "../../lib/use-motion";
-import { eachPaintedFrame, insetsWithin, waitForStable } from "../../VisualTest.utils";
+import { eachPaintedFrame, insetsWithin, offBy, waitForStable } from "../../VisualTest.utils";
 import { ToggleGroup, type ToggleGroupRootProps } from "./index";
 
 // Runs with reduced motion off, so Motion drives the indicator; the CSS-path cases turn reduced
@@ -250,21 +250,20 @@ describe("ToggleGroup indicator after display:none", () => {
      * The largest distance between an edge of the indicator and the same edge of `value`'s item;
      * null while no indicator shows
      */
-    const offBy = (value: Shown["value"]) => {
+    const offItem = (value: Shown["value"]) => {
       const shown = indicator();
-      if (!shown?.checkVisibility()) return null;
-      return Math.max(...Object.values(insetsWithin(items[value], shown)).map(Math.abs));
+      return shown?.checkVisibility() ? offBy(items[value], shown) : null;
     };
     const settled = () => waitForStable(() => indicator()?.getAttribute("style") ?? null);
-    return { rerender, indicator, offBy, settled };
+    return { rerender, indicator, offItem, settled };
   }
 
   /**
    * The offsets of each painted frame with a visible indicator, for 30 frames. Asserts none is
    * more than 1px off: no growing from 0×0, or sliding from where it was before it hid.
    */
-  async function visibleOffsets(offBy: () => number | null) {
-    const offsets = (await eachPaintedFrame(offBy, 30)).filter((offset) => offset !== null);
+  async function visibleOffsets(read: () => number | null) {
+    const offsets = (await eachPaintedFrame(read, 30)).filter((offset) => offset !== null);
     expect(offsets.length).toBeGreaterThan(0);
     expect(Math.max(...offsets), JSON.stringify(offsets)).toBeLessThanOrEqual(1);
     return offsets;
@@ -293,13 +292,13 @@ describe("ToggleGroup indicator after display:none", () => {
   ] as const)(
     "shows the indicator over %s on every frame after display:none",
     async (_, value, withMotion) => {
-      const { offBy } = await reshow({ value, withMotion });
-      await visibleOffsets(() => offBy(value));
+      const { offItem } = await reshow({ value, withMotion });
+      await visibleOffsets(() => offItem(value));
     },
   );
 
   it("still slides the indicator to the next item after display:none", async () => {
-    const { indicator, offBy, rerender } = await reshow({ value: "a", withMotion: true });
+    const { indicator, offItem, rerender } = await reshow({ value: "a", withMotion: true });
     const left = () => indicator()?.getBoundingClientRect().left ?? Number.NaN;
     const start = await waitForStable(left);
 
@@ -313,7 +312,7 @@ describe("ToggleGroup indicator after display:none", () => {
       JSON.stringify(lefts),
     ).toBe(true);
     await waitForStable(left);
-    expect(offBy("b")).toBeLessThanOrEqual(1);
+    expect(offItem("b")).toBeLessThanOrEqual(1);
   });
 
   describe("and reduced motion toggled while hidden", () => {
@@ -328,7 +327,7 @@ describe("ToggleGroup indicator after display:none", () => {
     ] as const)(
       "shows the indicator over the item on every frame with reduced motion %s",
       async (_, steps) => {
-        const { indicator, offBy, rerender, settled } = await renderShown();
+        const { indicator, offItem, rerender, settled } = await renderShown();
         /** Waits until the CSS fallback or Motion has finished handing the indicator over */
         const handedOver = () =>
           waitForStable(() => {
@@ -349,7 +348,7 @@ describe("ToggleGroup indicator after display:none", () => {
         }
 
         rerender(group({ hidden: false, value: "a" }));
-        await visibleOffsets(() => offBy("a"));
+        await visibleOffsets(() => offItem("a"));
       },
     );
   });
