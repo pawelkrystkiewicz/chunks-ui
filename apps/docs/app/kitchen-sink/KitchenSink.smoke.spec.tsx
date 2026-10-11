@@ -1,25 +1,31 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, expect, it, vi } from "vitest";
+import { act, cleanup, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 // Imported as content/kitchen-sink.mdx does; the page renders nothing else
 import { KitchenSink } from "@/kitchen-sink";
 
-afterEach(() => {
-  cleanup();
-  vi.restoreAllMocks();
+let error: ReturnType<typeof vi.spyOn>;
+
+beforeEach(() => {
+  error = vi.spyOn(console, "error");
 });
 
-// React reports render errors, missing keys and bad props through console.error
-it("renders the kitchen sink and each of its tabs without a React error", () => {
-  const error = vi.spyOn(console, "error");
-  render(<KitchenSink />);
-  expect(screen.getByRole("heading", { level: 1, name: "Acme Dashboard" })).toBeTruthy();
-
-  // Only the selected tab's panel is mounted
-  for (const tab of screen.getAllByRole("tab")) {
-    fireEvent.click(tab);
-    expect(screen.getByRole("tabpanel", { name: tab.textContent ?? "" })).toBeTruthy();
+afterEach(() => {
+  // After cleanup, so errors from unmounting count too
+  cleanup();
+  try {
+    // React reports render errors, missing keys and bad props through console.error
+    expect(error).not.toHaveBeenCalled();
+  } finally {
+    // So one failure doesn't leak its calls into the next test
+    error.mockRestore();
   }
+});
 
-  expect(error).not.toHaveBeenCalled();
+it("renders the kitchen sink without a React error", async () => {
+  // Strict mode, as Next renders the docs in development
+  render(<KitchenSink />, { reactStrictMode: true });
+  // Tabs.Content keeps every panel mounted, so this one render covers all four
+  await act(async () => {});
+  expect(screen.getByRole("heading", { level: 1, name: "Acme Dashboard" })).toBeTruthy();
 });

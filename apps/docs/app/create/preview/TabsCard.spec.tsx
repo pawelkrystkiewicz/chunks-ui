@@ -1,9 +1,7 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, expect, it } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { expect, it } from "vitest";
 import { TabsCard } from "./TabsCard";
-
-afterEach(cleanup);
 
 // The spring and the panel change need layout and frames, which jsdom lacks, so the motion was
 // checked by hand in a browser on /create. These cover the panel switching.

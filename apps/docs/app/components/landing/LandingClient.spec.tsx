@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { CopyRow, HeroCopy } from "./LandingClient";
 
@@ -15,7 +15,6 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  cleanup();
   vi.useRealTimers();
 });
 

@@ -1,10 +1,8 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { afterEach, expect, it } from "vitest";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { expect, it } from "vitest";
 import { PreviewPanel } from "./PreviewPanel";
 import { DEFAULT_THEME } from "./theme-model";
-
-afterEach(cleanup);
 
 // `focus`: the role and name that receives focus on open, never the close button
 const OVERLAYS = [

@@ -1,9 +1,7 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, expect, it } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { expect, it } from "vitest";
 import { LandingPage } from "./LandingPage";
-
-afterEach(cleanup);
 
 it.each([
   ["Read the docs", "/getting-started"],

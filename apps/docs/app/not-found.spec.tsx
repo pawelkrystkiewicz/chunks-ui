@@ -1,9 +1,7 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, expect, it } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { expect, it } from "vitest";
 import NotFound from "./not-found";
-
-afterEach(cleanup);
 
 it("tells the reader the page is missing and links back into the docs", () => {
   render(<NotFound />);

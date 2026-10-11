@@ -1,10 +1,9 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, expect, it } from "vitest";
 import { CreatePage } from "./CreatePage";
 
 afterEach(() => {
-  cleanup();
   localStorage.clear();
 });
 

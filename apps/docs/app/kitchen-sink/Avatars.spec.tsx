@@ -1,14 +1,12 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import type { ReactElement } from "react";
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { TeamCard } from "../create/preview/TeamCard";
 import { ActivityFeed } from "./ActivityFeed";
 import { TEAM } from "./data";
 import { TaskTable } from "./TaskTable";
 import { TeamPanel } from "./TeamPanel";
-
-afterEach(cleanup);
 
 // Each avatar sits next to the person's visible name, so it must not name them again
 describe.each<[string, () => ReactElement]>([
