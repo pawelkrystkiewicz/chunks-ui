@@ -19,7 +19,9 @@ export type CopyButtonProps = Omit<ComponentProps<typeof IconButton>, "children"
    */
   value: string;
   /**
-   * The duration in milliseconds for how long the "copied" state is visible (defaults to 2000ms).
+   * How long, in milliseconds, `copied` stays `true`. The time starts when the clipboard write
+   * succeeds, and each new copy starts it again. A failed write does not set `copied`.
+   * @default 2000
    */
   timeout?: number;
   /**
