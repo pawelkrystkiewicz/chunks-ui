@@ -1,7 +1,13 @@
 import { render } from "@testing-library/react";
+import { StrictMode } from "react";
 import { beforeAll, describe, expect, it } from "vitest";
 import { page, userEvent } from "vitest/browser";
-import { enterMotionPath, MOTION_PATHS, waitForStable } from "../../VisualTest.utils";
+import {
+  eachPaintedFrame,
+  enterMotionPath,
+  MOTION_PATHS,
+  waitForStable,
+} from "../../VisualTest.utils";
 import { Button } from "../button";
 import { Tabs } from "./index";
 
@@ -137,6 +143,44 @@ describe("Tabs.Contents with Motion, beside the active panel", () => {
     ]);
     expect(background).toBeDefined();
     for (const rgb of beside) expect(rgb).toEqual(background);
+  });
+});
+
+describe("Tabs.Contents with Motion, under StrictMode", () => {
+  // StrictMode (Next.js turns it on in development) runs effects, cleans them up and runs them
+  // again. The re-run must jump to the default panel like the first run, not spring there from
+  // the first one. Panel A is taller, so a height springing from the tallest panel shows too.
+  it("starts at rest on a default panel other than the first", async () => {
+    await enterMotionPath(true);
+    const { getByTestId } = render(
+      <StrictMode>
+        <div style={{ padding: 40 }}>
+          <Tabs.Root defaultValue="c">
+            <Tabs.Contents data-testid="contents">
+              <Tabs.Content value="a">
+                <div className="h-40">Panel A</div>
+              </Tabs.Content>
+              <Tabs.Content value="b">Panel B</Tabs.Content>
+              <Tabs.Content value="c" data-testid="c">
+                <div className="h-10">Panel C</div>
+              </Tabs.Content>
+            </Tabs.Contents>
+          </Tabs.Root>
+        </div>
+      </StrictMode>,
+    );
+    const contents = getByTestId("contents");
+    const panel = getByTestId("c");
+    const place = () => {
+      const box = contents.getBoundingClientRect();
+      return {
+        offset: Math.round(panel.getBoundingClientRect().left - box.left),
+        height: Math.round(box.height),
+      };
+    };
+    const frames = await eachPaintedFrame(place, 20);
+    // Panel C where the container is, and the 40px of its h-10, from the first frame
+    expect(frames).toEqual(frames.map(() => ({ offset: 0, height: 40 })));
   });
 });
 

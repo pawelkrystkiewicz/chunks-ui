@@ -373,11 +373,15 @@ function TabsContents({ className, children, transition, ref, ...props }: TabsCo
     resize.current = motion.animate(container, { height }, options);
   }, [m, motion, height]);
 
-  // Stop on unmount, or Motion keeps writing to the detached elements until it settles
+  // Stop on unmount, or Motion keeps writing to the detached elements until it settles.
+  // StrictMode and <Activity> run the effects above again after this cleanup, so forget the
+  // animations too: the re-run must jump to the current state like the first run, not spring.
   useLayoutEffect(
     () => () => {
       slide.current?.stop();
       resize.current?.stop();
+      slide.current = null;
+      resize.current = null;
     },
     [],
   );
