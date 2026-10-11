@@ -1,5 +1,5 @@
 import { act, cleanup, render, screen } from "@testing-library/react";
-import type { ReactNode } from "react";
+import { type ReactNode, StrictMode } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { renderToString } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -47,7 +47,7 @@ function serverMarkup(ui: ReactNode) {
 
 async function hydrate(container: HTMLElement, ui: ReactNode) {
   await act(async () => {
-    const root = hydrateRoot(container, ui);
+    const root = hydrateRoot(container, <StrictMode>{ui}</StrictMode>);
     restore.push(() => root.unmount());
   });
 }

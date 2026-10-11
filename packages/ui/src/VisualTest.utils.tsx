@@ -81,6 +81,10 @@ export function insetsWithin(outer: Element, inner: Element): Insets {
   };
 }
 
+/** The largest distance in CSS px between an edge of `inner` and the same edge of `outer` */
+export const offBy = (outer: Element, inner: Element) =>
+  Math.max(...Object.values(insetsWithin(outer, inner)).map(Math.abs));
+
 /**
  * The two paths of a Motion-driven part with no reduced-motion preference: Motion animates it,
  * or Motion never arrives and the CSS fallback does. Pass `withMotion` to `enterMotionPath`.

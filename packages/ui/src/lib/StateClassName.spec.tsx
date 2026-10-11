@@ -500,7 +500,8 @@ const fixtures: Record<
 function ToastAdder() {
   const { add } = Toast.useToast();
   useEffect(() => {
-    add({ title: "Saved", type: "success" });
+    // A fixed id makes the add idempotent: StrictMode runs this effect twice
+    add({ id: "saved", title: "Saved", type: "success" });
   }, [add]);
   return null;
 }

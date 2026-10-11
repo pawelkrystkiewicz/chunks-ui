@@ -1,22 +1,7 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, beforeAll, expect, it } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { expect, it } from "vitest";
 import { TabsCard } from "./TabsCard";
-
-beforeAll(() => {
-  // jsdom lacks it, and useReducedMotion queries media
-  window.matchMedia ??= (media) =>
-    ({
-      matches: false,
-      media,
-      addListener() {},
-      removeListener() {},
-      addEventListener() {},
-      removeEventListener() {},
-    }) as never;
-});
-
-afterEach(cleanup);
 
 // The spring and the panel change need layout and frames, which jsdom lacks, so the motion was
 // checked by hand in a browser on /create. These cover the panel switching.

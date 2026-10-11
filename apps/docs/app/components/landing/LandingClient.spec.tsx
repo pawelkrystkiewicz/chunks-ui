@@ -1,19 +1,7 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { CopyRow, HeroCopy } from "./LandingClient";
-
-// nextra-theme-docs builds an IntersectionObserver at import time; jsdom has none
-vi.hoisted(() => {
-  globalThis.IntersectionObserver ??= class {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-    takeRecords() {
-      return [];
-    }
-  } as never;
-});
 
 const CMD = "bun add chunks-ui motion";
 const MESSAGE = "Copied to clipboard";
@@ -27,7 +15,6 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  cleanup();
   vi.useRealTimers();
 });
 
