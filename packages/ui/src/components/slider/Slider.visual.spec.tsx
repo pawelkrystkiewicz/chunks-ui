@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { userEvent } from "vitest/browser";
-import { renderFixture, SMALL_FEATURE_SCREENSHOT } from "../../VisualTest.utils";
+import { renderFixture } from "../../VisualTest.utils";
 import { Slider } from "./index";
 
 describe("Slider", () => {
@@ -17,7 +17,7 @@ describe("Slider", () => {
         </Slider.Root>
       </div>,
     );
-    await expect(fixture).toMatchScreenshot(SMALL_FEATURE_SCREENSHOT);
+    await expect(fixture).toMatchScreenshot();
   });
 
   it("range", async () => {
@@ -34,7 +34,7 @@ describe("Slider", () => {
         </Slider.Root>
       </div>,
     );
-    await expect(fixture).toMatchScreenshot(SMALL_FEATURE_SCREENSHOT);
+    await expect(fixture).toMatchScreenshot();
   });
 
   it("disabled", async () => {
@@ -50,7 +50,7 @@ describe("Slider", () => {
         </Slider.Root>
       </div>,
     );
-    await expect(fixture).toMatchScreenshot(SMALL_FEATURE_SCREENSHOT);
+    await expect(fixture).toMatchScreenshot();
   });
 
   // Keyboard focus lands on the visually hidden range input inside the thumb, so the thumb

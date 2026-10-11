@@ -1,13 +1,7 @@
 import { DirectionProvider } from "@base-ui/react/direction-provider";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { commands, userEvent } from "vitest/browser";
-import {
-  expectDimmed,
-  insetsWithin,
-  renderFixture,
-  SMALL_FEATURE_SCREENSHOT,
-  waitForStable,
-} from "../../VisualTest.utils";
+import { expectDimmed, insetsWithin, renderFixture, waitForStable } from "../../VisualTest.utils";
 import { Tabs } from "./index";
 
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
@@ -46,7 +40,7 @@ describe("Tabs", () => {
         </Tabs.Contents>
       </Tabs.Root>,
     );
-    await expect(fixture).toMatchScreenshot(SMALL_FEATURE_SCREENSHOT);
+    await expect(fixture).toMatchScreenshot();
   });
 
   it("vertical", async () => {
@@ -67,7 +61,7 @@ describe("Tabs", () => {
         </Tabs.Contents>
       </Tabs.Root>,
     );
-    await expect(fixture).toMatchScreenshot(SMALL_FEATURE_SCREENSHOT);
+    await expect(fixture).toMatchScreenshot();
   });
 
   // Runs with reduced motion, so the indicator renders the CSS fallback without a transition

@@ -1,7 +1,7 @@
 import { render } from "@testing-library/react";
 import { afterAll, describe, it } from "vitest";
 import { commands } from "vitest/browser";
-import { pauseAnimations, renderFixture, SMALL_FEATURE_SCREENSHOT } from "../../VisualTest.utils";
+import { pauseAnimations, renderFixture } from "../../VisualTest.utils";
 import { Progress } from "./index";
 
 describe("Progress", () => {
@@ -13,7 +13,7 @@ describe("Progress", () => {
         </Progress.Track>
       </Progress.Root>,
     );
-    await expect(fixture).toMatchScreenshot(SMALL_FEATURE_SCREENSHOT);
+    await expect(fixture).toMatchScreenshot();
   });
 
   it("indeterminate", async () => {
@@ -25,7 +25,7 @@ describe("Progress", () => {
       </Progress.Root>,
     );
     pauseAnimations();
-    await expect(fixture).toMatchScreenshot(SMALL_FEATURE_SCREENSHOT);
+    await expect(fixture).toMatchScreenshot();
   });
 });
 

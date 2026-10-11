@@ -50,6 +50,10 @@ export default defineConfig({
           comparatorOptions: {
             // Pinned image renders repeat byte for byte, so no pixel may differ.
             allowedMismatchedPixelRatio: 0,
+            // Pixelmatch's default 0.1 misses a --border line (oklch 0.922) removed from white.
+            // 0.02 still ignores a shift of about 5 grey levels; not 0, to absorb rounding noise
+            // between Chromium builds and emulated vs native amd64 runs
+            threshold: 0.02,
           },
         },
       },

@@ -2,7 +2,7 @@ import { render } from "@testing-library/react";
 import { cancelFrame, frame } from "motion/react";
 import type { ReactNode } from "react";
 import { afterAll, beforeAll, beforeEach, describe, expect } from "vitest";
-import { commands, page, type ScreenshotMatcherOptions } from "vitest/browser";
+import { commands, page } from "vitest/browser";
 import { reloadMotion } from "./lib/use-motion";
 
 /** Renders children in a padded fixture wrapper. Returns the wrapper element for screenshotting. */
@@ -18,15 +18,6 @@ export async function renderFixture(children: ReactNode) {
   await document.fonts.ready;
   return { ...result, fixture: result.getByTestId("fixture") };
 }
-
-/**
- * `toMatchScreenshot` options for small or faint features: 0.02 per-pixel colour threshold instead
- * of the default 0.1. The config's zero mismatch ratio still applies.
- */
-export const SMALL_FEATURE_SCREENSHOT = {
-  comparatorName: "pixelmatch",
-  comparatorOptions: { threshold: 0.02 },
-} satisfies ScreenshotMatcherOptions<"pixelmatch">;
 
 /** For portal-based components (Dialog, Drawer, Tooltip, etc.) that render fixed-position content. */
 export async function renderPage(children: ReactNode) {
