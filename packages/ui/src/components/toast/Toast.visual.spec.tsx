@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { type ComponentPropsWithoutRef, useEffect, useRef } from "react";
 import { afterAll, beforeAll, describe, expect, it, onTestFinished } from "vitest";
 import { commands, page } from "vitest/browser";
+import { SMALL_FEATURE_SCREENSHOT } from "../../VisualTest.utils";
 import { Toast } from "./index";
 
 function AddToast({
@@ -48,7 +49,8 @@ describe("Toast", () => {
       </Toast.Provider>,
     );
     await screen.findByRole("button", { name: "Retry now" });
-    await expect(page.elementLocator(document.body)).toMatchScreenshot();
+    // The action's faint border is all that shows its width
+    await expect(page.elementLocator(document.body)).toMatchScreenshot(SMALL_FEATURE_SCREENSHOT);
   });
 });
 
