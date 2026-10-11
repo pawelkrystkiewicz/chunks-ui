@@ -1,29 +1,8 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { afterEach, beforeAll, expect, it } from "vitest";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { expect, it } from "vitest";
 import { PreviewPanel } from "./PreviewPanel";
 import { DEFAULT_THEME } from "./theme-model";
-
-beforeAll(() => {
-  // jsdom lacks both: ToggleGroup measures its items, useReducedMotion queries media.
-  // Motion below 12.20.4 subscribes with the deprecated addListener.
-  globalThis.ResizeObserver ??= class {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  };
-  window.matchMedia ??= (media) =>
-    ({
-      matches: false,
-      media,
-      addListener() {},
-      removeListener() {},
-      addEventListener() {},
-      removeEventListener() {},
-    }) as never;
-});
-
-afterEach(cleanup);
 
 // `focus`: the role and name that receives focus on open, never the close button
 const OVERLAYS = [

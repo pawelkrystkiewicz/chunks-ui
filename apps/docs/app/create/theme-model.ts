@@ -47,9 +47,11 @@ export const FONTS_HREF = `https://fonts.googleapis.com/css2?${FONTS.filter(
   .map((f) => `family=${f.name.replaceAll(" ", "+")}:wght@400;500;600;700`)
   .join("&")}&display=swap`;
 
+const BLUE: Oklch = { l: 0.56, c: 0.2165, h: 257.21 };
+
 /** Each one keeps 4.5:1 with its `primary-foreground`. Red sits at 0.605 so dark text reaches it. */
 export const PRIMARIES: (Oklch & { name: string })[] = [
-  { name: "Blue", l: 0.56, c: 0.2165, h: 257.21 },
+  { name: "Blue", ...BLUE },
   { name: "Violet", l: 0.58, c: 0.22, h: 293 },
   { name: "Pink", l: 0.63, c: 0.22, h: 354 },
   { name: "Red", l: 0.605, c: 0.22, h: 25 },
@@ -73,7 +75,7 @@ const baseOf = (id: BaseId) =>
   BASES.find((b) => b.id === id) ?? (BASES[0] as (typeof BASES)[number]);
 
 export const DEFAULT_THEME: Theme = {
-  primary: { l: 0.56, c: 0.2165, h: 257.21 },
+  primary: { ...BLUE },
   base: "neutral",
   mode: "light",
   fontHeading: "Outfit",
@@ -239,6 +241,7 @@ const FILLS = {
   destructive: { l: 0.582, c: 0.2249, h: 25.88 },
 } satisfies Record<string, Oklch>;
 
+/** For the default theme, matches every colour token in `chunks-ui/theme.css` (the spec checks it). */
 export function palette(t: Theme, mode: Mode): Record<string, string> {
   const b = baseOf(t.base);
   const n = (l: number, k = 1) => ok(l, b.c * k, b.h);
@@ -273,7 +276,7 @@ export function palette(t: Theme, mode: Mode): Record<string, string> {
     accent: d ? n(0.269) : n(0.97),
     "accent-foreground": d ? n(0.985) : n(0.205),
     border: d ? n(0.269) : n(0.922),
-    input: d ? n(0.3) : n(0.922),
+    input: d ? n(0.269) : n(0.922),
     ring: d ? n(0.556) : n(0.62),
   };
   chartList(t, mode).forEach((v, i) => {
@@ -405,6 +408,12 @@ export function shuffle(): Omit<Theme, "mode" | "fontSize"> {
 
 const STORE_KEY = "chunks-create-theme-v1";
 
+/**
+ * Blue before #214 deepened it. A theme stored with exactly it loads with today's Blue.
+ * Matched exactly: the hue slider still builds `l: 0.6048` with integer hues, which must stay.
+ */
+const OLD_BLUE: Oklch = { l: 0.6048, c: 0.2165, h: 257.21 };
+
 export const ENUMS = {
   mode: ["light", "dark"] as const,
   shadow: ["none", "subtle", "lifted"] as const,
@@ -431,7 +440,10 @@ export function loadTheme(): Theme | null {
     const out: Record<string, unknown> = { ...DEFAULT_THEME };
     const p = s.primary;
     if (p && ["l", "c", "h"].every((n) => Number.isFinite(p[n]))) {
-      out.primary = { l: p.l, c: p.c, h: p.h };
+      out.primary =
+        p.l === OLD_BLUE.l && p.c === OLD_BLUE.c && p.h === OLD_BLUE.h
+          ? { ...BLUE }
+          : { l: p.l, c: p.c, h: p.h };
     }
     for (const [k, allowed] of Object.entries(ENUMS)) {
       if ((allowed as readonly string[]).includes(s[k])) out[k] = s[k];

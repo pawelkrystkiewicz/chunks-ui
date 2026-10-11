@@ -3,6 +3,7 @@
   "include": ["."],
   "exclude": [
     "dist",
+    "scripts",
     "node_modules",
     "*.config.ts",
     "vitest.setup.ts",

@@ -1,15 +1,14 @@
 import { DirectionProvider } from "@base-ui/react/direction-provider";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { commands, userEvent } from "vitest/browser";
-import { expectDimmed, insetsWithin, renderFixture, waitForStable } from "../../VisualTest.utils";
+import { expectDimmed, offBy, renderFixture, waitForStable } from "../../VisualTest.utils";
 import { Tabs } from "./index";
 
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
 const activeTab = () => document.querySelector('[role="tab"][aria-selected="true"]') as Element;
 const indicator = () => document.querySelector('[data-testid="indicator"]') as Element;
 /** The largest distance between an edge of the indicator and the same edge of the active tab */
-const offset = () =>
-  Math.max(...Object.values(insetsWithin(activeTab(), indicator())).map(Math.abs));
+const offset = () => offBy(activeTab(), indicator());
 
 /** Waits for the indicator to come to rest, then checks it covers the active tab within 1px */
 async function expectIndicatorOverActiveTab() {

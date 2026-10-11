@@ -3,7 +3,7 @@ import { createRef, useEffect } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { commands, page } from "vitest/browser";
 import { reloadMotion } from "../../lib/use-motion";
-import { eachPaintedFrame, insetsWithin, waitForStable } from "../../VisualTest.utils";
+import { eachPaintedFrame, offBy, waitForStable } from "../../VisualTest.utils";
 import { Tabs, type TabsContentsProps } from "./index";
 
 // Runs with reduced motion off, so Tabs.Contents slides and resizes with Motion
@@ -414,10 +414,6 @@ describe("Tabs.Indicator with Motion", () => {
       </Tabs.Root>
     </div>
   );
-
-  /** The largest distance between an edge of the indicator and the same edge of the tab */
-  const offBy = (tab: Element, indicator: Element) =>
-    Math.max(...Object.values(insetsWithin(tab, indicator)).map(Math.abs));
 
   /** Renders tab "a", hides the tabs, selects `value`, then shows them again */
   async function reshow(value: Shown["value"]) {
