@@ -1,21 +1,8 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ComponentType } from "react";
-import { afterEach, beforeAll, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { ComboboxBasicDemo, ComboboxGroupedDemo, ComboboxMultiDemo } from "./combobox-demos";
-
-beforeAll(() => {
-  // jsdom has no matchMedia; useReducedMotion queries it. Motion below 12.20.4 uses addListener.
-  window.matchMedia ??= (media) =>
-    ({
-      matches: false,
-      media,
-      addListener() {},
-      removeListener() {},
-      addEventListener() {},
-      removeEventListener() {},
-    }) as never;
-});
 
 afterEach(cleanup);
 

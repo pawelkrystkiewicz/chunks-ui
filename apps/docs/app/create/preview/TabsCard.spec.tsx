@@ -1,20 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, beforeAll, expect, it } from "vitest";
+import { afterEach, expect, it } from "vitest";
 import { TabsCard } from "./TabsCard";
-
-beforeAll(() => {
-  // jsdom lacks it, and useReducedMotion queries media
-  window.matchMedia ??= (media) =>
-    ({
-      matches: false,
-      media,
-      addListener() {},
-      removeListener() {},
-      addEventListener() {},
-      removeEventListener() {},
-    }) as never;
-});
 
 afterEach(cleanup);
 

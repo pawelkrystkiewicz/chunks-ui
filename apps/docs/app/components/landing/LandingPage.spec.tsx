@@ -1,29 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, expect, it } from "vitest";
 import { LandingPage } from "./LandingPage";
-
-// jsdom lacks these. nextra-theme-docs builds an IntersectionObserver at import time, and
-// useReducedMotion queries media; Motion below 12.20.4 subscribes with the deprecated addListener.
-vi.hoisted(() => {
-  globalThis.IntersectionObserver ??= class {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-    takeRecords() {
-      return [];
-    }
-  } as never;
-  window.matchMedia ??= (media) =>
-    ({
-      matches: false,
-      media,
-      addListener() {},
-      removeListener() {},
-      addEventListener() {},
-      removeEventListener() {},
-    }) as never;
-});
 
 afterEach(cleanup);
 

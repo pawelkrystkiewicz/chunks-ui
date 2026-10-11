@@ -1,19 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, expect, it } from "vitest";
 import NotFound from "./not-found";
-
-// nextra-theme-docs builds an IntersectionObserver at import time; jsdom has none
-vi.hoisted(() => {
-  globalThis.IntersectionObserver ??= class {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-    takeRecords() {
-      return [];
-    }
-  } as never;
-});
 
 afterEach(cleanup);
 

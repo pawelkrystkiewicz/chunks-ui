@@ -1,26 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, beforeAll, expect, it } from "vitest";
+import { afterEach, expect, it } from "vitest";
 import { CreatePage } from "./CreatePage";
-
-beforeAll(() => {
-  // jsdom lacks both: ToggleGroup measures its items, useReducedMotion queries media.
-  // Motion below 12.20.4 subscribes with the deprecated addListener.
-  globalThis.ResizeObserver ??= class {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  };
-  window.matchMedia ??= (media) =>
-    ({
-      matches: false,
-      media,
-      addListener() {},
-      removeListener() {},
-      addEventListener() {},
-      removeEventListener() {},
-    }) as never;
-});
 
 afterEach(() => {
   cleanup();
