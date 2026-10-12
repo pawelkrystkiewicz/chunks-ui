@@ -1,4 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { commands, page, userEvent } from "vitest/browser";
 import { ELEMENT_COLOR, ELEMENT_VARIANTS } from "../../types";
 import { pauseAnimations, renderFixture } from "../../VisualTest.utils";
 import { Button } from "./index";
@@ -64,5 +66,73 @@ describe("Button", () => {
     );
     pauseAnimations();
     await expect(fixture).toMatchScreenshot();
+  });
+});
+
+// Keyboard focus shows the ring. The default colour only: the ring is `--ring` in every colour,
+// and the variant decides what borders the gap between the ring and the button
+describe("Button focus-visible", () => {
+  for (const mode of ["light", "dark"] as const) {
+    for (const variant of variants) {
+      it(`[${mode}] [${variant}]`, async () => {
+        await renderFixture(
+          <div
+            data-testid="mode"
+            className={mode === "dark" ? "dark bg-background p-4" : "bg-background p-4"}
+          >
+            <Button variant={variant}>Focused</Button>
+          </div>,
+        );
+        await userEvent.tab();
+        const button = screen.getByRole("button");
+        expect(button.matches(":focus-visible")).toBe(true);
+        await expect(page.getByTestId("mode")).toMatchScreenshot();
+      });
+    }
+  }
+});
+
+/** `--ring` as the browser computes it for an outline colour */
+function ringColor() {
+  const probe = document.createElement("span");
+  probe.style.outlineColor = "var(--ring)";
+  document.body.append(probe);
+  const color = getComputedStyle(probe).outlineColor;
+  probe.remove();
+  return color;
+}
+
+describe("Button focus ring with no reduced-motion preference", () => {
+  beforeAll(() => commands.emulateMedia({ reducedMotion: "no-preference" }));
+  afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
+
+  it.each(variants)(
+    "has the ring colour from the moment it takes keyboard focus (%s)",
+    async (variant) => {
+      render(
+        <>
+          <button type="button">Before</button>
+          <Button variant={variant}>Target</Button>
+        </>,
+      );
+      await userEvent.tab();
+      const target = screen.getByRole("button", { name: "Target" });
+      // Focus moves on from a keyboard-focused element, so the target matches :focus-visible.
+      // Moved in the page, so the style below is read in the same task: a transition would
+      // still be at its start.
+      target.focus();
+      expect(target.matches(":focus-visible")).toBe(true);
+      expect(getComputedStyle(target).outlineColor).toBe(ringColor());
+    },
+  );
+
+  // The ring is left out, not the rest: hover and press still transition
+  it("still fades its colours and scales when pressed", () => {
+    render(<Button>Target</Button>);
+    const properties = getComputedStyle(screen.getByRole("button")).transitionProperty.split(", ");
+    expect(properties).toEqual(
+      expect.arrayContaining(["color", "background-color", "border-color", "scale"]),
+    );
+    expect(properties.filter((p) => p === "all" || p.startsWith("outline"))).toEqual([]);
   });
 });
