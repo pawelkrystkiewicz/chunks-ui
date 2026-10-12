@@ -108,10 +108,43 @@ Put long content in a `Dialog.Body` between the Title and the actions. The popup
 
 <DialogLongContentExample />
 
-- `Dialog.Body` must be a direct child of `Dialog.Popup`. With a Body, the popup is a flex column.
+- Use `Dialog.Body` only when the content can overflow. A short Body is still a tab stop, and it takes the initial focus from the first action.
+- `Dialog.Body` must be a direct child of `Dialog.Popup`. Wrapping the Body in a `<form>` or a `<div>` loses the layout: the popup scrolls as a whole again, the actions are not pinned and the Body does not scroll. For a form, see below.
+- With a Body, the popup is a flex column. Bare inline children, such as a lone `Dialog.Close` button, stretch to the full width, and the margins between children do not collapse. Wrap the actions in a block, as in the example.
+- The Body has a 0.25rem gutter (`-m-1 p-1`), so the focus rings of full-width fields are not clipped at its edges. The content does not move. A margin class on the Body, such as `mt-4`, replaces the negative margin on that side and adds the 0.25rem of padding.
 - The Body is a tab stop, so the keyboard can scroll it (arrow keys, Page Up and Page Down, Home and End). It is a region that the Title names.
-- When nothing tabbable comes before the Body, the Body gets the focus when the dialog opens. The dialog opens at the top of the content, and a screen reader reads the Body's name. The Body shows a focus ring when the dialog was opened with the keyboard.
+- When nothing tabbable comes before the Body, the Body gets the focus when the dialog opens with a keyboard or a mouse. The dialog opens at the top of the content, and a screen reader reads the Body's name. On touch, Base UI focuses the popup itself. The Body shows a focus ring when the dialog was opened with the keyboard.
 - For a form in the Body, pass `initialFocus` on `Dialog.Popup` a ref to the first field.
+
+### Form in a Body
+
+Put the `<form>` inside the Body, and let the submit button in the actions point at it with the `form` attribute:
+
+```tsx
+<Dialog.Root>
+  <Dialog.Trigger>New task</Dialog.Trigger>
+  <Dialog.Portal>
+    <Dialog.Backdrop />
+    <Dialog.Popup>
+      <Dialog.Title>New task</Dialog.Title>
+      <Dialog.Body className="mt-4">
+        <form id="new-task" className="space-y-3" onSubmit={(e) => e.preventDefault()}>
+          <Input aria-label="Title" placeholder="Title" />
+          <Textarea aria-label="Notes" placeholder="Notes" />
+        </form>
+      </Dialog.Body>
+      <div className="mt-4 flex justify-end gap-2">
+        <Dialog.Close render={<Button variant="outlined" color="secondary" />}>
+          Cancel
+        </Dialog.Close>
+        <Button type="submit" form="new-task">
+          Create
+        </Button>
+      </div>
+    </Dialog.Popup>
+  </Dialog.Portal>
+</Dialog.Root>
+```
 
 Without a Body, content taller than the popup makes the whole popup scroll. Base UI focuses the first tabbable element and scrolls to it, so a dialog with its actions only at the bottom opens at the bottom. Pass `initialFocus` a ref to a top element, such as the Close button or the Title with `tabIndex={-1}`, to open at the top.
 
