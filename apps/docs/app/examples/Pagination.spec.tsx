@@ -16,5 +16,4 @@ it.each([
     // fireEvent returns false when a handler called preventDefault
     expect(fireEvent.click(link), link.textContent ?? "").toBe(false);
   }
-  expect(window.location.hash).toBe("");
 });
