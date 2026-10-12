@@ -116,7 +116,7 @@ function toIsoDate(date: Date): string {
   return `${pad(date.getFullYear(), 4)}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
-export const DEFAULT_DATE_PICKER_LABELS: DatePickerLabels = {
+export const DEFAULT_DATE_PICKER_LABELS: Readonly<DatePickerLabels> = {
   ...DEFAULT_CALENDAR_LABELS,
   placeholder: "Pick a date",
   selectedDate: (date) =>

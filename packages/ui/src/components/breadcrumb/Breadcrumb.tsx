@@ -31,7 +31,7 @@ export type BreadcrumbLabels = {
   ellipsis: string;
 };
 
-export const DEFAULT_BREADCRUMB_LABELS: BreadcrumbLabels = {
+export const DEFAULT_BREADCRUMB_LABELS: Readonly<BreadcrumbLabels> = {
   root: "Breadcrumb",
   ellipsis: "More",
 };

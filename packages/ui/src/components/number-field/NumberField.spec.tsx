@@ -2,8 +2,8 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import * as React from "react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { DEFAULT_NUMBER_FIELD_LABELS, NumberField } from "./NumberField";
+import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from "vitest";
+import { DEFAULT_NUMBER_FIELD_LABELS, NumberField, type NumberFieldLabels } from "./NumberField";
 
 afterEach(cleanup);
 
@@ -210,6 +210,10 @@ describe("NumberField", () => {
 });
 
 describe("NumberField labels", () => {
+  it("types DEFAULT_NUMBER_FIELD_LABELS as read-only", () => {
+    expectTypeOf(DEFAULT_NUMBER_FIELD_LABELS).toEqualTypeOf<Readonly<NumberFieldLabels>>();
+  });
+
   function UnnamedNumberField(props: Partial<React.ComponentProps<typeof NumberField.Root>> = {}) {
     return (
       <NumberField.Root defaultValue={0} {...props}>

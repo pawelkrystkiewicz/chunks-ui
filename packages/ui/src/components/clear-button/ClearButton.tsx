@@ -11,7 +11,7 @@ export type ClearButtonLabels = {
   clear: string;
 };
 
-export const DEFAULT_CLEAR_BUTTON_LABELS: ClearButtonLabels = { clear: "Clear" };
+export const DEFAULT_CLEAR_BUTTON_LABELS: Readonly<ClearButtonLabels> = { clear: "Clear" };
 
 export type ClearButtonProps = ComponentProps<"button"> & {
   /**

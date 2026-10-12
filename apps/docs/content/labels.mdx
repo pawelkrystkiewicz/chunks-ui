@@ -42,7 +42,7 @@ export const PL_COMBOBOX: Partial<ComboboxLabels> = {
 };
 ```
 
-Each component exports the type of its labels as `<Component>Labels` (`ComboboxLabels`) and the English defaults as `DEFAULT_<COMPONENT>_LABELS` (`DEFAULT_COMBOBOX_LABELS`).
+Each component exports the type of its labels as `<Component>Labels` (`ComboboxLabels`) and the English defaults as `DEFAULT_<COMPONENT>_LABELS` (`DEFAULT_COMBOBOX_LABELS`). The defaults are typed read-only: change the text with `labels`, not by writing to the defaults.
 
 ## What takes precedence
 

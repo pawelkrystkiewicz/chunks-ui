@@ -1,8 +1,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
-import { afterEach, describe, expect, it } from "vitest";
-import { createToastManager, DEFAULT_TOAST_LABELS, Toast } from "./Toast";
+import { afterEach, describe, expect, expectTypeOf, it } from "vitest";
+import { createToastManager, DEFAULT_TOAST_LABELS, Toast, type ToastLabels } from "./Toast";
 
 afterEach(cleanup);
 
@@ -345,6 +345,10 @@ describe("Toast", () => {
 });
 
 describe("Toast labels", () => {
+  it("types DEFAULT_TOAST_LABELS as read-only", () => {
+    expectTypeOf(DEFAULT_TOAST_LABELS).toEqualTypeOf<Readonly<ToastLabels>>();
+  });
+
   function DismissibleHarness() {
     const toast = Toast.useToast();
     return (

@@ -29,7 +29,7 @@ export type ComboboxLabels = {
   chipRemove: string;
 };
 
-export const DEFAULT_COMBOBOX_LABELS: ComboboxLabels = {
+export const DEFAULT_COMBOBOX_LABELS: Readonly<ComboboxLabels> = {
   trigger: "Show options",
   clear: "Clear selection",
   chipRemove: "Remove",

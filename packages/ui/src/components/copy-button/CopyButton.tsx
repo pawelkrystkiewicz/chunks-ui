@@ -27,7 +27,7 @@ export type CopyButtonLabels = {
   copied: string;
 };
 
-export const DEFAULT_COPY_BUTTON_LABELS: CopyButtonLabels = {
+export const DEFAULT_COPY_BUTTON_LABELS: Readonly<CopyButtonLabels> = {
   copy: "Copy to clipboard",
   copied: "Copied",
 };

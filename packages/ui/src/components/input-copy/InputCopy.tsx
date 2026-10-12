@@ -7,7 +7,9 @@ import { Input } from "../input";
 /** The built-in English strings of `InputCopy`: the names of its copy button. */
 export type InputCopyLabels = CopyButtonLabels;
 
-export const DEFAULT_INPUT_COPY_LABELS: InputCopyLabels = DEFAULT_COPY_BUTTON_LABELS;
+export const DEFAULT_INPUT_COPY_LABELS: Readonly<InputCopyLabels> = {
+  ...DEFAULT_COPY_BUTTON_LABELS,
+};
 
 export type InputCopyProps = Omit<
   ComponentProps<typeof Input>,

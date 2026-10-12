@@ -27,7 +27,7 @@ export type NumberFieldLabels = {
   roleDescription: string;
 };
 
-export const DEFAULT_NUMBER_FIELD_LABELS: NumberFieldLabels = {
+export const DEFAULT_NUMBER_FIELD_LABELS: Readonly<NumberFieldLabels> = {
   increment: "Increase",
   decrement: "Decrease",
   roleDescription: "Number field",

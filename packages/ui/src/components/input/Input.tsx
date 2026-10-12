@@ -15,7 +15,7 @@ export type InputLabels = {
   clear: string;
 };
 
-export const DEFAULT_INPUT_LABELS: InputLabels = { clear: "Clear" };
+export const DEFAULT_INPUT_LABELS: Readonly<InputLabels> = { clear: "Clear" };
 
 export type InputProps = ComponentProps<typeof BaseInput> &
   VariantProps<typeof inputVariants> & {

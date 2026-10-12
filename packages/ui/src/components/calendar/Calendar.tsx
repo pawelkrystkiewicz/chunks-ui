@@ -89,7 +89,7 @@ export type CalendarLabels = {
   day: (date: Date) => string;
 };
 
-export const DEFAULT_CALENDAR_LABELS: CalendarLabels = {
+export const DEFAULT_CALENDAR_LABELS: Readonly<CalendarLabels> = {
   previousMonth: "Previous month",
   nextMonth: "Next month",
   heading: (date) => `${MONTH_NAMES[date.getMonth()]} ${date.getFullYear()}`,

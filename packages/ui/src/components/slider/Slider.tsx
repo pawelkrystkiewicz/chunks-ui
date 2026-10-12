@@ -23,7 +23,7 @@ export type SliderLabels = {
   rangeEnd: (value: string) => string;
 };
 
-export const DEFAULT_SLIDER_LABELS: SliderLabels = {
+export const DEFAULT_SLIDER_LABELS: Readonly<SliderLabels> = {
   rangeStart: (value) => `${value} start range`,
   rangeEnd: (value) => `${value} end range`,
 };

@@ -1,7 +1,12 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { axe } from "jest-axe";
-import { afterEach, describe, expect, it } from "vitest";
-import { DEFAULT_PAGINATION_LABELS, Pagination, type PaginationRootProps } from "./Pagination";
+import { afterEach, describe, expect, expectTypeOf, it } from "vitest";
+import {
+  DEFAULT_PAGINATION_LABELS,
+  Pagination,
+  type PaginationLabels,
+  type PaginationRootProps,
+} from "./Pagination";
 
 afterEach(cleanup);
 
@@ -125,6 +130,10 @@ describe("Pagination", () => {
 });
 
 describe("Pagination labels", () => {
+  it("types DEFAULT_PAGINATION_LABELS as read-only", () => {
+    expectTypeOf(DEFAULT_PAGINATION_LABELS).toEqualTypeOf<Readonly<PaginationLabels>>();
+  });
+
   function LabelledPagination(props: PaginationRootProps) {
     return (
       <Pagination.Root {...props}>

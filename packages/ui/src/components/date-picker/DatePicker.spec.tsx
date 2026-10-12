@@ -3,10 +3,10 @@ import { cleanup, isInaccessible, render, screen, waitFor, within } from "@testi
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { createRef } from "react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 import { createDate } from "../calendar/Calendar";
 import { Field } from "../field";
-import { DatePicker, DEFAULT_DATE_PICKER_LABELS } from "./DatePicker";
+import { DatePicker, type DatePickerLabels, DEFAULT_DATE_PICKER_LABELS } from "./DatePicker";
 
 const MARCH_15_LABEL = "Sunday, March 15, 2026";
 
@@ -611,6 +611,10 @@ describe("DatePicker keyboard", () => {
 });
 
 describe("DatePicker labels", () => {
+  it("types DEFAULT_DATE_PICKER_LABELS as read-only", () => {
+    expectTypeOf(DEFAULT_DATE_PICKER_LABELS).toEqualTypeOf<Readonly<DatePickerLabels>>();
+  });
+
   it("uses DEFAULT_DATE_PICKER_LABELS", () => {
     const { rerender } = render(<DatePicker />);
     const { placeholder, selectedDate } = DEFAULT_DATE_PICKER_LABELS;

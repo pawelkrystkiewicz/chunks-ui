@@ -1,9 +1,10 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { axe } from "jest-axe";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 import {
   DEFAULT_SLIDER_LABELS,
   Slider,
+  type SliderLabels,
   type SliderRootProps,
   type SliderThumbProps,
 } from "./Slider";
@@ -100,6 +101,10 @@ describe("Slider", () => {
 });
 
 describe("Slider labels", () => {
+  it("types DEFAULT_SLIDER_LABELS as read-only", () => {
+    expectTypeOf(DEFAULT_SLIDER_LABELS).toEqualTypeOf<Readonly<SliderLabels>>();
+  });
+
   function RangeSlider({
     thumbProps,
     ...props

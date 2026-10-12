@@ -341,6 +341,10 @@ describe("Combobox icon buttons", () => {
     );
   }
 
+  it("types DEFAULT_COMBOBOX_LABELS as read-only", () => {
+    expectTypeOf(DEFAULT_COMBOBOX_LABELS).toEqualTypeOf<Readonly<ComboboxLabels>>();
+  });
+
   it("names the default Trigger, Clear and ChipRemove", () => {
     render(<MultiSelect />);
     expect(screen.getByRole("button", { name: "Show options" })).toBeInTheDocument();

@@ -14,7 +14,7 @@ export type ChipLabels = {
   remove: string;
 };
 
-export const DEFAULT_CHIP_LABELS: ChipLabels = { remove: "Remove" };
+export const DEFAULT_CHIP_LABELS: Readonly<ChipLabels> = { remove: "Remove" };
 
 export type ChipProps = ComponentProps<"span"> &
   Omit<VariantProps<typeof chipVariants>, "color" | "variant"> & {

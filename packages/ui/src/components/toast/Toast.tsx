@@ -87,7 +87,7 @@ export type ToastLabels = {
   close: string;
 };
 
-export const DEFAULT_TOAST_LABELS: ToastLabels = {
+export const DEFAULT_TOAST_LABELS: Readonly<ToastLabels> = {
   viewport: "Notifications",
   close: "Close",
 };

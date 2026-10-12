@@ -20,7 +20,7 @@ export type ThemeToggleLabels = {
   switchToLight: string;
 };
 
-export const DEFAULT_THEME_TOGGLE_LABELS: ThemeToggleLabels = {
+export const DEFAULT_THEME_TOGGLE_LABELS: Readonly<ThemeToggleLabels> = {
   switchToDark: "Switch to dark mode",
   switchToLight: "Switch to light mode",
 };

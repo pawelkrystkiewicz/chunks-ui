@@ -1,8 +1,8 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
-import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { CopyButton, DEFAULT_COPY_BUTTON_LABELS } from "./CopyButton";
+import { afterEach, beforeAll, describe, expect, expectTypeOf, it, vi } from "vitest";
+import { CopyButton, type CopyButtonLabels, DEFAULT_COPY_BUTTON_LABELS } from "./CopyButton";
 
 beforeAll(() => {
   Object.defineProperty(navigator, "clipboard", {
@@ -80,6 +80,10 @@ describe("CopyButton", () => {
 });
 
 describe("CopyButton labels", () => {
+  it("types DEFAULT_COPY_BUTTON_LABELS as read-only", () => {
+    expectTypeOf(DEFAULT_COPY_BUTTON_LABELS).toEqualTypeOf<Readonly<CopyButtonLabels>>();
+  });
+
   it("is named by DEFAULT_COPY_BUTTON_LABELS before and after a copy", async () => {
     const user = userEvent.setup();
     render(<CopyButton value="test" />);

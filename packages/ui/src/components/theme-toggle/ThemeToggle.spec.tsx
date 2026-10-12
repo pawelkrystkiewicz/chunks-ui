@@ -2,9 +2,9 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { createRef } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 import { Tooltip } from "../tooltip";
-import { DEFAULT_THEME_TOGGLE_LABELS, ThemeToggle } from "./ThemeToggle";
+import { DEFAULT_THEME_TOGGLE_LABELS, ThemeToggle, type ThemeToggleLabels } from "./ThemeToggle";
 
 afterEach(cleanup);
 
@@ -137,6 +137,10 @@ describe("ThemeToggle", () => {
 });
 
 describe("ThemeToggle labels", () => {
+  it("types DEFAULT_THEME_TOGGLE_LABELS as read-only", () => {
+    expectTypeOf(DEFAULT_THEME_TOGGLE_LABELS).toEqualTypeOf<Readonly<ThemeToggleLabels>>();
+  });
+
   it("uses DEFAULT_THEME_TOGGLE_LABELS", () => {
     const { rerender } = render(<ThemeToggle theme="light" />);
     const { switchToDark, switchToLight } = DEFAULT_THEME_TOGGLE_LABELS;

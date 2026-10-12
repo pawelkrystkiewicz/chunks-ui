@@ -41,7 +41,7 @@ export type PaginationLabels = {
   ellipsis: string;
 };
 
-export const DEFAULT_PAGINATION_LABELS: PaginationLabels = {
+export const DEFAULT_PAGINATION_LABELS: Readonly<PaginationLabels> = {
   root: "pagination",
   previous: "Previous",
   next: "Next",
