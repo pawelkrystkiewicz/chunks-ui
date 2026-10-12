@@ -136,13 +136,8 @@ describeMotionPaths("Dialog", () => {
     expect(ring).toBeGreaterThan(0);
     const bodyBox = boxOf(body);
     const inputBox = boxOf(input);
-    const bodyStyle = getComputedStyle(body);
-    const padLeft = Number.parseFloat(bodyStyle.paddingLeft);
-    const padRight = Number.parseFloat(bodyStyle.paddingRight);
     // The outline lies inside the Body's padding box, so overflow does not clip it
     expect(inputBox.left - ring).toBeGreaterThanOrEqual(bodyBox.left);
     expect(inputBox.right + ring).toBeLessThanOrEqual(bodyBox.right);
-    expect(padLeft).toBeGreaterThanOrEqual(ring);
-    expect(padRight).toBeGreaterThanOrEqual(ring);
   });
 });

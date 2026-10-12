@@ -103,12 +103,8 @@ describe("Dialog.Body", () => {
     );
     const body = screen.getByRole("region", { name: "Terms" });
     expect(body).toHaveClass("custom");
+    expect(body).toHaveAttribute("tabindex", "0");
     expect(ref.current).toBe(body);
-  });
-
-  it("is a tab stop, so the keyboard can scroll it", () => {
-    renderBody(<Dialog.Title>Terms</Dialog.Title>, <Dialog.Body>Text</Dialog.Body>);
-    expect(screen.getByRole("region", { name: "Terms" })).toHaveAttribute("tabindex", "0");
   });
 
   it("is named by the Title when the Title has its own id", () => {
