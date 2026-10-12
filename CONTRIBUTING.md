@@ -110,6 +110,8 @@ button/
 - **Props over config objects**: `<Button color="primary" variant="outlined">`
 - **One component, one job** — no mode-switching god components
 
+Built-in text is the one exception to props over config objects. A component with English strings of its own takes `labels?: Partial<XLabels>` on the part users render (for a compound component, usually its Root, which passes it to the other parts by context). Export `XLabels` and `DEFAULT_X_LABELS`, typed `Readonly<XLabels>`, and merge them as `{ ...DEFAULT_X_LABELS, ...labels }`. An explicit `aria-label`, or an existing prop that sets the same text (such as `placeholder`), wins over `labels`. List the component in `apps/docs/content/labels.mdx`.
+
 ### Animation
 
 - Import spring presets from `src/lib/motion.ts` — no magic numbers in components
