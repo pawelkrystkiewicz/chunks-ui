@@ -59,7 +59,7 @@
     "clean": "rm -rf .turbo node_modules dist coverage"
   },
   "peerDependencies": {
-    "@base-ui/react": "^1.8.0",
+    "@base-ui/react": "^1.9.0",
     "class-variance-authority": "^0.7.1",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
@@ -77,7 +77,7 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "0.18.5",
-    "@base-ui/react": "^1.8.0",
+    "@base-ui/react": "^1.9.0",
     "@chunks-ui/typescript-config": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "@playwright/test": "1.64.0",
