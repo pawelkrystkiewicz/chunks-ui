@@ -8,6 +8,11 @@
   --font-display: "Outfit", ui-sans-serif, system-ui, sans-serif;
 }
 
+/* The library ring, saved before .landing overrides --ring; the previews restore it. */
+:root {
+  --l-lib-ring: var(--ring);
+}
+
 /* Landing page surface tokens (app/components/landing). */
 .landing {
   /* System fallback (not bare sans-serif) so → and ↗, which Manrope lacks, match the design. */
@@ -20,6 +25,8 @@
   --l-ill: #8d96b0;
   --l-brand: oklch(60.48% 0.2165 257.21);
   --l-brand-pale: oklch(80% 0.1 257);
+  /* One focus ring colour, the page text: the library's grey barely clears 3:1 on --l-bg. */
+  --ring: var(--l-fg);
   --l-grid:
     repeating-linear-gradient(90deg, transparent 0 20px, var(--l-ill) 20px 21px),
     repeating-linear-gradient(0deg, transparent 0 20px, var(--l-ill) 20px 21px);
@@ -46,6 +53,12 @@
   --l-line: oklch(0.28 0.03 265);
   --l-card: oklch(0.2 0.03 265);
   --l-ill: oklch(0.55 0.04 265);
+}
+
+/* Hero, band and footer carry `dark` in both themes: white ring, as the library's dark ring is
+   under 3:1 there. Known gap: BUILT ON links on the hero's light-theme bottom fade, 2.68:1 (#297). */
+.landing .dark {
+  --ring: #fff;
 }
 
 /*

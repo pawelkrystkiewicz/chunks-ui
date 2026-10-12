@@ -15,6 +15,7 @@ import {
   SelectionPreview,
   StructurePreview,
 } from "./ComponentPreviews";
+import { FOCUS_RING, FOCUS_RING_INSET } from "./focus";
 import { ApiArt, HeroStack, ScopeArt, SizeArt } from "./Illustrations";
 import {
   CopyRow,
@@ -128,8 +129,7 @@ const TOTAL = tally(CATEGORIES.flatMap((c) => Object.values(c.items)));
 const WRAP = "mx-auto max-w-[1200px] px-[clamp(22px,4vw,40px)]";
 const CELL =
   "flex min-w-0 flex-col gap-3 border-(--l-line) border-r border-b px-7 pt-6 pb-8 text-(--l-fg) transition-colors duration-300 ease-in-out hover:bg-(--l-card)";
-const TEXT_LINK =
-  "inline-flex items-center gap-2 font-semibold text-(--l-fg) text-[14px] transition-colors duration-250 hover:text-primary-text";
+const TEXT_LINK = `inline-flex items-center gap-2 font-semibold text-(--l-fg) text-[14px] transition-colors duration-250 hover:text-primary-text ${FOCUS_RING}`;
 
 /** Internal routes go through next/link; files and external URLs stay plain anchors. */
 function Href({ href, ...props }: ComponentProps<"a"> & { href: string }) {
@@ -250,7 +250,7 @@ function Header() {
       <Link
         href="/"
         aria-label="Chunks UI home"
-        className="flex items-center gap-2.5 px-[clamp(22px,2.4vw,28px)] py-[18px] font-bold text-[17px] text-white tracking-[-.01em]"
+        className={`flex items-center gap-2.5 px-[clamp(22px,2.4vw,28px)] py-[18px] font-bold text-[17px] text-white tracking-[-.01em] ${FOCUS_RING_INSET}`}
       >
         <Logo />
         Chunks UI
@@ -263,7 +263,7 @@ function Header() {
           <Href
             key={label}
             href={href}
-            className="text-white/70 transition-colors duration-250 hover:text-white"
+            className={`text-white/70 transition-colors duration-250 hover:text-white ${FOCUS_RING}`}
           >
             {label}
           </Href>
@@ -273,7 +273,7 @@ function Header() {
         <ThemeButton />
         <Link
           href={DOCS}
-          className="hidden h-[35px] items-center rounded-lg bg-white px-4 font-semibold text-[13px] text-black transition duration-300 hover:bg-white/88 active:scale-[.97] lg:inline-flex"
+          className={`hidden h-[35px] items-center rounded-lg bg-white px-4 font-semibold text-[13px] text-black transition duration-300 hover:bg-white/88 active:scale-[.97] lg:inline-flex ${FOCUS_RING}`}
         >
           Get started
         </Link>
@@ -282,7 +282,7 @@ function Header() {
             <Href
               key={label}
               href={href}
-              className="border-white/10 border-b py-2.5 font-semibold text-[28px] text-white tracking-[-.02em]"
+              className={`border-white/10 border-b py-2.5 font-semibold text-[28px] text-white tracking-[-.02em] ${FOCUS_RING}`}
             >
               {label}
             </Href>
@@ -305,9 +305,8 @@ const BUILT_ON = [
 ];
 
 // The hero, the get-started band and the footer are dark in both modes. The `dark` class scopes the
-// theme to them, so any chunks-ui token inside resolves to its dark value. Today that is the focus
-// ring of ThemeToggle and of the CTA (which overrides it in the hero, see below); the scope stays
-// so a future `text-*-text` here keeps 4.5:1.
+// theme to them, so any chunks-ui token inside resolves to its dark value, and globals.css gives
+// them a white --ring (`.landing .dark`). The scope also keeps a future `text-*-text` here at 4.5:1.
 function Hero() {
   return (
     <section className="dark relative overflow-hidden bg-(image:--l-hero-bg) text-white">
@@ -333,10 +332,7 @@ function Hero() {
             Motion. One npm package, not a copy-paste registry.
           </p>
           <div className="flex flex-wrap items-center gap-3">
-            {/* The dark scope's --ring is 2.8:1 on the hero gradient; white clears 3:1 (WCAG 1.4.11) */}
-            <Cta href={DOCS} className="focus-visible:outline-white">
-              Read the docs
-            </Cta>
+            <Cta href={DOCS}>Read the docs</Cta>
             <HeroCopy text={INSTALL} />
           </div>
         </div>
@@ -345,13 +341,13 @@ function Hero() {
         </div>
       </div>
       <div className={`${WRAP} relative z-2 pb-[120px]`}>
-        <small className="font-mono text-[11px] text-white/60 tracking-[.1em]">BUILT ON</small>
+        <small className="font-mono text-[11px] text-white/70 tracking-[.1em]">BUILT ON</small>
         <div className="mt-3.5 flex flex-wrap gap-x-11 gap-y-4 font-bold text-[24px] tracking-[-.02em]">
           {BUILT_ON.map(({ label, href }) => (
             <Href
               key={label}
               href={href}
-              className="text-white transition-colors duration-250 hover:text-white/70"
+              className={`text-white transition-colors duration-250 hover:text-white/70 ${FOCUS_RING}`}
             >
               {label}
             </Href>
@@ -468,12 +464,12 @@ function ComponentsSection() {
                 href={c.href}
                 aria-labelledby={`cat-${c.tag}-title`}
                 aria-describedby={`cat-${c.tag}-body`}
-                className={`${CELL} group/card`}
+                className={`${CELL} group/card ${FOCUS_RING_INSET}`}
               >
                 <CellMeta left={`0${i + 1} · ${c.tag}`} right={`${names.length} COMPONENTS`} />
                 <div
                   aria-hidden
-                  className="relative mb-1 aspect-[16/10] overflow-hidden rounded-[10px] border border-(--l-line) bg-background"
+                  className="relative mb-1 aspect-[16/10] overflow-hidden rounded-[10px] border border-(--l-line) bg-background [--ring:var(--l-lib-ring)]"
                 >
                   <div className="absolute inset-0 flex items-center justify-center px-5 pt-4 pb-[34px] font-sans text-[13px] text-foreground transition-transform duration-600 ease-fluid group-hover/card:scale-[1.03] motion-reduce:transition-none">
                     {c.preview}
@@ -587,16 +583,7 @@ function CreateSection() {
   return (
     <section id="create" className="pt-6">
       <div className={WRAP}>
-        <SectionHead
-          eyebrow="Create"
-          title="Theme it"
-          accent="in the browser."
-          link={
-            <Link href="/create" className={TEXT_LINK}>
-              Open Create →
-            </Link>
-          }
-        />
+        <SectionHead eyebrow="Create" title="Theme it" accent="in the browser." />
         <Grid className="lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)]">
           <div className={`${STATEMENT} gap-5`}>
             <span className={STATEMENT_LABEL}>{"// The configurator"}</span>
@@ -619,9 +606,8 @@ function CreateSection() {
 
 // Hover text is --l-brand-pale: over the brightest part of the gradient, a mid blue such as
 // oklch(70% .15 257) drops to 3.6:1 (390px wide) and 4.2:1 (1920px); --l-brand-pale keeps 5:1.
-const ROW =
-  "flex flex-col gap-1 border-white/15 border-b py-[18px] text-left text-white transition-colors duration-300 hover:text-(--l-brand-pale)";
-const ROW_LABEL = "font-mono text-[11px] text-white/55 tracking-[.06em]";
+const ROW = `flex flex-col gap-1 border-white/15 border-b py-[18px] text-left text-white transition-colors duration-300 hover:text-(--l-brand-pale) ${FOCUS_RING}`;
+const ROW_LABEL = "font-mono text-[11px] text-white/70 tracking-[.06em]";
 const ROW_VALUE = "font-semibold text-[20px] tracking-[-.015em]";
 
 const LINK_ROWS = [
@@ -644,7 +630,7 @@ function GetStarted() {
         <h2 className="text-balance font-display font-semibold text-[clamp(36px,5vw,60px)] text-white leading-[1.02] tracking-[-.045em]">
           Install once.
           <br />
-          <em className="text-white/50 not-italic">Compose the rest.</em>
+          <em className="text-white/70 not-italic">Compose the rest.</em>
         </h2>
         <div className="flex flex-col border-white/15 border-t">
           <CopyRow
