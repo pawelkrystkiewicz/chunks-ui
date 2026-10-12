@@ -68,23 +68,23 @@ export type {
   DialogCloseProps,
   DialogDescriptionProps,
   DialogPopupProps,
+  DialogPortalProps,
   DialogRootProps,
   DialogTitleProps,
   DialogTriggerProps,
 } from "./components/dialog";
 export { Dialog } from "./components/dialog";
-export type { DialogPortalProps } from "./components/dialog/Dialog";
 export type {
   DrawerBackdropProps,
   DrawerCloseProps,
   DrawerDescriptionProps,
   DrawerPopupProps,
+  DrawerPortalProps,
   DrawerProps,
   DrawerTitleProps,
   DrawerTriggerProps,
 } from "./components/drawer";
 export { Drawer } from "./components/drawer";
-export type { DrawerPortalProps } from "./components/drawer/Drawer";
 export type {
   EmptyActionsProps,
   EmptyDescriptionProps,
@@ -245,13 +245,13 @@ export { ToggleGroup } from "./components/toggle-group";
 export type {
   TooltipArrowProps,
   TooltipPopupProps,
+  TooltipPortalProps,
   TooltipPositionerProps,
   TooltipProviderProps,
   TooltipRootProps,
   TooltipTriggerProps,
 } from "./components/tooltip";
 export { Tooltip } from "./components/tooltip";
-export type { TooltipPortalProps } from "./components/tooltip/Tooltip";
 // Utilities
 export { type ClassInput, cn, cnState, type StateClassName } from "./lib/cn";
 export { springs } from "./lib/motion";
