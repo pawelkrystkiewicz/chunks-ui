@@ -2,7 +2,7 @@ import { act, cleanup, isInaccessible, render, screen, within } from "@testing-l
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { Calendar } from "./Calendar";
+import { Calendar, DEFAULT_CALENDAR_LABELS } from "./Calendar";
 
 afterEach(cleanup);
 
@@ -532,5 +532,60 @@ describe("Calendar keyboard navigation", () => {
       />,
     );
     expect(await axe(container)).toHaveNoViolations();
+  });
+});
+
+describe("Calendar labels", () => {
+  const PL_NARROW_WEEKDAYS = ["N", "P", "W", "Ś", "C", "P", "S"];
+
+  it("uses DEFAULT_CALENDAR_LABELS", () => {
+    render(<Calendar value={MARCH_15_2026} />);
+    const { previousMonth, nextMonth, heading, weekday, day } = DEFAULT_CALENDAR_LABELS;
+    expect(getButton(previousMonth)).toBeInTheDocument();
+    expect(getButton(nextMonth)).toBeInTheDocument();
+    expect(screen.getByRole("grid", { name: heading(new Date(2026, 2, 1)) })).toBeInTheDocument();
+    const headers = screen.getAllByRole("columnheader").map((th) => th.textContent);
+    // March 1, 2026 is a Sunday
+    expect(headers).toEqual([0, 1, 2, 3, 4, 5, 6].map((d) => weekday(new Date(2026, 2, 1 + d))));
+    expect(dayButton(MARCH_15_2026)).toHaveAccessibleName(day(MARCH_15_2026));
+  });
+
+  it("takes every string from labels", async () => {
+    const user = userEvent.setup();
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      render(
+        <Calendar
+          value={MARCH_15_2026}
+          weekStartsOn={1}
+          labels={{
+            previousMonth: "Poprzedni miesiąc",
+            nextMonth: "Następny miesiąc",
+            heading: (date) => `${date.getMonth() + 1}/${date.getFullYear()}`,
+            weekday: (date) => PL_NARROW_WEEKDAYS[date.getDay()] ?? "",
+            day: (date) => `Dzień ${date.getDate()}`,
+          }}
+        />,
+      );
+      expect(screen.getByRole("grid", { name: "3/2026" })).toBeInTheDocument();
+      expect(screen.getByText("3/2026")).toBeInTheDocument();
+      const headers = screen.getAllByRole("columnheader").map((th) => th.textContent);
+      expect(headers).toEqual(["P", "W", "Ś", "C", "P", "S", "N"]);
+      expect(getButton("Dzień 15")).toBeInTheDocument();
+      await user.click(getButton("Następny miesiąc"));
+      expect(screen.getByRole("grid", { name: "4/2026" })).toBeInTheDocument();
+      await user.click(getButton("Poprzedni miesiąc"));
+      expect(screen.getByRole("grid", { name: "3/2026" })).toBeInTheDocument();
+      // Two weekdays share a name ("P"), which must not clash as React keys
+      expect(consoleError).not.toHaveBeenCalled();
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
+
+  it("keeps the default for a key labels leaves out", () => {
+    render(<Calendar value={MARCH_15_2026} labels={{ nextMonth: "Następny miesiąc" }} />);
+    expect(getButton("Previous month")).toBeInTheDocument();
+    expect(getButton("Następny miesiąc")).toBeInTheDocument();
   });
 });

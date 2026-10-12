@@ -35,6 +35,11 @@ export type CalendarProps = {
    * @default false
    */
   showOutsideDays?: boolean;
+  /**
+   * Replaces the built-in English strings, e.g. to translate them. Keys you leave out keep the
+   * default from `DEFAULT_CALENDAR_LABELS`.
+   */
+  labels?: Partial<CalendarLabels>;
   className?: string;
 };
 
@@ -54,6 +59,49 @@ const MONTH_NAMES = [
   "November",
   "December",
 ] as const;
+
+/** The built-in English strings of `Calendar`. The functions get the date they describe. */
+export type CalendarLabels = {
+  /**
+   * Name of the button that shows the previous month.
+   * @default "Previous month"
+   */
+  previousMonth: string;
+  /**
+   * Name of the button that shows the next month.
+   * @default "Next month"
+   */
+  nextMonth: string;
+  /**
+   * The heading above the days, which also names the grid. Gets the first day of the shown month.
+   * @default (date) => "March 2026"
+   */
+  heading: (date: Date) => string;
+  /**
+   * The column header of a weekday. Gets a date that falls on that weekday.
+   * @default (date) => "Su" | "Mo" | "Tu" | "We" | "Th" | "Fr" | "Sa"
+   */
+  weekday: (date: Date) => string;
+  /**
+   * Accessible name of a day button.
+   * @default (date) => "Sunday, March 15, 2026"
+   */
+  day: (date: Date) => string;
+};
+
+export const DEFAULT_CALENDAR_LABELS: CalendarLabels = {
+  previousMonth: "Previous month",
+  nextMonth: "Next month",
+  heading: (date) => `${MONTH_NAMES[date.getMonth()]} ${date.getFullYear()}`,
+  weekday: (date) => DAY_NAMES[date.getDay()] ?? "",
+  day: (date) =>
+    date.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }),
+};
 
 function isSameDay(a: Date, b: Date): boolean {
   return (
@@ -161,8 +209,10 @@ export function Calendar({
   max,
   weekStartsOn = 0,
   showOutsideDays = false,
+  labels,
   className,
 }: CalendarProps) {
+  const names = { ...DEFAULT_CALENDAR_LABELS, ...labels };
   const isControlled = value !== undefined;
 
   const [internalValue, setInternalValue] = useState<Date | null>(defaultValue ?? null);
@@ -196,7 +246,7 @@ export function Calendar({
   const tabStop =
     [focusedDate, selectedDate, today].find(isInView) ?? new Date(viewYear, viewMonth, 1);
 
-  const monthYearLabel = `${MONTH_NAMES[viewMonth]} ${viewYear}`;
+  const monthYearLabel = names.heading(new Date(viewYear, viewMonth, 1));
   const monthYearLabelId = useId();
 
   const prevMonth = useCallback(() => {
@@ -215,7 +265,11 @@ export function Calendar({
     () => buildWeekRows(viewYear, viewMonth, weekStartsOn, showOutsideDays),
     [viewYear, viewMonth, weekStartsOn, showOutsideDays],
   );
-  const dayNames = [...DAY_NAMES.slice(weekStartsOn), ...DAY_NAMES.slice(0, weekStartsOn)];
+  // A date for each column header: the first row of the shown month, outside days included
+  const firstOfMonth = new Date(viewYear, viewMonth, 1);
+  const weekdays = Array.from({ length: 7 }, (_, i) =>
+    addDays(firstOfMonth, i - weekdayIndex(firstOfMonth, weekStartsOn)),
+  );
 
   const handleDayClick = useCallback(
     (date: Date) => {
@@ -257,7 +311,7 @@ export function Calendar({
       <div className="mb-4 flex items-center justify-between">
         <button
           type="button"
-          aria-label="Previous month"
+          aria-label={names.previousMonth}
           onClick={prevMonth}
           className={cn(
             "inline-flex size-7 items-center justify-center rounded-sm",
@@ -286,7 +340,7 @@ export function Calendar({
         </span>
         <button
           type="button"
-          aria-label="Next month"
+          aria-label={names.nextMonth}
           onClick={nextMonth}
           className={cn(
             "inline-flex size-7 items-center justify-center rounded-sm",
@@ -322,13 +376,13 @@ export function Calendar({
       >
         <thead>
           <tr>
-            {dayNames.map((d) => (
+            {weekdays.map((date) => (
               <th
-                key={d}
+                key={date.getDay()}
                 scope="col"
                 className="w-8 py-1 text-center font-normal text-muted-foreground text-xs"
               >
-                {d}
+                {names.weekday(date)}
               </th>
             ))}
           </tr>
@@ -351,12 +405,7 @@ export function Calendar({
                   const isCurrentMonth = date.getMonth() === viewMonth;
                   const disabled = isDayDisabled(date);
 
-                  const ariaLabel = date.toLocaleDateString("en-US", {
-                    weekday: "long",
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  });
+                  const ariaLabel = names.day(date);
 
                   return (
                     // biome-ignore lint/a11y/useAriaPropsSupportedByRole: a <td> in a role="grid" table is a gridcell, which supports aria-selected

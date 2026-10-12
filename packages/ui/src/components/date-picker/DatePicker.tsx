@@ -6,7 +6,26 @@ import { type ComponentProps, useId, useLayoutEffect, useRef, useState } from "r
 import { cn } from "../../lib/cn";
 import { usePortalContainer } from "../../lib/portal-container";
 import { useMergedRef } from "../../lib/use-merged-ref";
-import { Calendar, type CalendarProps } from "../calendar/Calendar";
+import {
+  Calendar,
+  type CalendarLabels,
+  type CalendarProps,
+  DEFAULT_CALENDAR_LABELS,
+} from "../calendar/Calendar";
+
+/** The built-in English strings of `DatePicker`: those of its trigger and of its calendar. */
+export type DatePickerLabels = CalendarLabels & {
+  /**
+   * Trigger text while no date is selected. The `placeholder` prop takes precedence.
+   * @default "Pick a date"
+   */
+  placeholder: string;
+  /**
+   * Trigger text for the selected date.
+   * @default (date) => "March 15, 2026"
+   */
+  selectedDate: (date: Date) => string;
+};
 
 type DatePickerOwnProps = Pick<CalendarProps, "weekStartsOn" | "showOutsideDays"> & {
   /**
@@ -26,7 +45,8 @@ type DatePickerOwnProps = Pick<CalendarProps, "weekStartsOn" | "showOutsideDays"
    */
   onValueChange?: (date: Date | null) => void;
   /**
-   * Placeholder text shown in the trigger when no date is selected.
+   * Placeholder text shown in the trigger when no date is selected. Takes precedence over
+   * `labels.placeholder`.
    * @default "Pick a date"
    */
   placeholder?: string;
@@ -64,6 +84,11 @@ type DatePickerOwnProps = Pick<CalendarProps, "weekStartsOn" | "showOutsideDays"
    * Classes for the wrapper element around the trigger.
    */
   className?: string;
+  /**
+   * Replaces the built-in English strings, e.g. to translate them, including the calendar's.
+   * Keys you leave out keep the default from `DEFAULT_DATE_PICKER_LABELS`.
+   */
+  labels?: Partial<DatePickerLabels>;
 };
 
 /**
@@ -80,19 +105,22 @@ function toIsoDate(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
-function formatDate(date: Date): string {
-  return date.toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-}
+export const DEFAULT_DATE_PICKER_LABELS: DatePickerLabels = {
+  ...DEFAULT_CALENDAR_LABELS,
+  placeholder: "Pick a date",
+  selectedDate: (date) =>
+    date.toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    }),
+};
 
 export function DatePicker({
   value,
   defaultValue,
   onValueChange,
-  placeholder = "Pick a date",
+  placeholder,
   disabled,
   min,
   max,
@@ -103,9 +131,11 @@ export function DatePicker({
   required,
   form,
   className,
+  labels,
   ref,
   ...triggerProps
 }: DatePickerProps) {
+  const names = { ...DEFAULT_DATE_PICKER_LABELS, ...labels };
   const container = usePortalContainer();
   const popupRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -120,7 +150,7 @@ export function DatePicker({
     setOpen(false);
   };
 
-  const displayValue = selectedDate ? formatDate(selectedDate) : "";
+  const displayValue = selectedDate ? names.selectedDate(selectedDate) : "";
   const isoValue = selectedDate ? toIsoDate(selectedDate) : "";
 
   // A <label htmlFor> names the button by itself and drops the date, so collect the ids of the
@@ -176,7 +206,7 @@ export function DatePicker({
                     !displayValue && "text-muted-foreground",
                   )}
                 >
-                  <span id={valueId}>{displayValue || placeholder}</span>
+                  <span id={valueId}>{displayValue || (placeholder ?? names.placeholder)}</span>
                 </BasePopover.Trigger>
                 {(formName !== undefined || required) && (
                   // Carries the date into the form. Not type="hidden" or readOnly: both skip
@@ -227,6 +257,7 @@ export function DatePicker({
                 isDateDisabled={isDateDisabled}
                 weekStartsOn={weekStartsOn}
                 showOutsideDays={showOutsideDays}
+                labels={names}
               />
             </BasePopover.Popup>
           </BasePopover.Positioner>

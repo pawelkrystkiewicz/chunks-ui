@@ -4,7 +4,7 @@ import { axe } from "jest-axe";
 import { createRef } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Field } from "../field";
-import { DatePicker } from "./DatePicker";
+import { DatePicker, DEFAULT_DATE_PICKER_LABELS } from "./DatePicker";
 
 const MARCH_15_LABEL = "Sunday, March 15, 2026";
 
@@ -414,5 +414,47 @@ describe("DatePicker keyboard", () => {
     expect(screen.queryByRole("grid")).not.toBeInTheDocument();
     expect(onValueChange).not.toHaveBeenCalled();
     expect(trigger).toHaveTextContent("March 15, 2026");
+  });
+});
+
+describe("DatePicker labels", () => {
+  it("uses DEFAULT_DATE_PICKER_LABELS", () => {
+    const { rerender } = render(<DatePicker />);
+    const { placeholder, selectedDate } = DEFAULT_DATE_PICKER_LABELS;
+    expect(screen.getByRole("button", { name: placeholder })).toBeInTheDocument();
+    rerender(<DatePicker value={new Date(2026, 2, 15)} />);
+    expect(
+      screen.getByRole("button", { name: selectedDate(new Date(2026, 2, 15)) }),
+    ).toBeInTheDocument();
+  });
+
+  it("takes the trigger text from labels", () => {
+    const labels = {
+      placeholder: "Wybierz datę",
+      selectedDate: (date: Date) =>
+        `${date.getDate()}.${date.getMonth() + 1}.${date.getFullYear()}`,
+    };
+    const { rerender } = render(<DatePicker labels={labels} />);
+    expect(screen.getByRole("button", { name: "Wybierz datę" })).toBeInTheDocument();
+    rerender(<DatePicker labels={labels} value={new Date(2026, 2, 15)} />);
+    expect(screen.getByRole("button", { name: "15.3.2026" })).toBeInTheDocument();
+  });
+
+  it("prefers the placeholder prop over labels", () => {
+    render(<DatePicker placeholder="Due date" labels={{ placeholder: "Wybierz datę" }} />);
+    expect(screen.getByRole("button", { name: "Due date" })).toBeInTheDocument();
+  });
+
+  it("passes the calendar's labels to the calendar", async () => {
+    const user = userEvent.setup();
+    render(
+      <DatePicker
+        value={new Date(2026, 2, 15)}
+        labels={{ previousMonth: "Poprzedni miesiąc", day: (date) => `Dzień ${date.getDate()}` }}
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: "March 15, 2026" }));
+    expect(await screen.findByLabelText("Poprzedni miesiąc", { selector: "button" })).toBeVisible();
+    expect(getButton("Dzień 15")).toBeInTheDocument();
   });
 });

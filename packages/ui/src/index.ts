@@ -21,7 +21,12 @@ export type {
 } from "./components/breadcrumb";
 export { Breadcrumb } from "./components/breadcrumb";
 export { Button, type ButtonProps, buttonVariants } from "./components/button";
-export { Calendar, type CalendarProps } from "./components/calendar";
+export {
+  Calendar,
+  type CalendarLabels,
+  type CalendarProps,
+  DEFAULT_CALENDAR_LABELS,
+} from "./components/calendar";
 export type {
   CardContentProps,
   CardDescriptionProps,
@@ -78,7 +83,12 @@ export {
   type CopyButtonProps,
   DEFAULT_COPY_BUTTON_LABELS,
 } from "./components/copy-button";
-export { DatePicker, type DatePickerProps } from "./components/date-picker";
+export {
+  DatePicker,
+  type DatePickerLabels,
+  type DatePickerProps,
+  DEFAULT_DATE_PICKER_LABELS,
+} from "./components/date-picker";
 export type {
   DialogBackdropProps,
   DialogCloseProps,
