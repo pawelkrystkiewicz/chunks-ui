@@ -175,3 +175,27 @@ export const eachPaintedFrame = <T,>(read: () => T, frames: number) =>
     };
     frame.postRender(step, true);
   });
+
+export type Dir = "ltr" | "rtl";
+
+/**
+ * An element's extent along the inline axis: distances that grow from left to right in LTR and
+ * from right to left in RTL. `a.end <= b.start` reads "a comes before b" in either direction.
+ * Takes an element or a `Range`, to measure text.
+ */
+export function inlineSpan(el: Pick<Element, "getBoundingClientRect">, dir: Dir) {
+  const { left, right } = el.getBoundingClientRect();
+  return dir === "ltr" ? { start: left, end: right } : { start: -right, end: -left };
+}
+
+export const px = (value: string) => Number.parseFloat(value);
+
+/** The inline extent of `el`'s content box: inside its border and padding */
+export function contentSpan(el: Element, dir: Dir) {
+  const style = getComputedStyle(el);
+  const { start, end } = inlineSpan(el, dir);
+  return {
+    start: start + px(style.borderInlineStartWidth) + px(style.paddingInlineStart),
+    end: end - px(style.borderInlineEndWidth) - px(style.paddingInlineEnd),
+  };
+}
