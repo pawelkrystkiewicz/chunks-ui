@@ -1,8 +1,8 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { userEvent } from "vitest/browser";
-import { AddToasts } from "../../VisualTest.utils";
 import { Toast } from "./index";
+import { AddToasts } from "./Toast.TestUtils";
 
 /*
  * Base UI marks the toasts past the provider's `limit` (3 by default) with `data-limited` and

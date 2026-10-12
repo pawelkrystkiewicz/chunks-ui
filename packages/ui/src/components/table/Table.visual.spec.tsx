@@ -70,6 +70,7 @@ describe.each(["ltr", "rtl"] as const)("Table in %s", (dir) => {
     await expect(fixture).toMatchScreenshot();
   });
 
+  // Needs the header cell wider than its text: true at width 360 with three columns
   it("aligns a header's text to the cell's inline start", async () => {
     await renderTable(dir);
     const head = screen.getByTestId("head");
@@ -81,7 +82,7 @@ describe.each(["ltr", "rtl"] as const)("Table in %s", (dir) => {
     for (const cell of [screen.getByTestId("check-head"), screen.getByTestId("check-cell")]) {
       const { paddingInlineStart, paddingInlineEnd } = getComputedStyle(cell);
       expect({ paddingInlineStart, paddingInlineEnd }).toEqual({
-        paddingInlineStart: "8px",
+        paddingInlineStart: "8px", // `px-2`
         paddingInlineEnd: "0px",
       });
     }

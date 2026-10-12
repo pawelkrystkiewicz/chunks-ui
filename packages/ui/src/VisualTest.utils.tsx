@@ -1,9 +1,8 @@
 import { render } from "@testing-library/react";
 import { cancelFrame, frame } from "motion/react";
-import { type ReactNode, useEffect, useRef } from "react";
+import type { ReactNode } from "react";
 import { afterAll, beforeAll, beforeEach, describe, expect } from "vitest";
 import { commands, page } from "vitest/browser";
-import { Toast } from "./components/toast";
 import { reloadMotion } from "./lib/use-motion";
 
 /** Renders children in a padded fixture wrapper. Returns the wrapper element for screenshotting. */
@@ -188,18 +187,4 @@ export function contentSpan(el: Element, dir: Dir) {
     start: start + px(style.borderInlineStartWidth) + px(style.paddingInlineStart),
     end: end - px(style.borderInlineEndWidth) - px(style.paddingInlineEnd),
   };
-}
-
-/** Adds `count` dismissible toasts titled "Toast 1" to "Toast N" that stay until closed */
-export function AddToasts({ count, className }: { count: number; className?: string }) {
-  const manager = Toast.useToast();
-  const added = useRef(false);
-  useEffect(() => {
-    if (added.current) return;
-    added.current = true;
-    for (let i = 1; i <= count; i++) {
-      manager.add({ title: `Toast ${i}`, dismissible: true, timeout: 0, className });
-    }
-  }, [manager, count, className]);
-  return null;
 }
