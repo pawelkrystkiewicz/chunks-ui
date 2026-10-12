@@ -514,15 +514,19 @@ describe("DatePicker form reset scope", () => {
       </form>,
       { container },
     );
-    const q = (name: string) => within(container).getByRole("button", { name });
-    await userEvent.click(q("March 15, 2026"));
-    // the popup is portalled to body, outside the shadow root
-    await userEvent.click(getButton("Friday, March 20, 2026"));
-    expect(q("March 20, 2026")).toBeInTheDocument();
-    await userEvent.click(q("Reset"));
-    expect(q("March 15, 2026")).toBeInTheDocument();
-    unmount();
-    host.remove();
+    // Testing Library's cleanup doesn't know the host, so remove it even when an assertion fails
+    try {
+      const q = (name: string) => within(container).getByRole("button", { name });
+      await userEvent.click(q("March 15, 2026"));
+      // the popup is portalled to body, outside the shadow root
+      await userEvent.click(getButton("Friday, March 20, 2026"));
+      expect(q("March 20, 2026")).toBeInTheDocument();
+      await userEvent.click(q("Reset"));
+      expect(q("March 15, 2026")).toBeInTheDocument();
+    } finally {
+      unmount();
+      host.remove();
+    }
   });
 
   it("ignores the reset of another form on the page", async () => {
