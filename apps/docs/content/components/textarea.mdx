@@ -59,6 +59,12 @@ The textarea has a minimum height of `min-h-ui-height` by default.
 <Textarea value={bio ?? ""} onChange={(event) => setBio(event.target.value)} />
 ```
 
+`onValueChange` gives you the new text directly, with the same signature as on `Input`: `(value, eventDetails)`.
+
+```tsx
+<Textarea value={bio ?? ""} onValueChange={setBio} />
+```
+
 ## Disabled
 
 ```tsx
@@ -75,7 +81,7 @@ The textarea has a minimum height of `min-h-ui-height` by default.
   definition={generateDefinition({
     code: `
 import type { TextareaProps } from 'chunks-ui'
-type Props = Pick<TextareaProps, 'autoResize'>
+type Props = Pick<TextareaProps, 'autoResize' | 'onValueChange'>
 export default Props
 `
   })}
