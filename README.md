@@ -43,7 +43,7 @@ Accordion, Toast, Menu, Progress, Calendar, DatePicker, Scroll Area, Number Fiel
 
 | Layer       | Technology                                     |
 | ----------- | ---------------------------------------------- |
-| Headless    | `@base-ui/react` v1.2+ (includes Floating UI)  |
+| Headless    | `@base-ui/react` v1.9+ (includes Floating UI)  |
 | Styling     | Tailwind CSS v4 + CVA                          |
 | Animation   | Motion v12+ (optional peer dep)                |
 | Build       | tsup (ESM + CJS + `.d.ts`)                     |
