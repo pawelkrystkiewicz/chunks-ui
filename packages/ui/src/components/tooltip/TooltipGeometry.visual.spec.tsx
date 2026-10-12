@@ -1,6 +1,7 @@
 import { DirectionProvider } from "@base-ui/react/direction-provider";
 import { render } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
+import { ARROW_PADDING_PX } from "../../lib/popup-arrow";
 import { waitForStable } from "../../VisualTest.utils";
 import { Button } from "../button";
 import { Tooltip } from "./index";
@@ -142,4 +143,68 @@ describe.each(CASES)("Tooltip arrow geometry, side $side ($dir)", ({ side, dir }
       );
     },
   );
+});
+
+type Align = "start" | "end";
+
+/**
+ * Opens a tooltip on `side` of a 20px trigger, aligned to its `align` edge. The trigger's centre
+ * is nearer that end of the popup than the arrow may come, so Base UI holds the arrow
+ * `arrowPadding` from the end. Measures, along the edge the arrow stands on, the distance from
+ * the popup's `align` end to the nearer end of the arrow's foot (its widest point, on the popup
+ * edge), and returns it with the popup's corner radius.
+ */
+async function footNearCorner(side: "top" | "bottom", align: Align, arrowPadding?: number) {
+  const { getByTestId, unmount } = render(
+    <div style={{ padding: 120, display: "flex", justifyContent: "center" }}>
+      <Tooltip.Root defaultOpen>
+        <Tooltip.Trigger aria-label="Trigger" style={{ width: 20, height: 20, padding: 0 }} />
+        <Tooltip.Portal>
+          <Tooltip.Positioner side={side} align={align} arrowPadding={arrowPadding}>
+            <Tooltip.Popup data-testid="popup">
+              <Tooltip.Arrow data-testid="arrow" />
+              Tooltip content
+            </Tooltip.Popup>
+          </Tooltip.Positioner>
+        </Tooltip.Portal>
+      </Tooltip.Root>
+    </div>,
+  );
+  const arrow = getByTestId("arrow");
+  const popup = getByTestId("popup");
+  const foot = await waitForStable(() => {
+    const a = arrow.getBoundingClientRect();
+    const p = popup.getBoundingClientRect();
+    return align === "start" ? a.left - p.left : p.right - a.right;
+  });
+  const radius = Number.parseFloat(getComputedStyle(popup).borderTopLeftRadius);
+  unmount();
+  return { foot, radius };
+}
+
+// Top and bottom only: a one-line tooltip on the left or right is shorter than the foot and two
+// corners, so Floating UI caps the padding there and the foot stands in a curve at any padding
+const NEAR_CORNER = (["top", "bottom"] as const).flatMap((side) =>
+  (["start", "end"] as const).map((align) => ({ side, align })),
+);
+
+describe.each(NEAR_CORNER)(
+  "Tooltip arrow, side $side, align $align, small trigger",
+  ({ side, align }) => {
+    it("keeps its foot off the popup's rounded corner", async () => {
+      const { foot, radius } = await footNearCorner(side, align);
+      // The corner curves this far along the edge; past it, the edge is straight
+      expect(foot).toBeGreaterThanOrEqual(radius - POSITION_ROUNDING_PX);
+    });
+  },
+);
+
+describe("Tooltip.Positioner arrowPadding", () => {
+  it("moves an arrow held near the corner by the padding it is given", async () => {
+    const byDefault = await footNearCorner("bottom", "start");
+    const padded = await footNearCorner("bottom", "start", 16);
+    expect(Math.abs(padded.foot - byDefault.foot - (16 - ARROW_PADDING_PX))).toBeLessThanOrEqual(
+      POSITION_ROUNDING_PX,
+    );
+  });
 });
