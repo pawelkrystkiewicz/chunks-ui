@@ -64,13 +64,14 @@ export type {
   ComboboxInputProps,
   ComboboxItemIndicatorProps,
   ComboboxItemProps,
+  ComboboxLabels,
   ComboboxListProps,
   ComboboxPopupProps,
   ComboboxPositionerProps,
   ComboboxRootProps,
   ComboboxTriggerProps,
 } from "./components/combobox";
-export { Combobox } from "./components/combobox";
+export { Combobox, DEFAULT_COMBOBOX_LABELS } from "./components/combobox";
 export {
   CopyButton,
   type CopyButtonLabels,
