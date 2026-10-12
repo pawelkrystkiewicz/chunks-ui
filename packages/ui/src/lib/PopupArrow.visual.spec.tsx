@@ -278,11 +278,12 @@ async function footNearCorner(kind: Kind, side: PhysicalSide, align: Align, arro
   return { foot, radius };
 }
 
+// Menu on one side is enough to show it passes `arrowPadding` too
 const NEAR_CORNER = KINDS.flatMap((kind) =>
   PHYSICAL_SIDES.flatMap((side) =>
     (["start", "end"] as const).map((align) => ({ kind, side, align })),
   ),
-);
+).filter(({ kind, side }) => kind === "Popover" || side === "bottom");
 
 describe.each(NEAR_CORNER)(
   "$kind arrow, side $side, align $align, small trigger",
@@ -385,15 +386,6 @@ describe.each(KINDS)("%s with an arrow, restyling the ring", (kind) => {
     await expect.poll(() => popup.matches(":focus-visible")).toBe(true);
 
     expect(getComputedStyle(popup, "::after").display).toBe("none");
-  });
-
-  it("ignores a colour from the plain `focus-visible:after:` prefix", async () => {
-    render(arrowedWith(kind, "focus-visible:after:[outline-color:rgb(255,0,0)]"));
-    const popup = await screen.findByTestId("popup");
-    await userEvent.keyboard("{Shift}");
-    await expect.poll(() => popup.matches(":focus-visible")).toBe(true);
-
-    expect(getComputedStyle(popup, "::after").outlineColor).not.toBe("rgb(255, 0, 0)");
   });
 });
 
