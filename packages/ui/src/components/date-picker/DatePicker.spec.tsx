@@ -1,3 +1,4 @@
+import { Form } from "@base-ui/react/form";
 import { cleanup, isInaccessible, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
@@ -327,6 +328,48 @@ describe("DatePicker in a form", () => {
     await userEvent.click(screen.getByRole("button", { name: "Pick a date" }));
     await userEvent.click(getButton(MARCH_15_LABEL));
     expect(form.checkValidity()).toBe(true);
+  });
+
+  it("is valueMissing in the Field's validity while required and empty", async () => {
+    const user = userEvent.setup();
+    render(
+      <Form aria-label="Task">
+        <Field.Root>
+          <Field.Label>Due date</Field.Label>
+          <DatePicker name="due" required />
+          <Field.Error match="valueMissing">Pick a due date</Field.Error>
+        </Field.Root>
+        <button type="submit">Save</button>
+      </Form>,
+    );
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    const trigger = screen.getByRole("button", { name: "Due date Pick a date" });
+    expect(trigger).toHaveAccessibleDescription("Pick a due date");
+    expect(trigger).toHaveAttribute("aria-invalid", "true");
+    expect(trigger).toHaveFocus();
+    await user.click(trigger);
+    await user.click(getButton(MARCH_15_LABEL));
+    expect(screen.queryByText("Pick a due date")).not.toBeInTheDocument();
+    expect(trigger).not.toHaveAttribute("aria-invalid");
+  });
+
+  // The field validates and focuses the form input when there is one, else the trigger
+  it("takes focus from a Base UI Form when its Field fails to validate, with no form input", async () => {
+    const user = userEvent.setup();
+    render(
+      <Form aria-label="Task">
+        <Field.Root validate={() => "Pick a weekday"}>
+          <Field.Label>Due date</Field.Label>
+          <DatePicker />
+          <Field.Error />
+        </Field.Root>
+        <button type="submit">Save</button>
+      </Form>,
+    );
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    const trigger = screen.getByRole("button", { name: "Due date Pick a date" });
+    expect(trigger).toHaveAccessibleDescription("Pick a weekday");
+    expect(trigger).toHaveFocus();
   });
 
   it("does not submit a value while disabled", () => {

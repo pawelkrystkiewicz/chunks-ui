@@ -7,3 +7,5 @@ Fixed: a controlled `Calendar` went back to the month of `value` whenever its pa
 Fixed: `DatePicker` submitted years before 1000 with fewer than 4 digits (`999-01-05`), which is not an ISO date. It now submits `0999-01-05`. `Calendar` showed the days of 1900–1999 for the years 0–99, which the `Date` constructor reads as 19xx; it now shows the right year.
 
 Fixed: an Invalid Date in `value` or `defaultValue` showed "Invalid Date" in the `DatePicker` trigger, submitted `NaN-NaN-NaN`, and left the calendar without days. It now counts as no date.
+
+Fixed: a required, empty `DatePicker` inside `Field.Root` was never `valueMissing` in the field's validity, because the field read the validity of the trigger button, which cannot be required. The field now validates the form input that carries `required`, so Base UI's `Form` blocks the submit, `Field.Error` with `match="valueMissing"` shows, and the trigger gets `aria-invalid` and the focus.

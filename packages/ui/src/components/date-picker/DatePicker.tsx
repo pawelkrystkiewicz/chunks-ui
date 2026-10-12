@@ -148,16 +148,19 @@ export function DatePicker({
         <BaseField.Control
           // Field.Control types its props for <input>; they reach the trigger <button> unchanged
           {...(triggerProps as BaseField.Control.Props)}
-          ref={mergedTriggerRef}
           disabled={disabled}
           // The field reads its value from here, not from the button's empty value
           value={isoValue}
           render={(controlProps, state) => {
-            // Field.Root's name comes through here. It goes on the form input, not the button
-            const { name: fieldName, ...buttonProps } = controlProps as typeof controlProps & {
-              name?: string;
-            };
+            // Field.Root's name comes through here. It goes on the form input, not the button.
+            // `fieldRef` tells the field which element to validate and to focus when invalid.
+            const {
+              name: fieldName,
+              ref: fieldRef,
+              ...buttonProps
+            } = controlProps as typeof controlProps & { name?: string };
             const formName = name ?? fieldName;
+            const hasFormInput = formName !== undefined || required;
             // A label replaces a button's text as its name. The trigger has no other way to
             // expose the date, so name it by its label and then the date. The label comes from
             // aria-labelledby (the consumer's or Field.Label's), else aria-label (read through the
@@ -169,6 +172,11 @@ export function DatePicker({
               <>
                 <BasePopover.Trigger
                   {...buttonProps}
+                  ref={mergedTriggerRef}
+                  // The field validates the form input when there is one: it carries `required`,
+                  // which a button cannot. Else it gets the trigger, through the ref of the
+                  // render element, which Base UI merges with `ref`.
+                  render={hasFormInput ? undefined : <button type="button" ref={fieldRef} />}
                   aria-labelledby={labelledBy ? `${labelledBy} ${valueId}` : undefined}
                   className={cn(
                     "flex h-ui-height w-full cursor-pointer items-center rounded-md border border-input bg-background px-3 text-left text-sm",
@@ -179,12 +187,13 @@ export function DatePicker({
                 >
                   <span id={valueId}>{displayValue || placeholder}</span>
                 </BasePopover.Trigger>
-                {(formName !== undefined || required) && (
+                {hasFormInput && (
                   // Carries the date into the form. Not type="hidden" or readOnly: both skip
                   // `required`. Disabled with the picker or its Field.Root, like a native control,
-                  // so it then submits nothing and blocks nothing. When the browser focuses it as
-                  // the first invalid field, the trigger takes the focus.
+                  // so it then submits nothing and blocks nothing. When the browser or a Base UI
+                  // Form focuses it as the first invalid field, the trigger takes the focus.
                   <input
+                    ref={fieldRef}
                     name={formName}
                     form={form}
                     value={isoValue}
