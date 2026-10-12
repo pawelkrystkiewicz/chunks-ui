@@ -1,9 +1,16 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, isInaccessible, render, screen } from "@testing-library/react";
 import { axe } from "jest-axe";
 import { afterEach, describe, expect, it } from "vitest";
 import { Breadcrumb, type BreadcrumbRootProps, DEFAULT_BREADCRUMB_LABELS } from "./Breadcrumb";
 
 afterEach(cleanup);
+
+/** `text`, which getByText finds even under aria-hidden, as screen readers can reach it. */
+const getReadableText = (text: string) => {
+  const element = screen.getByText(text);
+  expect(isInaccessible(element)).toBe(false);
+  return element;
+};
 
 function BasicBreadcrumb() {
   return (
@@ -65,7 +72,7 @@ describe("Breadcrumb", () => {
         </Breadcrumb.List>
       </Breadcrumb.Root>,
     );
-    expect(screen.getByText("More")).toBeInTheDocument();
+    expect(getReadableText("More")).toBeInTheDocument();
   });
 
   it("renders Link with render prop", () => {
@@ -117,13 +124,13 @@ describe("Breadcrumb labels", () => {
     render(<LabelledBreadcrumb />);
     const { root, ellipsis } = DEFAULT_BREADCRUMB_LABELS;
     expect(screen.getByRole("navigation", { name: root })).toBeInTheDocument();
-    expect(screen.getByText(ellipsis)).toBeInTheDocument();
+    expect(getReadableText(ellipsis)).toBeInTheDocument();
   });
 
   it("takes every string from labels on Root", () => {
     render(<LabelledBreadcrumb labels={{ root: "Okruszki", ellipsis: "Więcej" }} />);
     expect(screen.getByRole("navigation", { name: "Okruszki" })).toBeInTheDocument();
-    expect(screen.getByText("Więcej")).toBeInTheDocument();
+    expect(getReadableText("Więcej")).toBeInTheDocument();
   });
 
   it("prefers aria-label on Root over labels", () => {

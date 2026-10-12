@@ -24,7 +24,8 @@ export type BreadcrumbLabels = {
    */
   root: string;
   /**
-   * Screen-reader text of `Breadcrumb.Ellipsis`.
+   * Text of `Breadcrumb.Ellipsis` for screen readers, which read it in place of the three dots.
+   * It is visually hidden.
    * @default "More"
    */
   ellipsis: string;
@@ -138,12 +139,7 @@ function BreadcrumbSeparator({ className, children, ...props }: BreadcrumbSepara
 function BreadcrumbEllipsis({ className, ...props }: BreadcrumbEllipsisProps) {
   const labels = useContext(BreadcrumbLabelsContext);
   return (
-    <span
-      role="presentation"
-      aria-hidden="true"
-      className={cn("flex size-9 items-center justify-center", className)}
-      {...props}
-    >
+    <span className={cn("flex size-9 items-center justify-center", className)} {...props}>
       <svg
         aria-hidden="true"
         xmlns="http://www.w3.org/2000/svg"
