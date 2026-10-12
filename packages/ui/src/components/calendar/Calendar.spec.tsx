@@ -41,11 +41,18 @@ const focusDay = (date: Date) => act(() => dayButton(date).focus());
 
 describe("Calendar", () => {
   it("renders the current month and year when no value is provided", () => {
-    render(<Calendar />);
-    const today = new Date();
-    const monthYear = today.toLocaleDateString("en-US", { month: "long", year: "numeric" });
-    expect(screen.getByRole("grid", { name: monthYear })).toBeInTheDocument();
-    expect(dayButton(today)).toBeInTheDocument();
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      vi.setSystemTime(new Date(2026, 2, 10, 12));
+      render(<Calendar />);
+      const today = new Date();
+      const monthYear = today.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+      expect(monthYear).toBe("March 2026");
+      expect(screen.getByRole("grid", { name: monthYear })).toBeInTheDocument();
+      expect(dayButton(today)).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("renders the correct month and year for a controlled date", () => {

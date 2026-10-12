@@ -12,7 +12,7 @@ const MARCH_15_LABEL = "Sunday, March 15, 2026";
  * The button with this aria-label, checked for what getByRole("button", { name }) checks: role,
  * accessible name, not hidden. With the calendar open, getByRole computes jsdom styles for every
  * day button it names, about 130ms a query under coverage on a laptop; this computes them for one.
- * `selector` leaves out any other element with that label, such as the grid named by its month.
+ * `selector` keeps the match to <button> elements.
  */
 const getButton = (name: string) => {
   const button = screen.getByLabelText(name, { selector: "button" });
