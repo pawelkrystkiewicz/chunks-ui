@@ -192,6 +192,36 @@ describe("Calendar", () => {
     expect(dayButton(dateIn(year - 1, 11, 31))).toBeInTheDocument();
   });
 
+  // addDays, addMonths and startOfDay must not fall back to `new Date(y, m, d)`
+  it.each([999, 50])("moves by key across a month edge in the year %i", async (year) => {
+    const user = userEvent.setup();
+    render(<Calendar value={dateIn(year, 1, 1)} />);
+    await focusDay(dateIn(year, 1, 1));
+    await user.keyboard("{ArrowLeft}");
+    expect(document.activeElement).toHaveAccessibleName(label(dateIn(year, 0, 31)));
+    expect(screen.getByRole("grid", { name: `January ${year}` })).toBeInTheDocument();
+    await user.keyboard("{PageUp}");
+    expect(document.activeElement).toHaveAccessibleName(label(dateIn(year - 1, 11, 31)));
+    expect(screen.getByRole("grid", { name: `December ${year - 1}` })).toBeInTheDocument();
+  });
+
+  it("stops at January of year 1", async () => {
+    const user = userEvent.setup();
+    render(<Calendar value={dateIn(1, 0, 1)} />);
+    expect(getButton("Previous month")).toHaveAttribute("aria-disabled", "true");
+    await user.click(getButton("Previous month"));
+    expect(screen.getByRole("grid", { name: "January 1" })).toBeInTheDocument();
+    await focusDay(dateIn(1, 0, 1));
+    for (const keys of ["{ArrowLeft}", "{ArrowUp}", "{PageUp}", "{Shift>}{PageUp}{/Shift}"]) {
+      await user.keyboard(keys);
+      expect(screen.getByRole("grid", { name: "January 1" })).toBeInTheDocument();
+      expect(document.activeElement).toHaveAccessibleName(label(dateIn(1, 0, 1)));
+    }
+    // Still moves forward
+    await user.keyboard("{ArrowRight}");
+    expect(document.activeElement).toHaveAccessibleName(label(dateIn(1, 0, 2)));
+  });
+
   it.each(["value", "defaultValue"])("shows today's month for an Invalid Date %s", (prop) => {
     vi.useFakeTimers({ toFake: ["Date"] });
     try {

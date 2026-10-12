@@ -70,6 +70,9 @@ function createDate(year: number, month: number, day: number): Date {
   return date;
 }
 
+/** The first day the calendar shows. Earlier years (0 and below) have no 4-digit ISO form. */
+const FIRST_DAY = createDate(1, 0, 1);
+
 function isSameDay(a: Date, b: Date): boolean {
   return (
     a.getFullYear() === b.getFullYear() &&
@@ -162,6 +165,7 @@ function buildWeekRows(
 
 function isDateOutOfRange(date: Date, min?: Date, max?: Date): boolean {
   const d = startOfDay(date);
+  if (d < FIRST_DAY) return true;
   if (min && d < startOfDay(min)) return true;
   if (max && d > startOfDay(max)) return true;
   return false;
@@ -216,10 +220,12 @@ export function Calendar({
   const monthYearLabel = `${MONTH_NAMES[viewMonth]} ${viewYear}`;
   const monthYearLabelId = useId();
 
+  const atFirstMonth = viewYear === 1 && viewMonth === 0;
   const prevMonth = useCallback(() => {
-    setView(({ year, month }) =>
-      month === 0 ? { year: year - 1, month: 11 } : { year, month: month - 1 },
-    );
+    setView((v) => {
+      if (v.year === 1 && v.month === 0) return v;
+      return v.month === 0 ? { year: v.year - 1, month: 11 } : { ...v, month: v.month - 1 };
+    });
   }, []);
 
   const nextMonth = useCallback(() => {
@@ -260,6 +266,7 @@ export function Calendar({
     const target = getKeyTarget(event, date, weekStartsOn);
     if (!target) return;
     event.preventDefault();
+    if (target < FIRST_DAY) return;
     // Render the target's month synchronously so its button exists before it takes focus.
     flushSync(() => {
       setFocusedDate(target);
@@ -275,12 +282,14 @@ export function Calendar({
         <button
           type="button"
           aria-label="Previous month"
+          aria-disabled={atFirstMonth || undefined}
           onClick={prevMonth}
           className={cn(
             "inline-flex size-7 items-center justify-center rounded-sm",
             "micro-interactions text-foreground/70",
             "hover:bg-accent hover:text-accent-foreground",
             "focus-visible:outline-2 focus-visible:outline-ring",
+            atFirstMonth && "opacity-40",
           )}
         >
           <svg
