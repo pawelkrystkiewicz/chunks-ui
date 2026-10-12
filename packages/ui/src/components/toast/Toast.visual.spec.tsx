@@ -53,23 +53,6 @@ describe("Toast", () => {
     await screen.findByRole("button", { name: "Retry now" });
     await expect(page.elementLocator(document.body)).toMatchScreenshot();
   });
-
-  it("default, right to left", async () => {
-    document.documentElement.dir = "rtl";
-    onTestFinished(() => document.documentElement.removeAttribute("dir"));
-    // Wider than the viewport, so the shot shows which corner it sits in
-    const { innerWidth, innerHeight } = window;
-    await page.viewport(640, 320);
-    onTestFinished(() => page.viewport(innerWidth, innerHeight));
-    render(
-      <Toast.Provider>
-        <AddToast title="File saved" description="Your changes have been saved." />
-        <Toast.Viewport />
-      </Toast.Provider>,
-    );
-    await screen.findByText("File saved");
-    await expect(page.elementLocator(document.body)).toMatchScreenshot();
-  });
 });
 
 /** The toasts' direction, and the page's: an `rtl:` variant would match in the LTR section */

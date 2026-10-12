@@ -171,8 +171,9 @@ export type Dir = "ltr" | "rtl";
 /**
  * An element's extent along the inline axis: distances that grow from left to right in LTR and
  * from right to left in RTL. `a.end <= b.start` reads "a comes before b" in either direction.
+ * Takes an element or a `Range`, to measure text.
  */
-export function inlineSpan(el: Element, dir: Dir) {
+export function inlineSpan(el: Pick<Element, "getBoundingClientRect">, dir: Dir) {
   const { left, right } = el.getBoundingClientRect();
   return dir === "ltr" ? { start: left, end: right } : { start: -right, end: -left };
 }

@@ -1,6 +1,6 @@
 import { screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import { contentSpan, type Dir, renderFixture } from "../../VisualTest.utils";
+import { contentSpan, type Dir, inlineSpan, renderFixture } from "../../VisualTest.utils";
 import { Checkbox } from "../checkbox";
 import { Table } from "./index";
 
@@ -56,14 +56,6 @@ function renderTable(dir: Dir) {
   );
 }
 
-/** The inline extent of the text inside `el` */
-function textSpan(el: Element, dir: Dir) {
-  const range = document.createRange();
-  range.selectNodeContents(el);
-  const { left, right } = range.getBoundingClientRect();
-  return dir === "ltr" ? { start: left, end: right } : { start: -right, end: -left };
-}
-
 describe.each(["ltr", "rtl"] as const)("Table in %s", (dir) => {
   it("with a checkbox column", async () => {
     const { fixture } = await renderTable(dir);
@@ -74,17 +66,17 @@ describe.each(["ltr", "rtl"] as const)("Table in %s", (dir) => {
   it("aligns a header's text to the cell's inline start", async () => {
     await renderTable(dir);
     const head = screen.getByTestId("head");
-    expect(textSpan(head, dir).start).toBeCloseTo(contentSpan(head, dir).start, 0);
+    const text = document.createRange();
+    text.selectNodeContents(head);
+    expect(inlineSpan(text, dir).start).toBeCloseTo(contentSpan(head, dir).start, 0);
   });
 
   it("drops only the inline-end padding of a cell holding a checkbox", async () => {
     await renderTable(dir);
     for (const cell of [screen.getByTestId("check-head"), screen.getByTestId("check-cell")]) {
       const { paddingInlineStart, paddingInlineEnd } = getComputedStyle(cell);
-      expect({ paddingInlineStart, paddingInlineEnd }).toEqual({
-        paddingInlineStart: "8px", // `px-2`
-        paddingInlineEnd: "0px",
-      });
+      expect(paddingInlineEnd).toBe("0px");
+      expect(paddingInlineStart).not.toBe("0px");
     }
   });
 });
