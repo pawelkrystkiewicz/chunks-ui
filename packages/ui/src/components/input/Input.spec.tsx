@@ -172,6 +172,30 @@ describe("Input", () => {
       expect(screen.queryByRole("button", { name: "Clear" })).not.toBeInTheDocument();
     });
 
+    it("empties a controlled input through onValueChange, then calls onClear", async () => {
+      const user = userEvent.setup();
+      const calls: string[] = [];
+      function Controlled() {
+        const [value, setValue] = useState("abc");
+        return (
+          <Input
+            aria-label="Search"
+            value={value}
+            clearable
+            onValueChange={(next) => {
+              calls.push(`onValueChange(${JSON.stringify(next)})`);
+              setValue(next);
+            }}
+            onClear={() => calls.push("onClear")}
+          />
+        );
+      }
+      render(<Controlled />);
+      await user.click(screen.getByRole("button", { name: "Clear" }));
+      expect(screen.getByRole("textbox")).toHaveValue("");
+      expect(calls).toEqual(['onValueChange("")', "onClear"]);
+    });
+
     it("leaves a controlled input as it is when its handler keeps the value", async () => {
       const user = userEvent.setup();
       const onValueChange = vi.fn();

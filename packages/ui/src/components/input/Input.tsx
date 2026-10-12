@@ -25,19 +25,21 @@ export type InputProps = ComponentProps<typeof BaseInput> &
      * Shows a built-in clear button while the input has text and is not `disabled` or
      * `readOnly`. While it shows, it takes the place of `endAdornment`.
      *
-     * Clearing keeps focus in the input (a click doesn't blur it) and empties it the way typing
-     * does: `onChange` and `onValueChange` fire with `""`, so the handler that sets a controlled
-     * `value` clears it. With `onClear` too, a controlled input works as `onClear` describes.
+     * Clearing empties the input the way typing does: `onChange` and `onValueChange` fire with
+     * `""`, so the handler that sets a controlled `value` clears it, and `onClear`, if given, is
+     * called afterwards. Focus stays in the input with a mouse click; with the keyboard (Tab to
+     * the button, Enter or Space) the input blurs and focus then returns to it.
      * Inside a disabled `Field.Root`, the button still shows, but a click changes nothing.
      * @default false
      */
     clearable?: boolean;
     /**
-     * Called, with no arguments, after the clear button clears the input. Passing it also shows
-     * the button, as `clearable` does.
+     * Called, with no arguments, when the clear button is used. Passing it also shows the button,
+     * as `clearable` does.
      *
-     * With `onClear`, a controlled input fires no `onChange` or `onValueChange` and keeps its
-     * `value` until `onClear` sets it. Inside a disabled `Field.Root`, it is not called.
+     * With `onClear` alone, a controlled input fires no `onChange` or `onValueChange` and keeps
+     * its `value` until `onClear` sets it. With `clearable` too, the value handlers fire first
+     * and `onClear` only notifies. Inside a disabled `Field.Root`, it is not called.
      */
     onClear?: () => void;
   };
@@ -112,8 +114,8 @@ export function Input({
     if (input?.disabled || input?.readOnly) return;
     // Focus the input before the clear button unmounts, or focus falls to <body>
     input?.focus();
-    // With onClear, a controlled input keeps its value until onClear sets it
-    if (input && (!isControlled || !onClear)) {
+    // With onClear alone, a controlled input keeps its value until onClear sets it
+    if (input && (!isControlled || clearable)) {
       // Empty it the way typing does, through the native setter and an input event, so React's
       // onChange, Base UI's field state and the consumer's handlers all see the change
       Object.getOwnPropertyDescriptor(Object.getPrototypeOf(input), "value")?.set?.call(input, "");
@@ -129,6 +131,7 @@ export function Input({
 
   return (
     <div
+      data-slot="input-adornments"
       className={cn(
         "relative inline-flex items-center",
         typeof className === "string" && className,
