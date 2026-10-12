@@ -64,6 +64,7 @@ export { CopyButton, type CopyButtonProps } from "./components/copy-button";
 export { DatePicker, type DatePickerProps } from "./components/date-picker";
 export type {
   DialogBackdropProps,
+  DialogBodyProps,
   DialogCloseProps,
   DialogDescriptionProps,
   DialogPopupProps,
