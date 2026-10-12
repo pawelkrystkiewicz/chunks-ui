@@ -67,7 +67,7 @@ A controlled input is cleared by the handler that sets its `value`:
 
 ```tsx
 export const ClearableSearch = () => {
-  const [value, setValue] = useState('')
+  const [value, setValue] = useState('Hello')
 
   return (
     <Input value={value} onValueChange={setValue} clearable placeholder="Search..." aria-label="Search" />
