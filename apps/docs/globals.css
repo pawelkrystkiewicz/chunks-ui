@@ -28,7 +28,7 @@
   --l-brand-pale: oklch(80% 0.1 257);
   /* Focus ring: the page's text colour, 16:1 or more on --l-bg and --l-card in both site themes.
      The library's grey --ring passes 3:1 on --l-bg (light) with almost no margin. The static
-     component previews restore the library ring through --l-lib-ring (see :root below). */
+     component previews restore the library ring through --l-lib-ring (see :root above). */
   --ring: var(--l-fg);
   --l-grid:
     repeating-linear-gradient(90deg, transparent 0 20px, var(--l-ill) 20px 21px),
