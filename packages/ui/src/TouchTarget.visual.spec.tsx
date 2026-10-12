@@ -82,6 +82,8 @@ describe.each(SIZES)("touch-target on a $width×$height element", ({ width, heig
       [0, dy],
       [-dx, -dy],
       [dx, dy],
+      [dx, -dy],
+      [-dx, dy],
     ] as const;
     for (const [x, y] of points) {
       expect(await pressAt(stage, centre.x + x, centre.y + y), `${x}, ${y}`).toBe(target);
@@ -145,9 +147,29 @@ describe("touch-target layout", () => {
       const target = getByTestId("target");
       expect(getComputedStyle(target).position).toBe(position);
       const { x, y } = centreOf(target);
-      expect(await pressAt(stage, x - (MIN_AREA / 2 - MARGIN), y)).toBe(target);
+      const reach = MIN_AREA / 2 - MARGIN;
+      expect(await pressAt(stage, x - reach, y)).toBe(target);
+      expect(await pressAt(stage, x + reach, y)).toBe(target);
+      expect(await pressAt(stage, x, y + reach)).toBe(target);
     },
   );
+
+  // A variant utility is emitted after `absolute`, so `position: relative` must not carry weight
+  it("keeps position: absolute under a variant, with the area still centred", async () => {
+    const { stage, getByTestId } = renderStage(
+      <span
+        data-testid="target"
+        className="absolute min-[0px]:touch-target"
+        style={{ display: "block", width: 16, height: 16 }}
+      />,
+    );
+    const target = getByTestId("target");
+    expect(getComputedStyle(target).position).toBe("absolute");
+    const { x, y } = centreOf(target);
+    const reach = MIN_AREA / 2 - MARGIN;
+    expect(await pressAt(stage, x - reach, y)).toBe(target);
+    expect(await pressAt(stage, x + reach, y)).toBe(target);
+  });
 });
 
 describe("touch-target on ClearButton (24px)", () => {

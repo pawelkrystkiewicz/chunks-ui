@@ -224,12 +224,17 @@
  * The area is an empty `::after` box. It is absolutely positioned, so it takes no space, and each
  * inset is half of (size - 44px) when that is negative, 0 otherwise. `::after` because Switch draws
  * its forced-colors ring with `::before`. `position: relative` makes the element the box's
- * containing block; Tailwind sorts this utility before `absolute`, `fixed` and `sticky`, so an
- * element with one of those keeps it. The box inherits `pointer-events`, so a control with
+ * containing block. It is set in `:where()`, so it has zero specificity: Tailwind emits variant
+ * utilities (`pointer-coarse:touch-target`) after all plain ones, and without `:where()` the
+ * `relative` would beat an `absolute`, `fixed` or `sticky` class on the element. Position
+ * utilities, inline styles and unlayered CSS win over it; layered component CSS (`@layer base`
+ * or `components`) does not. The box inherits `pointer-events`, so a control with
  * `pointer-events: none` (disabled) stays inert in the whole area.
  */
 @utility touch-target {
-  position: relative;
+  :where(&) {
+    position: relative;
+  }
 
   &::after {
     content: "";
