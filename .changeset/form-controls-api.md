@@ -9,3 +9,5 @@ A click on `Input`'s clear button no longer blurs the input, with `clearable` or
 `Textarea` has `onValueChange(value, eventDetails)`, like `Input`.
 
 A disabled `Radio.Root` outside `Radio.Item` and outside a disabled `Radio.Group` now dims and shows a not-allowed cursor. Before, it looked enabled, and its `pointer-events: none` hid the cursor. Inside a disabled group or a disabled `Radio.Item`, it is still dimmed once.
+
+`Label` now dims right before a disabled `Input` with adornments, which renders a wrapper around its input.
