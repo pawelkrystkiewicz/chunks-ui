@@ -16,6 +16,7 @@ import {
   sameTheme,
   type Theme,
   toScopeStyle,
+  withHue,
 } from "./theme-model";
 
 /** Reads an `oklch(l c h)` string as written by `palette()` or theme.css, whose lightness may be a percentage. */
@@ -131,6 +132,52 @@ describe("contrast", () => {
       4.57,
       1,
     );
+  });
+
+  it("measures the colours as painted, in 8-bit sRGB", () => {
+    // Paints as #757900. Unrounded, white text on it measures 4.50:1.
+    expect(contrast({ l: 0.985, c: 0, h: 0 }, { l: 0.546, c: 0.2165, h: 113 })).toBeCloseTo(
+      4.48,
+      2,
+    );
+  });
+});
+
+describe("withHue", () => {
+  const primaryText = (primary: Oklch, base: Theme["base"]) => {
+    const pal = palette({ ...DEFAULT_THEME, primary, base }, "light");
+    const fg = pal["primary-foreground"] ?? "";
+    return { fg, ratio: contrast(parseOklch(fg), parseOklch(pal.primary ?? "")) };
+  };
+
+  it("leaves Ink at today's Blue lightness and chroma", () => {
+    expect(withHue(ink.primary, 200)).toEqual({ l: 0.56, c: 0.2165, h: 200 });
+  });
+
+  it("darkens a hue where neither text reaches 4.5:1 at Blue's lightness until white text does", () => {
+    const primary = withHue(ink.primary, 100);
+    expect(primary).toEqual({ l: 0.552, c: 0.2165, h: 100 });
+    expect(primaryText(primary, "neutral").fg).toBe("oklch(0.985 0 0)");
+  });
+
+  it("gives every hue a primary whose text reaches 4.5:1 as painted, on every base", () => {
+    for (let h = 0; h < 360; h++) {
+      for (const { id: base } of BASES) {
+        expect(
+          primaryText(withHue(ink.primary, h), base).ratio,
+          `h ${h} ${base}`,
+        ).toBeGreaterThanOrEqual(4.5);
+      }
+    }
+  });
+
+  it("keeps Blue as it is", () => {
+    const blue = { l: 0.56, c: 0.2165, h: 257.21 };
+    expect(withHue(blue, blue.h)).toEqual(blue);
+  });
+
+  it("keeps the lightness and chroma of a swatch other than Blue", () => {
+    expect(withHue({ l: 0.63, c: 0.22, h: 354 }, 10)).toEqual({ l: 0.63, c: 0.22, h: 10 });
   });
 });
 
@@ -294,7 +341,7 @@ describe("loadTheme", () => {
   it("loads any other stored primary unchanged", () => {
     for (const primary of [
       { l: 0.6048, c: 0.2165, h: 200 }, // the old Blue's lightness at another hue
-      { l: 0.6048, c: 0.2165, h: 257 }, // what the hue slider builds on leaving Ink
+      { l: 0.6048, c: 0.2165, h: 257 }, // what the hue slider built on leaving Ink until #294
     ]) {
       stored({ ...DEFAULT_THEME, primary });
       expect(loadTheme()?.primary).toEqual(primary);
