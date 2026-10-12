@@ -2,9 +2,21 @@ import { Input as BaseInput } from "@base-ui/react/input";
 import type { VariantProps } from "class-variance-authority";
 import { type ComponentProps, type ReactNode, useEffect, useRef, useState } from "react";
 import { cn, cnState } from "../../lib/cn";
+import { mergeLabels } from "../../lib/labels";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { ClearButton } from "../clear-button";
 import { inputVariants } from "./Input.Variants";
+
+/** The built-in English strings of `Input`. */
+export type InputLabels = {
+  /**
+   * Name of the built-in clear button.
+   * @default "Clear"
+   */
+  clear: string;
+};
+
+export const DEFAULT_INPUT_LABELS: Readonly<InputLabels> = { clear: "Clear" };
 
 export type InputProps = ComponentProps<typeof BaseInput> &
   VariantProps<typeof inputVariants> & {
@@ -42,6 +54,11 @@ export type InputProps = ComponentProps<typeof BaseInput> &
      * and `onClear` only notifies. Inside a disabled `Field.Root`, it is not called.
      */
     onClear?: () => void;
+    /**
+     * Replaces the built-in English strings, e.g. to translate them. Keys you leave out keep the
+     * default from `DEFAULT_INPUT_LABELS`.
+     */
+    labels?: Partial<InputLabels>;
   };
 
 const isEmpty = (value: unknown) => value == null || String(value).length === 0;
@@ -54,6 +71,7 @@ export function Input({
   className,
   ref,
   onValueChange,
+  labels,
   ...props
 }: InputProps) {
   const inputRef = useRef<HTMLElement>(null);
@@ -129,6 +147,8 @@ export function Input({
     onClear?.();
   };
 
+  const clearLabel = mergeLabels(DEFAULT_INPUT_LABELS, labels).clear;
+
   return (
     <div
       data-slot="input-adornments"
@@ -158,6 +178,7 @@ export function Input({
         <span className="absolute end-3 flex items-center">
           {showsClearButton ? (
             <ClearButton
+              label={clearLabel}
               onClick={handleClear}
               // A mousedown would move focus to the button and blur the input, which validates
               // a validationMode="onBlur" field mid-clear

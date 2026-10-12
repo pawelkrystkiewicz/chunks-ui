@@ -1,11 +1,14 @@
 import {
   type ComponentProps,
   cloneElement,
+  createContext,
   isValidElement,
   type ReactElement,
   type ReactNode,
+  useContext,
 } from "react";
 import { cn } from "../../lib/cn";
+import { mergeLabels } from "../../lib/labels";
 import { BUTTON_ANIMATION_CLASSES } from "../shared";
 
 type RenderProps = { className?: string; children?: ReactNode; [key: string]: unknown };
@@ -15,7 +18,47 @@ type RenderElement = ReactElement<RenderProps>;
 // Types
 // ---------------------------------------------------------------------------
 
-export type PaginationRootProps = ComponentProps<"nav">;
+/** The built-in English strings of `Pagination`. */
+export type PaginationLabels = {
+  /**
+   * Name of the `Pagination.Root` navigation landmark.
+   * @default "pagination"
+   */
+  root: string;
+  /**
+   * Text of `Pagination.Previous` when it has no children.
+   * @default "Previous"
+   */
+  previous: string;
+  /**
+   * Text of `Pagination.Next` when it has no children.
+   * @default "Next"
+   */
+  next: string;
+  /**
+   * Screen-reader text of `Pagination.Ellipsis`.
+   * @default "More pages"
+   */
+  ellipsis: string;
+};
+
+export const DEFAULT_PAGINATION_LABELS: Readonly<PaginationLabels> = {
+  root: "pagination",
+  previous: "Previous",
+  next: "Next",
+  ellipsis: "More pages",
+};
+
+const PaginationLabelsContext = createContext(DEFAULT_PAGINATION_LABELS);
+
+export type PaginationRootProps = ComponentProps<"nav"> & {
+  /**
+   * Replaces the built-in English strings, e.g. to translate them. Keys you leave out keep the
+   * default from `DEFAULT_PAGINATION_LABELS`. `aria-label` on Root and `children` on Previous
+   * and Next take precedence.
+   */
+  labels?: Partial<PaginationLabels>;
+};
 export type PaginationContentProps = ComponentProps<"ul">;
 export type PaginationItemProps = ComponentProps<"li">;
 export type PaginationLinkProps = ComponentProps<"a"> & {
@@ -59,13 +102,16 @@ const LINK_CLASSES = [
 // Components
 // ---------------------------------------------------------------------------
 
-function PaginationRoot({ className, ...props }: PaginationRootProps) {
+function PaginationRoot({ className, labels, ...props }: PaginationRootProps) {
+  const names = mergeLabels(DEFAULT_PAGINATION_LABELS, labels);
   return (
-    <nav
-      aria-label="pagination"
-      className={cn("mx-auto flex w-full justify-center", className)}
-      {...props}
-    />
+    <PaginationLabelsContext.Provider value={names}>
+      <nav
+        aria-label={names.root}
+        className={cn("mx-auto flex w-full justify-center", className)}
+        {...props}
+      />
+    </PaginationLabelsContext.Provider>
   );
 }
 
@@ -97,6 +143,7 @@ function PaginationLink({ className, active, render, children, ...props }: Pagin
 }
 
 function PaginationPrevious({ className, render, children, ...props }: PaginationPreviousProps) {
+  const labels = useContext(PaginationLabelsContext);
   const classes = cn(LINK_CLASSES, "gap-1 px-2.5", className);
 
   const content = (
@@ -115,7 +162,7 @@ function PaginationPrevious({ className, render, children, ...props }: Paginatio
       >
         <path d="m15 18-6-6 6-6" />
       </svg>
-      <span>{children ?? "Previous"}</span>
+      <span>{children ?? labels.previous}</span>
     </>
   );
 
@@ -135,11 +182,12 @@ function PaginationPrevious({ className, render, children, ...props }: Paginatio
 }
 
 function PaginationNext({ className, render, children, ...props }: PaginationNextProps) {
+  const labels = useContext(PaginationLabelsContext);
   const classes = cn(LINK_CLASSES, "gap-1 px-2.5", className);
 
   const content = (
     <>
-      <span>{children ?? "Next"}</span>
+      <span>{children ?? labels.next}</span>
       <svg
         xmlns="http://www.w3.org/2000/svg"
         width="16"
@@ -173,6 +221,7 @@ function PaginationNext({ className, render, children, ...props }: PaginationNex
 }
 
 function PaginationEllipsis({ className, ...props }: PaginationEllipsisProps) {
+  const labels = useContext(PaginationLabelsContext);
   return (
     <span className={cn("flex size-9 items-center justify-center", className)} {...props}>
       <svg
@@ -191,7 +240,7 @@ function PaginationEllipsis({ className, ...props }: PaginationEllipsisProps) {
         <circle cx="19" cy="12" r="1" />
         <circle cx="5" cy="12" r="1" />
       </svg>
-      <span className="sr-only">More pages</span>
+      <span className="sr-only">{labels.ellipsis}</span>
     </span>
   );
 }

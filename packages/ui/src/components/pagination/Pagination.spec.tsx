@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { axe } from "jest-axe";
 import { afterEach, describe, expect, it } from "vitest";
-import { Pagination } from "./Pagination";
+import { DEFAULT_PAGINATION_LABELS, Pagination, type PaginationRootProps } from "./Pagination";
 
 afterEach(cleanup);
 
@@ -121,5 +121,64 @@ describe("Pagination", () => {
   it("has no a11y violations", async () => {
     const { container } = render(<BasicPagination />);
     expect(await axe(container)).toHaveNoViolations();
+  });
+});
+
+describe("Pagination labels", () => {
+  function LabelledPagination(props: PaginationRootProps) {
+    return (
+      <Pagination.Root {...props}>
+        <Pagination.Content>
+          <Pagination.Item>
+            <Pagination.Previous href="#" />
+          </Pagination.Item>
+          <Pagination.Item>
+            <Pagination.Ellipsis />
+          </Pagination.Item>
+          <Pagination.Item>
+            <Pagination.Next href="#" />
+          </Pagination.Item>
+        </Pagination.Content>
+      </Pagination.Root>
+    );
+  }
+
+  it("uses DEFAULT_PAGINATION_LABELS", () => {
+    render(<LabelledPagination />);
+    const { root, previous, next, ellipsis } = DEFAULT_PAGINATION_LABELS;
+    expect(screen.getByRole("navigation", { name: root })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: previous })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: next })).toBeInTheDocument();
+    expect(screen.getByText(ellipsis)).toBeInTheDocument();
+  });
+
+  it("takes every string from labels on Root", () => {
+    render(
+      <LabelledPagination
+        labels={{
+          root: "Paginacja",
+          previous: "Poprzednia",
+          next: "Następna",
+          ellipsis: "Więcej stron",
+        }}
+      />,
+    );
+    expect(screen.getByRole("navigation", { name: "Paginacja" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Poprzednia" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Następna" })).toBeInTheDocument();
+    expect(screen.getByText("Więcej stron")).toBeInTheDocument();
+  });
+
+  it("prefers aria-label on Root and children on Previous and Next over labels", () => {
+    render(
+      <Pagination.Root
+        aria-label="Results pages"
+        labels={{ root: "Paginacja", previous: "Wstecz" }}
+      >
+        <Pagination.Previous href="#">Back</Pagination.Previous>
+      </Pagination.Root>,
+    );
+    expect(screen.getByRole("navigation", { name: "Results pages" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Back" })).toBeInTheDocument();
   });
 });

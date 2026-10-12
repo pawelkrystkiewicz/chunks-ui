@@ -1,4 +1,5 @@
 import { NumberFieldBasicExample, NumberFieldMinMaxExample, NumberFieldScrubExample, NumberFieldDisabledExample } from '@/examples/NumberField'
+import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
 # NumberField
 
@@ -102,4 +103,27 @@ Wrap a label with `NumberField.ScrubArea` to allow click-and-drag adjustment. Wh
 
 ## Props
 
-All parts accept the props from their corresponding Base UI [`NumberField`](https://base-ui.com/react/components/number-field#api-reference) sub-components.
+All parts accept the props from their corresponding Base UI [`NumberField`](https://base-ui.com/react/components/number-field#api-reference) sub-components. `NumberField.Root` also takes `labels`:
+
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { NumberFieldRootProps } from 'chunks-ui'
+type Props = Pick<NumberFieldRootProps, 'labels'>
+export default Props
+`
+  })}
+/>
+
+## Labels
+
+`labels` replaces the built-in English text, for example to translate it. Keys you leave out keep their default from `DEFAULT_NUMBER_FIELD_LABELS`. Base UI sets these strings; `aria-label` on `NumberField.Increment` or `NumberField.Decrement` and `aria-roledescription` on `NumberField.Input` take precedence. See [Labels](/labels).
+
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { NumberFieldLabels } from 'chunks-ui'
+export default NumberFieldLabels
+`
+  })}
+/>

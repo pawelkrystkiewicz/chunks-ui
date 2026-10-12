@@ -1,11 +1,16 @@
+import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
 import { cleanup, render, screen } from "@testing-library/react";
 import { axe } from "jest-axe";
-import { afterEach, describe, expect, it } from "vitest";
+import type { ComponentProps } from "react";
+import { afterEach, describe, expect, expectTypeOf, it } from "vitest";
 import {
   Combobox,
   type ComboboxChipRemoveProps,
   type ComboboxClearProps,
+  type ComboboxLabels,
+  type ComboboxRootProps,
   type ComboboxTriggerProps,
+  DEFAULT_COMBOBOX_LABELS,
 } from "./Combobox";
 
 afterEach(cleanup);
@@ -287,6 +292,13 @@ describe("Combobox", () => {
     expect(screen.getByTestId("gl")).toHaveClass("custom");
   });
 
+  // Checked by check-types: the generic defaults keep Root's props those of Base UI, plus labels
+  it("types Root's props as Base UI's Root props plus labels", () => {
+    expectTypeOf<ComboboxRootProps>().toEqualTypeOf<
+      ComponentProps<typeof BaseCombobox.Root> & { labels?: Partial<ComboboxLabels> }
+    >();
+  });
+
   it("has no a11y violations", async () => {
     const { container } = render(
       <Combobox.Root>
@@ -305,13 +317,15 @@ describe("Combobox icon buttons", () => {
     triggerProps,
     clearProps,
     chipRemoveProps,
+    labels,
   }: {
     triggerProps?: ComboboxTriggerProps;
     clearProps?: ComboboxClearProps;
     chipRemoveProps?: ComboboxChipRemoveProps;
+    labels?: Partial<ComboboxLabels>;
   }) {
     return (
-      <Combobox.Root multiple items={fruits} defaultValue={["Apple"]}>
+      <Combobox.Root multiple items={fruits} defaultValue={["Apple"]} labels={labels}>
         <Combobox.Control>
           <Combobox.Chips>
             <Combobox.Chip>
@@ -327,11 +341,105 @@ describe("Combobox icon buttons", () => {
     );
   }
 
+  it("types DEFAULT_COMBOBOX_LABELS as read-only", () => {
+    expectTypeOf(DEFAULT_COMBOBOX_LABELS).toEqualTypeOf<Readonly<ComboboxLabels>>();
+  });
+
   it("names the default Trigger, Clear and ChipRemove", () => {
     render(<MultiSelect />);
     expect(screen.getByRole("button", { name: "Show options" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Clear selection" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Remove" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Remove Apple" })).toBeInTheDocument();
+  });
+
+  it("names them with DEFAULT_COMBOBOX_LABELS", () => {
+    render(<MultiSelect />);
+    const { trigger, clear, chipRemove } = DEFAULT_COMBOBOX_LABELS;
+    for (const name of [trigger, clear, `${chipRemove} Apple`]) {
+      expect(screen.getByRole("button", { name })).toBeInTheDocument();
+    }
+  });
+
+  it("takes the names from labels on Root", () => {
+    render(
+      <MultiSelect
+        labels={{ trigger: "Pokaż opcje", clear: "Wyczyść wybór", chipRemove: "Usuń" }}
+      />,
+    );
+    for (const name of ["Pokaż opcje", "Wyczyść wybór", "Usuń Apple"]) {
+      expect(screen.getByRole("button", { name })).toBeInTheDocument();
+    }
+  });
+
+  it.each([
+    { chipRemove: "{chip} を削除", name: "Apple を削除" },
+    { chipRemove: "Supprimer {chip} ?", name: "Supprimer Apple ?" },
+  ])("puts the chip's content where $chipRemove has {chip}", ({ chipRemove, name }) => {
+    render(<MultiSelect labels={{ chipRemove }} />);
+    expect(screen.getByRole("button", { name })).toBeInTheDocument();
+  });
+
+  // Base UI's own Chip gives ChipRemove no chip to be named after
+  it("drops {chip} from the name of a ChipRemove outside Combobox.Chip", () => {
+    render(
+      <Combobox.Root
+        multiple
+        items={fruits}
+        defaultValue={["Apple"]}
+        labels={{ chipRemove: "Supprimer {chip} ?" }}
+      >
+        <Combobox.Chips>
+          <BaseCombobox.Chip>
+            Apple
+            <Combobox.ChipRemove />
+          </BaseCombobox.Chip>
+        </Combobox.Chips>
+      </Combobox.Root>,
+    );
+    expect(screen.getByRole("button", { name: "Supprimer ?" })).toBeInTheDocument();
+  });
+
+  it("names ChipRemove after rich chip content", () => {
+    render(
+      <Combobox.Root multiple items={fruits} defaultValue={["Apple"]}>
+        <Combobox.Chips>
+          <Combobox.Chip>
+            <svg aria-hidden="true" />
+            <span>Apple</span> pie
+            <Combobox.ChipRemove />
+          </Combobox.Chip>
+        </Combobox.Chips>
+      </Combobox.Root>,
+    );
+    expect(screen.getByRole("button", { name: "Remove Apple pie" })).toBeInTheDocument();
+  });
+
+  it("names ChipRemove after a chip with its own id", () => {
+    render(
+      <Combobox.Root multiple items={fruits} defaultValue={["Apple"]}>
+        <Combobox.Chips>
+          <Combobox.Chip id="apple-chip">
+            Apple
+            <Combobox.ChipRemove />
+          </Combobox.Chip>
+        </Combobox.Chips>
+      </Combobox.Root>,
+    );
+    expect(screen.getByRole("button", { name: "Remove Apple" })).toBeInTheDocument();
+  });
+
+  it("prefers aria-label on a part over labels", () => {
+    render(
+      <MultiSelect
+        labels={{ trigger: "Pokaż opcje", clear: "Wyczyść wybór", chipRemove: "Usuń" }}
+        triggerProps={{ "aria-label": "Show fruits" }}
+        clearProps={{ "aria-label": "Clear fruits" }}
+        chipRemoveProps={{ "aria-label": "Drop Apple" }}
+      />,
+    );
+    for (const name of ["Show fruits", "Clear fruits", "Drop Apple"]) {
+      expect(screen.getByRole("button", { name })).toBeInTheDocument();
+    }
   });
 
   it("passes axe with every icon button named", async () => {

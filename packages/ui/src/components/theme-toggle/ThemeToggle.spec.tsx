@@ -4,7 +4,7 @@ import { axe } from "jest-axe";
 import { createRef } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Tooltip } from "../tooltip";
-import { ThemeToggle } from "./ThemeToggle";
+import { DEFAULT_THEME_TOGGLE_LABELS, ThemeToggle } from "./ThemeToggle";
 
 afterEach(cleanup);
 
@@ -133,5 +133,28 @@ describe("ThemeToggle", () => {
   it("has no a11y violations", async () => {
     const { container } = render(<ThemeToggle theme="light" />);
     expect(await axe(container)).toHaveNoViolations();
+  });
+});
+
+describe("ThemeToggle labels", () => {
+  it("uses DEFAULT_THEME_TOGGLE_LABELS", () => {
+    const { rerender } = render(<ThemeToggle theme="light" />);
+    const { switchToDark, switchToLight } = DEFAULT_THEME_TOGGLE_LABELS;
+    expect(screen.getByRole("button", { name: switchToDark })).toBeInTheDocument();
+    rerender(<ThemeToggle theme="dark" />);
+    expect(screen.getByRole("button", { name: switchToLight })).toBeInTheDocument();
+  });
+
+  it("takes both names from labels", () => {
+    const labels = { switchToDark: "Włącz tryb ciemny", switchToLight: "Włącz tryb jasny" };
+    const { rerender } = render(<ThemeToggle theme="light" labels={labels} />);
+    expect(screen.getByRole("button", { name: "Włącz tryb ciemny" })).toBeInTheDocument();
+    rerender(<ThemeToggle theme="dark" labels={labels} />);
+    expect(screen.getByRole("button", { name: "Włącz tryb jasny" })).toBeInTheDocument();
+  });
+
+  it("prefers aria-label over labels", () => {
+    render(<ThemeToggle theme="light" aria-label="Theme" labels={{ switchToDark: "Ciemny" }} />);
+    expect(screen.getByRole("button", { name: "Theme" })).toBeInTheDocument();
   });
 });

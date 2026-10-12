@@ -1,4 +1,5 @@
 import { SliderBasicExample, SliderWithValueExample, SliderRangeExample, SliderVerticalExample, SliderDisabledExample } from '@/examples/Slider'
+import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
 # Slider
 
@@ -130,4 +131,27 @@ function ControlledSlider() {
 
 ## Props
 
-All compound parts are thin style wrappers. Props are forwarded to the underlying Base UI [`Slider`](https://base-ui.com/react/components/slider#api-reference).
+All compound parts are thin style wrappers. Props are forwarded to the underlying Base UI [`Slider`](https://base-ui.com/react/components/slider#api-reference). `Slider.Root` also takes `labels`:
+
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { SliderRootProps } from 'chunks-ui'
+type Props = Pick<SliderRootProps, 'labels'>
+export default Props
+`
+  })}
+/>
+
+## Labels
+
+`labels` replaces the built-in English text, for example to translate it. Keys you leave out keep their default from `DEFAULT_SLIDER_LABELS`. They are the `aria-valuetext` that Base UI gives the two thumbs of a range slider, as functions of the formatted value. `getAriaValueText` and `aria-valuetext` on `Slider.Thumb` take precedence. See [Labels](/labels).
+
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { SliderLabels } from 'chunks-ui'
+export default SliderLabels
+`
+  })}
+/>

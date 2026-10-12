@@ -1,1 +1,6 @@
-export { ClearButton, type ClearButtonProps } from "./ClearButton";
+export {
+  ClearButton,
+  type ClearButtonLabels,
+  type ClearButtonProps,
+  DEFAULT_CLEAR_BUTTON_LABELS,
+} from "./ClearButton";
