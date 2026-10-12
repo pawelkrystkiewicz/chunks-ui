@@ -2,7 +2,7 @@ import { ToggleGroupBasicExample, ToggleGroupMultipleExample, ToggleGroupRequire
 
 # Toggle Group
 
-A group of toggle buttons where one or multiple items can be pressed at a time. Built on Base UI's `Toggle` and `ToggleGroup` primitives. In single-select mode, a sliding indicator animates between the active item using Motion (with CSS transition fallback). When the group is hidden (for example with `display: none`) and shown again, the indicator appears over the pressed item instead of growing from nothing.
+A group of toggle buttons where one or multiple items can be pressed at a time. Built on Base UI's `Toggle` and `ToggleGroup` primitives. In single-select mode, a sliding indicator animates between the active item using Motion (with CSS transition fallback). When the group is hidden (for example with `display: none`) and shown again, the indicator appears over the pressed item instead of growing from nothing. Only pressing another item slides the indicator: when an item or the group changes size (for example a font size, padding or container width change), it moves to the pressed item at once, so it does not trail behind it.
 
 ## Import
 
@@ -82,7 +82,7 @@ function ControlledToggleGroup() {
 
 | Part | Description |
 |---|---|
-| `ToggleGroup.Root` | Container that manages selection state. Renders a pill-shaped muted background with inline-flex layout. In single-select mode, renders a sliding indicator behind the active item. |
+| `ToggleGroup.Root` | Container that manages selection state. Renders a pill-shaped muted background with inline-flex layout. In single-select mode, renders a sliding indicator behind the active item. The indicator slides to an item when it is pressed, and follows a resize at once. |
 | `ToggleGroup.Item` | Individual toggle button. Shows muted text by default, foreground text when pressed. In multiple mode, each pressed item gets its own background highlight. |
 
 ## Props

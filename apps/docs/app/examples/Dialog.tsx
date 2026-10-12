@@ -64,3 +64,36 @@ export function DialogControlledExample() {
     </Container>
   );
 }
+
+const TERMS = Array.from({ length: 12 }, (_, i) => `Section ${i + 1}`);
+
+export function DialogLongContentExample() {
+  return (
+    <Container>
+      <Dialog.Root>
+        <Dialog.Trigger>Read the terms</Dialog.Trigger>
+        <Dialog.Portal>
+          <Dialog.Backdrop />
+          <Dialog.Popup>
+            <Dialog.Title>Terms of service</Dialog.Title>
+            <Dialog.Description>Read the terms before you accept them.</Dialog.Description>
+            <Dialog.Body className="mt-4 space-y-3 text-sm">
+              {TERMS.map((section) => (
+                <p key={section}>
+                  {section}. These terms apply to your use of the service. Keep your account details
+                  safe and tell us when something looks wrong.
+                </p>
+              ))}
+            </Dialog.Body>
+            <div className="mt-4 flex justify-end gap-2">
+              <Dialog.Close render={<Button variant="outlined" color="secondary" />}>
+                Cancel
+              </Dialog.Close>
+              <Dialog.Close render={<Button />}>Accept</Dialog.Close>
+            </div>
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>
+    </Container>
+  );
+}
