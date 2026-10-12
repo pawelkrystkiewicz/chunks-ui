@@ -3,6 +3,7 @@
 import { NumberField as BaseNumberField } from "@base-ui/react/number-field";
 import { type ComponentProps, createContext, useContext } from "react";
 import { cnState } from "../../lib/cn";
+import { mergeLabels } from "../../lib/labels";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -58,7 +59,7 @@ export type NumberFieldScrubAreaCursorProps = ComponentProps<
 
 function NumberFieldRoot({ className, labels, ...props }: NumberFieldRootProps) {
   return (
-    <NumberFieldLabelsContext.Provider value={{ ...DEFAULT_NUMBER_FIELD_LABELS, ...labels }}>
+    <NumberFieldLabelsContext.Provider value={mergeLabels(DEFAULT_NUMBER_FIELD_LABELS, labels)}>
       <BaseNumberField.Root className={cnState("flex flex-col", className)} {...props} />
     </NumberFieldLabelsContext.Provider>
   );

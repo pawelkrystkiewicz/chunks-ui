@@ -12,6 +12,7 @@ import {
   useState,
 } from "react";
 import { cn } from "../../lib/cn";
+import { mergeLabels } from "../../lib/labels";
 import { usePortalContainer } from "../../lib/portal-container";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import {
@@ -150,7 +151,7 @@ export function DatePicker({
   ref,
   ...triggerProps
 }: DatePickerProps) {
-  const names = { ...DEFAULT_DATE_PICKER_LABELS, ...labels };
+  const names = mergeLabels(DEFAULT_DATE_PICKER_LABELS, labels);
   const container = usePortalContainer();
   const popupRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);

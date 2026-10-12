@@ -8,6 +8,7 @@ import {
   useContext,
 } from "react";
 import { cn } from "../../lib/cn";
+import { mergeLabels } from "../../lib/labels";
 
 type RenderProps = { className?: string; children?: ReactNode; [key: string]: unknown };
 type RenderElement = ReactElement<RenderProps>;
@@ -60,7 +61,7 @@ export type BreadcrumbEllipsisProps = ComponentProps<"span">;
 // ---------------------------------------------------------------------------
 
 function BreadcrumbRoot({ className, labels, ...props }: BreadcrumbRootProps) {
-  const names = { ...DEFAULT_BREADCRUMB_LABELS, ...labels };
+  const names = mergeLabels(DEFAULT_BREADCRUMB_LABELS, labels);
   return (
     <BreadcrumbLabelsContext.Provider value={names}>
       <nav aria-label={names.root} className={className} {...props} />

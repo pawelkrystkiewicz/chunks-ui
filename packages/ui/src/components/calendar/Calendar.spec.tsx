@@ -623,6 +623,13 @@ describe("Calendar labels", () => {
     expectTypeOf(DEFAULT_CALENDAR_LABELS).toEqualTypeOf<Readonly<CalendarLabels>>();
   });
 
+  it("keeps the default when a function label is undefined", () => {
+    render(<Calendar value={MARCH_15_2026} labels={{ heading: undefined }} />);
+    expect(
+      screen.getByRole("grid", { name: DEFAULT_CALENDAR_LABELS.heading(new Date(2026, 2, 1)) }),
+    ).toBeInTheDocument();
+  });
+
   const PL_NARROW_WEEKDAYS = ["N", "P", "W", "Ś", "C", "P", "S"];
 
   it("uses DEFAULT_CALENDAR_LABELS", () => {

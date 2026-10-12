@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { mergeLabels } from "../../lib/labels";
 import { IconButton, type IconButtonProps } from "../icon-button";
 
 type IconButtonOnClick = NonNullable<IconButtonProps["onClick"]>;
@@ -87,7 +88,7 @@ export function CopyButton({
     [value, timeout, onClick],
   );
 
-  const names = { ...DEFAULT_COPY_BUTTON_LABELS, ...labels };
+  const names = mergeLabels(DEFAULT_COPY_BUTTON_LABELS, labels);
   const defaultLabel = !children ? (copied ? names.copied : names.copy) : undefined;
 
   return (

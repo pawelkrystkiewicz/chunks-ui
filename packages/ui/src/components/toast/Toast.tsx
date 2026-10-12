@@ -4,6 +4,7 @@ import { Toast as BaseToast } from "@base-ui/react/toast";
 import { X } from "lucide-react";
 import type { ComponentProps, ComponentType } from "react";
 import { cn, cnState } from "../../lib/cn";
+import { mergeLabels } from "../../lib/labels";
 import { useReducedMotion } from "../../lib/use-motion";
 
 /**
@@ -108,7 +109,7 @@ export type ToastActionProps = ComponentProps<typeof BaseToast.Action>;
 
 function ToastViewport({ className, labels, ...props }: ToastViewportProps) {
   const manager = BaseToast.useToastManager();
-  const names = { ...DEFAULT_TOAST_LABELS, ...labels };
+  const names = mergeLabels(DEFAULT_TOAST_LABELS, labels);
 
   return (
     <BaseToast.Viewport

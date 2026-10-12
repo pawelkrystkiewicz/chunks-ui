@@ -8,6 +8,7 @@ import {
   useContext,
 } from "react";
 import { cn } from "../../lib/cn";
+import { mergeLabels } from "../../lib/labels";
 import { BUTTON_ANIMATION_CLASSES } from "../shared";
 
 type RenderProps = { className?: string; children?: ReactNode; [key: string]: unknown };
@@ -102,7 +103,7 @@ const LINK_CLASSES = [
 // ---------------------------------------------------------------------------
 
 function PaginationRoot({ className, labels, ...props }: PaginationRootProps) {
-  const names = { ...DEFAULT_PAGINATION_LABELS, ...labels };
+  const names = mergeLabels(DEFAULT_PAGINATION_LABELS, labels);
   return (
     <PaginationLabelsContext.Provider value={names}>
       <nav

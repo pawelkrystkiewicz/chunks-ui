@@ -2,6 +2,7 @@ import { Input as BaseInput } from "@base-ui/react/input";
 import type { VariantProps } from "class-variance-authority";
 import { type ComponentProps, type ReactNode, useEffect, useRef, useState } from "react";
 import { cn, cnState } from "../../lib/cn";
+import { mergeLabels } from "../../lib/labels";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { ClearButton } from "../clear-button";
 import { inputVariants } from "./Input.Variants";
@@ -146,7 +147,7 @@ export function Input({
     onClear?.();
   };
 
-  const clearLabel = { ...DEFAULT_INPUT_LABELS, ...labels }.clear;
+  const clearLabel = mergeLabels(DEFAULT_INPUT_LABELS, labels).clear;
 
   return (
     <div

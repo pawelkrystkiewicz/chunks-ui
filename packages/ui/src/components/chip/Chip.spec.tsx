@@ -76,6 +76,30 @@ describe("Chip labels", () => {
     expectTypeOf(DEFAULT_CHIP_LABELS).toEqualTypeOf<Readonly<ChipLabels>>();
   });
 
+  it("keeps the default when a label is undefined", () => {
+    render(
+      <Chip onRemove={vi.fn()} labels={{ remove: undefined }}>
+        Apple
+      </Chip>,
+    );
+    expect(screen.getByRole("button", { name: "Remove Apple" })).toBeInTheDocument();
+  });
+
+  // aria-labelledby joins its parts with spaces, so punctuation next to {chip} is read apart
+  it.each([
+    { remove: "{chip}", name: "Apple" },
+    { remove: "{chip}!", name: "Apple !" },
+    { remove: "x{chip}", name: "x Apple" },
+    { remove: "{chip} y", name: "Apple y" },
+  ])("names the button $name for the label $remove", ({ remove, name }) => {
+    render(
+      <Chip onRemove={vi.fn()} labels={{ remove }}>
+        Apple
+      </Chip>,
+    );
+    expect(screen.getByRole("button", { name })).toBeInTheDocument();
+  });
+
   it("names the remove button after the chip", () => {
     render(<Chip onRemove={vi.fn()}>Apple</Chip>);
     expect(screen.getByRole("button", { name: "Remove Apple" })).toBeInTheDocument();

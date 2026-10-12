@@ -4,6 +4,7 @@ import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
 import type React from "react";
 import { type ComponentProps, createContext, useContext, useId } from "react";
 import { cn, cnState } from "../../lib/cn";
+import { mergeLabels } from "../../lib/labels";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
 import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
@@ -26,6 +27,7 @@ export type ComboboxLabels = {
    * Name of `Combobox.ChipRemove` when it renders the default icon, read with its chip's text.
    * `{chip}` marks where the text goes: `"{chip} を削除"` reads "Apple を削除". Without `{chip}`,
    * the text follows the label, so the default reads "Remove Apple".
+   * Only the first `{chip}` counts.
    * @default "Remove"
    */
   chipRemove: string;
@@ -75,7 +77,7 @@ function ComboboxRoot<Value, Multiple extends boolean | undefined = false, Item 
   ...props
 }: ComboboxRootProps<Value, Multiple, Item>) {
   return (
-    <ComboboxLabelsContext.Provider value={{ ...DEFAULT_COMBOBOX_LABELS, ...labels }}>
+    <ComboboxLabelsContext.Provider value={mergeLabels(DEFAULT_COMBOBOX_LABELS, labels)}>
       <BaseCombobox.Root<Value, Multiple, Item> {...props} />
     </ComboboxLabelsContext.Provider>
   );

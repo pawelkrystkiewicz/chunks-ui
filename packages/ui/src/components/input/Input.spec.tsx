@@ -346,6 +346,18 @@ describe("Input labels", () => {
     expectTypeOf(DEFAULT_INPUT_LABELS).toEqualTypeOf<Readonly<InputLabels>>();
   });
 
+  it("keeps the default when a label is undefined", () => {
+    render(
+      <Input
+        aria-label="Search"
+        defaultValue="abc"
+        onClear={vi.fn()}
+        labels={{ clear: undefined }}
+      />,
+    );
+    expect(screen.getByRole("button", { name: DEFAULT_INPUT_LABELS.clear })).toBeInTheDocument();
+  });
+
   it("names the clear button with DEFAULT_INPUT_LABELS", () => {
     render(<Input aria-label="Search" defaultValue="abc" onClear={vi.fn()} />);
     expect(screen.getByRole("button", { name: DEFAULT_INPUT_LABELS.clear })).toBeInTheDocument();

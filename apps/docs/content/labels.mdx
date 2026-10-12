@@ -66,7 +66,7 @@ To put the chip's text somewhere else, write `{chip}` where it goes:
 </Chip>
 ```
 
-This button reads "Apple を削除". On a `Combobox`, `labels={{ chipRemove: "Supprimer {chip} ?" }}` makes it read "Supprimer Apple ?". The text before and after `{chip}` is joined to the chip's text with a space, so `"Delete {chip}?"` reads "Delete Apple ?".
+This button reads "Apple を削除". On a `Combobox`, `labels={{ chipRemove: "Supprimer {chip} ?" }}` makes it read "Supprimer Apple ?". The text before and after `{chip}` is joined to the chip's text with a space, so `"Delete {chip}?"` reads "Delete Apple ?". Punctuation attached to `{chip}` is read with a space for the same reason: `aria-labelledby` joins its parts with spaces. Only the first `{chip}` counts; a second one stays as plain text.
 
 ## Components with labels
 

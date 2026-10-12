@@ -1,5 +1,6 @@
 import type { ComponentProps } from "react";
 import { cn } from "../../lib/cn";
+import { mergeLabels } from "../../lib/labels";
 import { BUTTON_ANIMATION_CLASSES } from "../shared";
 
 /** The built-in English strings of `ClearButton`. */
@@ -32,7 +33,7 @@ export function ClearButton({ className, label, labels, ...props }: ClearButtonP
   // text would take the default in, and "Remove Apple" would read "Remove Apple Clear"
   const defaultLabel = props["aria-labelledby"]
     ? undefined
-    : { ...DEFAULT_CLEAR_BUTTON_LABELS, ...labels }.clear;
+    : mergeLabels(DEFAULT_CLEAR_BUTTON_LABELS, labels).clear;
   const resolvedLabel = label ?? props["aria-label"] ?? defaultLabel;
   return (
     <button

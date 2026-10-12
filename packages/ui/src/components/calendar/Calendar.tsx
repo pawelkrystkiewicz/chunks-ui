@@ -11,6 +11,7 @@ import {
 } from "react";
 import { flushSync } from "react-dom";
 import { cn } from "../../lib/cn";
+import { mergeLabels } from "../../lib/labels";
 
 export type CalendarProps = {
   /** Controlled selected date. An Invalid Date counts as no date. */
@@ -239,7 +240,7 @@ export function Calendar({
   labels,
   className,
 }: CalendarProps) {
-  const names = { ...DEFAULT_CALENDAR_LABELS, ...labels };
+  const names = mergeLabels(DEFAULT_CALENDAR_LABELS, labels);
   const isControlled = value !== undefined;
 
   const [internalValue, setInternalValue] = useState<Date | null>(defaultValue ?? null);

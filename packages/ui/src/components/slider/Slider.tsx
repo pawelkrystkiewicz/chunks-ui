@@ -3,6 +3,7 @@
 import { Slider as BaseSlider } from "@base-ui/react/slider";
 import { type ComponentProps, createContext, useContext } from "react";
 import { cnState } from "../../lib/cn";
+import { mergeLabels } from "../../lib/labels";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -57,7 +58,7 @@ function SliderRoot({ className, labels, ...props }: SliderRootProps) {
   const range = Array.isArray(value) && value.length === 2;
   return (
     <SliderLabelsContext.Provider
-      value={{ labels: { ...DEFAULT_SLIDER_LABELS, ...labels }, range }}
+      value={{ labels: mergeLabels(DEFAULT_SLIDER_LABELS, labels), range }}
     >
       <BaseSlider.Root
         className={cnState(

@@ -1,6 +1,7 @@
 import type { VariantProps } from "class-variance-authority";
 import { type ComponentProps, useId } from "react";
 import { cn } from "../../lib/cn";
+import { mergeLabels } from "../../lib/labels";
 import type { ElementBaseVariant, ElementColor } from "../../types";
 import { ClearButton } from "../clear-button";
 import { chipVariants } from "./Chip.Variants";
@@ -11,6 +12,7 @@ export type ChipLabels = {
    * Name of the remove button, read with the chip's text. `{chip}` marks where the text goes:
    * `"{chip} を削除"` reads "Apple を削除". Without `{chip}`, the text follows the label, so the
    * default reads "Remove Apple".
+   * Only the first `{chip}` counts.
    * @default "Remove"
    */
   remove: string;
@@ -83,7 +85,7 @@ export function Chip({
   const generatedId = useId();
   const chipId = id ?? generatedId;
   const removeName = removeButtonName(
-    { ...DEFAULT_CHIP_LABELS, ...labels }.remove,
+    mergeLabels(DEFAULT_CHIP_LABELS, labels).remove,
     chipId,
     generatedId,
   );

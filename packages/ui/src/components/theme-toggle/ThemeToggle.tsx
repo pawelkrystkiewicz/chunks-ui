@@ -2,6 +2,7 @@
 
 import type { ComponentProps, MouseEventHandler, ReactNode } from "react";
 import { cn } from "../../lib/cn";
+import { mergeLabels } from "../../lib/labels";
 import { useReducedMotion } from "../../lib/use-motion";
 
 export type Theme = "light" | "dark";
@@ -93,7 +94,7 @@ export function ThemeToggle({
   ...props
 }: ThemeToggleProps) {
   const reduced = useReducedMotion();
-  const names = { ...DEFAULT_THEME_TOGGLE_LABELS, ...labels };
+  const names = mergeLabels(DEFAULT_THEME_TOGGLE_LABELS, labels);
 
   return (
     <button
