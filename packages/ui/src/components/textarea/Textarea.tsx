@@ -9,6 +9,11 @@ export type TextareaProps = Omit<ComponentProps<"textarea">, "className"> & {
    * @default false
    */
   autoResize?: boolean;
+  /**
+   * Called with the new value and Base UI's event details when the text changes, as on `Input`.
+   * Fires together with `onChange`.
+   */
+  onValueChange?: BaseField.Control.Props["onValueChange"];
 };
 
 /**

@@ -11,7 +11,15 @@ import { Select } from "./components/select";
 import { Switch } from "./components/switch";
 import { Toast } from "./components/toast";
 import { reloadMotion } from "./lib/use-motion";
-import { eachPaintedFrame, insetsWithin, waitForStable } from "./VisualTest.utils";
+import {
+  contentSpan,
+  type Dir,
+  eachPaintedFrame,
+  inlineSpan,
+  insetsWithin,
+  px,
+  waitForStable,
+} from "./VisualTest.utils";
 
 /*
  * Parts that sit at the start or the end of a line must swap sides right to left. Most cases run
@@ -19,7 +27,6 @@ import { eachPaintedFrame, insetsWithin, waitForStable } from "./VisualTest.util
  * holds in LTR and mirrors in RTL.
  */
 
-type Dir = "ltr" | "rtl";
 const DIRS: Dir[] = ["ltr", "rtl"];
 
 /** Renders `ui` the way an app sets a direction: `dir` on <html>, which portalled popups inherit */
@@ -36,27 +43,6 @@ function renderIn(dir: Dir, ui: ReactNode) {
 afterEach(() => {
   document.documentElement.removeAttribute("dir");
 });
-
-/**
- * An element's extent along the inline axis: distances that grow from left to right in LTR and
- * from right to left in RTL. `a.end <= b.start` reads "a comes before b" in either direction.
- */
-function inlineSpan(el: Element, dir: Dir) {
-  const { left, right } = el.getBoundingClientRect();
-  return dir === "ltr" ? { start: left, end: right } : { start: -right, end: -left };
-}
-
-const px = (value: string) => Number.parseFloat(value);
-
-/** The inline extent of `el`'s content box: inside its border and padding */
-function contentSpan(el: Element, dir: Dir) {
-  const style = getComputedStyle(el);
-  const { start, end } = inlineSpan(el, dir);
-  return {
-    start: start + px(style.borderInlineStartWidth) + px(style.paddingInlineStart),
-    end: end - px(style.borderInlineEndWidth) - px(style.paddingInlineEnd),
-  };
-}
 
 /** Distances from `outer`'s inline-start and inline-end edges to the same edges of `inner` */
 function inlineInsets(outer: Element, inner: Element, dir: Dir) {

@@ -46,6 +46,7 @@ export type {
   ComboboxChipRemoveProps,
   ComboboxChipsProps,
   ComboboxClearProps,
+  ComboboxControlProps,
   ComboboxEmptyProps,
   ComboboxGroupLabelProps,
   ComboboxGroupProps,
@@ -64,9 +65,11 @@ export { CopyButton, type CopyButtonProps } from "./components/copy-button";
 export { DatePicker, type DatePickerProps } from "./components/date-picker";
 export type {
   DialogBackdropProps,
+  DialogBodyProps,
   DialogCloseProps,
   DialogDescriptionProps,
   DialogPopupProps,
+  DialogPortalProps,
   DialogRootProps,
   DialogTitleProps,
   DialogTriggerProps,
@@ -77,6 +80,7 @@ export type {
   DrawerCloseProps,
   DrawerDescriptionProps,
   DrawerPopupProps,
+  DrawerPortalProps,
   DrawerProps,
   DrawerTitleProps,
   DrawerTriggerProps,
@@ -242,6 +246,7 @@ export { ToggleGroup } from "./components/toggle-group";
 export type {
   TooltipArrowProps,
   TooltipPopupProps,
+  TooltipPortalProps,
   TooltipPositionerProps,
   TooltipProviderProps,
   TooltipRootProps,

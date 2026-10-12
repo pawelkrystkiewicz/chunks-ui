@@ -52,6 +52,7 @@ The `side` prop on `Drawer.Popup` controls which edge the drawer slides from:
 - `bottom` drawer spans the full width with automatic height (up to `80dvh`) and rounded top corners.
 - Content taller than the drawer scrolls inside it.
 - With long content and actions only at the bottom, Base UI focuses the first tabbable element and scrolls to it. Pass `initialFocus` a ref to a top element, such as the Close button or the Title with `tabIndex={-1}`, to open at the top.
+- With nothing tabbable inside, or with `initialFocus` on the popup itself, the popup takes focus. When the browser shows focus there (after keyboard use, for example), the ring is 2px in `--ring` and drawn just inside the 1px border on the open side, 3px from the popup's edge, so the border stays visible.
 
 ## Controlled
 
