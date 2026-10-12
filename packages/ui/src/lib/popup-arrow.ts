@@ -5,9 +5,12 @@
 
 /**
  * The positioner's default `arrowPadding`: how close Base UI lets the arrow come to the popup's
- * ends (by a small trigger, it shifts the popup instead). The arrow's foot, 2.5/√2 units either
+ * ends (by a smaller trigger with `align` start or end, it shifts the popup instead, so the arrow
+ * still points at the trigger's centre; with the default `center`, near a viewport edge, the arrow
+ * can be held at the padding instead). The arrow's foot, 2.5/√2 units either
  * side of its centre, then starts 7.9px in, where the straight edge after the 8px `rounded-md`
- * corner begins. At Base UI's 5 it stood out of the curve. A larger radius needs more padding.
+ * corner begins. At Base UI's 5 it stood out of the curve. The arrow scales with `--spacing`
+ * but this is fixed px: raise it with a larger corner radius or a larger `--spacing`.
  */
 export const ARROW_PADDING_PX = 10;
 
@@ -20,12 +23,14 @@ export const ARROW_PADDING_PX = 10;
  * positioner, before that move, so a popup that caps its height takes the reach off it too.
  *
  * The arrow is a positioned child, so it paints over the popup's own focus ring where they meet.
- * The ring moves to an `::after` overlay instead: positioned, last in the popup and raised, it
+ * In a popup that holds an arrow (`has-[.PopupArrow]:`), the ring moves to an `::after` overlay: positioned, last in the popup and raised, it
  * paints above the arrow. `relative` above anchors it on the popup's border box, and it takes the
  * popup's radius and a clear border of the popup's width, because Chromium draws the ring of a
  * bordered box partly over the border. It draws the browser's own ring (`outline: auto 1px
- * -webkit-focus-ring-color`, as Chromium and Safari do; a browser without that colour keeps its
- * default one), only while the popup is `:focus-visible`.
+ * -webkit-focus-ring-color`, which matches Chromium's UA ring; Safari draws its own platform ring
+ * either way; a browser without that colour keeps its default one), only while the popup is
+ * `:focus-visible`. Forced colours name `Highlight`, the system focus colour. A popup without an
+ * arrow keeps the browser's ring on itself: an `overflow` on it would clip the overlay.
  */
 export const arrowPopupClasses = [
   "relative",
@@ -36,10 +41,12 @@ export const arrowPopupClasses = [
   "has-[.PopupArrow]:data-[side=right]:ml-(--popup-arrow-reach)",
   "has-[.PopupArrow]:data-[side=inline-start]:me-(--popup-arrow-reach)",
   "has-[.PopupArrow]:data-[side=inline-end]:ms-(--popup-arrow-reach)",
-  "focus-visible:outline-none",
-  "focus-visible:after:pointer-events-none focus-visible:after:absolute focus-visible:after:-inset-px focus-visible:after:z-10",
-  "focus-visible:after:rounded-[inherit] focus-visible:after:border focus-visible:after:border-transparent",
-  "focus-visible:after:[outline-style:auto] focus-visible:after:[outline-width:1px] focus-visible:after:[outline-color:-webkit-focus-ring-color]",
+  "has-[.PopupArrow]:focus-visible:outline-none",
+  "has-[.PopupArrow]:focus-visible:after:pointer-events-none has-[.PopupArrow]:focus-visible:after:absolute has-[.PopupArrow]:focus-visible:after:-inset-px has-[.PopupArrow]:focus-visible:after:z-10",
+  "has-[.PopupArrow]:focus-visible:after:rounded-[inherit] has-[.PopupArrow]:focus-visible:after:border has-[.PopupArrow]:focus-visible:after:border-transparent",
+  "has-[.PopupArrow]:focus-visible:after:[outline-style:auto] has-[.PopupArrow]:focus-visible:after:[outline-width:1px] has-[.PopupArrow]:focus-visible:after:[outline-color:-webkit-focus-ring-color]",
+  // Forced colours revert an author `outline-color` on the overlay to CanvasText, so name the system focus colour
+  "has-[.PopupArrow]:forced-colors:focus-visible:after:[outline-color:Highlight]",
 ];
 
 export const arrowClasses = [

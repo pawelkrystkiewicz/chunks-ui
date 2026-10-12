@@ -40,7 +40,7 @@ export type MenuContentProps = ComponentProps<typeof BaseMenu.Popup> & {
   alignOffset?: ComponentProps<typeof BaseMenu.Positioner>["alignOffset"];
   /**
    * How close the arrow may come to the popup's ends, in pixels. The default keeps the arrow's
-   * foot off the 8px rounded corner; raise it with a larger corner radius.
+   * foot off the 8px rounded corner; raise it with a larger corner radius or a larger `--spacing`.
    * @default 10
    */
   arrowPadding?: ComponentProps<typeof BaseMenu.Positioner>["arrowPadding"];

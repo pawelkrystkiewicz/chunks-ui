@@ -347,6 +347,59 @@ describe.each(KINDS)("%s focused from the keyboard", (kind) => {
   });
 });
 
+describe.each(KINDS)("%s focused from the keyboard, without an arrow", (kind) => {
+  // An overlay would be clipped by a consumer's `overflow`, so such a popup keeps the browser's ring
+  it("keeps the browser's ring on the popup itself, and has no overlay", async () => {
+    const ring = await browserRing();
+    const content = { "data-testid": "popup", className: "overflow-auto" };
+    render(
+      kind === "Popover" ? (
+        <Popover.Root defaultOpen>
+          <Popover.Trigger>Trigger</Popover.Trigger>
+          <Popover.Content {...content}>Popover</Popover.Content>
+        </Popover.Root>
+      ) : (
+        <Menu.Root defaultOpen>
+          <Menu.Trigger>Trigger</Menu.Trigger>
+          <Menu.Content {...content}>
+            <Menu.Item>Item</Menu.Item>
+          </Menu.Content>
+        </Menu.Root>
+      ),
+    );
+    const popup = await screen.findByTestId("popup");
+    await expect.poll(() => popup.matches(":focus-visible")).toBe(true);
+
+    expect(ringOf(getComputedStyle(popup))).toEqual(ring);
+    expect(getComputedStyle(popup, "::after").content).toBe("none");
+  });
+});
+
+/** The colour `Highlight` resolves to under the current (forced) colours, read off a probe. */
+function highlight() {
+  const probe = document.createElement("div");
+  probe.style.color = "Highlight";
+  document.body.append(probe);
+  const colour = getComputedStyle(probe).color;
+  probe.remove();
+  return colour;
+}
+
+describe.each(KINDS)("%s with an arrow, in forced colours", (kind) => {
+  afterEach(() => commands.emulateMedia({ forcedColors: "none" }));
+
+  it("draws its overlay's ring in the system focus colour", async () => {
+    await commands.emulateMedia({ forcedColors: "active" });
+    await expect.poll(() => matchMedia("(forced-colors: active)").matches).toBe(true);
+    render(arrowed(kind, "bottom", "ltr", true));
+    const popup = await screen.findByTestId("popup");
+    await userEvent.keyboard("{Shift}");
+    await expect.poll(() => popup.matches(":focus-visible")).toBe(true);
+
+    expect(getComputedStyle(popup, "::after").outlineColor).toBe(highlight());
+  });
+});
+
 /**
  * Records, on each painted frame from the click on, whether the arrow's tip shows. Frames before
  * Base UI has placed the arrow (no inline position yet) are left out.
