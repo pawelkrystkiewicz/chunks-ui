@@ -1,11 +1,14 @@
+import type { Combobox as BaseCombobox } from "@base-ui/react/combobox";
 import { cleanup, render, screen } from "@testing-library/react";
 import { axe } from "jest-axe";
-import { afterEach, describe, expect, it } from "vitest";
+import type { ComponentProps } from "react";
+import { afterEach, describe, expect, expectTypeOf, it } from "vitest";
 import {
   Combobox,
   type ComboboxChipRemoveProps,
   type ComboboxClearProps,
   type ComboboxLabels,
+  type ComboboxRootProps,
   type ComboboxTriggerProps,
   DEFAULT_COMBOBOX_LABELS,
 } from "./Combobox";
@@ -287,6 +290,13 @@ describe("Combobox", () => {
       </Combobox.Root>,
     );
     expect(screen.getByTestId("gl")).toHaveClass("custom");
+  });
+
+  // Checked by check-types: the generic defaults keep Root's props those of Base UI, plus labels
+  it("types Root's props as Base UI's Root props plus labels", () => {
+    expectTypeOf<ComboboxRootProps>().toEqualTypeOf<
+      ComponentProps<typeof BaseCombobox.Root> & { labels?: Partial<ComboboxLabels> }
+    >();
   });
 
   it("has no a11y violations", async () => {
