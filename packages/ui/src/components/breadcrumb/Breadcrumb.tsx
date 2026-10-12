@@ -1,9 +1,11 @@
 import {
   type ComponentProps,
   cloneElement,
+  createContext,
   isValidElement,
   type ReactElement,
   type ReactNode,
+  useContext,
 } from "react";
 import { cn } from "../../lib/cn";
 
@@ -14,7 +16,34 @@ type RenderElement = ReactElement<RenderProps>;
 // Types
 // ---------------------------------------------------------------------------
 
-export type BreadcrumbRootProps = ComponentProps<"nav">;
+/** The built-in English strings of `Breadcrumb`. */
+export type BreadcrumbLabels = {
+  /**
+   * Name of the `Breadcrumb.Root` navigation landmark.
+   * @default "Breadcrumb"
+   */
+  root: string;
+  /**
+   * Screen-reader text of `Breadcrumb.Ellipsis`.
+   * @default "More"
+   */
+  ellipsis: string;
+};
+
+export const DEFAULT_BREADCRUMB_LABELS: BreadcrumbLabels = {
+  root: "Breadcrumb",
+  ellipsis: "More",
+};
+
+const BreadcrumbLabelsContext = createContext(DEFAULT_BREADCRUMB_LABELS);
+
+export type BreadcrumbRootProps = ComponentProps<"nav"> & {
+  /**
+   * Replaces the built-in English strings, e.g. to translate them. Keys you leave out keep the
+   * default from `DEFAULT_BREADCRUMB_LABELS`. `aria-label` on Root takes precedence.
+   */
+  labels?: Partial<BreadcrumbLabels>;
+};
 export type BreadcrumbListProps = ComponentProps<"ol">;
 export type BreadcrumbItemProps = ComponentProps<"li">;
 export type BreadcrumbLinkProps = ComponentProps<"a"> & {
@@ -29,8 +58,13 @@ export type BreadcrumbEllipsisProps = ComponentProps<"span">;
 // Components
 // ---------------------------------------------------------------------------
 
-function BreadcrumbRoot({ className, ...props }: BreadcrumbRootProps) {
-  return <nav aria-label="Breadcrumb" className={className} {...props} />;
+function BreadcrumbRoot({ className, labels, ...props }: BreadcrumbRootProps) {
+  const names = { ...DEFAULT_BREADCRUMB_LABELS, ...labels };
+  return (
+    <BreadcrumbLabelsContext.Provider value={names}>
+      <nav aria-label={names.root} className={className} {...props} />
+    </BreadcrumbLabelsContext.Provider>
+  );
 }
 
 function BreadcrumbList({ className, ...props }: BreadcrumbListProps) {
@@ -102,6 +136,7 @@ function BreadcrumbSeparator({ className, children, ...props }: BreadcrumbSepara
 }
 
 function BreadcrumbEllipsis({ className, ...props }: BreadcrumbEllipsisProps) {
+  const labels = useContext(BreadcrumbLabelsContext);
   return (
     <span
       role="presentation"
@@ -125,7 +160,7 @@ function BreadcrumbEllipsis({ className, ...props }: BreadcrumbEllipsisProps) {
         <circle cx="19" cy="12" r="1" />
         <circle cx="5" cy="12" r="1" />
       </svg>
-      <span className="sr-only">More</span>
+      <span className="sr-only">{labels.ellipsis}</span>
     </span>
   );
 }

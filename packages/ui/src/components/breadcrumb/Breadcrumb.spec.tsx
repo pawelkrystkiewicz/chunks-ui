@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { axe } from "jest-axe";
 import { afterEach, describe, expect, it } from "vitest";
-import { Breadcrumb } from "./Breadcrumb";
+import { Breadcrumb, type BreadcrumbRootProps, DEFAULT_BREADCRUMB_LABELS } from "./Breadcrumb";
 
 afterEach(cleanup);
 
@@ -97,5 +97,37 @@ describe("Breadcrumb", () => {
   it("has no a11y violations", async () => {
     const { container } = render(<BasicBreadcrumb />);
     expect(await axe(container)).toHaveNoViolations();
+  });
+});
+
+describe("Breadcrumb labels", () => {
+  function LabelledBreadcrumb(props: BreadcrumbRootProps) {
+    return (
+      <Breadcrumb.Root {...props}>
+        <Breadcrumb.List>
+          <Breadcrumb.Item>
+            <Breadcrumb.Ellipsis />
+          </Breadcrumb.Item>
+        </Breadcrumb.List>
+      </Breadcrumb.Root>
+    );
+  }
+
+  it("uses DEFAULT_BREADCRUMB_LABELS", () => {
+    render(<LabelledBreadcrumb />);
+    const { root, ellipsis } = DEFAULT_BREADCRUMB_LABELS;
+    expect(screen.getByRole("navigation", { name: root })).toBeInTheDocument();
+    expect(screen.getByText(ellipsis)).toBeInTheDocument();
+  });
+
+  it("takes every string from labels on Root", () => {
+    render(<LabelledBreadcrumb labels={{ root: "Okruszki", ellipsis: "Więcej" }} />);
+    expect(screen.getByRole("navigation", { name: "Okruszki" })).toBeInTheDocument();
+    expect(screen.getByText("Więcej")).toBeInTheDocument();
+  });
+
+  it("prefers aria-label on Root over labels", () => {
+    render(<LabelledBreadcrumb aria-label="You are here" labels={{ root: "Okruszki" }} />);
+    expect(screen.getByRole("navigation", { name: "You are here" })).toBeInTheDocument();
   });
 });

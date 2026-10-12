@@ -13,13 +13,14 @@ export { Avatar, type AvatarProps } from "./components/avatar";
 export type {
   BreadcrumbEllipsisProps,
   BreadcrumbItemProps,
+  BreadcrumbLabels,
   BreadcrumbLinkProps,
   BreadcrumbListProps,
   BreadcrumbPageProps,
   BreadcrumbRootProps,
   BreadcrumbSeparatorProps,
 } from "./components/breadcrumb";
-export { Breadcrumb } from "./components/breadcrumb";
+export { Breadcrumb, DEFAULT_BREADCRUMB_LABELS } from "./components/breadcrumb";
 export { Button, type ButtonProps, buttonVariants } from "./components/button";
 export {
   Calendar,
@@ -174,12 +175,13 @@ export type {
   PaginationContentProps,
   PaginationEllipsisProps,
   PaginationItemProps,
+  PaginationLabels,
   PaginationLinkProps,
   PaginationNextProps,
   PaginationPreviousProps,
   PaginationRootProps,
 } from "./components/pagination";
-export { Pagination } from "./components/pagination";
+export { DEFAULT_PAGINATION_LABELS, Pagination } from "./components/pagination";
 export type {
   PopoverArrowProps,
   PopoverCloseProps,
