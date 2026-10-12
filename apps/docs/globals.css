@@ -56,7 +56,7 @@
 }
 
 /* Hero, band and footer carry `dark` in both themes: white ring, as the library's dark ring is
-   under 3:1 there. Known gap: BUILT ON links on the hero's light-theme bottom fade, 2.68:1 (#297). */
+   under 3:1 there. */
 .landing .dark {
   --ring: #fff;
 }

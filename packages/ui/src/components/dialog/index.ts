@@ -3,6 +3,7 @@ export type {
   DialogCloseProps,
   DialogDescriptionProps,
   DialogPopupProps,
+  DialogPortalProps,
   DialogRootProps,
   DialogTitleProps,
   DialogTriggerProps,

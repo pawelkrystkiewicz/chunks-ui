@@ -22,15 +22,24 @@ export type InputProps = ComponentProps<typeof BaseInput> &
      */
     endAdornment?: ReactNode;
     /**
-     * Called, with no arguments, when the user clicks the built-in clear button or presses Enter
-     * or Space on it. Passing this prop enables the button, which shows while the input has text,
-     * controlled (`value`) or uncontrolled (`defaultValue`), and is not `disabled` or `readOnly`.
-     * While it shows, it takes the place of `endAdornment`.
+     * Shows a built-in clear button while the input has text and is not `disabled` or
+     * `readOnly`. While it shows, it takes the place of `endAdornment`.
      *
-     * Focus moves to the input first. An uncontrolled input is then emptied for you, and
-     * `onChange` and `onValueChange` fire with `""` before `onClear`. A controlled input stays as
-     * it is until `onClear` sets its `value`. Inside a disabled `Field.Root`, the button still
-     * shows, but a click changes nothing and does not call `onClear`.
+     * Clearing empties the input the way typing does: `onChange` and `onValueChange` fire with
+     * `""`, so the handler that sets a controlled `value` clears it, and `onClear`, if given, is
+     * called afterwards. Focus stays in the input with a mouse click; with the keyboard (Tab to
+     * the button, Enter or Space) the input blurs and focus then returns to it.
+     * Inside a disabled `Field.Root`, the button still shows, but a click changes nothing.
+     * @default false
+     */
+    clearable?: boolean;
+    /**
+     * Called, with no arguments, when the clear button is used. Passing it also shows the button,
+     * as `clearable` does.
+     *
+     * With `onClear` alone, a controlled input fires no `onChange` or `onValueChange` and keeps
+     * its `value` until `onClear` sets it. With `clearable` too, the value handlers fire first
+     * and `onClear` only notifies. Inside a disabled `Field.Root`, it is not called.
      */
     onClear?: () => void;
   };
@@ -40,6 +49,7 @@ const isEmpty = (value: unknown) => value == null || String(value).length === 0;
 export function Input({
   startAdornment,
   endAdornment,
+  clearable,
   onClear,
   className,
   ref,
@@ -53,8 +63,9 @@ export function Input({
   const [hasUncontrolledText, setHasUncontrolledText] = useState(
     () => !isEmpty(props.defaultValue),
   );
-  const hasAdornments = startAdornment || endAdornment || onClear;
-  const tracksText = typeof onClear === "function" && !isControlled;
+  const hasClearButton = clearable || typeof onClear === "function";
+  const hasAdornments = startAdornment || endAdornment || hasClearButton;
+  const tracksText = hasClearButton && !isControlled;
 
   // A form reset restores the default value without an input event. The reset event fires
   // before the values change, so read the value in the next task
@@ -86,8 +97,8 @@ export function Input({
     );
   }
 
-  const clearable =
-    typeof onClear === "function" &&
+  const showsClearButton =
+    hasClearButton &&
     !props.disabled &&
     !props.readOnly &&
     (isControlled ? !isEmpty(props.value) : hasUncontrolledText);
@@ -103,7 +114,8 @@ export function Input({
     if (input?.disabled || input?.readOnly) return;
     // Focus the input before the clear button unmounts, or focus falls to <body>
     input?.focus();
-    if (!isControlled && input) {
+    // With onClear alone, a controlled input keeps its value until onClear sets it
+    if (input && (!isControlled || clearable)) {
       // Empty it the way typing does, through the native setter and an input event, so React's
       // onChange, Base UI's field state and the consumer's handlers all see the change
       Object.getOwnPropertyDescriptor(Object.getPrototypeOf(input), "value")?.set?.call(input, "");
@@ -119,6 +131,7 @@ export function Input({
 
   return (
     <div
+      data-slot="input-adornments"
       className={cn(
         "relative inline-flex items-center",
         typeof className === "string" && className,
@@ -133,7 +146,7 @@ export function Input({
         className={cnState(
           inputVariants(),
           startAdornment && "ps-9",
-          (endAdornment || onClear) && "pe-9",
+          (endAdornment || hasClearButton) && "pe-9",
           typeof className === "function" ? className : undefined,
         )}
         ref={mergedRef}
@@ -141,9 +154,18 @@ export function Input({
         {...props}
       />
       {/* The clear button and endAdornment share one slot: while the button shows, it wins */}
-      {(endAdornment || clearable) && (
+      {(endAdornment || showsClearButton) && (
         <span className="absolute end-3 flex items-center">
-          {clearable ? <ClearButton onClick={handleClear} /> : endAdornment}
+          {showsClearButton ? (
+            <ClearButton
+              onClick={handleClear}
+              // A mousedown would move focus to the button and blur the input, which validates
+              // a validationMode="onBlur" field mid-clear
+              onMouseDown={(event) => event.preventDefault()}
+            />
+          ) : (
+            endAdornment
+          )}
         </span>
       )}
     </div>

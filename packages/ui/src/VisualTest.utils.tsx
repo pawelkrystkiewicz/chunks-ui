@@ -36,6 +36,16 @@ export function expectDimmed(disabledEl: Element, enabledEl: Element) {
   expect(style(enabledEl)).toEqual({ opacity: "1", pointerEvents: "auto" });
 }
 
+/** `--ring` as the browser computes it for an outline colour */
+export function ringColor() {
+  const probe = document.createElement("span");
+  probe.style.outlineColor = "var(--ring)";
+  document.body.append(probe);
+  const color = getComputedStyle(probe).outlineColor;
+  probe.remove();
+  return color;
+}
+
 /** Pauses all CSS animations — use for components with loaders/spinners. */
 export function pauseAnimations() {
   for (const el of document.querySelectorAll("*")) {

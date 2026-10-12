@@ -1,5 +1,6 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import { page } from "vitest/browser";
 import { renderFixture } from "../../VisualTest.utils";
 import { Radio } from "./index";
 
@@ -43,6 +44,85 @@ describe("Radio", () => {
     );
     expect(drawnOpacity(getByRole("radio", { name: "Option" }))).toBe(0.5);
     expect(drawnOpacity(getByText("Option"))).toBe(0.5);
+  });
+
+  // pointer-events: none would hide the not-allowed cursor; Base UI ignores the click anyway
+  const looks = (el: Element) => ({
+    opacity: drawnOpacity(el),
+    cursor: getComputedStyle(el).cursor,
+    pointerEvents: getComputedStyle(el).pointerEvents,
+  });
+
+  it("dims a disabled Radio.Root outside a disabled group and shows a not-allowed cursor", () => {
+    const { getByRole } = render(
+      <Radio.Group defaultValue="a">
+        <Radio.Root value="a" aria-label="Enabled">
+          <Radio.Indicator />
+        </Radio.Root>
+        <Radio.Root value="b" aria-label="Disabled" disabled>
+          <Radio.Indicator />
+        </Radio.Root>
+      </Radio.Group>,
+    );
+    expect(looks(getByRole("radio", { name: "Disabled" }))).toEqual({
+      opacity: 0.5,
+      cursor: "not-allowed",
+      pointerEvents: "auto",
+    });
+    expect(looks(getByRole("radio", { name: "Enabled" }))).toEqual({
+      opacity: 1,
+      cursor: "pointer",
+      pointerEvents: "auto",
+    });
+  });
+
+  // pointer-events: none no longer swallows the click, so the disabled root must not take focus
+  it("keeps focus where it was when a disabled Radio.Root is clicked", async () => {
+    const { getByRole } = render(
+      <div>
+        <input aria-label="Name" />
+        <Radio.Group defaultValue="a">
+          <Radio.Root value="a" aria-label="Enabled">
+            <Radio.Indicator />
+          </Radio.Root>
+          <Radio.Root value="b" aria-label="Disabled" disabled>
+            <Radio.Indicator />
+          </Radio.Root>
+        </Radio.Group>
+      </div>,
+    );
+    const input = getByRole("textbox", { name: "Name" });
+    input.focus();
+    // force: Playwright refuses to click a disabled element, a user can
+    await page.elementLocator(getByRole("radio", { name: "Disabled" })).click({ force: true });
+    expect(document.activeElement).toBe(input);
+  });
+
+  it("keeps a non-disabled item's label not-allowed inside a disabled group", () => {
+    const { getByText } = render(
+      <Radio.Group defaultValue="a" disabled>
+        <Radio.Item value="a">Option</Radio.Item>
+      </Radio.Group>,
+    );
+    const label = getByText("Option").closest("label");
+    expect(label && getComputedStyle(label).cursor).toBe("not-allowed");
+  });
+
+  it.each([
+    ["the roots of a disabled group", false],
+    ["a disabled root of a disabled group", true],
+  ])("dims %s once", (_, rootDisabled) => {
+    const { getByRole } = render(
+      <Radio.Group defaultValue="a" disabled>
+        <Radio.Root value="a" aria-label="Option" disabled={rootDisabled}>
+          <Radio.Indicator />
+        </Radio.Root>
+      </Radio.Group>,
+    );
+    expect(looks(getByRole("radio", { name: "Option" }))).toMatchObject({
+      opacity: 0.5,
+      cursor: "not-allowed",
+    });
   });
 
   it("leaves an enabled item undimmed", () => {

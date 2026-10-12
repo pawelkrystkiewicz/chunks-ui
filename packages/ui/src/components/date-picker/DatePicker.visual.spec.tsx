@@ -1,7 +1,9 @@
+import { Form } from "@base-ui/react/form";
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import { renderFixture } from "../../VisualTest.utils";
+import { Field } from "../field";
 import { DatePicker } from "./index";
 
 describe("DatePicker", () => {
@@ -60,6 +62,24 @@ describe("DatePicker in a form", () => {
         <DatePicker aria-label="Due date" name="due" required />
         <button type="submit">Save</button>
       </form>,
+    );
+    await page.getByRole("button", { name: "Save" }).click();
+    const trigger = page.getByRole("button", { name: "Due date Pick a date" });
+    await expect.element(trigger).toHaveFocus();
+    expect(trigger.element().matches(":focus-visible")).toBe(true);
+  });
+
+  // Base UI's Form focuses the invalid field's input, then calls select() on it
+  it("keeps focus on the trigger when a Base UI Form finds it required and empty", async () => {
+    render(
+      <Form aria-label="Task">
+        <Field.Root>
+          <Field.Label>Due date</Field.Label>
+          <DatePicker name="due" required />
+          <Field.Error match="valueMissing">Pick a due date</Field.Error>
+        </Field.Root>
+        <button type="submit">Save</button>
+      </Form>,
     );
     await page.getByRole("button", { name: "Save" }).click();
     const trigger = page.getByRole("button", { name: "Due date Pick a date" });
