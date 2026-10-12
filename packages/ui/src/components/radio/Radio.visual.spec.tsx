@@ -45,6 +45,69 @@ describe("Radio", () => {
     expect(drawnOpacity(getByText("Option"))).toBe(0.5);
   });
 
+  it("standalone roots, one disabled", async () => {
+    const { fixture } = await renderFixture(
+      <Radio.Group defaultValue="a" aria-label="Plan">
+        <div style={{ display: "flex", gap: 12 }}>
+          <Radio.Root value="a" aria-label="Free">
+            <Radio.Indicator />
+          </Radio.Root>
+          <Radio.Root value="b" aria-label="Pro" disabled>
+            <Radio.Indicator />
+          </Radio.Root>
+        </div>
+      </Radio.Group>,
+    );
+    await expect(fixture).toMatchScreenshot();
+  });
+
+  // pointer-events: none would hide the not-allowed cursor; Base UI ignores the click anyway
+  const looks = (el: Element) => ({
+    opacity: drawnOpacity(el),
+    cursor: getComputedStyle(el).cursor,
+    pointerEvents: getComputedStyle(el).pointerEvents,
+  });
+
+  it("dims a disabled Radio.Root outside a disabled group and shows a not-allowed cursor", () => {
+    const { getByRole } = render(
+      <Radio.Group defaultValue="a">
+        <Radio.Root value="a" aria-label="Enabled">
+          <Radio.Indicator />
+        </Radio.Root>
+        <Radio.Root value="b" aria-label="Disabled" disabled>
+          <Radio.Indicator />
+        </Radio.Root>
+      </Radio.Group>,
+    );
+    expect(looks(getByRole("radio", { name: "Disabled" }))).toEqual({
+      opacity: 0.5,
+      cursor: "not-allowed",
+      pointerEvents: "auto",
+    });
+    expect(looks(getByRole("radio", { name: "Enabled" }))).toEqual({
+      opacity: 1,
+      cursor: "pointer",
+      pointerEvents: "auto",
+    });
+  });
+
+  it.each([
+    ["the roots of a disabled group", false],
+    ["a disabled root of a disabled group", true],
+  ])("dims %s once", (_, rootDisabled) => {
+    const { getByRole } = render(
+      <Radio.Group defaultValue="a" disabled>
+        <Radio.Root value="a" aria-label="Option" disabled={rootDisabled}>
+          <Radio.Indicator />
+        </Radio.Root>
+      </Radio.Group>,
+    );
+    expect(looks(getByRole("radio", { name: "Option" }))).toMatchObject({
+      opacity: 0.5,
+      cursor: "not-allowed",
+    });
+  });
+
   it("leaves an enabled item undimmed", () => {
     const { getByRole, getByText } = render(
       <Radio.Group defaultValue="a">

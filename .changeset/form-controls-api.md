@@ -7,3 +7,5 @@
 A click on `Input`'s clear button no longer blurs the input, with `clearable` or `onClear`. Focus stays in the input, so a `Field.Root` with `validationMode="onBlur"` no longer validates in the middle of a clear.
 
 `Textarea` has `onValueChange(value, eventDetails)`, like `Input`.
+
+A disabled `Radio.Root` outside `Radio.Item` and outside a disabled `Radio.Group` now dims and shows a not-allowed cursor. Before, it looked enabled, and its `pointer-events: none` hid the cursor. Inside a disabled group or a disabled `Radio.Item`, it is still dimmed once.
