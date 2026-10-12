@@ -6,19 +6,25 @@ import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest
 import { reloadMotion } from "../../lib/use-motion";
 import { ToggleGroup } from "./ToggleGroup";
 
-/** The elements each live ResizeObserver watches, and its callback */
-const observers = new Map<
-  ResizeObserver,
-  { callback: ResizeObserverCallback; targets: Set<Element> }
->();
+type Watched = {
+  callback: ResizeObserverCallback;
+  /** Each element the observer watches, and the box it watches */
+  targets: Map<Element, ResizeObserverBoxOptions>;
+};
+
+/** What each live ResizeObserver watches, and its callback */
+const observers = new Map<ResizeObserver, Watched>();
 
 /**
  * Notifies the observers that watch `target`, as the browser does after layout and before it
- * paints. jsdom has no layout, so the browser specs cover when that happens.
+ * paints. `only` is the one box that changed size, as the border box does alone on a padding
+ * change; by default every box did, as on a change of content. jsdom has no layout, so the
+ * browser specs cover when that happens.
  */
-function resize(target: Element) {
+function resize(target: Element, only?: ResizeObserverBoxOptions) {
   for (const [observer, { callback, targets }] of observers) {
-    if (targets.has(target)) callback([], observer);
+    const box = targets.get(target);
+    if (box && (!only || box === only)) callback([], observer);
   }
 }
 
@@ -27,12 +33,12 @@ const boxes = new Map<Element, DOMRect>();
 
 beforeAll(() => {
   globalThis.ResizeObserver = class {
-    #watched: { callback: ResizeObserverCallback; targets: Set<Element> };
+    #watched: Watched;
     constructor(callback: ResizeObserverCallback) {
-      this.#watched = { callback, targets: new Set() };
+      this.#watched = { callback, targets: new Map() };
     }
-    observe(target: Element) {
-      this.#watched.targets.add(target);
+    observe(target: Element, options?: ResizeObserverOptions) {
+      this.#watched.targets.set(target, options?.box ?? "content-box");
       observers.set(this, this.#watched);
     }
     unobserve(target: Element) {
@@ -315,6 +321,14 @@ describe("ToggleGroup indicator measurement", () => {
     height: `${height}px`,
   });
 
+  /** The box written on the indicator of `group`; null without one */
+  const indicatorOf = (group: HTMLElement) => {
+    const span = group.querySelector<HTMLElement>(":scope > span");
+    if (!span) return null;
+    const { left, top, width, height } = span.style;
+    return { left, top, width, height };
+  };
+
   /**
    * A controlled group of items A and B with nothing pressed, then A pressed. The group is at
    * (10, 0) and A at (14, 4), so the indicator is at (4, 4) within the group.
@@ -337,13 +351,7 @@ describe("ToggleGroup indicator measurement", () => {
     boxes.set(items.b, new DOMRect(56, 4, 50, 24));
     const press = (value: "a" | "b") => rerender(ui([value]));
     press("a");
-    /** The box written on the indicator; null without one */
-    const indicator = () => {
-      const span = group.querySelector<HTMLElement>(":scope > span");
-      if (!span) return null;
-      const { left, top, width, height } = span.style;
-      return { left, top, width, height };
-    };
+    const indicator = () => indicatorOf(group);
     expect(indicator()).toEqual(px(4, 4, 40, 24));
     return { group, items, press, indicator };
   }
@@ -397,6 +405,20 @@ describe("ToggleGroup indicator measurement", () => {
       boxes.set(items[value], new DOMRect(20, 2, 64, 28));
       act(() => resize(items[value]));
       expect(indicator()).toEqual(px(10, 2, 64, 28));
+    },
+  );
+
+  // A padding change resizes an item's border box alone, and in a group that keeps its size it
+  // moves the items after it too
+  it.each(["a", "b"] as const)(
+    "measures pressed item %s again when only the padding of item a changes",
+    (value) => {
+      const { items, press, indicator } = renderPressed();
+      press(value);
+      boxes.set(items.a, new DOMRect(14, 4, 56, 24));
+      boxes.set(items.b, new DOMRect(72, 4, 50, 24));
+      act(() => resize(items.a, "border-box"));
+      expect(indicator()).toEqual(value === "a" ? px(4, 4, 56, 24) : px(62, 4, 50, 24));
     },
   );
 

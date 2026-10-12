@@ -37,6 +37,12 @@ type ToggleGroupCtx = {
 
 const ToggleGroupContext = createContext<ToggleGroupCtx | null>(null);
 
+/**
+ * The indicator covers an item's border box. A padding change resizes that box alone, and in a
+ * group that keeps its size it moves the other items too.
+ */
+const ITEM_BOX: ResizeObserverOptions = { box: "border-box" };
+
 // ---------------------------------------------------------------------------
 // Root
 // ---------------------------------------------------------------------------
@@ -79,7 +85,7 @@ function ToggleGroupRoot({
     if (previous) observerRef.current?.unobserve(previous);
     if (el) {
       items.set(val, el);
-      observerRef.current?.observe(el);
+      observerRef.current?.observe(el, ITEM_BOX);
     } else {
       items.delete(val);
     }
@@ -122,7 +128,7 @@ function ToggleGroupRoot({
     observer.observe(container);
     borderBox.observe(container, { box: "border-box" });
     // The items too: in a group that keeps its size, an item can resize or show again alone
-    for (const item of itemsRef.current.values()) observer.observe(item);
+    for (const item of itemsRef.current.values()) observer.observe(item, ITEM_BOX);
     observerRef.current = observer;
     return () => {
       observer.disconnect();

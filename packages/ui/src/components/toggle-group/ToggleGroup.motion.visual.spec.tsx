@@ -492,6 +492,17 @@ const RESIZES: [string, Layout, Layout][] = [
     FIXED,
     { ...FIXED, itemStyle: { fontSize: 20 } },
   ],
+  // Only the item's border box grows: its content box doesn't, nor does the group
+  [
+    "the padding of the item, in a group of fixed size",
+    FIXED,
+    { ...FIXED, itemStyle: { paddingInline: 24 } },
+  ],
+  [
+    "the padding of the item, in a group that fills its box",
+    FILLS,
+    { ...FILLS, itemStyle: { paddingInline: 24 } },
+  ],
   // The group's border box grows; its content box, sized by the items, doesn't
   ["the padding of the group", {}, { groupPadding: 16 }],
   // The group's content box shrinks; its border box, sized by the box around it, doesn't
