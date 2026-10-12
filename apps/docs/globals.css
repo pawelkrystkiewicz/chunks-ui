@@ -8,8 +8,7 @@
   --font-display: "Outfit", ui-sans-serif, system-ui, sans-serif;
 }
 
-/* The site's own --ring, saved before .landing overrides it. It computes on <html>, so it follows
-   html.dark. The landing's preview frames re-apply it. */
+/* The library ring, saved before .landing overrides --ring; the previews restore it. */
 :root {
   --l-lib-ring: var(--ring);
 }
@@ -26,9 +25,7 @@
   --l-ill: #8d96b0;
   --l-brand: oklch(60.48% 0.2165 257.21);
   --l-brand-pale: oklch(80% 0.1 257);
-  /* Focus ring: the page's text colour, 16:1 or more on --l-bg and --l-card in both site themes.
-     The library's grey --ring passes 3:1 on --l-bg (light) with almost no margin. The static
-     component previews restore the library ring through --l-lib-ring (see :root above). */
+  /* One focus ring colour, the page text: the library's grey barely clears 3:1 on --l-bg. */
   --ring: var(--l-fg);
   --l-grid:
     repeating-linear-gradient(90deg, transparent 0 20px, var(--l-ill) 20px 21px),
@@ -58,9 +55,8 @@
   --l-ill: oklch(0.55 0.04 265);
 }
 
-/* The hero, the band and the footer carry `dark` (dark in both site themes): white ring. The
-   library's dark --ring is below 3:1 there. White is not enough everywhere: the hero's bottom fade
-   in the light theme gives the BUILT ON links 2.68:1 (known gap, tracked in #297). */
+/* Hero, band and footer carry `dark` in both themes: white ring, as the library's dark ring is
+   under 3:1 there. Known gap: BUILT ON links on the hero's light-theme bottom fade, 2.68:1 (#297). */
 .landing .dark {
   --ring: #fff;
 }
