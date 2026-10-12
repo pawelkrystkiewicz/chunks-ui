@@ -13,6 +13,25 @@ import { IconButton, type IconButtonProps } from "../icon-button";
 type IconButtonOnClick = NonNullable<IconButtonProps["onClick"]>;
 type IconButtonClickEvent = Parameters<IconButtonOnClick>[0];
 
+/** The built-in English strings of `CopyButton`. */
+export type CopyButtonLabels = {
+  /**
+   * Name of the button before a copy.
+   * @default "Copy to clipboard"
+   */
+  copy: string;
+  /**
+   * Name of the button while it shows the copied state.
+   * @default "Copied"
+   */
+  copied: string;
+};
+
+export const DEFAULT_COPY_BUTTON_LABELS: CopyButtonLabels = {
+  copy: "Copy to clipboard",
+  copied: "Copied",
+};
+
 export type CopyButtonProps = Omit<ComponentProps<typeof IconButton>, "children"> & {
   /**
    * The string value to be copied to the clipboard when the button is clicked.
@@ -28,6 +47,12 @@ export type CopyButtonProps = Omit<ComponentProps<typeof IconButton>, "children"
    * If not provided, a default icon/UI is rendered.
    */
   children?: (state: { copied: boolean }) => ReactNode;
+  /**
+   * Replaces the built-in English strings, e.g. to translate them. Keys you leave out keep the
+   * default from `DEFAULT_COPY_BUTTON_LABELS`. `aria-label` takes precedence. With `children`,
+   * the button has no default name, so `labels` does not apply.
+   */
+  labels?: Partial<CopyButtonLabels>;
 };
 
 const DEFAULT_TIMEOUT = 2000;
@@ -37,6 +62,7 @@ export function CopyButton({
   timeout = DEFAULT_TIMEOUT,
   children,
   onClick,
+  labels,
   ...props
 }: CopyButtonProps) {
   const [copied, setCopied] = useState(false);
@@ -61,7 +87,8 @@ export function CopyButton({
     [value, timeout, onClick],
   );
 
-  const defaultLabel = !children ? (copied ? "Copied" : "Copy to clipboard") : undefined;
+  const names = { ...DEFAULT_COPY_BUTTON_LABELS, ...labels };
+  const defaultLabel = !children ? (copied ? names.copied : names.copy) : undefined;
 
   return (
     <IconButton aria-label={defaultLabel} {...props} onClick={handleClick}>

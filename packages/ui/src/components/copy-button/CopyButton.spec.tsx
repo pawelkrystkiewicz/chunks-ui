@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { CopyButton } from "./CopyButton";
+import { CopyButton, DEFAULT_COPY_BUTTON_LABELS } from "./CopyButton";
 
 beforeAll(() => {
   Object.defineProperty(navigator, "clipboard", {
@@ -76,5 +76,37 @@ describe("CopyButton", () => {
   it("has no a11y violations", async () => {
     const { container } = render(<CopyButton value="test" />);
     expect(await axe(container)).toHaveNoViolations();
+  });
+});
+
+describe("CopyButton labels", () => {
+  it("is named by DEFAULT_COPY_BUTTON_LABELS before and after a copy", async () => {
+    const user = userEvent.setup();
+    render(<CopyButton value="test" />);
+    await user.click(screen.getByRole("button", { name: DEFAULT_COPY_BUTTON_LABELS.copy }));
+    expect(
+      screen.getByRole("button", { name: DEFAULT_COPY_BUTTON_LABELS.copied }),
+    ).toBeInTheDocument();
+  });
+
+  it("takes both names from labels", async () => {
+    const user = userEvent.setup();
+    render(<CopyButton value="test" labels={{ copy: "Kopiuj", copied: "Skopiowano" }} />);
+    await user.click(screen.getByRole("button", { name: "Kopiuj" }));
+    expect(screen.getByRole("button", { name: "Skopiowano" })).toBeInTheDocument();
+  });
+
+  it("keeps the default for a key labels leaves out", async () => {
+    const user = userEvent.setup();
+    render(<CopyButton value="test" labels={{ copied: "Skopiowano" }} />);
+    await user.click(screen.getByRole("button", { name: "Copy to clipboard" }));
+    expect(screen.getByRole("button", { name: "Skopiowano" })).toBeInTheDocument();
+  });
+
+  it("prefers aria-label over labels", async () => {
+    const user = userEvent.setup();
+    render(<CopyButton value="test" aria-label="Copy link" labels={{ copy: "Kopiuj" }} />);
+    await user.click(screen.getByRole("button", { name: "Copy link" }));
+    expect(screen.getByRole("button", { name: "Copy link" })).toBeInTheDocument();
   });
 });

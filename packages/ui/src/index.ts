@@ -71,7 +71,12 @@ export type {
   ComboboxTriggerProps,
 } from "./components/combobox";
 export { Combobox } from "./components/combobox";
-export { CopyButton, type CopyButtonProps } from "./components/copy-button";
+export {
+  CopyButton,
+  type CopyButtonLabels,
+  type CopyButtonProps,
+  DEFAULT_COPY_BUTTON_LABELS,
+} from "./components/copy-button";
 export { DatePicker, type DatePickerProps } from "./components/date-picker";
 export type {
   DialogBackdropProps,
@@ -120,7 +125,12 @@ export {
   type InputProps,
   inputVariants,
 } from "./components/input";
-export { InputCopy, type InputCopyProps } from "./components/input-copy";
+export {
+  DEFAULT_INPUT_COPY_LABELS,
+  InputCopy,
+  type InputCopyLabels,
+  type InputCopyProps,
+} from "./components/input-copy";
 export { Label, type LabelProps } from "./components/label";
 export { Loader, type LoaderProps } from "./components/loader";
 export type {
