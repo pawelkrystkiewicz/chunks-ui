@@ -142,7 +142,7 @@ When the calendar opens, focus goes to the selected day, or to today if no date 
   definition={generateDefinition({
     code: `
 import type { DatePickerProps } from 'chunks-ui'
-type Props = Pick<DatePickerProps, 'value' | 'defaultValue' | 'onValueChange' | 'placeholder' | 'disabled' | 'min' | 'max' | 'isDateDisabled' | 'weekStartsOn' | 'showOutsideDays' | 'name' | 'required' | 'form' | 'className'>
+type Props = Pick<DatePickerProps, 'value' | 'defaultValue' | 'onValueChange' | 'placeholder' | 'disabled' | 'min' | 'max' | 'isDateDisabled' | 'weekStartsOn' | 'showOutsideDays' | 'name' | 'required' | 'form' | 'className' | 'labels'>
 export default Props
 `
   })}
@@ -151,3 +151,16 @@ export default Props
 `DatePicker` also takes every other `<button>` prop except `onChange` and passes it to the trigger. Use `onValueChange` to follow the date.
 
 `className` goes on the `<div>` that wraps the trigger, and `style` on the trigger `<button>`. The trigger fills the wrapper, so set the width with `className`.
+
+## Labels
+
+`labels` replaces the built-in English text, for example to translate it. Keys you leave out keep their default from `DEFAULT_DATE_PICKER_LABELS`. They include every [Calendar key](/components/calendar#labels), which the picker passes to its calendar. The `placeholder` prop takes precedence over `labels.placeholder`. See [Labels](/labels).
+
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { DatePickerLabels } from 'chunks-ui'
+export default DatePickerLabels
+`
+  })}
+/>

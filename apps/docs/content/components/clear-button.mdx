@@ -40,13 +40,26 @@ Use the `label` prop to override the default accessible label:
   definition={generateDefinition({
     code: `
 import type { ClearButtonProps } from 'chunks-ui'
-type Props = Pick<ClearButtonProps, 'label'>
+type Props = Pick<ClearButtonProps, 'label' | 'labels'>
 export default Props
 `
   })}
 />
 
 All other props are forwarded to the underlying `<button>` element.
+
+## Labels
+
+`labels` replaces the built-in English text, for example to translate it. Keys you leave out keep their default from `DEFAULT_CLEAR_BUTTON_LABELS`. `label` and `aria-label` take precedence. See [Labels](/labels).
+
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { ClearButtonLabels } from 'chunks-ui'
+export default ClearButtonLabels
+`
+  })}
+/>
 
 ## Styling
 

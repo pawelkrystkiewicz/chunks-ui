@@ -67,13 +67,27 @@ Use the `render` prop on `Breadcrumb.Link` to render a framework-specific link (
 
 | Part | Description |
 |---|---|
-| `Breadcrumb.Root` | `<nav>` wrapper with `aria-label="Breadcrumb"`. |
+| `Breadcrumb.Root` | `<nav>` wrapper named "Breadcrumb". Takes `labels` for the parts' built-in text. |
 | `Breadcrumb.List` | Ordered list (`<ol>`) containing items. |
 | `Breadcrumb.Item` | List item (`<li>`) wrapping a link or page. |
 | `Breadcrumb.Link` | Clickable anchor. Accepts `render` prop for custom link components. |
 | `Breadcrumb.Page` | Current page indicator with `aria-current="page"`. |
 | `Breadcrumb.Separator` | Decorative separator. Renders its own `<li>`, so place it between items, not inside one. Defaults to a chevron icon. |
 | `Breadcrumb.Ellipsis` | Collapsed state indicator (three dots). |
+
+## Breadcrumb.Root Props
+
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { BreadcrumbRootProps } from 'chunks-ui'
+type Props = Pick<BreadcrumbRootProps, 'labels'>
+export default Props
+`
+  })}
+/>
+
+All other props are forwarded to the underlying `<nav>` element.
 
 ## Breadcrumb.Link Props
 
@@ -92,3 +106,16 @@ All other props are forwarded to the underlying `<a>` element (or the custom ele
 ## Breadcrumb.Separator Props
 
 All props are forwarded to the underlying `<li>` element. Pass `children` to replace the default chevron separator icon.
+
+## Labels
+
+`labels` replaces the built-in English text, for example to translate it. Keys you leave out keep their default from `DEFAULT_BREADCRUMB_LABELS`. `aria-label` on `Breadcrumb.Root` takes precedence. See [Labels](/labels).
+
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { BreadcrumbLabels } from 'chunks-ui'
+export default BreadcrumbLabels
+`
+  })}
+/>

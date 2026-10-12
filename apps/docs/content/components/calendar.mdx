@@ -83,8 +83,21 @@ The left and right arrows are not mirrored in right-to-left layouts.
   definition={generateDefinition({
     code: `
 import type { CalendarProps } from 'chunks-ui'
-type Props = Pick<CalendarProps, 'value' | 'defaultValue' | 'onValueChange' | 'isDateDisabled' | 'min' | 'max' | 'weekStartsOn' | 'showOutsideDays'>
+type Props = Pick<CalendarProps, 'value' | 'defaultValue' | 'onValueChange' | 'isDateDisabled' | 'min' | 'max' | 'weekStartsOn' | 'showOutsideDays' | 'labels'>
 export default Props
+`
+  })}
+/>
+
+## Labels
+
+`labels` replaces the built-in English text, for example to translate it. Keys you leave out keep their default from `DEFAULT_CALENDAR_LABELS`. The keys that depend on a date are functions of that date, so you can pass `Intl` formatters. See [Labels](/labels).
+
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { CalendarLabels } from 'chunks-ui'
+export default CalendarLabels
 `
   })}
 />

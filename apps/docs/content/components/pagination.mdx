@@ -62,13 +62,27 @@ Use the `render` prop on `Link`, `Previous`, and `Next` to render framework-spec
 
 | Part | Description |
 |---|---|
-| `Pagination.Root` | `<nav>` wrapper with `aria-label="pagination"`. |
+| `Pagination.Root` | `<nav>` wrapper named "pagination". Takes `labels` for the parts' built-in text. |
 | `Pagination.Content` | `<ul>` containing page items. |
 | `Pagination.Item` | `<li>` wrapping a link, ellipsis, or nav button. |
 | `Pagination.Link` | Page number link. `active` sets `aria-current="page"`. |
 | `Pagination.Previous` | Previous page button with chevron icon. |
 | `Pagination.Next` | Next page button with chevron icon. |
 | `Pagination.Ellipsis` | Collapsed page range indicator. |
+
+## Pagination.Root Props
+
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { PaginationRootProps } from 'chunks-ui'
+type Props = Pick<PaginationRootProps, 'labels'>
+export default Props
+`
+  })}
+/>
+
+All other props are forwarded to the underlying `<nav>` element.
 
 ## Pagination.Link Props
 
@@ -97,3 +111,16 @@ export default Props
 />
 
 All other props are forwarded to the underlying `<a>` element.
+
+## Labels
+
+`labels` replaces the built-in English text, for example to translate it. Keys you leave out keep their default from `DEFAULT_PAGINATION_LABELS`. `aria-label` on `Pagination.Root` and `children` on `Pagination.Previous` and `Pagination.Next` take precedence. See [Labels](/labels).
+
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { PaginationLabels } from 'chunks-ui'
+export default PaginationLabels
+`
+  })}
+/>

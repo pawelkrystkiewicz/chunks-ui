@@ -47,10 +47,23 @@ Control how long the "copied" confirmation persists with the `timeout` prop (def
   definition={generateDefinition({
     code: `
 import type { CopyButtonProps } from 'chunks-ui'
-type Props = Pick<CopyButtonProps, 'value' | 'timeout' | 'children'>
+type Props = Pick<CopyButtonProps, 'value' | 'timeout' | 'children' | 'labels'>
 export default Props
 `
   })}
 />
 
 All other props are forwarded to the underlying [`IconButton`](/components/icon-button), so `variant` and `color` work too. They default to `text` and `secondary`.
+
+## Labels
+
+`labels` replaces the built-in English text, for example to translate it. Keys you leave out keep their default from `DEFAULT_COPY_BUTTON_LABELS`. `aria-label` takes precedence and keeps one name in both states. With `children`, the button has no default name, so `labels` does not apply. See [Labels](/labels).
+
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { CopyButtonLabels } from 'chunks-ui'
+export default CopyButtonLabels
+`
+  })}
+/>

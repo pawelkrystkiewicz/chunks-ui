@@ -1,4 +1,5 @@
 import { Container, ComboboxBasicDemo, ComboboxClearDemo, ComboboxGroupedDemo, ComboboxMultiDemo } from '@/components'
+import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
 # Combobox
 
@@ -256,10 +257,10 @@ function ControlledCombobox() {
 
 ## Accessible Names
 
-`Combobox.Trigger`, `Combobox.Clear` and `Combobox.ChipRemove` show only an icon, so each one has a default `aria-label`: "Show options", "Clear selection" and "Remove". Pass `aria-label` to use a different name, for example one that says which chip the button removes:
+`Combobox.Trigger`, `Combobox.Clear` and `Combobox.ChipRemove` show only an icon, so each one has a default name: "Show options", "Clear selection" and "Remove" followed by the text of its chip ("Remove Apple"). Pass [`labels`](#labels) to `Combobox.Root` to translate them, or `aria-label` to a part to use a different name:
 
 ```tsx
-<Combobox.ChipRemove aria-label={`Remove ${item.label}`} />
+<Combobox.ChipRemove aria-label={`Deselect ${item.label}`} />
 ```
 
 If you pass `children` or a `render` element, the default name and the default icon are not applied. The content you pass names the button, so give icon-only content an `aria-label`:
@@ -272,4 +273,27 @@ Inside `Field.Root`, Base UI sets `aria-labelledby` on `Combobox.Trigger` to the
 
 ## Props
 
-All compound parts accept the same props as their underlying Base UI [`Combobox`](https://base-ui.com/react/components/combobox#api-reference) counterparts. `Combobox.Control` is a plain `<div>` wrapper and accepts all standard HTML div props. No additional custom props are defined.
+All compound parts accept the same props as their underlying Base UI [`Combobox`](https://base-ui.com/react/components/combobox#api-reference) counterparts. `Combobox.Control` is a plain `<div>` wrapper and accepts all standard HTML div props. `Combobox.Root` also takes `labels`:
+
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { ComboboxRootProps } from 'chunks-ui'
+type Props = Pick<ComboboxRootProps, 'labels'>
+export default Props
+`
+  })}
+/>
+
+## Labels
+
+`labels` replaces the built-in English text, for example to translate it. Keys you leave out keep their default from `DEFAULT_COMBOBOX_LABELS`. An `aria-label` on a part takes precedence. See [Labels](/labels).
+
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { ComboboxLabels } from 'chunks-ui'
+export default ComboboxLabels
+`
+  })}
+/>

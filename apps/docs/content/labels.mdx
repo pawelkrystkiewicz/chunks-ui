@@ -1,0 +1,75 @@
+# Labels
+
+Some components contain English text of their own: the accessible names of icon buttons (the Combobox chevron, the remove button of a Chip), screen-reader text (the "More pages" of `Pagination.Ellipsis`) and visible defaults (the month and weekday names of `Calendar`, the "Pick a date" of `DatePicker`). Each of these components takes a `labels` prop that replaces this text, for example to translate it.
+
+## Translate a component
+
+Pass only the keys you want to change. The keys you leave out keep their English default.
+
+```tsx
+<Combobox.Root
+  items={["Jabłko", "Banan"]}
+  labels={{ trigger: "Pokaż opcje", clear: "Wyczyść wybór", chipRemove: "Usuń" }}
+>
+  {/* The parts read the labels from Combobox.Root */}
+</Combobox.Root>
+```
+
+Text that depends on data is a function. The `Calendar` keys get the date they describe, so you can pass `Intl` formatters:
+
+```tsx
+<Calendar
+  weekStartsOn={1}
+  labels={{
+    previousMonth: "Poprzedni miesiąc",
+    nextMonth: "Następny miesiąc",
+    heading: (date) => date.toLocaleDateString("pl-PL", { month: "long", year: "numeric" }),
+    weekday: (date) => date.toLocaleDateString("pl-PL", { weekday: "short" }),
+    day: (date) => date.toLocaleDateString("pl-PL", { dateStyle: "full" }),
+  }}
+/>
+```
+
+There is no provider that sets the labels of all components. To use the same translation in many places, keep it in a constant and pass it to each component:
+
+```tsx
+import type { ComboboxLabels } from "chunks-ui";
+
+export const PL_COMBOBOX: Partial<ComboboxLabels> = {
+  trigger: "Pokaż opcje",
+  clear: "Wyczyść wybór",
+  chipRemove: "Usuń",
+};
+```
+
+Each component exports the type of its labels as `<Component>Labels` (`ComboboxLabels`) and the English defaults as `DEFAULT_<COMPONENT>_LABELS` (`DEFAULT_COMBOBOX_LABELS`).
+
+## What takes precedence
+
+- An `aria-label` on a part wins over `labels`: `<Combobox.Trigger aria-label="Show fruits" />` keeps that name.
+- A prop that already sets the same text wins too: `placeholder` on `DatePicker`, `label` on `ClearButton`, `children` on `Pagination.Previous` and `Pagination.Next`, and `getAriaValueText` or `aria-valuetext` on `Slider.Thumb`.
+
+## Remove buttons
+
+The remove button of a `Chip` and `Combobox.ChipRemove` read their label and then the text of their chip, for example "Remove Apple". With `labels={{ remove: "Usuń" }}` on a `Chip`, the button reads "Usuń Apple". The label always comes first.
+
+## Components with labels
+
+These components take `labels`. The Labels section of each page lists the keys and their defaults.
+
+- [Breadcrumb](/components/breadcrumb#labels): `labels` on `Breadcrumb.Root`, type `BreadcrumbLabels`
+- [Calendar](/components/calendar#labels): `labels` on `Calendar`, type `CalendarLabels`
+- [Chip](/components/chip#labels): `labels` on `Chip`, type `ChipLabels`
+- [ClearButton](/components/clear-button#labels): `labels` on `ClearButton`, type `ClearButtonLabels`
+- [Combobox](/components/combobox#labels): `labels` on `Combobox.Root`, type `ComboboxLabels`
+- [CopyButton](/components/copy-button#labels): `labels` on `CopyButton`, type `CopyButtonLabels`
+- [DatePicker](/components/date-picker#labels): `labels` on `DatePicker`, type `DatePickerLabels`
+- [Input](/components/input#labels): `labels` on `Input`, type `InputLabels`
+- [InputCopy](/components/input-copy#labels): `labels` on `InputCopy`, type `InputCopyLabels`
+- [NumberField](/components/number-field#labels): `labels` on `NumberField.Root`, type `NumberFieldLabels`
+- [Pagination](/components/pagination#labels): `labels` on `Pagination.Root`, type `PaginationLabels`
+- [Slider](/components/slider#labels): `labels` on `Slider.Root`, type `SliderLabels`
+- [ThemeToggle](/components/theme-toggle#labels): `labels` on `ThemeToggle`, type `ThemeToggleLabels`
+- [Toast](/components/toast#labels): `labels` on `Toast.Viewport`, type `ToastLabels`
+
+One string cannot be changed: while a `Combobox` popup is open, Base UI adds visually hidden "Dismiss" buttons for screen readers around it, and they take no props.

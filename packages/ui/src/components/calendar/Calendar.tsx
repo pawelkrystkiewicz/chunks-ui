@@ -79,7 +79,7 @@ export type CalendarLabels = {
   heading: (date: Date) => string;
   /**
    * The column header of a weekday. Gets a date that falls on that weekday.
-   * @default (date) => "Su" | "Mo" | "Tu" | "We" | "Th" | "Fr" | "Sa"
+   * @default (date) => "Su" … "Sa"
    */
   weekday: (date: Date) => string;
   /**

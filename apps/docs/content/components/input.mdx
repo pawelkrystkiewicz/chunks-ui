@@ -119,10 +119,23 @@ Wrap `Input` in a `Field` for labels, descriptions, and validation:
   definition={generateDefinition({
     code: `
 import type { InputProps } from 'chunks-ui'
-type Props = Pick<InputProps, 'startAdornment' | 'endAdornment' | 'onClear'>
+type Props = Pick<InputProps, 'startAdornment' | 'endAdornment' | 'onClear' | 'labels'>
 export default Props
 `
   })}
 />
 
 All other props are forwarded to the underlying Base UI [`Input`](https://base-ui.com/react/components/input#api-reference).
+
+## Labels
+
+`labels` replaces the built-in English text, for example to translate it. Keys you leave out keep their default from `DEFAULT_INPUT_LABELS`. See [Labels](/labels).
+
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { InputLabels } from 'chunks-ui'
+export default InputLabels
+`
+  })}
+/>
