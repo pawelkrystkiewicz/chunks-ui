@@ -23,8 +23,8 @@ export const ARROW_PADDING_PX = 10;
  * positioner, before that move, so a popup that caps its height takes the reach off it too.
  *
  * The arrow is a positioned child, so it paints over the popup's own focus ring where they meet.
- * In a popup that holds an arrow (`has-[.PopupArrow]:`), the ring moves to an `::after` overlay: positioned, last in the popup and raised, it
- * paints above the arrow. `relative` above anchors it on the popup's border box, and it takes the
+ * In a popup that holds an arrow (`has-[.PopupArrow]:`), the ring moves to an `::after` overlay:
+ * positioned, last in the popup and raised, it paints above the arrow. `relative` above anchors it on the popup's border box, and it takes the
  * popup's radius and a clear border of the popup's width, because Chromium draws the ring of a
  * bordered box partly over the border. It draws the browser's own ring (`outline: auto 1px
  * -webkit-focus-ring-color`, which matches Chromium's UA ring; Safari draws its own platform ring

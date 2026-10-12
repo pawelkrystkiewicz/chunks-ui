@@ -347,6 +347,56 @@ describe.each(KINDS)("%s focused from the keyboard", (kind) => {
   });
 });
 
+/** An open arrowed popup of `kind` whose content takes the consumer's `className` */
+function arrowedWith(kind: Kind, className: string): ReactNode {
+  return kind === "Popover" ? (
+    <Popover.Root defaultOpen>
+      <Popover.Trigger>Trigger</Popover.Trigger>
+      <Popover.Content data-testid="popup" className={className}>
+        <Popover.Arrow />
+        Popover
+      </Popover.Content>
+    </Popover.Root>
+  ) : (
+    <Menu.Root defaultOpen>
+      <Menu.Trigger>Trigger</Menu.Trigger>
+      <Menu.Content data-testid="popup" className={className}>
+        <Menu.Arrow />
+        <Menu.Item>Item</Menu.Item>
+      </Menu.Content>
+    </Menu.Root>
+  );
+}
+
+describe.each(KINDS)("%s with an arrow, restyling the ring", (kind) => {
+  it("takes a colour from the same `has-[.PopupArrow]:focus-visible:after:` prefix", async () => {
+    render(arrowedWith(kind, "has-[.PopupArrow]:focus-visible:after:[outline-color:rgb(255,0,0)]"));
+    const popup = await screen.findByTestId("popup");
+    await userEvent.keyboard("{Shift}");
+    await expect.poll(() => popup.matches(":focus-visible")).toBe(true);
+
+    expect(getComputedStyle(popup, "::after").outlineColor).toBe("rgb(255, 0, 0)");
+  });
+
+  it("removes the overlay, and so the ring, with `focus-visible:after:hidden`", async () => {
+    render(arrowedWith(kind, "focus-visible:after:hidden"));
+    const popup = await screen.findByTestId("popup");
+    await userEvent.keyboard("{Shift}");
+    await expect.poll(() => popup.matches(":focus-visible")).toBe(true);
+
+    expect(getComputedStyle(popup, "::after").display).toBe("none");
+  });
+
+  it("ignores a colour from the plain `focus-visible:after:` prefix", async () => {
+    render(arrowedWith(kind, "focus-visible:after:[outline-color:rgb(255,0,0)]"));
+    const popup = await screen.findByTestId("popup");
+    await userEvent.keyboard("{Shift}");
+    await expect.poll(() => popup.matches(":focus-visible")).toBe(true);
+
+    expect(getComputedStyle(popup, "::after").outlineColor).not.toBe("rgb(255, 0, 0)");
+  });
+});
+
 describe.each(KINDS)("%s focused from the keyboard, without an arrow", (kind) => {
   // An overlay would be clipped by a consumer's `overflow`, so such a popup keeps the browser's ring
   it("keeps the browser's ring on the popup itself, and has no overlay", async () => {
