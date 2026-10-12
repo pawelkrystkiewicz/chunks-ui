@@ -33,7 +33,7 @@ function ControlledCalendar() {
 
 <CalendarControlledExample />
 
-When `value` changes to another day, the calendar shows that day's month. A re-render with the same day, such as an inline `value={new Date()}`, keeps the month the user moved to.
+When `value` changes to another day, the calendar shows that day's month. A re-render with the same day, such as an inline `value={new Date()}`, keeps the month the user moved to. The same rule means that setting a new `Date` for the day that is already selected does not move the view back, so a "Today" button does nothing visible while today is selected and the user is on another month. To show the month again, remount the calendar with a `key`, for example `<Calendar key={todayClicks} value={today} />`, and change the key in the button's handler.
 
 ## Disabled Dates
 

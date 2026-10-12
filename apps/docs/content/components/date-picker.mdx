@@ -126,7 +126,9 @@ With `required`, the form does not submit until a date is selected, and focus mo
 
 Inside `Field.Root`, the field's `name` is used when the picker has none, and a disabled field disables the hidden input too. For a picker outside its `<form>`, set `form` to the form's `id`.
 
-A form reset sets the picker back to its `defaultValue`, or to no date. A controlled picker keeps its `value`, as a controlled input does: set it back in the form's `onReset`.
+A form reset sets the picker back to its `defaultValue`, or to no date. A controlled picker keeps its `value`, as a controlled input does: set it back in the form's `onReset`. A reset that `onReset` cancels with `event.preventDefault()` leaves the picker as it is. As with native controls, a reset does not call `onValueChange`: an uncontrolled picker that you mirror in state through `onValueChange` is out of date after a reset, so reset that state in the form's `onReset` too.
+
+When the picker has a `name` or is `required`, or its `Field.Root` has a `name`, the form input is the field's control and takes part in the browser's form validation, as an `Input` does. A failing `validate` on `Field.Root` with `validationMode` set to `"onChange"` or `"onBlur"` then also blocks the submit of a plain `<form>` and shows the browser's validation bubble.
 
 ## Keyboard
 
