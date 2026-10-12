@@ -126,6 +126,8 @@ With `required`, the form does not submit until a date is selected, and focus mo
 
 Inside `Field.Root`, the field's `name` is used when the picker has none, and a disabled field disables the hidden input too. For a picker outside its `<form>`, set `form` to the form's `id`.
 
+A form reset sets the picker back to its `defaultValue`, or to no date. A controlled picker keeps its `value`, as a controlled input does: set it back in the form's `onReset`.
+
 ## Keyboard
 
 | Key | Action |

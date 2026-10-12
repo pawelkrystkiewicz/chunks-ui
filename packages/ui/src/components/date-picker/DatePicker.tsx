@@ -2,7 +2,15 @@
 
 import { Field as BaseField } from "@base-ui/react/field";
 import { Popover as BasePopover } from "@base-ui/react/popover";
-import { type ComponentProps, useId, useLayoutEffect, useRef, useState } from "react";
+import {
+  type ComponentProps,
+  type RefObject,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { cn } from "../../lib/cn";
 import { usePortalContainer } from "../../lib/portal-container";
 import { useMergedRef } from "../../lib/use-merged-ref";
@@ -14,7 +22,8 @@ type DatePickerOwnProps = Pick<CalendarProps, "weekStartsOn" | "showOutsideDays"
    */
   value?: Date | null;
   /**
-   * The initial selected date when uncontrolled. An Invalid Date counts as no date.
+   * The initial selected date when uncontrolled. A form reset restores it. An Invalid Date
+   * counts as no date.
    * @default null
    */
   defaultValue?: Date | null;
@@ -121,6 +130,18 @@ export function DatePicker({
     setOpen(false);
   };
 
+  // A form reset restores the default date, as it restores an input's default value. A
+  // controlled picker keeps `value`, as a controlled React input does. The field's control is
+  // the form input, which `form` can link to a form it is outside of, else the trigger.
+  const fieldControlRef = useRef<HTMLInputElement | HTMLButtonElement>(null);
+  useEffect(() => {
+    const formElement = fieldControlRef.current?.form;
+    if (!formElement || value !== undefined) return;
+    const reset = () => setInternalDate(defaultValue ?? null);
+    formElement.addEventListener("reset", reset);
+    return () => formElement.removeEventListener("reset", reset);
+  });
+
   const displayValue = selectedDate ? formatDate(selectedDate) : "";
   const isoValue = selectedDate ? toIsoDate(selectedDate) : "";
 
@@ -148,6 +169,7 @@ export function DatePicker({
         <BaseField.Control
           // Field.Control types its props for <input>; they reach the trigger <button> unchanged
           {...(triggerProps as BaseField.Control.Props)}
+          ref={fieldControlRef as RefObject<HTMLInputElement>}
           disabled={disabled}
           // The field reads its value from here, not from the button's empty value
           value={isoValue}

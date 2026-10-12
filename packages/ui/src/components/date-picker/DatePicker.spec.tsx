@@ -429,6 +429,61 @@ describe("DatePicker in a form", () => {
   });
 });
 
+describe("DatePicker form reset", () => {
+  const MARCH_15 = new Date(2026, 2, 15);
+  const formData = () => new FormData(screen.getByRole<HTMLFormElement>("form")).get("due");
+  const pickMarch20 = async (trigger: string) => {
+    await userEvent.click(screen.getByRole("button", { name: trigger }));
+    await userEvent.click(getButton("Friday, March 20, 2026"));
+    expect(screen.getByRole("button", { name: "March 20, 2026" })).toBeInTheDocument();
+  };
+
+  it.each([
+    { picker: "its default date", props: { name: "due", defaultValue: MARCH_15 } },
+    { picker: "no date", props: { name: "due" } },
+    { picker: "its default date, with no name", props: { defaultValue: MARCH_15 } },
+  ])("restores $picker", async ({ props }) => {
+    render(
+      <form aria-label="Task">
+        <DatePicker {...props} />
+        <button type="reset">Reset</button>
+      </form>,
+    );
+    const text = props.defaultValue ? "March 15, 2026" : "Pick a date";
+    await pickMarch20(text);
+    await userEvent.click(screen.getByRole("button", { name: "Reset" }));
+    expect(screen.getByRole("button", { name: text })).toBeInTheDocument();
+    if (props.name) expect(formData()).toBe(props.defaultValue ? "2026-03-15" : "");
+  });
+
+  it("restores its default date when it is outside the form, linked by `form`", async () => {
+    render(
+      <>
+        <form id="task" aria-label="Task">
+          <button type="reset">Reset</button>
+        </form>
+        <DatePicker name="due" form="task" defaultValue={MARCH_15} />
+      </>,
+    );
+    await pickMarch20("March 15, 2026");
+    await userEvent.click(screen.getByRole("button", { name: "Reset" }));
+    expect(screen.getByRole("button", { name: "March 15, 2026" })).toBeInTheDocument();
+    expect(formData()).toBe("2026-03-15");
+  });
+
+  it("keeps a controlled value", async () => {
+    render(
+      <form aria-label="Task">
+        <DatePicker name="due" value={MARCH_15} />
+        <button type="reset">Reset</button>
+      </form>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Reset" }));
+    expect(screen.getByRole("button", { name: "March 15, 2026" })).toBeInTheDocument();
+    expect(formData()).toBe("2026-03-15");
+  });
+});
+
 describe("DatePicker keyboard", () => {
   // Checks the focused element instead of querying every button by role and name: that query
   // computes jsdom styles for each day button, over half of each test's time, and timed out on CI.
