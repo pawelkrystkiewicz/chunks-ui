@@ -10,6 +10,8 @@ import { cn, cnState, type ClassInput, type StateClassName } from "chunks-ui";
 
 In a React Server Component, import them from [`chunks-ui/utils`](#server-components).
 
+`chunks-ui/theme.css` also defines a CSS utility, [`touch-target`](#touch-target), that makes the hit area of a small control larger.
+
 ## Server components
 
 The `chunks-ui` bundle starts with `"use client"`, because its components need state, effects and Base UI. In a React Server Component (for example, a Next.js App Router page), each export of `chunks-ui` is a client reference. You can render top-level components such as `<Button>` directly, but compound parts such as `<Tabs.Root>` need a client component around them, and you cannot call the functions. A call such as `buttonVariants(...)` throws:
@@ -169,3 +171,28 @@ import { Search } from "lucide-react";
 |---|---|
 | `ClassInput` | What `cn` accepts: a string, number, bigint, boolean or nullish value, an array of `ClassInput`, or a dictionary of class names to conditions. clsx's `ClassValue` without functions. |
 | `StateClassName<State>` | A Base UI part's `className`: `string \| ((state: State) => string \| undefined) \| undefined`. The last argument of `cnState`. |
+
+## touch-target
+
+`touch-target` makes the hit area of a small control at least 44×44px. The area is centred on the control and takes no space, so the control keeps its size and the layout does not change. A press anywhere in the area goes to the control. 44px is the minimum target size in WCAG 2.5.5 (AAA) and in Apple's Human Interface Guidelines.
+
+No component applies it. Add it to a control that is smaller than 44px and that people tap, for example an `IconButton` (32px) or a `ClearButton` (24px):
+
+```tsx
+<IconButton aria-label="Close" className="touch-target">
+  <XIcon />
+</IconButton>
+
+<ClearButton className="touch-target" />
+```
+
+The class comes with `chunks-ui/theme.css`. It works with variants too, for example `pointer-coarse:touch-target` (Tailwind 4.1 or later) to make the area larger only on touch screens.
+
+The area is the control's `::after` pseudo-element, which has `position: absolute`. That has these effects:
+
+- **The control gets `position: relative`**, so the area is centred on it. An `absolute`, `fixed` or `sticky` class on the control wins, and the area is still centred. If the control has absolutely positioned children, they are now positioned relative to the control.
+- **Your `after:` classes change the area.** Do not use them on the same element. To see the area while you test, give it an outline: `after:outline-dashed`.
+- **Some elements have no `::after`**, for example `<input>` and `<img>`. On these elements the class has no effect.
+- **Overflow cuts the area.** If the control or one of its parents has `overflow: hidden`, the area stops at that edge. In a scroll container, an area that goes past the container's padding makes the content scroll further. Give the container padding of at least half the difference between 44px and the control size.
+- **The area covers the elements around the control**, except positioned elements that come later in the DOM. Where it covers a neighbour, a press goes to the control, also on the neighbour's own box. Keep the centres of neighbouring controls at least 44px apart. If two areas overlap, the press goes to the control that comes later in the DOM.
+- **A disabled control does not get presses.** The area inherits `pointer-events` from the control, so a control with `pointer-events: none`, such as a disabled `IconButton` or `ClearButton`, gets no presses anywhere in the area. A pointer in the area hovers the control, so its hover styles apply.
