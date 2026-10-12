@@ -263,6 +263,38 @@ describe("DatePicker in a form", () => {
     expect(formData(form)).toBe("2026-10-02");
   });
 
+  it.each([
+    { year: 999, iso: "0999-01-05", text: "January 5, 999" },
+    { year: 50, iso: "0050-01-05", text: "January 5, 50" },
+  ])("submits a date in the year $year as a 4-digit yyyy-mm-dd", ({ year, iso, text }) => {
+    const date = new Date(2000, 0, 1);
+    date.setFullYear(year, 0, 5);
+    render(
+      <form aria-label="Task">
+        <DatePicker name="due" defaultValue={date} />
+      </form>,
+    );
+    const submitted = formData(screen.getByRole<HTMLFormElement>("form"));
+    expect(submitted).toBe(iso);
+    // The parse the docs give: a date-time without an offset is local time
+    expect(new Date(`${submitted}T00:00`)).toEqual(date);
+    expect(screen.getByRole("button", { name: text })).toBeInTheDocument();
+  });
+
+  it.each(["value", "defaultValue"])(
+    "treats an Invalid Date %s as no date, and opens on today's month",
+    async (prop) => {
+      render(
+        <form aria-label="Task">
+          <DatePicker name="due" {...{ [prop]: new Date(Number.NaN) }} />
+        </form>,
+      );
+      expect(formData(screen.getByRole<HTMLFormElement>("form"))).toBe("");
+      await userEvent.click(screen.getByRole("button", { name: "Pick a date" }));
+      expect(screen.getByRole("grid", { name: "March 2026" })).toBeInTheDocument();
+    },
+  );
+
   it("submits an empty value when no date is selected", () => {
     render(
       <form aria-label="Task">

@@ -37,6 +37,12 @@ const tabStops = () =>
     .getAllByRole("button", { hidden: true })
     .filter((b) => b.tabIndex === 0);
 const focusDay = (date: Date) => act(() => dayButton(date).focus());
+/** Local midnight in any year: `new Date(y, m, d)` reads years 0–99 as 1900–1999. */
+const dateIn = (year: number, month: number, day: number) => {
+  const date = new Date(2000, 0, 1);
+  date.setFullYear(year, month, day);
+  return date;
+};
 
 describe("Calendar", () => {
   it("renders the current month and year when no value is provided", () => {
@@ -171,6 +177,31 @@ describe("Calendar", () => {
     expect(screen.getByText("April 2026")).toBeInTheDocument();
     rerender(<Calendar value={new Date(2026, 2, 16)} />);
     expect(screen.getByText("March 2026")).toBeInTheDocument();
+  });
+
+  it.each([999, 50])("shows, selects and leaves a month in the year %i", async (year) => {
+    const user = userEvent.setup();
+    const onValueChange = vi.fn();
+    render(<Calendar value={dateIn(year, 0, 5)} onValueChange={onValueChange} />);
+    expect(screen.getByRole("grid", { name: `January ${year}` })).toBeInTheDocument();
+    expect(dayButton(dateIn(year, 0, 5))).toHaveAttribute("data-selected", "true");
+    await user.click(dayButton(dateIn(year, 0, 20)));
+    expect(onValueChange).toHaveBeenCalledWith(dateIn(year, 0, 20));
+    await user.click(getButton("Previous month"));
+    expect(screen.getByRole("grid", { name: `December ${year - 1}` })).toBeInTheDocument();
+    expect(dayButton(dateIn(year - 1, 11, 31))).toBeInTheDocument();
+  });
+
+  it.each(["value", "defaultValue"])("shows today's month for an Invalid Date %s", (prop) => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      vi.setSystemTime(new Date(2026, 2, 10, 12));
+      const { container } = render(<Calendar {...{ [prop]: new Date(Number.NaN) }} />);
+      expect(screen.getByRole("grid", { name: "March 2026" })).toBeInTheDocument();
+      expect(container.querySelector("[data-selected]")).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("navigates across year boundary (December -> January) under StrictMode", async () => {

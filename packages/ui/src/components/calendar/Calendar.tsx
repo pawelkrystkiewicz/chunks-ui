@@ -13,9 +13,9 @@ import { flushSync } from "react-dom";
 import { cn } from "../../lib/cn";
 
 export type CalendarProps = {
-  /** Controlled selected date. */
+  /** Controlled selected date. An Invalid Date counts as no date. */
   value?: Date | null;
-  /** Initial selected date for uncontrolled usage. */
+  /** Initial selected date for uncontrolled usage. An Invalid Date counts as no date. */
   defaultValue?: Date | null;
   /** Called when the selected date changes. */
   onValueChange?: (date: Date | null) => void;
@@ -55,6 +55,21 @@ const MONTH_NAMES = [
   "December",
 ] as const;
 
+/** `date`, or null when it is missing or an Invalid Date, which counts as no date. */
+export function validDate(date: Date | null | undefined): Date | null {
+  return date && !Number.isNaN(date.getTime()) ? date : null;
+}
+
+/**
+ * Local midnight of a day. Unlike `new Date(y, m, d)`, it keeps the years 0–99, which the
+ * constructor reads as 1900–1999. Months and days out of range roll over as in the constructor.
+ */
+function createDate(year: number, month: number, day: number): Date {
+  const date = new Date(2000, 0, 1);
+  date.setFullYear(year, month, day);
+  return date;
+}
+
 function isSameDay(a: Date, b: Date): boolean {
   return (
     a.getFullYear() === b.getFullYear() &&
@@ -64,19 +79,19 @@ function isSameDay(a: Date, b: Date): boolean {
 }
 
 function startOfDay(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  return createDate(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
 function addDays(date: Date, days: number): Date {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
+  return createDate(date.getFullYear(), date.getMonth(), date.getDate() + days);
 }
 
 /** Same day `months` later, clamped to the target month's length (Mar 31 − 1 month = Feb 28). */
 function addMonths(date: Date, months: number): Date {
   const year = date.getFullYear();
   const month = date.getMonth() + months;
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  return new Date(year, month, Math.min(date.getDate(), daysInMonth));
+  const daysInMonth = createDate(year, month + 1, 0).getDate();
+  return createDate(year, month, Math.min(date.getDate(), daysInMonth));
 }
 
 /** Column of `date` in a week that starts on `weekStartsOn` (0 = first column). */
@@ -117,24 +132,24 @@ function buildWeekRows(
   weekStartsOn: number,
   showOutsideDays: boolean,
 ): CalendarCell[][] {
-  const firstDay = new Date(year, month, 1);
-  const lastDay = new Date(year, month + 1, 0);
+  const firstDay = createDate(year, month, 1);
+  const lastDay = createDate(year, month + 1, 0);
   const startPad = weekdayIndex(firstDay, weekStartsOn);
   const totalDays = lastDay.getDate();
 
   const cells: CalendarCell[] = [];
 
   for (let i = 0; i < startPad; i++) {
-    const date = new Date(year, month, i - startPad + 1);
+    const date = createDate(year, month, i - startPad + 1);
     cells.push({ key: date.toISOString(), date: showOutsideDays ? date : null });
   }
   for (let d = 1; d <= totalDays; d++) {
-    const date = new Date(year, month, d);
+    const date = createDate(year, month, d);
     cells.push({ key: date.toISOString(), date });
   }
   // Pad to complete the last row
   for (let d = 1; cells.length % 7 !== 0; d++) {
-    const date = new Date(year, month + 1, d);
+    const date = createDate(year, month + 1, d);
     cells.push({ key: date.toISOString(), date: showOutsideDays ? date : null });
   }
 
@@ -167,7 +182,7 @@ export function Calendar({
 
   const [internalValue, setInternalValue] = useState<Date | null>(defaultValue ?? null);
 
-  const selectedDate = isControlled ? (value ?? null) : internalValue;
+  const selectedDate = validDate(isControlled ? value : internalValue);
 
   const initialViewDate = selectedDate ?? new Date();
   // Year and month live in one state so navigation updaters stay pure (StrictMode double-invokes them).
@@ -196,7 +211,7 @@ export function Calendar({
   const isInView = (date: Date | null): date is Date =>
     date !== null && date.getFullYear() === viewYear && date.getMonth() === viewMonth;
   const tabStop =
-    [focusedDate, selectedDate, today].find(isInView) ?? new Date(viewYear, viewMonth, 1);
+    [focusedDate, selectedDate, today].find(isInView) ?? createDate(viewYear, viewMonth, 1);
 
   const monthYearLabel = `${MONTH_NAMES[viewMonth]} ${viewYear}`;
   const monthYearLabelId = useId();
@@ -346,10 +361,7 @@ export function Calendar({
                   }
 
                   const isToday = isSameDay(date, today);
-                  const isSelected =
-                    selectedDate !== null &&
-                    selectedDate !== undefined &&
-                    isSameDay(date, selectedDate);
+                  const isSelected = selectedDate !== null && isSameDay(date, selectedDate);
                   const isCurrentMonth = date.getMonth() === viewMonth;
                   const disabled = isDayDisabled(date);
 

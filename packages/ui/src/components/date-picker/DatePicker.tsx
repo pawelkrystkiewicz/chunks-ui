@@ -6,15 +6,15 @@ import { type ComponentProps, useId, useLayoutEffect, useRef, useState } from "r
 import { cn } from "../../lib/cn";
 import { usePortalContainer } from "../../lib/portal-container";
 import { useMergedRef } from "../../lib/use-merged-ref";
-import { Calendar, type CalendarProps } from "../calendar/Calendar";
+import { Calendar, type CalendarProps, validDate } from "../calendar/Calendar";
 
 type DatePickerOwnProps = Pick<CalendarProps, "weekStartsOn" | "showOutsideDays"> & {
   /**
-   * The currently selected date (controlled).
+   * The currently selected date (controlled). An Invalid Date counts as no date.
    */
   value?: Date | null;
   /**
-   * The initial selected date when uncontrolled.
+   * The initial selected date when uncontrolled. An Invalid Date counts as no date.
    * @default null
    */
   defaultValue?: Date | null;
@@ -74,10 +74,11 @@ type DatePickerOwnProps = Pick<CalendarProps, "weekStartsOn" | "showOutsideDays"
 export type DatePickerProps = DatePickerOwnProps &
   Omit<ComponentProps<"button">, keyof DatePickerOwnProps | "children" | "type" | "onChange">;
 
-// Local calendar date, not toISOString(), which shifts to UTC and can change the day
+// Local calendar date, not toISOString(), which shifts to UTC and can change the day. The year
+// has 4 digits, as ISO 8601 and <input type="date"> need: 0999, not 999.
 function toIsoDate(date: Date): string {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  const pad = (n: number, length = 2) => String(n).padStart(length, "0");
+  return `${pad(date.getFullYear(), 4)}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
 function formatDate(date: Date): string {
@@ -112,7 +113,7 @@ export function DatePicker({
   const mergedTriggerRef = useMergedRef(triggerRef, ref);
   const [open, setOpen] = useState(false);
   const [internalDate, setInternalDate] = useState<Date | null>(defaultValue ?? null);
-  const selectedDate = value !== undefined ? value : internalDate;
+  const selectedDate = validDate(value !== undefined ? value : internalDate);
 
   const handleDateSelect = (date: Date | null) => {
     if (value === undefined) setInternalDate(date);
