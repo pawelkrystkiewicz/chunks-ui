@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { commands, page, userEvent } from "vitest/browser";
 import { ELEMENT_COLOR, ELEMENT_VARIANTS } from "../../types";
-import { pauseAnimations, renderFixture } from "../../VisualTest.utils";
+import { pauseAnimations, renderFixture, ringColor } from "../../VisualTest.utils";
 import { Button } from "./index";
 
 const variants = ELEMENT_VARIANTS;
@@ -92,16 +92,6 @@ describe("Button focus-visible", () => {
   }
 });
 
-/** `--ring` as the browser computes it for an outline colour */
-function ringColor() {
-  const probe = document.createElement("span");
-  probe.style.outlineColor = "var(--ring)";
-  document.body.append(probe);
-  const color = getComputedStyle(probe).outlineColor;
-  probe.remove();
-  return color;
-}
-
 describe("Button focus ring with no reduced-motion preference", () => {
   beforeAll(() => commands.emulateMedia({ reducedMotion: "no-preference" }));
   afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
@@ -122,7 +112,10 @@ describe("Button focus ring with no reduced-motion preference", () => {
       // still be at its start.
       target.focus();
       expect(target.matches(":focus-visible")).toBe(true);
-      expect(getComputedStyle(target).outlineColor).toBe(ringColor());
+      const style = getComputedStyle(target);
+      // Not reduced motion: otherwise the colour would pass without any transition to test
+      expect(style.transitionProperty).not.toBe("none");
+      expect(style.outlineColor).toBe(ringColor());
     },
   );
 

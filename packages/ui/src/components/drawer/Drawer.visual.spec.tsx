@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { commands } from "vitest/browser";
-import { enterMotionPath, renderPage } from "../../VisualTest.utils";
+import { enterMotionPath, renderPage, ringColor } from "../../VisualTest.utils";
 import { Drawer } from "./index";
 
 describe("Drawer", () => {
@@ -51,20 +51,16 @@ describe("Drawer", () => {
   });
 });
 
-/** `--ring` as the browser computes it for an outline colour */
-function ringColor() {
-  const probe = document.createElement("span");
-  probe.style.outlineColor = "var(--ring)";
-  document.body.append(probe);
-  const color = getComputedStyle(probe).outlineColor;
-  probe.remove();
-  return color;
-}
-
 function ringOf(element: Element) {
   const { outlineStyle, outlineWidth, outlineOffset, outlineColor } = getComputedStyle(element);
   return { outlineStyle, outlineWidth, outlineOffset, outlineColor };
 }
+
+const OPEN_SIDE_BORDER = {
+  left: "borderRightWidth",
+  right: "borderLeftWidth",
+  bottom: "borderTopWidth",
+} as const;
 
 const SIDES = ["left", "right", "bottom"] as const;
 
@@ -116,16 +112,37 @@ describe.each(PATHS)("Drawer.Popup focus ring, $path", ({ reducedMotion, withMot
       } finally {
         document.removeEventListener("focusin", onFocus);
       }
-      // Inside the popup's edge, so the border on the open side still shows
+      // Inside the popup's edge, past the border on the open side, so the border still shows
       expect(rings[0]).toEqual({
         focusVisible: true,
         outlineStyle: "solid",
         outlineWidth: "2px",
-        outlineOffset: "-2px",
+        outlineOffset: "-3px",
         outlineColor: ringColor(),
       });
     },
   );
+});
+
+describe("Drawer.Popup focus ring and border", () => {
+  it.each(SIDES)("keeps the %s border out from under the ring", async (side) => {
+    render(
+      <Drawer.Root defaultOpen>
+        <Drawer.Portal>
+          <Drawer.Popup side={side} data-testid="popup">
+            <Drawer.Title>Drawer Title</Drawer.Title>
+          </Drawer.Popup>
+        </Drawer.Portal>
+      </Drawer.Root>,
+    );
+    const popup = await screen.findByTestId("popup");
+    await expect.poll(() => popup.matches(":focus-visible")).toBe(true);
+    const style = getComputedStyle(popup);
+    const border = Number.parseFloat(style[OPEN_SIDE_BORDER[side]]);
+    expect(border).toBeGreaterThan(0);
+    // The ring starts where the offset box ends: at least the border width inside the edge
+    expect(-Number.parseFloat(style.outlineOffset)).toBeGreaterThanOrEqual(border);
+  });
 });
 
 // Share of the element's box that is inside the viewport

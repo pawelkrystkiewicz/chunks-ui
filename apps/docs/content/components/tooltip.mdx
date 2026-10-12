@@ -79,7 +79,7 @@ A nested `Tooltip.Provider` without a `delay` uses 50ms, not the outer Provider'
 
 ## Positioning
 
-The popup sits 2 spacing units (8px at the default `--spacing`) from the trigger, so the arrow tip clears the trigger at any spacing. A `sideOffset` on the positioner adds to that gap. The arrow stays at least `arrowPadding` (default `10`) pixels from the popup's ends, clear of the rounded corner; with a larger corner radius or a larger `--spacing`, raise `arrowPadding` on `Tooltip.Positioner`. Override placement with `side` and `align`:
+The popup sits 2 spacing units (8px at the default `--spacing`) from the trigger, so the arrow tip clears the trigger at any spacing. A `sideOffset` on the positioner adds to that gap. On the top and bottom sides the arrow stays at least `arrowPadding` (default `10`) pixels from the popup's ends, clear of the rounded corner. On left and right the popup is about 24px tall for one line, so Floating UI caps the padding at 6. With `align="start"` or `"end"`, the popup shifts past a trigger narrower than 30px (was 20px) by up to 5px. With a larger corner radius or a larger `--spacing`, raise `arrowPadding` on `Tooltip.Positioner`. Override placement with `side` and `align`:
 
 ```tsx
 <Tooltip.Positioner side="right" align="center">
