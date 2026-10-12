@@ -13,9 +13,11 @@ import {
 } from "../../VisualTest.utils";
 import { ToggleGroup, type ToggleGroupRootProps } from "./index";
 
-// Runs with reduced motion off, so Motion drives the indicator; the CSS-path cases turn reduced
-// motion on. A consumer's ref must not replace the refs the indicator relies on: the Root's
-// (it measures against the container) and an Item's (how the Root finds the item).
+// Runs with reduced motion off, so Motion drives the indicator once it loads. The CSS fallback
+// drives it in the cases that turn reduced motion on, and in those that hold Motion back with
+// reduced motion still off (MOTION_PATHS, and the re-shows without Motion). A consumer's ref must
+// not replace the refs the indicator relies on: the Root's (it measures against the container)
+// and an Item's (how the Root finds the item).
 
 type Part = "Root" | "Item";
 type RefKind = "object" | "callback" | "undefined";
@@ -236,6 +238,24 @@ function beforePaint<T>(target: Element, read: () => T) {
       resolve(read());
     });
     observer.observe(target);
+  });
+}
+
+/**
+ * As `beforePaint`, for a `target` shown now: reads `read` in the first frame in which its border
+ * box differs from its size now. A new observer is also notified in its first frame when nothing
+ * changed; that notification is skipped.
+ */
+function beforePaintOnceResized<T>(target: Element, read: () => T) {
+  const { width, height } = target.getBoundingClientRect();
+  return new Promise<T>((resolve) => {
+    const observer = new ResizeObserver(([entry]) => {
+      const size = entry?.borderBoxSize[0];
+      if (size?.inlineSize === width && size.blockSize === height) return;
+      observer.disconnect();
+      resolve(read());
+    });
+    observer.observe(target, { box: "border-box" });
   });
 }
 
@@ -555,30 +575,40 @@ describe.each(MOTION_PATHS)("ToggleGroup indicator on a resize, $path", ({ withM
     expect(offBy(alpha, indicator() ?? alpha)).toBeLessThanOrEqual(1);
   });
 
-  /** The indicator's left edge for 40 painted frames after `value` becomes "b" */
-  async function slideToBeta(layout: Layout = {}) {
-    const { indicator, item, rerender } = await renderSized(withMotion, layout);
+  it("still slides to a newly pressed item", async () => {
+    const { indicator, item, rerender } = await renderSized(withMotion);
     const start = indicator().getBoundingClientRect().left;
-    rerender(sized({ ...layout, value: "b" }));
+    rerender(sized({ value: "b" }));
     const lefts = await eachPaintedFrame(() => indicator().getBoundingClientRect().left, 40);
     await waitForStable(() => offBy(item("Beta"), indicator()));
     const end = indicator().getBoundingClientRect().left;
     expect(offBy(item("Beta"), indicator())).toBeLessThanOrEqual(1);
     expect(end).toBeGreaterThan(start + 1);
-    return lefts.filter((left) => left > start + 1 && left < end - 1);
-  }
-
-  it("still slides to a newly pressed item", async () => {
-    const between = await slideToBeta();
-    expect(between.length).toBeGreaterThan(0);
+    // In-between frames: it slides rather than jumping
+    expect(
+      lefts.some((left) => left > start + 1 && left < end - 1),
+      JSON.stringify(lefts),
+    ).toBe(true);
   });
 
   // The pressed item grows once it is pressed, so it is measured again mid-slide. That resize
-  // must not cut the slide short by jumping to the end. A slide cut short shows at most one frame
-  // in between; the bar is 2, as a loaded run paints few frames during a whole slide.
+  // must not cut the slide short: a slide cut short jumps to the item in the frame its new size
+  // is measured in, which this reads after the group's ResizeObserver, before that frame paints.
   it("still slides to an item that grows when it is pressed", async () => {
-    const between = await slideToBeta({ itemClassName: "data-pressed:text-xl" });
-    expect(between.length).toBeGreaterThanOrEqual(2);
+    const layout = { itemClassName: "data-pressed:text-xl" };
+    const { indicator, item, rerender } = await renderSized(withMotion, layout);
+    const beta = item("Beta");
+    const left = (el: Element) => el.getBoundingClientRect().left;
+    const grown = beforePaintOnceResized(beta, () => ({
+      indicator: left(indicator()),
+      beta: left(beta),
+    }));
+
+    rerender(sized({ ...layout, value: "b" }));
+    const first = await grown;
+    expect(first.indicator, JSON.stringify(first)).toBeLessThan(first.beta - 1);
+    await waitForStable(() => offBy(beta, indicator()));
+    expect(offBy(beta, indicator())).toBeLessThanOrEqual(1);
   });
 });
 
