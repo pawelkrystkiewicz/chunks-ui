@@ -310,8 +310,9 @@ const BUILT_ON = [
 function Hero() {
   return (
     <section className="dark relative overflow-hidden bg-(image:--l-hero-bg) text-white">
-      {/* 160px: a taller fade brings the light theme's pale --l-bg up behind the BUILT ON links, and
-          their text and ring drop under 3:1 (200px gave 2.84 and 2.68). */}
+      {/* 160px, with the BUILT ON row's pb-[120px] below: a taller fade (or less padding) brings the
+          light theme's pale --l-bg up behind the BUILT ON links, and their text and ring drop under
+          3:1 (200px gave 2.84 and 2.68). */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[160px] bg-linear-to-b from-transparent to-(--l-bg)" />
       <Header />
       <div
@@ -342,6 +343,7 @@ function Hero() {
           <HeroStack total={TOTAL.core + TOTAL.extended} />
         </div>
       </div>
+      {/* pb-[120px] keeps the BUILT ON row above most of the hero's fade; see the fade's comment */}
       <div className={`${WRAP} relative z-2 pb-[120px]`}>
         <small className="font-mono text-[11px] text-white/70 tracking-[.1em]">BUILT ON</small>
         <div className="mt-3.5 flex flex-wrap gap-x-11 gap-y-4 font-bold text-[24px] tracking-[-.02em]">

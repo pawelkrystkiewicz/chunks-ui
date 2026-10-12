@@ -29,7 +29,7 @@ it("every link and button, the footer's too, draws the --ring outline on keyboar
   const { container } = render(<LandingPage />);
   fireEvent.click(screen.getByRole("button", { name: "Menu" }));
   const focusable = [...container.querySelectorAll<HTMLElement>("a[href], button")];
-  expect(focusable.length).toBeGreaterThan(30);
+  expect(focusable.length).toBeGreaterThan(40);
   expect(focusable.filter((el) => el.closest("footer")).length).toBeGreaterThan(5);
   const without = focusable
     .filter(
