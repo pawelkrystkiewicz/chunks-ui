@@ -41,7 +41,9 @@ function AccordionTrigger({ className, children, ...props }: AccordionTriggerPro
         "group/trigger flex flex-1 cursor-pointer items-center justify-between py-4 text-left font-medium text-sm",
         "hover:text-foreground/80",
         "focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
-        // Base UI keeps a disabled trigger focusable: aria-disabled, never the disabled attribute
+        // Base UI (1.9+) gives a disabled <button> trigger the disabled attribute, and a trigger
+        // rendered as another element (nativeButton={false}) aria-disabled
+        "disabled:pointer-events-none disabled:opacity-50",
         "aria-disabled:pointer-events-none aria-disabled:opacity-50",
         className,
       )}
