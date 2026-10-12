@@ -16,6 +16,7 @@ import { flushSync } from "react-dom";
 import { cn, cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { useMergedRef } from "../../lib/use-merged-ref";
+import { useReducedMotion } from "../../lib/use-motion";
 import { useHeldWhileDriving, useMotionAnimate } from "../../lib/use-motion-animate";
 
 // ---------------------------------------------------------------------------
@@ -252,6 +253,11 @@ function ToggleGroupIndicator({ box, value }: { box: IndicatorBox; value: string
   // While Motion drives it, the box it mounted with: a span mounted as the group shows again
   // paints over the item before Motion writes anything
   const style = useHeldWhileDriving(driven, box);
+  // micro-interactions already turns the CSS fallback's transition off under reduced motion.
+  // This is for Motion's hand-off: reduced motion turned on finishes a slide and hands the
+  // indicator back to the fallback, but `sliding` ends a frame later. Meanwhile the fallback
+  // renders the classes a settled indicator has.
+  const reduced = useReducedMotion();
 
   return (
     <span
@@ -259,9 +265,9 @@ function ToggleGroupIndicator({ box, value }: { box: IndicatorBox; value: string
       className={cn(
         "absolute z-0 rounded-md bg-background shadow-sm",
         // The CSS fallback slides with a transition, which is off unless the indicator slides to
-        // another item. Under reduced motion, micro-interactions turns it off.
+        // another item
         !driven && "micro-interactions duration-200 ease-snappy",
-        !driven && !sliding && "transition-none",
+        !driven && (!sliding || reduced) && "transition-none",
       )}
       style={style}
     />
