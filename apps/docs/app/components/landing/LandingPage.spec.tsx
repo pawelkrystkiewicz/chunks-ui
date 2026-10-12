@@ -25,14 +25,12 @@ it("the Create section links to /create once, besides the preset tiles", () => {
   ]);
 });
 
-// The footer keeps the browser's ring, which holds 3:1 on its flat black.
-it("every link and button above the footer draws the --ring outline on keyboard focus", () => {
+it("every link and button, the footer's too, draws the --ring outline on keyboard focus", () => {
   const { container } = render(<LandingPage />);
   fireEvent.click(screen.getByRole("button", { name: "Menu" }));
-  const focusable = [...container.querySelectorAll<HTMLElement>("a[href], button")].filter(
-    (el) => !el.closest("footer"),
-  );
+  const focusable = [...container.querySelectorAll<HTMLElement>("a[href], button")];
   expect(focusable.length).toBeGreaterThan(30);
+  expect(focusable.filter((el) => el.closest("footer")).length).toBeGreaterThan(5);
   const without = focusable
     .filter(
       (el) =>

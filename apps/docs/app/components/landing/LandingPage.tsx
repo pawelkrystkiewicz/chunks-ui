@@ -687,7 +687,7 @@ function Footer() {
           <div className="flex flex-col items-start">
             <Link
               href="/"
-              className="flex items-center gap-2.5 font-bold text-[17px] text-white tracking-[-.01em]"
+              className={`flex items-center gap-2.5 font-bold text-[17px] text-white tracking-[-.01em] ${FOCUS_RING}`}
             >
               <Logo />
               Chunks UI
@@ -704,7 +704,7 @@ function Footer() {
                   <Href
                     key={label}
                     href={href}
-                    className="text-white/80 transition-colors duration-250 hover:text-white"
+                    className={`text-white/80 transition-colors duration-250 hover:text-white ${FOCUS_RING}`}
                   >
                     {label}
                   </Href>
@@ -719,7 +719,7 @@ function Footer() {
             Built with{" "}
             <Link
               href={DOCS}
-              className="text-white/70 underline underline-offset-2 hover:text-white"
+              className={`text-white/70 underline underline-offset-2 hover:text-white ${FOCUS_RING}`}
             >
               chunks-ui
             </Link>
