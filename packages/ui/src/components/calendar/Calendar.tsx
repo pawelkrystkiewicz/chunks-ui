@@ -13,9 +13,9 @@ import { flushSync } from "react-dom";
 import { cn } from "../../lib/cn";
 
 export type CalendarProps = {
-  /** Controlled selected date. */
+  /** Controlled selected date. An Invalid Date counts as no date. */
   value?: Date | null;
-  /** Initial selected date for uncontrolled usage. */
+  /** Initial selected date for uncontrolled usage. An Invalid Date counts as no date. */
   defaultValue?: Date | null;
   /** Called when the selected date changes. */
   onValueChange?: (date: Date | null) => void;
@@ -55,6 +55,27 @@ const MONTH_NAMES = [
   "December",
 ] as const;
 
+/**
+ * `date`, or null when it is missing, an Invalid Date, or before year 1 (no 4-digit ISO form):
+ * all count as no date.
+ */
+export function validDate(date: Date | null | undefined): Date | null {
+  return date && !Number.isNaN(date.getTime()) && date.getFullYear() >= 1 ? date : null;
+}
+
+/**
+ * Local midnight of a day. Unlike `new Date(y, m, d)`, it keeps the years 0–99, which the
+ * constructor reads as 1900–1999. Months and days out of range roll over as in the constructor.
+ */
+export function createDate(year: number, month: number, day: number): Date {
+  const date = new Date(2000, 0, 1);
+  date.setFullYear(year, month, day);
+  return date;
+}
+
+/** The first day the calendar shows. Earlier years (0 and below) have no 4-digit ISO form. */
+const FIRST_DAY = createDate(1, 0, 1);
+
 function isSameDay(a: Date, b: Date): boolean {
   return (
     a.getFullYear() === b.getFullYear() &&
@@ -64,19 +85,19 @@ function isSameDay(a: Date, b: Date): boolean {
 }
 
 function startOfDay(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  return createDate(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
 function addDays(date: Date, days: number): Date {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
+  return createDate(date.getFullYear(), date.getMonth(), date.getDate() + days);
 }
 
 /** Same day `months` later, clamped to the target month's length (Mar 31 − 1 month = Feb 28). */
 function addMonths(date: Date, months: number): Date {
   const year = date.getFullYear();
   const month = date.getMonth() + months;
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  return new Date(year, month, Math.min(date.getDate(), daysInMonth));
+  const daysInMonth = createDate(year, month + 1, 0).getDate();
+  return createDate(year, month, Math.min(date.getDate(), daysInMonth));
 }
 
 /** Column of `date` in a week that starts on `weekStartsOn` (0 = first column). */
@@ -117,24 +138,24 @@ function buildWeekRows(
   weekStartsOn: number,
   showOutsideDays: boolean,
 ): CalendarCell[][] {
-  const firstDay = new Date(year, month, 1);
-  const lastDay = new Date(year, month + 1, 0);
+  const firstDay = createDate(year, month, 1);
+  const lastDay = createDate(year, month + 1, 0);
   const startPad = weekdayIndex(firstDay, weekStartsOn);
   const totalDays = lastDay.getDate();
 
   const cells: CalendarCell[] = [];
 
   for (let i = 0; i < startPad; i++) {
-    const date = new Date(year, month, i - startPad + 1);
+    const date = createDate(year, month, i - startPad + 1);
     cells.push({ key: date.toISOString(), date: showOutsideDays ? date : null });
   }
   for (let d = 1; d <= totalDays; d++) {
-    const date = new Date(year, month, d);
+    const date = createDate(year, month, d);
     cells.push({ key: date.toISOString(), date });
   }
   // Pad to complete the last row
   for (let d = 1; cells.length % 7 !== 0; d++) {
-    const date = new Date(year, month + 1, d);
+    const date = createDate(year, month + 1, d);
     cells.push({ key: date.toISOString(), date: showOutsideDays ? date : null });
   }
 
@@ -147,6 +168,7 @@ function buildWeekRows(
 
 function isDateOutOfRange(date: Date, min?: Date, max?: Date): boolean {
   const d = startOfDay(date);
+  if (d < FIRST_DAY) return true;
   if (min && d < startOfDay(min)) return true;
   if (max && d > startOfDay(max)) return true;
   return false;
@@ -167,7 +189,7 @@ export function Calendar({
 
   const [internalValue, setInternalValue] = useState<Date | null>(defaultValue ?? null);
 
-  const selectedDate = isControlled ? (value ?? null) : internalValue;
+  const selectedDate = validDate(isControlled ? value : internalValue);
 
   const initialViewDate = selectedDate ?? new Date();
   // Year and month live in one state so navigation updaters stay pure (StrictMode double-invokes them).
@@ -177,14 +199,16 @@ export function Calendar({
   });
   const { year: viewYear, month: viewMonth } = view;
 
-  // Sync visible month when controlled value changes to a different month
+  // Show the month of a controlled value when it moves to another day. Keyed by the day, not
+  // the Date object: an inline `value={new Date()}` is a new object on every render.
+  const controlledDay = isControlled && selectedDate ? startOfDay(selectedDate).getTime() : null;
   useEffect(() => {
-    if (isControlled && value) {
-      const year = value.getFullYear();
-      const month = value.getMonth();
-      setView((v) => (v.year === year && v.month === month ? v : { year, month }));
-    }
-  }, [isControlled, value]);
+    if (controlledDay === null) return;
+    const day = new Date(controlledDay);
+    const year = day.getFullYear();
+    const month = day.getMonth();
+    setView((v) => (v.year === year && v.month === month ? v : { year, month }));
+  }, [controlledDay]);
 
   const today = useMemo(() => startOfDay(new Date()), []);
 
@@ -194,15 +218,17 @@ export function Calendar({
   const isInView = (date: Date | null): date is Date =>
     date !== null && date.getFullYear() === viewYear && date.getMonth() === viewMonth;
   const tabStop =
-    [focusedDate, selectedDate, today].find(isInView) ?? new Date(viewYear, viewMonth, 1);
+    [focusedDate, selectedDate, today].find(isInView) ?? createDate(viewYear, viewMonth, 1);
 
   const monthYearLabel = `${MONTH_NAMES[viewMonth]} ${viewYear}`;
   const monthYearLabelId = useId();
 
+  const atFirstMonth = viewYear === 1 && viewMonth === 0;
   const prevMonth = useCallback(() => {
-    setView(({ year, month }) =>
-      month === 0 ? { year: year - 1, month: 11 } : { year, month: month - 1 },
-    );
+    setView((v) => {
+      if (v.year === 1 && v.month === 0) return v;
+      return v.month === 0 ? { year: v.year - 1, month: 11 } : { ...v, month: v.month - 1 };
+    });
   }, []);
 
   const nextMonth = useCallback(() => {
@@ -243,6 +269,7 @@ export function Calendar({
     const target = getKeyTarget(event, date, weekStartsOn);
     if (!target) return;
     event.preventDefault();
+    if (target < FIRST_DAY) return;
     // Render the target's month synchronously so its button exists before it takes focus.
     flushSync(() => {
       setFocusedDate(target);
@@ -258,12 +285,15 @@ export function Calendar({
         <button
           type="button"
           aria-label="Previous month"
+          aria-disabled={atFirstMonth || undefined}
           onClick={prevMonth}
           className={cn(
             "inline-flex size-7 items-center justify-center rounded-sm",
             "micro-interactions text-foreground/70",
-            "hover:bg-accent hover:text-accent-foreground",
             "focus-visible:outline-2 focus-visible:outline-ring",
+            atFirstMonth
+              ? "cursor-not-allowed opacity-40"
+              : "hover:bg-accent hover:text-accent-foreground",
           )}
         >
           <svg
@@ -344,10 +374,7 @@ export function Calendar({
                   }
 
                   const isToday = isSameDay(date, today);
-                  const isSelected =
-                    selectedDate !== null &&
-                    selectedDate !== undefined &&
-                    isSameDay(date, selectedDate);
+                  const isSelected = selectedDate !== null && isSameDay(date, selectedDate);
                   const isCurrentMonth = date.getMonth() === viewMonth;
                   const disabled = isDayDisabled(date);
 
@@ -379,7 +406,10 @@ export function Calendar({
                           isToday &&
                             !isSelected &&
                             "font-medium text-primary-text ring-1 ring-primary",
-                          !isCurrentMonth && !isSelected && "text-muted-foreground",
+                          // Forced colours replace the muted colour, so name the system's dimmed one
+                          !isCurrentMonth &&
+                            !isSelected &&
+                            "text-muted-foreground forced-colors:text-[GrayText]",
                           disabled && "pointer-events-none opacity-40",
                         )}
                       >

@@ -42,6 +42,16 @@ export const InputWithClearButton = () => {
   );
 };
 
-export const InputWithClearButtonUncontrolled = () => (
-  <Input defaultValue="Hello" onClear={() => {}} placeholder="Search..." aria-label="Search" />
-);
+export const ClearableSearch = () => {
+  const [value, setValue] = useState("Hello");
+
+  return (
+    <Input
+      value={value}
+      onValueChange={setValue}
+      clearable
+      placeholder="Search..."
+      aria-label="Search"
+    />
+  );
+};
