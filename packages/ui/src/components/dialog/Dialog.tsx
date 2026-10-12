@@ -4,6 +4,8 @@ import { Dialog as BaseDialog } from "@base-ui/react/dialog";
 import {
   type ComponentProps,
   createContext,
+  type Dispatch,
+  type SetStateAction,
   useContext,
   useId,
   useLayoutEffect,
@@ -38,7 +40,7 @@ export type DialogCloseProps = ComponentProps<typeof BaseDialog.Close>;
 /** The id of the Title mounted in this Popup, which names the Body, and its setter */
 const TitleIdContext = createContext<{
   titleId?: string;
-  setTitleId?: (id: string | undefined) => void;
+  setTitleId?: Dispatch<SetStateAction<string | undefined>>;
 }>({});
 
 function DialogPortal({ className, children, ...props }: DialogPortalProps) {
@@ -126,7 +128,8 @@ function DialogTitle({ className, id: idProp, ...props }: DialogTitleProps) {
   // A layout effect, like Base UI's own title id: the Body is named before focus moves to it
   useLayoutEffect(() => {
     setTitleId?.(id);
-    return () => setTitleId?.(undefined);
+    // Clear only our own id, so another Title still mounted in this Popup keeps naming the Body
+    return () => setTitleId?.((current) => (current === id ? undefined : current));
   }, [id, setTitleId]);
 
   return (
