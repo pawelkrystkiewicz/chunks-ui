@@ -161,6 +161,18 @@ describe("Calendar", () => {
     expect(screen.getByText("April 2026")).toBeInTheDocument();
   });
 
+  // An inline `value={new Date()}` is a new object, milliseconds later, on every render
+  it("keeps the shown month when it re-renders with the same day", async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(<Calendar value={new Date(2026, 2, 15, 9)} />);
+    await user.click(getButton("Next month"));
+    rerender(<Calendar value={new Date(2026, 2, 15, 9)} />);
+    rerender(<Calendar value={new Date(2026, 2, 15, 17, 30)} />);
+    expect(screen.getByText("April 2026")).toBeInTheDocument();
+    rerender(<Calendar value={new Date(2026, 2, 16)} />);
+    expect(screen.getByText("March 2026")).toBeInTheDocument();
+  });
+
   it("navigates across year boundary (December -> January) under StrictMode", async () => {
     // StrictMode comes from the global render config in vitest.setup.ts
     const user = userEvent.setup();

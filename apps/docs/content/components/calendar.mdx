@@ -33,6 +33,8 @@ function ControlledCalendar() {
 
 <CalendarControlledExample />
 
+When `value` changes to another day, the calendar shows that day's month. A re-render with the same day, such as an inline `value={new Date()}`, keeps the month the user moved to.
+
 ## Disabled Dates
 
 Use `min`/`max` to set a date range, or `isDateDisabled` to disable individual dates with a predicate:

@@ -177,14 +177,16 @@ export function Calendar({
   });
   const { year: viewYear, month: viewMonth } = view;
 
-  // Sync visible month when controlled value changes to a different month
+  // Show the month of a controlled value when it moves to another day. Keyed by the day, not
+  // the Date object: an inline `value={new Date()}` is a new object on every render.
+  const controlledDay = isControlled && selectedDate ? startOfDay(selectedDate).getTime() : null;
   useEffect(() => {
-    if (isControlled && value) {
-      const year = value.getFullYear();
-      const month = value.getMonth();
-      setView((v) => (v.year === year && v.month === month ? v : { year, month }));
-    }
-  }, [isControlled, value]);
+    if (controlledDay === null) return;
+    const day = new Date(controlledDay);
+    const year = day.getFullYear();
+    const month = day.getMonth();
+    setView((v) => (v.year === year && v.month === month ? v : { year, month }));
+  }, [controlledDay]);
 
   const today = useMemo(() => startOfDay(new Date()), []);
 
