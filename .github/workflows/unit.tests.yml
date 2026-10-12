@@ -31,8 +31,7 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      # One task at a time: the docs and ui suites in parallel share the runner's 4 vCPUs and
-      # slow each other's jsdom tests down. Local runs keep turbo's parallel default.
+      # One task at a time: the docs and ui jsdom suites slow each other down on 4 vCPUs
       - name: Run tests and generate coverage report
         run: bun run test:unit:coverage --concurrency=1
 

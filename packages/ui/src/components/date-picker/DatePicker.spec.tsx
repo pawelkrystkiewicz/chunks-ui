@@ -8,12 +8,7 @@ import { DatePicker } from "./DatePicker";
 
 const MARCH_15_LABEL = "Sunday, March 15, 2026";
 
-/**
- * The button with this aria-label, checked for what getByRole("button", { name }) checks: role,
- * accessible name, not hidden. With the calendar open, getByRole computes jsdom styles for every
- * day button it names, about 130ms a query under coverage on a laptop; this computes them for one.
- * `selector` keeps the match to <button> elements.
- */
+// Same as Calendar.spec's getButton: a named getByRole is too slow with the calendar open.
 const getButton = (name: string) => {
   const button = screen.getByLabelText(name, { selector: "button" });
   expect(button).toHaveRole("button");
@@ -126,8 +121,7 @@ describe("DatePicker", () => {
       expect(outsideDay).toHaveClass("text-muted-foreground");
       expect(outsideDay).toHaveAttribute("tabindex", "-1");
     }
-    // `hidden: true` skips the style check on every day. It can only let more buttons in: a
-    // hidden tab stop would join the list and fail the comparison with the day getButton finds.
+    // See Calendar.spec's tabStops for why hidden: true is safe.
     const tabStops = within(screen.getByRole("grid"))
       .getAllByRole("button", { hidden: true })
       .filter((button) => button.tabIndex === 0);

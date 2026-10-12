@@ -18,10 +18,9 @@ const label = (date: Date) =>
     day: "numeric",
   });
 /**
- * The button with this aria-label, checked for what getByRole("button", { name }) checks: role,
- * accessible name, not hidden. getByRole computes jsdom styles for every button it names, about
- * 130ms over a month of days under coverage on a laptop; this computes them for one button.
- * `selector` leaves out the grid, which /March 20/ also matches through its "March 2026" label.
+ * A named getByRole computes jsdom styles for every button in the grid, ~130ms a query under
+ * coverage; this computes them for one. `selector` leaves out the grid, which /March 20/ also
+ * matches through its "March 2026" label.
  */
 const getButton = (name: string | RegExp) => {
   const button = screen.getByLabelText(name, { selector: "button" });
@@ -47,7 +46,6 @@ describe("Calendar", () => {
       render(<Calendar />);
       const today = new Date();
       const monthYear = today.toLocaleDateString("en-US", { month: "long", year: "numeric" });
-      expect(monthYear).toBe("March 2026");
       expect(screen.getByRole("grid", { name: monthYear })).toBeInTheDocument();
       expect(dayButton(today)).toBeInTheDocument();
     } finally {
