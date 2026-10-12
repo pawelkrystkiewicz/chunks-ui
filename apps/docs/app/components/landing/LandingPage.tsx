@@ -126,10 +126,17 @@ const tally = (tiers: Tier[]) => {
 const TOTAL = tally(CATEGORIES.flatMap((c) => Object.values(c.items)));
 
 const WRAP = "mx-auto max-w-[1200px] px-[clamp(22px,4vw,40px)]";
+// The landing --ring (globals.css) on keyboard focus, as chunks-ui's Button draws it. Grid cells and
+// the header logo draw it inside their box: the grid frame and the hero's edge clip what is outside.
+// LandingClient repeats these classes: a server module gets client references, not values, from a
+// client module.
+const FOCUS_RING =
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
+const FOCUS_RING_INSET =
+  "focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-ring";
 const CELL =
   "flex min-w-0 flex-col gap-3 border-(--l-line) border-r border-b px-7 pt-6 pb-8 text-(--l-fg) transition-colors duration-300 ease-in-out hover:bg-(--l-card)";
-const TEXT_LINK =
-  "inline-flex items-center gap-2 font-semibold text-(--l-fg) text-[14px] transition-colors duration-250 hover:text-primary-text";
+const TEXT_LINK = `inline-flex items-center gap-2 font-semibold text-(--l-fg) text-[14px] transition-colors duration-250 hover:text-primary-text ${FOCUS_RING}`;
 
 /** Internal routes go through next/link; files and external URLs stay plain anchors. */
 function Href({ href, ...props }: ComponentProps<"a"> & { href: string }) {
@@ -250,7 +257,7 @@ function Header() {
       <Link
         href="/"
         aria-label="Chunks UI home"
-        className="flex items-center gap-2.5 px-[clamp(22px,2.4vw,28px)] py-[18px] font-bold text-[17px] text-white tracking-[-.01em]"
+        className={`flex items-center gap-2.5 px-[clamp(22px,2.4vw,28px)] py-[18px] font-bold text-[17px] text-white tracking-[-.01em] ${FOCUS_RING_INSET}`}
       >
         <Logo />
         Chunks UI
@@ -263,7 +270,7 @@ function Header() {
           <Href
             key={label}
             href={href}
-            className="text-white/70 transition-colors duration-250 hover:text-white"
+            className={`text-white/70 transition-colors duration-250 hover:text-white ${FOCUS_RING}`}
           >
             {label}
           </Href>
@@ -273,7 +280,7 @@ function Header() {
         <ThemeButton />
         <Link
           href={DOCS}
-          className="hidden h-[35px] items-center rounded-lg bg-white px-4 font-semibold text-[13px] text-black transition duration-300 hover:bg-white/88 active:scale-[.97] lg:inline-flex"
+          className={`hidden h-[35px] items-center rounded-lg bg-white px-4 font-semibold text-[13px] text-black transition duration-300 hover:bg-white/88 active:scale-[.97] lg:inline-flex ${FOCUS_RING}`}
         >
           Get started
         </Link>
@@ -282,7 +289,7 @@ function Header() {
             <Href
               key={label}
               href={href}
-              className="border-white/10 border-b py-2.5 font-semibold text-[28px] text-white tracking-[-.02em]"
+              className={`border-white/10 border-b py-2.5 font-semibold text-[28px] text-white tracking-[-.02em] ${FOCUS_RING}`}
             >
               {label}
             </Href>
@@ -347,7 +354,7 @@ function Hero() {
             <Href
               key={label}
               href={href}
-              className="text-white transition-colors duration-250 hover:text-white/70"
+              className={`text-white transition-colors duration-250 hover:text-white/70 ${FOCUS_RING}`}
             >
               {label}
             </Href>
@@ -464,7 +471,7 @@ function ComponentsSection() {
                 href={c.href}
                 aria-labelledby={`cat-${c.tag}-title`}
                 aria-describedby={`cat-${c.tag}-body`}
-                className={`${CELL} group/card`}
+                className={`${CELL} group/card ${FOCUS_RING_INSET}`}
               >
                 <CellMeta left={`0${i + 1} · ${c.tag}`} right={`${names.length} COMPONENTS`} />
                 <div
@@ -606,8 +613,7 @@ function CreateSection() {
 
 // Hover text is --l-brand-pale: over the brightest part of the gradient, a mid blue such as
 // oklch(70% .15 257) drops to 3.6:1 (390px wide) and 4.2:1 (1920px); --l-brand-pale keeps 5:1.
-const ROW =
-  "flex flex-col gap-1 border-white/15 border-b py-[18px] text-left text-white transition-colors duration-300 hover:text-(--l-brand-pale)";
+const ROW = `flex flex-col gap-1 border-white/15 border-b py-[18px] text-left text-white transition-colors duration-300 hover:text-(--l-brand-pale) ${FOCUS_RING}`;
 const ROW_LABEL = "font-mono text-[11px] text-white/70 tracking-[.06em]";
 const ROW_VALUE = "font-semibold text-[20px] tracking-[-.015em]";
 
