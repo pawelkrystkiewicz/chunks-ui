@@ -50,6 +50,17 @@ describe("Textarea", () => {
     expect(textarea).toHaveValue("xyz");
   });
 
+  it("calls onValueChange with the new value and the event details, like Input", async () => {
+    const onValueChange = vi.fn();
+    render(<Textarea aria-label="Notes" defaultValue="ab" onValueChange={onValueChange} />);
+    await userEvent.type(screen.getByRole("textbox"), "c");
+    expect(onValueChange).toHaveBeenCalledOnce();
+    expect(onValueChange).toHaveBeenCalledWith(
+      "abc",
+      expect.objectContaining({ event: expect.any(Event) }),
+    );
+  });
+
   it("has no a11y violations", async () => {
     const { container } = render(<Textarea placeholder="Enter text" aria-label="Message" />);
     expect(await axe(container)).toHaveNoViolations();

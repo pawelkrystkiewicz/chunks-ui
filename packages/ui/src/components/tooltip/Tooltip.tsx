@@ -5,6 +5,7 @@ import { type ComponentProps, createContext, useContext } from "react";
 import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
+import { ARROW_PADDING_PX } from "../../lib/popup-arrow";
 import { usePortalContainer } from "../../lib/portal-container";
 import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
 
@@ -12,7 +13,14 @@ export type TooltipRootProps = ComponentProps<typeof BaseTooltip.Root>;
 export type TooltipProviderProps = ComponentProps<typeof BaseTooltip.Provider>;
 export type TooltipTriggerProps = ComponentProps<typeof BaseTooltip.Trigger>;
 export type TooltipPortalProps = ComponentProps<typeof BaseTooltip.Portal>;
-export type TooltipPositionerProps = ComponentProps<typeof BaseTooltip.Positioner>;
+export type TooltipPositionerProps = ComponentProps<typeof BaseTooltip.Positioner> & {
+  /**
+   * How close the arrow may come to the popup's ends, in pixels. The default keeps the arrow's
+   * foot off the 8px rounded corner; raise it with a larger corner radius or a larger `--spacing`.
+   * @default 10
+   */
+  arrowPadding?: ComponentProps<typeof BaseTooltip.Positioner>["arrowPadding"];
+};
 export type TooltipPopupProps = ComponentProps<typeof BaseTooltip.Popup>;
 export type TooltipArrowProps = ComponentProps<typeof BaseTooltip.Arrow>;
 
@@ -73,8 +81,18 @@ function TooltipArrow({ className, ...props }: TooltipArrowProps) {
   );
 }
 
-function TooltipPositioner({ className, ...props }: TooltipPositionerProps) {
-  return <BaseTooltip.Positioner className={cnState("z-tooltips", className)} {...props} />;
+function TooltipPositioner({
+  className,
+  arrowPadding = ARROW_PADDING_PX,
+  ...props
+}: TooltipPositionerProps) {
+  return (
+    <BaseTooltip.Positioner
+      className={cnState("z-tooltips", className)}
+      arrowPadding={arrowPadding}
+      {...props}
+    />
+  );
 }
 
 // Base UI's own default open delay is 600ms; chunks-ui opens after 50ms.
