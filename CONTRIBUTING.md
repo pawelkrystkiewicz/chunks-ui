@@ -85,7 +85,7 @@ Components from `@creation-ui/react` that were not carried forward:
 | **LoadingOverlay**        | Trivial composition                          | Position a `Loader` over the content with Tailwind  |
 | **Highlighter**           | Niche search highlighting                    | App code                                            |
 | **Icon** (built-in paths) | Hardcoded SVG paths lock users in            | Pass any icon (e.g. Lucide) as `ReactNode`          |
-| **TouchTarget**           | Too small to be a component                  | `touch-target` CSS utility (planned, #200)          |
+| **TouchTarget**           | Too small to be a component                  | `touch-target` CSS utility (#200)                   |
 | **Overlay**               | Not useful on its own                        | Built into Dialog and Drawer                        |
 | **DropdownChevron**       | Internal detail                              | Internal to Select and Combobox                     |
 | **Autocomplete** (custom) | Behaved as a combobox, not free-form         | `Combobox`                                          |

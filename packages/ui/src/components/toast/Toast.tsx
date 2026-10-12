@@ -115,7 +115,7 @@ function ToastViewport({ className, labels, ...props }: ToastViewportProps) {
     <BaseToast.Viewport
       aria-label={names.viewport}
       className={cnState(
-        "fixed right-4 bottom-4 z-toasts flex w-[380px] max-w-[calc(100vw-2rem)] flex-col gap-2 outline-none",
+        "fixed end-4 bottom-4 z-toasts flex w-[380px] max-w-[calc(100vw-2rem)] flex-col gap-2 outline-none",
         className,
       )}
       {...props}
@@ -151,6 +151,9 @@ function ToastRoot({ className, toast, ...props }: ToastRootProps) {
   return (
     <BaseToast.Root
       toast={toast}
+      // Base UI's default is down and right, whatever the direction. Left is the way off the
+      // screen in RTL, and a swiped toast leaves the way it was swiped (below).
+      swipeDirection={["down", "left", "right"]}
       className={cnState(
         "Toast",
         "group relative flex w-full items-center gap-3 overflow-hidden rounded-sm border border-border bg-popover p-4 pe-10 shadow-lg",
@@ -159,8 +162,16 @@ function ToastRoot({ className, toast, ...props }: ToastRootProps) {
         "not-[.toast-stack]:data-limited:hidden",
         !reduced && [
           "micro-interactions",
-          "data-starting-style:translate-x-full data-starting-style:opacity-0",
-          "data-ending-style:translate-x-full data-ending-style:opacity-0",
+          // In and out past the viewport's inline end. `:dir()` reads the toast's own direction,
+          // `rtl:` would also match in an LTR section of an RTL page.
+          "[--toast-slide-x:100%] [&:dir(rtl)]:[--toast-slide-x:-100%]",
+          "data-starting-style:translate-x-(--toast-slide-x) data-starting-style:opacity-0",
+          // A toast that leaves the limit gets no `data-starting-style`: it was `display: none`
+          "starting:translate-x-(--toast-slide-x) starting:opacity-0",
+          "data-ending-style:translate-x-(--toast-slide-x) data-ending-style:opacity-0",
+          "data-[swipe-direction=left]:data-ending-style:-translate-x-full",
+          "data-[swipe-direction=right]:data-ending-style:translate-x-full",
+          "data-[swipe-direction=down]:data-ending-style:translate-x-0 data-[swipe-direction=down]:data-ending-style:translate-y-full",
           "transition-[translate,opacity] duration-300 ease-out",
         ],
         className,

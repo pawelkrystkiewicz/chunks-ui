@@ -1,10 +1,20 @@
 import { cva } from "class-variance-authority";
 
-/** Shared by the CSS variants and the Motion path, which positions the popup with its own classes. */
-export const drawerBase =
-  "fixed overflow-y-auto overscroll-contain border-border bg-background p-6 shadow-xl";
+/**
+ * Shared by the CSS variants and the Motion path, which positions the popup with its own classes.
+ * The popup takes focus when nothing inside is tabbable or `initialFocus` points at it; its ring
+ * is drawn 3px inside the edge (1px border, then the 2px ring), so the border on the open side
+ * still shows.
+ */
+export const drawerBase = [
+  "fixed overflow-y-auto overscroll-contain border-border bg-background p-6 shadow-xl",
+  "focus-visible:outline-2 focus-visible:-outline-offset-3 focus-visible:outline-ring",
+];
 
-export const drawerPopupVariants = cva([drawerBase, "micro-interactions"], {
+// Only the slide: `all` would also fade the focus ring in from the text colour
+const cssSlide = "micro-interactions [transition-property:translate]";
+
+export const drawerPopupVariants = cva([drawerBase, cssSlide], {
   variants: {
     side: {
       left: [

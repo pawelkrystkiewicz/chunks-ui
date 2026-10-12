@@ -1,5 +1,7 @@
-import { describe, it } from "vitest";
-import { renderPage } from "../../VisualTest.utils";
+import { render, screen } from "@testing-library/react";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { commands } from "vitest/browser";
+import { enterMotionPath, renderPage, ringColor } from "../../VisualTest.utils";
 import { Drawer } from "./index";
 
 describe("Drawer", () => {
@@ -46,5 +48,97 @@ describe("Drawer", () => {
       </Drawer.Root>,
     );
     await expect(body).toMatchScreenshot();
+  });
+});
+
+function ringOf(element: Element) {
+  const { outlineStyle, outlineWidth, outlineOffset, outlineColor } = getComputedStyle(element);
+  return { outlineStyle, outlineWidth, outlineOffset, outlineColor };
+}
+
+async function emulateReducedMotion(reducedMotion: "reduce" | "no-preference") {
+  await commands.emulateMedia({ reducedMotion });
+  await expect
+    .poll(() => matchMedia("(prefers-reduced-motion: reduce)").matches)
+    .toBe(reducedMotion === "reduce");
+}
+
+/**
+ * Reduced motion uses the CSS variants with no transition. With no preference, Motion slides the
+ * popup, or, when Motion never arrives, the CSS variants' transition does.
+ */
+const PATHS = [
+  { path: "reduced motion", reducedMotion: "reduce", withMotion: true },
+  { path: "Motion", reducedMotion: "no-preference", withMotion: true },
+  { path: "CSS fallback", reducedMotion: "no-preference", withMotion: false },
+] as const;
+
+describe.each(PATHS)("Drawer.Popup focus ring, $path", ({ reducedMotion, withMotion }) => {
+  beforeAll(() => enterMotionPath(withMotion));
+  beforeEach(() => emulateReducedMotion(reducedMotion));
+  afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
+
+  // One side: the sides share one ring class
+  it("draws the whole inset ring from the moment the popup takes focus, clear of the border", async () => {
+    // Read in the focus event, so a transition on the ring would still be at its start
+    const rings: (ReturnType<typeof ringOf> & { focusVisible: boolean })[] = [];
+    const onFocus = ({ target }: FocusEvent) => {
+      if (target instanceof HTMLElement && target.dataset.testid === "popup") {
+        rings.push({ focusVisible: target.matches(":focus-visible"), ...ringOf(target) });
+      }
+    };
+    document.addEventListener("focusin", onFocus);
+    try {
+      // Nothing tabbable inside, so Base UI focuses the popup
+      render(
+        <Drawer.Root defaultOpen>
+          <Drawer.Portal>
+            <Drawer.Popup side="right" data-testid="popup">
+              <Drawer.Title>Drawer Title</Drawer.Title>
+            </Drawer.Popup>
+          </Drawer.Portal>
+        </Drawer.Root>,
+      );
+      await expect.poll(() => rings.length).toBeGreaterThan(0);
+    } finally {
+      document.removeEventListener("focusin", onFocus);
+    }
+    // Inside the popup's edge, past the border on the open side, so the border still shows
+    expect(rings[0]).toEqual({
+      focusVisible: true,
+      outlineStyle: "solid",
+      outlineWidth: "2px",
+      outlineOffset: "-3px",
+      outlineColor: ringColor(),
+    });
+    const popup = await screen.findByTestId("popup");
+    const style = getComputedStyle(popup);
+    const border = Number.parseFloat(style.borderLeftWidth);
+    expect(border).toBeGreaterThan(0);
+    // The ring starts where the offset box ends: at least the border width inside the edge
+    expect(-Number.parseFloat(style.outlineOffset)).toBeGreaterThanOrEqual(border);
+  });
+});
+
+describe("Drawer.Popup CSS fallback with no reduced-motion preference", () => {
+  beforeAll(() => enterMotionPath(false));
+  beforeEach(() => emulateReducedMotion("no-preference"));
+  afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
+
+  it("slides the popup with a CSS transition", async () => {
+    render(
+      <Drawer.Root defaultOpen>
+        <Drawer.Portal>
+          <Drawer.Popup side="right" data-testid="popup">
+            <Drawer.Title>Drawer Title</Drawer.Title>
+          </Drawer.Popup>
+        </Drawer.Portal>
+      </Drawer.Root>,
+    );
+    const popup = await screen.findByTestId("popup");
+    expect(popup).toHaveClass("micro-interactions");
+    const style = getComputedStyle(popup);
+    expect(style.transitionProperty).toBe("translate");
+    expect(style.transitionDuration).not.toBe("0s");
   });
 });

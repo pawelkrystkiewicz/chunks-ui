@@ -93,6 +93,7 @@ export {
 } from "./components/date-picker";
 export type {
   DialogBackdropProps,
+  DialogBodyProps,
   DialogCloseProps,
   DialogDescriptionProps,
   DialogPopupProps,
