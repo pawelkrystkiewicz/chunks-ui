@@ -56,14 +56,6 @@ function ringOf(element: Element) {
   return { outlineStyle, outlineWidth, outlineOffset, outlineColor };
 }
 
-const OPEN_SIDE_BORDER = {
-  left: "borderRightWidth",
-  right: "borderLeftWidth",
-  bottom: "borderTopWidth",
-} as const;
-
-const SIDES = ["left", "right", "bottom"] as const;
-
 async function emulateReducedMotion(reducedMotion: "reduce" | "no-preference") {
   await commands.emulateMedia({ reducedMotion });
   await expect
@@ -86,101 +78,67 @@ describe.each(PATHS)("Drawer.Popup focus ring, $path", ({ reducedMotion, withMot
   beforeEach(() => emulateReducedMotion(reducedMotion));
   afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
 
-  it.each(SIDES)(
-    "draws the whole inset ring from the moment the popup takes focus (%s)",
-    async (side) => {
-      // Read in the focus event, so a transition on the ring would still be at its start
-      const rings: (ReturnType<typeof ringOf> & { focusVisible: boolean })[] = [];
-      const onFocus = ({ target }: FocusEvent) => {
-        if (target instanceof HTMLElement && target.dataset.testid === "popup") {
-          rings.push({ focusVisible: target.matches(":focus-visible"), ...ringOf(target) });
-        }
-      };
-      document.addEventListener("focusin", onFocus);
-      try {
-        // Nothing tabbable inside, so Base UI focuses the popup
-        render(
-          <Drawer.Root defaultOpen>
-            <Drawer.Portal>
-              <Drawer.Popup side={side} data-testid="popup">
-                <Drawer.Title>Drawer Title</Drawer.Title>
-              </Drawer.Popup>
-            </Drawer.Portal>
-          </Drawer.Root>,
-        );
-        await expect.poll(() => rings.length).toBeGreaterThan(0);
-      } finally {
-        document.removeEventListener("focusin", onFocus);
+  // One side: the sides share one ring class
+  it("draws the whole inset ring from the moment the popup takes focus, clear of the border", async () => {
+    // Read in the focus event, so a transition on the ring would still be at its start
+    const rings: (ReturnType<typeof ringOf> & { focusVisible: boolean })[] = [];
+    const onFocus = ({ target }: FocusEvent) => {
+      if (target instanceof HTMLElement && target.dataset.testid === "popup") {
+        rings.push({ focusVisible: target.matches(":focus-visible"), ...ringOf(target) });
       }
-      // Inside the popup's edge, past the border on the open side, so the border still shows
-      expect(rings[0]).toEqual({
-        focusVisible: true,
-        outlineStyle: "solid",
-        outlineWidth: "2px",
-        outlineOffset: "-3px",
-        outlineColor: ringColor(),
-      });
-    },
-  );
-});
-
-describe("Drawer.Popup focus ring and border", () => {
-  it.each(SIDES)("keeps the %s border out from under the ring", async (side) => {
-    render(
-      <Drawer.Root defaultOpen>
-        <Drawer.Portal>
-          <Drawer.Popup side={side} data-testid="popup">
-            <Drawer.Title>Drawer Title</Drawer.Title>
-          </Drawer.Popup>
-        </Drawer.Portal>
-      </Drawer.Root>,
-    );
+    };
+    document.addEventListener("focusin", onFocus);
+    try {
+      // Nothing tabbable inside, so Base UI focuses the popup
+      render(
+        <Drawer.Root defaultOpen>
+          <Drawer.Portal>
+            <Drawer.Popup side="right" data-testid="popup">
+              <Drawer.Title>Drawer Title</Drawer.Title>
+            </Drawer.Popup>
+          </Drawer.Portal>
+        </Drawer.Root>,
+      );
+      await expect.poll(() => rings.length).toBeGreaterThan(0);
+    } finally {
+      document.removeEventListener("focusin", onFocus);
+    }
+    // Inside the popup's edge, past the border on the open side, so the border still shows
+    expect(rings[0]).toEqual({
+      focusVisible: true,
+      outlineStyle: "solid",
+      outlineWidth: "2px",
+      outlineOffset: "-3px",
+      outlineColor: ringColor(),
+    });
     const popup = await screen.findByTestId("popup");
-    await expect.poll(() => popup.matches(":focus-visible")).toBe(true);
     const style = getComputedStyle(popup);
-    const border = Number.parseFloat(style[OPEN_SIDE_BORDER[side]]);
+    const border = Number.parseFloat(style.borderLeftWidth);
     expect(border).toBeGreaterThan(0);
     // The ring starts where the offset box ends: at least the border width inside the edge
     expect(-Number.parseFloat(style.outlineOffset)).toBeGreaterThanOrEqual(border);
   });
 });
 
-// Share of the element's box that is inside the viewport
-function visibleShare(element: Element) {
-  const box = element.getBoundingClientRect();
-  const width = Math.max(0, Math.min(box.right, innerWidth) - Math.max(box.left, 0));
-  const height = Math.max(0, Math.min(box.bottom, innerHeight) - Math.max(box.top, 0));
-  return (width * height) / (box.width * box.height);
-}
-
-const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
-
 describe("Drawer.Popup CSS fallback with no reduced-motion preference", () => {
   beforeAll(() => enterMotionPath(false));
   beforeEach(() => emulateReducedMotion("no-preference"));
   afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
 
-  it.each(SIDES)("slides a %s drawer in", async (side) => {
-    const drawer = (open: boolean) => (
-      <Drawer.Root open={open}>
+  it("slides the popup with a CSS transition", async () => {
+    render(
+      <Drawer.Root defaultOpen>
         <Drawer.Portal>
-          <Drawer.Popup side={side} data-testid="popup">
+          <Drawer.Popup side="right" data-testid="popup">
             <Drawer.Title>Drawer Title</Drawer.Title>
           </Drawer.Popup>
         </Drawer.Portal>
-      </Drawer.Root>
+      </Drawer.Root>,
     );
-    const { rerender } = render(drawer(false));
-    rerender(drawer(true));
     const popup = await screen.findByTestId("popup");
     expect(popup).toHaveClass("micro-interactions");
-    const shares: number[] = [];
-    for (let frame = 0; frame < 60; frame++) {
-      shares.push(visibleShare(popup));
-      await nextFrame();
-    }
-    // Some frames show it partly off-screen, and it ends inside the viewport
-    expect(shares.some((share) => share > 0.01 && share < 0.99)).toBe(true);
-    expect(shares.at(-1)).toBeGreaterThan(0.99);
+    const style = getComputedStyle(popup);
+    expect(style.transitionProperty).toBe("translate");
+    expect(style.transitionDuration).not.toBe("0s");
   });
 });

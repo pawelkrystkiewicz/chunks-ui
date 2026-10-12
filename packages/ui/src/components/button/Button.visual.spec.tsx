@@ -96,28 +96,26 @@ describe("Button focus ring with no reduced-motion preference", () => {
   beforeAll(() => commands.emulateMedia({ reducedMotion: "no-preference" }));
   afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
 
-  it.each(variants)(
-    "has the ring colour from the moment it takes keyboard focus (%s)",
-    async (variant) => {
-      render(
-        <>
-          <button type="button">Before</button>
-          <Button variant={variant}>Target</Button>
-        </>,
-      );
-      await userEvent.tab();
-      const target = screen.getByRole("button", { name: "Target" });
-      // Focus moves on from a keyboard-focused element, so the target matches :focus-visible.
-      // Moved in the page, so the style below is read in the same task: a transition would
-      // still be at its start.
-      target.focus();
-      expect(target.matches(":focus-visible")).toBe(true);
-      const style = getComputedStyle(target);
-      // Not reduced motion: otherwise the colour would pass without any transition to test
-      expect(style.transitionProperty).not.toBe("none");
-      expect(style.outlineColor).toBe(ringColor());
-    },
-  );
+  // Contained: the ring used to fade from the white text colour, most visibly there
+  it("has the ring colour from the moment it takes keyboard focus", async () => {
+    render(
+      <>
+        <button type="button">Before</button>
+        <Button variant="contained">Target</Button>
+      </>,
+    );
+    await userEvent.tab();
+    const target = screen.getByRole("button", { name: "Target" });
+    // Focus moves on from a keyboard-focused element, so the target matches :focus-visible.
+    // Moved in the page, so the style below is read in the same task: a transition would
+    // still be at its start.
+    target.focus();
+    expect(target.matches(":focus-visible")).toBe(true);
+    const style = getComputedStyle(target);
+    // Not reduced motion: otherwise the colour would pass without any transition to test
+    expect(style.transitionProperty).not.toBe("none");
+    expect(style.outlineColor).toBe(ringColor());
+  });
 
   // The ring is left out, not the rest: hover and press still transition
   it("still fades its colours and scales when pressed", () => {

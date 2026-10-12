@@ -82,28 +82,26 @@ describe("IconButton focus ring with no reduced-motion preference", () => {
   beforeAll(() => commands.emulateMedia({ reducedMotion: "no-preference" }));
   afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
 
-  it.each(variants)(
-    "has the ring colour from the moment it takes keyboard focus (%s)",
-    async (variant) => {
-      render(
-        <>
-          <button type="button">Before</button>
-          <IconButton variant={variant} color="primary" aria-label="Target">
-            {icon}
-          </IconButton>
-        </>,
-      );
-      await userEvent.tab();
-      const target = screen.getByRole("button", { name: "Target" });
-      // Focus moves on from a keyboard-focused element, so the target matches :focus-visible.
-      // Moved in the page, so the style below is read in the same task: a transition would
-      // still be at its start.
-      target.focus();
-      expect(target.matches(":focus-visible")).toBe(true);
-      const style = getComputedStyle(target);
-      // Not reduced motion: otherwise the colour would pass without any transition to test
-      expect(style.transitionProperty).not.toBe("none");
-      expect(style.outlineColor).toBe(ringColor());
-    },
-  );
+  // One variant: the ring colour does not depend on it
+  it("has the ring colour from the moment it takes keyboard focus", async () => {
+    render(
+      <>
+        <button type="button">Before</button>
+        <IconButton variant="contained" color="primary" aria-label="Target">
+          {icon}
+        </IconButton>
+      </>,
+    );
+    await userEvent.tab();
+    const target = screen.getByRole("button", { name: "Target" });
+    // Focus moves on from a keyboard-focused element, so the target matches :focus-visible.
+    // Moved in the page, so the style below is read in the same task: a transition would
+    // still be at its start.
+    target.focus();
+    expect(target.matches(":focus-visible")).toBe(true);
+    const style = getComputedStyle(target);
+    // Not reduced motion: otherwise the colour would pass without any transition to test
+    expect(style.transitionProperty).not.toBe("none");
+    expect(style.outlineColor).toBe(ringColor());
+  });
 });

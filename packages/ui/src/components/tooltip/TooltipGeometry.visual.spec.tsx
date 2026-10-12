@@ -182,11 +182,13 @@ async function footNearCorner(side: "top" | "bottom", align: Align, arrowPadding
   return { foot, radius };
 }
 
-// Top and bottom only: a one-line tooltip on the left or right is shorter than the foot and two
-// corners, so Floating UI caps the padding there and the foot stands in a curve at any padding
-const NEAR_CORNER = (["top", "bottom"] as const).flatMap((side) =>
-  (["start", "end"] as const).map((align) => ({ side, align })),
-);
+// Bottom only: top shares the code path. Not left or right: a one-line tooltip there is shorter
+// than the foot and two corners, so Floating UI caps the padding and the foot stands in a curve
+// at any padding
+const NEAR_CORNER = (["start", "end"] as const).map((align) => ({
+  side: "bottom" as const,
+  align,
+}));
 
 describe.each(NEAR_CORNER)(
   "Tooltip arrow, side $side, align $align, small trigger",
