@@ -28,6 +28,10 @@ function resize(target: Element, only?: ResizeObserverBoxOptions) {
   }
 }
 
+/** Whether any live ResizeObserver watches `target` */
+const watched = (target: Element) =>
+  [...observers.values()].some(({ targets }) => targets.has(target));
+
 /** Boxes set by a test; any other element measures 40×24 at the origin */
 const boxes = new Map<Element, DOMRect>();
 
@@ -441,5 +445,37 @@ describe("ToggleGroup indicator measurement", () => {
     press("b");
     await frames(2);
     expect(indicator()).toEqual(px(46, 4, 50, 24));
+  });
+
+  /** A controlled group of item A, and of item C after it while `withC` */
+  const withLateItem = (value: string[], withC: boolean) => (
+    <ToggleGroup.Root value={value}>
+      <ToggleGroup.Item value="a">A</ToggleGroup.Item>
+      {withC && <ToggleGroup.Item value="c">C</ToggleGroup.Item>}
+    </ToggleGroup.Root>
+  );
+
+  it("follows an item mounted after the group when it is pressed and when it resizes", () => {
+    const { rerender } = render(withLateItem(["a"], false));
+    const group = screen.getByRole("group");
+    boxes.set(group, new DOMRect(10, 0, 160, 32));
+    rerender(withLateItem(["a"], true));
+    const c = screen.getByRole("button", { name: "C" });
+    boxes.set(c, new DOMRect(110, 4, 50, 24));
+
+    rerender(withLateItem(["c"], true));
+    expect(indicatorOf(group)).toEqual(px(100, 4, 50, 24));
+    // A padding change resizes its border box alone
+    boxes.set(c, new DOMRect(102, 4, 66, 24));
+    act(() => resize(c, "border-box"));
+    expect(indicatorOf(group)).toEqual(px(92, 4, 66, 24));
+  });
+
+  it("stops watching an item once it unmounts", () => {
+    const { rerender } = render(withLateItem(["a"], true));
+    const c = screen.getByRole("button", { name: "C" });
+    expect(watched(c)).toBe(true);
+    rerender(withLateItem(["a"], false));
+    expect(watched(c)).toBe(false);
   });
 });
