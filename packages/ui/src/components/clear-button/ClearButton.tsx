@@ -21,14 +21,19 @@ export type ClearButtonProps = ComponentProps<"button"> & {
   label?: string;
   /**
    * Replaces the built-in English strings, e.g. to translate them. Keys you leave out keep the
-   * default from `DEFAULT_CLEAR_BUTTON_LABELS`. `label` and `aria-label` take precedence.
+   * default from `DEFAULT_CLEAR_BUTTON_LABELS`. `label` and `aria-label` take precedence, and
+   * `aria-labelledby` turns the default off: the button is then named by what it references.
    */
   labels?: Partial<ClearButtonLabels>;
 };
 
 export function ClearButton({ className, label, labels, ...props }: ClearButtonProps) {
-  const resolvedLabel =
-    label ?? props["aria-label"] ?? { ...DEFAULT_CLEAR_BUTTON_LABELS, ...labels }.clear;
+  // No default next to aria-labelledby: when the referenced element contains this button, its
+  // text would take the default in, and "Remove Apple" would read "Remove Apple Clear"
+  const defaultLabel = props["aria-labelledby"]
+    ? undefined
+    : { ...DEFAULT_CLEAR_BUTTON_LABELS, ...labels }.clear;
+  const resolvedLabel = label ?? props["aria-label"] ?? defaultLabel;
   return (
     <button
       type="button"

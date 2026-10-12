@@ -64,4 +64,32 @@ describe("ClearButton labels", () => {
     render(<ClearButton labels={{ clear: "Wyczyść" }} {...props} />);
     expect(screen.getByRole("button", { name: "Remove" })).toBeInTheDocument();
   });
+
+  // An aria-label would be read again when the referenced element contains the button
+  it("sets no default aria-label when aria-labelledby names it", () => {
+    render(
+      <>
+        <span id="name">Remove filter</span>
+        <ClearButton aria-labelledby="name" labels={{ clear: "Wyczyść" }} />
+      </>,
+    );
+    const button = screen.getByRole("button", { name: "Remove filter" });
+    expect(button).not.toHaveAttribute("aria-label");
+  });
+
+  it.each([
+    ["label", { label: "Remove" }],
+    ["aria-label", { "aria-label": "Remove" }],
+  ])("keeps %s next to aria-labelledby", (_prop, props) => {
+    render(
+      <>
+        <span id="name">Remove filter</span>
+        <ClearButton aria-labelledby="name" {...props} />
+      </>,
+    );
+    expect(screen.getByRole("button", { name: "Remove filter" })).toHaveAttribute(
+      "aria-label",
+      "Remove",
+    );
+  });
 });

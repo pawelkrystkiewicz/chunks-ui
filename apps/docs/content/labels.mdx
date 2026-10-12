@@ -52,6 +52,7 @@ Each component exports the type of its labels as `<Component>Labels` (`ComboboxL
 
 - An `aria-label` on a part wins over `labels`: `<Combobox.Trigger aria-label="Show fruits" />` keeps that name.
 - A prop that already sets the same text wins too: `placeholder` on `DatePicker`, `label` on `ClearButton`, `children` on `Pagination.Previous` and `Pagination.Next`, and `getAriaValueText` or `aria-valuetext` on `Slider.Thumb`.
+- An `aria-labelledby` on `ClearButton` turns its default name off: the button is named by the elements it references.
 
 ## Remove buttons
 
