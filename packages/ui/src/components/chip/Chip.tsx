@@ -76,30 +76,28 @@ export function Chip({
   onRemove,
   labels,
   className,
+  id,
   children,
   ...props
 }: ChipProps) {
-  const id = useId();
-  const labelId = `${id}-label`;
-  const removeName = removeButtonName({ ...DEFAULT_CHIP_LABELS, ...labels }.remove, labelId, id);
+  const generatedId = useId();
+  const chipId = id ?? generatedId;
+  const removeName = removeButtonName(
+    { ...DEFAULT_CHIP_LABELS, ...labels }.remove,
+    chipId,
+    generatedId,
+  );
 
   return (
-    <span className={cn(chipVariants({ color, variant }), className)} {...props}>
-      {/* `contents` keeps the layout of bare children. The span gives the text an id for the
-          remove button, and is always there so that adding or dropping `onRemove` doesn't
-          remount the children */}
-      <span id={onRemove ? labelId : undefined} className="contents">
-        {children}
-      </span>
+    <span id={chipId} className={cn(chipVariants({ color, variant }), className)} {...props}>
+      {children}
       {onRemove && (
-        // Named by hidden text around the chip's text: "Remove Apple", or "Apple を削除"
+        // Named by hidden text around the chip's text: "Remove Apple", or "Apple を削除". The
+        // button sits inside the chip, so it has no aria-label: one would be read again as part
+        // of the chip's text
         <>
           {removeName.hiddenText}
-          <ClearButton
-            label={removeName.withoutChip}
-            aria-labelledby={removeName.labelledBy}
-            onClick={onRemove}
-          />
+          <ClearButton aria-labelledby={removeName.labelledBy} onClick={onRemove} />
         </>
       )}
     </span>

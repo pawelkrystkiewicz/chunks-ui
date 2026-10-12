@@ -112,6 +112,41 @@ describe("Chip labels", () => {
     expect(screen.getByRole("button", { name })).toBeInTheDocument();
   });
 
+  it("names the remove button after the chip itself", () => {
+    render(
+      <Chip data-testid="chip" onRemove={vi.fn()}>
+        Apple
+      </Chip>,
+    );
+    const chip = screen.getByTestId("chip");
+    const button = screen.getByRole("button", { name: "Remove Apple" });
+    expect(chip.id).not.toBe("");
+    expect(button.getAttribute("aria-labelledby")?.split(" ")).toContain(chip.id);
+    // An aria-label would be read again as part of the chip's text: "Remove Apple Remove"
+    expect(button).not.toHaveAttribute("aria-label");
+  });
+
+  it("names the remove button after a chip with the consumer's id", () => {
+    render(
+      <Chip id="fruit" data-testid="chip" onRemove={vi.fn()}>
+        Apple
+      </Chip>,
+    );
+    expect(screen.getByTestId("chip")).toHaveAttribute("id", "fruit");
+    const button = screen.getByRole("button", { name: "Remove Apple" });
+    expect(button.getAttribute("aria-labelledby")?.split(" ")).toContain("fruit");
+  });
+
+  // axe's color-contrast rule skips text under `display: contents`, so no wrapper may hold it
+  it("keeps the text directly in the chip", () => {
+    render(
+      <Chip data-testid="chip" onRemove={vi.fn()}>
+        Apple
+      </Chip>,
+    );
+    expect(screen.getByText("Apple")).toBe(screen.getByTestId("chip"));
+  });
+
   it("starts the name with DEFAULT_CHIP_LABELS.remove", () => {
     render(<Chip onRemove={vi.fn()}>Apple</Chip>);
     expect(
