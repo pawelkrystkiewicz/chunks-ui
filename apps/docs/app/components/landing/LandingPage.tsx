@@ -15,6 +15,7 @@ import {
   SelectionPreview,
   StructurePreview,
 } from "./ComponentPreviews";
+import { FOCUS_RING, FOCUS_RING_INSET } from "./focus";
 import { ApiArt, HeroStack, ScopeArt, SizeArt } from "./Illustrations";
 import {
   CopyRow,
@@ -126,14 +127,6 @@ const tally = (tiers: Tier[]) => {
 const TOTAL = tally(CATEGORIES.flatMap((c) => Object.values(c.items)));
 
 const WRAP = "mx-auto max-w-[1200px] px-[clamp(22px,4vw,40px)]";
-// The landing --ring (globals.css) on keyboard focus, as chunks-ui's Button draws it. Grid cells and
-// the header logo draw it inside their box: the grid frame and the hero's edge clip what is outside.
-// LandingClient repeats these classes: a server module gets client references, not values, from a
-// client module.
-const FOCUS_RING =
-  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
-const FOCUS_RING_INSET =
-  "focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-ring";
 const CELL =
   "flex min-w-0 flex-col gap-3 border-(--l-line) border-r border-b px-7 pt-6 pb-8 text-(--l-fg) transition-colors duration-300 ease-in-out hover:bg-(--l-card)";
 const TEXT_LINK = `inline-flex items-center gap-2 font-semibold text-(--l-fg) text-[14px] transition-colors duration-250 hover:text-primary-text ${FOCUS_RING}`;
@@ -476,7 +469,7 @@ function ComponentsSection() {
                 <CellMeta left={`0${i + 1} · ${c.tag}`} right={`${names.length} COMPONENTS`} />
                 <div
                   aria-hidden
-                  className="relative mb-1 aspect-[16/10] overflow-hidden rounded-[10px] border border-(--l-line) bg-background"
+                  className="relative mb-1 aspect-[16/10] overflow-hidden rounded-[10px] border border-(--l-line) bg-background [--ring:var(--l-lib-ring)]"
                 >
                   <div className="absolute inset-0 flex items-center justify-center px-5 pt-4 pb-[34px] font-sans text-[13px] text-foreground transition-transform duration-600 ease-fluid group-hover/card:scale-[1.03] motion-reduce:transition-none">
                     {c.preview}

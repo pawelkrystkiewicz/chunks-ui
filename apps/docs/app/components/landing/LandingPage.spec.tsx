@@ -44,3 +44,13 @@ it("every link and button above the footer draws the --ring outline on keyboard 
     .map((el) => el.getAttribute("aria-label") ?? el.textContent);
   expect(without).toEqual([]);
 });
+
+// The previews stand for the library, so their frames restore the site ring that .landing replaces.
+it("every component preview frame restores the library ring", () => {
+  const { container } = render(<LandingPage />);
+  const frames = [
+    ...container.querySelectorAll<HTMLElement>("a[aria-labelledby^='cat-'] > div[aria-hidden]"),
+  ];
+  expect(frames.length).toBe(6);
+  for (const f of frames) expect(f.classList).toContain("[--ring:var(--l-lib-ring)]");
+});
