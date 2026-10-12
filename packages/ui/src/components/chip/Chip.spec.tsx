@@ -100,6 +100,18 @@ describe("Chip labels", () => {
     expect(screen.getByRole("button", { name: "Usuń Apple" })).toBeInTheDocument();
   });
 
+  it.each([
+    { remove: "{chip} を削除", name: "Apple を削除" },
+    { remove: "Supprimer {chip} ?", name: "Supprimer Apple ?" },
+  ])("puts the chip's content where $remove has {chip}", ({ remove, name }) => {
+    render(
+      <Chip onRemove={vi.fn()} labels={{ remove }}>
+        Apple
+      </Chip>,
+    );
+    expect(screen.getByRole("button", { name })).toBeInTheDocument();
+  });
+
   it("starts the name with DEFAULT_CHIP_LABELS.remove", () => {
     render(<Chip onRemove={vi.fn()}>Apple</Chip>);
     expect(

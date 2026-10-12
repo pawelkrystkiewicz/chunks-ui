@@ -1,4 +1,4 @@
-import type { Combobox as BaseCombobox } from "@base-ui/react/combobox";
+import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
 import { cleanup, render, screen } from "@testing-library/react";
 import { axe } from "jest-axe";
 import type { ComponentProps } from "react";
@@ -369,6 +369,34 @@ describe("Combobox icon buttons", () => {
     for (const name of ["Pokaż opcje", "Wyczyść wybór", "Usuń Apple"]) {
       expect(screen.getByRole("button", { name })).toBeInTheDocument();
     }
+  });
+
+  it.each([
+    { chipRemove: "{chip} を削除", name: "Apple を削除" },
+    { chipRemove: "Supprimer {chip} ?", name: "Supprimer Apple ?" },
+  ])("puts the chip's content where $chipRemove has {chip}", ({ chipRemove, name }) => {
+    render(<MultiSelect labels={{ chipRemove }} />);
+    expect(screen.getByRole("button", { name })).toBeInTheDocument();
+  });
+
+  // Base UI's own Chip gives ChipRemove no chip to be named after
+  it("drops {chip} from the name of a ChipRemove outside Combobox.Chip", () => {
+    render(
+      <Combobox.Root
+        multiple
+        items={fruits}
+        defaultValue={["Apple"]}
+        labels={{ chipRemove: "Supprimer {chip} ?" }}
+      >
+        <Combobox.Chips>
+          <BaseCombobox.Chip>
+            Apple
+            <Combobox.ChipRemove />
+          </BaseCombobox.Chip>
+        </Combobox.Chips>
+      </Combobox.Root>,
+    );
+    expect(screen.getByRole("button", { name: "Supprimer ?" })).toBeInTheDocument();
   });
 
   it("names ChipRemove after rich chip content", () => {

@@ -8,6 +8,7 @@ import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
 import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
 import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
+import { removeButtonName } from "../chip/Chip";
 
 /** The built-in English strings of `Combobox`: the names of its icon buttons. */
 export type ComboboxLabels = {
@@ -22,8 +23,9 @@ export type ComboboxLabels = {
    */
   clear: string;
   /**
-   * Name of `Combobox.ChipRemove` when it renders the default icon. Its chip's text follows it,
-   * so the button reads "Remove Apple".
+   * Name of `Combobox.ChipRemove` when it renders the default icon, read with its chip's text.
+   * `{chip}` marks where the text goes: `"{chip} を削除"` reads "Apple を削除". Without `{chip}`,
+   * the text follows the label, so the default reads "Remove Apple".
    * @default "Remove"
    */
   chipRemove: string;
@@ -324,24 +326,20 @@ function ComboboxChip({ className, id, ...props }: ComboboxChipProps) {
 function ComboboxChipRemove({ className, children, ...props }: ComboboxChipRemoveProps) {
   const labels = useContext(ComboboxLabelsContext);
   const chipId = useContext(ComboboxChipIdContext);
-  const nameId = useId();
-  // Named by a hidden "Remove", then the chip's text: "Remove Apple". The button sits inside the
-  // chip, so it has no aria-label: one would be read again as part of the chip's text.
+  const id = useId();
+  // Named by hidden text around the chip's text: "Remove Apple", or "Apple を削除". The button
+  // sits inside the chip, so it has no aria-label: one would be read again as part of the chip's
+  // text. Without a Combobox.Chip around it, there is no chip text to read, and `{chip}` is dropped.
+  const name = removeButtonName(labels.chipRemove, chipId ?? "", id);
   const namedByChip = chipId !== undefined && props["aria-label"] === undefined;
   return (
     <BaseCombobox.ChipRemove
       {...ownContent(
         children,
         props.render,
-        namedByChip
-          ? { "aria-labelledby": `${nameId} ${chipId}` }
-          : { "aria-label": labels.chipRemove },
+        namedByChip ? { "aria-labelledby": name.labelledBy } : { "aria-label": name.withoutChip },
         <>
-          {namedByChip && (
-            <span id={nameId} hidden>
-              {labels.chipRemove}
-            </span>
-          )}
+          {namedByChip && name.hiddenText}
           <svg
             viewBox="0 0 24 24"
             fill="none"

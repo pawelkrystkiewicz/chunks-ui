@@ -51,7 +51,17 @@ Each component exports the type of its labels as `<Component>Labels` (`ComboboxL
 
 ## Remove buttons
 
-The remove button of a `Chip` and `Combobox.ChipRemove` read their label and then the text of their chip, for example "Remove Apple". With `labels={{ remove: "Usuń" }}` on a `Chip`, the button reads "Usuń Apple". The label always comes first.
+The remove button of a `Chip` and `Combobox.ChipRemove` read their label together with the text of their chip, for example "Remove Apple". By default the label comes first: with `labels={{ remove: "Usuń" }}` on a `Chip`, the button reads "Usuń Apple".
+
+To put the chip's text somewhere else, write `{chip}` where it goes:
+
+```tsx
+<Chip labels={{ remove: "{chip} を削除" }} onRemove={() => {}}>
+  Apple
+</Chip>
+```
+
+This button reads "Apple を削除". On a `Combobox`, `labels={{ chipRemove: "Supprimer {chip} ?" }}` makes it read "Supprimer Apple ?". The text before and after `{chip}` is joined to the chip's text with a space, so `"Delete {chip}?"` reads "Delete Apple ?".
 
 ## Components with labels
 
