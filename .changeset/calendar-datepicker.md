@@ -11,3 +11,5 @@ Fixed: an Invalid Date in `value` or `defaultValue` showed "Invalid Date" in the
 Fixed: a required, empty `DatePicker` inside `Field.Root` was never `valueMissing` in the field's validity, because the field read the validity of the trigger button, which cannot be required. The field now validates the form input that carries `required`, so Base UI's `Form` blocks the submit, `Field.Error` with `match="valueMissing"` shows, and the trigger gets `aria-invalid` and the focus.
 
 Fixed: resetting the form left an uncontrolled `DatePicker` on the date the user picked. A form reset now restores `defaultValue`, or no date, also for a picker linked to its form by `form`. A controlled picker keeps `value`.
+
+Fixed: in forced-colors mode (for example Windows contrast themes) the `Calendar` days from neighbouring months (`showOutsideDays`) looked the same as the days of the shown month. They now use the system colour for dimmed text, `GrayText`.

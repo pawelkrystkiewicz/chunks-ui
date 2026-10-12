@@ -393,7 +393,10 @@ export function Calendar({
                           isToday &&
                             !isSelected &&
                             "font-medium text-primary-text ring-1 ring-primary",
-                          !isCurrentMonth && !isSelected && "text-muted-foreground",
+                          // Forced colours replace the muted colour, so name the system's dimmed one
+                          !isCurrentMonth &&
+                            !isSelected &&
+                            "text-muted-foreground forced-colors:text-[GrayText]",
                           disabled && "pointer-events-none opacity-40",
                         )}
                       >

@@ -53,7 +53,7 @@ const isWeekend = (date: Date) => date.getDay() === 0 || date.getDay() === 6;
 
 ## Week Start and Outside Days
 
-`weekStartsOn` sets the first column of the week: `0` is Sunday (the default), `1` is Monday. `showOutsideDays` fills the empty cells before the 1st and after the last day of the month with dimmed days from the neighbouring months. Clicking one of them selects it and shows its month. They are never Tab stops.
+`weekStartsOn` sets the first column of the week: `0` is Sunday (the default), `1` is Monday. `showOutsideDays` fills the empty cells before the 1st and after the last day of the month with dimmed days from the neighbouring months. Clicking one of them selects it and shows its month. They are never Tab stops. In forced-colors mode, such as a Windows contrast theme, they take the system colour for dimmed text (`GrayText`).
 
 ```tsx
 <Calendar weekStartsOn={1} showOutsideDays />
