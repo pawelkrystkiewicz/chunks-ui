@@ -2,11 +2,28 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { axe } from "jest-axe";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { reloadMotion } from "../../lib/use-motion";
 import { Tooltip } from "./Tooltip";
 
 afterEach(cleanup);
 
 describe("Tooltip", () => {
+  it("transitions the Popup with CSS while Motion has not loaded", async () => {
+    const loading = reloadMotion();
+    render(
+      <Tooltip.Root open>
+        <Tooltip.Trigger>Hover</Tooltip.Trigger>
+        <Tooltip.Portal>
+          <Tooltip.Positioner>
+            <Tooltip.Popup data-testid="popup">Tip</Tooltip.Popup>
+          </Tooltip.Positioner>
+        </Tooltip.Portal>
+      </Tooltip.Root>,
+    );
+    expect(screen.getByTestId("popup")).toHaveClass("micro-interactions");
+    await loading;
+  });
+
   it("renders Popup with custom className", () => {
     render(
       <Tooltip.Root open>

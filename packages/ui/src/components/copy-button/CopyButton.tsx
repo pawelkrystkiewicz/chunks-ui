@@ -50,7 +50,8 @@ export function CopyButton({
 
   const handleClick = useCallback(
     (e: IconButtonClickEvent) => {
-      navigator.clipboard.writeText(value).then(() => {
+      // Optional: no Clipboard API in insecure contexts; the click must still reach `onClick`
+      navigator.clipboard?.writeText(value).then(() => {
         setCopied(true);
         if (timerRef.current) clearTimeout(timerRef.current);
         timerRef.current = setTimeout(() => setCopied(false), timeout);
