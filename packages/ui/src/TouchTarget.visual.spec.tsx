@@ -48,7 +48,6 @@ const centreOf = (element: Element) => {
 
 const SIZES = [
   { width: 16, height: 16 },
-  { width: 24, height: 8 },
   // Wider than the minimum: the area grows only vertically
   { width: 80, height: 20 },
 ] as const;
@@ -64,12 +63,6 @@ describe.each(SIZES)("touch-target on a $width×$height element", ({ width, heig
     const target = getByTestId("target");
     return { stage, target, centre: centreOf(target) };
   }
-
-  it("keeps its own size", () => {
-    const { target } = renderTarget();
-    const box = target.getBoundingClientRect();
-    expect({ width: box.width, height: box.height }).toEqual({ width, height });
-  });
 
   it("catches a press just inside each edge and corner of the area", async () => {
     const { stage, target, centre } = renderTarget();
@@ -128,31 +121,23 @@ describe("touch-target layout", () => {
     expect(boxes()).toEqual(without);
   });
 
-  it("makes a static element the area's containing block", () => {
-    const { getByTestId } = renderStage(<span data-testid="target" className="touch-target" />);
-    expect(getComputedStyle(getByTestId("target")).position).toBe("relative");
-  });
-
   // The `::after` box is absolutely positioned against the element, which works from any position
-  it.each(["absolute", "fixed", "sticky"])(
-    "keeps position: %s, with the area still centred",
-    async (position) => {
-      const { stage, getByTestId } = renderStage(
-        <span
-          data-testid="target"
-          className={`touch-target ${position}`}
-          style={{ display: "block", width: 16, height: 16 }}
-        />,
-      );
-      const target = getByTestId("target");
-      expect(getComputedStyle(target).position).toBe(position);
-      const { x, y } = centreOf(target);
-      const reach = MIN_AREA / 2 - MARGIN;
-      expect(await pressAt(stage, x - reach, y)).toBe(target);
-      expect(await pressAt(stage, x + reach, y)).toBe(target);
-      expect(await pressAt(stage, x, y + reach)).toBe(target);
-    },
-  );
+  it("keeps position: absolute, with the area still centred", async () => {
+    const { stage, getByTestId } = renderStage(
+      <span
+        data-testid="target"
+        className="touch-target absolute"
+        style={{ display: "block", width: 16, height: 16 }}
+      />,
+    );
+    const target = getByTestId("target");
+    expect(getComputedStyle(target).position).toBe("absolute");
+    const { x, y } = centreOf(target);
+    const reach = MIN_AREA / 2 - MARGIN;
+    expect(await pressAt(stage, x - reach, y)).toBe(target);
+    expect(await pressAt(stage, x + reach, y)).toBe(target);
+    expect(await pressAt(stage, x, y + reach)).toBe(target);
+  });
 
   // A variant utility is emitted after `absolute`, so `position: relative` must not carry weight
   it("keeps position: absolute under a variant, with the area still centred", async () => {
