@@ -141,6 +141,7 @@ function ToastRoot({ className, toast, ...props }: ToastRootProps) {
           "data-ending-style:translate-x-(--toast-slide-x) data-ending-style:opacity-0",
           "data-[swipe-direction=left]:data-ending-style:-translate-x-full",
           "data-[swipe-direction=right]:data-ending-style:translate-x-full",
+          "data-[swipe-direction=down]:data-ending-style:translate-x-0 data-[swipe-direction=down]:data-ending-style:translate-y-full",
           "transition-[translate,opacity] duration-300 ease-out",
         ],
         className,

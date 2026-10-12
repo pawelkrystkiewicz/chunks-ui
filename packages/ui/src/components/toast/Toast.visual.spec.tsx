@@ -3,8 +3,9 @@ import { render, screen, within } from "@testing-library/react";
 import { type ComponentPropsWithoutRef, type ReactNode, useEffect, useRef } from "react";
 import { afterAll, beforeAll, describe, expect, it, onTestFinished } from "vitest";
 import { commands, page, userEvent } from "vitest/browser";
-import { AddToasts, type Dir } from "../../VisualTest.utils";
+import type { Dir } from "../../VisualTest.utils";
 import { Toast } from "./index";
+import { AddToasts } from "./Toast.TestUtils";
 
 function AddToast({
   title,
@@ -139,11 +140,11 @@ describe.each(["ltr", "rtl"] as const)("Toast action in %s", (dir) => {
   });
 });
 
-function RootList() {
+function RootList({ swipeDirection }: { swipeDirection?: ("down" | "left" | "right" | "up")[] }) {
   return (
     <>
       {Toast.useToast().toasts.map((toast) => (
-        <Toast.Root key={toast.id} toast={toast}>
+        <Toast.Root key={toast.id} toast={toast} swipeDirection={swipeDirection}>
           <Toast.Description>{toast.description}</Toast.Description>
           <Toast.Action>Undo</Toast.Action>
         </Toast.Root>
@@ -201,14 +202,35 @@ describe("Toast with motion allowed", () => {
     expect(transitioned()).toEqual(["opacity", "translate"]);
   });
 
-  describe.each([
-    { dir: "ltr", drag: 1 },
-    { dir: "rtl", drag: -1 },
-  ] as const)("swiping, $dir", ({ dir, drag }) => {
-    const side = drag > 0 ? "right" : "left";
+  /** Dispatched by hand: no pointer is active for the made-up id */
+  function swipe(toast: HTMLElement, drag: "left" | "right" | "down") {
+    toast.setPointerCapture = () => {};
+    const pointer = (type: string, d: number, target: EventTarget = toast) =>
+      target.dispatchEvent(
+        new PointerEvent(type, {
+          bubbles: true,
+          pointerId: 7,
+          button: 0,
+          clientX: 300 + (drag === "down" ? 0 : d * (drag === "right" ? 1 : -1)),
+          clientY: 300 + (drag === "down" ? d : 0),
+          movementX: drag === "down" ? 0 : 10 * (drag === "right" ? 1 : -1),
+          movementY: drag === "down" ? 10 : 0,
+        }),
+      );
+    pointer("pointerdown", 0);
+    for (const d of [0, 20, 60, 100]) pointer("pointermove", d);
+    pointer("pointerup", 100, document);
+  }
 
-    // Dispatched by hand: the gesture needs several moves, and Playwright's drag makes one
-    it(`dismisses a toast dragged ${side}, and it leaves ${side}`, async () => {
+  // Dragged by hand: the gesture needs several moves, and Playwright's drag makes one
+  describe.each([
+    { dir: "ltr", drag: "right" },
+    { dir: "ltr", drag: "left" },
+    { dir: "rtl", drag: "right" },
+    { dir: "rtl", drag: "left" },
+    { dir: "ltr", drag: "down" },
+  ] as const)("swiping $drag, $dir", ({ dir, drag }) => {
+    it("dismisses the toast, and it leaves the way it was dragged", async () => {
       document.documentElement.dir = dir;
       onTestFinished(() => document.documentElement.removeAttribute("dir"));
       render(
@@ -219,37 +241,51 @@ describe("Toast with motion allowed", () => {
       );
       const toast = (await screen.findByText("File saved")).closest(".Toast") as HTMLElement;
       await expect.poll(() => getComputedStyle(toast).opacity).toBe("1");
-      // No pointer is active for the made-up id
-      toast.setPointerCapture = () => {};
 
-      const home = toast.getBoundingClientRect().left;
-      const pointer = (type: string, dx: number, target: EventTarget = toast) =>
-        target.dispatchEvent(
-          new PointerEvent(type, {
-            bubbles: true,
-            pointerId: 7,
-            button: 0,
-            clientX: 300 + dx * drag,
-            clientY: 300,
-            movementX: 10 * drag,
-          }),
-        );
-      pointer("pointerdown", 0);
-      for (const dx of [0, 20, 60, 100]) pointer("pointermove", dx);
-      pointer("pointerup", 100, document);
+      const home = toast.getBoundingClientRect();
+      swipe(toast, drag);
 
-      await expect.poll(() => toast.dataset.swipeDirection).toBe(side);
-      // The farthest it gets from where it sat, along the drag
-      let farthest = 0;
+      await expect.poll(() => toast.dataset.swipeDirection).toBe(drag);
+      // The farthest it gets from where it sat, along and across the drag
+      const sign = drag === "left" ? -1 : 1;
+      let along = 0;
+      let across = 0;
       await expect
         .poll(() => {
           if (toast.isConnected) {
-            farthest = Math.max(farthest, (toast.getBoundingClientRect().left - home) * drag);
+            const box = toast.getBoundingClientRect();
+            const dx = (box.left - home.left) * sign;
+            const dy = (box.top - home.top) * sign;
+            along = Math.max(along, drag === "down" ? dy : dx);
+            across = Math.max(across, Math.abs(drag === "down" ? dx : dy));
           }
-          return farthest;
+          return along;
         })
-        .toBeGreaterThan(100);
+        // Its own extent along the drag, near enough
+        .toBeGreaterThan((drag === "down" ? home.height : home.width) * 0.9);
+      expect(across).toBeLessThan(1);
     });
+  });
+
+  it("keeps a toast dragged a way the caller left out", async () => {
+    render(
+      <Toast.Provider>
+        <AddToast title="File saved" description="Saved" />
+        <BaseToast.Viewport className="fixed right-4 bottom-4 w-[240px]">
+          <RootList swipeDirection={["right"]} />
+        </BaseToast.Viewport>
+      </Toast.Provider>,
+    );
+    const toast = (await screen.findByRole("button", { name: "Undo" })).closest(
+      ".Toast",
+    ) as HTMLElement;
+    await expect.poll(() => getComputedStyle(toast).opacity).toBe("1");
+
+    swipe(toast, "left");
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    expect(toast.isConnected).toBe(true);
+    expect(toast.dataset.swipeDirection).toBeUndefined();
+    expect(toast.dataset.endingStyle).toBeUndefined();
   });
 
   describe.each(LAYOUTS)("$layout", (layout) => {
