@@ -1,7 +1,13 @@
 ---
-"chunks-ui": patch
+"chunks-ui": minor
 ---
 
-`chunks-ui` now needs `@base-ui/react` 1.9.0 or later (was 1.8.0).
+The `@base-ui/react` peer dependency now requires `^1.9.0`. It accepted `1.4.1` or later before.
 
-`Accordion.Trigger` and `Collapsible.Trigger` are dimmed again when they are disabled, on the root, the item or the trigger. Base UI 1.9.0 gives a disabled `<button>` trigger the native `disabled` attribute instead of `aria-disabled`, so the trigger lost its dimmed style. A disabled trigger is also no longer reachable with Tab, which is Base UI's change. A trigger rendered as another element (`nativeButton={false}`) still gets `aria-disabled`, and it is dimmed too.
+With Base UI 1.9, a disabled `Accordion.Trigger` or `Collapsible.Trigger` is no longer reachable with Tab. This holds for a native `<button>` trigger, which gets the `disabled` attribute, and for a trigger rendered as another element (`nativeButton={false}`), which gets `aria-disabled="true"` and `tabIndex=-1`.
+
+Upgrade Base UI to fix the peer warning:
+
+```bash
+bun add @base-ui/react@^1.9
+```
