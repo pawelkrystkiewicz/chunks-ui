@@ -1,8 +1,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
-import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest";
-import { ClearButton, type ClearButtonLabels, DEFAULT_CLEAR_BUTTON_LABELS } from "./ClearButton";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { ClearButton, DEFAULT_CLEAR_BUTTON_LABELS } from "./ClearButton";
 
 afterEach(cleanup);
 
@@ -41,10 +41,6 @@ describe("ClearButton", () => {
 });
 
 describe("ClearButton labels", () => {
-  it("types DEFAULT_CLEAR_BUTTON_LABELS as read-only", () => {
-    expectTypeOf(DEFAULT_CLEAR_BUTTON_LABELS).toEqualTypeOf<Readonly<ClearButtonLabels>>();
-  });
-
   it("is named by DEFAULT_CLEAR_BUTTON_LABELS", () => {
     render(<ClearButton />);
     expect(

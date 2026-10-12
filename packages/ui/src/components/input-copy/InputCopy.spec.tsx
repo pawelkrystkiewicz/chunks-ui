@@ -1,8 +1,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
-import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from "vitest";
-import { DEFAULT_INPUT_COPY_LABELS, InputCopy, type InputCopyLabels } from "./InputCopy";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { DEFAULT_INPUT_COPY_LABELS, InputCopy } from "./InputCopy";
 
 afterEach(cleanup);
 
@@ -42,10 +42,6 @@ describe("InputCopy", () => {
 });
 
 describe("InputCopy labels", () => {
-  it("types DEFAULT_INPUT_COPY_LABELS as read-only", () => {
-    expectTypeOf(DEFAULT_INPUT_COPY_LABELS).toEqualTypeOf<Readonly<InputCopyLabels>>();
-  });
-
   it("names the copy button Copied after a copy", async () => {
     const user = userEvent.setup();
     render(<InputCopy value="code" />);

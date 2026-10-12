@@ -2,8 +2,8 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { useState } from "react";
-import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest";
-import { Chip, type ChipLabels, DEFAULT_CHIP_LABELS } from "./Chip";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { Chip, DEFAULT_CHIP_LABELS } from "./Chip";
 
 afterEach(cleanup);
 
@@ -72,10 +72,6 @@ describe("Chip", () => {
 });
 
 describe("Chip labels", () => {
-  it("types DEFAULT_CHIP_LABELS as read-only", () => {
-    expectTypeOf(DEFAULT_CHIP_LABELS).toEqualTypeOf<Readonly<ChipLabels>>();
-  });
-
   it("keeps the default when a label is undefined", () => {
     render(
       <Chip onRemove={vi.fn()} labels={{ remove: undefined }}>

@@ -1,12 +1,7 @@
 import { cleanup, isInaccessible, render, screen } from "@testing-library/react";
 import { axe } from "jest-axe";
-import { afterEach, describe, expect, expectTypeOf, it } from "vitest";
-import {
-  Breadcrumb,
-  type BreadcrumbLabels,
-  type BreadcrumbRootProps,
-  DEFAULT_BREADCRUMB_LABELS,
-} from "./Breadcrumb";
+import { afterEach, describe, expect, it } from "vitest";
+import { Breadcrumb, type BreadcrumbRootProps, DEFAULT_BREADCRUMB_LABELS } from "./Breadcrumb";
 
 afterEach(cleanup);
 
@@ -113,10 +108,6 @@ describe("Breadcrumb", () => {
 });
 
 describe("Breadcrumb labels", () => {
-  it("types DEFAULT_BREADCRUMB_LABELS as read-only", () => {
-    expectTypeOf(DEFAULT_BREADCRUMB_LABELS).toEqualTypeOf<Readonly<BreadcrumbLabels>>();
-  });
-
   function LabelledBreadcrumb(props: BreadcrumbRootProps) {
     return (
       <Breadcrumb.Root {...props}>

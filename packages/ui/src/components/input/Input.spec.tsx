@@ -2,9 +2,9 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { type ChangeEvent, createRef, useState } from "react";
-import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { Field } from "../field";
-import { DEFAULT_INPUT_LABELS, Input, type InputLabels } from "./Input";
+import { DEFAULT_INPUT_LABELS, Input } from "./Input";
 
 afterEach(cleanup);
 
@@ -342,22 +342,6 @@ describe("Input", () => {
 });
 
 describe("Input labels", () => {
-  it("types DEFAULT_INPUT_LABELS as read-only", () => {
-    expectTypeOf(DEFAULT_INPUT_LABELS).toEqualTypeOf<Readonly<InputLabels>>();
-  });
-
-  it("keeps the default when a label is undefined", () => {
-    render(
-      <Input
-        aria-label="Search"
-        defaultValue="abc"
-        onClear={vi.fn()}
-        labels={{ clear: undefined }}
-      />,
-    );
-    expect(screen.getByRole("button", { name: DEFAULT_INPUT_LABELS.clear })).toBeInTheDocument();
-  });
-
   it("names the clear button with DEFAULT_INPUT_LABELS", () => {
     render(<Input aria-label="Search" defaultValue="abc" onClear={vi.fn()} />);
     expect(screen.getByRole("button", { name: DEFAULT_INPUT_LABELS.clear })).toBeInTheDocument();

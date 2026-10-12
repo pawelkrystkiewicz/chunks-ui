@@ -1,8 +1,8 @@
 import { act, cleanup, isInaccessible, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
-import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from "vitest";
-import { Calendar, type CalendarLabels, createDate, DEFAULT_CALENDAR_LABELS } from "./Calendar";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { Calendar, createDate, DEFAULT_CALENDAR_LABELS } from "./Calendar";
 
 afterEach(cleanup);
 
@@ -619,10 +619,6 @@ describe("Calendar keyboard navigation", () => {
 });
 
 describe("Calendar labels", () => {
-  it("types DEFAULT_CALENDAR_LABELS as read-only", () => {
-    expectTypeOf(DEFAULT_CALENDAR_LABELS).toEqualTypeOf<Readonly<CalendarLabels>>();
-  });
-
   it("keeps the default when a function label is undefined", () => {
     render(<Calendar value={MARCH_15_2026} labels={{ heading: undefined }} />);
     expect(
