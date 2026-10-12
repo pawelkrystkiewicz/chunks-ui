@@ -2,7 +2,7 @@ import { act, cleanup, isInaccessible, render, screen, within } from "@testing-l
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { Calendar, DEFAULT_CALENDAR_LABELS } from "./Calendar";
+import { Calendar, createDate, DEFAULT_CALENDAR_LABELS } from "./Calendar";
 
 afterEach(cleanup);
 
@@ -159,6 +159,89 @@ describe("Calendar", () => {
     await user.click(getButton("Next month"));
 
     expect(screen.getByText("April 2026")).toBeInTheDocument();
+  });
+
+  // An inline `value={new Date()}` is a new object, milliseconds later, on every render
+  it("keeps the shown month when it re-renders with the same day", async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(<Calendar value={new Date(2026, 2, 15, 9)} />);
+    await user.click(getButton("Next month"));
+    rerender(<Calendar value={new Date(2026, 2, 15, 9)} />);
+    rerender(<Calendar value={new Date(2026, 2, 15, 17, 30)} />);
+    expect(screen.getByText("April 2026")).toBeInTheDocument();
+    rerender(<Calendar value={new Date(2026, 2, 16)} />);
+    expect(screen.getByText("March 2026")).toBeInTheDocument();
+  });
+
+  it.each([999, 50])("shows, selects and leaves a month in the year %i", async (year) => {
+    const user = userEvent.setup();
+    const onValueChange = vi.fn();
+    render(<Calendar value={createDate(year, 0, 5)} onValueChange={onValueChange} />);
+    expect(screen.getByRole("grid", { name: `January ${year}` })).toBeInTheDocument();
+    expect(dayButton(createDate(year, 0, 5))).toHaveAttribute("data-selected", "true");
+    await user.click(dayButton(createDate(year, 0, 20)));
+    expect(onValueChange).toHaveBeenCalledWith(createDate(year, 0, 20));
+    await user.click(getButton("Previous month"));
+    expect(screen.getByRole("grid", { name: `December ${year - 1}` })).toBeInTheDocument();
+    expect(dayButton(createDate(year - 1, 11, 31))).toBeInTheDocument();
+  });
+
+  // addDays, addMonths and startOfDay must not fall back to `new Date(y, m, d)`
+  it.each([999, 50])("moves by key across a month edge in the year %i", async (year) => {
+    const user = userEvent.setup();
+    render(<Calendar value={createDate(year, 1, 1)} />);
+    await focusDay(createDate(year, 1, 1));
+    await user.keyboard("{ArrowLeft}");
+    expect(document.activeElement).toHaveAccessibleName(label(createDate(year, 0, 31)));
+    expect(screen.getByRole("grid", { name: `January ${year}` })).toBeInTheDocument();
+    await user.keyboard("{PageUp}");
+    expect(document.activeElement).toHaveAccessibleName(label(createDate(year - 1, 11, 31)));
+    expect(screen.getByRole("grid", { name: `December ${year - 1}` })).toBeInTheDocument();
+  });
+
+  it("stops at January of year 1", async () => {
+    const user = userEvent.setup();
+    render(<Calendar value={createDate(1, 0, 1)} />);
+    expect(getButton("Previous month")).toHaveAttribute("aria-disabled", "true");
+    await user.click(getButton("Previous month"));
+    expect(screen.getByRole("grid", { name: "January 1" })).toBeInTheDocument();
+    await focusDay(createDate(1, 0, 1));
+    for (const keys of ["{ArrowLeft}", "{ArrowUp}", "{PageUp}", "{Shift>}{PageUp}{/Shift}"]) {
+      await user.keyboard(keys);
+      expect(screen.getByRole("grid", { name: "January 1" })).toBeInTheDocument();
+      expect(document.activeElement).toHaveAccessibleName(label(createDate(1, 0, 1)));
+    }
+    // Still moves forward
+    await user.keyboard("{ArrowRight}");
+    expect(document.activeElement).toHaveAccessibleName(label(createDate(1, 0, 2)));
+  });
+
+  describe.each([
+    { bad: "an Invalid Date", date: new Date(Number.NaN) },
+    { bad: "a date before year 1", date: createDate(0, 5, 15) },
+  ])("$bad", ({ date }) => {
+    it.each(["value", "defaultValue"])("is no date as the %s: shows today's month", (prop) => {
+      vi.useFakeTimers({ toFake: ["Date"] });
+      try {
+        vi.setSystemTime(new Date(2026, 2, 10, 12));
+        const { container } = render(<Calendar {...{ [prop]: date }} />);
+        expect(screen.getByRole("grid", { name: "March 2026" })).toBeInTheDocument();
+        expect(container.querySelector("[data-selected]")).toBeNull();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+  });
+
+  it("drops the hover style of Previous month at year 1 and keeps it focusable", () => {
+    render(<Calendar defaultValue={createDate(1, 0, 10)} />);
+    const prev = screen.getByRole("button", { name: "Previous month" });
+    expect(prev).toHaveAttribute("aria-disabled", "true");
+    expect(prev).toHaveClass("cursor-not-allowed");
+    expect(prev).not.toHaveClass("hover:bg-accent");
+    expect(prev).not.toHaveClass("pointer-events-none");
+    prev.focus();
+    expect(prev).toHaveFocus();
   });
 
   it("navigates across year boundary (December -> January) under StrictMode", async () => {

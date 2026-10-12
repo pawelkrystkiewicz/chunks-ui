@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { describe, expect, it } from "vitest";
 import { Checkbox } from "../checkbox";
 import { Input } from "../input";
+import { Radio } from "../radio";
 import { Switch } from "../switch";
 import { Label } from "./index";
 
@@ -38,6 +39,11 @@ describe("Label", () => {
       false,
     ],
     [
+      "placed right before an Input with adornments",
+      (disabled) => <Input id="control" disabled={disabled} startAdornment="$" />,
+      false,
+    ],
+    [
       "placed after a native input marked peer",
       (disabled) => <input id="control" className="peer" disabled={disabled} />,
       true,
@@ -55,6 +61,52 @@ describe("Label", () => {
     };
     expect(style(true)).toEqual(dimmed);
     expect(style(false)).toEqual(normal);
+  });
+
+  it("dims before an Input with adornments in a disabled fieldset", () => {
+    const { getByText } = render(
+      <fieldset disabled>
+        <Label htmlFor="price">Price</Label>
+        <Input id="price" startAdornment="$" />
+      </fieldset>,
+    );
+    expect(looks(getByText("Price"))).toEqual(dimmed);
+  });
+
+  // Only a disabled input inside the wrapper counts, not a disabled button in an adornment
+  it("doesn't dim before an enabled Input whose adornment holds a disabled button", () => {
+    const { getByText } = render(
+      <div className="flex items-center gap-2">
+        <Label htmlFor="code">Code</Label>
+        <Input
+          id="code"
+          endAdornment={
+            <button type="button" disabled>
+              Apply
+            </button>
+          }
+        />
+      </div>,
+    );
+    expect(looks(getByText("Code"))).toEqual(normal);
+  });
+
+  // Base UI renders a hidden `<input disabled>` inside the next sibling of a Radio.Group's label
+  it("doesn't dim before a Radio.Group with one disabled root", () => {
+    const { getByText } = render(
+      <div>
+        <Label>Plan</Label>
+        <Radio.Group defaultValue="a" aria-label="Plan">
+          <Radio.Root value="a" aria-label="Free">
+            <Radio.Indicator />
+          </Radio.Root>
+          <Radio.Root value="b" aria-label="Pro" disabled>
+            <Radio.Indicator />
+          </Radio.Root>
+        </Radio.Group>
+      </div>,
+    );
+    expect(looks(getByText("Plan"))).toEqual(normal);
   });
 
   // Checkbox, Switch and Radio.Root carry the `peer` class, so a `peer-*` style would reach

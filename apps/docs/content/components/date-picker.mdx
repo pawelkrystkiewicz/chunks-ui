@@ -101,11 +101,11 @@ A click on a `<label>` or a `Field.Label` clicks the trigger, so it opens the ca
 
 ## Forms
 
-Give the picker a `name` to send the selected date with a `<form>`. A hidden input holds the date as `yyyy-mm-dd`, or an empty string when no date is selected. A disabled picker sends nothing.
+Give the picker a `name` to send the selected date with a `<form>`. A hidden input holds the date as `yyyy-mm-dd`, or an empty string when no date is selected. The year always has 4 digits: January 5, 999 is `0999-01-05`. A disabled picker sends nothing.
 
-To turn the value back into a local `Date`, split it: `const [y, m, d] = value.split("-").map(Number); new Date(y, m - 1, d)`. Do not use `new Date("2026-10-10")`: it reads the string as midnight UTC, which is the day before in time zones west of UTC.
+To turn the value back into a local `Date`, add a time: `` new Date(`${value}T00:00`) ``. A date and time without an offset is read as local time. Do not use `new Date("2026-10-10")`: a date alone is read as midnight UTC, which is the day before in time zones west of UTC.
 
-With `required`, the form does not submit until a date is selected, and focus moves to the trigger. A button has no required state for screen readers, so put it in the label, for example "Due date (required)". `required` only blocks a native submit: `Field.Validity` and `Field.Error` with `match="valueMissing"` do not see it yet.
+With `required`, the form does not submit until a date is selected, and focus moves to the trigger. A button has no required state for screen readers, so put it in the label, for example "Due date (required)". When Base UI's `Form` (`@base-ui/react/form`) validates the field on submit, an empty required picker is `valueMissing` in `Field.Validity`: `Field.Error` with `match="valueMissing"` shows its message and the trigger gets `aria-invalid`.
 
 ```tsx
 <form
@@ -125,6 +125,10 @@ With `required`, the form does not submit until a date is selected, and focus mo
 <DatePickerFormExample />
 
 Inside `Field.Root`, the field's `name` is used when the picker has none, and a disabled field disables the hidden input too. For a picker outside its `<form>`, set `form` to the form's `id`.
+
+A form reset sets the picker back to its `defaultValue`, or to no date. A controlled picker keeps its `value`, as a controlled input does: set it back in the form's `onReset`. A reset that `onReset` cancels with `event.preventDefault()` leaves the picker as it is. As with native controls, a reset does not call `onValueChange`: an uncontrolled picker that you mirror in state through `onValueChange` is out of date after a reset, so reset that state in the form's `onReset` too.
+
+When the picker has a `name` or is `required`, or its `Field.Root` has a `name`, the form input is the field's control and takes part in the browser's form validation, as an `Input` does. A failing `validate` on `Field.Root` with `validationMode` set to `"onChange"` or `"onBlur"` then also blocks the submit of a plain `<form>` and shows the browser's validation bubble.
 
 ## Keyboard
 
