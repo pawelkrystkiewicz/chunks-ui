@@ -275,6 +275,7 @@ describe("form-control boundaries, light mode", () => {
     for (const name of bordered) {
       const control = getByTestId(name);
       const background = backgroundOf(control);
+      expect.soft(parseFloat(getComputedStyle(control).borderTopWidth), name).toBeGreaterThan(0);
       expect
         .soft(
           ratio(

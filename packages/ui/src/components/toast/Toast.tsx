@@ -178,7 +178,7 @@ function ToastAction({ className, ...props }: ToastActionProps) {
   return (
     <BaseToast.Action
       className={cnState(
-        "micro-interactions mt-1 inline-flex h-7 w-fit items-center rounded-md border border-border px-3 font-medium text-xs hover:bg-accent hover:text-accent-foreground",
+        "micro-interactions mt-1 inline-flex h-7 w-fit items-center rounded-md border border-input px-3 font-medium text-xs hover:bg-accent hover:text-accent-foreground",
         "focus-visible:outline-2 focus-visible:outline-ring",
         className,
       )}

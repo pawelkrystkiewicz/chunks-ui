@@ -91,7 +91,7 @@ Relative colour syntax needs Chrome 119+, Safari 18+ or Firefox 128+. Older brow
 | `--ring` | `oklch(0.62 0 0)` | `oklch(0.556 0 0)` |
 | `--radius` | `0.625rem` | `0.625rem` |
 
-`--input` is the boundary of a form control: the border of `Input`, `Textarea`, `Select`, `Combobox`, `NumberField`, `DatePicker`, `Checkbox`, `Radio` and the `outlined` secondary `Button` and `IconButton`, and the unchecked `Switch` track. A boundary that identifies a control needs 3:1 contrast with the background (WCAG 1.4.11). In light mode `--input` is the lightest neutral that reaches it: 3.03:1 on white. `--border` separates content, such as the edge of a `Card` or a table row, so it stays lighter (1.26:1). In dark mode both are `oklch(0.269 0 0)`, about 1.3:1 on the dark background. If you set your own `--input`, keep 3:1 with `--background`.
+`--input` is the boundary of a form control: the border of `Input`, `Textarea`, `Select`, `Combobox`, `NumberField`, `DatePicker`, `Checkbox`, `Radio` and the `outlined` secondary `Button` and `IconButton`, and the unchecked `Switch` track. A boundary that identifies a control needs 3:1 contrast with the background (WCAG 1.4.11). The 3:1 holds against `--background`; a control on a tinted surface such as `Table.Header` (`bg-muted/50`) or a hovered table row measures about 2.9:1. In light mode `--input` is the lightest neutral that reaches it: 3.03:1 on white. `--border` separates content, such as the edge of a `Card` or a table row, so it stays lighter (1.26:1). In dark mode both are `oklch(0.269 0 0)`, about 1.3:1 on the dark background. If you set your own `--input`, keep 3:1 with `--background`.
 
 ## Tailwind Usage
 
