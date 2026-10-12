@@ -2,7 +2,7 @@ import { act, cleanup, isInaccessible, render, screen, within } from "@testing-l
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { Calendar } from "./Calendar";
+import { Calendar, createDate } from "./Calendar";
 
 afterEach(cleanup);
 
@@ -37,12 +37,6 @@ const tabStops = () =>
     .getAllByRole("button", { hidden: true })
     .filter((b) => b.tabIndex === 0);
 const focusDay = (date: Date) => act(() => dayButton(date).focus());
-/** Local midnight in any year: `new Date(y, m, d)` reads years 0–99 as 1900–1999. */
-const dateIn = (year: number, month: number, day: number) => {
-  const date = new Date(2000, 0, 1);
-  date.setFullYear(year, month, day);
-  return date;
-};
 
 describe("Calendar", () => {
   it("renders the current month and year when no value is provided", () => {
@@ -182,76 +176,65 @@ describe("Calendar", () => {
   it.each([999, 50])("shows, selects and leaves a month in the year %i", async (year) => {
     const user = userEvent.setup();
     const onValueChange = vi.fn();
-    render(<Calendar value={dateIn(year, 0, 5)} onValueChange={onValueChange} />);
+    render(<Calendar value={createDate(year, 0, 5)} onValueChange={onValueChange} />);
     expect(screen.getByRole("grid", { name: `January ${year}` })).toBeInTheDocument();
-    expect(dayButton(dateIn(year, 0, 5))).toHaveAttribute("data-selected", "true");
-    await user.click(dayButton(dateIn(year, 0, 20)));
-    expect(onValueChange).toHaveBeenCalledWith(dateIn(year, 0, 20));
+    expect(dayButton(createDate(year, 0, 5))).toHaveAttribute("data-selected", "true");
+    await user.click(dayButton(createDate(year, 0, 20)));
+    expect(onValueChange).toHaveBeenCalledWith(createDate(year, 0, 20));
     await user.click(getButton("Previous month"));
     expect(screen.getByRole("grid", { name: `December ${year - 1}` })).toBeInTheDocument();
-    expect(dayButton(dateIn(year - 1, 11, 31))).toBeInTheDocument();
+    expect(dayButton(createDate(year - 1, 11, 31))).toBeInTheDocument();
   });
 
   // addDays, addMonths and startOfDay must not fall back to `new Date(y, m, d)`
   it.each([999, 50])("moves by key across a month edge in the year %i", async (year) => {
     const user = userEvent.setup();
-    render(<Calendar value={dateIn(year, 1, 1)} />);
-    await focusDay(dateIn(year, 1, 1));
+    render(<Calendar value={createDate(year, 1, 1)} />);
+    await focusDay(createDate(year, 1, 1));
     await user.keyboard("{ArrowLeft}");
-    expect(document.activeElement).toHaveAccessibleName(label(dateIn(year, 0, 31)));
+    expect(document.activeElement).toHaveAccessibleName(label(createDate(year, 0, 31)));
     expect(screen.getByRole("grid", { name: `January ${year}` })).toBeInTheDocument();
     await user.keyboard("{PageUp}");
-    expect(document.activeElement).toHaveAccessibleName(label(dateIn(year - 1, 11, 31)));
+    expect(document.activeElement).toHaveAccessibleName(label(createDate(year - 1, 11, 31)));
     expect(screen.getByRole("grid", { name: `December ${year - 1}` })).toBeInTheDocument();
   });
 
   it("stops at January of year 1", async () => {
     const user = userEvent.setup();
-    render(<Calendar value={dateIn(1, 0, 1)} />);
+    render(<Calendar value={createDate(1, 0, 1)} />);
     expect(getButton("Previous month")).toHaveAttribute("aria-disabled", "true");
     await user.click(getButton("Previous month"));
     expect(screen.getByRole("grid", { name: "January 1" })).toBeInTheDocument();
-    await focusDay(dateIn(1, 0, 1));
+    await focusDay(createDate(1, 0, 1));
     for (const keys of ["{ArrowLeft}", "{ArrowUp}", "{PageUp}", "{Shift>}{PageUp}{/Shift}"]) {
       await user.keyboard(keys);
       expect(screen.getByRole("grid", { name: "January 1" })).toBeInTheDocument();
-      expect(document.activeElement).toHaveAccessibleName(label(dateIn(1, 0, 1)));
+      expect(document.activeElement).toHaveAccessibleName(label(createDate(1, 0, 1)));
     }
     // Still moves forward
     await user.keyboard("{ArrowRight}");
-    expect(document.activeElement).toHaveAccessibleName(label(dateIn(1, 0, 2)));
+    expect(document.activeElement).toHaveAccessibleName(label(createDate(1, 0, 2)));
   });
 
-  it.each(["value", "defaultValue"])("shows today's month for an Invalid Date %s", (prop) => {
-    vi.useFakeTimers({ toFake: ["Date"] });
-    try {
-      vi.setSystemTime(new Date(2026, 2, 10, 12));
-      const { container } = render(<Calendar {...{ [prop]: new Date(Number.NaN) }} />);
-      expect(screen.getByRole("grid", { name: "March 2026" })).toBeInTheDocument();
-      expect(container.querySelector("[data-selected]")).toBeNull();
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
-  it.each(["value", "defaultValue"])("treats a %s before year 1 as no date", (prop) => {
-    vi.useFakeTimers({ toFake: ["Date"] });
-    try {
-      vi.setSystemTime(new Date(2026, 2, 10, 12));
-      const yearZero = new Date(2000, 0, 1);
-      yearZero.setFullYear(0, 5, 15);
-      const { container } = render(<Calendar {...{ [prop]: yearZero }} />);
-      expect(screen.getByRole("grid", { name: "March 2026" })).toBeInTheDocument();
-      expect(container.querySelector("[data-selected]")).toBeNull();
-    } finally {
-      vi.useRealTimers();
-    }
+  describe.each([
+    { bad: "an Invalid Date", date: new Date(Number.NaN) },
+    { bad: "a date before year 1", date: createDate(0, 5, 15) },
+  ])("$bad", ({ date }) => {
+    it.each(["value", "defaultValue"])("is no date as the %s: shows today's month", (prop) => {
+      vi.useFakeTimers({ toFake: ["Date"] });
+      try {
+        vi.setSystemTime(new Date(2026, 2, 10, 12));
+        const { container } = render(<Calendar {...{ [prop]: date }} />);
+        expect(screen.getByRole("grid", { name: "March 2026" })).toBeInTheDocument();
+        expect(container.querySelector("[data-selected]")).toBeNull();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
   });
 
   it("drops the hover style of Previous month at year 1 and keeps it focusable", () => {
-    const first = new Date(2000, 0, 1);
-    first.setFullYear(1, 0, 10);
-    render(<Calendar defaultValue={first} />);
+    render(<Calendar defaultValue={createDate(1, 0, 10)} />);
     const prev = screen.getByRole("button", { name: "Previous month" });
     expect(prev).toHaveAttribute("aria-disabled", "true");
     expect(prev).toHaveClass("cursor-not-allowed");

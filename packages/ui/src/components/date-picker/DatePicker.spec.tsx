@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { createRef } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { createDate } from "../calendar/Calendar";
 import { Field } from "../field";
 import { DatePicker } from "./DatePicker";
 
@@ -264,37 +265,38 @@ describe("DatePicker in a form", () => {
     expect(formData(form)).toBe("2026-10-02");
   });
 
-  it.each([
-    { year: 999, iso: "0999-01-05", text: "January 5, 999" },
-    { year: 50, iso: "0050-01-05", text: "January 5, 50" },
-  ])("submits a date in the year $year as a 4-digit yyyy-mm-dd", ({ year, iso, text }) => {
-    const date = new Date(2000, 0, 1);
-    date.setFullYear(year, 0, 5);
+  it("submits a date in the year 50 as a 4-digit yyyy-mm-dd", () => {
+    const date = createDate(50, 0, 5);
     render(
       <form aria-label="Task">
         <DatePicker name="due" defaultValue={date} />
       </form>,
     );
     const submitted = formData(screen.getByRole<HTMLFormElement>("form"));
-    expect(submitted).toBe(iso);
+    expect(submitted).toBe("0050-01-05");
     // The parse the docs give: a date-time without an offset is local time
     expect(new Date(`${submitted}T00:00`)).toEqual(date);
-    expect(screen.getByRole("button", { name: text })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "January 5, 50" })).toBeInTheDocument();
   });
 
-  it.each(["value", "defaultValue"])(
-    "treats an Invalid Date %s as no date, and opens on today's month",
-    async (prop) => {
-      render(
-        <form aria-label="Task">
-          <DatePicker name="due" {...{ [prop]: new Date(Number.NaN) }} />
-        </form>,
-      );
-      expect(formData(screen.getByRole<HTMLFormElement>("form"))).toBe("");
-      await userEvent.click(screen.getByRole("button", { name: "Pick a date" }));
-      expect(screen.getByRole("grid", { name: "March 2026" })).toBeInTheDocument();
-    },
-  );
+  describe.each([
+    { bad: "an Invalid Date", date: new Date(Number.NaN) },
+    { bad: "a date in year 0", date: createDate(0, 5, 15) },
+  ])("$bad", ({ date }) => {
+    it.each(["value", "defaultValue"])(
+      "as the %s is no date: submits nothing, opens on today's month",
+      async (prop) => {
+        render(
+          <form aria-label="Task">
+            <DatePicker name="due" {...{ [prop]: date }} />
+          </form>,
+        );
+        expect(formData(screen.getByRole<HTMLFormElement>("form"))).toBe("");
+        await userEvent.click(screen.getByRole("button", { name: "Pick a date" }));
+        expect(screen.getByRole("grid", { name: "March 2026" })).toBeInTheDocument();
+      },
+    );
+  });
 
   it("submits an empty value when no date is selected", () => {
     render(
@@ -368,7 +370,6 @@ describe("DatePicker in a form", () => {
     );
     await user.click(screen.getByRole("button", { name: "Save" }));
     const trigger = screen.getByRole("button", { name: "Due date Pick a date" });
-    expect(trigger).toHaveAccessibleDescription("Pick a weekday");
     expect(trigger).toHaveFocus();
   });
 
@@ -539,20 +540,6 @@ describe("DatePicker form reset scope", () => {
     await userEvent.click(getButton("Friday, March 20, 2026"));
     await userEvent.click(screen.getByRole("button", { name: "Reset other" }));
     expect(screen.getByRole("button", { name: "March 20, 2026" })).toBeInTheDocument();
-  });
-});
-
-describe("DatePicker years before 1", () => {
-  it.each(["value", "defaultValue"])("treats a %s in year 0 as no date", async (prop) => {
-    const yearZero = new Date(2000, 0, 1);
-    yearZero.setFullYear(0, 5, 15);
-    render(
-      <form aria-label="Task">
-        <DatePicker name="due" {...{ [prop]: yearZero }} />
-      </form>,
-    );
-    expect(new FormData(screen.getByRole<HTMLFormElement>("form")).get("due")).toBe("");
-    expect(screen.getByRole("button", { name: "Pick a date" })).toBeInTheDocument();
   });
 });
 

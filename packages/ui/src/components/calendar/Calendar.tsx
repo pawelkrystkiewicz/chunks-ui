@@ -67,7 +67,7 @@ export function validDate(date: Date | null | undefined): Date | null {
  * Local midnight of a day. Unlike `new Date(y, m, d)`, it keeps the years 0–99, which the
  * constructor reads as 1900–1999. Months and days out of range roll over as in the constructor.
  */
-function createDate(year: number, month: number, day: number): Date {
+export function createDate(year: number, month: number, day: number): Date {
   const date = new Date(2000, 0, 1);
   date.setFullYear(year, month, day);
   return date;

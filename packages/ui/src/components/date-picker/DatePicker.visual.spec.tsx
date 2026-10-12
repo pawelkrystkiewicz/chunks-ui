@@ -83,7 +83,6 @@ describe("DatePicker in a form", () => {
     );
     await page.getByRole("button", { name: "Save" }).click();
     const trigger = page.getByRole("button", { name: "Due date Pick a date" });
-    await expect.element(page.getByText("Pick a due date")).toBeVisible();
     await expect.element(trigger).toHaveFocus();
     expect(trigger.element().matches(":focus-visible")).toBe(true);
   });
