@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, isInaccessible, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -17,19 +17,40 @@ const label = (date: Date) =>
     month: "long",
     day: "numeric",
   });
-const dayButton = (date: Date) => screen.getByRole("button", { name: label(date) });
-// Day labels end with the year; the month nav buttons do not.
+/**
+ * A named getByRole computes jsdom styles for every button in the grid, ~130ms a query under
+ * coverage; this computes them for one. `selector` leaves out the grid, which /March 20/ also
+ * matches through its "March 2026" label.
+ */
+const getButton = (name: string | RegExp) => {
+  const button = screen.getByLabelText(name, { selector: "button" });
+  expect(button).toHaveRole("button");
+  expect(button).toHaveAccessibleName(name);
+  expect(isInaccessible(button)).toBe(false);
+  return button;
+};
+const dayButton = (date: Date) => getButton(label(date));
+// `hidden: true` skips the style check on every day. It can only let more buttons in: a hidden
+// tab stop would join the list and fail the comparison with the day that getButton finds.
 const tabStops = () =>
-  screen.getAllByRole("button", { name: /\d{4}$/ }).filter((b) => b.tabIndex === 0);
+  within(screen.getByRole("grid"))
+    .getAllByRole("button", { hidden: true })
+    .filter((b) => b.tabIndex === 0);
 const focusDay = (date: Date) => act(() => dayButton(date).focus());
 
 describe("Calendar", () => {
   it("renders the current month and year when no value is provided", () => {
-    render(<Calendar />);
-    // Should render some month/year heading — we just verify the container is present
-    const buttons = screen.getAllByRole("button");
-    // At least prev/next + some day buttons
-    expect(buttons.length).toBeGreaterThan(2);
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      vi.setSystemTime(new Date(2026, 2, 10, 12));
+      render(<Calendar />);
+      const today = new Date();
+      const monthYear = today.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+      expect(screen.getByRole("grid", { name: monthYear })).toBeInTheDocument();
+      expect(dayButton(today)).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("renders the correct month and year for a controlled date", () => {
@@ -56,16 +77,17 @@ describe("Calendar", () => {
   it("fills padding cells with neighbouring-month days only when showOutsideDays is set", () => {
     const feb23 = "Monday, February 23, 2026";
     const { rerender } = render(<Calendar value={MARCH_15_2026} weekStartsOn={1} />);
-    expect(screen.queryByRole("button", { name: feb23 })).not.toBeInTheDocument();
+    // No element labelled so at all, hidden or not: stricter than a role query, and no styles
+    expect(screen.queryByLabelText(feb23)).not.toBeInTheDocument();
     rerender(<Calendar value={MARCH_15_2026} weekStartsOn={1} showOutsideDays />);
-    expect(screen.getByRole("button", { name: feb23 })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Saturday, April 4, 2026" })).toBeInTheDocument();
+    expect(getButton(feb23)).toBeInTheDocument();
+    expect(getButton("Saturday, April 4, 2026")).toBeInTheDocument();
   });
 
   // The 4.5:1 itself is checked by the docs axe run (check:a11y)
   it("dims outside days with the muted colour, not opacity", () => {
     render(<Calendar value={MARCH_15_2026} weekStartsOn={1} showOutsideDays />);
-    const feb23 = screen.getByRole("button", { name: "Monday, February 23, 2026" });
+    const feb23 = getButton("Monday, February 23, 2026");
     expect(feb23).toHaveClass("text-muted-foreground");
     expect(feb23.className).not.toMatch(/\bopacity-/);
   });
@@ -79,7 +101,7 @@ describe("Calendar", () => {
         min={new Date(2026, 2, 5)}
       />,
     );
-    const feb23 = screen.getByRole("button", { name: "Monday, February 23, 2026" });
+    const feb23 = getButton("Monday, February 23, 2026");
     expect(feb23).toHaveAttribute("aria-disabled", "true");
     expect(feb23).toHaveClass("text-muted-foreground", "opacity-40");
   });
@@ -87,8 +109,8 @@ describe("Calendar", () => {
   it("keeps the selected colour on a selected outside day", async () => {
     const user = userEvent.setup();
     render(<Calendar value={new Date(2026, 1, 28)} weekStartsOn={1} showOutsideDays />);
-    await user.click(screen.getByRole("button", { name: "Next month" }));
-    const feb28 = screen.getByRole("button", { name: "Saturday, February 28, 2026" });
+    await user.click(getButton("Next month"));
+    const feb28 = getButton("Saturday, February 28, 2026");
     expect(feb28).toHaveAttribute("data-selected", "true");
     expect(feb28).toHaveClass("text-primary-foreground");
     expect(feb28).not.toHaveClass("text-muted-foreground");
@@ -97,7 +119,7 @@ describe("Calendar", () => {
   it("moves the view to the month of a clicked outside day", async () => {
     const user = userEvent.setup();
     render(<Calendar defaultValue={MARCH_15_2026} weekStartsOn={1} showOutsideDays />);
-    await user.click(screen.getByRole("button", { name: "Monday, February 23, 2026" }));
+    await user.click(getButton("Monday, February 23, 2026"));
     expect(screen.getByText("February 2026")).toBeInTheDocument();
   });
 
@@ -107,7 +129,7 @@ describe("Calendar", () => {
     render(<Calendar value={MARCH_15_2026} onValueChange={onValueChange} />);
 
     // Click on day 10 of March 2026
-    const day10 = screen.getByRole("button", { name: /March 10/ });
+    const day10 = getButton(/March 10/);
     await user.click(day10);
 
     expect(onValueChange).toHaveBeenCalledOnce();
@@ -123,7 +145,7 @@ describe("Calendar", () => {
 
     expect(screen.getByText("March 2026")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Previous month" }));
+    await user.click(getButton("Previous month"));
 
     expect(screen.getByText("February 2026")).toBeInTheDocument();
   });
@@ -134,7 +156,7 @@ describe("Calendar", () => {
 
     expect(screen.getByText("March 2026")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Next month" }));
+    await user.click(getButton("Next month"));
 
     expect(screen.getByText("April 2026")).toBeInTheDocument();
   });
@@ -146,7 +168,7 @@ describe("Calendar", () => {
 
     expect(screen.getByText("December 2026")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Next month" }));
+    await user.click(getButton("Next month"));
 
     expect(screen.getByText("January 2027")).toBeInTheDocument();
   });
@@ -158,7 +180,7 @@ describe("Calendar", () => {
 
     expect(screen.getByText("January 2026")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Previous month" }));
+    await user.click(getButton("Previous month"));
 
     expect(screen.getByText("December 2025")).toBeInTheDocument();
   });
@@ -172,7 +194,7 @@ describe("Calendar", () => {
       <Calendar value={MARCH_15_2026} onValueChange={onValueChange} isDateDisabled={disableDay5} />,
     );
 
-    const day5 = screen.getByRole("button", { name: /March 5/ });
+    const day5 = getButton(/March 5/);
     expect(day5).toHaveAttribute("aria-disabled", "true");
 
     await user.click(day5);
@@ -182,34 +204,34 @@ describe("Calendar", () => {
   it("dates before min are disabled", () => {
     render(<Calendar value={MARCH_15_2026} min={new Date(2026, 2, 10)} />);
 
-    const day5 = screen.getByRole("button", { name: /March 5/ });
+    const day5 = getButton(/March 5/);
     expect(day5).toHaveAttribute("aria-disabled", "true");
 
-    const day10 = screen.getByRole("button", { name: /March 10/ });
+    const day10 = getButton(/March 10/);
     expect(day10).not.toHaveAttribute("aria-disabled");
   });
 
   it("dates after max are disabled", () => {
     render(<Calendar value={MARCH_15_2026} max={new Date(2026, 2, 20)} />);
 
-    const day25 = screen.getByRole("button", { name: /March 25/ });
+    const day25 = getButton(/March 25/);
     expect(day25).toHaveAttribute("aria-disabled", "true");
 
-    const day20 = screen.getByRole("button", { name: /March 20/ });
+    const day20 = getButton(/March 20/);
     expect(day20).not.toHaveAttribute("aria-disabled");
   });
 
   it("selected date has data-selected", () => {
     render(<Calendar value={MARCH_15_2026} />);
 
-    const day15 = screen.getByRole("button", { name: /March 15/ });
+    const day15 = getButton(/March 15/);
     expect(day15).toHaveAttribute("data-selected", "true");
   });
 
   it("unselected days do not have data-selected", () => {
     render(<Calendar value={MARCH_15_2026} />);
 
-    const day10 = screen.getByRole("button", { name: /March 10/ });
+    const day10 = getButton(/March 10/);
     expect(day10).not.toHaveAttribute("data-selected");
   });
 
@@ -229,10 +251,7 @@ describe("Calendar", () => {
     render(<Calendar value={today} />);
 
     // There should be exactly one button with aria-current="date"
-    const todayButtons = screen
-      .getAllByRole("button")
-      .filter((b) => b.getAttribute("aria-current") === "date");
-    expect(todayButtons).toHaveLength(1);
+    expect(screen.getAllByRole("button", { current: "date" })).toHaveLength(1);
   });
 
   it("uncontrolled: updates internal state when a day is clicked", async () => {
@@ -240,12 +259,12 @@ describe("Calendar", () => {
     const onValueChange = vi.fn();
     render(<Calendar defaultValue={MARCH_15_2026} onValueChange={onValueChange} />);
 
-    const day20 = screen.getByRole("button", { name: /March 20/ });
+    const day20 = getButton(/March 20/);
     await user.click(day20);
 
     expect(onValueChange).toHaveBeenCalledOnce();
     // The previously selected day should no longer be selected
-    const day15 = screen.getByRole("button", { name: /March 15/ });
+    const day15 = getButton(/March 15/);
     expect(day15).not.toHaveAttribute("data-selected");
     // The newly clicked day should be selected
     expect(day20).toHaveAttribute("data-selected", "true");
@@ -253,14 +272,14 @@ describe("Calendar", () => {
 
   it("prev/next navigation buttons have aria-labels", () => {
     render(<Calendar value={MARCH_15_2026} />);
-    expect(screen.getByRole("button", { name: "Previous month" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Next month" })).toBeInTheDocument();
+    expect(getButton("Previous month")).toBeInTheDocument();
+    expect(getButton("Next month")).toBeInTheDocument();
   });
 
   it("day buttons have descriptive aria-labels", () => {
     render(<Calendar value={MARCH_15_2026} />);
     // Should have a button with a label that includes "March" and "2026"
-    const day1 = screen.getByRole("button", { name: /March 1, 2026/ });
+    const day1 = getButton(/March 1, 2026/);
     expect(day1).toBeInTheDocument();
   });
 
@@ -268,7 +287,7 @@ describe("Calendar", () => {
     const user = userEvent.setup();
     render(<Calendar value={MARCH_15_2026} />);
     expect(screen.getByRole("grid", { name: "March 2026" })).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Next month" }));
+    await user.click(getButton("Next month"));
     expect(screen.getByRole("grid", { name: "April 2026" })).toBeInTheDocument();
   });
 
@@ -324,7 +343,7 @@ describe("Calendar keyboard navigation", () => {
     const user = userEvent.setup();
     render(<Calendar defaultValue={defaultValue} />);
     for (let i = 0; i < nextClicks; i++) {
-      await user.click(screen.getByRole("button", { name: "Next month" }));
+      await user.click(getButton("Next month"));
     }
     expect(tabStops()).toEqual([dayButton(expected)]);
   });
@@ -338,20 +357,21 @@ describe("Calendar keyboard navigation", () => {
       </>,
     );
     await user.tab();
-    expect(screen.getByRole("button", { name: "Previous month" })).toHaveFocus();
+    expect(getButton("Previous month")).toHaveFocus();
     await user.tab();
-    expect(screen.getByRole("button", { name: "Next month" })).toHaveFocus();
+    expect(getButton("Next month")).toHaveFocus();
     await user.tab();
     expect(dayButton(MARCH_15_2026)).toHaveFocus();
     await user.tab();
-    expect(screen.getByRole("button", { name: "After" })).toHaveFocus();
+    // Named by its text, not an aria-label, so getButton does not find it
+    expect(screen.getByText("After")).toHaveFocus();
   });
 
   it("never makes an outside day a tab stop, even when it is selected", async () => {
     const user = userEvent.setup();
     const feb28 = new Date(2026, 1, 28);
     render(<Calendar defaultValue={feb28} weekStartsOn={1} showOutsideDays />);
-    await user.click(screen.getByRole("button", { name: "Next month" }));
+    await user.click(getButton("Next month"));
     // Feb 28 is now a selected outside day in the March view.
     expect(dayButton(feb28)).toHaveAttribute("data-selected", "true");
     expect(dayButton(feb28).tabIndex).toBe(-1);

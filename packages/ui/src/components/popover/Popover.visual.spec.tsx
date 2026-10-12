@@ -34,9 +34,30 @@ describe("Popover", () => {
         </Popover.Root>
       </div>,
     );
-    // Opened with the mouse, so the focused popup shows no focus ring for the arrow's base to cover
+    // Opened with the mouse, so the focused popup shows no focus ring; the next spec has one
     await userEvent.click(page.getByRole("button", { name: "Trigger" }));
     await commands.parkPointer();
+    await expect(body).toMatchScreenshot();
+  });
+
+  it("arrow, side bottom, opened from the keyboard", async () => {
+    const body = await renderPage(
+      <div style={{ padding: 120, display: "flex", justifyContent: "center" }}>
+        <Popover.Root>
+          <Popover.Trigger render={<Button variant="outlined" />}>Trigger</Popover.Trigger>
+          <Popover.Content side="bottom">
+            <Popover.Arrow />
+            <Popover.Title>Title</Popover.Title>
+          </Popover.Content>
+        </Popover.Root>
+      </div>,
+    );
+    page.getByRole("button", { name: "Trigger" }).element().focus();
+    await userEvent.keyboard("{Enter}");
+    // The popup holds nothing to focus, so it takes focus itself and shows its ring, which must
+    // cross the arrow's base, not run under it
+    const popup = page.getByRole("dialog");
+    await expect.poll(() => popup.element().matches(":focus-visible")).toBe(true);
     await expect(body).toMatchScreenshot();
   });
 

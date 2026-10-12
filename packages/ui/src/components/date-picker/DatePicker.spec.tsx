@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, isInaccessible, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { createRef } from "react";
@@ -7,6 +7,15 @@ import { Field } from "../field";
 import { DatePicker } from "./DatePicker";
 
 const MARCH_15_LABEL = "Sunday, March 15, 2026";
+
+// Same as Calendar.spec's getButton: a named getByRole is too slow with the calendar open.
+const getButton = (name: string) => {
+  const button = screen.getByLabelText(name, { selector: "button" });
+  expect(button).toHaveRole("button");
+  expect(button).toHaveAccessibleName(name);
+  expect(isInaccessible(button)).toBe(false);
+  return button;
+};
 
 beforeEach(() => {
   // Freeze "today" so the real Calendar opens on March 2026 when no date is selected.
@@ -49,7 +58,7 @@ describe("DatePicker", () => {
     const onValueChange = vi.fn();
     render(<DatePicker onValueChange={onValueChange} />);
     await userEvent.click(screen.getByRole("button", { name: "Pick a date" }));
-    await userEvent.click(screen.getByRole("button", { name: MARCH_15_LABEL }));
+    await userEvent.click(getButton(MARCH_15_LABEL));
     expect(onValueChange).toHaveBeenCalledOnce();
     expect(onValueChange.mock.calls[0]?.[0]).toEqual(new Date(2026, 2, 15));
     expect(screen.queryByRole("grid")).not.toBeInTheDocument();
@@ -58,7 +67,7 @@ describe("DatePicker", () => {
   it("updates displayed date after uncontrolled selection", async () => {
     render(<DatePicker />);
     await userEvent.click(screen.getByRole("button", { name: "Pick a date" }));
-    await userEvent.click(screen.getByRole("button", { name: MARCH_15_LABEL }));
+    await userEvent.click(getButton(MARCH_15_LABEL));
     expect(screen.getByRole("button", { name: "March 15, 2026" })).toBeInTheDocument();
   });
 
@@ -66,7 +75,7 @@ describe("DatePicker", () => {
     const onValueChange = vi.fn();
     render(<DatePicker value={new Date(2026, 0, 1)} onValueChange={onValueChange} />);
     await userEvent.click(screen.getByRole("button", { name: "January 1, 2026" }));
-    await userEvent.click(screen.getByRole("button", { name: "Thursday, January 15, 2026" }));
+    await userEvent.click(getButton("Thursday, January 15, 2026"));
     expect(screen.getByRole("button", { name: "January 1, 2026" })).toBeInTheDocument();
     expect(onValueChange).toHaveBeenCalledOnce();
   });
@@ -86,11 +95,9 @@ describe("DatePicker", () => {
       "Friday, March 13, 2026",
       "Thursday, March 26, 2026",
     ]) {
-      expect(screen.getByRole("button", { name })).toHaveAttribute("aria-disabled", "true");
+      expect(getButton(name)).toHaveAttribute("aria-disabled", "true");
     }
-    expect(screen.getByRole("button", { name: MARCH_15_LABEL })).not.toHaveAttribute(
-      "aria-disabled",
-    );
+    expect(getButton(MARCH_15_LABEL)).not.toHaveAttribute("aria-disabled");
   });
 
   it("starts the calendar week on Monday with weekStartsOn={1}", async () => {
@@ -110,14 +117,15 @@ describe("DatePicker", () => {
       "Friday, April 3, 2026",
       "Saturday, April 4, 2026",
     ]) {
-      const outsideDay = screen.getByRole("button", { name });
+      const outsideDay = getButton(name);
       expect(outsideDay).toHaveClass("text-muted-foreground");
       expect(outsideDay).toHaveAttribute("tabindex", "-1");
     }
+    // See Calendar.spec's tabStops for why hidden: true is safe.
     const tabStops = within(screen.getByRole("grid"))
-      .getAllByRole("button")
+      .getAllByRole("button", { hidden: true })
       .filter((button) => button.tabIndex === 0);
-    expect(tabStops).toEqual([screen.getByRole("button", { name: MARCH_15_LABEL })]);
+    expect(tabStops).toEqual([getButton(MARCH_15_LABEL)]);
   });
 
   it("disables trigger when disabled prop is set", () => {
@@ -251,7 +259,7 @@ describe("DatePicker in a form", () => {
     const form = screen.getByRole<HTMLFormElement>("form");
     expect(formData(form)).toBe("2026-10-10");
     await userEvent.click(screen.getByRole("button", { name: "October 10, 2026" }));
-    await userEvent.click(screen.getByRole("button", { name: "Friday, October 2, 2026" }));
+    await userEvent.click(getButton("Friday, October 2, 2026"));
     expect(formData(form)).toBe("2026-10-02");
   });
 
@@ -285,7 +293,7 @@ describe("DatePicker in a form", () => {
     form.querySelector<HTMLInputElement>("input[name='due']")?.focus();
     expect(screen.getByRole("button", { name: "Pick a date" })).toHaveFocus();
     await userEvent.click(screen.getByRole("button", { name: "Pick a date" }));
-    await userEvent.click(screen.getByRole("button", { name: MARCH_15_LABEL }));
+    await userEvent.click(getButton(MARCH_15_LABEL));
     expect(form.checkValidity()).toBe(true);
   });
 

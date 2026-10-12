@@ -5,7 +5,7 @@ import type { ComponentProps } from "react";
 import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
-import { arrowClasses, arrowPopupClasses } from "../../lib/popup-arrow";
+import { ARROW_PADDING_PX, arrowClasses, arrowPopupClasses } from "../../lib/popup-arrow";
 import { usePortalContainer } from "../../lib/portal-container";
 import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
 
@@ -38,6 +38,12 @@ export type MenuContentProps = ComponentProps<typeof BaseMenu.Popup> & {
    * @default 0
    */
   alignOffset?: ComponentProps<typeof BaseMenu.Positioner>["alignOffset"];
+  /**
+   * How close the arrow may come to the popup's ends, in pixels. The default keeps the arrow's
+   * foot off the 8px rounded corner; raise it with a larger corner radius or a larger `--spacing`.
+   * @default 10
+   */
+  arrowPadding?: ComponentProps<typeof BaseMenu.Positioner>["arrowPadding"];
 };
 
 export type MenuItemProps = ComponentProps<typeof BaseMenu.Item>;
@@ -62,6 +68,7 @@ function MenuContentPopup({
   side,
   align,
   alignOffset,
+  arrowPadding = ARROW_PADDING_PX,
   ...props
 }: MenuContentProps) {
   const m = useLoadedMotion();
@@ -83,6 +90,7 @@ function MenuContentPopup({
       side={side}
       align={align}
       alignOffset={alignOffset}
+      arrowPadding={arrowPadding}
     >
       <BaseMenu.Popup
         render={render}
