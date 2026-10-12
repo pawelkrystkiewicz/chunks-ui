@@ -87,7 +87,7 @@ function ToastViewport({ className, ...props }: ToastViewportProps) {
   return (
     <BaseToast.Viewport
       className={cnState(
-        "fixed right-4 bottom-4 z-toasts flex w-[380px] max-w-[calc(100vw-2rem)] flex-col gap-2 outline-none",
+        "fixed end-4 bottom-4 z-toasts flex w-[380px] max-w-[calc(100vw-2rem)] flex-col gap-2 outline-none",
         className,
       )}
       {...props}
@@ -129,8 +129,13 @@ function ToastRoot({ className, toast, ...props }: ToastRootProps) {
         "not-[.toast-stack]:data-limited:hidden",
         !reduced && [
           "micro-interactions",
-          "data-starting-style:translate-x-full data-starting-style:opacity-0",
-          "data-ending-style:translate-x-full data-ending-style:opacity-0",
+          // In and out past the viewport's inline end. `:dir()` reads the toast's own direction,
+          // `rtl:` would also match in an LTR section of an RTL page.
+          "[--toast-slide-x:100%] [&:dir(rtl)]:[--toast-slide-x:-100%]",
+          "data-starting-style:translate-x-(--toast-slide-x) data-starting-style:opacity-0",
+          // A toast that leaves the limit gets no `data-starting-style`: it was `display: none`
+          "starting:translate-x-(--toast-slide-x) starting:opacity-0",
+          "data-ending-style:translate-x-(--toast-slide-x) data-ending-style:opacity-0",
           "transition-[translate,opacity] duration-300 ease-out",
         ],
         className,

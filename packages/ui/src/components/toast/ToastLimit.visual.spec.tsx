@@ -70,6 +70,9 @@ describe("Toast past the limit", () => {
     await userEvent.click(within(toastOf("Toast 5")).getByLabelText("Close"));
 
     await expect.poll(shownTitles).toEqual(["Toast 2", "Toast 3", "Toast 4"]);
+    // Under reduced motion, the config's default, it shows at once (Toast.visual.spec.tsx has
+    // the slide)
+    expect(toastOf("Toast 2").getAnimations()).toEqual([]);
   });
 
   it("keeps the stack's own handling in the opt-in stacked viewport", async () => {

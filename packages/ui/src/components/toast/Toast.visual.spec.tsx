@@ -1,8 +1,8 @@
 import { Toast as BaseToast } from "@base-ui/react/toast";
-import { render, screen } from "@testing-library/react";
-import { type ComponentPropsWithoutRef, useEffect, useRef } from "react";
+import { render, screen, within } from "@testing-library/react";
+import { type ComponentPropsWithoutRef, type ReactNode, useEffect, useRef } from "react";
 import { afterAll, beforeAll, describe, expect, it, onTestFinished } from "vitest";
-import { commands, page } from "vitest/browser";
+import { commands, page, userEvent } from "vitest/browser";
 import { Toast } from "./index";
 
 function AddToast({
@@ -50,6 +50,60 @@ describe("Toast", () => {
     );
     await screen.findByRole("button", { name: "Retry now" });
     await expect(page.elementLocator(document.body)).toMatchScreenshot();
+  });
+
+  it("default, right to left", async () => {
+    document.documentElement.dir = "rtl";
+    onTestFinished(() => document.documentElement.removeAttribute("dir"));
+    // Wider than the viewport, so the shot shows which corner it sits in
+    const { innerWidth, innerHeight } = window;
+    await page.viewport(640, 320);
+    onTestFinished(() => page.viewport(innerWidth, innerHeight));
+    render(
+      <Toast.Provider>
+        <AddToast title="File saved" description="Your changes have been saved." />
+        <Toast.Viewport />
+      </Toast.Provider>,
+    );
+    await screen.findByText("File saved");
+    await expect(page.elementLocator(document.body)).toMatchScreenshot();
+  });
+});
+
+type Dir = "ltr" | "rtl";
+
+/** The toasts' direction, and the page's: an `rtl:` variant would match in the LTR section */
+const LAYOUTS = [
+  { layout: "ltr", dir: "ltr", page: "ltr" },
+  { layout: "rtl", dir: "rtl", page: "rtl" },
+  { layout: "ltr section on an rtl page", dir: "ltr", page: "rtl" },
+] as const;
+
+/** Renders `ui` on a page of direction `page`, in a section of direction `dir` if they differ */
+function renderIn({ dir, page }: { dir: Dir; page: Dir }, ui: ReactNode) {
+  document.documentElement.dir = page;
+  onTestFinished(() => document.documentElement.removeAttribute("dir"));
+  return render(page === dir ? ui : <div dir={dir}>{ui}</div>);
+}
+
+describe.each(LAYOUTS)("Toast viewport, $layout", (layout) => {
+  it("sits in the bottom corner at the inline end", async () => {
+    // Wide enough that the viewport doesn't span the page, so its side is plain to see
+    const { innerWidth, innerHeight } = window;
+    await page.viewport(800, 600);
+    onTestFinished(() => page.viewport(innerWidth, innerHeight));
+    renderIn(
+      layout,
+      <Toast.Provider>
+        <AddToast title="File saved" />
+        <Toast.Viewport />
+      </Toast.Provider>,
+    );
+    await screen.findByText("File saved");
+    const box = screen.getByRole("region", { name: /Notifications/ }).getBoundingClientRect();
+    const { clientWidth, clientHeight } = document.documentElement;
+    expect(clientHeight - box.bottom).toBeCloseTo(16, 0);
+    expect(layout.dir === "ltr" ? clientWidth - box.right : box.left).toBeCloseTo(16, 0);
   });
 });
 
@@ -125,7 +179,7 @@ describe("Toast with motion allowed", () => {
   beforeAll(() => commands.emulateMedia({ reducedMotion: "no-preference" }));
   afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
 
-  // `translate-x-full` sets the `translate` property, not `transform`
+  // The `translate-x-*` slide sets the `translate` property, not `transform`
   it("slides and fades in", async () => {
     // Every transition that starts, recorded from before the toast mounts
     const runs: { target: EventTarget | null; property: string }[] = [];
@@ -147,4 +201,92 @@ describe("Toast with motion allowed", () => {
     await expect.poll(transitioned).toEqual(expect.arrayContaining(["opacity", "translate"]));
     expect(transitioned()).toEqual(["opacity", "translate"]);
   });
+
+  describe.each(LAYOUTS)("$layout", (layout) => {
+    // Past the viewport's inline end: from the right in LTR, from the left in RTL
+    const expectEntersFromInlineEnd = ({ offset, width, opacity }: EnterStart) => {
+      expect(opacity).toBe("0");
+      expect(offset).toBeCloseTo(layout.dir === "ltr" ? width : -width, 0);
+    };
+
+    it("slides in from past the inline end", async () => {
+      const enterStart = holdEnterOf("File saved");
+      renderIn(
+        layout,
+        <Toast.Provider>
+          <AddToast title="File saved" />
+          <Toast.Viewport />
+        </Toast.Provider>,
+      );
+      const toast = (await screen.findByText("File saved")).closest(".Toast") as HTMLElement;
+      expectEntersFromInlineEnd(await enterStart(toast));
+    });
+
+    // Base UI gives a toast that leaves the limit no `data-starting-style`, and it was
+    // `display: none`, so only `@starting-style` gives its transition a start
+    it("slides a toast hidden past the limit in when a newer one closes", async () => {
+      const enterStart = holdEnterOf("Toast 2");
+      renderIn(
+        layout,
+        <Toast.Provider>
+          <AddToasts count={5} />
+          <Toast.Viewport />
+        </Toast.Provider>,
+      );
+      const hidden = (await screen.findByText("Toast 2")).closest(".Toast") as HTMLElement;
+      await expect.poll(() => getComputedStyle(hidden).display).toBe("none");
+      const newest = (await screen.findByText("Toast 5")).closest(".Toast") as HTMLElement;
+
+      // Base UI hides the close button from assistive tech, so it has no accessible role
+      await userEvent.click(within(newest).getByLabelText("Close"));
+      expectEntersFromInlineEnd(await enterStart(hidden));
+    });
+  });
 });
+
+function AddToasts({ count }: { count: number }) {
+  const manager = Toast.useToast();
+  const added = useRef(false);
+  useEffect(() => {
+    if (added.current) return;
+    added.current = true;
+    for (let i = 1; i <= count; i++) {
+      manager.add({ title: `Toast ${i}`, dismissible: true, timeout: 0 });
+    }
+  }, [manager, count]);
+  return null;
+}
+
+/** The first frame of a toast's enter transition, against the place where it comes to rest */
+type EnterStart = { offset: number; width: number; opacity: string };
+
+/**
+ * Pauses the transitions of the toast titled `title` as they start, so the returned function can
+ * rewind them to their first frame and measure it. Call before the toast shows.
+ */
+function holdEnterOf(title: string) {
+  const held = new Set<CSSTransition>();
+  const hold = (event: TransitionEvent) => {
+    const toast = event.target as Element;
+    if (!toast.classList.contains("Toast") || !toast.textContent?.includes(title)) return;
+    for (const animation of toast.getAnimations()) {
+      if (animation instanceof CSSTransition && !held.has(animation)) {
+        animation.pause();
+        held.add(animation);
+      }
+    }
+  };
+  document.addEventListener("transitionrun", hold, true);
+  onTestFinished(() => document.removeEventListener("transitionrun", hold, true));
+
+  return async (toast: HTMLElement): Promise<EnterStart> => {
+    const properties = () => [...held].map((transition) => transition.transitionProperty).sort();
+    await expect.poll(properties).toEqual(["opacity", "translate"]);
+    for (const transition of held) transition.currentTime = 0;
+    const start = toast.getBoundingClientRect().left;
+    const { opacity } = getComputedStyle(toast);
+    for (const transition of held) transition.finish();
+    const rest = toast.getBoundingClientRect();
+    return { offset: start - rest.left, width: rest.width, opacity };
+  };
+}
