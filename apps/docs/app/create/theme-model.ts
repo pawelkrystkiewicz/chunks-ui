@@ -207,7 +207,10 @@ export function chartList(t: Pick<Theme, "primary" | "chart">, mode: Mode): stri
   return DS_CHARTS[mode];
 }
 
-/** OKLCH to linear sRGB, clipped to the sRGB gamut the way browsers clip it. */
+/**
+ * OKLCH to linear sRGB as the browser paints it: clipped to the sRGB gamut, then rounded to
+ * 8 bits per channel. Unrounded, a colour can measure 4.50:1 and paint at 4.47:1.
+ */
 function linearSrgb({ l, c, h }: Oklch): [number, number, number] {
   const a = c * Math.cos((h * Math.PI) / 180);
   const b = c * Math.sin((h * Math.PI) / 180);
@@ -216,15 +219,19 @@ function linearSrgb({ l, c, h }: Oklch): [number, number, number] {
     (l - 0.1055613458 * a - 0.0638541728 * b) ** 3,
     (l - 0.0894841775 * a - 1.291485548 * b) ** 3,
   ] as const;
-  const clip = (v: number) => Math.min(1, Math.max(0, v));
+  const paint = (v: number) => {
+    const x = Math.min(1, Math.max(0, v));
+    const s = Math.round(255 * (x <= 0.0031308 ? 12.92 * x : 1.055 * x ** (1 / 2.4) - 0.055)) / 255;
+    return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  };
   return [
-    clip(4.0767416621 * lms[0] - 3.3077115913 * lms[1] + 0.2309699292 * lms[2]),
-    clip(-1.2684380046 * lms[0] + 2.6097574011 * lms[1] - 0.3413193965 * lms[2]),
-    clip(-0.0041960863 * lms[0] - 0.7034186147 * lms[1] + 1.707614701 * lms[2]),
+    paint(4.0767416621 * lms[0] - 3.3077115913 * lms[1] + 0.2309699292 * lms[2]),
+    paint(-1.2684380046 * lms[0] + 2.6097574011 * lms[1] - 0.3413193965 * lms[2]),
+    paint(-0.0041960863 * lms[0] - 0.7034186147 * lms[1] + 1.707614701 * lms[2]),
   ];
 }
 
-/** WCAG 2 contrast ratio of two colours, from 1 to 21. */
+/** WCAG 2 contrast ratio of two colours as painted, from 1 to 21. */
 export function contrast(x: Oklch, y: Oklch): number {
   const luminance = (o: Oklch) => {
     const [r, g, b] = linearSrgb(o);
@@ -283,6 +290,22 @@ export function palette(t: Theme, mode: Mode): Record<string, string> {
     out[`chart-${i + 1}`] = v;
   });
   return out;
+}
+
+/**
+ * The primary the hue slider makes when it moves `p` to hue `h`. Ink and Blue-chroma primaries
+ * (Blue, or one the slider made) start from Blue's lightness and chroma every time, so moves
+ * never ratchet the lightness down. Where white text can't reach 4.5:1 there, and dark text
+ * misses 4.5:1 on at least one base, it darkens in 0.001 steps until white text does. Other swatches keep theirs.
+ */
+export function withHue(p: Oklch, h: number): Oklch {
+  if (p.c >= 0.01 && p.c !== BLUE.c) return { l: p.l, c: p.c, h };
+  const at = (l: number) => ({ l, c: BLUE.c, h });
+  let l = BLUE.l;
+  if (BASES.some((b) => contrast({ l: 0.145, c: b.c, h: b.h }, at(l)) < 4.5)) {
+    while (contrast({ l: 0.985, c: 0, h: 0 }, at(l)) < 4.5) l = (Math.round(l * 1000) - 1) / 1000;
+  }
+  return at(l);
 }
 
 const SHADOWS: Record<Shadow, (dark: boolean) => string> = {
@@ -410,7 +433,8 @@ const STORE_KEY = "chunks-create-theme-v1";
 
 /**
  * Blue before #214 deepened it. A theme stored with exactly it loads with today's Blue.
- * Matched exactly: the hue slider still builds `l: 0.6048` with integer hues, which must stay.
+ * Matched exactly: until #294 the hue slider built `l: 0.6048` at integer hues, and themes
+ * stored from it load as they are.
  */
 const OLD_BLUE: Oklch = { l: 0.6048, c: 0.2165, h: 257.21 };
 
