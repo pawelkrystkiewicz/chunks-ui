@@ -156,6 +156,8 @@ Most components that animate with a CSS transition use the `micro-interactions` 
 
 The class sits in the `components` layer, so timing utilities in `className` override it on parts that keep their CSS transition, for example `<Button className="duration-150 ease-snappy">`. Parts that Motion drives, such as `Tabs.Indicator`, the `Switch` thumb and popups that open with a Motion spring, drop the class while Motion runs. Do not put timing utilities on them: a `duration-*` class on its own makes the browser transition `all` properties, on top of the values Motion writes.
 
+On Button, IconButton, ClearButton, the Pagination links and the CSS fallback of the Popover, Menu, Tooltip, Combobox and Drawer popups, the transition covers a fixed list of properties, set with `[transition-property:…]`. Tailwind sorts `transition-shadow`, `transition-all`, `transition-colors` and `transition-[…]` before it, so on these parts such a utility in `className` changes only the timing, not the properties. `transition-none` still turns the transition off. To animate another property, set the whole list yourself, for example `[transition-property:color,background-color,border-color,opacity,scale,box-shadow]`: tailwind-merge then replaces the library's list.
+
 ## Component Sizing
 
 | Token | Value |
