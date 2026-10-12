@@ -3,13 +3,23 @@ import type { CSSProperties, ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { Button } from "./components/button";
 import { Calendar } from "./components/calendar";
+import { Checkbox } from "./components/checkbox";
 import { Chip } from "./components/chip";
+import { Combobox } from "./components/combobox";
+import { DatePicker } from "./components/date-picker";
 import { Field } from "./components/field";
 import { IconButton } from "./components/icon-button";
+import { Input } from "./components/input";
+import { NumberField } from "./components/number-field";
+import { Radio } from "./components/radio";
+import { Select } from "./components/select";
+import { Switch } from "./components/switch";
+import { Textarea } from "./components/textarea";
 
 /*
  * WCAG 2 contrast of the default theme, read from the colours the browser computes for the
- * components in light and dark mode. Normal text needs 4.5:1, the focus ring 3:1.
+ * components in light and dark mode. Normal text needs 4.5:1, the focus ring and a control's
+ * boundary 3:1.
  */
 
 type Mode = "light" | "dark";
@@ -205,6 +215,85 @@ describe.each(MODES)("theme contrast, %s mode", (mode) => {
     );
     expect.soft(textContrast(getByText("muted")), "muted").toBeGreaterThanOrEqual(4.5);
     expect.soft(textContrast(getByText("ring")), "ring").toBeGreaterThanOrEqual(3);
+  });
+});
+
+// Light mode only: by the #328 decision, dark mode keeps --input at oklch(0.269 0 0), about 1.3:1
+describe("form-control boundaries, light mode", () => {
+  it("borders and the Switch off-track ≥ 3 on the background", () => {
+    const { getByTestId } = renderIn(
+      "light",
+      <>
+        <Input data-testid="Input" aria-label="Input" />
+        <Textarea data-testid="Textarea" aria-label="Textarea" />
+        <Select.Root>
+          <Select.Trigger data-testid="Select" aria-label="Select">
+            <Select.Value />
+          </Select.Trigger>
+        </Select.Root>
+        <Combobox.Root items={[]}>
+          <Combobox.Input data-testid="Combobox" aria-label="Combobox" />
+        </Combobox.Root>
+        <NumberField.Root>
+          <NumberField.Group data-testid="NumberField">
+            <NumberField.Input aria-label="NumberField" />
+          </NumberField.Group>
+        </NumberField.Root>
+        <DatePicker data-testid="DatePicker" aria-label="DatePicker" />
+        <Checkbox.Root data-testid="Checkbox" aria-label="Checkbox" />
+        <Radio.Group aria-label="Radio">
+          <Radio.Root value="a" data-testid="Radio" aria-label="Radio" />
+        </Radio.Group>
+        <Button data-testid="Button" variant="outlined" color="secondary">
+          Button
+        </Button>
+        <IconButton
+          data-testid="IconButton"
+          variant="outlined"
+          color="secondary"
+          aria-label="IconButton"
+        >
+          <Icon />
+        </IconButton>
+        <Switch.Root data-testid="Switch" aria-label="Switch">
+          <Switch.Thumb />
+        </Switch.Root>
+      </>,
+    );
+    const bordered = [
+      "Input",
+      "Textarea",
+      "Select",
+      "Combobox",
+      "NumberField",
+      "DatePicker",
+      "Checkbox",
+      "Radio",
+      "Button",
+      "IconButton",
+    ];
+    for (const name of bordered) {
+      const control = getByTestId(name);
+      const background = backgroundOf(control);
+      expect.soft(parseFloat(getComputedStyle(control).borderTopWidth), name).toBeGreaterThan(0);
+      expect
+        .soft(
+          ratio(
+            paint(...background, getComputedStyle(control).borderTopColor),
+            paint(...background),
+          ),
+          name,
+        )
+        .toBeGreaterThanOrEqual(3);
+    }
+    // The Switch has no border: its unchecked track is the boundary
+    const track = getByTestId("Switch");
+    const outside = track.parentElement;
+    if (!outside) throw new Error("No Switch parent");
+    expect(
+      ratio(paint(...backgroundOf(track)), paint(...backgroundOf(outside))),
+      "Switch",
+    ).toBeGreaterThanOrEqual(3);
   });
 });
 

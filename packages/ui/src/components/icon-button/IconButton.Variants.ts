@@ -77,7 +77,7 @@ export const iconButtonVariants = cva(
       {
         variant: "outlined",
         color: "secondary",
-        className: "border-border text-secondary-foreground hover:bg-accent",
+        className: "border-input text-secondary-foreground hover:bg-accent",
       },
       // Text
       {
