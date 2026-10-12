@@ -283,7 +283,8 @@ export function palette(t: Theme, mode: Mode): Record<string, string> {
     accent: d ? n(0.269) : n(0.97),
     "accent-foreground": d ? n(0.985) : n(0.205),
     border: d ? n(0.269) : n(0.922),
-    input: d ? n(0.269) : n(0.922),
+    // A form control's boundary: 3:1 on white in light mode, on every base
+    input: d ? n(0.269) : n(0.668),
     ring: d ? n(0.556) : n(0.62),
   };
   chartList(t, mode).forEach((v, i) => {

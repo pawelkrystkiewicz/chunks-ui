@@ -51,7 +51,11 @@
 
   /* Utility */
   --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
+  /*
+   * The boundary of a form control (`border-input`, and the unchecked Switch track `bg-input`)
+   * needs 3:1 on the background. 0.668 is the lightest neutral that reaches it: 3.03:1 on white.
+   */
+  --input: oklch(0.668 0 0);
   --ring: oklch(0.62 0 0);
   --radius: 0.625rem;
 

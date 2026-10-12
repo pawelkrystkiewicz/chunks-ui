@@ -100,6 +100,14 @@ describe("palette", () => {
     }
   });
 
+  it("gives form-control boundaries (--input) 3:1 on the background in light mode, on every base", () => {
+    for (const { id: base } of BASES) {
+      const pal = palette({ ...DEFAULT_THEME, base }, "light");
+      const ratio = contrast(parseOklch(pal.input ?? ""), parseOklch(pal.background ?? ""));
+      expect(ratio, base).toBeGreaterThanOrEqual(3);
+    }
+  });
+
   it("puts dark text on a mid-light primary that white text fails on", () => {
     const pink: Theme = { ...DEFAULT_THEME, primary: { l: 0.63, c: 0.22, h: 354 } };
     expect(palette(pink, "light")["primary-foreground"]).toBe("oklch(0.145 0 0)");
