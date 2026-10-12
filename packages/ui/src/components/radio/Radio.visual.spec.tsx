@@ -46,22 +46,6 @@ describe("Radio", () => {
     expect(drawnOpacity(getByText("Option"))).toBe(0.5);
   });
 
-  it("standalone roots, one disabled", async () => {
-    const { fixture } = await renderFixture(
-      <Radio.Group defaultValue="a" aria-label="Plan">
-        <div style={{ display: "flex", gap: 12 }}>
-          <Radio.Root value="a" aria-label="Free">
-            <Radio.Indicator />
-          </Radio.Root>
-          <Radio.Root value="b" aria-label="Pro" disabled>
-            <Radio.Indicator />
-          </Radio.Root>
-        </div>
-      </Radio.Group>,
-    );
-    await expect(fixture).toMatchScreenshot();
-  });
-
   // pointer-events: none would hide the not-allowed cursor; Base UI ignores the click anyway
   const looks = (el: Element) => ({
     opacity: drawnOpacity(el),

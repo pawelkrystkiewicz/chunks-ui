@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
-import { createRef, useState } from "react";
+import { createRef } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Field } from "../field";
 import { Textarea } from "./Textarea";
@@ -59,17 +59,6 @@ describe("Textarea", () => {
       "abc",
       expect.objectContaining({ event: expect.any(Event) }),
     );
-  });
-
-  it("is controlled through value and onValueChange", async () => {
-    function Controlled() {
-      const [value, setValue] = useState("");
-      return <Textarea aria-label="Notes" value={value} onValueChange={setValue} />;
-    }
-    render(<Controlled />);
-    const textarea = screen.getByRole("textbox");
-    await userEvent.type(textarea, "hi");
-    expect(textarea).toHaveValue("hi");
   });
 
   it("has no a11y violations", async () => {

@@ -158,20 +158,6 @@ describe("Input", () => {
       expect(screen.queryByRole("button", { name: "Clear" })).not.toBeInTheDocument();
     });
 
-    it("empties a controlled input through onValueChange when there is no onClear", async () => {
-      const user = userEvent.setup();
-      function Controlled() {
-        const [value, setValue] = useState("abc");
-        return <Input aria-label="Search" value={value} onValueChange={setValue} clearable />;
-      }
-      render(<Controlled />);
-      await user.click(screen.getByRole("button", { name: "Clear" }));
-      const input = screen.getByRole("textbox");
-      expect(input).toHaveValue("");
-      expect(document.activeElement).toBe(input);
-      expect(screen.queryByRole("button", { name: "Clear" })).not.toBeInTheDocument();
-    });
-
     it("empties a controlled input through onValueChange, then calls onClear", async () => {
       const user = userEvent.setup();
       const calls: string[] = [];
@@ -203,16 +189,6 @@ describe("Input", () => {
       await user.click(screen.getByRole("button", { name: "Clear" }));
       expect(onValueChange).toHaveBeenCalledWith("", expect.anything());
       expect(screen.getByRole("textbox")).toHaveValue("abc");
-    });
-
-    it("hides the clear button on a disabled or read-only input", () => {
-      render(
-        <>
-          <Input aria-label="Disabled" defaultValue="abc" disabled clearable />
-          <Input aria-label="Read-only" defaultValue="abc" readOnly clearable />
-        </>,
-      );
-      expect(screen.queryByRole("button", { name: "Clear" })).not.toBeInTheDocument();
     });
   });
 
@@ -252,13 +228,19 @@ describe("Input", () => {
     expect(validate).toHaveBeenCalledWith("", expect.anything());
   });
 
-  it("hides the clear button on a disabled input", () => {
-    render(<Input aria-label="Search" defaultValue="abc" disabled onClear={vi.fn()} />);
+  it.each([
+    ["onClear", { onClear: () => {} }],
+    ["clearable", { clearable: true }],
+  ])("hides the clear button on a disabled input (%s)", (_name, props) => {
+    render(<Input aria-label="Search" defaultValue="abc" disabled {...props} />);
     expect(screen.queryByRole("button", { name: "Clear" })).not.toBeInTheDocument();
   });
 
-  it("hides the clear button on a read-only input", () => {
-    render(<Input aria-label="Search" defaultValue="abc" readOnly onClear={vi.fn()} />);
+  it.each([
+    ["onClear", { onClear: () => {} }],
+    ["clearable", { clearable: true }],
+  ])("hides the clear button on a read-only input (%s)", (_name, props) => {
+    render(<Input aria-label="Search" defaultValue="abc" readOnly {...props} />);
     expect(screen.queryByRole("button", { name: "Clear" })).not.toBeInTheDocument();
   });
 

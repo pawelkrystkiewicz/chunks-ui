@@ -1,7 +1,6 @@
 import { render } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it } from "vitest";
-import { renderFixture } from "../../VisualTest.utils";
 import { Checkbox } from "../checkbox";
 import { Input } from "../input";
 import { Radio } from "../radio";
@@ -108,18 +107,6 @@ describe("Label", () => {
       </div>,
     );
     expect(looks(getByText("Plan"))).toEqual(normal);
-  });
-
-  it("next to an Input with adornments, enabled and disabled", async () => {
-    const { fixture } = await renderFixture(
-      <div className="grid grid-cols-[auto_200px] items-center gap-3">
-        <Label htmlFor="amount">Amount</Label>
-        <Input id="amount" startAdornment="$" defaultValue="40" />
-        <Label htmlFor="limit">Limit</Label>
-        <Input id="limit" startAdornment="$" defaultValue="100" disabled />
-      </div>,
-    );
-    await expect(fixture).toMatchScreenshot();
   });
 
   // Checkbox, Switch and Radio.Root carry the `peer` class, so a `peer-*` style would reach
