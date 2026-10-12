@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { axe } from "jest-axe";
 import { createRef, type ReactNode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
@@ -149,6 +149,18 @@ describe("Dialog.Body", () => {
     expect(screen.getByTestId("body")).toHaveAttribute("aria-labelledby");
     rerender(<Toggle title={false} />);
     expect(screen.getByTestId("body")).not.toHaveAttribute("aria-labelledby");
+  });
+
+  it("is named by the time it takes the initial focus", async () => {
+    let nameAtFocus: string | null | undefined;
+    renderBody(
+      <Dialog.Title>Terms</Dialog.Title>,
+      <Dialog.Body onFocus={(e) => (nameAtFocus = e.currentTarget.getAttribute("aria-labelledby"))}>
+        Text
+      </Dialog.Body>,
+    );
+    await waitFor(() => expect(screen.getByRole("region", { name: "Terms" })).toHaveFocus());
+    expect(nameAtFocus).toBeTruthy();
   });
 
   it("has no a11y violations", async () => {

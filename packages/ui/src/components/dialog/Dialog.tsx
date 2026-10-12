@@ -1,7 +1,14 @@
 "use client";
 
 import { Dialog as BaseDialog } from "@base-ui/react/dialog";
-import { type ComponentProps, createContext, useContext, useEffect, useId, useState } from "react";
+import {
+  type ComponentProps,
+  createContext,
+  useContext,
+  useId,
+  useLayoutEffect,
+  useState,
+} from "react";
 import { cn, cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
@@ -116,7 +123,8 @@ function DialogTitle({ className, id: idProp, ...props }: DialogTitleProps) {
   const fallbackId = useId();
   const id = idProp ?? fallbackId;
   const { setTitleId } = useContext(TitleIdContext);
-  useEffect(() => {
+  // A layout effect, like Base UI's own title id: the Body is named before focus moves to it
+  useLayoutEffect(() => {
     setTitleId?.(id);
     return () => setTitleId?.(undefined);
   }, [id, setTitleId]);
@@ -153,7 +161,8 @@ function DialogBody({ className, ...props }: DialogBodyProps) {
       tabIndex={0}
       aria-labelledby={props["aria-label"] ? undefined : titleId}
       className={cn(
-        "DialogBody min-h-0 flex-1 overflow-y-auto overscroll-contain",
+        // The -m-1 p-1 gutter keeps the focus rings of full-width fields inside the scroll box, without moving them
+        "DialogBody -m-1 min-h-0 flex-1 overflow-y-auto overscroll-contain p-1",
         "focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
         className,
       )}

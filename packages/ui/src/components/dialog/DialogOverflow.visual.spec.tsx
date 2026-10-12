@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { expect, it } from "vitest";
 import { userEvent } from "vitest/browser";
 import { boxOf, describeMotionPaths, waitForStable } from "../../VisualTest.utils";
+import { Input } from "../input";
 import { Dialog } from "./index";
 
 // Geometry only, no screenshots. Both paths: CSS transitions (reduced motion) and Motion springs.
@@ -114,5 +115,34 @@ describeMotionPaths("Dialog", () => {
     expect(popup.scrollHeight).toBe(popup.clientHeight);
     const box = boxOf(popup);
     expect((box.top + box.bottom) / 2).toBeCloseTo(window.innerHeight / 2, 0);
+  });
+
+  it("with a Body, does not clip the focus ring of a full-width field", async () => {
+    const { body } = await openWithBody(
+      <>
+        <Input aria-label="Name" />
+        <div style={{ height: 2000 }} />
+      </>,
+    );
+
+    const input = screen.getByRole("textbox", { name: "Name" });
+    await expect.element(body).toHaveFocus();
+    await userEvent.tab();
+    await expect.element(input).toHaveFocus();
+
+    expect(body.scrollWidth).toBe(body.clientWidth);
+    const style = getComputedStyle(input);
+    const ring = Number.parseFloat(style.outlineWidth) + Number.parseFloat(style.outlineOffset);
+    expect(ring).toBeGreaterThan(0);
+    const bodyBox = boxOf(body);
+    const inputBox = boxOf(input);
+    const bodyStyle = getComputedStyle(body);
+    const padLeft = Number.parseFloat(bodyStyle.paddingLeft);
+    const padRight = Number.parseFloat(bodyStyle.paddingRight);
+    // The outline lies inside the Body's padding box, so overflow does not clip it
+    expect(inputBox.left - ring).toBeGreaterThanOrEqual(bodyBox.left);
+    expect(inputBox.right + ring).toBeLessThanOrEqual(bodyBox.right);
+    expect(padLeft).toBeGreaterThanOrEqual(ring);
+    expect(padRight).toBeGreaterThanOrEqual(ring);
   });
 });
