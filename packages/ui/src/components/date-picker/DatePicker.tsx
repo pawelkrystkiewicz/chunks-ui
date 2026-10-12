@@ -22,7 +22,10 @@ import {
   validDate,
 } from "../calendar/Calendar";
 
-/** The built-in English strings of `DatePicker`: those of its trigger and of its calendar. */
+/**
+ * The built-in English strings of `DatePicker`: those of its trigger and of its calendar. A React
+ * Server Component can't pass the functions to `DatePicker`, a client component.
+ */
 export type DatePickerLabels = CalendarLabels & {
   /**
    * Trigger text while no date is selected. The `placeholder` prop takes precedence.
@@ -30,7 +33,8 @@ export type DatePickerLabels = CalendarLabels & {
    */
   placeholder: string;
   /**
-   * Trigger text for the selected date.
+   * Trigger text for the selected date. Gets a picked date at local midnight, and `value` as you
+   * pass it: format it in the local time zone, not with `timeZone: "UTC"`.
    * @default (date) => "March 15, 2026"
    */
   selectedDate: (date: Date) => string;

@@ -60,7 +60,11 @@ const MONTH_NAMES = [
   "December",
 ] as const;
 
-/** The built-in English strings of `Calendar`. The functions get the date they describe. */
+/**
+ * The built-in English strings of `Calendar`. The functions get the date they describe, at local
+ * midnight: format it in the local time zone, not with `timeZone: "UTC"`, which east of UTC gives
+ * the day before. A React Server Component can't pass functions to `Calendar`, a client component.
+ */
 export type CalendarLabels = {
   /**
    * Name of the button that shows the previous month.
@@ -73,17 +77,18 @@ export type CalendarLabels = {
    */
   nextMonth: string;
   /**
-   * The heading above the days, which also names the grid. Gets the first day of the shown month.
+   * The heading above the days, which also names the grid. Gets the first day of the shown month,
+   * at local midnight.
    * @default (date) => "March 2026"
    */
   heading: (date: Date) => string;
   /**
-   * The column header of a weekday. Gets a date that falls on that weekday.
+   * The column header of a weekday. Gets a date that falls on that weekday, at local midnight.
    * @default (date) => "Su" … "Sa"
    */
   weekday: (date: Date) => string;
   /**
-   * Accessible name of a day button.
+   * Accessible name of a day button. Gets its day, at local midnight.
    * @default (date) => "Sunday, March 15, 2026"
    */
   day: (date: Date) => string;

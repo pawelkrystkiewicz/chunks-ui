@@ -8,7 +8,10 @@ import { cnState } from "../../lib/cn";
 // Types
 // ---------------------------------------------------------------------------
 
-/** The built-in English strings of `Slider`, which come from Base UI. */
+/**
+ * The built-in English strings of `Slider`, which come from Base UI. A React Server Component
+ * can't pass the functions to `Slider.Root`, a client component.
+ */
 export type SliderLabels = {
   /**
    * The `aria-valuetext` of the first thumb of a range slider (two values). Gets the formatted

@@ -30,6 +30,10 @@ Text that depends on data is a function. The `Calendar` keys get the date they d
 />
 ```
 
+The `Calendar` functions get each date at local midnight. Format it in the user's time zone, as `toLocaleDateString` does by default. With `timeZone: "UTC"`, a user east of UTC sees the day before.
+
+`Calendar`, `DatePicker` and `Slider` take functions in `labels`. A React Server Component cannot pass a function to a client component, and every `chunks-ui` component is one (see [Server components](/utilities#server-components)). Pass function labels from a client component (a file that starts with `"use client"`), for example a small wrapper that holds your translations. String labels can come from a server component.
+
 There is no provider that sets the labels of all components. To use the same translation in many places, keep it in a constant and pass it to each component:
 
 ```tsx

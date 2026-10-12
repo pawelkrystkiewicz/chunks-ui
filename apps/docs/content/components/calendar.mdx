@@ -93,7 +93,7 @@ export default Props
 
 ## Labels
 
-`labels` replaces the built-in English text, for example to translate it. Keys you leave out keep their default from `DEFAULT_CALENDAR_LABELS`. The keys that depend on a date are functions of that date, so you can pass `Intl` formatters. See [Labels](/labels).
+`labels` replaces the built-in English text, for example to translate it. Keys you leave out keep their default from `DEFAULT_CALENDAR_LABELS`. The keys that depend on a date are functions of that date, so you can pass `Intl` formatters. They get the date at local midnight: format it in the local time zone, not with `timeZone: "UTC"`. A server component can't pass functions, so set them in a client component. See [Labels](/labels).
 
 <TSDoc
   definition={generateDefinition({
