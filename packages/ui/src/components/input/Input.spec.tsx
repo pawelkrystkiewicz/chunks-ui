@@ -129,6 +129,105 @@ describe("Input", () => {
     });
   }
 
+  describe("clearable", () => {
+    it("shows the clear button on an uncontrolled input with text, without onClear", async () => {
+      const user = userEvent.setup();
+      render(<Input aria-label="Search" defaultValue="" clearable />);
+      const input = screen.getByRole("textbox");
+      expect(input).not.toHaveAttribute("clearable");
+      expect(screen.queryByRole("button", { name: "Clear" })).not.toBeInTheDocument();
+      await user.type(input, "abc");
+      expect(screen.getByRole("button", { name: "Clear" })).toBeInTheDocument();
+    });
+
+    it("empties an uncontrolled input and calls onClear after onValueChange", async () => {
+      const user = userEvent.setup();
+      const calls: string[] = [];
+      render(
+        <Input
+          aria-label="Search"
+          defaultValue="abc"
+          clearable
+          onValueChange={(value) => calls.push(`onValueChange(${JSON.stringify(value)})`)}
+          onClear={() => calls.push("onClear")}
+        />,
+      );
+      await user.click(screen.getByRole("button", { name: "Clear" }));
+      expect(screen.getByRole("textbox")).toHaveValue("");
+      expect(calls).toEqual(['onValueChange("")', "onClear"]);
+      expect(screen.queryByRole("button", { name: "Clear" })).not.toBeInTheDocument();
+    });
+
+    it("empties a controlled input through onValueChange when there is no onClear", async () => {
+      const user = userEvent.setup();
+      function Controlled() {
+        const [value, setValue] = useState("abc");
+        return <Input aria-label="Search" value={value} onValueChange={setValue} clearable />;
+      }
+      render(<Controlled />);
+      await user.click(screen.getByRole("button", { name: "Clear" }));
+      const input = screen.getByRole("textbox");
+      expect(input).toHaveValue("");
+      expect(document.activeElement).toBe(input);
+      expect(screen.queryByRole("button", { name: "Clear" })).not.toBeInTheDocument();
+    });
+
+    it("leaves a controlled input as it is when its handler keeps the value", async () => {
+      const user = userEvent.setup();
+      const onValueChange = vi.fn();
+      render(<Input aria-label="Search" value="abc" onValueChange={onValueChange} clearable />);
+      await user.click(screen.getByRole("button", { name: "Clear" }));
+      expect(onValueChange).toHaveBeenCalledWith("", expect.anything());
+      expect(screen.getByRole("textbox")).toHaveValue("abc");
+    });
+
+    it("hides the clear button on a disabled or read-only input", () => {
+      render(
+        <>
+          <Input aria-label="Disabled" defaultValue="abc" disabled clearable />
+          <Input aria-label="Read-only" defaultValue="abc" readOnly clearable />
+        </>,
+      );
+      expect(screen.queryByRole("button", { name: "Clear" })).not.toBeInTheDocument();
+    });
+  });
+
+  // validationMode="onBlur" validates on every blur, so a clear must not blur the input
+  it.each([
+    ["clearable", { clearable: true }],
+    ["onClear", { onClear: () => {} }],
+  ])("keeps focus in the input without a blur when Clear is clicked (%s)", async (_, props) => {
+    const user = userEvent.setup();
+    const onBlur = vi.fn();
+    render(<Input aria-label="Search" defaultValue="abc" onBlur={onBlur} {...props} />);
+    const input = screen.getByRole("textbox");
+    await user.click(input);
+    await user.click(screen.getByRole("button", { name: "Clear" }));
+    expect(input).toHaveValue("");
+    expect(document.activeElement).toBe(input);
+    expect(onBlur).not.toHaveBeenCalled();
+  });
+
+  it("validates a validationMode=onBlur field once, on the real blur, after a clear", async () => {
+    const user = userEvent.setup();
+    const validate = vi.fn(() => null);
+    render(
+      <>
+        <Field.Root validationMode="onBlur" validate={validate}>
+          <Field.Label>Search</Field.Label>
+          <Input defaultValue="abc" clearable />
+        </Field.Root>
+        <button type="button">Elsewhere</button>
+      </>,
+    );
+    await user.click(screen.getByRole("textbox"));
+    await user.click(screen.getByRole("button", { name: "Clear" }));
+    expect(validate).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "Elsewhere" }));
+    expect(validate).toHaveBeenCalledOnce();
+    expect(validate).toHaveBeenCalledWith("", expect.anything());
+  });
+
   it("hides the clear button on a disabled input", () => {
     render(<Input aria-label="Search" defaultValue="abc" disabled onClear={vi.fn()} />);
     expect(screen.queryByRole("button", { name: "Clear" })).not.toBeInTheDocument();

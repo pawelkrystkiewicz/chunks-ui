@@ -5,7 +5,6 @@ import {
   InputErrorExample,
   InputWithFieldExample,
   InputWithClearButton,
-  InputWithClearButtonUncontrolled,
 } from '@/examples/Input'
 import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
@@ -51,9 +50,33 @@ Use `startAdornment` and `endAdornment` to place icons or text at the edges of t
 
 ## Clear Button
 
-Pass an `onClear` callback to show a built-in clear button (uses the `ClearButton` component internally). The button shows while the input has text, controlled or uncontrolled, and not on a `disabled` or `readOnly` input. Clearing moves focus back to the input. While the button is visible it takes the place of `endAdornment`, so the two don't show together.
+Add `clearable` to show a built-in clear button (the `ClearButton` component). The button shows while the input has text, and not on a `disabled` or `readOnly` input. While it is visible it takes the place of `endAdornment`, so the two don't show together.
 
-A controlled input keeps its `value` until your `onClear` sets it to `''`:
+Clearing empties the input the way typing does: `onChange` and `onValueChange` fire with `''`. Focus stays in the input, because a click on the button doesn't blur it, so a `Field.Root` with `validationMode="onBlur"` doesn't validate in the middle of a clear.
+
+```tsx
+<Input defaultValue="Hello" clearable placeholder="Search..." aria-label="Search" />
+```
+
+<Container>
+  <Input defaultValue="Hello" clearable placeholder="Search..." aria-label="Search" />
+</Container>
+
+A controlled input is cleared by the handler that sets its `value`:
+
+```tsx
+export const ClearableSearch = () => {
+  const [value, setValue] = useState('')
+
+  return (
+    <Input value={value} onValueChange={setValue} clearable placeholder="Search..." aria-label="Search" />
+  )
+}
+```
+
+### onClear
+
+`onClear` is called after the button clears the input. Passing it also shows the button, without `clearable`. With `onClear`, a controlled input fires no `onChange` or `onValueChange`, and keeps its `value` until your `onClear` sets it to `''`:
 
 ```tsx
 export const InputWithClearButton = () => {
@@ -75,15 +98,7 @@ export const InputWithClearButton = () => {
   <InputWithClearButton />
 </Container>
 
-An uncontrolled input (`defaultValue`) is emptied for you, and `onChange` and `onValueChange` fire with the empty value. `onClear` only tells you that it happened:
-
-```tsx
-<Input defaultValue="Hello" onClear={() => {}} placeholder="Search..." aria-label="Search" />
-```
-
-<Container>
-  <InputWithClearButtonUncontrolled />
-</Container>
+An uncontrolled input (`defaultValue`) is emptied for you, as with `clearable`, and `onClear` only tells you that it happened.
 
 ## Error State
 
@@ -119,7 +134,7 @@ Wrap `Input` in a `Field` for labels, descriptions, and validation:
   definition={generateDefinition({
     code: `
 import type { InputProps } from 'chunks-ui'
-type Props = Pick<InputProps, 'startAdornment' | 'endAdornment' | 'onClear'>
+type Props = Pick<InputProps, 'startAdornment' | 'endAdornment' | 'clearable' | 'onClear'>
 export default Props
 `
   })}
