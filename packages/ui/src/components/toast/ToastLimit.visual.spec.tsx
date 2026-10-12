@@ -1,26 +1,13 @@
 import { render, screen, within } from "@testing-library/react";
-import { useEffect, useRef } from "react";
 import { describe, expect, it } from "vitest";
 import { userEvent } from "vitest/browser";
+import { AddToasts } from "../../VisualTest.utils";
 import { Toast } from "./index";
 
 /*
  * Base UI marks the toasts past the provider's `limit` (3 by default) with `data-limited` and
  * makes them inert. The default viewport must not show them as cards that can't be used.
  */
-
-function AddToasts({ count, className }: { count: number; className?: string }) {
-  const manager = Toast.useToast();
-  const added = useRef(false);
-  useEffect(() => {
-    if (added.current) return;
-    added.current = true;
-    for (let i = 1; i <= count; i++) {
-      manager.add({ title: `Toast ${i}`, dismissible: true, timeout: 0, className });
-    }
-  }, [manager, count, className]);
-  return null;
-}
 
 const toastOf = (title: string) => screen.getByText(title).closest(".Toast") as HTMLElement;
 

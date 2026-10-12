@@ -1,8 +1,9 @@
 import { render } from "@testing-library/react";
 import { cancelFrame, frame } from "motion/react";
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 import { afterAll, beforeAll, beforeEach, describe, expect } from "vitest";
 import { commands, page } from "vitest/browser";
+import { Toast } from "./components/toast";
 import { reloadMotion } from "./lib/use-motion";
 
 /** Renders children in a padded fixture wrapper. Returns the wrapper element for screenshotting. */
@@ -165,3 +166,40 @@ export const eachPaintedFrame = <T,>(read: () => T, frames: number) =>
     };
     frame.postRender(step, true);
   });
+
+export type Dir = "ltr" | "rtl";
+
+/**
+ * An element's extent along the inline axis: distances that grow from left to right in LTR and
+ * from right to left in RTL. `a.end <= b.start` reads "a comes before b" in either direction.
+ */
+export function inlineSpan(el: Element, dir: Dir) {
+  const { left, right } = el.getBoundingClientRect();
+  return dir === "ltr" ? { start: left, end: right } : { start: -right, end: -left };
+}
+
+export const px = (value: string) => Number.parseFloat(value);
+
+/** The inline extent of `el`'s content box: inside its border and padding */
+export function contentSpan(el: Element, dir: Dir) {
+  const style = getComputedStyle(el);
+  const { start, end } = inlineSpan(el, dir);
+  return {
+    start: start + px(style.borderInlineStartWidth) + px(style.paddingInlineStart),
+    end: end - px(style.borderInlineEndWidth) - px(style.paddingInlineEnd),
+  };
+}
+
+/** Adds `count` dismissible toasts titled "Toast 1" to "Toast N" that stay until closed */
+export function AddToasts({ count, className }: { count: number; className?: string }) {
+  const manager = Toast.useToast();
+  const added = useRef(false);
+  useEffect(() => {
+    if (added.current) return;
+    added.current = true;
+    for (let i = 1; i <= count; i++) {
+      manager.add({ title: `Toast ${i}`, dismissible: true, timeout: 0, className });
+    }
+  }, [manager, count, className]);
+  return null;
+}

@@ -3,6 +3,7 @@ import { render, screen, within } from "@testing-library/react";
 import { type ComponentPropsWithoutRef, type ReactNode, useEffect, useRef } from "react";
 import { afterAll, beforeAll, describe, expect, it, onTestFinished } from "vitest";
 import { commands, page, userEvent } from "vitest/browser";
+import { AddToasts, type Dir } from "../../VisualTest.utils";
 import { Toast } from "./index";
 
 function AddToast({
@@ -69,8 +70,6 @@ describe("Toast", () => {
     await expect(page.elementLocator(document.body)).toMatchScreenshot();
   });
 });
-
-type Dir = "ltr" | "rtl";
 
 /** The toasts' direction, and the page's: an `rtl:` variant would match in the LTR section */
 const LAYOUTS = [
@@ -202,6 +201,57 @@ describe("Toast with motion allowed", () => {
     expect(transitioned()).toEqual(["opacity", "translate"]);
   });
 
+  describe.each([
+    { dir: "ltr", drag: 1 },
+    { dir: "rtl", drag: -1 },
+  ] as const)("swiping, $dir", ({ dir, drag }) => {
+    const side = drag > 0 ? "right" : "left";
+
+    // Dispatched by hand: the gesture needs several moves, and Playwright's drag makes one
+    it(`dismisses a toast dragged ${side}, and it leaves ${side}`, async () => {
+      document.documentElement.dir = dir;
+      onTestFinished(() => document.documentElement.removeAttribute("dir"));
+      render(
+        <Toast.Provider>
+          <AddToast title="File saved" />
+          <Toast.Viewport />
+        </Toast.Provider>,
+      );
+      const toast = (await screen.findByText("File saved")).closest(".Toast") as HTMLElement;
+      await expect.poll(() => getComputedStyle(toast).opacity).toBe("1");
+      // No pointer is active for the made-up id
+      toast.setPointerCapture = () => {};
+
+      const home = toast.getBoundingClientRect().left;
+      const pointer = (type: string, dx: number, target: EventTarget = toast) =>
+        target.dispatchEvent(
+          new PointerEvent(type, {
+            bubbles: true,
+            pointerId: 7,
+            button: 0,
+            clientX: 300 + dx * drag,
+            clientY: 300,
+            movementX: 10 * drag,
+          }),
+        );
+      pointer("pointerdown", 0);
+      for (const dx of [0, 20, 60, 100]) pointer("pointermove", dx);
+      pointer("pointerup", 100, document);
+
+      await expect.poll(() => toast.dataset.swipeDirection).toBe(side);
+      // The farthest it gets from where it sat, along the drag
+      let farthest = 0;
+      await expect
+        .poll(() => {
+          if (toast.isConnected) {
+            farthest = Math.max(farthest, (toast.getBoundingClientRect().left - home) * drag);
+          }
+          return farthest;
+        })
+        .toBeGreaterThan(100);
+    });
+  });
+
   describe.each(LAYOUTS)("$layout", (layout) => {
     // Past the viewport's inline end: from the right in LTR, from the left in RTL
     const expectEntersFromInlineEnd = ({ offset, width, opacity }: EnterStart) => {
@@ -225,7 +275,6 @@ describe("Toast with motion allowed", () => {
     // Base UI gives a toast that leaves the limit no `data-starting-style`, and it was
     // `display: none`, so only `@starting-style` gives its transition a start
     it("slides a toast hidden past the limit in when a newer one closes", async () => {
-      const enterStart = holdEnterOf("Toast 2");
       renderIn(
         layout,
         <Toast.Provider>
@@ -237,25 +286,14 @@ describe("Toast with motion allowed", () => {
       await expect.poll(() => getComputedStyle(hidden).display).toBe("none");
       const newest = (await screen.findByText("Toast 5")).closest(".Toast") as HTMLElement;
 
+      // Armed only now, so a transition from mounting can't stand in for the one under test
+      const enterStart = holdEnterOf("Toast 2");
       // Base UI hides the close button from assistive tech, so it has no accessible role
       await userEvent.click(within(newest).getByLabelText("Close"));
       expectEntersFromInlineEnd(await enterStart(hidden));
     });
   });
 });
-
-function AddToasts({ count }: { count: number }) {
-  const manager = Toast.useToast();
-  const added = useRef(false);
-  useEffect(() => {
-    if (added.current) return;
-    added.current = true;
-    for (let i = 1; i <= count; i++) {
-      manager.add({ title: `Toast ${i}`, dismissible: true, timeout: 0 });
-    }
-  }, [manager, count]);
-  return null;
-}
 
 /** The first frame of a toast's enter transition, against the place where it comes to rest */
 type EnterStart = { offset: number; width: number; opacity: string };

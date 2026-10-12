@@ -1,10 +1,8 @@
 import { screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import { renderFixture } from "../../VisualTest.utils";
+import { contentSpan, type Dir, renderFixture } from "../../VisualTest.utils";
 import { Checkbox } from "../checkbox";
 import { Table } from "./index";
-
-type Dir = "ltr" | "rtl";
 
 afterEach(() => {
   document.documentElement.removeAttribute("dir");
@@ -56,19 +54,6 @@ function renderTable(dir: Dir) {
       </Table.Root>
     </div>,
   );
-}
-
-const px = (value: string) => Number.parseFloat(value);
-
-/** The inline extent of `el`'s content box: grows left to right in LTR, right to left in RTL */
-function contentSpan(el: Element, dir: Dir) {
-  const style = getComputedStyle(el);
-  const { left, right } = el.getBoundingClientRect();
-  const [start, end] = dir === "ltr" ? [left, right] : [-right, -left];
-  return {
-    start: start + px(style.borderInlineStartWidth) + px(style.paddingInlineStart),
-    end: end - px(style.borderInlineEndWidth) - px(style.paddingInlineEnd),
-  };
 }
 
 /** The inline extent of the text inside `el` */
