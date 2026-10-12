@@ -310,7 +310,9 @@ const BUILT_ON = [
 function Hero() {
   return (
     <section className="dark relative overflow-hidden bg-(image:--l-hero-bg) text-white">
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[200px] bg-linear-to-b from-transparent to-(--l-bg)" />
+      {/* 160px: a taller fade brings the light theme's pale --l-bg up behind the BUILT ON links, and
+          their text and ring drop under 3:1 (200px gave 2.84 and 2.68). */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[160px] bg-linear-to-b from-transparent to-(--l-bg)" />
       <Header />
       <div
         className={`${WRAP} relative z-2 grid min-h-[600px] grid-cols-[repeat(auto-fit,minmax(min(100%,440px),1fr))] items-center gap-10 pt-[clamp(56px,8vw,96px)] pb-16`}
