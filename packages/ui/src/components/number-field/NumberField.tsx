@@ -1,14 +1,48 @@
 "use client";
 
 import { NumberField as BaseNumberField } from "@base-ui/react/number-field";
-import type { ComponentProps } from "react";
+import { type ComponentProps, createContext, useContext } from "react";
 import { cnState } from "../../lib/cn";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-export type NumberFieldRootProps = ComponentProps<typeof BaseNumberField.Root>;
+/** The built-in English strings of `NumberField`, which come from Base UI. */
+export type NumberFieldLabels = {
+  /**
+   * Name of `NumberField.Increment`.
+   * @default "Increase"
+   */
+  increment: string;
+  /**
+   * Name of `NumberField.Decrement`.
+   * @default "Decrease"
+   */
+  decrement: string;
+  /**
+   * The `aria-roledescription` of `NumberField.Input`, which a screen reader reads as its role.
+   * @default "Number field"
+   */
+  roleDescription: string;
+};
+
+export const DEFAULT_NUMBER_FIELD_LABELS: NumberFieldLabels = {
+  increment: "Increase",
+  decrement: "Decrease",
+  roleDescription: "Number field",
+};
+
+const NumberFieldLabelsContext = createContext(DEFAULT_NUMBER_FIELD_LABELS);
+
+export type NumberFieldRootProps = ComponentProps<typeof BaseNumberField.Root> & {
+  /**
+   * Replaces the built-in English strings, e.g. to translate them. Keys you leave out keep the
+   * default from `DEFAULT_NUMBER_FIELD_LABELS`. `aria-label` and `aria-roledescription` on a part
+   * take precedence.
+   */
+  labels?: Partial<NumberFieldLabels>;
+};
 export type NumberFieldGroupProps = ComponentProps<typeof BaseNumberField.Group>;
 export type NumberFieldInputProps = ComponentProps<typeof BaseNumberField.Input>;
 export type NumberFieldIncrementProps = ComponentProps<typeof BaseNumberField.Increment>;
@@ -22,8 +56,12 @@ export type NumberFieldScrubAreaCursorProps = ComponentProps<
 // Components
 // ---------------------------------------------------------------------------
 
-function NumberFieldRoot({ className, ...props }: NumberFieldRootProps) {
-  return <BaseNumberField.Root className={cnState("flex flex-col", className)} {...props} />;
+function NumberFieldRoot({ className, labels, ...props }: NumberFieldRootProps) {
+  return (
+    <NumberFieldLabelsContext.Provider value={{ ...DEFAULT_NUMBER_FIELD_LABELS, ...labels }}>
+      <BaseNumberField.Root className={cnState("flex flex-col", className)} {...props} />
+    </NumberFieldLabelsContext.Provider>
+  );
 }
 
 function NumberFieldGroup({ className, ...props }: NumberFieldGroupProps) {
@@ -41,8 +79,10 @@ function NumberFieldGroup({ className, ...props }: NumberFieldGroupProps) {
 }
 
 function NumberFieldInput({ className, ...props }: NumberFieldInputProps) {
+  const labels = useContext(NumberFieldLabelsContext);
   return (
     <BaseNumberField.Input
+      aria-roledescription={labels.roleDescription}
       className={cnState(
         "h-ui-height w-full min-w-16 flex-1 bg-transparent px-3 text-center text-foreground text-sm tabular-nums",
         "placeholder:text-muted-foreground",
@@ -56,8 +96,10 @@ function NumberFieldInput({ className, ...props }: NumberFieldInputProps) {
 }
 
 function NumberFieldIncrement({ className, ...props }: NumberFieldIncrementProps) {
+  const labels = useContext(NumberFieldLabelsContext);
   return (
     <BaseNumberField.Increment
+      aria-label={labels.increment}
       className={cnState(
         "micro-interactions flex h-ui-height items-center justify-center px-2 text-muted-foreground hover:text-foreground",
         "border-input border-s",
@@ -85,8 +127,10 @@ function NumberFieldIncrement({ className, ...props }: NumberFieldIncrementProps
 }
 
 function NumberFieldDecrement({ className, ...props }: NumberFieldDecrementProps) {
+  const labels = useContext(NumberFieldLabelsContext);
   return (
     <BaseNumberField.Decrement
+      aria-label={labels.decrement}
       className={cnState(
         "micro-interactions flex h-ui-height items-center justify-center px-2 text-muted-foreground hover:text-foreground",
         "border-input border-e",

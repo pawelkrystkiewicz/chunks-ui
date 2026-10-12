@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import * as React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { NumberField } from "./NumberField";
+import { DEFAULT_NUMBER_FIELD_LABELS, NumberField } from "./NumberField";
 
 afterEach(cleanup);
 
@@ -206,5 +206,49 @@ describe("NumberField", () => {
       </NumberField.Root>,
     );
     expect(await axe(container)).toHaveNoViolations();
+  });
+});
+
+describe("NumberField labels", () => {
+  function UnnamedNumberField(props: Partial<React.ComponentProps<typeof NumberField.Root>> = {}) {
+    return (
+      <NumberField.Root defaultValue={0} {...props}>
+        <NumberField.Group>
+          <NumberField.Decrement />
+          <NumberField.Input aria-label="Quantity" />
+          <NumberField.Increment />
+        </NumberField.Group>
+      </NumberField.Root>
+    );
+  }
+
+  it("uses DEFAULT_NUMBER_FIELD_LABELS", () => {
+    render(<UnnamedNumberField />);
+    const { increment, decrement, roleDescription } = DEFAULT_NUMBER_FIELD_LABELS;
+    expect(screen.getByRole("button", { name: increment })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: decrement })).toBeInTheDocument();
+    expect(screen.getByRole("textbox")).toHaveAttribute("aria-roledescription", roleDescription);
+  });
+
+  it("takes every string from labels on Root", () => {
+    render(
+      <UnnamedNumberField
+        labels={{ increment: "Zwiększ", decrement: "Zmniejsz", roleDescription: "Pole liczbowe" }}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Zwiększ" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Zmniejsz" })).toBeInTheDocument();
+    expect(screen.getByRole("textbox")).toHaveAttribute("aria-roledescription", "Pole liczbowe");
+  });
+
+  it("prefers aria-label and aria-roledescription on a part over labels", () => {
+    render(
+      <NumberField.Root defaultValue={0} labels={{ increment: "Zwiększ", roleDescription: "Pole" }}>
+        <NumberField.Input aria-label="Quantity" aria-roledescription="Counter" />
+        <NumberField.Increment aria-label="Add one" />
+      </NumberField.Root>,
+    );
+    expect(screen.getByRole("button", { name: "Add one" })).toBeInTheDocument();
+    expect(screen.getByRole("textbox")).toHaveAttribute("aria-roledescription", "Counter");
   });
 });

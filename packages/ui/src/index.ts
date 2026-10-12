@@ -166,11 +166,12 @@ export type {
   NumberFieldGroupProps,
   NumberFieldIncrementProps,
   NumberFieldInputProps,
+  NumberFieldLabels,
   NumberFieldRootProps,
   NumberFieldScrubAreaCursorProps,
   NumberFieldScrubAreaProps,
 } from "./components/number-field";
-export { NumberField } from "./components/number-field";
+export { DEFAULT_NUMBER_FIELD_LABELS, NumberField } from "./components/number-field";
 export type {
   PaginationContentProps,
   PaginationEllipsisProps,
@@ -233,12 +234,13 @@ export { Skeleton, type SkeletonProps } from "./components/skeleton";
 export type {
   SliderControlProps,
   SliderIndicatorProps,
+  SliderLabels,
   SliderRootProps,
   SliderThumbProps,
   SliderTrackProps,
   SliderValueProps,
 } from "./components/slider";
-export { Slider } from "./components/slider";
+export { DEFAULT_SLIDER_LABELS, Slider } from "./components/slider";
 export type { SwitchRootProps, SwitchThumbProps } from "./components/switch";
 export { Switch } from "./components/switch";
 export type {
@@ -264,19 +266,20 @@ export type {
 } from "./components/tabs";
 export { Tabs, useTabsValue } from "./components/tabs";
 export { Textarea, type TextareaProps } from "./components/textarea";
-export type { Theme, ThemeToggleProps } from "./components/theme-toggle";
-export { ThemeToggle } from "./components/theme-toggle";
+export type { Theme, ThemeToggleLabels, ThemeToggleProps } from "./components/theme-toggle";
+export { DEFAULT_THEME_TOGGLE_LABELS, ThemeToggle } from "./components/theme-toggle";
 export type {
   ToastActionProps,
   ToastCloseProps,
   ToastDescriptionProps,
+  ToastLabels,
   ToastProviderProps,
   ToastRootProps,
   ToastStyleOptions,
   ToastTitleProps,
   ToastViewportProps,
 } from "./components/toast";
-export { createToastManager, Toast } from "./components/toast";
+export { createToastManager, DEFAULT_TOAST_LABELS, Toast } from "./components/toast";
 export type { ToggleGroupItemProps, ToggleGroupRootProps } from "./components/toggle-group";
 export { ToggleGroup } from "./components/toggle-group";
 export type {

@@ -1,14 +1,44 @@
 "use client";
 
 import { Slider as BaseSlider } from "@base-ui/react/slider";
-import type { ComponentProps } from "react";
+import { type ComponentProps, createContext, useContext } from "react";
 import { cnState } from "../../lib/cn";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-export type SliderRootProps = ComponentProps<typeof BaseSlider.Root>;
+/** The built-in English strings of `Slider`, which come from Base UI. */
+export type SliderLabels = {
+  /**
+   * The `aria-valuetext` of the first thumb of a range slider (two values). Gets the formatted
+   * value.
+   * @default (value) => "20 start range"
+   */
+  rangeStart: (value: string) => string;
+  /**
+   * The `aria-valuetext` of the second thumb of a range slider. Gets the formatted value.
+   * @default (value) => "80 end range"
+   */
+  rangeEnd: (value: string) => string;
+};
+
+export const DEFAULT_SLIDER_LABELS: SliderLabels = {
+  rangeStart: (value) => `${value} start range`,
+  rangeEnd: (value) => `${value} end range`,
+};
+
+// `range`: the slider has two values, the only case where Base UI adds range text to the thumbs
+const SliderLabelsContext = createContext({ labels: DEFAULT_SLIDER_LABELS, range: false });
+
+export type SliderRootProps = ComponentProps<typeof BaseSlider.Root> & {
+  /**
+   * Replaces the built-in English strings, e.g. to translate them. Keys you leave out keep the
+   * default from `DEFAULT_SLIDER_LABELS`. `getAriaValueText` and `aria-valuetext` on a thumb take
+   * precedence.
+   */
+  labels?: Partial<SliderLabels>;
+};
 export type SliderValueProps = ComponentProps<typeof BaseSlider.Value>;
 export type SliderControlProps = ComponentProps<typeof BaseSlider.Control>;
 export type SliderTrackProps = ComponentProps<typeof BaseSlider.Track>;
@@ -19,16 +49,22 @@ export type SliderThumbProps = ComponentProps<typeof BaseSlider.Thumb>;
 // Components
 // ---------------------------------------------------------------------------
 
-function SliderRoot({ className, ...props }: SliderRootProps) {
+function SliderRoot({ className, labels, ...props }: SliderRootProps) {
+  const value = props.value ?? props.defaultValue;
+  const range = Array.isArray(value) && value.length === 2;
   return (
-    <BaseSlider.Root
-      className={cnState(
-        "flex w-full flex-col gap-2",
-        "data-[orientation=vertical]:h-full data-[orientation=vertical]:w-auto data-[orientation=vertical]:flex-row",
-        className,
-      )}
-      {...props}
-    />
+    <SliderLabelsContext.Provider
+      value={{ labels: { ...DEFAULT_SLIDER_LABELS, ...labels }, range }}
+    >
+      <BaseSlider.Root
+        className={cnState(
+          "flex w-full flex-col gap-2",
+          "data-[orientation=vertical]:h-full data-[orientation=vertical]:w-auto data-[orientation=vertical]:flex-row",
+          className,
+        )}
+        {...props}
+      />
+    </SliderLabelsContext.Provider>
   );
 }
 
@@ -77,9 +113,17 @@ function SliderIndicator({ className, ...props }: SliderIndicatorProps) {
   );
 }
 
-function SliderThumb({ className, ...props }: SliderThumbProps) {
+function SliderThumb({ className, getAriaValueText, ...props }: SliderThumbProps) {
+  const { labels, range } = useContext(SliderLabelsContext);
+  // Base UI ignores aria-valuetext when getAriaValueText is set, so leave a consumer's in place
+  const rangeValueText =
+    range && props["aria-valuetext"] === undefined
+      ? (formattedValue: string, _value: number, index: number) =>
+          index === 0 ? labels.rangeStart(formattedValue) : labels.rangeEnd(formattedValue)
+      : undefined;
   return (
     <BaseSlider.Thumb
+      getAriaValueText={getAriaValueText ?? rangeValueText}
       className={cnState(
         "size-4 rounded-full border-2 border-primary bg-background shadow-sm",
         // animate only colors to avoid resize slugishness
