@@ -33,7 +33,11 @@ function RadioRoot({ className, ...props }: RadioRootProps) {
         "micro-interactions cursor-pointer",
         "focus-visible:outline-2 focus-visible:outline-ring",
         "data-[checked]:border-primary",
-        "data-[disabled]:pointer-events-none data-[disabled]:cursor-not-allowed",
+        // No pointer-events-none: it would hide the cursor, and Base UI ignores the click anyway.
+        // A disabled Radio.Group dims itself, so inside one the root drops its own dim and isn't
+        // dimmed twice.
+        "data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50",
+        "group-data-[disabled]/radio-group:data-[disabled]:opacity-100",
         className,
       )}
       {...props}
@@ -102,14 +106,15 @@ function RadioItem({ children, className, disabled, ...props }: RadioItemProps) 
   return (
     <label
       className={cn(
-        "flex cursor-pointer items-center gap-2",
+        "flex cursor-pointer items-center gap-2 group-data-[disabled]/radio-group:cursor-not-allowed",
         // Dims the radio and its text together. A disabled Radio.Group dims itself, so inside one
         // the item drops its own dim and isn't dimmed twice.
         disabled && "cursor-not-allowed opacity-50 group-data-[disabled]/radio-group:opacity-100",
         className,
       )}
     >
-      <RadioRoot disabled={disabled} {...props}>
+      {/* The label above, or a disabled group, dims the radio with its text: no second dim */}
+      <RadioRoot disabled={disabled} className="data-[disabled]:opacity-100" {...props}>
         <RadioIndicator />
       </RadioRoot>
       <span>{children}</span>
