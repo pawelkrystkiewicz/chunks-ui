@@ -1,5 +1,6 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import { page } from "vitest/browser";
 import { renderFixture } from "../../VisualTest.utils";
 import { Radio } from "./index";
 
@@ -89,6 +90,38 @@ describe("Radio", () => {
       cursor: "pointer",
       pointerEvents: "auto",
     });
+  });
+
+  // pointer-events: none no longer swallows the click, so the disabled root must not take focus
+  it("keeps focus where it was when a disabled Radio.Root is clicked", async () => {
+    const { getByRole } = render(
+      <div>
+        <input aria-label="Name" />
+        <Radio.Group defaultValue="a">
+          <Radio.Root value="a" aria-label="Enabled">
+            <Radio.Indicator />
+          </Radio.Root>
+          <Radio.Root value="b" aria-label="Disabled" disabled>
+            <Radio.Indicator />
+          </Radio.Root>
+        </Radio.Group>
+      </div>,
+    );
+    const input = getByRole("textbox", { name: "Name" });
+    input.focus();
+    // force: Playwright refuses to click a disabled element, a user can
+    await page.elementLocator(getByRole("radio", { name: "Disabled" })).click({ force: true });
+    expect(document.activeElement).toBe(input);
+  });
+
+  it("keeps a non-disabled item's label not-allowed inside a disabled group", () => {
+    const { getByText } = render(
+      <Radio.Group defaultValue="a" disabled>
+        <Radio.Item value="a">Option</Radio.Item>
+      </Radio.Group>,
+    );
+    const label = getByText("Option").closest("label");
+    expect(label && getComputedStyle(label).cursor).toBe("not-allowed");
   });
 
   it.each([
