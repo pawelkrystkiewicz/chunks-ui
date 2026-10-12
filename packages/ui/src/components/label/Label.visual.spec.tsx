@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { renderFixture } from "../../VisualTest.utils";
 import { Checkbox } from "../checkbox";
 import { Input } from "../input";
+import { Radio } from "../radio";
 import { Switch } from "../switch";
 import { Label } from "./index";
 
@@ -89,6 +90,24 @@ describe("Label", () => {
       </div>,
     );
     expect(looks(getByText("Code"))).toEqual(normal);
+  });
+
+  // Base UI renders a hidden `<input disabled>` inside the next sibling of a Radio.Group's label
+  it("doesn't dim before a Radio.Group with one disabled root", () => {
+    const { getByText } = render(
+      <div>
+        <Label>Plan</Label>
+        <Radio.Group defaultValue="a" aria-label="Plan">
+          <Radio.Root value="a" aria-label="Free">
+            <Radio.Indicator />
+          </Radio.Root>
+          <Radio.Root value="b" aria-label="Pro" disabled>
+            <Radio.Indicator />
+          </Radio.Root>
+        </Radio.Group>
+      </div>,
+    );
+    expect(looks(getByText("Plan"))).toEqual(normal);
   });
 
   it("next to an Input with adornments, enabled and disabled", async () => {

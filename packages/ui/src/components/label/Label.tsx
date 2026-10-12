@@ -12,11 +12,12 @@ export function Label({ className, ...props }: LabelProps) {
         "peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
         // Dims when the control right after it (its next sibling) is disabled, whatever `htmlFor`
         // points at: a native control is :disabled, a Base UI part gets data-disabled, and an
-        // Input with adornments is a wrapper with the disabled input as a child. No
+        // Input with adornments is a wrapper (data-slot="input-adornments") with the disabled input as a
+        // child, which excludes the hidden `<input disabled>` Base UI puts inside a Radio.Group. No
         // `peer-data-disabled:`, because Checkbox, Switch and Radio.Root carry `peer` and it would
         // dim every later label in the same parent.
-        "has-[+:disabled,+[data-disabled],+*>input:disabled]:cursor-not-allowed",
-        "has-[+:disabled,+[data-disabled],+*>input:disabled]:opacity-50",
+        "has-[+:disabled,+[data-disabled],+[data-slot=input-adornments]>input:disabled]:cursor-not-allowed",
+        "has-[+:disabled,+[data-disabled],+[data-slot=input-adornments]>input:disabled]:opacity-50",
         className,
       )}
       {...props}
