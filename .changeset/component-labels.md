@@ -14,4 +14,6 @@ Changed: the remove button of a `Chip` and `Combobox.ChipRemove` are now named a
 
 Fixed: the copy button of `InputCopy` now reads "Copied" after a copy, as `CopyButton` does. Before, `InputCopy` set a fixed "Copy to clipboard" name on it.
 
+Fixed: screen readers now read the "More" of `Breadcrumb.Ellipsis`. Before, the whole ellipsis was `aria-hidden`, its text included.
+
 `Combobox.Root` is now a chunks-ui component that wraps Base UI's. `ComboboxRootProps` keeps its shape when used without type arguments and now takes them too (`ComboboxRootProps<Value, Multiple, Item>`).
