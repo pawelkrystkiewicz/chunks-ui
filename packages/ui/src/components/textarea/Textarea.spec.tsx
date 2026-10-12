@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
-import { createRef } from "react";
+import { createRef, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Field } from "../field";
 import { Textarea } from "./Textarea";
@@ -48,6 +48,28 @@ describe("Textarea", () => {
 
     rerender(<Textarea aria-label="Notes" value="xyz" onChange={onChange} />);
     expect(textarea).toHaveValue("xyz");
+  });
+
+  it("calls onValueChange with the new value and the event details, like Input", async () => {
+    const onValueChange = vi.fn();
+    render(<Textarea aria-label="Notes" defaultValue="ab" onValueChange={onValueChange} />);
+    await userEvent.type(screen.getByRole("textbox"), "c");
+    expect(onValueChange).toHaveBeenCalledOnce();
+    expect(onValueChange).toHaveBeenCalledWith(
+      "abc",
+      expect.objectContaining({ event: expect.any(Event) }),
+    );
+  });
+
+  it("is controlled through value and onValueChange", async () => {
+    function Controlled() {
+      const [value, setValue] = useState("");
+      return <Textarea aria-label="Notes" value={value} onValueChange={setValue} />;
+    }
+    render(<Controlled />);
+    const textarea = screen.getByRole("textbox");
+    await userEvent.type(textarea, "hi");
+    expect(textarea).toHaveValue("hi");
   });
 
   it("has no a11y violations", async () => {
