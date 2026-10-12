@@ -471,6 +471,19 @@ describe("DatePicker form reset", () => {
     expect(formData()).toBe("2026-03-15");
   });
 
+  it("keeps the picked date when the reset is cancelled", async () => {
+    render(
+      <form aria-label="Task" onReset={(event) => event.preventDefault()}>
+        <DatePicker name="due" defaultValue={MARCH_15} />
+        <button type="reset">Reset</button>
+      </form>,
+    );
+    await pickMarch20("March 15, 2026");
+    await userEvent.click(screen.getByRole("button", { name: "Reset" }));
+    expect(screen.getByRole("button", { name: "March 20, 2026" })).toBeInTheDocument();
+    expect(formData()).toBe("2026-03-20");
+  });
+
   it("keeps a controlled value", async () => {
     render(
       <form aria-label="Task">
