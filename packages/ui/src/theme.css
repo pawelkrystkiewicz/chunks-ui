@@ -218,6 +218,32 @@
 }
 
 /*
+ * Grows the hit area of a small control to at least 44×44px, centred on it, without changing
+ * its size or layout. Opt-in: no component applies it.
+ *
+ * The area is an empty `::after` box. It is absolutely positioned, so it takes no space, and each
+ * inset is half of (size - 44px) when that is negative, 0 otherwise. `::after` because Switch draws
+ * its forced-colors ring with `::before`. `position: relative` makes the element the box's
+ * containing block. It is set in `:where()`, so it has zero specificity: Tailwind emits variant
+ * utilities (`pointer-coarse:touch-target`) after all plain ones, and without `:where()` the
+ * `relative` would beat an `absolute`, `fixed` or `sticky` class on the element. Position
+ * utilities, inline styles and unlayered CSS win over it; layered component CSS (`@layer base`
+ * or `components`) does not. The box inherits `pointer-events`, so a control with
+ * `pointer-events: none` (disabled) stays inert in the whole area.
+ */
+@utility touch-target {
+  :where(&) {
+    position: relative;
+  }
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: min(0px, (100% - 44px) / 2);
+  }
+}
+
+/*
  * In the components layer, so utilities such as `duration-150` or `ease-linear` win over it.
  * Unlayered CSS would beat every Tailwind layer.
  */

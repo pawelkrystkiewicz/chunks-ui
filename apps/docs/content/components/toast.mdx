@@ -9,7 +9,7 @@ import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
 # Toast
 
-A notification system built on Base UI's `Toast` primitive. Toasts slide in from the bottom-right corner and auto-dismiss. The `useToast` hook triggers them from anywhere within the provider.
+A notification system built on Base UI's `Toast` primitive. Toasts slide in from the bottom corner at the inline end (bottom-right in left-to-right layouts, bottom-left in right-to-left ones) and auto-dismiss. In both directions a toast can be swiped away down, left or right, and it leaves the way it was swiped. The `useToast` hook triggers them from anywhere within the provider.
 
 ## Import
 
@@ -237,7 +237,7 @@ The stacking CSS respects `prefers-reduced-motion: reduce` — users with that s
 
 | Part | Description |
 |---|---|
-| `Toast.Provider` | Context provider. Must wrap any component that calls `useToast`. Accepts `timeout` and `limit` (default `3`). In the default viewport, toasts past the limit stay hidden until newer ones close. |
+| `Toast.Provider` | Context provider. Must wrap any component that calls `useToast`. Accepts `timeout` and `limit` (default `3`). In the default viewport, toasts past the limit stay hidden until newer ones close, then slide in (at once with reduced motion, or in browsers without `@starting-style`). |
 | `Toast.Viewport` | Fixed-position container that renders all active toasts. |
 | `Toast.Root` | Individual toast wrapper with slide/fade enter/exit transitions. |
 | `Toast.Title` | Bold toast heading. |

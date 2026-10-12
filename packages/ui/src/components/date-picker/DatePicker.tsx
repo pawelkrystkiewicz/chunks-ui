@@ -2,19 +2,28 @@
 
 import { Field as BaseField } from "@base-ui/react/field";
 import { Popover as BasePopover } from "@base-ui/react/popover";
-import { type ComponentProps, useId, useLayoutEffect, useRef, useState } from "react";
+import {
+  type ComponentProps,
+  type RefObject,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { cn } from "../../lib/cn";
 import { usePortalContainer } from "../../lib/portal-container";
 import { useMergedRef } from "../../lib/use-merged-ref";
-import { Calendar, type CalendarProps } from "../calendar/Calendar";
+import { Calendar, type CalendarProps, validDate } from "../calendar/Calendar";
 
 type DatePickerOwnProps = Pick<CalendarProps, "weekStartsOn" | "showOutsideDays"> & {
   /**
-   * The currently selected date (controlled).
+   * The currently selected date (controlled). An Invalid Date counts as no date.
    */
   value?: Date | null;
   /**
-   * The initial selected date when uncontrolled.
+   * The initial selected date when uncontrolled. A form reset restores it. An Invalid Date
+   * counts as no date.
    * @default null
    */
   defaultValue?: Date | null;
@@ -74,10 +83,11 @@ type DatePickerOwnProps = Pick<CalendarProps, "weekStartsOn" | "showOutsideDays"
 export type DatePickerProps = DatePickerOwnProps &
   Omit<ComponentProps<"button">, keyof DatePickerOwnProps | "children" | "type" | "onChange">;
 
-// Local calendar date, not toISOString(), which shifts to UTC and can change the day
+// Local calendar date, not toISOString(), which shifts to UTC and can change the day. The year
+// has 4 digits, as ISO 8601 and <input type="date"> need: 0999, not 999.
 function toIsoDate(date: Date): string {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  const pad = (n: number, length = 2) => String(n).padStart(length, "0");
+  return `${pad(date.getFullYear(), 4)}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
 function formatDate(date: Date): string {
@@ -112,13 +122,32 @@ export function DatePicker({
   const mergedTriggerRef = useMergedRef(triggerRef, ref);
   const [open, setOpen] = useState(false);
   const [internalDate, setInternalDate] = useState<Date | null>(defaultValue ?? null);
-  const selectedDate = value !== undefined ? value : internalDate;
+  const selectedDate = validDate(value !== undefined ? value : internalDate);
 
   const handleDateSelect = (date: Date | null) => {
     if (value === undefined) setInternalDate(date);
     onValueChange?.(date);
     setOpen(false);
   };
+
+  // A form reset restores the default date, as it restores an input's default value. A
+  // controlled picker keeps `value`, as a controlled React input does. The field's control is
+  // the form input, which `form` can link to a form it is outside of, else the trigger.
+  const fieldControlRef = useRef<HTMLInputElement | HTMLButtonElement>(null);
+  useEffect(() => {
+    const formElement = fieldControlRef.current?.form;
+    if (!formElement || value !== undefined) return;
+    // Listen on the form's root node (the document, or a shadow root, as `reset` is not composed),
+    // in the bubble phase: it runs after React's root listener, so a consumer's `onReset` has had
+    // the chance to cancel the reset, which leaves the controls as they are.
+    const doc = formElement.getRootNode();
+    const reset = (event: Event) => {
+      if (event.target !== formElement || event.defaultPrevented) return;
+      setInternalDate(defaultValue ?? null);
+    };
+    doc.addEventListener("reset", reset);
+    return () => doc.removeEventListener("reset", reset);
+  });
 
   const displayValue = selectedDate ? formatDate(selectedDate) : "";
   const isoValue = selectedDate ? toIsoDate(selectedDate) : "";
@@ -147,16 +176,20 @@ export function DatePicker({
         <BaseField.Control
           // Field.Control types its props for <input>; they reach the trigger <button> unchanged
           {...(triggerProps as BaseField.Control.Props)}
-          ref={mergedTriggerRef}
+          ref={fieldControlRef as RefObject<HTMLInputElement>}
           disabled={disabled}
           // The field reads its value from here, not from the button's empty value
           value={isoValue}
           render={(controlProps, state) => {
-            // Field.Root's name comes through here. It goes on the form input, not the button
-            const { name: fieldName, ...buttonProps } = controlProps as typeof controlProps & {
-              name?: string;
-            };
+            // Field.Root's name comes through here. It goes on the form input, not the button.
+            // `fieldRef` tells the field which element to validate and to focus when invalid.
+            const {
+              name: fieldName,
+              ref: fieldRef,
+              ...buttonProps
+            } = controlProps as typeof controlProps & { name?: string };
             const formName = name ?? fieldName;
+            const hasFormInput = formName !== undefined || required;
             // A label replaces a button's text as its name. The trigger has no other way to
             // expose the date, so name it by its label and then the date. The label comes from
             // aria-labelledby (the consumer's or Field.Label's), else aria-label (read through the
@@ -168,6 +201,11 @@ export function DatePicker({
               <>
                 <BasePopover.Trigger
                   {...buttonProps}
+                  ref={mergedTriggerRef}
+                  // The field validates the form input when there is one: it carries `required`,
+                  // which a button cannot. Else it gets the trigger, through the ref of the
+                  // render element, which Base UI merges with `ref`.
+                  render={hasFormInput ? undefined : <button type="button" ref={fieldRef} />}
                   aria-labelledby={labelledBy ? `${labelledBy} ${valueId}` : undefined}
                   className={cn(
                     "flex h-ui-height w-full cursor-pointer items-center rounded-md border border-input bg-background px-3 text-left text-sm",
@@ -178,12 +216,13 @@ export function DatePicker({
                 >
                   <span id={valueId}>{displayValue || placeholder}</span>
                 </BasePopover.Trigger>
-                {(formName !== undefined || required) && (
+                {hasFormInput && (
                   // Carries the date into the form. Not type="hidden" or readOnly: both skip
                   // `required`. Disabled with the picker or its Field.Root, like a native control,
-                  // so it then submits nothing and blocks nothing. When the browser focuses it as
-                  // the first invalid field, the trigger takes the focus.
+                  // so it then submits nothing and blocks nothing. When the browser or a Base UI
+                  // Form focuses it as the first invalid field, the trigger takes the focus.
                   <input
+                    ref={fieldRef}
                     name={formName}
                     form={form}
                     value={isoValue}

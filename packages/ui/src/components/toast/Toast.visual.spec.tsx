@@ -1,9 +1,11 @@
 import { Toast as BaseToast } from "@base-ui/react/toast";
-import { render, screen } from "@testing-library/react";
-import { type ComponentPropsWithoutRef, useEffect, useRef } from "react";
+import { render, screen, within } from "@testing-library/react";
+import { type ComponentPropsWithoutRef, type ReactNode, useEffect, useRef } from "react";
 import { afterAll, beforeAll, describe, expect, it, onTestFinished } from "vitest";
-import { commands, page } from "vitest/browser";
+import { commands, page, userEvent } from "vitest/browser";
+import type { Dir } from "../../VisualTest.utils";
 import { Toast } from "./index";
+import { AddToasts } from "./Toast.TestUtils";
 
 function AddToast({
   title,
@@ -53,6 +55,41 @@ describe("Toast", () => {
   });
 });
 
+/** The toasts' direction, and the page's: an `rtl:` variant would match in the LTR section */
+const LAYOUTS = [
+  { layout: "ltr", dir: "ltr", page: "ltr" },
+  { layout: "rtl", dir: "rtl", page: "rtl" },
+  { layout: "ltr section on an rtl page", dir: "ltr", page: "rtl" },
+] as const;
+
+/** Renders `ui` on a page of direction `page`, in a section of direction `dir` if they differ */
+function renderIn({ dir, page }: { dir: Dir; page: Dir }, ui: ReactNode) {
+  document.documentElement.dir = page;
+  onTestFinished(() => document.documentElement.removeAttribute("dir"));
+  return render(page === dir ? ui : <div dir={dir}>{ui}</div>);
+}
+
+describe.each(LAYOUTS)("Toast viewport, $layout", (layout) => {
+  it("sits in the bottom corner at the inline end", async () => {
+    // Wide enough that the viewport doesn't span the page, so its side is plain to see
+    const { innerWidth, innerHeight } = window;
+    await page.viewport(800, 600);
+    onTestFinished(() => page.viewport(innerWidth, innerHeight));
+    renderIn(
+      layout,
+      <Toast.Provider>
+        <AddToast title="File saved" />
+        <Toast.Viewport />
+      </Toast.Provider>,
+    );
+    await screen.findByText("File saved");
+    const box = screen.getByRole("region", { name: /Notifications/ }).getBoundingClientRect();
+    const { clientWidth, clientHeight } = document.documentElement;
+    expect(clientHeight - box.bottom).toBeCloseTo(16, 0);
+    expect(layout.dir === "ltr" ? clientWidth - box.right : box.left).toBeCloseTo(16, 0);
+  });
+});
+
 describe.each(["ltr", "rtl"] as const)("Toast action in %s", (dir) => {
   it("is as wide as its label and sits at the content's start edge", async () => {
     document.documentElement.dir = dir;
@@ -86,11 +123,11 @@ describe.each(["ltr", "rtl"] as const)("Toast action in %s", (dir) => {
   });
 });
 
-function RootList() {
+function RootList({ swipeDirection }: { swipeDirection?: ("down" | "left" | "right" | "up")[] }) {
   return (
     <>
       {Toast.useToast().toasts.map((toast) => (
-        <Toast.Root key={toast.id} toast={toast}>
+        <Toast.Root key={toast.id} toast={toast} swipeDirection={swipeDirection}>
           <Toast.Description>{toast.description}</Toast.Description>
           <Toast.Action>Undo</Toast.Action>
         </Toast.Root>
@@ -125,7 +162,7 @@ describe("Toast with motion allowed", () => {
   beforeAll(() => commands.emulateMedia({ reducedMotion: "no-preference" }));
   afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
 
-  // `translate-x-full` sets the `translate` property, not `transform`
+  // The `translate-x-*` slide sets the `translate` property, not `transform`
   it("slides and fades in", async () => {
     // Every transition that starts, recorded from before the toast mounts
     const runs: { target: EventTarget | null; property: string }[] = [];
@@ -147,4 +184,166 @@ describe("Toast with motion allowed", () => {
     await expect.poll(transitioned).toEqual(expect.arrayContaining(["opacity", "translate"]));
     expect(transitioned()).toEqual(["opacity", "translate"]);
   });
+
+  /** Dispatched by hand: no pointer is active for the made-up id */
+  function swipe(toast: HTMLElement, drag: "left" | "right" | "down") {
+    toast.setPointerCapture = () => {};
+    const pointer = (type: string, d: number, target: EventTarget = toast) =>
+      target.dispatchEvent(
+        new PointerEvent(type, {
+          bubbles: true,
+          pointerId: 7,
+          button: 0,
+          clientX: 300 + (drag === "down" ? 0 : d * (drag === "right" ? 1 : -1)),
+          clientY: 300 + (drag === "down" ? d : 0),
+          movementX: drag === "down" ? 0 : 10 * (drag === "right" ? 1 : -1),
+          movementY: drag === "down" ? 10 : 0,
+        }),
+      );
+    pointer("pointerdown", 0);
+    for (const d of [0, 20, 60, 100]) pointer("pointermove", d);
+    pointer("pointerup", 100, document);
+  }
+
+  // Dragged by hand: the gesture needs several moves, and Playwright's drag makes one
+  describe.each([
+    { dir: "ltr", drag: "right" },
+    { dir: "ltr", drag: "left" },
+    { dir: "rtl", drag: "right" },
+    { dir: "rtl", drag: "left" },
+    { dir: "ltr", drag: "down" },
+  ] as const)("swiping $drag, $dir", ({ dir, drag }) => {
+    it("dismisses the toast, and it leaves the way it was dragged", async () => {
+      document.documentElement.dir = dir;
+      onTestFinished(() => document.documentElement.removeAttribute("dir"));
+      render(
+        <Toast.Provider>
+          <AddToast title="File saved" />
+          <Toast.Viewport />
+        </Toast.Provider>,
+      );
+      const toast = (await screen.findByText("File saved")).closest(".Toast") as HTMLElement;
+      await expect.poll(() => getComputedStyle(toast).opacity).toBe("1");
+
+      const home = toast.getBoundingClientRect();
+      swipe(toast, drag);
+
+      await expect.poll(() => toast.dataset.swipeDirection).toBe(drag);
+      // The farthest it gets from where it sat, along and across the drag
+      const sign = drag === "left" ? -1 : 1;
+      let along = 0;
+      let across = 0;
+      await expect
+        .poll(() => {
+          if (toast.isConnected) {
+            const box = toast.getBoundingClientRect();
+            const dx = (box.left - home.left) * sign;
+            const dy = (box.top - home.top) * sign;
+            along = Math.max(along, drag === "down" ? dy : dx);
+            across = Math.max(across, Math.abs(drag === "down" ? dx : dy));
+          }
+          return along;
+        })
+        // Its own extent along the drag, near enough
+        .toBeGreaterThan((drag === "down" ? home.height : home.width) * 0.9);
+      expect(across).toBeLessThan(1);
+    });
+  });
+
+  it("keeps a toast dragged a way the caller left out", async () => {
+    render(
+      <Toast.Provider>
+        <AddToast title="File saved" description="Saved" />
+        <BaseToast.Viewport className="fixed right-4 bottom-4 w-[240px]">
+          <RootList swipeDirection={["right"]} />
+        </BaseToast.Viewport>
+      </Toast.Provider>,
+    );
+    const toast = (await screen.findByRole("button", { name: "Undo" })).closest(
+      ".Toast",
+    ) as HTMLElement;
+    await expect.poll(() => getComputedStyle(toast).opacity).toBe("1");
+
+    swipe(toast, "left");
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    expect(toast.isConnected).toBe(true);
+    expect(toast.dataset.swipeDirection).toBeUndefined();
+    expect(toast.dataset.endingStyle).toBeUndefined();
+  });
+
+  describe.each(LAYOUTS)("$layout", (layout) => {
+    // Past the viewport's inline end: from the right in LTR, from the left in RTL
+    const expectEntersFromInlineEnd = ({ offset, width, opacity }: EnterStart) => {
+      expect(opacity).toBe("0");
+      expect(offset).toBeCloseTo(layout.dir === "ltr" ? width : -width, 0);
+    };
+
+    it("slides in from past the inline end", async () => {
+      const enterStart = holdEnterOf("File saved");
+      renderIn(
+        layout,
+        <Toast.Provider>
+          <AddToast title="File saved" />
+          <Toast.Viewport />
+        </Toast.Provider>,
+      );
+      const toast = (await screen.findByText("File saved")).closest(".Toast") as HTMLElement;
+      expectEntersFromInlineEnd(await enterStart(toast));
+    });
+
+    // Base UI gives a toast that leaves the limit no `data-starting-style`, and it was
+    // `display: none`, so only `@starting-style` gives its transition a start
+    it("slides a toast hidden past the limit in when a newer one closes", async () => {
+      renderIn(
+        layout,
+        <Toast.Provider>
+          <AddToasts count={5} />
+          <Toast.Viewport />
+        </Toast.Provider>,
+      );
+      const hidden = (await screen.findByText("Toast 2")).closest(".Toast") as HTMLElement;
+      await expect.poll(() => getComputedStyle(hidden).display).toBe("none");
+      const newest = (await screen.findByText("Toast 5")).closest(".Toast") as HTMLElement;
+
+      // Armed only now, so a transition from mounting can't stand in for the one under test
+      const enterStart = holdEnterOf("Toast 2");
+      // Base UI hides the close button from assistive tech, so it has no accessible role
+      await userEvent.click(within(newest).getByLabelText("Close"));
+      expectEntersFromInlineEnd(await enterStart(hidden));
+    });
+  });
 });
+
+/** The first frame of a toast's enter transition, against the place where it comes to rest */
+type EnterStart = { offset: number; width: number; opacity: string };
+
+/**
+ * Pauses the transitions of the toast titled `title` as they start, so the returned function can
+ * rewind them to their first frame and measure it. Call before the toast shows.
+ */
+function holdEnterOf(title: string) {
+  const held = new Set<CSSTransition>();
+  const hold = (event: TransitionEvent) => {
+    const toast = event.target as Element;
+    if (!toast.classList.contains("Toast") || !toast.textContent?.includes(title)) return;
+    for (const animation of toast.getAnimations()) {
+      if (animation instanceof CSSTransition && !held.has(animation)) {
+        animation.pause();
+        held.add(animation);
+      }
+    }
+  };
+  document.addEventListener("transitionrun", hold, true);
+  onTestFinished(() => document.removeEventListener("transitionrun", hold, true));
+
+  return async (toast: HTMLElement): Promise<EnterStart> => {
+    const properties = () => [...held].map((transition) => transition.transitionProperty).sort();
+    await expect.poll(properties).toEqual(["opacity", "translate"]);
+    for (const transition of held) transition.currentTime = 0;
+    const start = toast.getBoundingClientRect().left;
+    const { opacity } = getComputedStyle(toast);
+    for (const transition of held) transition.finish();
+    const rest = toast.getBoundingClientRect();
+    return { offset: start - rest.left, width: rest.width, opacity };
+  };
+}
