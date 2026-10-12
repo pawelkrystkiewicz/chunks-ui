@@ -55,14 +55,12 @@ export function Chip({
 
   return (
     <span className={cn(chipVariants({ color, variant }), className)} {...props}>
-      {onRemove ? (
-        // `contents` keeps the layout of bare children; the span only gives the text an id
-        <span id={labelId} className="contents">
-          {children}
-        </span>
-      ) : (
-        children
-      )}
+      {/* `contents` keeps the layout of bare children. The span gives the text an id for the
+          remove button, and is always there so that adding or dropping `onRemove` doesn't
+          remount the children */}
+      <span id={onRemove ? labelId : undefined} className="contents">
+        {children}
+      </span>
       {onRemove && (
         // Named by its own label, then the chip's text: "Remove Apple"
         <ClearButton

@@ -1,6 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
+import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Chip, DEFAULT_CHIP_LABELS } from "./Chip";
 
@@ -32,6 +33,36 @@ describe("Chip", () => {
   it("does not show remove button without onRemove", () => {
     render(<Chip>Tag</Chip>);
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  });
+
+  it("keeps its children mounted when onRemove comes and goes", async () => {
+    const user = userEvent.setup();
+    function Counter() {
+      const [count, setCount] = useState(0);
+      return (
+        <button type="button" onClick={() => setCount(count + 1)}>
+          {`Clicked ${count}`}
+        </button>
+      );
+    }
+    const { rerender } = render(
+      <Chip>
+        <Counter />
+      </Chip>,
+    );
+    await user.click(screen.getByRole("button", { name: "Clicked 0" }));
+    rerender(
+      <Chip onRemove={vi.fn()}>
+        <Counter />
+      </Chip>,
+    );
+    expect(screen.getByRole("button", { name: "Clicked 1" })).toBeInTheDocument();
+    rerender(
+      <Chip>
+        <Counter />
+      </Chip>,
+    );
+    expect(screen.getByRole("button", { name: "Clicked 1" })).toBeInTheDocument();
   });
 
   it("has no a11y violations", async () => {
