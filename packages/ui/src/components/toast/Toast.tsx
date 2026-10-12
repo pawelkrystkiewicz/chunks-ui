@@ -121,6 +121,9 @@ function ToastRoot({ className, toast, ...props }: ToastRootProps) {
   return (
     <BaseToast.Root
       toast={toast}
+      // Base UI's default is down and right, whatever the direction. Left is the way off the
+      // screen in RTL, and a swiped toast leaves the way it was swiped (below).
+      swipeDirection={["down", "left", "right"]}
       className={cnState(
         "Toast",
         "group relative flex w-full items-center gap-3 overflow-hidden rounded-sm border border-border bg-popover p-4 pe-10 shadow-lg",
@@ -136,6 +139,8 @@ function ToastRoot({ className, toast, ...props }: ToastRootProps) {
           // A toast that leaves the limit gets no `data-starting-style`: it was `display: none`
           "starting:translate-x-(--toast-slide-x) starting:opacity-0",
           "data-ending-style:translate-x-(--toast-slide-x) data-ending-style:opacity-0",
+          "data-[swipe-direction=left]:data-ending-style:-translate-x-full",
+          "data-[swipe-direction=right]:data-ending-style:translate-x-full",
           "transition-[translate,opacity] duration-300 ease-out",
         ],
         className,
