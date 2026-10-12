@@ -37,7 +37,7 @@ Button, Input, Textarea, Checkbox, Radio, Switch, Select, Combobox, Tabs, Dialog
 
 | Layer    | Technology                                    |
 | -------- | --------------------------------------------- |
-| Headless | `@base-ui/react` v1.2+ (includes Floating UI) |
+| Headless | `@base-ui/react` v1.9+ (includes Floating UI) |
 | Styling  | Tailwind CSS v4 + CVA                         |
 | Animation | Motion v12+ (optional peer dep)              |
 | Build    | tsup (ESM + CJS + `.d.ts`)                    |

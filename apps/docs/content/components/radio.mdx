@@ -50,6 +50,19 @@ Disable individual radio buttons or the entire group:
 
 <RadioDisabledExample />
 
+A disabled `Radio.Root` dims and shows a not-allowed cursor on its own too, outside `Radio.Item` and in a group that isn't disabled. Inside a disabled `Radio.Group` or a disabled `Radio.Item`, the radio is dimmed once with them, not twice.
+
+```tsx
+<Radio.Group defaultValue="free" aria-label="Plan">
+  <Radio.Root value="free" aria-label="Free">
+    <Radio.Indicator />
+  </Radio.Root>
+  <Radio.Root value="pro" aria-label="Pro" disabled>
+    <Radio.Indicator />
+  </Radio.Root>
+</Radio.Group>
+```
+
 ## Compound Parts
 
 | Part              | Description                                                                  |
