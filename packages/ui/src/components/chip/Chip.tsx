@@ -1,9 +1,20 @@
 import type { VariantProps } from "class-variance-authority";
-import type { ComponentProps } from "react";
+import { type ComponentProps, useId } from "react";
 import { cn } from "../../lib/cn";
 import type { ElementBaseVariant, ElementColor } from "../../types";
 import { ClearButton } from "../clear-button";
 import { chipVariants } from "./Chip.Variants";
+
+/** The built-in English strings of `Chip`. */
+export type ChipLabels = {
+  /**
+   * Name of the remove button. The chip's text follows it, so the button reads "Remove Apple".
+   * @default "Remove"
+   */
+  remove: string;
+};
+
+export const DEFAULT_CHIP_LABELS: ChipLabels = { remove: "Remove" };
 
 export type ChipProps = ComponentProps<"span"> &
   Omit<VariantProps<typeof chipVariants>, "color" | "variant"> & {
@@ -21,13 +32,46 @@ export type ChipProps = ComponentProps<"span"> &
      * @remarks `"contained" | "outlined"`
      */
     variant?: ElementBaseVariant;
+    /**
+     * Replaces the built-in English strings, e.g. to translate them. Keys you leave out keep the
+     * default from `DEFAULT_CHIP_LABELS`.
+     */
+    labels?: Partial<ChipLabels>;
   };
 
-export function Chip({ color, variant, onRemove, className, children, ...props }: ChipProps) {
+export function Chip({
+  color,
+  variant,
+  onRemove,
+  labels,
+  className,
+  children,
+  ...props
+}: ChipProps) {
+  const id = useId();
+  const labelId = `${id}-label`;
+  const removeId = `${id}-remove`;
+  const { remove } = { ...DEFAULT_CHIP_LABELS, ...labels };
+
   return (
     <span className={cn(chipVariants({ color, variant }), className)} {...props}>
-      {children}
-      {onRemove && <ClearButton label="Remove" onClick={onRemove} />}
+      {onRemove ? (
+        // `contents` keeps the layout of bare children; the span only gives the text an id
+        <span id={labelId} className="contents">
+          {children}
+        </span>
+      ) : (
+        children
+      )}
+      {onRemove && (
+        // Named by its own label, then the chip's text: "Remove Apple"
+        <ClearButton
+          id={removeId}
+          label={remove}
+          aria-labelledby={`${removeId} ${labelId}`}
+          onClick={onRemove}
+        />
+      )}
     </span>
   );
 }

@@ -6,6 +6,17 @@ import { useMergedRef } from "../../lib/use-merged-ref";
 import { ClearButton } from "../clear-button";
 import { inputVariants } from "./Input.Variants";
 
+/** The built-in English strings of `Input`. */
+export type InputLabels = {
+  /**
+   * Name of the built-in clear button.
+   * @default "Clear"
+   */
+  clear: string;
+};
+
+export const DEFAULT_INPUT_LABELS: InputLabels = { clear: "Clear" };
+
 export type InputProps = ComponentProps<typeof BaseInput> &
   VariantProps<typeof inputVariants> & {
     /**
@@ -33,6 +44,11 @@ export type InputProps = ComponentProps<typeof BaseInput> &
      * shows, but a click changes nothing and does not call `onClear`.
      */
     onClear?: () => void;
+    /**
+     * Replaces the built-in English strings, e.g. to translate them. Keys you leave out keep the
+     * default from `DEFAULT_INPUT_LABELS`.
+     */
+    labels?: Partial<InputLabels>;
   };
 
 const isEmpty = (value: unknown) => value == null || String(value).length === 0;
@@ -44,6 +60,7 @@ export function Input({
   className,
   ref,
   onValueChange,
+  labels,
   ...props
 }: InputProps) {
   const inputRef = useRef<HTMLElement>(null);
@@ -117,6 +134,8 @@ export function Input({
     onClear?.();
   };
 
+  const clearLabel = { ...DEFAULT_INPUT_LABELS, ...labels }.clear;
+
   return (
     <div
       className={cn(
@@ -143,7 +162,7 @@ export function Input({
       {/* The clear button and endAdornment share one slot: while the button shows, it wins */}
       {(endAdornment || clearable) && (
         <span className="absolute end-3 flex items-center">
-          {clearable ? <ClearButton onClick={handleClear} /> : endAdornment}
+          {clearable ? <ClearButton label={clearLabel} onClick={handleClear} /> : endAdornment}
         </span>
       )}
     </div>

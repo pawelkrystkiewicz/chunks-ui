@@ -2,18 +2,33 @@ import type { ComponentProps } from "react";
 import { cn } from "../../lib/cn";
 import { BUTTON_ANIMATION_CLASSES } from "../shared";
 
+/** The built-in English strings of `ClearButton`. */
+export type ClearButtonLabels = {
+  /**
+   * Accessible name of the button.
+   * @default "Clear"
+   */
+  clear: string;
+};
+
+export const DEFAULT_CLEAR_BUTTON_LABELS: ClearButtonLabels = { clear: "Clear" };
+
 export type ClearButtonProps = ComponentProps<"button"> & {
   /**
-   * Accessible label for the clear button, used as `aria-label`.
+   * Accessible label for the clear button, used as `aria-label`. Takes precedence over `labels`.
    * @default "Clear"
    */
   label?: string;
+  /**
+   * Replaces the built-in English strings, e.g. to translate them. Keys you leave out keep the
+   * default from `DEFAULT_CLEAR_BUTTON_LABELS`. `label` and `aria-label` take precedence.
+   */
+  labels?: Partial<ClearButtonLabels>;
 };
 
-const DEFAULT_LABEL = "Clear";
-
-export function ClearButton({ className, label, ...props }: ClearButtonProps) {
-  const resolvedLabel = label ?? props["aria-label"] ?? DEFAULT_LABEL;
+export function ClearButton({ className, label, labels, ...props }: ClearButtonProps) {
+  const resolvedLabel =
+    label ?? props["aria-label"] ?? { ...DEFAULT_CLEAR_BUTTON_LABELS, ...labels }.clear;
   return (
     <button
       type="button"

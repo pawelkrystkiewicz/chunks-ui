@@ -2,7 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { Chip } from "./Chip";
+import { Chip, DEFAULT_CHIP_LABELS } from "./Chip";
 
 afterEach(cleanup);
 
@@ -24,7 +24,7 @@ describe("Chip", () => {
   it("shows remove button when onRemove is provided", async () => {
     const onRemove = vi.fn();
     render(<Chip onRemove={onRemove}>Tag</Chip>);
-    const btn = screen.getByRole("button", { name: "Remove" });
+    const btn = screen.getByRole("button", { name: "Remove Tag" });
     await userEvent.click(btn);
     expect(onRemove).toHaveBeenCalledOnce();
   });
@@ -36,6 +36,44 @@ describe("Chip", () => {
 
   it("has no a11y violations", async () => {
     const { container } = render(<Chip>Tag</Chip>);
+    expect(await axe(container)).toHaveNoViolations();
+  });
+});
+
+describe("Chip labels", () => {
+  it("names the remove button after the chip", () => {
+    render(<Chip onRemove={vi.fn()}>Apple</Chip>);
+    expect(screen.getByRole("button", { name: "Remove Apple" })).toBeInTheDocument();
+  });
+
+  it("names the remove button after rich chip content", () => {
+    render(
+      <Chip onRemove={vi.fn()}>
+        <svg aria-hidden="true" />
+        <span>Apple</span> pie
+      </Chip>,
+    );
+    expect(screen.getByRole("button", { name: "Remove Apple pie" })).toBeInTheDocument();
+  });
+
+  it("takes the remove word from labels", () => {
+    render(
+      <Chip onRemove={vi.fn()} labels={{ remove: "Usuń" }}>
+        Apple
+      </Chip>,
+    );
+    expect(screen.getByRole("button", { name: "Usuń Apple" })).toBeInTheDocument();
+  });
+
+  it("starts the name with DEFAULT_CHIP_LABELS.remove", () => {
+    render(<Chip onRemove={vi.fn()}>Apple</Chip>);
+    expect(
+      screen.getByRole("button", { name: `${DEFAULT_CHIP_LABELS.remove} Apple` }),
+    ).toBeInTheDocument();
+  });
+
+  it("has no a11y violations when removable", async () => {
+    const { container } = render(<Chip onRemove={vi.fn()}>Apple</Chip>);
     expect(await axe(container)).toHaveNoViolations();
   });
 });

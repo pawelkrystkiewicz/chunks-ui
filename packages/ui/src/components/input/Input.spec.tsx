@@ -4,7 +4,7 @@ import { axe } from "jest-axe";
 import { type ChangeEvent, createRef, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Field } from "../field";
-import { Input } from "./Input";
+import { DEFAULT_INPUT_LABELS, Input } from "./Input";
 
 afterEach(cleanup);
 
@@ -233,5 +233,29 @@ describe("Input", () => {
     );
     expect(screen.getByRole("button", { name: "Clear" })).toBeInTheDocument();
     expect(await axe(container)).toHaveNoViolations();
+  });
+});
+
+describe("Input labels", () => {
+  it("names the clear button with DEFAULT_INPUT_LABELS", () => {
+    render(<Input aria-label="Search" defaultValue="abc" onClear={vi.fn()} />);
+    expect(screen.getByRole("button", { name: DEFAULT_INPUT_LABELS.clear })).toBeInTheDocument();
+  });
+
+  it("takes the clear button's name from labels", () => {
+    render(
+      <Input
+        aria-label="Search"
+        defaultValue="abc"
+        onClear={vi.fn()}
+        labels={{ clear: "Wyczyść" }}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Wyczyść" })).toBeInTheDocument();
+  });
+
+  it("does not pass labels to the input element", () => {
+    render(<Input aria-label="Search" labels={{ clear: "Wyczyść" }} />);
+    expect(screen.getByRole("textbox")).not.toHaveAttribute("labels");
   });
 });

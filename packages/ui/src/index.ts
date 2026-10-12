@@ -33,8 +33,19 @@ export type {
 export { Card } from "./components/card";
 export type { CheckboxIndicatorProps, CheckboxRootProps } from "./components/checkbox";
 export { Checkbox } from "./components/checkbox";
-export { Chip, type ChipProps, chipVariants } from "./components/chip";
-export { ClearButton, type ClearButtonProps } from "./components/clear-button";
+export {
+  Chip,
+  type ChipLabels,
+  type ChipProps,
+  chipVariants,
+  DEFAULT_CHIP_LABELS,
+} from "./components/chip";
+export {
+  ClearButton,
+  type ClearButtonLabels,
+  type ClearButtonProps,
+  DEFAULT_CLEAR_BUTTON_LABELS,
+} from "./components/clear-button";
 export type {
   CollapsiblePanelProps,
   CollapsibleRootProps,
@@ -102,7 +113,13 @@ export {
   type IconButtonProps,
   iconButtonVariants,
 } from "./components/icon-button";
-export { Input, type InputProps, inputVariants } from "./components/input";
+export {
+  DEFAULT_INPUT_LABELS,
+  Input,
+  type InputLabels,
+  type InputProps,
+  inputVariants,
+} from "./components/input";
 export { InputCopy, type InputCopyProps } from "./components/input-copy";
 export { Label, type LabelProps } from "./components/label";
 export { Loader, type LoaderProps } from "./components/loader";
