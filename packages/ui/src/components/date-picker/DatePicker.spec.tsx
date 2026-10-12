@@ -497,6 +497,65 @@ describe("DatePicker form reset", () => {
   });
 });
 
+describe("DatePicker form reset scope", () => {
+  const MARCH_15 = new Date(2026, 2, 15);
+
+  it("restores its default in a form inside a shadow root", async () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    const shadow = host.attachShadow({ mode: "open" });
+    const container = document.createElement("div");
+    shadow.append(container);
+    const { unmount } = render(
+      <form aria-label="Task">
+        <DatePicker name="due" defaultValue={MARCH_15} />
+        <button type="reset">Reset</button>
+      </form>,
+      { container },
+    );
+    const q = (name: string) => within(container).getByRole("button", { name });
+    await userEvent.click(q("March 15, 2026"));
+    // the popup is portalled to body, outside the shadow root
+    await userEvent.click(getButton("Friday, March 20, 2026"));
+    expect(q("March 20, 2026")).toBeInTheDocument();
+    await userEvent.click(q("Reset"));
+    expect(q("March 15, 2026")).toBeInTheDocument();
+    unmount();
+    host.remove();
+  });
+
+  it("ignores the reset of another form on the page", async () => {
+    render(
+      <>
+        <form aria-label="Task">
+          <DatePicker name="due" defaultValue={MARCH_15} />
+        </form>
+        <form aria-label="Other">
+          <button type="reset">Reset other</button>
+        </form>
+      </>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "March 15, 2026" }));
+    await userEvent.click(getButton("Friday, March 20, 2026"));
+    await userEvent.click(screen.getByRole("button", { name: "Reset other" }));
+    expect(screen.getByRole("button", { name: "March 20, 2026" })).toBeInTheDocument();
+  });
+});
+
+describe("DatePicker years before 1", () => {
+  it.each(["value", "defaultValue"])("treats a %s in year 0 as no date", async (prop) => {
+    const yearZero = new Date(2000, 0, 1);
+    yearZero.setFullYear(0, 5, 15);
+    render(
+      <form aria-label="Task">
+        <DatePicker name="due" {...{ [prop]: yearZero }} />
+      </form>,
+    );
+    expect(new FormData(screen.getByRole<HTMLFormElement>("form")).get("due")).toBe("");
+    expect(screen.getByRole("button", { name: "Pick a date" })).toBeInTheDocument();
+  });
+});
+
 describe("DatePicker keyboard", () => {
   // Checks the focused element instead of querying every button by role and name: that query
   // computes jsdom styles for each day button, over half of each test's time, and timed out on CI.

@@ -234,6 +234,33 @@ describe("Calendar", () => {
     }
   });
 
+  it.each(["value", "defaultValue"])("treats a %s before year 1 as no date", (prop) => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      vi.setSystemTime(new Date(2026, 2, 10, 12));
+      const yearZero = new Date(2000, 0, 1);
+      yearZero.setFullYear(0, 5, 15);
+      const { container } = render(<Calendar {...{ [prop]: yearZero }} />);
+      expect(screen.getByRole("grid", { name: "March 2026" })).toBeInTheDocument();
+      expect(container.querySelector("[data-selected]")).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("drops the hover style of Previous month at year 1 and keeps it focusable", () => {
+    const first = new Date(2000, 0, 1);
+    first.setFullYear(1, 0, 10);
+    render(<Calendar defaultValue={first} />);
+    const prev = screen.getByRole("button", { name: "Previous month" });
+    expect(prev).toHaveAttribute("aria-disabled", "true");
+    expect(prev).toHaveClass("cursor-not-allowed");
+    expect(prev).not.toHaveClass("hover:bg-accent");
+    expect(prev).not.toHaveClass("pointer-events-none");
+    prev.focus();
+    expect(prev).toHaveFocus();
+  });
+
   it("navigates across year boundary (December -> January) under StrictMode", async () => {
     // StrictMode comes from the global render config in vitest.setup.ts
     const user = userEvent.setup();

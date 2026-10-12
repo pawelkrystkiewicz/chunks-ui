@@ -137,10 +137,10 @@ export function DatePicker({
   useEffect(() => {
     const formElement = fieldControlRef.current?.form;
     if (!formElement || value !== undefined) return;
-    // Listen on the document, in the bubble phase: it runs after React's root listener, so a
-    // consumer's `onReset` has had the chance to cancel the reset, which leaves the controls as
-    // they are.
-    const doc = formElement.ownerDocument;
+    // Listen on the form's root node (the document, or a shadow root, as `reset` is not composed),
+    // in the bubble phase: it runs after React's root listener, so a consumer's `onReset` has had
+    // the chance to cancel the reset, which leaves the controls as they are.
+    const doc = formElement.getRootNode();
     const reset = (event: Event) => {
       if (event.target !== formElement || event.defaultPrevented) return;
       setInternalDate(defaultValue ?? null);

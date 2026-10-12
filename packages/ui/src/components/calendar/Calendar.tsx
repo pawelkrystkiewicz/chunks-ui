@@ -55,9 +55,12 @@ const MONTH_NAMES = [
   "December",
 ] as const;
 
-/** `date`, or null when it is missing or an Invalid Date, which counts as no date. */
+/**
+ * `date`, or null when it is missing, an Invalid Date, or before year 1 (no 4-digit ISO form):
+ * all count as no date.
+ */
 export function validDate(date: Date | null | undefined): Date | null {
-  return date && !Number.isNaN(date.getTime()) ? date : null;
+  return date && !Number.isNaN(date.getTime()) && date.getFullYear() >= 1 ? date : null;
 }
 
 /**
@@ -287,9 +290,10 @@ export function Calendar({
           className={cn(
             "inline-flex size-7 items-center justify-center rounded-sm",
             "micro-interactions text-foreground/70",
-            "hover:bg-accent hover:text-accent-foreground",
             "focus-visible:outline-2 focus-visible:outline-ring",
-            atFirstMonth && "opacity-40",
+            atFirstMonth
+              ? "cursor-not-allowed opacity-40"
+              : "hover:bg-accent hover:text-accent-foreground",
           )}
         >
           <svg
