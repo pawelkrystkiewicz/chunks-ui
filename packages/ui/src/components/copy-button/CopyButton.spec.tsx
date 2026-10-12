@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
@@ -56,6 +56,21 @@ describe("CopyButton", () => {
     render(<CopyButton value="test" onClick={onClick} />);
     await user.click(screen.getByRole("button"));
     expect(onClick).toHaveBeenCalledOnce();
+  });
+
+  it("still calls onClick when the Clipboard API is missing (insecure context)", async () => {
+    const clipboard = navigator.clipboard;
+    Object.defineProperty(navigator, "clipboard", { value: undefined, configurable: true });
+    try {
+      // fireEvent, not userEvent: `userEvent.setup()` installs its own clipboard stub
+      const onClick = vi.fn();
+      render(<CopyButton value="test" onClick={onClick} />);
+      fireEvent.click(screen.getByRole("button"));
+      expect(onClick).toHaveBeenCalledOnce();
+      expect(screen.getByRole("button", { name: "Copy to clipboard" })).toBeInTheDocument();
+    } finally {
+      Object.defineProperty(navigator, "clipboard", { value: clipboard, configurable: true });
+    }
   });
 
   it("has no a11y violations", async () => {

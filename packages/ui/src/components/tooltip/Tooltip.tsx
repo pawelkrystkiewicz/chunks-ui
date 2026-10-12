@@ -44,7 +44,8 @@ function TooltipPopup({ className, ...props }: TooltipPopupProps) {
         "data-[side=inline-start]:me-2 data-[side=inline-end]:ms-2",
         !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
         !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
-        // !useSpring && "micro-interactions",
+        // Only the fade and scale: `all` would also slide the side margin when the side flips
+        !useSpring && "micro-interactions [transition-property:opacity,scale]",
         className,
       )}
       {...props}
