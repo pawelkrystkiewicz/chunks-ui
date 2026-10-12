@@ -43,9 +43,30 @@ describe("Menu", () => {
         </Menu.Root>
       </div>,
     );
-    // Opened with the mouse, so the focused popup shows no focus ring for the arrow's base to cover
+    // Opened with the mouse, so the focused popup shows no focus ring; the next spec has one
     await userEvent.click(page.getByRole("button", { name: "Options" }));
     await commands.parkPointer();
+    await expect(body).toMatchScreenshot();
+  });
+
+  it("open with arrow, focused from the keyboard", async () => {
+    // Enter or Space on the trigger would focus the first item. A menu that opens after a key
+    // press, as from a shortcut, focuses the popup, and its ring must cross the arrow's base
+    await userEvent.keyboard("{Shift}");
+    const body = await renderPage(
+      <div style={{ padding: 40 }}>
+        <Menu.Root defaultOpen>
+          <Menu.Trigger>Options</Menu.Trigger>
+          <Menu.Content>
+            <Menu.Arrow />
+            <Menu.Item>Edit</Menu.Item>
+            <Menu.Item>Copy</Menu.Item>
+          </Menu.Content>
+        </Menu.Root>
+      </div>,
+    );
+    const popup = page.getByRole("menu");
+    await expect.poll(() => popup.element().matches(":focus-visible")).toBe(true);
     await expect(body).toMatchScreenshot();
   });
 });

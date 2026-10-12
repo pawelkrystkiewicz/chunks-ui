@@ -4,12 +4,27 @@
  */
 
 /**
+ * The positioner's default `arrowPadding`. The arrow's foot, 2.5/√2 units either side of its
+ * centre, then starts 7.9px in, where the straight edge after the 8px `rounded-md` corner begins;
+ * Base UI's default 5 put it in the curve. The arrow scales with `--spacing` but this is fixed px:
+ * raise it with a larger corner radius or a larger `--spacing`.
+ */
+export const ARROW_PADDING_PX = 10;
+
+/**
  * For a popup that can hold an arrow. `relative` makes the popup the arrow's containing block at
  * all times, not only while a scale animation transforms it. With an arrow inside, the popup moves
  * away from the trigger by `--popup-arrow-reach`, the arrow's reach (2.5/√2 units, less the 1px
  * border, rounded up to 1.75 units: whole pixels at the default spacing), so `sideOffset` stays
  * the gap between the trigger and the tip. Base UI measures `--available-height` from the
  * positioner, before that move, so a popup that caps its height takes the reach off it too.
+ *
+ * The arrow is a positioned child, so it paints over the popup's own focus ring where they meet.
+ * In a popup that holds an arrow (`has-[.PopupArrow]:`), the ring moves to an `::after` overlay,
+ * positioned and raised so it paints above the arrow. It takes the popup's radius and a transparent
+ * border of the popup's width, because Chromium draws the ring of a bordered box partly over the
+ * border. Forced colours name `Highlight`, the system focus colour. A popup without an arrow keeps
+ * the browser's ring on itself: an overlay would be clipped by its `overflow`.
  */
 export const arrowPopupClasses = [
   "relative",
@@ -20,6 +35,12 @@ export const arrowPopupClasses = [
   "has-[.PopupArrow]:data-[side=right]:ml-(--popup-arrow-reach)",
   "has-[.PopupArrow]:data-[side=inline-start]:me-(--popup-arrow-reach)",
   "has-[.PopupArrow]:data-[side=inline-end]:ms-(--popup-arrow-reach)",
+  "has-[.PopupArrow]:focus-visible:outline-none",
+  "has-[.PopupArrow]:focus-visible:after:pointer-events-none has-[.PopupArrow]:focus-visible:after:absolute has-[.PopupArrow]:focus-visible:after:-inset-px has-[.PopupArrow]:focus-visible:after:z-10",
+  "has-[.PopupArrow]:focus-visible:after:rounded-[inherit] has-[.PopupArrow]:focus-visible:after:border has-[.PopupArrow]:focus-visible:after:border-transparent",
+  "has-[.PopupArrow]:focus-visible:after:[outline-style:auto] has-[.PopupArrow]:focus-visible:after:[outline-width:1px] has-[.PopupArrow]:focus-visible:after:[outline-color:-webkit-focus-ring-color]",
+  // Forced colours revert an author `outline-color` on the overlay to CanvasText, so name the system focus colour
+  "has-[.PopupArrow]:forced-colors:focus-visible:after:[outline-color:Highlight]",
 ];
 
 export const arrowClasses = [
