@@ -2,9 +2,29 @@
 
 import type { ComponentProps, MouseEventHandler, ReactNode } from "react";
 import { cn } from "../../lib/cn";
+import { mergeLabels } from "../../lib/labels";
 import { useReducedMotion } from "../../lib/use-motion";
 
 export type Theme = "light" | "dark";
+
+/** The built-in English strings of `ThemeToggle`. */
+export type ThemeToggleLabels = {
+  /**
+   * Name of the button while the theme is light.
+   * @default "Switch to dark mode"
+   */
+  switchToDark: string;
+  /**
+   * Name of the button while the theme is dark.
+   * @default "Switch to light mode"
+   */
+  switchToLight: string;
+};
+
+export const DEFAULT_THEME_TOGGLE_LABELS: Readonly<ThemeToggleLabels> = {
+  switchToDark: "Switch to dark mode",
+  switchToLight: "Switch to light mode",
+};
 
 export interface ThemeToggleProps extends Omit<ComponentProps<"button">, "children"> {
   /** Current active theme.
@@ -17,6 +37,11 @@ export interface ThemeToggleProps extends Omit<ComponentProps<"button">, "childr
   lightIcon?: ReactNode;
   /** Custom icon shown when the theme is dark. */
   darkIcon?: ReactNode;
+  /**
+   * Replaces the built-in English strings, e.g. to translate them. Keys you leave out keep the
+   * default from `DEFAULT_THEME_TOGGLE_LABELS`. `aria-label` takes precedence.
+   */
+  labels?: Partial<ThemeToggleLabels>;
 }
 
 function SunIcon() {
@@ -65,15 +90,17 @@ export function ThemeToggle({
   className,
   type = "button",
   "aria-label": ariaLabel,
+  labels,
   ...props
 }: ThemeToggleProps) {
   const reduced = useReducedMotion();
+  const names = mergeLabels(DEFAULT_THEME_TOGGLE_LABELS, labels);
 
   return (
     <button
       {...props}
       type={type}
-      aria-label={ariaLabel ?? (theme === "light" ? "Switch to dark mode" : "Switch to light mode")}
+      aria-label={ariaLabel ?? (theme === "light" ? names.switchToDark : names.switchToLight)}
       className={cn(
         "relative size-9 cursor-pointer rounded-md",
         "text-muted-foreground hover:bg-accent hover:text-foreground",

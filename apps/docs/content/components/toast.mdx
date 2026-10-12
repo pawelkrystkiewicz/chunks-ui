@@ -271,6 +271,31 @@ Only string-level overrides are worth knowing about here:
 - Pass `className="toast-stack-viewport"` to opt into the [stacking pattern](#stacking-behaviour).
 - Otherwise, you almost never need to touch the viewport beyond mounting it.
 
+`Toast.Viewport` also takes `labels`:
+
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { ToastViewportProps } from 'chunks-ui'
+type Props = Pick<ToastViewportProps, 'labels'>
+export default Props
+`
+  })}
+/>
+
 ### Compound parts
 
 All other compound parts (`Toast.Provider`, `Toast.Root`, `Toast.Title`, `Toast.Description`, `Toast.Close`, `Toast.Action`) are thin style wrappers and forward their props to the corresponding Base UI primitive. See the [Base UI Toast reference](https://base-ui.com/react/components/toast#api-reference) for the full prop surface.
+
+## Labels
+
+`labels` replaces the built-in English text, for example to translate it. Keys you leave out keep their default from `DEFAULT_TOAST_LABELS`. `labels.viewport` names the region that Base UI announces the toasts in, and `labels.close` names the close button of a dismissible toast. `aria-label` on `Toast.Viewport` takes precedence over `labels.viewport`. See [Labels](/labels).
+
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { ToastLabels } from 'chunks-ui'
+export default ToastLabels
+`
+  })}
+/>

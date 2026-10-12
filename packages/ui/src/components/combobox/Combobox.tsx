@@ -2,14 +2,59 @@
 
 import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
 import type React from "react";
-import type { ComponentProps } from "react";
+import { type ComponentProps, createContext, useContext, useId } from "react";
 import { cn, cnState } from "../../lib/cn";
+import { mergeLabels } from "../../lib/labels";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
 import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
 import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
+import { removeButtonName } from "../chip/Chip";
 
-export type ComboboxRootProps = ComponentProps<typeof BaseCombobox.Root>;
+/** The built-in English strings of `Combobox`: the names of its icon buttons. */
+export type ComboboxLabels = {
+  /**
+   * Name of `Combobox.Trigger` when it renders the default icon.
+   * @default "Show options"
+   */
+  trigger: string;
+  /**
+   * Name of `Combobox.Clear` when it renders the default icon.
+   * @default "Clear selection"
+   */
+  clear: string;
+  /**
+   * Name of `Combobox.ChipRemove` when it renders the default icon, read with its chip's text.
+   * `{chip}` marks where the text goes: `"{chip} を削除"` reads "Apple を削除". Without `{chip}`,
+   * the text follows the label, so the default reads "Remove Apple".
+   * Only the first `{chip}` counts.
+   * @default "Remove"
+   */
+  chipRemove: string;
+};
+
+export const DEFAULT_COMBOBOX_LABELS: Readonly<ComboboxLabels> = {
+  trigger: "Show options",
+  clear: "Clear selection",
+  chipRemove: "Remove",
+};
+
+const ComboboxLabelsContext = createContext(DEFAULT_COMBOBOX_LABELS);
+// The id of the Combobox.Chip around a ChipRemove, which names the remove button
+const ComboboxChipIdContext = createContext<string | undefined>(undefined);
+
+// The defaults match ComponentProps<typeof BaseCombobox.Root>, the type before labels were added
+export type ComboboxRootProps<
+  Value = unknown,
+  Multiple extends boolean | undefined = boolean | undefined,
+  Item = Value,
+> = BaseCombobox.Root.Props<Value, Multiple, Item> & {
+  /**
+   * Replaces the built-in English strings, e.g. to translate them. Keys you leave out keep the
+   * default from `DEFAULT_COMBOBOX_LABELS`. An `aria-label` on a part takes precedence.
+   */
+  labels?: Partial<ComboboxLabels>;
+};
 export type ComboboxInputProps = ComponentProps<typeof BaseCombobox.Input>;
 export type ComboboxTriggerProps = ComponentProps<typeof BaseCombobox.Trigger>;
 export type ComboboxPopupProps = ComponentProps<typeof BaseCombobox.Popup>;
@@ -26,6 +71,17 @@ export type ComboboxChipsProps = ComponentProps<typeof BaseCombobox.Chips>;
 export type ComboboxChipProps = ComponentProps<typeof BaseCombobox.Chip>;
 export type ComboboxChipRemoveProps = ComponentProps<typeof BaseCombobox.ChipRemove>;
 export type ComboboxControlProps = React.ComponentProps<"div">;
+
+function ComboboxRoot<Value, Multiple extends boolean | undefined = false, Item = Value>({
+  labels,
+  ...props
+}: ComboboxRootProps<Value, Multiple, Item>) {
+  return (
+    <ComboboxLabelsContext.Provider value={mergeLabels(DEFAULT_COMBOBOX_LABELS, labels)}>
+      <BaseCombobox.Root<Value, Multiple, Item> {...props} />
+    </ComboboxLabelsContext.Provider>
+  );
+}
 
 function ComboboxControl({ className, ...props }: ComboboxControlProps) {
   return (
@@ -57,27 +113,28 @@ function ComboboxInput({ className, ...props }: ComboboxInputProps) {
 }
 
 // Trigger, Clear and ChipRemove render an aria-hidden icon by default, so they name themselves
-// with a default aria-label. Custom children or a `render` element own the content instead (a
-// fixed label would hide their visible text), so neither the label nor the icon is applied then.
+// with a default name from `labels`. Custom children or a `render` element own the content instead
+// (a fixed label would hide their visible text), so neither the name nor the icon is applied then.
 // A consumer's aria-label replaces the default; inside Field.Root, Base UI's aria-labelledby on
 // the Trigger still takes precedence over any aria-label.
 function ownContent(
   children: React.ReactNode,
   render: unknown,
-  label: string,
+  name: { "aria-label"?: string; "aria-labelledby"?: string },
   icon: React.ReactNode,
 ) {
   const hasOwnContent = children != null || render != null;
-  return hasOwnContent ? { children } : { "aria-label": label, children: icon };
+  return hasOwnContent ? { children } : { ...name, children: icon };
 }
 
 function ComboboxTrigger({ className, children, ...props }: ComboboxTriggerProps) {
+  const labels = useContext(ComboboxLabelsContext);
   return (
     <BaseCombobox.Trigger
       {...ownContent(
         children,
         props.render,
-        "Show options",
+        { "aria-label": labels.trigger },
         <svg
           viewBox="0 0 24 24"
           fill="none"
@@ -212,12 +269,13 @@ function ComboboxEmpty({ className, ...props }: ComboboxEmptyProps) {
 }
 
 function ComboboxClear({ className, children, ...props }: ComboboxClearProps) {
+  const labels = useContext(ComboboxLabelsContext);
   return (
     <BaseCombobox.Clear
       {...ownContent(
         children,
         props.render,
-        "Clear selection",
+        { "aria-label": labels.clear },
         <svg
           viewBox="0 0 24 24"
           fill="none"
@@ -250,37 +308,53 @@ function ComboboxGroupLabel({ className, ...props }: ComboboxGroupLabelProps) {
   );
 }
 
-function ComboboxChip({ className, ...props }: ComboboxChipProps) {
+function ComboboxChip({ className, id, ...props }: ComboboxChipProps) {
+  const generatedId = useId();
+  const chipId = id ?? generatedId;
   return (
-    <BaseCombobox.Chip
-      className={cnState(
-        "inline-flex items-center gap-1 rounded-sm border border-border bg-muted px-1.5 py-0.5 text-xs",
-        className,
-      )}
-      {...props}
-    />
+    <ComboboxChipIdContext.Provider value={chipId}>
+      <BaseCombobox.Chip
+        id={chipId}
+        className={cnState(
+          "inline-flex items-center gap-1 rounded-sm border border-border bg-muted px-1.5 py-0.5 text-xs",
+          className,
+        )}
+        {...props}
+      />
+    </ComboboxChipIdContext.Provider>
   );
 }
 
 function ComboboxChipRemove({ className, children, ...props }: ComboboxChipRemoveProps) {
+  const labels = useContext(ComboboxLabelsContext);
+  const chipId = useContext(ComboboxChipIdContext);
+  const id = useId();
+  // Named by hidden text around the chip's text: "Remove Apple", or "Apple を削除". The button
+  // sits inside the chip, so it has no aria-label: one would be read again as part of the chip's
+  // text. Without a Combobox.Chip around it, there is no chip text to read, and `{chip}` is dropped.
+  const name = removeButtonName(labels.chipRemove, chipId ?? "", id);
+  const namedByChip = chipId !== undefined && props["aria-label"] === undefined;
   return (
     <BaseCombobox.ChipRemove
       {...ownContent(
         children,
         props.render,
-        "Remove",
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          className="size-3"
-          aria-hidden="true"
-        >
-          <path d="M18 6 6 18" />
-          <path d="m6 6 12 12" />
-        </svg>,
+        namedByChip ? { "aria-labelledby": name.labelledBy } : { "aria-label": name.withoutChip },
+        <>
+          {namedByChip && name.hiddenText}
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            className="size-3"
+            aria-hidden="true"
+          >
+            <path d="M18 6 6 18" />
+            <path d="m6 6 12 12" />
+          </svg>
+        </>,
       )}
       className={cnState(
         "micro-interactions inline-flex items-center text-muted-foreground hover:text-foreground",
@@ -301,7 +375,7 @@ function ComboboxPortal({ children, ...props }: ComponentProps<typeof BaseCombob
 }
 
 export const Combobox = {
-  Root: BaseCombobox.Root,
+  Root: ComboboxRoot,
   Control: ComboboxControl,
   Input: ComboboxInput,
   Trigger: ComboboxTrigger,

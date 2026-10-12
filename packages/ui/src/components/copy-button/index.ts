@@ -1,1 +1,6 @@
-export { CopyButton, type CopyButtonProps } from "./CopyButton";
+export {
+  CopyButton,
+  type CopyButtonLabels,
+  type CopyButtonProps,
+  DEFAULT_COPY_BUTTON_LABELS,
+} from "./CopyButton";

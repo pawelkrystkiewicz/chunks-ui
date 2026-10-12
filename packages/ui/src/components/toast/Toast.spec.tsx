@@ -2,7 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { afterEach, describe, expect, it } from "vitest";
-import { createToastManager, Toast } from "./Toast";
+import { createToastManager, DEFAULT_TOAST_LABELS, Toast } from "./Toast";
 
 afterEach(cleanup);
 
@@ -341,5 +341,55 @@ describe("Toast", () => {
         },
       }),
     ).toHaveNoViolations();
+  });
+});
+
+describe("Toast labels", () => {
+  function DismissibleHarness() {
+    const toast = Toast.useToast();
+    return (
+      <button type="button" onClick={() => toast.add({ title: "Saved", dismissible: true })}>
+        Show toast
+      </button>
+    );
+  }
+
+  it("uses DEFAULT_TOAST_LABELS", async () => {
+    const user = userEvent.setup();
+    render(
+      <Toast.Provider>
+        <DismissibleHarness />
+        <Toast.Viewport />
+      </Toast.Provider>,
+    );
+    expect(screen.getByRole("region", { name: DEFAULT_TOAST_LABELS.viewport })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Show toast" }));
+    // Base UI aria-hides the close button until the toast is focused or hovered, which empties
+    // its computed name, so find it by its label
+    expect(
+      await screen.findByLabelText(DEFAULT_TOAST_LABELS.close, { selector: "button" }),
+    ).toBeInTheDocument();
+  });
+
+  it("takes every string from labels on Viewport", async () => {
+    const user = userEvent.setup();
+    render(
+      <Toast.Provider>
+        <DismissibleHarness />
+        <Toast.Viewport labels={{ viewport: "Powiadomienia", close: "Zamknij" }} />
+      </Toast.Provider>,
+    );
+    expect(screen.getByRole("region", { name: "Powiadomienia" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Show toast" }));
+    expect(await screen.findByLabelText("Zamknij", { selector: "button" })).toBeInTheDocument();
+  });
+
+  it("prefers aria-label on Viewport over labels", () => {
+    render(
+      <Toast.Provider>
+        <Toast.Viewport aria-label="Alerts" labels={{ viewport: "Powiadomienia" }} />
+      </Toast.Provider>,
+    );
+    expect(screen.getByRole("region", { name: "Alerts" })).toBeInTheDocument();
   });
 });

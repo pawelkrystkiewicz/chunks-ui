@@ -68,10 +68,23 @@ Replace the default sun/moon icons via `lightIcon` and `darkIcon`:
   definition={generateDefinition({
     code: `
 import type { ThemeToggleProps } from 'chunks-ui'
-type Props = Pick<ThemeToggleProps, 'theme' | 'onClick' | 'lightIcon' | 'darkIcon'>
+type Props = Pick<ThemeToggleProps, 'theme' | 'onClick' | 'lightIcon' | 'darkIcon' | 'labels'>
 export default Props
 `
   })}
 />
 
-All other `<button>` props, including `ref`, are forwarded to the underlying `<button>` element. Pass `aria-label` to replace the default name ("Switch to dark mode" / "Switch to light mode").
+All other `<button>` props, including `ref`, are forwarded to the underlying `<button>` element. Pass `aria-label` to replace the default name ("Switch to dark mode" / "Switch to light mode") in both themes, or `labels` to replace each one.
+
+## Labels
+
+`labels` replaces the built-in English text, for example to translate it. Keys you leave out keep their default from `DEFAULT_THEME_TOGGLE_LABELS`. `aria-label` takes precedence. See [Labels](/labels).
+
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { ThemeToggleLabels } from 'chunks-ui'
+export default ThemeToggleLabels
+`
+  })}
+/>

@@ -13,15 +13,21 @@ export { Avatar, type AvatarProps } from "./components/avatar";
 export type {
   BreadcrumbEllipsisProps,
   BreadcrumbItemProps,
+  BreadcrumbLabels,
   BreadcrumbLinkProps,
   BreadcrumbListProps,
   BreadcrumbPageProps,
   BreadcrumbRootProps,
   BreadcrumbSeparatorProps,
 } from "./components/breadcrumb";
-export { Breadcrumb } from "./components/breadcrumb";
+export { Breadcrumb, DEFAULT_BREADCRUMB_LABELS } from "./components/breadcrumb";
 export { Button, type ButtonProps, buttonVariants } from "./components/button";
-export { Calendar, type CalendarProps } from "./components/calendar";
+export {
+  Calendar,
+  type CalendarLabels,
+  type CalendarProps,
+  DEFAULT_CALENDAR_LABELS,
+} from "./components/calendar";
 export type {
   CardContentProps,
   CardDescriptionProps,
@@ -33,8 +39,19 @@ export type {
 export { Card } from "./components/card";
 export type { CheckboxIndicatorProps, CheckboxRootProps } from "./components/checkbox";
 export { Checkbox } from "./components/checkbox";
-export { Chip, type ChipProps, chipVariants } from "./components/chip";
-export { ClearButton, type ClearButtonProps } from "./components/clear-button";
+export {
+  Chip,
+  type ChipLabels,
+  type ChipProps,
+  chipVariants,
+  DEFAULT_CHIP_LABELS,
+} from "./components/chip";
+export {
+  ClearButton,
+  type ClearButtonLabels,
+  type ClearButtonProps,
+  DEFAULT_CLEAR_BUTTON_LABELS,
+} from "./components/clear-button";
 export type {
   CollapsiblePanelProps,
   CollapsibleRootProps,
@@ -54,15 +71,26 @@ export type {
   ComboboxInputProps,
   ComboboxItemIndicatorProps,
   ComboboxItemProps,
+  ComboboxLabels,
   ComboboxListProps,
   ComboboxPopupProps,
   ComboboxPositionerProps,
   ComboboxRootProps,
   ComboboxTriggerProps,
 } from "./components/combobox";
-export { Combobox } from "./components/combobox";
-export { CopyButton, type CopyButtonProps } from "./components/copy-button";
-export { DatePicker, type DatePickerProps } from "./components/date-picker";
+export { Combobox, DEFAULT_COMBOBOX_LABELS } from "./components/combobox";
+export {
+  CopyButton,
+  type CopyButtonLabels,
+  type CopyButtonProps,
+  DEFAULT_COPY_BUTTON_LABELS,
+} from "./components/copy-button";
+export {
+  DatePicker,
+  type DatePickerLabels,
+  type DatePickerProps,
+  DEFAULT_DATE_PICKER_LABELS,
+} from "./components/date-picker";
 export type {
   DialogBackdropProps,
   DialogBodyProps,
@@ -106,8 +134,19 @@ export {
   type IconButtonProps,
   iconButtonVariants,
 } from "./components/icon-button";
-export { Input, type InputProps, inputVariants } from "./components/input";
-export { InputCopy, type InputCopyProps } from "./components/input-copy";
+export {
+  DEFAULT_INPUT_LABELS,
+  Input,
+  type InputLabels,
+  type InputProps,
+  inputVariants,
+} from "./components/input";
+export {
+  DEFAULT_INPUT_COPY_LABELS,
+  InputCopy,
+  type InputCopyLabels,
+  type InputCopyProps,
+} from "./components/input-copy";
 export { Label, type LabelProps } from "./components/label";
 export { Loader, type LoaderProps } from "./components/loader";
 export type {
@@ -131,21 +170,23 @@ export type {
   NumberFieldGroupProps,
   NumberFieldIncrementProps,
   NumberFieldInputProps,
+  NumberFieldLabels,
   NumberFieldRootProps,
   NumberFieldScrubAreaCursorProps,
   NumberFieldScrubAreaProps,
 } from "./components/number-field";
-export { NumberField } from "./components/number-field";
+export { DEFAULT_NUMBER_FIELD_LABELS, NumberField } from "./components/number-field";
 export type {
   PaginationContentProps,
   PaginationEllipsisProps,
   PaginationItemProps,
+  PaginationLabels,
   PaginationLinkProps,
   PaginationNextProps,
   PaginationPreviousProps,
   PaginationRootProps,
 } from "./components/pagination";
-export { Pagination } from "./components/pagination";
+export { DEFAULT_PAGINATION_LABELS, Pagination } from "./components/pagination";
 export type {
   PopoverArrowProps,
   PopoverCloseProps,
@@ -197,12 +238,13 @@ export { Skeleton, type SkeletonProps } from "./components/skeleton";
 export type {
   SliderControlProps,
   SliderIndicatorProps,
+  SliderLabels,
   SliderRootProps,
   SliderThumbProps,
   SliderTrackProps,
   SliderValueProps,
 } from "./components/slider";
-export { Slider } from "./components/slider";
+export { DEFAULT_SLIDER_LABELS, Slider } from "./components/slider";
 export type { SwitchRootProps, SwitchThumbProps } from "./components/switch";
 export { Switch } from "./components/switch";
 export type {
@@ -228,19 +270,20 @@ export type {
 } from "./components/tabs";
 export { Tabs, useTabsValue } from "./components/tabs";
 export { Textarea, type TextareaProps } from "./components/textarea";
-export type { Theme, ThemeToggleProps } from "./components/theme-toggle";
-export { ThemeToggle } from "./components/theme-toggle";
+export type { Theme, ThemeToggleLabels, ThemeToggleProps } from "./components/theme-toggle";
+export { DEFAULT_THEME_TOGGLE_LABELS, ThemeToggle } from "./components/theme-toggle";
 export type {
   ToastActionProps,
   ToastCloseProps,
   ToastDescriptionProps,
+  ToastLabels,
   ToastProviderProps,
   ToastRootProps,
   ToastStyleOptions,
   ToastTitleProps,
   ToastViewportProps,
 } from "./components/toast";
-export { createToastManager, Toast } from "./components/toast";
+export { createToastManager, DEFAULT_TOAST_LABELS, Toast } from "./components/toast";
 export type { ToggleGroupItemProps, ToggleGroupRootProps } from "./components/toggle-group";
 export { ToggleGroup } from "./components/toggle-group";
 export type {

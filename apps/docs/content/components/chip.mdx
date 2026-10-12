@@ -84,16 +84,31 @@ function TagList() {
 
 <ChipRemovableExample />
 
+The remove button reads its label and then the chip's text, for example "Remove React". To put the chip's text first, mark its place with `{chip}`: `labels={{ remove: "{chip} を削除" }}` reads "React を削除". See [Labels](/labels#remove-buttons).
+
 ## Props
 
 <TSDoc
   definition={generateDefinition({
     code: `
 import type { ChipProps } from 'chunks-ui'
-type Props = Pick<ChipProps, 'onRemove' | 'color' | 'variant'>
+type Props = Pick<ChipProps, 'onRemove' | 'color' | 'variant' | 'labels'>
 export default Props
 `
   })}
 />
 
 All other props are forwarded to the underlying `<span>` element.
+
+## Labels
+
+`labels` replaces the built-in English text, for example to translate it. Keys you leave out keep their default from `DEFAULT_CHIP_LABELS`. See [Labels](/labels).
+
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { ChipLabels } from 'chunks-ui'
+export default ChipLabels
+`
+  })}
+/>

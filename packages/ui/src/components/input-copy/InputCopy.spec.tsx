@@ -1,7 +1,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { InputCopy } from "./InputCopy";
+import { DEFAULT_INPUT_COPY_LABELS, InputCopy } from "./InputCopy";
 
 afterEach(cleanup);
 
@@ -37,5 +38,23 @@ describe("InputCopy", () => {
   it("has no a11y violations", async () => {
     const { container } = render(<InputCopy value="test" aria-label="Copy link" />);
     expect(await axe(container)).toHaveNoViolations();
+  });
+});
+
+describe("InputCopy labels", () => {
+  it("names the copy button Copied after a copy", async () => {
+    const user = userEvent.setup();
+    render(<InputCopy value="code" />);
+    await user.click(screen.getByRole("button", { name: DEFAULT_INPUT_COPY_LABELS.copy }));
+    expect(
+      screen.getByRole("button", { name: DEFAULT_INPUT_COPY_LABELS.copied }),
+    ).toBeInTheDocument();
+  });
+
+  it("takes the copy button's names from labels", async () => {
+    const user = userEvent.setup();
+    render(<InputCopy value="code" labels={{ copy: "Kopiuj", copied: "Skopiowano" }} />);
+    await user.click(screen.getByRole("button", { name: "Kopiuj" }));
+    expect(screen.getByRole("button", { name: "Skopiowano" })).toBeInTheDocument();
   });
 });

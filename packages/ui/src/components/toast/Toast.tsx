@@ -4,6 +4,7 @@ import { Toast as BaseToast } from "@base-ui/react/toast";
 import { X } from "lucide-react";
 import type { ComponentProps, ComponentType } from "react";
 import { cn, cnState } from "../../lib/cn";
+import { mergeLabels } from "../../lib/labels";
 import { useReducedMotion } from "../../lib/use-motion";
 
 /**
@@ -73,19 +74,46 @@ declare module "@base-ui/react/toast" {
 
 export const createToastManager = BaseToast.createToastManager;
 
+/** The built-in English strings of `Toast`. */
+export type ToastLabels = {
+  /**
+   * Name of the `Toast.Viewport` region.
+   * @default "Notifications"
+   */
+  viewport: string;
+  /**
+   * Name of the close button of a dismissible toast.
+   * @default "Close"
+   */
+  close: string;
+};
+
+export const DEFAULT_TOAST_LABELS: Readonly<ToastLabels> = {
+  viewport: "Notifications",
+  close: "Close",
+};
+
 export type ToastProviderProps = ComponentProps<typeof BaseToast.Provider>;
-export type ToastViewportProps = ComponentProps<typeof BaseToast.Viewport>;
+export type ToastViewportProps = ComponentProps<typeof BaseToast.Viewport> & {
+  /**
+   * Replaces the built-in English strings, e.g. to translate them. Keys you leave out keep the
+   * default from `DEFAULT_TOAST_LABELS`. `aria-label` takes precedence over `labels.viewport`.
+   */
+  labels?: Partial<ToastLabels>;
+};
 export type ToastRootProps = ComponentProps<typeof BaseToast.Root>;
 export type ToastTitleProps = ComponentProps<typeof BaseToast.Title>;
 export type ToastDescriptionProps = ComponentProps<typeof BaseToast.Description>;
 export type ToastCloseProps = ComponentProps<typeof BaseToast.Close>;
 export type ToastActionProps = ComponentProps<typeof BaseToast.Action>;
 
-function ToastViewport({ className, ...props }: ToastViewportProps) {
+function ToastViewport({ className, labels, ...props }: ToastViewportProps) {
   const manager = BaseToast.useToastManager();
+  const names = mergeLabels(DEFAULT_TOAST_LABELS, labels);
 
   return (
     <BaseToast.Viewport
+      aria-label={names.viewport}
       className={cnState(
         "fixed end-4 bottom-4 z-toasts flex w-[380px] max-w-[calc(100vw-2rem)] flex-col gap-2 outline-none",
         className,
@@ -108,7 +136,9 @@ function ToastViewport({ className, ...props }: ToastViewportProps) {
               )}
               {toast.actionProps != null && <ToastAction {...toast.actionProps} />}
             </BaseToast.Content>
-            {(dismissible || toast.onClose) && <ToastClose onClick={toast.onClose} />}
+            {(dismissible || toast.onClose) && (
+              <ToastClose aria-label={names.close} onClick={toast.onClose} />
+            )}
           </ToastRoot>
         );
       })}
@@ -172,7 +202,7 @@ function ToastDescription({ className, ...props }: ToastDescriptionProps) {
 function ToastClose({ className, children, ...props }: ToastCloseProps) {
   return (
     <BaseToast.Close
-      aria-label="Close"
+      aria-label={DEFAULT_TOAST_LABELS.close}
       className={cnState(
         "micro-interactions absolute end-2 top-5 flex size-6 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground",
         "focus-visible:outline-2 focus-visible:outline-ring",

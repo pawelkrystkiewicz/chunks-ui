@@ -46,10 +46,23 @@ function EditableInputCopy() {
   definition={generateDefinition({
     code: `
 import type { InputCopyProps } from 'chunks-ui'
-type Props = Pick<InputCopyProps, 'value'>
+type Props = Pick<InputCopyProps, 'value' | 'labels'>
 export default Props
 `
   })}
 />
 
-All other `Input` props are forwarded except `endAdornment` and `onClear` (reserved for the internal `CopyButton`). `readOnly` defaults to `true`.
+All other `Input` props are forwarded except `endAdornment` and `onClear` (reserved for the internal `CopyButton`). `readOnly` defaults to `true`. `aria-label` names the input, not the copy button.
+
+## Labels
+
+`labels` replaces the built-in English text, for example to translate it. Keys you leave out keep their default from `DEFAULT_INPUT_COPY_LABELS`. They name the copy button, which reads "Copied" for a moment after a copy. See [Labels](/labels).
+
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { InputCopyLabels } from 'chunks-ui'
+export default InputCopyLabels
+`
+  })}
+/>

@@ -1,19 +1,40 @@
 import type { ComponentProps } from "react";
 import { cn } from "../../lib/cn";
+import { mergeLabels } from "../../lib/labels";
 import { BUTTON_ANIMATION_CLASSES } from "../shared";
+
+/** The built-in English strings of `ClearButton`. */
+export type ClearButtonLabels = {
+  /**
+   * Accessible name of the button.
+   * @default "Clear"
+   */
+  clear: string;
+};
+
+export const DEFAULT_CLEAR_BUTTON_LABELS: Readonly<ClearButtonLabels> = { clear: "Clear" };
 
 export type ClearButtonProps = ComponentProps<"button"> & {
   /**
-   * Accessible label for the clear button, used as `aria-label`.
+   * Accessible label for the clear button, used as `aria-label`. Takes precedence over `labels`.
    * @default "Clear"
    */
   label?: string;
+  /**
+   * Replaces the built-in English strings, e.g. to translate them. Keys you leave out keep the
+   * default from `DEFAULT_CLEAR_BUTTON_LABELS`. `label` and `aria-label` take precedence, and
+   * `aria-labelledby` turns the default off: the button is then named by what it references.
+   */
+  labels?: Partial<ClearButtonLabels>;
 };
 
-const DEFAULT_LABEL = "Clear";
-
-export function ClearButton({ className, label, ...props }: ClearButtonProps) {
-  const resolvedLabel = label ?? props["aria-label"] ?? DEFAULT_LABEL;
+export function ClearButton({ className, label, labels, ...props }: ClearButtonProps) {
+  // No default next to aria-labelledby: when the referenced element contains this button, its
+  // text would take the default in, and "Remove Apple" would read "Remove Apple Clear"
+  const defaultLabel = props["aria-labelledby"]
+    ? undefined
+    : mergeLabels(DEFAULT_CLEAR_BUTTON_LABELS, labels).clear;
+  const resolvedLabel = label ?? props["aria-label"] ?? defaultLabel;
   return (
     <button
       type="button"
