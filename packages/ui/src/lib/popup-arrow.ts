@@ -28,7 +28,10 @@ export function arrowPaddingIn(positioner: Element): number | undefined {
   // A value with a percentage (`min(8px, 50% - 8px)`) parses as NaN, and leaves the others to count
   const radius = Math.max(0, ...CORNERS.map((corner) => Number.parseFloat(corners[corner]) || 0));
   const size = Number.parseFloat(getComputedStyle(arrow).width);
-  return radius + (size * (Math.SQRT2 - 1)) / 2;
+  const padding = radius + (size * (Math.SQRT2 - 1)) / 2;
+  // Without layout (jsdom, happy-dom) the width is "" and the padding NaN: Base UI's own default
+  // then applies, instead of a `left: NaN`
+  return Number.isFinite(padding) ? padding : undefined;
 }
 
 /**
