@@ -1,7 +1,8 @@
 import { cleanup, isInaccessible, render, screen } from "@testing-library/react";
 import { axe } from "jest-axe";
 import { afterEach, describe, expect, it } from "vitest";
-import { Breadcrumb, type BreadcrumbRootProps, DEFAULT_BREADCRUMB_LABELS } from "./Breadcrumb";
+import { Breadcrumb, type BreadcrumbRootProps } from "./Breadcrumb";
+import { DEFAULT_BREADCRUMB_LABELS } from "./Breadcrumb.Labels";
 
 afterEach(cleanup);
 

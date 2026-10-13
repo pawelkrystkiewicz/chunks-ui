@@ -10,6 +10,7 @@ import {
 import { cn } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
 import { BUTTON_ANIMATION_CLASSES } from "../shared";
+import { DEFAULT_PAGINATION_LABELS, type PaginationLabels } from "./Pagination.Labels";
 
 type RenderProps = { className?: string; children?: ReactNode; [key: string]: unknown };
 type RenderElement = ReactElement<RenderProps>;
@@ -17,37 +18,6 @@ type RenderElement = ReactElement<RenderProps>;
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-
-/** The built-in English strings of `Pagination`. */
-export type PaginationLabels = {
-  /**
-   * Name of the `Pagination.Root` navigation landmark.
-   * @default "pagination"
-   */
-  root: string;
-  /**
-   * Text of `Pagination.Previous` when it has no children.
-   * @default "Previous"
-   */
-  previous: string;
-  /**
-   * Text of `Pagination.Next` when it has no children.
-   * @default "Next"
-   */
-  next: string;
-  /**
-   * Screen-reader text of `Pagination.Ellipsis`.
-   * @default "More pages"
-   */
-  ellipsis: string;
-};
-
-export const DEFAULT_PAGINATION_LABELS: Readonly<PaginationLabels> = {
-  root: "pagination",
-  previous: "Previous",
-  next: "Next",
-  ellipsis: "More pages",
-};
 
 const PaginationLabelsContext = createContext(DEFAULT_PAGINATION_LABELS);
 

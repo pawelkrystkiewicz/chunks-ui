@@ -3,7 +3,8 @@ import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import * as React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { DEFAULT_NUMBER_FIELD_LABELS, NumberField } from "./NumberField";
+import { NumberField } from "./NumberField";
+import { DEFAULT_NUMBER_FIELD_LABELS } from "./NumberField.Labels";
 
 afterEach(cleanup);
 

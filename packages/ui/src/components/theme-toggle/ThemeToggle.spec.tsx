@@ -4,7 +4,8 @@ import { axe } from "jest-axe";
 import { createRef } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Tooltip } from "../tooltip";
-import { DEFAULT_THEME_TOGGLE_LABELS, ThemeToggle } from "./ThemeToggle";
+import { ThemeToggle } from "./ThemeToggle";
+import { DEFAULT_THEME_TOGGLE_LABELS } from "./ThemeToggle.Labels";
 
 afterEach(cleanup);
 

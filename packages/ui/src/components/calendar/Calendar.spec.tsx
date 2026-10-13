@@ -1,8 +1,10 @@
 import { act, cleanup, isInaccessible, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
+import { startTransition, useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { Calendar, createDate, DEFAULT_CALENDAR_LABELS } from "./Calendar";
+import { Calendar, createDate } from "./Calendar";
+import { DEFAULT_CALENDAR_LABELS } from "./Calendar.Labels";
 
 afterEach(cleanup);
 
@@ -38,6 +40,21 @@ const tabStops = () =>
     .filter((b) => b.tabIndex === 0);
 const focusDay = (date: Date) => act(() => dayButton(date).focus());
 
+const SHORT_WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+/** Moves Sunday, the first item, to the end. */
+const fromMonday = (week: string[]) => [...week.slice(1), ...week.slice(0, 1)];
+
+/** Checks the column headers: the weekday name each shows, and the name screen readers read. */
+function expectWeekdayHeaders(shown: string[], read: string[]) {
+  const headers = screen.getAllByRole("columnheader");
+  expect(headers.map((th) => th.querySelector('[aria-hidden="true"]')?.textContent)).toEqual(shown);
+  expect(headers).toHaveLength(read.length);
+  headers.forEach((th, i) => {
+    expect(th).toHaveAccessibleName(read[i]);
+  });
+}
+
 describe("Calendar", () => {
   it("renders the current month and year when no value is provided", () => {
     vi.useFakeTimers({ toFake: ["Date"] });
@@ -65,10 +82,15 @@ describe("Calendar", () => {
     }
   });
 
+  // Screen readers read a column header when focus moves to another column: "Su" alone is unclear
+  it("shows a short weekday name in each column header and names it by the full one", () => {
+    render(<Calendar value={MARCH_15_2026} />);
+    expectWeekdayHeaders(SHORT_WEEKDAYS, WEEKDAYS);
+  });
+
   it("starts the week on Monday with weekStartsOn={1}", () => {
     render(<Calendar value={MARCH_15_2026} weekStartsOn={1} />);
-    const headers = screen.getAllByRole("columnheader").map((th) => th.textContent);
-    expect(headers).toEqual(["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]);
+    expectWeekdayHeaders(fromMonday(SHORT_WEEKDAYS), fromMonday(WEEKDAYS));
     // March 1, 2026 is a Sunday: last cell of the first row
     const firstRow = screen.getAllByRole("row")[1];
     expect(firstRow?.querySelectorAll("td")[6]).toHaveTextContent("1");
@@ -618,6 +640,246 @@ describe("Calendar keyboard navigation", () => {
   });
 });
 
+describe("Calendar month", () => {
+  const APRIL_1 = new Date(2026, 3, 1);
+  const grid = (name: string) => screen.getByRole("grid", { name });
+
+  it("shows the month of a controlled `month`, not the selected day's, and keeps it when `value` moves", () => {
+    const { rerender } = render(
+      <Calendar value={MARCH_15_2026} month={new Date(2026, 5, 20, 14)} />,
+    );
+    expect(grid("June 2026")).toBeInTheDocument();
+    rerender(<Calendar value={new Date(2026, 6, 4)} month={new Date(2026, 5, 20, 14)} />);
+    expect(grid("June 2026")).toBeInTheDocument();
+  });
+
+  it("asks for the next and previous month through onMonthChange and waits for `month`", async () => {
+    const user = userEvent.setup();
+    const onMonthChange = vi.fn();
+    const { rerender } = render(<Calendar month={MARCH_15_2026} onMonthChange={onMonthChange} />);
+    await user.click(getButton("Next month"));
+    expect(onMonthChange).toHaveBeenLastCalledWith(APRIL_1);
+    expect(grid("March 2026")).toBeInTheDocument();
+    await user.click(getButton("Previous month"));
+    expect(onMonthChange).toHaveBeenLastCalledWith(new Date(2026, 1, 1));
+    expect(onMonthChange).toHaveBeenCalledTimes(2);
+    rerender(<Calendar month={APRIL_1} onMonthChange={onMonthChange} />);
+    expect(grid("April 2026")).toBeInTheDocument();
+  });
+
+  it("follows a parent that sets `month` in onMonthChange, by buttons and keys", async () => {
+    const user = userEvent.setup();
+    function Controlled() {
+      const [month, setMonth] = useState(MARCH_15_2026);
+      return <Calendar defaultValue={MARCH_15_2026} month={month} onMonthChange={setMonth} />;
+    }
+    render(<Controlled />);
+    await user.click(getButton("Next month"));
+    expect(grid("April 2026")).toBeInTheDocument();
+    await user.click(getButton("Previous month"));
+    await focusDay(MARCH_15_2026);
+    await user.keyboard("{PageDown}");
+    expect(grid("April 2026")).toBeInTheDocument();
+    expect(dayButton(new Date(2026, 3, 15))).toHaveFocus();
+  });
+
+  it("keeps focus on its day when a key leaves a `month` the parent keeps", async () => {
+    const user = userEvent.setup();
+    const onMonthChange = vi.fn();
+    const march31 = new Date(2026, 2, 31);
+    render(<Calendar defaultValue={march31} month={march31} onMonthChange={onMonthChange} />);
+    await focusDay(march31);
+    await user.keyboard("{ArrowRight}");
+    expect(onMonthChange).toHaveBeenCalledExactlyOnceWith(APRIL_1);
+    expect(grid("March 2026")).toBeInTheDocument();
+    expect(dayButton(march31)).toHaveFocus();
+    expect(tabStops()).toEqual([dayButton(march31)]);
+  });
+
+  // A parent that answers with a month other than the asked-for one removes the focused day
+  const JUNE_1 = new Date(2026, 5, 1);
+  const clampToJune = (month: Date) => (month > JUNE_1 ? JUNE_1 : month);
+
+  it("focuses the tab stop of the month a parent shows instead of the asked-for one", async () => {
+    const user = userEvent.setup();
+    function Clamped() {
+      const [month, setMonth] = useState(MARCH_15_2026);
+      return (
+        <Calendar
+          defaultValue={MARCH_15_2026}
+          month={month}
+          onMonthChange={(next) => setMonth(clampToJune(next))}
+        />
+      );
+    }
+    render(<Clamped />);
+    await focusDay(MARCH_15_2026);
+    await user.keyboard("{Shift>}{PageDown}{/Shift}");
+    expect(grid("June 2026")).toBeInTheDocument();
+    expect(document.activeElement).not.toBe(document.body);
+    expect(tabStops()).toEqual([document.activeElement]);
+  });
+
+  it("moves focus to the asked-for day when the parent sets `month` later", async () => {
+    const user = userEvent.setup();
+    let applyMonth = () => {};
+    function Deferred() {
+      const [month, setMonth] = useState(MARCH_15_2026);
+      return (
+        <Calendar
+          defaultValue={MARCH_15_2026}
+          month={month}
+          onMonthChange={(next) => {
+            applyMonth = () => setMonth(next);
+          }}
+        />
+      );
+    }
+    render(<Deferred />);
+    await focusDay(MARCH_15_2026);
+    await user.keyboard("{PageDown}");
+    expect(grid("March 2026")).toBeInTheDocument();
+    expect(dayButton(MARCH_15_2026)).toHaveFocus();
+    act(() => applyMonth());
+    expect(grid("April 2026")).toBeInTheDocument();
+    expect(dayButton(new Date(2026, 3, 15))).toHaveFocus();
+    expect(tabStops()).toEqual([dayButton(new Date(2026, 3, 15))]);
+  });
+
+  it("focuses the tab stop of another month that a parent shows in a transition", async () => {
+    const user = userEvent.setup();
+    function ClampedTransition() {
+      const [month, setMonth] = useState(MARCH_15_2026);
+      return (
+        <Calendar
+          defaultValue={MARCH_15_2026}
+          month={month}
+          onMonthChange={(next) => startTransition(() => setMonth(clampToJune(next)))}
+        />
+      );
+    }
+    render(<ClampedTransition />);
+    await focusDay(MARCH_15_2026);
+    await user.keyboard("{Shift>}{PageDown}{/Shift}");
+    expect(grid("June 2026")).toBeInTheDocument();
+    expect(document.activeElement).not.toBe(document.body);
+    expect(tabStops()).toEqual([document.activeElement]);
+  });
+
+  it("does not steal focus after a pointer click when the parent sets `month` later", async () => {
+    const user = userEvent.setup();
+    let applyMonth = () => {};
+    function Deferred() {
+      const [month, setMonth] = useState(MARCH_15_2026);
+      return (
+        <Calendar
+          defaultValue={MARCH_15_2026}
+          month={month}
+          onMonthChange={(next) => {
+            applyMonth = () => setMonth(next);
+          }}
+        />
+      );
+    }
+    render(<Deferred />);
+    await focusDay(MARCH_15_2026);
+    await user.keyboard("{PageDown}");
+    await user.click(getButton("Next month"));
+    // Safari and Firefox on macOS do not focus a clicked button: focus falls back to the body
+    (document.activeElement as HTMLElement).blur();
+    expect(document.activeElement).toBe(document.body);
+    act(() => applyMonth());
+    expect(grid("April 2026")).toBeInTheDocument();
+    expect(document.activeElement).toBe(document.body);
+  });
+
+  it("leaves focus where the user moved it before the parent sets `month`", async () => {
+    const user = userEvent.setup();
+    let applyMonth = () => {};
+    function Deferred() {
+      const [month, setMonth] = useState(MARCH_15_2026);
+      return (
+        <Calendar
+          defaultValue={MARCH_15_2026}
+          month={month}
+          onMonthChange={(next) => {
+            applyMonth = () => setMonth(next);
+          }}
+        />
+      );
+    }
+    render(<Deferred />);
+    await focusDay(MARCH_15_2026);
+    await user.keyboard("{PageDown}");
+    act(() => getButton("Next month").focus());
+    act(() => applyMonth());
+    expect(grid("April 2026")).toBeInTheDocument();
+    expect(getButton("Next month")).toHaveFocus();
+  });
+
+  it("selects an outside day and asks for its month", async () => {
+    const user = userEvent.setup();
+    const onMonthChange = vi.fn();
+    const onValueChange = vi.fn();
+    render(
+      <Calendar
+        month={MARCH_15_2026}
+        onMonthChange={onMonthChange}
+        onValueChange={onValueChange}
+        weekStartsOn={1}
+        showOutsideDays
+      />,
+    );
+    await user.click(getButton("Monday, February 23, 2026"));
+    expect(onValueChange).toHaveBeenCalledExactlyOnceWith(new Date(2026, 1, 23));
+    expect(onMonthChange).toHaveBeenCalledExactlyOnceWith(new Date(2026, 1, 1));
+    expect(grid("March 2026")).toBeInTheDocument();
+  });
+
+  it("calls onMonthChange when the user moves an uncontrolled month", async () => {
+    const user = userEvent.setup();
+    const onMonthChange = vi.fn();
+    render(<Calendar defaultValue={MARCH_15_2026} onMonthChange={onMonthChange} />);
+    await user.click(getButton("Next month"));
+    expect(grid("April 2026")).toBeInTheDocument();
+    expect(onMonthChange).toHaveBeenLastCalledWith(APRIL_1);
+    await focusDay(new Date(2026, 3, 1));
+    await user.keyboard("{ArrowLeft}");
+    expect(grid("March 2026")).toBeInTheDocument();
+    expect(onMonthChange).toHaveBeenLastCalledWith(new Date(2026, 2, 1));
+    expect(onMonthChange).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not call onMonthChange when a new `value` moves an uncontrolled month", () => {
+    const onMonthChange = vi.fn();
+    const { rerender } = render(<Calendar value={MARCH_15_2026} onMonthChange={onMonthChange} />);
+    rerender(<Calendar value={new Date(2026, 6, 4)} onMonthChange={onMonthChange} />);
+    expect(grid("July 2026")).toBeInTheDocument();
+    expect(onMonthChange).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { bad: "an Invalid Date", month: new Date(Number.NaN) },
+    { bad: "a date before year 1", month: createDate(0, 5, 15) },
+  ])("shows the selected day's month for $bad as the `month`", async ({ month }) => {
+    const user = userEvent.setup();
+    const onMonthChange = vi.fn();
+    render(<Calendar value={MARCH_15_2026} month={month} onMonthChange={onMonthChange} />);
+    expect(grid("March 2026")).toBeInTheDocument();
+    await user.click(getButton("Next month"));
+    expect(onMonthChange).toHaveBeenCalledExactlyOnceWith(APRIL_1);
+  });
+
+  it("does not ask for a month before January of year 1", async () => {
+    const user = userEvent.setup();
+    const onMonthChange = vi.fn();
+    render(<Calendar month={createDate(1, 0, 10)} onMonthChange={onMonthChange} />);
+    expect(getButton("Previous month")).toHaveAttribute("aria-disabled", "true");
+    await user.click(getButton("Previous month"));
+    expect(onMonthChange).not.toHaveBeenCalled();
+  });
+});
+
 describe("Calendar labels", () => {
   it("keeps the default when a function label is undefined", () => {
     render(<Calendar value={MARCH_15_2026} labels={{ heading: undefined }} />);
@@ -627,17 +889,35 @@ describe("Calendar labels", () => {
   });
 
   const PL_NARROW_WEEKDAYS = ["N", "P", "W", "Ś", "C", "P", "S"];
+  const PL_WEEKDAYS = [
+    "niedziela",
+    "poniedziałek",
+    "wtorek",
+    "środa",
+    "czwartek",
+    "piątek",
+    "sobota",
+  ];
 
   it("uses DEFAULT_CALENDAR_LABELS", () => {
     render(<Calendar value={MARCH_15_2026} />);
-    const { previousMonth, nextMonth, heading, weekday, day } = DEFAULT_CALENDAR_LABELS;
+    const { previousMonth, nextMonth, heading, day } = DEFAULT_CALENDAR_LABELS;
     expect(getButton(previousMonth)).toBeInTheDocument();
     expect(getButton(nextMonth)).toBeInTheDocument();
     expect(screen.getByRole("grid", { name: heading(new Date(2026, 2, 1)) })).toBeInTheDocument();
-    const headers = screen.getAllByRole("columnheader").map((th) => th.textContent);
-    // March 1, 2026 is a Sunday
-    expect(headers).toEqual([0, 1, 2, 3, 4, 5, 6].map((d) => weekday(new Date(2026, 2, 1 + d))));
     expect(dayButton(MARCH_15_2026)).toHaveAccessibleName(day(MARCH_15_2026));
+  });
+
+  it("reads a custom weekday to screen readers when weekdayLong is not set", () => {
+    render(
+      <Calendar
+        value={MARCH_15_2026}
+        labels={{ weekday: (date) => PL_WEEKDAYS[date.getDay()] ?? "" }}
+      />,
+    );
+    const headers = screen.getAllByRole("columnheader");
+    expect(headers[0]).toHaveAccessibleName(PL_WEEKDAYS[0]);
+    expect(headers[1]).toHaveAccessibleName(PL_WEEKDAYS[1]);
   });
 
   it("takes every string from labels", async () => {
@@ -653,14 +933,14 @@ describe("Calendar labels", () => {
             nextMonth: "Następny miesiąc",
             heading: (date) => `${date.getMonth() + 1}/${date.getFullYear()}`,
             weekday: (date) => PL_NARROW_WEEKDAYS[date.getDay()] ?? "",
+            weekdayLong: (date) => PL_WEEKDAYS[date.getDay()] ?? "",
             day: (date) => `Dzień ${date.getDate()}`,
           }}
         />,
       );
       expect(screen.getByRole("grid", { name: "3/2026" })).toBeInTheDocument();
       expect(screen.getByText("3/2026")).toBeInTheDocument();
-      const headers = screen.getAllByRole("columnheader").map((th) => th.textContent);
-      expect(headers).toEqual(["P", "W", "Ś", "C", "P", "S", "N"]);
+      expectWeekdayHeaders(fromMonday(PL_NARROW_WEEKDAYS), fromMonday(PL_WEEKDAYS));
       expect(getButton("Dzień 15")).toBeInTheDocument();
       await user.click(getButton("Następny miesiąc"));
       expect(screen.getByRole("grid", { name: "4/2026" })).toBeInTheDocument();

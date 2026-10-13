@@ -97,7 +97,7 @@ Setup: `jest-axe` is globally configured in `vitest.setup.ts` — `toHaveNoViola
 Browser specs (Vitest browser mode, Playwright Chromium) in `packages/ui`. They screenshot components and compare them with committed baselines, and they cover the geometry that jsdom can't measure (positions, sizes, overflow).
 
 - **Mismatch tolerance is 0; the colour threshold is 0.02.** `toMatchScreenshot` runs with `allowedMismatchedPixelRatio: 0` (`vitest.visual.config.ts`), so one detected differing pixel fails the spec. "Detected" means a pixel's colour differs by more than pixelmatch's threshold, which the config sets to 0.02 instead of the default 0.1, and anti-aliased pixels are ignored. At 0.1, removing a `--border` line (oklch 0.922) on white leaves no pixel detected. 0.02 still ignores a shift of about 5 grey levels (a 0.97 fill at half opacity), and is not 0 so rounding noise between Chromium builds doesn't fail a run.
-- **Only Linux baselines are committed** (`*-linux.png`), and CI compares against them. macOS baselines (`*-darwin.png`) are gitignored and exist only on your machine. With zero tolerance, a macOS baseline left over from an older checkout fails locally although nothing is wrong: refresh it with `bun run test:visual:update` (in `packages/ui`) before you treat a local failure as a regression.
+- **Only Linux baselines are committed** (`*-linux.png`), and CI compares against them. macOS baselines (`*-darwin.png`) are gitignored and exist only on your machine. With zero tolerance, a macOS baseline left over from an older checkout fails locally although nothing is wrong: refresh it with `bun run test:visual:update` (in `packages/ui`) before you treat a local failure as a regression. Both `bun run test:visual` and `bun run test:visual:update` take a path filter (a substring of the spec path): `bun run test:visual:update button` refreshes only the matching specs. In `packages/ui` the script passes `--update=true`, because a bare `--update` would take the filter as its value and refresh every spec.
 - **Regenerate Linux baselines in Docker** after you commit the change. CI renders on x86 in the same image, so force `linux/amd64`; an arm64 render can differ from the CI render. Under emulation on Apple silicon the run takes minutes, which is not a hang. `<wt>` is your checkout or worktree, `<scratchpad>` any scratch directory outside it:
 
   ```bash
@@ -112,6 +112,22 @@ Browser specs (Vitest browser mode, Playwright Chromium) in `packages/ui`. They 
   - Bump the tag and both digests with `@playwright/test`. `docker buildx imagetools inspect` on the new `-noble` tag lists the manifests.
   - `bun run update:screenshots` does the same on GitHub Actions for the current branch.
 - Look at every changed PNG before you commit it.
+
+## WebKit Smoke Tests (`*.webkit.visual.spec.tsx`)
+
+The visual suite runs in Chromium only, so a bug that only Safari has does not show there. A small set of browser specs runs in WebKit (Playwright's Safari engine) to catch such bugs: `src/Smoke.webkit.visual.spec.tsx`, in its own project (`vitest.webkit.config.ts`).
+
+- **Geometry and paint, no screenshot baselines.** There is no second set of PNGs to keep up to date. A paint check reads a screenshot as data: it counts the pixels in an element's box that change when the element is hidden. 0 means that WebKit laid the element out but painted none of it. A geometry check alone does not find that.
+- **A known WebKit bug is asserted by a plain `it`** (W80, #341). WebKit paints nothing of a `Tabs.Contents` panel when both conditions are true: the panel is in a CSS column after the first, and the slid track reaches over a composited layer that paints before it. On `/create`, once #295 moves TabsCard back to `Tabs.Contents`, that layer is the sticky theme sidebar, which is composited while the page scrolls. Layout and hit testing are correct, and Chromium paints the panel. The bug is in WebKit's compositing inside CSS columns, and no change to `Tabs.Contents` prevents it. Tried and failed: `will-change`, `contain`, `isolation`, clipping, a 3D transform, a margin or `left` instead of the transform. The page can work around it: give the columns container its own composited layer (`will-change: transform`), and the panel paints. A spec checks this workaround. The bug spec asserts that 0 pixels paint, so when it starts to fail, WebKit has fixed the bug: flip it to expect painted pixels and rename it. Keep the workaround spec: users' Safari lags behind WebKit.
+- **Run it locally** in `packages/ui`:
+
+  ```bash
+  bunx playwright install webkit   # once
+  bun run test:webkit
+  ```
+
+  On macOS this runs Playwright's macOS WebKit. CI runs the Linux build from the Playwright image. The suite was run in the pinned `linux/amd64` image (v1.64.0-noble) too: all specs pass, and W80 reproduces there with 0 painted pixels, as on macOS.
+- **Name new specs `*.webkit.visual.spec.tsx`.** The Chromium projects exclude them, and the unit run and `tsconfig.json` skip every `*.visual.spec.tsx` file. Keep the set small. It is a smoke test, not a second visual suite.
 
 ## Coverage Targets
 
@@ -167,11 +183,11 @@ bun run test:unit:coverage # with V8 coverage report
 ## CI
 
 - **Unit tests + coverage** run on every PR and master push (`unit.tests.yml`), and so do the tests of the root `scripts/` (`bun test ./scripts`)
-- **Visual regression** runs on every PR and master push (`visual-regression.tests.yml`); the master result goes to Slack
-- **Lint + typecheck** run on every PR and master push (`quality-gates.yml`)
+- **Visual regression** runs on every PR and master push (`visual-regression.tests.yml`); the master result goes to Slack. The WebKit smoke tests run in the same job and container after the Chromium suite, also when only the Chromium suite failed.
+- **Lint + typecheck** run on every PR and master push (`quality-gates.yml`), and also cover the root `scripts/` (`lint:scripts`, `check-types:scripts`)
 - **Version checks** run in `quality-gates.yml` (`check:playwright` in the `lint` job, `check:tailwind` in the `typecheck` job):
   - `bun run check:playwright` fails when `@playwright/test`, the docs' `playwright`, a workflow `mcr.microsoft.com/playwright` image tag or the Docker recipe above name different versions. It also fails on a reference without a `v<version>` tag. It checks no digest: they are bumped with the tag by hand or by Renovate. It makes no network calls.
-  - `bun run check:tailwind` builds `chunks-ui`, compiles `dist/theme.css` and the code it scans with Tailwind 4.0.0 (the oldest v4) and with the installed version, and fails when 4.0.0 does not generate a class the installed version does. A consumer on 4.0 would get no CSS for that class. The scan reads every word in `dist`, so a listed name can also come from a comment or string, not only from a class in use. It also fails when either version generates fewer than 100 classes or lacks a Button class (the scan broke). The installed version compiles with the Tailwind packages in `bun.lock`. 4.0.0 installs from `scripts/tailwind-4.0` (`bun install --frozen-lockfile` in a temporary directory), so every dependency is pinned and `bun.lock` does not change. To move the pin, change `package.fixture.json` there, run `bun install` in a temporary copy named `package.json`, and copy its `bun.lock` back as `bun.fixture.lock`. The install needs the network.
+  - `bun run check:tailwind` builds `chunks-ui`, compiles `dist/theme.css` and the code it scans with Tailwind 4.0.0 (the oldest v4) and with the installed version, and fails when 4.0.0 does not generate a class the installed version does. A consumer on 4.0 would get no CSS for that class. The scan reads every word in `dist`, so a listed name can also come from a comment or string, not only from a class in use. Both versions also compile the theme's own static `@utility` names (through an extra `@source` list), and it fails when the installed version does not generate one. It also fails when either version lacks a Button class (the scan broke). The installed version compiles with the Tailwind packages in `bun.lock`. 4.0.0 installs from `scripts/tailwind-4.0` (`bun install --frozen-lockfile` in a temporary directory), so every dependency is pinned and `bun.lock` does not change. To move the pin, change `package.fixture.json` there, run `bun install` in a temporary copy named `package.json`, and copy its `bun.lock` back as `bun.fixture.lock`. The install needs the network.
 - **Docs snippets and axe** run on every PR and master push (`quality-gates.yml`), see below
 
 ### Docs checks

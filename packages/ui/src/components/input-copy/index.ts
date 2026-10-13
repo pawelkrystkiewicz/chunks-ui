@@ -1,6 +1,5 @@
 export {
-  DEFAULT_INPUT_COPY_LABELS,
   InputCopy,
-  type InputCopyLabels,
   type InputCopyProps,
 } from "./InputCopy";
+export { DEFAULT_INPUT_COPY_LABELS, type InputCopyLabels } from "./InputCopy.Labels";

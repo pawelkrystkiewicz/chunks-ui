@@ -2,7 +2,8 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ClearButton, DEFAULT_CLEAR_BUTTON_LABELS } from "./ClearButton";
+import { ClearButton } from "./ClearButton";
+import { DEFAULT_CLEAR_BUTTON_LABELS } from "./ClearButton.Labels";
 
 afterEach(cleanup);
 
@@ -12,7 +13,8 @@ describe("ClearButton", () => {
     expect(screen.getByRole("button", { name: "Clear" })).toBeInTheDocument();
   });
 
-  it("renders with custom label", () => {
+  // Deprecated in favour of labels.clear, and still working
+  it("renders with the deprecated label prop", () => {
     render(<ClearButton label="Remove" />);
     expect(screen.getByRole("button", { name: "Remove" })).toBeInTheDocument();
   });
@@ -35,7 +37,7 @@ describe("ClearButton", () => {
   });
 
   it("has no a11y violations", async () => {
-    const { container } = render(<ClearButton label="Clear" onClick={() => {}} />);
+    const { container } = render(<ClearButton labels={{ clear: "Remove" }} onClick={() => {}} />);
     expect(await axe(container)).toHaveNoViolations();
   });
 });
@@ -59,6 +61,11 @@ describe("ClearButton labels", () => {
   ])("prefers %s over labels", (_prop, props) => {
     render(<ClearButton labels={{ clear: "Wyczyść" }} {...props} />);
     expect(screen.getByRole("button", { name: "Remove" })).toBeInTheDocument();
+  });
+
+  it("ranks aria-label over label over labels", () => {
+    render(<ClearButton label="A" aria-label="B" labels={{ clear: "C" }} />);
+    expect(screen.getByRole("button", { name: "B" })).toBeInTheDocument();
   });
 
   // An aria-label would be read again when the referenced element contains the button

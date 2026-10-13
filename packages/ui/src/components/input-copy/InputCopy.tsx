@@ -1,15 +1,9 @@
 "use client";
 
 import type { ComponentProps } from "react";
-import { CopyButton, type CopyButtonLabels, DEFAULT_COPY_BUTTON_LABELS } from "../copy-button";
+import { CopyButton } from "../copy-button";
 import { Input } from "../input";
-
-/** The built-in English strings of `InputCopy`: the names of its copy button. */
-export type InputCopyLabels = CopyButtonLabels;
-
-export const DEFAULT_INPUT_COPY_LABELS: Readonly<InputCopyLabels> = {
-  ...DEFAULT_COPY_BUTTON_LABELS,
-};
+import type { InputCopyLabels } from "./InputCopy.Labels";
 
 export type InputCopyProps = Omit<
   ComponentProps<typeof Input>,
