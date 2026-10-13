@@ -9,7 +9,8 @@ import { IconButton } from "./components/icon-button";
 
 /*
  * WCAG 2 contrast of the default theme, read from the colours the browser computes for the
- * components in light and dark mode. Normal text needs 4.5:1, the focus ring 3:1.
+ * components in light and dark mode. Normal text needs 4.5:1. The focus ring is not checked:
+ * since #355 it is 60% primary on the background, below 3:1 by choice (about 2.4:1 light, 2:1 dark).
  */
 
 type Mode = "light" | "dark";
@@ -195,16 +196,9 @@ describe.each(MODES)("theme contrast, %s mode", (mode) => {
     }
   });
 
-  it("muted-foreground on muted ≥ 4.5 and the ring on the background ≥ 3", () => {
-    const { getByText } = renderIn(
-      mode,
-      <>
-        <p className="bg-muted text-muted-foreground">muted</p>
-        <p className="text-ring">ring</p>
-      </>,
-    );
-    expect.soft(textContrast(getByText("muted")), "muted").toBeGreaterThanOrEqual(4.5);
-    expect.soft(textContrast(getByText("ring")), "ring").toBeGreaterThanOrEqual(3);
+  it("muted-foreground on muted ≥ 4.5", () => {
+    const { getByText } = renderIn(mode, <p className="bg-muted text-muted-foreground">muted</p>);
+    expect(textContrast(getByText("muted"))).toBeGreaterThanOrEqual(4.5);
   });
 });
 

@@ -284,7 +284,8 @@ export function palette(t: Theme, mode: Mode): Record<string, string> {
     "accent-foreground": d ? n(0.985) : n(0.205),
     border: d ? n(0.269) : n(0.922),
     input: d ? n(0.269) : n(0.922),
-    ring: d ? n(0.556) : n(0.62),
+    // Same mix as theme.css, so --ring resolves against the scope's own tokens.
+    ring: "color-mix(in oklab, var(--primary) 60%, var(--background))",
   };
   chartList(t, mode).forEach((v, i) => {
     out[`chart-${i + 1}`] = v;

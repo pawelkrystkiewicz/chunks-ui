@@ -52,7 +52,11 @@
   /* Utility */
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.62 0 0);
+  /*
+   * Focus ring: 60% primary in OKLab, which keeps the primary's hue (OKLCH drifts to the
+   * background's hue 0). A nested element that sets `--primary` or `--background` needs its own `--ring`.
+   */
+  --ring: color-mix(in oklab, var(--primary) 60%, var(--background));
   --radius: 0.625rem;
 
   /* Chart colors (shadcn compat) */
@@ -99,7 +103,8 @@
 
   --border: oklch(0.269 0 0);
   --input: oklch(0.269 0 0);
-  --ring: oklch(0.556 0 0);
+  /* Declared again, so a `.dark` element inside a light page mixes its own primary and background. */
+  --ring: color-mix(in oklab, var(--primary) 60%, var(--background));
 
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
