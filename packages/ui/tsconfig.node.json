@@ -1,0 +1,12 @@
+{
+  "extends": "@chunks-ui/typescript-config/react-library.json",
+  "include": [
+    "vitest.config.ts",
+    "vitest.visual.config.ts",
+    "vitest.webkit.config.ts",
+    "tsup.config.ts"
+  ],
+  "compilerOptions": {
+    "noUncheckedIndexedAccess": true
+  }
+}
