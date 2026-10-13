@@ -30,13 +30,16 @@
       "cache": false
     },
     "test:visual": {
-      "cache": false
+      "cache": false,
+      "passThroughEnv": ["PLAYWRIGHT_*"]
     },
     "test:visual:update": {
-      "cache": false
+      "cache": false,
+      "passThroughEnv": ["PLAYWRIGHT_*"]
     },
     "test:webkit": {
-      "cache": false
+      "cache": false,
+      "passThroughEnv": ["PLAYWRIGHT_*"]
     },
     "generate:llm": {
       "cache": false
