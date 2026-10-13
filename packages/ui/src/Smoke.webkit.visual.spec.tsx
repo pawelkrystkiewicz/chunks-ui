@@ -1,6 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import type { CSSProperties } from "react";
-import { beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { commands, page, userEvent } from "vitest/browser";
 import { Button } from "./components/button";
 import { Card } from "./components/card";
@@ -17,6 +17,7 @@ import {
   outlineTransitions,
   ringColor,
   waitForStable,
+  withViewport,
 } from "./VisualTest.utils";
 
 /*
@@ -104,7 +105,7 @@ const settleContents = (contents: HTMLElement) =>
 
 // Wide enough for two columns beside a sidebar; it fits the runner window, so a screenshot is
 // one px per CSS px
-beforeAll(() => page.viewport(1000, 700));
+withViewport(1000, 700);
 
 // Safari users mostly have no reduced-motion preference: Motion drives the springs here
 beforeEach(() => enterMotionPath(true));

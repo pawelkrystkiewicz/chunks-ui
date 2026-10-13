@@ -1,7 +1,7 @@
 import { DirectionProvider } from "@base-ui/react/direction-provider";
 import { render, screen } from "@testing-library/react";
 import { type ReactNode, useState } from "react";
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { commands, page, userEvent } from "vitest/browser";
 import { Button } from "../components/button";
 import { Menu } from "../components/menu";
@@ -456,15 +456,6 @@ async function focusedEdges(kind: Kind, className: string, arrow: boolean) {
 }
 
 describe.each(KINDS)("%s with an arrow and a consumer's border width", (kind) => {
-  // The page is 414 × 600, kept as it was: the existing baselines use this size
-  let width = 0;
-  let height = 0;
-  beforeAll(() => {
-    ({ innerWidth: width, innerHeight: height } = window);
-    return page.viewport(414, 600);
-  });
-  afterAll(() => page.viewport(width, height));
-
   it.each(["border-0", "border-2"])(
     "with `%s`, draws its overlay's ring where the browser draws the popup's own",
     async (border) => {
