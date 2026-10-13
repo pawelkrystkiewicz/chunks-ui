@@ -1,11 +1,14 @@
 import { describe, it } from "vitest";
 import { ELEMENT_COLOR } from "../../types";
-import { renderFixture } from "../../VisualTest.utils";
+import { renderFixture, withViewport } from "../../VisualTest.utils";
 import { Chip } from "./index";
 
 const colors = ELEMENT_COLOR;
 
 describe("Chip", () => {
+  // A row of five chips is wider than the default 414px page
+  withViewport(720);
+
   it("color matrix", async () => {
     const { fixture } = await renderFixture(
       <div style={{ display: "flex", gap: 12 }}>

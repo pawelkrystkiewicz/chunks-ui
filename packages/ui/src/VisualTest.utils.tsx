@@ -5,8 +5,46 @@ import { afterAll, beforeAll, beforeEach, describe, expect } from "vitest";
 import { commands, page } from "vitest/browser";
 import { reloadMotion } from "./lib/use-motion";
 
-/** Renders children in a padded fixture wrapper. Returns the wrapper element for screenshotting. */
-export async function renderFixture(children: ReactNode) {
+/**
+ * How far in CSS px the content of `fixture` reaches past each of its edges, 0 where it fits.
+ * Content that an `overflow` ancestor clips doesn't count: a screenshot doesn't show it either.
+ */
+function overflowPast(fixture: Element) {
+  const box = fixture.getBoundingClientRect();
+  // The scrollable overflow covers the right and bottom edges, text included, but it never
+  // reaches past the left or top edge, so for those walk the element boxes
+  let top = 0;
+  let left = 0;
+  const walk = (el: Element) => {
+    for (const child of el.children) {
+      const { width, height, top: childTop, left: childLeft } = child.getBoundingClientRect();
+      if (width > 0 && height > 0) {
+        top = Math.max(top, box.top - childTop);
+        left = Math.max(left, box.left - childLeft);
+      }
+      if (getComputedStyle(child).overflow === "visible") walk(child);
+    }
+  };
+  walk(fixture);
+  return {
+    top,
+    right: fixture.scrollWidth - fixture.clientWidth,
+    bottom: fixture.scrollHeight - fixture.clientHeight,
+    left,
+  };
+}
+
+/**
+ * Renders children in a padded fixture wrapper. Returns the wrapper element for screenshotting.
+ *
+ * Fails when the content reaches past the fixture, as a screenshot of the fixture would crop it.
+ * Give the spec a wider page with `withViewport`, or pass `allowOverflow` when the overflow is
+ * what the spec shows.
+ */
+export async function renderFixture(
+  children: ReactNode,
+  { allowOverflow = false }: { allowOverflow?: boolean } = {},
+) {
   const result = render(
     <div
       data-testid="fixture"
@@ -16,7 +54,33 @@ export async function renderFixture(children: ReactNode) {
     </div>,
   );
   await document.fonts.ready;
-  return { ...result, fixture: result.getByTestId("fixture") };
+  const fixture = result.getByTestId("fixture");
+  if (!allowOverflow) {
+    expect(overflowPast(fixture), "content past the fixture, which a screenshot crops").toEqual({
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
+    });
+  }
+  return { ...result, fixture };
+}
+
+/**
+ * Resizes the test page to `width` × `height` CSS px (`height` defaults to the current one) for
+ * the tests of the calling `describe` block, and back afterwards. The default page is 414 × 896,
+ * which the runner scales to fit its 1280 × 720 window, so screenshots come out at 0.8 of their
+ * CSS size; a page that fits the window is captured at full size.
+ */
+export function withViewport(width: number, height?: number) {
+  let previous: [number, number] | undefined;
+  beforeAll(async () => {
+    previous = [innerWidth, innerHeight];
+    await page.viewport(width, height ?? innerHeight);
+  });
+  afterAll(async () => {
+    if (previous) await page.viewport(...previous);
+  });
 }
 
 /** For portal-based components (Dialog, Drawer, Tooltip, etc.) that render fixed-position content. */
