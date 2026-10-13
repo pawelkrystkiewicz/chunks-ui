@@ -52,7 +52,10 @@ export function overflowPast(fixture: Element) {
  */
 export function expectNoOverflow(el: Element) {
   if (el.closest("[data-allow-overflow]")) return;
-  expect(overflowPast(el), "content past the fixture, which a screenshot crops").toEqual({
+  expect(
+    overflowPast(el),
+    "content past the screenshotted element, which a screenshot crops",
+  ).toEqual({
     top: 0,
     right: 0,
     bottom: 0,
@@ -88,8 +91,17 @@ export async function renderFixture(
 
 /**
  * Resizes the test page to `width` × `height` CSS px for the calling `describe` block, and back.
+ * Throws when the page doesn't fit the runner's browser window, where Vitest would scale it down
+ * and the screenshots would no longer be one px per CSS px. The test page is an iframe of the
+ * runner page, which is the window and same-origin, so `window.parent` measures it.
  */
 export function withViewport(width: number, height?: number) {
+  const { innerWidth: windowWidth, innerHeight: windowHeight } = window.parent;
+  if (width > windowWidth || (height ?? 0) > windowHeight) {
+    throw new Error(
+      `withViewport(${width}, ${height}) does not fit the ${windowWidth} × ${windowHeight} runner window, and Vitest would scale the page down: raise RUNNER_WINDOW in vitest.visual.config.ts`,
+    );
+  }
   let previous: [number, number] | undefined;
   beforeAll(async () => {
     previous = [innerWidth, innerHeight];

@@ -48,7 +48,7 @@ async function paintedAt(points: Point[]): Promise<Rgb[]> {
   });
 }
 
-// The test page scales a taller iframe down to fit its window; this one it shows at full size
+// A 414 × 600 page, shorter than the default 414 × 896, so the frame the spec measures is compact
 beforeAll(() => page.viewport(414, 600));
 
 const close = (a: Rgb, b: Rgb) => a.every((channel, i) => Math.abs(channel - (b[i] ?? 0)) <= 2);

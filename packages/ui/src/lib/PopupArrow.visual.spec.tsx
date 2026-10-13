@@ -456,7 +456,7 @@ async function focusedEdges(kind: Kind, className: string, arrow: boolean) {
 }
 
 describe.each(KINDS)("%s with an arrow and a consumer's border width", (kind) => {
-  // The test page scales a taller iframe down to fit its window; this one it shows at full size
+  // A 414 × 600 page, shorter than the default 414 × 896, so the frame the spec measures is compact
   let width = 0;
   let height = 0;
   beforeAll(() => {

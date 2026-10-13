@@ -3,7 +3,13 @@ import type { CSSProperties, ReactNode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import { Popover } from "./components/popover";
-import { overflowPast, renderFixture, renderPage, withViewport } from "./VisualTest.utils";
+import {
+  expectNoOverflow,
+  overflowPast,
+  renderFixture,
+  renderPage,
+  withViewport,
+} from "./VisualTest.utils";
 
 /** A 100 × 50 box, off the page's origin, with `children` inside */
 function box(children: ReactNode, style?: CSSProperties) {
@@ -124,7 +130,7 @@ describe("overflowPast", () => {
 });
 
 describe("toMatchScreenshot", () => {
-  const cropped = "content past the fixture, which a screenshot crops";
+  const cropped = "content past the screenshotted element, which a screenshot crops";
 
   it("fails when the fixture's content grows past it after the render", async () => {
     const { fixture, getByTestId } = await renderFixture(
@@ -132,6 +138,16 @@ describe("toMatchScreenshot", () => {
     );
     getByTestId("panel").style.minWidth = "600px";
     await expect(expect(fixture).toMatchScreenshot()).rejects.toThrow(cropped);
+  });
+
+  it("passes when a fixture rendered with allowOverflow grows past itself", async () => {
+    const { fixture, getByTestId } = await renderFixture(
+      <div data-testid="panel" style={{ width: 100, height: 20 }} />,
+      { allowOverflow: true },
+    );
+    getByTestId("panel").style.minWidth = "600px";
+    expect(overflowPast(fixture).right).toBeGreaterThan(0);
+    expect(() => expectNoOverflow(fixture)).not.toThrow();
   });
 
   it("fails when a popup opened on the page reaches past it", async () => {
@@ -156,6 +172,14 @@ async function screenshotSize() {
   await image.decode();
   return { width: image.naturalWidth, height: image.naturalHeight };
 }
+
+describe("withViewport", () => {
+  it("rejects a page wider or taller than the runner window", () => {
+    const window = /raise RUNNER_WINDOW in vitest\.visual\.config\.ts/;
+    expect(() => withViewport(2000)).toThrow(window);
+    expect(() => withViewport(500, 5000)).toThrow(window);
+  });
+});
 
 describe("a screenshot of the page", () => {
   it("has one px per CSS px on the default 414 × 896 page", async () => {

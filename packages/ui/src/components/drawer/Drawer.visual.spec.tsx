@@ -5,7 +5,7 @@ import { enterMotionPath, renderPage, ringColor, withViewport } from "../../Visu
 import { Drawer } from "./index";
 
 describe("Drawer", () => {
-  // 640×480 fits the window, so the screenshot is full size, not 0.8
+  // A 640×480 page, smaller than the default, so the drawer is tested in a narrower frame
   withViewport(640, 480);
 
   it("right", async () => {

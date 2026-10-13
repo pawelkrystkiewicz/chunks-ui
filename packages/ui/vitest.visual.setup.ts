@@ -7,7 +7,7 @@ import latinExt from "@fontsource-variable/manrope/files/manrope-latin-ext-wght-
 import latin from "@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2?url";
 import vietnamese from "@fontsource-variable/manrope/files/manrope-vietnamese-wght-normal.woff2?url";
 import unicodeRanges from "@fontsource-variable/manrope/unicode.json";
-import { beforeEach, chai } from "vitest";
+import { beforeEach, chai, expect } from "vitest";
 import { commands, type Locator } from "vitest/browser";
 import { expectNoOverflow } from "./src/VisualTest.utils";
 
@@ -29,7 +29,7 @@ await Promise.all(
     "latin-ext": latinExt,
     latin,
   } satisfies Record<keyof typeof unicodeRanges, string>).map(([subset, url]) => {
-    const face = new FontFace("Manrope", `url(${url})`, {
+    const face = new FontFace("Manrope", `url(${JSON.stringify(url)})`, {
       weight: "200 800",
       unicodeRange: unicodeRanges[subset as keyof typeof unicodeRanges],
     });
@@ -49,6 +49,9 @@ chai.util.overwriteMethod(
   (toMatchScreenshot: (...args: unknown[]) => Promise<void>) =>
     async function (this: object, ...args: unknown[]) {
       const target: Element | Locator = chai.util.flag(this, "object");
+      // A locator waits for its element to exist, as Playwright does; a nullish target fails
+      // with Vitest's own "Expected element or locator to be defined".
+      await expect.element(target as HTMLElement | Locator).toBeInTheDocument();
       expectNoOverflow(target instanceof Element ? target : target.element());
       return toMatchScreenshot.apply(this, args);
     },
