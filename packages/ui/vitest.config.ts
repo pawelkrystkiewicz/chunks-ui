@@ -6,9 +6,10 @@ export default defineConfig({
     include: ["src/**/*.spec.{ts,tsx}"],
     exclude: ["src/**/*.visual.spec.tsx"],
     passWithNoTests: false,
-    // Measured on CI runs where the docs and ui suites still ran in parallel: CI is ~6-14x slower
-    // than a laptop, popup-opening tests take 1.3-2.1s there, too close to the 5s default.
-    testTimeout: 15_000,
+    // About 3x the slowest test on CI. Measured on the 94 unit.tests.yml runs from #311 (serial
+    // suites) to 2026-10-13: the slowest test of a run took 1.18s at the median, 1.60s at p90 and
+    // 1.86s at most (DatePicker's form remount test), hooks included. About 0.3s on a laptop.
+    testTimeout: 6_000,
     setupFiles: ["./vitest.setup.ts"],
     // Vitest blanks CSS imports by default; cn.spec.ts reads the theme tokens as text
     css: { include: [/theme\.css\?raw$/] },

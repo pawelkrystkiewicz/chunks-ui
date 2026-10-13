@@ -40,6 +40,9 @@ jobs:
       - name: Check the Playwright version matches everywhere
         run: bun run check:playwright
 
+      - name: Check the bun version matches packageManager everywhere
+        run: bun run check:bun
+
   typecheck:
     timeout-minutes: 10
     runs-on: ubuntu-latest

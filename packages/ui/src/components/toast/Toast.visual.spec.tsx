@@ -1,9 +1,9 @@
 import { Toast as BaseToast } from "@base-ui/react/toast";
 import { render, screen, within } from "@testing-library/react";
-import { type ComponentPropsWithoutRef, type ReactNode, useEffect, useRef } from "react";
+import { type ComponentPropsWithoutRef, type ReactNode, useEffect } from "react";
 import { afterAll, beforeAll, describe, expect, it, onTestFinished } from "vitest";
 import { commands, page, userEvent } from "vitest/browser";
-import type { Dir } from "../../VisualTest.utils";
+import { type Dir, withViewport } from "../../VisualTest.utils";
 import { Toast } from "./index";
 import { AddToasts } from "./Toast.TestUtils";
 
@@ -17,13 +17,12 @@ function AddToast({
   actionProps?: ComponentPropsWithoutRef<"button">;
 }) {
   const manager = Toast.useToast();
-  const added = useRef(false);
+  // A fixed id: a remount updates this toast instead of adding a second one. Mount-only on
+  // purpose: `manager` and `actionProps` change every render, and updating the toast renders again.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the props are fixed in each spec
   useEffect(() => {
-    if (!added.current) {
-      added.current = true;
-      manager.add({ title, description, actionProps });
-    }
-  }, [manager, title, description, actionProps]);
+    manager.add({ id: "visual-toast", title, description, actionProps });
+  }, []);
   return null;
 }
 
@@ -70,11 +69,10 @@ function renderIn({ dir, page }: { dir: Dir; page: Dir }, ui: ReactNode) {
 }
 
 describe.each(LAYOUTS)("Toast viewport, $layout", (layout) => {
+  // Wide enough that the viewport doesn't span the page, so its side is plain to see
+  withViewport(800, 600);
+
   it("sits in the bottom corner at the inline end", async () => {
-    // Wide enough that the viewport doesn't span the page, so its side is plain to see
-    const { innerWidth, innerHeight } = window;
-    await page.viewport(800, 600);
-    onTestFinished(() => page.viewport(innerWidth, innerHeight));
     renderIn(
       layout,
       <Toast.Provider>

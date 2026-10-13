@@ -512,8 +512,15 @@ function ToastList({ children }: { children: (toast: ToastObject) => ReactNode }
   return <>{Toast.useToast().toasts.map(children)}</>;
 }
 
+// The className each part gets: none (its base classes), the state function, or a string
+const MODES = {
+  none: () => undefined,
+  function: () => fromState,
+  string: (part: string) => `custom-${part}`,
+} satisfies Record<string, (part: string) => ClassNameProp>;
+
 // Renders a fixture with `className` set on every part, and returns each part's classes
-async function classesOf(name: string, className: (part: string) => ClassNameProp) {
+async function renderClasses(name: string, className: (part: string) => ClassNameProp) {
   const fixture = fixtures[name];
   if (!fixture) throw new Error(`No fixture ${name}`);
   render(fixture.ui((part) => ({ className: className(part), "data-testid": part })));
@@ -524,6 +531,19 @@ async function classesOf(name: string, className: (part: string) => ClassNamePro
   }
   cleanup();
   return classes;
+}
+
+// One render reads every part of a fixture, so each fixture renders once per mode and its parts'
+// tests share the result: 3 renders per fixture instead of 4 per part
+const rendered = new Map<string, Promise<Map<string, string[]>>>();
+async function classesOf(name: string, mode: keyof typeof MODES, part: string) {
+  const key = `${name}|${mode}`;
+  let classes = rendered.get(key);
+  if (!classes) {
+    classes = renderClasses(name, MODES[mode]);
+    rendered.set(key, classes);
+  }
+  return (await classes).get(part) ?? [];
 }
 
 beforeAll(async () => {
@@ -549,8 +569,8 @@ describe("className on Base UI parts", () => {
   it.each(rows)(
     "%s.%s calls a className function with its state",
     async (name, part, stateClass) => {
-      const base = (await classesOf(name, () => undefined)).get(part) ?? [];
-      const classes = (await classesOf(name, () => fromState)).get(part) ?? [];
+      const base = await classesOf(name, "none", part);
+      const classes = await classesOf(name, "function", part);
       expect(classes).toContain("fn-called");
       if (stateClass) expect(classes).toContain(stateClass);
       expect(classes).toEqual(expect.arrayContaining(base));
@@ -558,8 +578,8 @@ describe("className on Base UI parts", () => {
   );
 
   it.each(rows)("%s.%s still takes a string className", async (name, part) => {
-    const base = (await classesOf(name, () => undefined)).get(part) ?? [];
-    const classes = (await classesOf(name, (p) => `custom-${p}`)).get(part) ?? [];
+    const base = await classesOf(name, "none", part);
+    const classes = await classesOf(name, "string", part);
     expect(classes).toContain(`custom-${part}`);
     expect(classes).toEqual(expect.arrayContaining(base));
   });

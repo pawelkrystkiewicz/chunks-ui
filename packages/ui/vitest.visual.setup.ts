@@ -7,13 +7,18 @@ import latinExt from "@fontsource-variable/manrope/files/manrope-latin-ext-wght-
 import latin from "@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2?url";
 import vietnamese from "@fontsource-variable/manrope/files/manrope-vietnamese-wght-normal.woff2?url";
 import unicodeRanges from "@fontsource-variable/manrope/unicode.json";
+import { configure } from "@testing-library/react";
 import { beforeEach, chai, expect } from "vitest";
-import { commands, type Locator } from "vitest/browser";
+import { commands, type Locator, userEvent } from "vitest/browser";
 import { expectNoOverflow } from "./src/VisualTest.utils";
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean | undefined;
 }
+
+// StrictMode on, as consumers (Next.js) and the unit suite run: an effect that misbehaves when
+// run again shows in geometry, a spring or a screenshot.
+configure({ reactStrictMode: true });
 
 // Manrope, the theme's --font-sans, from local files: the weights (200–800) and subsets the docs
 // app loads from Google Fonts. Without it, text fell back to each machine's sans-serif, so glyph
@@ -73,4 +78,13 @@ beforeEach(() => {
 // Move the mouse off the page before each test.
 beforeEach(async () => {
   await commands.parkPointer();
+});
+
+// Chromium shows :focus-visible on a programmatic focus (a defaultOpen popup taking focus) only
+// after a keyboard event, never after a mouse one, and the page keeps that state across tests and
+// spec files. A screenshot of such a popup had a ring or none by which spec ran before it, which
+// a shuffled run exposed. Start every test in keyboard modality; a spec that wants the mouse's
+// (no ring) clicks first.
+beforeEach(async () => {
+  await userEvent.keyboard("{Escape}");
 });
