@@ -353,32 +353,31 @@ async function auditPopup(
   // A handle, as some triggers change their name while open (Combobox: "Hide options")
   const handle = await trigger.elementHandle({ timeout: POPUP_MS });
   const element = page.getByRole(popup.popup);
-  let id: string;
   let problems: Problem[];
-  let state: { expanded: string | null; controls: string | null };
   try {
     await trigger.click({ timeout: POPUP_MS });
     await element.waitFor({ timeout: POPUP_MS });
-    const popupId = await element.getAttribute("id");
-    if (!popupId) throw new Error(`The open ${popup.popup} has no id to scope axe to`);
-    id = popupId;
+    const id = await element.getAttribute("id");
+    if (!id) throw new Error(`The open ${popup.popup} has no id to scope axe to`);
     problems = await axe(page, popup.page, theme, matched, { selector: `[id="${id}"]`, label });
     // The trigger tells assistive technology the popup is open, and which element it is
-    state = await handle.evaluate((el) => ({
+    const state = await handle.evaluate((el) => ({
       expanded: el.getAttribute("aria-expanded"),
       controls: el.getAttribute("aria-controls"),
     }));
+    if (state.expanded !== "true" || state.controls !== id) {
+      problems.push({
+        page: label,
+        theme,
+        rule: "popup-trigger",
+        help: "The open popup's trigger must have aria-expanded=\"true\" and aria-controls set to the popup's id",
+        targets: [
+          `aria-expanded=${state.expanded}, aria-controls=${state.controls}, popup id=${id}`,
+        ],
+      });
+    }
   } finally {
     await handle.dispose();
-  }
-  if (state.expanded !== "true" || state.controls !== id) {
-    problems.push({
-      page: label,
-      theme,
-      rule: "popup-trigger",
-      help: "The open popup's trigger must have aria-expanded=\"true\" and aria-controls set to the popup's id",
-      targets: [`aria-expanded=${state.expanded}, aria-controls=${state.controls}, popup id=${id}`],
-    });
   }
   // The violations found above must survive a popup that won't close
   try {

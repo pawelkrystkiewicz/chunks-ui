@@ -2,7 +2,7 @@
 /**
  * Fails when a bun version differs from `packageManager` in the root package.json, which
  * setup-bun reads in every workflow: a `bun@<version>` in the Docker recipe of TESTING_STRATEGY.md
- * or a `bun-version:` in a workflow step's `with` (parsed as YAML; an expression is skipped). Also fails when the recipe names no `bun@<version>`, and on a
+ * or a `bun-version:` in a workflow step's `with` (parsed as YAML). Also fails when the recipe names no `bun@<version>`, and on a
  * workflow `bun-version-file:` other than package.json. A different bun can fail to read bun.lock
  * (`--frozen-lockfile`) or resolve other versions than CI.
  *
@@ -12,31 +12,13 @@ import { join } from "node:path";
 import { load } from "js-yaml";
 
 const RECIPE = "TESTING_STRATEGY.md";
-// A version starts with a digit and ends on a version character, so `bun@1.4.3.` in a sentence
-// reads 1.4.3; not `setup-bun@<sha>`, which names the action
-const RECIPE_PIN = /(?<![\w-])bun@(?<version>\d+(?:\.\d+){1,2}(?:[-+][\w.]+)?)/g;
-const FENCE = /^\s*```/;
-
-/** The fenced code blocks of a Markdown text that hold a `docker run` (the recipe), with their first line number. */
-function recipeBlocks(lines: string[]): { start: number; lines: string[] }[] {
-  const blocks: { start: number; lines: string[] }[] = [];
-  let current: { start: number; lines: string[] } | undefined;
-  lines.forEach((line, i) => {
-    if (FENCE.test(line)) {
-      if (current) blocks.push(current);
-      current = current ? undefined : { start: i + 2, lines: [] };
-    } else current?.lines.push(line);
-  });
-  return blocks.filter((block) => block.lines.some((line) => line.includes("docker run")));
-}
+// A version starts with a digit and ends on a version character, so `bun@1.4.3.` in a sentence reads 1.4.3
+const RECIPE_PIN = /npm i -g bun@(?<version>\d+(?:\.\d+){1,2}(?:[-+][\w.]+)?)/g;
 
 type Step = { name?: string; with?: Record<string, unknown> };
 type Workflow = { jobs?: Record<string, { steps?: Step[] }> };
 
-/**
- * One line per problem: a version that differs from `packageManager`, or a missing pin. A workflow
- * value that is an expression (`${{ matrix.bun }}`) is not a literal pin, so it is skipped.
- */
+/** One line per problem: a version that differs from `packageManager`, or a missing pin. */
 export async function checkBunVersions(root: string): Promise<string[]> {
   const pkg = await Bun.file(join(root, "package.json")).json();
   const expected = /^bun@(?<version>[^+\s]+)/.exec(pkg.packageManager ?? "")?.groups?.version;
@@ -44,20 +26,14 @@ export async function checkBunVersions(root: string): Promise<string[]> {
   const source = "package.json (packageManager)";
 
   const problems: string[] = [];
-  const recipe = (await Bun.file(join(root, RECIPE)).text()).split("\n");
-  let recipePins = 0;
-  for (const block of recipeBlocks(recipe)) {
-    block.lines.forEach((line, i) => {
-      for (const match of line.matchAll(RECIPE_PIN)) {
-        recipePins++;
-        const version = match.groups?.version;
-        if (version !== expected) {
-          problems.push(`${RECIPE}:${block.start + i} has ${version}, ${source} has ${expected}`);
-        }
-      }
-    });
+  const recipe = await Bun.file(join(root, RECIPE)).text();
+  const pins = [...recipe.matchAll(RECIPE_PIN)];
+  for (const { index, groups } of pins) {
+    if (groups?.version === expected) continue;
+    const line = recipe.slice(0, index).split("\n").length;
+    problems.push(`${RECIPE}:${line} has ${groups?.version}, ${source} has ${expected}`);
   }
-  if (recipePins === 0) problems.push(`${RECIPE} names no bun@<version> in its Docker recipe`);
+  if (pins.length === 0) problems.push(`${RECIPE} names no bun@<version> in its Docker recipe`);
 
   const glob = new Bun.Glob(".github/workflows/*.{yml,yaml}");
   for (const file of [...glob.scanSync({ cwd: root, dot: true })].sort()) {
@@ -73,15 +49,11 @@ export async function checkBunVersions(root: string): Promise<string[]> {
       for (const [index, step] of (job.steps ?? []).entries()) {
         const where = `${file} job ${jobId} step ${step.name ? `"${step.name}"` : index + 1}`;
         const { "bun-version": version, "bun-version-file": versionFile } = step.with ?? {};
-        const literal = (value: unknown) =>
-          value === undefined || String(value).includes("${{") ? undefined : String(value);
-        const pin = literal(version);
-        const pinFile = literal(versionFile);
-        if (pin !== undefined && pin !== expected) {
-          problems.push(`${where} has ${pin}, ${source} has ${expected}`);
+        if (version !== undefined && version !== expected) {
+          problems.push(`${where} has ${version}, ${source} has ${expected}`);
         }
-        if (pinFile !== undefined && pinFile !== "package.json") {
-          problems.push(`${where} reads ${pinFile}, not package.json, for the bun version`);
+        if (versionFile !== undefined && versionFile !== "package.json") {
+          problems.push(`${where} reads ${versionFile}, not package.json, for the bun version`);
         }
       }
     }
