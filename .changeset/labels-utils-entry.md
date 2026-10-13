@@ -7,5 +7,3 @@ Added: `chunks-ui/utils` exports the English label defaults of every component (
 ```tsx
 import { DEFAULT_COPY_BUTTON_LABELS } from "chunks-ui/utils";
 ```
-
-`chunks-ui` still exports all of them, and both entries export the same objects.
