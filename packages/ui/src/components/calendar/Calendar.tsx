@@ -403,7 +403,9 @@ export function Calendar({
   };
 
   return (
-    <div className={cn("w-fit p-3", className)}>
+    // A pointer interaction means the user left the keyboard: a month the parent applies later
+    // must not pull focus into the grid, as in Safari, where a clicked button leaves it on the body.
+    <div className={cn("w-fit p-3", className)} onPointerDown={() => setPendingFocus(null)}>
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <button

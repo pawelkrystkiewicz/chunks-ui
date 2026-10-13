@@ -741,6 +741,33 @@ describe("Calendar month", () => {
     expect(tabStops()).toEqual([document.activeElement]);
   });
 
+  it("does not steal focus after a pointer click when the parent sets `month` later", async () => {
+    const user = userEvent.setup();
+    let applyMonth = () => {};
+    function Deferred() {
+      const [month, setMonth] = useState(MARCH_15_2026);
+      return (
+        <Calendar
+          defaultValue={MARCH_15_2026}
+          month={month}
+          onMonthChange={(next) => {
+            applyMonth = () => setMonth(next);
+          }}
+        />
+      );
+    }
+    render(<Deferred />);
+    await focusDay(MARCH_15_2026);
+    await user.keyboard("{PageDown}");
+    await user.click(getButton("Next month"));
+    // Safari and Firefox on macOS do not focus a clicked button: focus falls back to the body
+    (document.activeElement as HTMLElement).blur();
+    expect(document.activeElement).toBe(document.body);
+    act(() => applyMonth());
+    expect(grid("April 2026")).toBeInTheDocument();
+    expect(document.activeElement).toBe(document.body);
+  });
+
   it("leaves focus where the user moved it before the parent sets `month`", async () => {
     const user = userEvent.setup();
     let applyMonth = () => {};
