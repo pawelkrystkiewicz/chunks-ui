@@ -2,7 +2,7 @@
 export type PaginationLabels = {
   /**
    * Name of the `Pagination.Root` navigation landmark.
-   * @default "pagination"
+   * @default "Pagination"
    */
   root: string;
   /**
@@ -23,7 +23,7 @@ export type PaginationLabels = {
 };
 
 export const DEFAULT_PAGINATION_LABELS: Readonly<PaginationLabels> = {
-  root: "pagination",
+  root: "Pagination",
   previous: "Previous",
   next: "Next",
   ellipsis: "More pages",
