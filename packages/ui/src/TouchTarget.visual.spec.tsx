@@ -2,6 +2,7 @@ import { render } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { userEvent } from "vitest/browser";
+import { Checkbox } from "./components/checkbox";
 import { ClearButton } from "./components/clear-button";
 
 /*
@@ -206,5 +207,23 @@ describe("touch-target on ClearButton (24px)", () => {
     const { x, y } = centreOf(getByRole("button"));
     expect(await pressAt(stage, x + outside, y)).toBe(stage);
     expect(onClick).not.toHaveBeenCalled();
+  });
+});
+
+describe("touch-target on Checkbox (16px)", () => {
+  const outside = (16 + MIN_AREA) / 4; // halfway between the box edge and the area edge
+
+  it("toggles on a press beside the box", async () => {
+    const onCheckedChange = vi.fn();
+    const { stage, getByRole } = renderStage(
+      <Checkbox.Root aria-label="Accept" className="touch-target" onCheckedChange={onCheckedChange}>
+        <Checkbox.Indicator />
+      </Checkbox.Root>,
+    );
+    const checkbox = getByRole("checkbox");
+    const { x, y } = centreOf(checkbox);
+    expect(await pressAt(stage, x, y + outside)).toBe(checkbox);
+    expect(onCheckedChange).toHaveBeenCalledOnce();
+    expect(checkbox.getAttribute("aria-checked")).toBe("true");
   });
 });
