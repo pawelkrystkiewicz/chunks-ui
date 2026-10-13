@@ -43,6 +43,7 @@ This page is a server component, and it renders the link below with that code:
 - `cn` and `cnState`, with their `ClassInput` and `StateClassName` types;
 - `buttonVariants`, `chipVariants`, `iconButtonVariants` and `inputVariants`;
 - `springs`, the Motion spring presets;
+- the English label defaults, `DEFAULT_*_LABELS`, and their `<Component>Labels` types (see [Labels](/labels));
 - the `ELEMENT_*` constants and the `Element*` types, such as `ElementColor`.
 
 `chunks-ui` exports the same names with the same behavior. In a client component, you can import them from either entry.
@@ -174,7 +175,7 @@ import { Search } from "lucide-react";
 
 ## touch-target
 
-`touch-target` makes the hit area of a small control at least 44×44px. The area is centred on the control and takes no space, so the control keeps its size and the layout does not change. A press anywhere in the area goes to the control. It is opt-in: no component applies it, so add it to a control that is smaller than 44px and that people tap, for example an `IconButton` (32px) or a `ClearButton` (24px):
+`touch-target` makes the hit area of a small control at least 44×44px, or the [size you set](#area-size). The area is centred on the control and takes no space, so the control keeps its size and the layout does not change. A press anywhere in the area goes to the control. It is opt-in: no component applies it, so add it to a control that is smaller than 44px and that people tap, for example an `IconButton` (32px), a `ClearButton` (24px) or a `Checkbox.Root` (16px):
 
 ```tsx
 <IconButton aria-label="Close" className="touch-target">
@@ -182,9 +183,38 @@ import { Search } from "lucide-react";
 </IconButton>
 
 <ClearButton className="touch-target" />
+
+<Checkbox.Root aria-label="Accept terms" className="touch-target">
+  <Checkbox.Indicator />
+</Checkbox.Root>
 ```
 
-The class comes with `chunks-ui/theme.css`. It works with variants too, for example `pointer-coarse:touch-target` (Tailwind 4.1 or later) to make the area larger only on touch screens. Use media-style variants (`pointer-coarse:`, `min-[…]:`); state variants such as `hover:` create the area only in that state.
+The class comes with `chunks-ui/theme.css`. It works with variants too (Tailwind 4.1 or later for these two):
+
+- `pointer-coarse:touch-target` makes the area larger only when the primary pointer is coarse, for example on a phone or tablet.
+- `any-pointer-coarse:touch-target` makes it larger when any pointer is coarse. Use it for hybrid devices, such as a laptop with a touch screen, where the primary pointer is the mouse or trackpad but people also tap.
+
+Use media-style variants (`pointer-coarse:`, `any-pointer-coarse:`, `min-[…]:`); state variants such as `hover:` create the area only in that state.
+
+### Area size
+
+The `--touch-target-size` token sets the smallest size of the area on each axis. It is not defined by default: without it the area is 44px, the size that WCAG 2.5.5 (Target Size, Enhanced) asks for. Set it on any scope (an element, `:root`, or `@theme`) to change it for the controls inside, with an arbitrary property or in CSS:
+
+```tsx
+<div className="[--touch-target-size:48px]">
+  <IconButton aria-label="Close" className="touch-target">
+    <XIcon />
+  </IconButton>
+</div>
+```
+
+```css
+.toolbar {
+  --touch-target-size: 48px;
+}
+```
+
+A control that is larger than the token on an axis keeps its own size on that axis.
 
 The area is the control's `::after` pseudo-element, which has `position: absolute`. That has these effects:
 
@@ -194,7 +224,7 @@ The area is the control's `::after` pseudo-element, which has `position: absolut
 - **Absolutely positioned children** of the control are now positioned relative to the control.
 - **Your `after:` classes change the area.** Do not use them on the same element.
 - **Some elements have no `::after`**, for example `<input>` and `<img>`. On these elements the area does not grow.
-- **Overflow cuts the area.** If the control or one of its parents has `overflow: hidden`, the area stops at that edge. `Checkbox.Root` has `overflow-hidden`, so `touch-target` on it does nothing: put the checkbox in a `Label` so the label text is also pressable (the label, not the utility, gives the larger target), or add `overflow-visible` to `Checkbox.Root` if the indicator allows it. In a scroll container, an area that goes past the container's padding makes the content scroll further. Give the container padding of at least half the difference between 44px and the control size.
-- **The area covers the elements around the control**, except elements that paint above it (later positioned or transformed elements, or a higher z-index). Where it covers a neighbour, a press goes to the control, also on the neighbour's own box. Keep the centres of neighbouring controls at least 44px apart. If two areas overlap, the press goes to the control that comes later in the DOM.
-- **A disabled control does not get presses.** The area inherits `pointer-events` from the control, so a control with `pointer-events: none`, such as a disabled `IconButton` or `ClearButton`, gets no presses anywhere in the area. A pointer in the area hovers the control, so its hover styles apply.
+- **Overflow cuts the area.** If the control or one of its parents has `overflow: hidden`, the area stops at that edge. In a scroll container, an area that goes past the container's padding makes the content scroll further. Give the container padding of at least half the difference between the area size (44px by default) and the control size.
+- **The area covers the elements around the control**, except elements that paint above it (later positioned or transformed elements, or a higher z-index). Where it covers a neighbour, a press goes to the control, also on the neighbour's own box. Keep the centres of neighbouring controls at least the area size (44px by default) apart. If two areas overlap, the press goes to the control that comes later in the DOM.
+- **A disabled control does not get presses.** The area inherits `pointer-events` from the control, so a control with `pointer-events: none`, such as a disabled `IconButton`, `ClearButton` or `Checkbox.Root`, gets no presses anywhere in the area. A pointer in the area hovers the control, so its hover styles apply.
 - **A control with interactive descendants loses them.** The area paints and hit-tests above the control's own non-positioned children, so a press on, for example, the remove button of a `Chip` with `onRemove` goes to the `Chip`. Use `touch-target` only on a control with no interactive descendants.

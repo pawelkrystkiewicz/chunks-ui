@@ -33,7 +33,37 @@ function ControlledCalendar() {
 
 <CalendarControlledExample />
 
-When `value` changes to another day, the calendar shows that day's month. A re-render with the same day, such as an inline `value={new Date()}`, keeps the month the user moved to. The same rule means that setting a new `Date` for the day that is already selected does not move the view back, so a "Today" button does nothing visible while today is selected and the user is on another month. To show the month again, remount the calendar with a `key`, for example `<Calendar key={todayClicks} value={today} />`, and change the key in the button's handler.
+When `value` changes to another day, the calendar shows that day's month. A re-render with the same day, such as an inline `value={new Date()}`, keeps the month the user moved to. The same rule means that setting a new `Date` for the day that is already selected does not move the view back, so a "Today" button does nothing visible while today is selected and the user is on another month. To show the month again, control the month: see [Shown Month](#shown-month).
+
+## Shown Month
+
+The calendar opens on the month of the selected day, else today's, and the arrows and keys move it. To control the shown month, pass `month`, any date in that month, and `onMonthChange`. `onMonthChange` gets the first day of the month the user moves to, at local midnight: by the arrows, by a key that moves focus out of the shown month, or by a click on a day from a neighbouring month. The view then waits for a new `month`. If you keep the month, a key that would leave it leaves focus where it is. When the new `month` comes later, for example from a transition, focus moves with the view to the day the key moved to. If you set another month instead, for example to keep the view inside a range, focus goes to that month's Tab stop.
+
+```tsx
+function MonthCalendar() {
+  const [date, setDate] = useState<Date | null>(null);
+  const [month, setMonth] = useState(() => new Date());
+
+  return (
+    <>
+      <Button
+        onClick={() => {
+          const today = new Date();
+          setDate(today);
+          setMonth(today);
+        }}
+      >
+        Today
+      </Button>
+      <Calendar value={date} onValueChange={setDate} month={month} onMonthChange={setMonth} />
+    </>
+  );
+}
+```
+
+With `month`, a new `value` does not move the view: set `month` too, as the Today button does. An Invalid Date, or a date before year 1, as `month` shows the selected day's month, else today's.
+
+Without `month`, `onMonthChange` still tells you when the user moves to another month, for example to load that month's data. A new `value` that moves the view does not call it.
 
 ## Disabled Dates
 
@@ -85,7 +115,7 @@ The left and right arrows are not mirrored in right-to-left layouts.
   definition={generateDefinition({
     code: `
 import type { CalendarProps } from 'chunks-ui'
-type Props = Pick<CalendarProps, 'value' | 'defaultValue' | 'onValueChange' | 'isDateDisabled' | 'min' | 'max' | 'weekStartsOn' | 'showOutsideDays' | 'labels'>
+type Props = Pick<CalendarProps, 'value' | 'defaultValue' | 'onValueChange' | 'month' | 'onMonthChange' | 'isDateDisabled' | 'min' | 'max' | 'weekStartsOn' | 'showOutsideDays' | 'labels'>
 export default Props
 `
   })}
@@ -94,6 +124,8 @@ export default Props
 ## Labels
 
 `labels` replaces the built-in English text, for example to translate it. Keys you leave out keep their default from `DEFAULT_CALENDAR_LABELS`. The keys that depend on a date are functions of that date, so you can pass `Intl` formatters. They get the date at local midnight: format it in the local time zone, not with `timeZone: "UTC"`. A server component can't pass functions, so set them in a client component. See [Labels](/labels).
+
+Each column header shows `weekday` and screen readers read `weekdayLong`; set both when you translate them (see [Labels](/labels)).
 
 <TSDoc
   definition={generateDefinition({

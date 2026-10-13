@@ -25,14 +25,15 @@ Text that depends on data is a function. The `Calendar` keys get the date they d
     nextMonth: "Następny miesiąc",
     heading: (date) => date.toLocaleDateString("pl-PL", { month: "long", year: "numeric" }),
     weekday: (date) => date.toLocaleDateString("pl-PL", { weekday: "short" }),
+    weekdayLong: (date) => date.toLocaleDateString("pl-PL", { weekday: "long" }),
     day: (date) => date.toLocaleDateString("pl-PL", { dateStyle: "full" }),
   }}
 />
 ```
 
-The `Calendar` functions get each date at local midnight. Format it in the user's time zone, as `toLocaleDateString` does by default. With `timeZone: "UTC"`, a user east of UTC sees the day before.
+The column headers show `weekday`, and screen readers read `weekdayLong` in its place, so translate both. If you leave out `weekdayLong`, screen readers read your `weekday` text. The `Calendar` functions get each date at local midnight. Format it in the user's time zone, as `toLocaleDateString` does by default. With `timeZone: "UTC"`, a user east of UTC sees the day before.
 
-`Calendar`, `DatePicker` and `Slider` take functions in `labels`. A React Server Component cannot pass a function to a client component, and every `chunks-ui` component is one (see [Server components](/utilities#server-components)). Pass function labels from a client component (a file that starts with `"use client"`), for example a small wrapper that holds your translations. String labels can come from a server component.
+`Calendar`, `DatePicker` and `Slider` take functions in `labels`. A React Server Component cannot pass a function to a client component, and every `chunks-ui` component is one (see [Server components](/utilities#server-components)). Pass function labels from a client component (a file that starts with `"use client"`), for example a small wrapper that holds your translations. String labels can come from a server component, which can also call the function defaults, for example `DEFAULT_CALENDAR_LABELS.day(date)`.
 
 There is no provider that sets the labels of all components. To use the same translation in many places, keep it in a constant and pass it to each component:
 
@@ -48,10 +49,31 @@ export const PL_COMBOBOX: Partial<ComboboxLabels> = {
 
 Each component exports the type of its labels as `<Component>Labels` (`ComboboxLabels`) and the English defaults as `DEFAULT_<COMPONENT>_LABELS` (`DEFAULT_COMBOBOX_LABELS`). The defaults are typed read-only: change the text with `labels`, not by writing to the defaults.
 
+## Read the defaults in a server component
+
+`chunks-ui` starts with `"use client"`. In a React Server Component, each of its exports is a client reference, so `DEFAULT_COPY_BUTTON_LABELS.copy` from `chunks-ui` is not the string. Import the defaults and the `<Component>Labels` types from `chunks-ui/utils`. This entry has no `"use client"` and no React code (see [Server components](/utilities#server-components)):
+
+```tsx
+// app/keys/page.tsx: a server component
+import { CopyButton } from "chunks-ui";
+import { DEFAULT_COPY_BUTTON_LABELS } from "chunks-ui/utils";
+
+export default function KeysPage() {
+  return (
+    <CopyButton
+      value="sk-test-123"
+      labels={{ copy: `${DEFAULT_COPY_BUTTON_LABELS.copy}: API key` }}
+    />
+  );
+}
+```
+
+The button reads "Copy to clipboard: API key". `chunks-ui` and `chunks-ui/utils` export the same objects, so a client component can import the defaults from either entry.
+
 ## What takes precedence
 
 - An `aria-label` on a part wins over `labels`: `<Combobox.Trigger aria-label="Show fruits" />` keeps that name.
-- A prop that already sets the same text wins too: `placeholder` on `DatePicker`, `label` on `ClearButton`, `children` on `Pagination.Previous` and `Pagination.Next`, and `getAriaValueText` or `aria-valuetext` on `Slider.Thumb`.
+- A prop that already sets the same text wins too: `placeholder` on `DatePicker`, `label` on `ClearButton` (deprecated: use `labels={{ clear }}`), `children` on `Pagination.Previous` and `Pagination.Next`, and `getAriaValueText` or `aria-valuetext` on `Slider.Thumb`.
 - An `aria-labelledby` on `ClearButton` turns its default name off: the button is named by the elements it references.
 
 ## Remove buttons

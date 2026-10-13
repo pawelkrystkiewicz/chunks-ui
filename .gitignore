@@ -61,3 +61,7 @@ playwright-report
 
 # personal follow-up notes
 /TODO.md
+
+# BSD sed -i backups: `sed -i -e ...` writes file-e, `sed -i -E ...` writes file-E
+*-e
+*-E

@@ -9,6 +9,7 @@ import {
 } from "react";
 import { cn } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
+import { type BreadcrumbLabels, DEFAULT_BREADCRUMB_LABELS } from "./Breadcrumb.Labels";
 
 type RenderProps = { className?: string; children?: ReactNode; [key: string]: unknown };
 type RenderElement = ReactElement<RenderProps>;
@@ -16,26 +17,6 @@ type RenderElement = ReactElement<RenderProps>;
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-
-/** The built-in English strings of `Breadcrumb`. */
-export type BreadcrumbLabels = {
-  /**
-   * Name of the `Breadcrumb.Root` navigation landmark.
-   * @default "Breadcrumb"
-   */
-  root: string;
-  /**
-   * Text of `Breadcrumb.Ellipsis` for screen readers, which read it in place of the three dots.
-   * It is visually hidden.
-   * @default "More"
-   */
-  ellipsis: string;
-};
-
-export const DEFAULT_BREADCRUMB_LABELS: Readonly<BreadcrumbLabels> = {
-  root: "Breadcrumb",
-  ellipsis: "More",
-};
 
 const BreadcrumbLabelsContext = createContext(DEFAULT_BREADCRUMB_LABELS);
 

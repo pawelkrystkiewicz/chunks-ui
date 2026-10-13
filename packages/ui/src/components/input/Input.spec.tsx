@@ -1,10 +1,11 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
-import { type ChangeEvent, createRef, useState } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { type ChangeEvent, createRef, useRef, useState } from "react";
+import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
 import { Field } from "../field";
-import { DEFAULT_INPUT_LABELS, Input } from "./Input";
+import { Input } from "./Input";
+import { DEFAULT_INPUT_LABELS } from "./Input.Labels";
 
 afterEach(cleanup);
 
@@ -190,6 +191,35 @@ describe("Input", () => {
       expect(onValueChange).toHaveBeenCalledWith("", expect.anything());
       expect(screen.getByRole("textbox")).toHaveValue("abc");
     });
+
+    describe("on a controlled input without a handler", () => {
+      let warn: MockInstance<typeof console.warn>;
+      beforeEach(() => {
+        warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      });
+      afterEach(() => warn.mockRestore());
+
+      it("warns once in development that the clear button can't change the value", () => {
+        const { rerender } = render(<Input aria-label="Search" value="abc" clearable />);
+        rerender(<Input aria-label="Search" value="abcd" clearable />);
+        expect(warn).toHaveBeenCalledOnce();
+        expect(warn.mock.calls[0]?.[0]).toMatch(/`clearable`.*`value`.*`onValueChange`/s);
+      });
+
+      it.each([
+        ["onValueChange", { onValueChange: () => {} }],
+        ["readOnly", { readOnly: true }],
+        ["disabled", { disabled: true }],
+      ])("does not warn with %s", (_, props) => {
+        render(<Input aria-label="Search" value="abc" clearable {...props} />);
+        expect(warn).not.toHaveBeenCalled();
+      });
+
+      it("does not warn on an uncontrolled input", () => {
+        render(<Input aria-label="Search" defaultValue="abc" clearable />);
+        expect(warn).not.toHaveBeenCalled();
+      });
+    });
   });
 
   // validationMode="onBlur" validates on every blur, so a clear must not blur the input
@@ -311,6 +341,37 @@ describe("Input", () => {
     expect(screen.getByRole("textbox")).toHaveValue("abc");
     expect(await screen.findByRole("button", { name: "Clear" })).toBeInTheDocument();
   });
+
+  // React Hook Form's reset() and setValue() write `input.value` directly, which fires no event
+  it.each([
+    { write: "empties", from: "abc", to: "", shows: false },
+    { write: "fills", from: "", to: "abc", shows: true },
+  ])(
+    "follows a write that $write an uncontrolled input without an event, on the next render",
+    async ({ from, to, shows }) => {
+      const user = userEvent.setup();
+      function ProgrammaticWrite() {
+        const ref = useRef<HTMLInputElement>(null);
+        const [, setRenders] = useState(0);
+        const write = () => {
+          if (ref.current) ref.current.value = to;
+          setRenders((n) => n + 1);
+        };
+        return (
+          <>
+            <Input aria-label="Search" ref={ref} defaultValue={from} clearable />
+            <button type="button" onClick={write}>
+              Write
+            </button>
+          </>
+        );
+      }
+      render(<ProgrammaticWrite />);
+      await user.click(screen.getByRole("button", { name: "Write" }));
+      expect(screen.getByRole("textbox")).toHaveValue(to);
+      expect(screen.queryByRole("button", { name: "Clear" }) !== null).toBe(shows);
+    },
+  );
 
   it("forwards the consumer's ref to a clearable input", () => {
     const ref = createRef<HTMLElement>();
