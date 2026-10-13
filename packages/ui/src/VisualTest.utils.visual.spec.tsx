@@ -2,6 +2,7 @@ import { render } from "@testing-library/react";
 import type { CSSProperties, ReactNode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { page, userEvent } from "vitest/browser";
+import { Menu } from "./components/menu";
 import { Popover } from "./components/popover";
 import {
   expectNoOverflow,
@@ -109,6 +110,88 @@ describe("overflowPast", () => {
     ).toEqual({ ...none, right: 60 });
   });
 
+  // The portal's <div> spans <body> at no height, and a modal menu lays a transparent inert
+  // backdrop over the whole page: neither paints anything a screenshot crops
+  it("counts neither a portal's own box nor a modal popup's inert backdrop", async () => {
+    const { getByTestId } = render(
+      <>
+        <div data-testid="box" style={{ height: 300 }}>
+          <Menu.Root defaultOpen>
+            <Menu.Trigger>Options</Menu.Trigger>
+            <Menu.Content>
+              <Menu.Item>Edit</Menu.Item>
+            </Menu.Content>
+          </Menu.Root>
+        </div>
+        {/* Pushes the portal's <div> (the last child of <body>) below the box's bottom edge */}
+        <div style={{ height: 200 }} />
+      </>,
+    );
+    await expect.element(page.getByRole("menuitem", { name: "Edit" })).toBeVisible();
+    expect(document.querySelector("[data-base-ui-portal] [data-base-ui-inert]")).not.toBeNull();
+    expect(overflowPast(getByTestId("box"))).toEqual(none);
+  });
+
+  // Floating UI portals a nested popup into its parent's portal <div>, so the walk of the parent
+  // reaches the nested portal's own <div> (it spans <body> at no height) as an ordinary child
+  it("does not count the own box of a portal nested in another portal", async () => {
+    const { getByTestId } = render(
+      <>
+        <div data-testid="box" style={{ height: 400 }}>
+          <Popover.Root defaultOpen>
+            <Popover.Trigger>Open</Popover.Trigger>
+            <Popover.Content>
+              <Popover.Root defaultOpen>
+                <Popover.Trigger>Nested</Popover.Trigger>
+                <Popover.Content>Nested popup</Popover.Content>
+              </Popover.Root>
+            </Popover.Content>
+          </Popover.Root>
+        </div>
+        {/* Pushes the portals' <div>s below the box's bottom edge */}
+        <div style={{ height: 300 }} />
+      </>,
+    );
+    const nested = page.getByText("Nested popup");
+    await expect.element(nested).toBeVisible();
+    await expect.poll(() => nested.element().getBoundingClientRect().top).toBeGreaterThan(0);
+    const nestedPortal = nested.element().closest("[data-base-ui-portal]");
+    expect(nestedPortal?.parentElement?.closest("[data-base-ui-portal]")).not.toBeNull();
+    expect(overflowPast(getByTestId("box"))).toEqual(none);
+  });
+
+  // An author's own role="presentation" element (a layout table) that Base UI marks inert behind a
+  // modal is page content, unlike the empty backdrop
+  it("counts a role=presentation element with content that Base UI marks inert", () => {
+    const { getByTestId } = render(
+      <div data-testid="box" style={{ margin: 100, width: 100, height: 50 }}>
+        <div role="presentation" data-base-ui-inert="" data-testid="layout">
+          <div style={{ width: 160, height: 10 }} />
+        </div>
+        <div role="presentation" data-base-ui-inert="" data-testid="backdrop" />
+      </div>,
+    );
+    expect(overflowPast(getByTestId("box"))).toEqual({ ...none, right: 60 });
+  });
+
+  it("does not measure the popup around the element it checks", async () => {
+    render(
+      <Popover.Root defaultOpen>
+        <Popover.Trigger>Open</Popover.Trigger>
+        <Popover.Content>
+          <div data-testid="inside" style={{ width: 60, height: 20 }} />
+        </Popover.Content>
+      </Popover.Root>,
+    );
+    const inside = page.getByTestId("inside");
+    await expect.element(inside).toBeVisible();
+    await expect.poll(() => inside.element().getBoundingClientRect().top).toBeGreaterThan(0);
+    const portal = inside.element().closest("[data-base-ui-portal]");
+    expect(portal).not.toBeNull();
+    // The popup's own boxes are bigger than the element, but they are not content past it
+    expect(overflowPast(inside.element())).toEqual(none);
+  });
+
   it("does not count content inside an overflow: auto or hidden box, but counts the box", () => {
     for (const overflow of ["auto", "hidden"]) {
       expect(
@@ -162,6 +245,43 @@ describe("toMatchScreenshot", () => {
     await userEvent.click(page.getByRole("button", { name: "Open" }));
     await expect.element(page.getByText("Wider than the page")).toBeVisible();
     await expect(expect(body).toMatchScreenshot()).rejects.toThrow(cropped);
+  });
+
+  // The popup portals to <body>, outside the fixture, and opens below the trigger, past the
+  // fixture's bottom edge
+  it("fails when a popup the fixture opens reaches past the fixture", async () => {
+    const { fixture } = await renderFixture(
+      <Popover.Root>
+        <Popover.Trigger>Open</Popover.Trigger>
+        <Popover.Content>
+          <div style={{ height: 100 }}>Below the fixture</div>
+        </Popover.Content>
+      </Popover.Root>,
+    );
+    await userEvent.click(page.getByRole("button", { name: "Open" }));
+    const popup = page.getByText("Below the fixture");
+    await expect.element(popup).toBeVisible();
+    expect(fixture.contains(popup.element())).toBe(false);
+    await expect(expect(fixture).toMatchScreenshot()).rejects.toThrow(cropped);
+  });
+
+  it("waits for a locator's element that renders after the call, then checks it", async () => {
+    const late = page.getByTestId("late");
+    expect(late.query()).toBeNull();
+    const screenshot = expect(late).toMatchScreenshot();
+    // 200px of content in a 100px box: the overflow check, not a missing element, fails the call
+    render(
+      <div data-testid="late" style={{ width: 100 }}>
+        <div style={{ width: 300, height: 10 }} />
+      </div>,
+    );
+    await expect(screenshot).rejects.toThrow(cropped);
+  });
+
+  it("fails at once with Vitest's own error for a nullish target", async () => {
+    await expect(expect(null).toMatchScreenshot()).rejects.toThrow(
+      "Expected element or locator to be defined",
+    );
   });
 });
 
