@@ -61,7 +61,14 @@ export async function checkBunVersions(root: string): Promise<string[]> {
 
   const glob = new Bun.Glob(".github/workflows/*.{yml,yaml}");
   for (const file of [...glob.scanSync({ cwd: root, dot: true })].sort()) {
-    const workflow = load(await Bun.file(join(root, file)).text()) as Workflow | null;
+    let workflow: Workflow | null;
+    try {
+      workflow = load(await Bun.file(join(root, file)).text()) as Workflow | null;
+    } catch (error) {
+      const reason = String(error instanceof Error ? error.message : error).split("\n")[0];
+      problems.push(`${file}: not valid YAML (${reason})`);
+      continue;
+    }
     for (const [jobId, job] of Object.entries(workflow?.jobs ?? {})) {
       for (const [index, step] of (job.steps ?? []).entries()) {
         const where = `${file} job ${jobId} step ${step.name ? `"${step.name}"` : index + 1}`;

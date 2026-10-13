@@ -27,7 +27,9 @@ describe("checkBunVersions", () => {
   });
 
   it("names a recipe whose bun version differs", async () => {
-    const dir = copyWith("TESTING_STRATEGY.md", (text) => text.replace(/bun@[\d.]+/, "bun@0.0.1"));
+    const dir = copyWith("TESTING_STRATEGY.md", (text) =>
+      text.replace(/npm i -g bun@[\d.]+/, "npm i -g bun@0.0.1"),
+    );
     expect(await checkBunVersions(dir)).toEqual([
       expect.stringMatching(
         /^TESTING_STRATEGY\.md:\d+ has 0\.0\.1, package\.json \(packageManager\) has /,
@@ -48,7 +50,7 @@ describe("checkBunVersions", () => {
     );
     expect(await checkBunVersions(dir)).toEqual([
       expect.stringMatching(
-        /^\.github\/workflows\/unit\.tests\.yml job \w+ step "Setup Bun" has 0\.0\.1, /,
+        /^\.github\/workflows\/unit\.tests\.yml job [\w-]+ step "Setup Bun" has 0\.0\.1, /,
       ),
     ]);
   });
@@ -59,7 +61,7 @@ describe("checkBunVersions", () => {
     );
     expect(await checkBunVersions(dir)).toEqual([
       expect.stringMatching(
-        /^\.github\/workflows\/unit\.tests\.yml job \w+ step "Setup Bun" reads \.bun-version, /,
+        /^\.github\/workflows\/unit\.tests\.yml job [\w-]+ step "Setup Bun" reads \.bun-version, /,
       ),
     ]);
   });
@@ -88,20 +90,32 @@ describe("checkBunVersions", () => {
     expect(await checkBunVersions(dir)).toEqual([]);
   });
 
-  it("finds a bun-version in a list item and in flow style", async () => {
-    const dir = copyWith(".github/workflows/unit.tests.yml", (text) =>
+  it("finds a bun-version in an unnamed list item and in flow style", async () => {
+    const item = copyWith(".github/workflows/unit.tests.yml", (text) =>
       text.replace(
-        "bun-version-file: package.json",
-        "bun-version-file: package.json\n          bun-version: 0.0.1",
+        /- name: Setup Bun\n(\s+)uses: (.+)\n\s+with:\n\s+bun-version-file: package.json/,
+        "- uses: $2\n$1with:\n$1  bun-version: 0.0.1",
       ),
     );
-    expect(await checkBunVersions(dir)).toEqual([
-      expect.stringMatching(/^\.github\/workflows\/unit\.tests\.yml job .* has 0\.0\.1, /),
+    expect(await checkBunVersions(item)).toEqual([
+      expect.stringMatching(
+        /^\.github\/workflows\/unit\.tests\.yml job [\w-]+ step \d+ has 0\.0\.1, /,
+      ),
     ]);
     const flow = copyWith(".github/workflows/unit.tests.yml", (text) =>
       text.replace(/with:\n\s+bun-version-file: package.json/, "with: { bun-version: '0.0.2' }"),
     );
     expect(await checkBunVersions(flow)).toEqual([expect.stringMatching(/ has 0\.0\.2, /)]);
+  });
+
+  it("names a workflow that is not valid YAML and keeps checking the rest", async () => {
+    const dir = copyWith(
+      ".github/workflows/unit.tests.yml",
+      (text) => `${text}\n  bad: [unclosed\n`,
+    );
+    expect(await checkBunVersions(dir)).toEqual([
+      expect.stringMatching(/^\.github\/workflows\/unit\.tests\.yml: not valid YAML \(.+\)$/),
+    ]);
   });
 
   it("skips an expression, which is not a literal pin", async () => {

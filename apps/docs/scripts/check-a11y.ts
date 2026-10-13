@@ -352,18 +352,25 @@ async function auditPopup(
   const trigger = page.getByRole(popup.trigger, { name: popup.name, exact: true }).first();
   // A handle, as some triggers change their name while open (Combobox: "Hide options")
   const handle = await trigger.elementHandle({ timeout: POPUP_MS });
-  await trigger.click({ timeout: POPUP_MS });
   const element = page.getByRole(popup.popup);
-  await element.waitFor({ timeout: POPUP_MS });
-  const id = await element.getAttribute("id");
-  if (!id) throw new Error(`The open ${popup.popup} has no id to scope axe to`);
-  const problems = await axe(page, popup.page, theme, matched, { selector: `[id="${id}"]`, label });
-  // The trigger tells assistive technology the popup is open, and which element it is
-  const state = await handle.evaluate((el) => ({
-    expanded: el.getAttribute("aria-expanded"),
-    controls: el.getAttribute("aria-controls"),
-  }));
-  await handle.dispose();
+  let id: string;
+  let problems: Problem[];
+  let state: { expanded: string | null; controls: string | null };
+  try {
+    await trigger.click({ timeout: POPUP_MS });
+    await element.waitFor({ timeout: POPUP_MS });
+    const popupId = await element.getAttribute("id");
+    if (!popupId) throw new Error(`The open ${popup.popup} has no id to scope axe to`);
+    id = popupId;
+    problems = await axe(page, popup.page, theme, matched, { selector: `[id="${id}"]`, label });
+    // The trigger tells assistive technology the popup is open, and which element it is
+    state = await handle.evaluate((el) => ({
+      expanded: el.getAttribute("aria-expanded"),
+      controls: el.getAttribute("aria-controls"),
+    }));
+  } finally {
+    await handle.dispose();
+  }
   if (state.expanded !== "true" || state.controls !== id) {
     problems.push({
       page: label,
