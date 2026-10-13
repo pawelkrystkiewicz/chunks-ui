@@ -1,6 +1,6 @@
 import { Toast as BaseToast } from "@base-ui/react/toast";
 import { render, screen, within } from "@testing-library/react";
-import { type ComponentPropsWithoutRef, type ReactNode, useEffect, useRef } from "react";
+import { type ComponentPropsWithoutRef, type ReactNode, useEffect } from "react";
 import { afterAll, beforeAll, describe, expect, it, onTestFinished } from "vitest";
 import { commands, page, userEvent } from "vitest/browser";
 import type { Dir } from "../../VisualTest.utils";
@@ -17,13 +17,13 @@ function AddToast({
   actionProps?: ComponentPropsWithoutRef<"button">;
 }) {
   const manager = Toast.useToast();
-  const added = useRef(false);
+  // A fixed id: adding again (StrictMode's second run) updates this toast, not a second one. It
+  // runs on mount only: `useToast()` returns a new `manager` on every render and `actionProps` is
+  // a new object, and updating the toast renders again.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the props are fixed in each spec
   useEffect(() => {
-    if (!added.current) {
-      added.current = true;
-      manager.add({ title, description, actionProps });
-    }
-  }, [manager, title, description, actionProps]);
+    manager.add({ id: "visual-toast", title, description, actionProps });
+  }, []);
   return null;
 }
 
