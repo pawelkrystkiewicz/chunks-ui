@@ -4,7 +4,7 @@ Personal React 19+ component library. Single npm package (`chunks-ui`) replacing
 
 ## Stack
 
-- Headless: `@base-ui/react` v1.2+ (includes Floating UI)
+- Headless: `@base-ui/react` v1.9+ (includes Floating UI)
 - Styling: Tailwind CSS v4 + CVA + `clsx` + `tailwind-merge`
 - Animation: Motion v12+ (optional peer dep)
 - Build: tsup (ESM + CJS + .d.ts)
@@ -42,6 +42,7 @@ Personal React 19+ component library. Single npm package (`chunks-ui`) replacing
 
 - `bun run test:visual` — run visual regression tests (requires Playwright browsers)
 - `bun run test:visual:update` — update visual snapshots locally
+- `bun run test:webkit` — run the WebKit smoke tests (requires `bunx playwright install webkit` once)
 - `bun run update:screenshots` — **trigger GitHub Actions workflow** to update screenshots on current branch (interactive, uses `gh` CLI)
 
 ## Key Conventions
