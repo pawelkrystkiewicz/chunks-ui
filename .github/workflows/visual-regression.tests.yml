@@ -41,7 +41,7 @@ jobs:
 
       # The image ships WebKit too. Runs when only the Chromium suite failed, so a PR sees both.
       - name: Run WebKit Smoke Tests
-        if: success() || steps.visual.outcome == 'failure'
+        if: success() || (failure() && steps.visual.outcome == 'failure')
         run: cd packages/ui && bun run test:webkit
 
       # Vitest writes each failed screenshot's actual and diff PNGs to <root>/.vitest-attachments
