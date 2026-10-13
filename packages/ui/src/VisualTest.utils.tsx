@@ -1,4 +1,4 @@
-import { render } from "@testing-library/react";
+import { type RenderResult, render } from "@testing-library/react";
 import { cancelFrame, frame } from "motion/react";
 import type { ReactNode } from "react";
 import { afterAll, beforeAll, beforeEach, describe, expect } from "vitest";
@@ -73,7 +73,7 @@ export function expectNoOverflow(el: Element) {
 export async function renderFixture(
   children: ReactNode,
   { allowOverflow = false }: { allowOverflow?: boolean } = {},
-) {
+): Promise<RenderResult & { fixture: HTMLElement }> {
   const result = render(
     <div
       data-testid="fixture"
