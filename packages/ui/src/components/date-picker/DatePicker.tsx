@@ -86,7 +86,9 @@ type DatePickerOwnProps = Pick<
   isDateDisabled?: (date: Date) => boolean;
   /**
    * Name of the form field. Renders a hidden input that submits the selected date as
-   * `yyyy-mm-dd`, or an empty string when no date is selected.
+   * `yyyy-mm-dd`, or an empty string when no date is selected. If `Field.Root` has a name, Base
+   * UI's `Form` uses it for `errors` and `onFormSubmit`, but the form data uses this one: set the
+   * name in one place.
    */
   name?: string;
   /**
@@ -95,7 +97,8 @@ type DatePickerOwnProps = Pick<
    */
   required?: boolean;
   /**
-   * The `id` of the `<form>` the hidden input belongs to, for a picker placed outside it.
+   * The `id` of the `<form>` the picker belongs to, for a picker placed outside it. A reset of
+   * that form restores the picker. With `name` or `required`, the date is submitted with that form.
    */
   form?: string;
   /**
