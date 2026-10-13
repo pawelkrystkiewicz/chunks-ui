@@ -98,6 +98,7 @@ Each component lives in `packages/ui/src/components/<name>/` with:
 button/
   Button.tsx           # component implementation
   Button.Variants.ts   # CVA variant definitions
+  Button.Labels.ts     # built-in text and its defaults, when the component has any
   Button.spec.tsx      # unit tests (co-located)
   index.ts             # public exports
 ```
@@ -110,7 +111,7 @@ button/
 - **Props over config objects**: `<Button color="primary" variant="outlined">`
 - **One component, one job** — no mode-switching god components
 
-Built-in text is the one exception to props over config objects. A component with English strings of its own takes `labels?: Partial<XLabels>` on the part users render (for a compound component, usually its Root, which passes it to the other parts by context). Export `XLabels` and `DEFAULT_X_LABELS`, typed `Readonly<XLabels>`, and merge them as `{ ...DEFAULT_X_LABELS, ...labels }`. An explicit `aria-label`, or an existing prop that sets the same text (such as `placeholder`), wins over `labels`. List the component in `apps/docs/content/labels.mdx`.
+Built-in text is the one exception to props over config objects. A component with English strings of its own takes `labels?: Partial<XLabels>` on the part users render (for a compound component, usually its Root, which passes it to the other parts by context). Define `XLabels` and `DEFAULT_X_LABELS` (typed `Readonly<XLabels>`) in a React-free `X.Labels.ts` with no React or client imports, re-export both from `src/utils.ts`, and merge with `mergeLabels(DEFAULT_X_LABELS, labels)`, which keeps the default for keys set to `undefined`. An explicit `aria-label`, or an existing prop that sets the same text (such as `placeholder`), wins over `labels`. List the component in `apps/docs/content/labels.mdx`.
 
 ### Animation
 
