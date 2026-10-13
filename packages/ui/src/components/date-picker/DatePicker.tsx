@@ -268,7 +268,7 @@ export function DatePicker({
                 isDateDisabled={isDateDisabled}
                 weekStartsOn={weekStartsOn}
                 showOutsideDays={showOutsideDays}
-                labels={names}
+                labels={labels}
               />
             </BasePopover.Popup>
           </BasePopover.Positioner>

@@ -1,4 +1,5 @@
-// chunks-ui/utils: the React-free helpers (class helpers, variants, constants and the English label defaults), built without the "use client" banner so that
+// chunks-ui/utils: the React-free helpers (class helpers, variants, constants and the English label
+// defaults), built without the "use client" banner so that
 // React Server Components can call them. Import only modules with no React, Base UI or Motion
 // code; utils.spec.ts walks this file's imports to check.
 // Rule: re-export every VALUE export of each module below, because the main entry imports those

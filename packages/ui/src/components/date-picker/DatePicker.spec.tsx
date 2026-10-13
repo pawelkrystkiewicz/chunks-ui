@@ -668,4 +668,19 @@ describe("DatePicker labels", () => {
       "Dzień tygodnia 0",
     );
   });
+
+  it("names the column headers by a custom weekday when weekdayLong is unset", async () => {
+    const user = userEvent.setup();
+    render(
+      <DatePicker
+        value={new Date(2026, 2, 15)}
+        labels={{ weekday: (date) => `Dzień ${date.getDay()}` }}
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: "March 15, 2026" }));
+    expect(await screen.findByLabelText("Previous month", { selector: "button" })).toBeVisible();
+    expect(screen.getAllByRole("columnheader", { hidden: true })[0]).toHaveAccessibleName(
+      "Dzień 0",
+    );
+  });
 });
