@@ -125,17 +125,18 @@ describe(".micro-interactions with no reduced-motion preference", () => {
   beforeAll(() => commands.emulateMedia({ reducedMotion: "no-preference" }));
   afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
 
+  // All but the focus ring, which changes at once (FocusRing.visual.spec.tsx)
   it("transitions with its own defaults when nothing overrides them", () => {
     expect(transitionOf(renderTarget(plain()))).toEqual({
-      property: "all",
-      duration: "0.3s",
+      property: "all, outline, outline-offset",
+      duration: "0.3s, 0s, 0s",
       timingFunction: "cubic-bezier(0.4, 0, 0.2, 1)",
     });
   });
 
   it("lets a duration utility change the duration", () => {
     expect(transitionOf(renderTarget(plain("duration-150")))).toEqual({
-      property: "all",
+      property: "all, outline, outline-offset",
       duration: "0.15s",
       timingFunction: "cubic-bezier(0.4, 0, 0.2, 1)",
     });
@@ -143,8 +144,8 @@ describe(".micro-interactions with no reduced-motion preference", () => {
 
   it("lets an easing utility change the timing function", () => {
     expect(transitionOf(renderTarget(plain("ease-linear")))).toEqual({
-      property: "all",
-      duration: "0.3s",
+      property: "all, outline, outline-offset",
+      duration: "0.3s, 0s, 0s",
       timingFunction: "linear",
     });
   });

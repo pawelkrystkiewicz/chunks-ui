@@ -108,8 +108,9 @@ function SliderThumb({ className, getAriaValueText, ...props }: SliderThumbProps
       getAriaValueText={getAriaValueText ?? rangeValueText}
       className={cnState(
         "size-4 rounded-full border-2 border-primary bg-background shadow-sm",
-        // animate only colors to avoid resize slugishness
-        "micro-interactions transition-colors",
+        // Only the colours, not the size (no sluggish resize), and not the focus ring:
+        // `transition-colors` also lists `outline-color`, so the ring faded in
+        "micro-interactions transition-[color,background-color,border-color]",
         "data-[dragging]:scale-110 data-[dragging]:shadow-md",
         // Keyboard focus lands on the visually hidden range input inside the thumb
         "has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ring has-[:focus-visible]:outline-offset-2",
