@@ -331,8 +331,8 @@ function Hero() {
             <em className="text-white/50 not-italic">Composed,</em> not configured.
           </h1>
           <p className="mb-[34px] max-w-[470px] text-pretty text-[18px] text-white/78 leading-normal">
-            Accessible React components on Base UI, styled with Tailwind CSS v4 and animated with
-            Motion. One npm package, not a copy-paste registry.
+            Accessible React components on Base UI, styled with Tailwind CSS v4. One npm package to
+            install, not a registry to copy from.
           </p>
           <div className="flex flex-wrap items-center gap-3">
             <Cta href={DOCS}>Read the docs</Cta>
@@ -516,7 +516,7 @@ const PRINCIPLES = [
     tag: "API",
     art: <ApiArt />,
     title: "LLM-friendly.",
-    body: "Props over config objects. Conventional names an agent can guess without opening the source.",
+    body: "Props over config objects. Ships with llms.txt, so agents can read the docs too.",
     meta: ["llms.txt", "AGENTS.md"],
   },
 ];
@@ -552,20 +552,20 @@ function MotionSection() {
   return (
     <section id="motion" className="pt-6 pb-24">
       <div className={WRAP}>
-        <SectionHead eyebrow="Motion" title="Animated from day one." accent="Not retrofitted." />
+        <SectionHead eyebrow="Motion" title="Animated by Motion." accent="Works without it." />
         <Grid className="lg:grid-cols-2">
           <div className={`${STATEMENT} gap-3.5`}>
             <span className={STATEMENT_LABEL}>{"// The default"}</span>
             <p className={STATEMENT_TEXT}>
-              Motion v12 is a first-class peer. Five spring presets cover tab indicators, content,
-              popups, overlays and hover.
+              Motion v12 is an optional peer. Five spring presets: indicator, content, popup,
+              overlay, micro.
             </p>
           </div>
           <div className={`${STATEMENT} gap-3.5`}>
             <span className={STATEMENT_LABEL}>{"// The fallback"}</span>
             <p className={STATEMENT_TEXT}>
-              No Motion installed? Components detect that at runtime and fall back to CSS
-              transitions. Every one respects prefers-reduced-motion.
+              Without Motion, components fall back to CSS transitions. Either way,
+              prefers-reduced-motion is respected.
             </p>
           </div>
         </Grid>
@@ -592,8 +592,8 @@ function CreateSection() {
           <div className={`${STATEMENT} gap-5`}>
             <span className={STATEMENT_LABEL}>{"// The configurator"}</span>
             <p className={STATEMENT_TEXT}>
-              Pick a preset or tune color, type, radius and density. Every change previews live
-              across real screens. Copy one CSS block when it looks right.
+              Start from a preset, then tune color, type, radius and spacing. The preview updates
+              live. Copy the CSS when it looks right.
             </p>
             <div className="mt-auto pt-2">
               <Cta href="/create">Open Create</Cta>
