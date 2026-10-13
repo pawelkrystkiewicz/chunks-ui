@@ -17,8 +17,7 @@ export default defineConfig({
     include: ["src/**/*.webkit.visual.spec.tsx"],
     browser: {
       ...visual.test?.browser,
-      // No reduced-motion preference, as most Safari users have: Motion drives Tabs.Contents'
-      // track with a transform, which is the path WebKit has painted wrong
+      // No reduced-motion preference, as most Safari users have: Motion drives the springs
       instances: [
         {
           browser: "webkit",
