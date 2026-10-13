@@ -101,30 +101,22 @@ describe("overflowPast", () => {
     ).toEqual({ ...none, right: 60 });
   });
 
-  it("counts the box of an overflow: auto child but not its inner content", () => {
-    expect(
-      box(
-        <div style={{ width: 100, height: 50, overflow: "auto" }}>
-          <div style={{ width: 500, height: 10 }} />
-        </div>,
-      ),
-    ).toEqual(none);
-    expect(
-      box(
-        <div style={{ width: 160, height: 50, overflow: "auto" }}>
-          <div style={{ width: 500, height: 10 }} />
-        </div>,
-      ),
-    ).toEqual({ ...none, right: 60 });
-  });
-
-  it("does not count content that an overflow ancestor clips", () => {
-    expect(
-      box(
-        <div style={{ width: 100, height: 50, overflow: "hidden" }}>
-          <div style={{ width: 500, height: 10 }} />
-        </div>,
-      ),
-    ).toEqual(none);
+  it("does not count content inside an overflow: auto or hidden box, but counts the box", () => {
+    for (const overflow of ["auto", "hidden"]) {
+      expect(
+        box(
+          <div style={{ width: 100, height: 50, overflow }}>
+            <div style={{ width: 500, height: 10 }} />
+          </div>,
+        ),
+      ).toEqual(none);
+      expect(
+        box(
+          <div style={{ width: 160, height: 50, overflow }}>
+            <div style={{ width: 500, height: 10 }} />
+          </div>,
+        ),
+      ).toEqual({ ...none, right: 60 });
+    }
   });
 });

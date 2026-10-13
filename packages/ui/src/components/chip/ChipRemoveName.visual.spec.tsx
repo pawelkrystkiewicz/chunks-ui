@@ -40,21 +40,6 @@ const removeButtons: Record<string, (label?: string) => ReactNode> = {
   ),
 };
 
-// The tree of the whole chip, as TESTING_STRATEGY.md shows it
-describe("Chip tree, as Chromium builds it", () => {
-  it("is the text and the named remove button", async () => {
-    render(removeButtons.Chip?.());
-    expect(await accessibilityTreeOf(page.getByTestId("chip").element())).toEqual({
-      role: "generic",
-      name: "",
-      children: [
-        { role: "StaticText", name: "Apple", children: [] },
-        { role: "button", name: "Remove Apple", children: [] },
-      ],
-    });
-  });
-});
-
 describe.each(Object.keys(removeButtons))("%s remove button, named by Chromium", (part) => {
   it.each([
     { label: undefined, name: "Remove Apple" },

@@ -15,7 +15,8 @@ import { reloadMotion } from "./lib/use-motion";
  *
  * Limit: the walk skips what an `overflow` ancestor holds, so a `position: absolute` or `fixed`
  * descendant whose containing block lies outside that ancestor is skipped too, although the
- * ancestor doesn't clip it.
+ * ancestor doesn't clip it. The walk runs once, after the render, and measures boxes with their
+ * transforms applied: content that grows later (opened, expanded) is not measured.
  */
 export function overflowPast(fixture: Element) {
   const box = fixture.getBoundingClientRect();
@@ -76,10 +77,7 @@ export async function renderFixture(
 }
 
 /**
- * Resizes the test page to `width` × `height` CSS px (`height` defaults to the current one) for
- * the tests of the calling `describe` block, and back afterwards. The default page is 414 × 896,
- * which the runner scales to fit its 1280 × 720 window, so screenshots come out at 0.8 of their
- * CSS size; a page that fits the window is captured at full size.
+ * Resizes the test page to `width` × `height` CSS px for the calling `describe` block, and back.
  */
 export function withViewport(width: number, height?: number) {
   let previous: [number, number] | undefined;
@@ -141,19 +139,12 @@ declare module "vitest/browser" {
     emulateMedia: (options: EmulatedMedia) => Promise<void>;
     /** Moves the mouse outside the viewport, registered in vitest.visual.config.ts. */
     parkPointer: () => Promise<void>;
-    /**
-     * Chromium's accessibility tree for the element a CSS selector matches, read over CDP;
-     * registered in vitest.visual.config.ts. `accessibilityTreeOf` takes an element instead.
-     */
+    /** Chromium's accessibility tree for a CSS selector; see vitest.visual.config.ts. */
     accessibilityTree: (selector: string) => Promise<AccessibilityNode>;
   }
 }
 
-/**
- * Chromium's accessibility tree for `element`: its role and the name Chromium computes, which
- * is what assistive tech gets, and the same for the nodes below it (ignored ones left out).
- * Testing Library computes names with its own implementation of the spec, which can differ.
- */
+/** Chromium's accessibility tree for `element`, via the `accessibilityTree` command. */
 export async function accessibilityTreeOf(element: Element) {
   const id = crypto.randomUUID();
   element.setAttribute("data-accessibility-tree", id);

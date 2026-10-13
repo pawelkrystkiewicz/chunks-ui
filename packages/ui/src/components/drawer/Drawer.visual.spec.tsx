@@ -5,8 +5,7 @@ import { enterMotionPath, renderPage, ringColor, withViewport } from "../../Visu
 import { Drawer } from "./index";
 
 describe("Drawer", () => {
-  // Fits the runner's window, so the screenshot shows the 320px drawer at full size rather than
-  // scaled to 0.8, and a page wider than the drawer around it
+  // 640×480 fits the window, so the screenshot is full size, not 0.8
   withViewport(640, 480);
 
   it("right", async () => {
