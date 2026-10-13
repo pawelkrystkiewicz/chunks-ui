@@ -49,8 +49,10 @@ chai.util.overwriteMethod(
   (toMatchScreenshot: (...args: unknown[]) => Promise<void>) =>
     async function (this: object, ...args: unknown[]) {
       const target: Element | Locator = chai.util.flag(this, "object");
-      // A locator waits for its element to exist, as Playwright does; a nullish target fails
-      // with Vitest's own "Expected element or locator to be defined".
+      // A nullish target goes straight to Vitest's own matcher, which fails with "Expected
+      // element or locator to be defined" at once, not after a poll timeout.
+      if (target == null) return toMatchScreenshot.apply(this, args);
+      // A locator waits for its element to exist, as Playwright does.
       await expect.element(target as HTMLElement | Locator).toBeInTheDocument();
       expectNoOverflow(target instanceof Element ? target : target.element());
       return toMatchScreenshot.apply(this, args);

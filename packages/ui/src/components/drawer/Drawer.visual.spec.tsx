@@ -5,7 +5,7 @@ import { enterMotionPath, renderPage, ringColor, withViewport } from "../../Visu
 import { Drawer } from "./index";
 
 describe("Drawer", () => {
-  // A 640×480 page, smaller than the default, so the drawer is tested in a narrower frame
+  // The page is 640 × 480, kept as it was: the existing baselines use this size
   withViewport(640, 480);
 
   it("right", async () => {

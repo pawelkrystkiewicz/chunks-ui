@@ -175,9 +175,9 @@ async function screenshotSize() {
 
 describe("withViewport", () => {
   it("rejects a page wider or taller than the runner window", () => {
-    const window = /raise RUNNER_WINDOW in vitest\.visual\.config\.ts/;
-    expect(() => withViewport(2000)).toThrow(window);
-    expect(() => withViewport(500, 5000)).toThrow(window);
+    const message = /raise RUNNER_WINDOW in vitest\.visual\.config\.ts/;
+    expect(() => withViewport(2000)).toThrow(message);
+    expect(() => withViewport(500, 5000)).toThrow(message);
   });
 });
 
