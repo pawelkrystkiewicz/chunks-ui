@@ -113,6 +113,24 @@ Browser specs (Vitest browser mode, Playwright Chromium) in `packages/ui`. They 
   - `bun run update:screenshots` does the same on GitHub Actions for the current branch.
 - Look at every changed PNG before you commit it.
 
+## WebKit Smoke Tests (`*.webkit.visual.spec.tsx`)
+
+The visual suite runs in Chromium only, so a bug that only Safari has does not show there. A small set of browser specs runs in WebKit (Playwright's Safari engine) to catch such bugs: `src/Smoke.webkit.visual.spec.tsx`, in its own project (`vitest.webkit.config.ts`).
+
+- **What it checks:** `Tabs.Contents` slides to a panel, takes the panel's height and paints it. A Popover opens below its trigger and a Select opens with the selected item over the trigger's value, and both paint. An Input has the control height and paints its text. A Checkbox paints its indicator inside its box. A Switch moves its thumb to the trailing edge.
+- **Geometry and paint, no screenshot baselines.** There is no second set of PNGs to keep up to date. A paint check reads a screenshot as data: it counts the pixels in an element's box that change when the element is hidden. 0 means that WebKit laid the element out but painted none of it. A geometry check alone does not find that.
+- **Motion on.** The project runs with no reduced-motion preference, as most Safari users have, and each spec loads Motion first, so the springs and the transformed `Tabs.Contents` track are in use.
+- **A known WebKit bug stays as `it.fails`** (W80, #341). WebKit paints nothing of a `Tabs.Contents` panel when both conditions are true: the panel is in a CSS column after the first, and the slid track reaches over a composited layer that paints before it. On `/create` that layer is the sticky theme sidebar, which is composited while the page scrolls. Layout and hit testing are correct, and Chromium paints the panel. The bug is in WebKit's compositing inside CSS columns, and no change to `Tabs.Contents` prevents it. These all fail: `will-change`, `contain`, `isolation`, `overflow: hidden` or `clip-path` on the container, a 3D transform, and a margin or `left` in place of the transform. The page can work around it: give the columns container its own composited layer (`will-change: transform`), and the panel paints. A spec checks this workaround. When the `it.fails` spec starts to fail, WebKit has fixed the bug: make it a plain `it`.
+- **Run it locally** in `packages/ui`:
+
+  ```bash
+  bunx playwright install webkit   # once
+  bun run test:webkit
+  ```
+
+  On macOS this runs Playwright's macOS WebKit. CI runs the Linux build from the Playwright image, and the results are the same.
+- **Name new specs `*.webkit.visual.spec.tsx`.** The Chromium projects exclude them, and the unit run and `tsconfig.json` skip every `*.visual.spec.tsx` file. Keep the set small. It is a smoke test, not a second visual suite.
+
 ## Coverage Targets
 
 No hard thresholds enforced yet. Current baseline:
