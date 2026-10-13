@@ -1,13 +1,12 @@
 import { DirectionProvider } from "@base-ui/react/direction-provider";
 import { render, screen } from "@testing-library/react";
 import { type ReactNode, useState } from "react";
-import { afterEach, describe, expect, it } from "vitest";
-import { commands, userEvent } from "vitest/browser";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { commands, page, userEvent } from "vitest/browser";
 import { Button } from "../components/button";
 import { Menu } from "../components/menu";
 import { Popover } from "../components/popover";
 import { describeMotionPaths, eachPaintedFrame, waitForStable } from "../VisualTest.utils";
-import { ARROW_PADDING_PX } from "./popup-arrow";
 import { PortalContainerProvider } from "./portal-container";
 import { reloadMotion } from "./use-motion";
 
@@ -50,6 +49,28 @@ function physicalSide(side: Side, dir: Direction): PhysicalSide {
 
 /** Floating UI rounds the popup position to whole device pixels (DPR 1 here). */
 const POSITION_ROUNDING_PX = 0.5;
+
+/** Chromium lays boxes out in 1/64 px, so an arrow held a fraction of a pixel in rounds to it. */
+const LAYOUT_ROUNDING_PX = 1 / 64;
+
+type Theme = { theme: string; vars: Record<string, string> };
+
+/** The default theme, and one with a larger corner radius and a larger `--spacing` (and arrow). */
+const THEMES: Theme[] = [
+  { theme: "default theme", vars: {} },
+  { theme: "--radius 1rem, --spacing 5px", vars: { "--radius": "1rem", "--spacing": "5px" } },
+];
+
+/** The popup is portalled to <body>, so the theme goes on the root element. */
+function applyTheme(vars: Theme["vars"]) {
+  for (const [name, value] of Object.entries(vars)) {
+    document.documentElement.style.setProperty(name, value);
+  }
+}
+
+function resetTheme(vars: Theme["vars"]) {
+  for (const name of Object.keys(vars)) document.documentElement.style.removeProperty(name);
+}
 
 /** The documented default `sideOffset` of each popup. */
 const SIDE_OFFSET_PX: Record<Kind, number> = { Popover: 8, Menu: 4 };
@@ -230,7 +251,8 @@ type Align = "start" | "end";
 /**
  * A popup of `kind` on `side` of a 20px trigger, aligned to its `align` edge. The trigger's centre
  * is nearer that end of the popup than the arrow may come, so Base UI holds the arrow
- * `arrowPadding` from the end. A fixed popup width, so no fraction of a pixel moves the arrow.
+ * `arrowPadding` from the end. A fixed popup width, so no fraction of a pixel moves the arrow, in
+ * px, so it still fits beside the trigger at a larger `--spacing`.
  */
 function nearCorner(kind: Kind, side: PhysicalSide, align: Align, arrowPadding?: number) {
   const trigger = { width: 20, height: 20, padding: 0 };
@@ -239,7 +261,7 @@ function nearCorner(kind: Kind, side: PhysicalSide, align: Align, arrowPadding?:
     kind === "Popover" ? (
       <Popover.Root defaultOpen>
         <Popover.Trigger aria-label="Trigger" style={trigger} />
-        <Popover.Content {...content} className="w-40">
+        <Popover.Content {...content} className="w-[160px]">
           <Popover.Arrow data-testid="arrow" />
           Popover
         </Popover.Content>
@@ -259,7 +281,8 @@ function nearCorner(kind: Kind, side: PhysicalSide, align: Align, arrowPadding?:
 /**
  * Renders `nearCorner` and measures, along the edge the arrow stands on, the distance from the
  * popup's `align` end to the nearer corner of the arrow's foot (its widest point, on the inner edge
- * of the popup's border). Also returns the popup's corner radius.
+ * of the popup's border). Also returns the popup's corner radius, and how far the foot reaches past
+ * the arrow's unturned box on each side: (√2 − 1)/2 of its size.
  */
 async function footNearCorner(kind: Kind, side: PhysicalSide, align: Align, arrowPadding?: number) {
   const { unmount } = render(nearCorner(kind, side, align, arrowPadding));
@@ -274,35 +297,38 @@ async function footNearCorner(kind: Kind, side: PhysicalSide, align: Align, arro
     return align === "start" ? a.top - p.top : p.bottom - a.bottom;
   });
   const radius = Number.parseFloat(getComputedStyle(popup).borderTopLeftRadius);
+  const overhang = (Number.parseFloat(getComputedStyle(arrow).width) * (Math.SQRT2 - 1)) / 2;
   unmount();
-  return { foot, radius };
+  return { foot, radius, overhang };
 }
 
 // Menu on one side is enough to show it passes `arrowPadding` too
 const NEAR_CORNER = KINDS.flatMap((kind) =>
   PHYSICAL_SIDES.flatMap((side) =>
-    (["start", "end"] as const).map((align) => ({ kind, side, align })),
+    (["start", "end"] as const).flatMap((align) =>
+      THEMES.map((theme) => ({ kind, side, align, ...theme })),
+    ),
   ),
 ).filter(({ kind, side }) => kind === "Popover" || side === "bottom");
 
 describe.each(NEAR_CORNER)(
-  "$kind arrow, side $side, align $align, small trigger",
-  ({ kind, side, align }) => {
+  "$kind arrow, side $side, align $align, small trigger, $theme",
+  ({ kind, side, align, vars }) => {
+    afterEach(() => resetTheme(vars));
+
     it("keeps its foot off the popup's rounded corner", async () => {
+      applyTheme(vars);
       const { foot, radius } = await footNearCorner(kind, side, align);
       // The corner curves this far along the edge; past it, the edge is straight
-      expect(foot).toBeGreaterThanOrEqual(radius - POSITION_ROUNDING_PX);
+      expect(foot).toBeGreaterThanOrEqual(radius - LAYOUT_ROUNDING_PX);
     });
   },
 );
 
 describe.each(KINDS)("%s.Content arrowPadding", (kind) => {
-  it("moves an arrow held near the corner by the padding it is given", async () => {
-    const byDefault = await footNearCorner(kind, "bottom", "start");
-    const padded = await footNearCorner(kind, "bottom", "start", 16);
-    expect(Math.abs(padded.foot - byDefault.foot - (16 - ARROW_PADDING_PX))).toBeLessThanOrEqual(
-      POSITION_ROUNDING_PX,
-    );
+  it("holds an arrow near the corner the padding it is given from the popup's end", async () => {
+    const { foot, overhang } = await footNearCorner(kind, "bottom", "start", 16);
+    expect(Math.abs(foot - (16 - overhang))).toBeLessThanOrEqual(LAYOUT_ROUNDING_PX);
   });
 });
 
@@ -348,13 +374,13 @@ describe.each(KINDS)("%s focused from the keyboard", (kind) => {
   });
 });
 
-/** An open arrowed popup of `kind` whose content takes the consumer's `className` */
-function arrowedWith(kind: Kind, className: string): ReactNode {
+/** An open popup of `kind`, arrowed unless `arrow` is false, whose content takes `className` */
+function popupWith(kind: Kind, className: string, arrow = true): ReactNode {
   return kind === "Popover" ? (
     <Popover.Root defaultOpen>
       <Popover.Trigger>Trigger</Popover.Trigger>
       <Popover.Content data-testid="popup" className={className}>
-        <Popover.Arrow />
+        {arrow && <Popover.Arrow />}
         Popover
       </Popover.Content>
     </Popover.Root>
@@ -362,7 +388,7 @@ function arrowedWith(kind: Kind, className: string): ReactNode {
     <Menu.Root defaultOpen>
       <Menu.Trigger>Trigger</Menu.Trigger>
       <Menu.Content data-testid="popup" className={className}>
-        <Menu.Arrow />
+        {arrow && <Menu.Arrow />}
         <Menu.Item>Item</Menu.Item>
       </Menu.Content>
     </Menu.Root>
@@ -371,7 +397,7 @@ function arrowedWith(kind: Kind, className: string): ReactNode {
 
 describe.each(KINDS)("%s with an arrow, restyling the ring", (kind) => {
   it("takes a colour from the same `has-[.PopupArrow]:focus-visible:after:` prefix", async () => {
-    render(arrowedWith(kind, "has-[.PopupArrow]:focus-visible:after:[outline-color:rgb(255,0,0)]"));
+    render(popupWith(kind, "has-[.PopupArrow]:focus-visible:after:[outline-color:rgb(255,0,0)]"));
     const popup = await screen.findByTestId("popup");
     await userEvent.keyboard("{Shift}");
     await expect.poll(() => popup.matches(":focus-visible")).toBe(true);
@@ -380,13 +406,78 @@ describe.each(KINDS)("%s with an arrow, restyling the ring", (kind) => {
   });
 
   it("removes the overlay, and so the ring, with `focus-visible:after:hidden`", async () => {
-    render(arrowedWith(kind, "focus-visible:after:hidden"));
+    render(popupWith(kind, "focus-visible:after:hidden"));
     const popup = await screen.findByTestId("popup");
     await userEvent.keyboard("{Shift}");
     await expect.poll(() => popup.matches(":focus-visible")).toBe(true);
 
     expect(getComputedStyle(popup, "::after").display).toBe("none");
   });
+});
+
+/** Offsets from a popup's edge, outward (negative) to inward, that cover the ring and the border */
+const ACROSS_EDGE = [-3, -2, -1, 0, 1, 2, 3];
+
+/**
+ * The colours the page paints across each edge of `popup`, at `ACROSS_EDGE` from it: through the
+ * middle of the left and right edges, and a quarter of the way along the top and bottom, clear of
+ * an arrow at the centre. Read from a screenshot, one image pixel per CSS pixel.
+ */
+async function acrossEdges(popup: Element) {
+  const base64 = await page.screenshot({ save: false });
+  const image = new Image();
+  image.src = `data:image/png;base64,${base64}`;
+  await image.decode();
+  expect(image.naturalWidth).toBe(window.innerWidth);
+  const canvas = document.createElement("canvas");
+  canvas.width = image.naturalWidth;
+  canvas.height = image.naturalHeight;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) throw new Error("No 2D canvas context");
+  ctx.drawImage(image, 0, 0);
+  const at = (x: number, y: number) =>
+    ctx.getImageData(Math.floor(x), Math.floor(y), 1, 1).data.slice(0, 3).join();
+  // The edges' first pixels inside the popup; its position is whole pixels
+  const p = popup.getBoundingClientRect();
+  const middle = p.top + p.height / 2;
+  const quarter = p.left + p.width / 4;
+  return {
+    left: ACROSS_EDGE.map((i) => at(p.left + i, middle)),
+    right: ACROSS_EDGE.map((i) => at(p.right - 1 - i, middle)),
+    top: ACROSS_EDGE.map((i) => at(quarter, p.top + i)),
+    bottom: ACROSS_EDGE.map((i) => at(quarter, p.bottom - 1 - i)),
+  };
+}
+
+/** Opens a popup of `kind` with `className` from the keyboard, and reads `acrossEdges` */
+async function focusedEdges(kind: Kind, className: string, arrow: boolean) {
+  await userEvent.keyboard("{Shift}");
+  const { unmount } = render(
+    <div style={{ padding: 120, display: "flex", justifyContent: "center" }}>
+      {popupWith(kind, className, arrow)}
+    </div>,
+  );
+  const popup = await screen.findByTestId("popup");
+  await expect.poll(() => popup.matches(":focus-visible")).toBe(true);
+  await waitForStable(() => JSON.stringify(popup.getBoundingClientRect()));
+  const edges = await acrossEdges(popup);
+  unmount();
+  return edges;
+}
+
+describe.each(KINDS)("%s with an arrow and a consumer's border width", (kind) => {
+  // The test page scales a taller iframe down to fit its window; this one it shows at full size
+  beforeAll(() => page.viewport(414, 600));
+  afterAll(() => page.viewport(414, 896));
+
+  it.each(["border-0", "border-2"])(
+    "with `%s`, draws its overlay's ring where the browser draws the popup's own",
+    async (border) => {
+      const own = await focusedEdges(kind, border, false);
+      const overlay = await focusedEdges(kind, border, true);
+      expect(overlay).toEqual(own);
+    },
+  );
 });
 
 describe.each(KINDS)("%s focused from the keyboard, without an arrow", (kind) => {

@@ -1,12 +1,20 @@
 "use client";
 
 import { Tooltip as BaseTooltip } from "@base-ui/react/tooltip";
-import { type ComponentProps, createContext, useContext } from "react";
+import {
+  type ComponentProps,
+  createContext,
+  useContext,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
-import { ARROW_PADDING_PX } from "../../lib/popup-arrow";
+import { arrowPaddingIn } from "../../lib/popup-arrow";
 import { usePortalContainer } from "../../lib/portal-container";
+import { useMergedRef } from "../../lib/use-merged-ref";
 import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
 
 export type TooltipRootProps = ComponentProps<typeof BaseTooltip.Root>;
@@ -15,9 +23,9 @@ export type TooltipTriggerProps = ComponentProps<typeof BaseTooltip.Trigger>;
 export type TooltipPortalProps = ComponentProps<typeof BaseTooltip.Portal>;
 export type TooltipPositionerProps = ComponentProps<typeof BaseTooltip.Positioner> & {
   /**
-   * How close the arrow may come to the popup's ends, in pixels. The default keeps the arrow's
-   * foot off the 8px rounded corner; raise it with a larger corner radius or a larger `--spacing`.
-   * @default 10
+   * How close the arrow may come to the popup's ends, in pixels. The default, read when the popup
+   * opens, keeps the arrow's foot off the popup's rounded corner at any `--radius` and `--spacing`.
+   * @default corner radius + 0.21 × arrow size (≈ 10.07)
    */
   arrowPadding?: ComponentProps<typeof BaseTooltip.Positioner>["arrowPadding"];
 };
@@ -50,6 +58,15 @@ function TooltipPopup({ className, ...props }: TooltipPopupProps) {
         // arrow and the tip clears the trigger at any --spacing.
         "data-[side=top]:mb-2 data-[side=bottom]:mt-2 data-[side=left]:mr-2 data-[side=right]:ml-2",
         "data-[side=inline-start]:me-2 data-[side=inline-end]:ms-2",
+        // On the left or right, one line is too short for the arrow's foot (2.5/√2 ≈ 1.77 units
+        // either side of its centre) between two full corners: Floating UI caps the padding and
+        // holds the arrow's centre within 1px of the middle. So the corners on the arrow's edge
+        // curve no further along it than where the foot can start.
+        "[--tooltip-arrow-corner:min(var(--radius-md),calc(50%-1px-var(--spacing)*1.77))]",
+        "has-[.PopupArrow]:data-[side=left]:rounded-r-(--tooltip-arrow-corner)",
+        "has-[.PopupArrow]:data-[side=right]:rounded-l-(--tooltip-arrow-corner)",
+        "has-[.PopupArrow]:data-[side=inline-start]:rounded-e-(--tooltip-arrow-corner)",
+        "has-[.PopupArrow]:data-[side=inline-end]:rounded-s-(--tooltip-arrow-corner)",
         !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
         !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
         // Only the fade and scale: `all` would also slide the side margin when the side flips
@@ -65,7 +82,8 @@ function TooltipArrow({ className, ...props }: TooltipArrowProps) {
   return (
     <BaseTooltip.Arrow
       className={cnState(
-        "absolute size-2.5 rotate-45 bg-foreground",
+        // `PopupArrow` marks it for the popup's `has-[.PopupArrow]:` and for `arrowPaddingIn`
+        "PopupArrow absolute size-2.5 rotate-45 bg-foreground",
         // Half the arrow's size, so its centre sits on the popup edge at any --spacing.
         "data-[side=top]:-bottom-1.25",
         "data-[side=bottom]:-top-1.25",
@@ -81,15 +99,19 @@ function TooltipArrow({ className, ...props }: TooltipArrowProps) {
   );
 }
 
-function TooltipPositioner({
-  className,
-  arrowPadding = ARROW_PADDING_PX,
-  ...props
-}: TooltipPositionerProps) {
+function TooltipPositioner({ className, arrowPadding, ref, ...props }: TooltipPositionerProps) {
+  const positioner = useRef<HTMLDivElement>(null);
+  const mergedRef = useMergedRef(positioner, ref);
+  const [arrowPaddingByDefault, setArrowPaddingByDefault] = useState<number>();
+  // Once the popup and its arrow are in the page, before the first paint
+  useLayoutEffect(() => {
+    if (positioner.current) setArrowPaddingByDefault(arrowPaddingIn(positioner.current));
+  }, []);
   return (
     <BaseTooltip.Positioner
+      ref={mergedRef}
       className={cnState("z-tooltips", className)}
-      arrowPadding={arrowPadding}
+      arrowPadding={arrowPadding ?? arrowPaddingByDefault}
       {...props}
     />
   );

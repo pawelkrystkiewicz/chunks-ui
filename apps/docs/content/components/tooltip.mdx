@@ -79,7 +79,7 @@ A nested `Tooltip.Provider` without a `delay` uses 50ms, not the outer Provider'
 
 ## Positioning
 
-The popup sits 2 spacing units (8px at the default `--spacing`) from the trigger. The arrow tip clears the trigger at any spacing. A `sideOffset` on the positioner adds to that gap. On the top and bottom sides the arrow stays at least `arrowPadding` (default `10`) pixels from the popup's ends, clear of the rounded corner. On left and right the popup is about 24px tall for one line, so Floating UI caps the padding at 6. With `align="start"` or `"end"`, the popup shifts past a trigger narrower than 30px by up to 5px. With a larger corner radius or a larger `--spacing`, raise `arrowPadding` on `Tooltip.Positioner`. Override placement with `side` and `align`:
+The popup sits 2 spacing units (8px at the default `--spacing`) from the trigger. The arrow tip clears the trigger at any spacing. A `sideOffset` on the positioner adds to that gap. The arrow stays at least `arrowPadding` pixels from the popup's ends, clear of the rounded corner. The default is the popup's corner radius plus 0.21 × the arrow's size (about 10 in the default theme), read when the popup opens, so it follows `--radius` and `--spacing`. On the left and right, one line of text (about 24px tall) is too short for that padding, so Floating UI holds the arrow near the middle; there the two corners on the arrow's edge curve less far along it, and the arrow's foot still meets a straight edge. Those two corners start from `--radius-md`, not from a `rounded-*` class on `Tooltip.Popup`. With `align="start"` or `"end"`, the popup shifts past a trigger narrower than 30px by up to 5px. Override placement with `side` and `align`:
 
 ```tsx
 <Tooltip.Positioner side="right" align="center">
@@ -96,7 +96,7 @@ The popup sits 2 spacing units (8px at the default `--spacing`) from the trigger
 | `Tooltip.Root` | State container. Manages hover/focus open state. |
 | `Tooltip.Trigger` | The element that activates the tooltip on hover/focus. Renders a `<button>`, so don't nest another button inside it: pass `render={<Button />}` to use a chunks-ui `Button`. |
 | `Tooltip.Portal` | Renders children in a portal. |
-| `Tooltip.Positioner` | Floating UI positioner. `z-tooltips` (400). No default `sideOffset`; the gap to the trigger is a 2-spacing-unit margin on `Tooltip.Popup`, and a `sideOffset` adds to it. `arrowPadding` defaults to `10`. |
+| `Tooltip.Positioner` | Floating UI positioner. `z-tooltips` (400). No default `sideOffset`; the gap to the trigger is a 2-spacing-unit margin on `Tooltip.Popup`, and a `sideOffset` adds to it. `arrowPadding` defaults to the popup's corner radius plus 0.21 × the arrow's size (about 10). |
 | `Tooltip.Popup` | The tooltip content. Dark background (`bg-foreground`), light text (`text-background`). |
 | `Tooltip.Arrow` | A rotated square (`bg-foreground`) absolutely positioned at the popup edge. Aligned to the anchor via Base UI CSS variables. |
 | `Tooltip.Provider` | Shared delay configuration for grouped tooltips. `delay` defaults to `50`. |

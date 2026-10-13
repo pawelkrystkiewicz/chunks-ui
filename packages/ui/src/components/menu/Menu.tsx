@@ -1,11 +1,11 @@
 "use client";
 
 import { Menu as BaseMenu } from "@base-ui/react/menu";
-import type { ComponentProps } from "react";
+import { type ComponentProps, useLayoutEffect, useRef, useState } from "react";
 import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
-import { ARROW_PADDING_PX, arrowClasses, arrowPopupClasses } from "../../lib/popup-arrow";
+import { arrowClasses, arrowPaddingIn, arrowPopupClasses } from "../../lib/popup-arrow";
 import { usePortalContainer } from "../../lib/portal-container";
 import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
 
@@ -39,9 +39,9 @@ export type MenuContentProps = ComponentProps<typeof BaseMenu.Popup> & {
    */
   alignOffset?: ComponentProps<typeof BaseMenu.Positioner>["alignOffset"];
   /**
-   * How close the arrow may come to the popup's ends, in pixels. The default keeps the arrow's
-   * foot off the 8px rounded corner; raise it with a larger corner radius or a larger `--spacing`.
-   * @default 10
+   * How close the arrow may come to the popup's ends, in pixels. The default, read when the popup
+   * opens, keeps the arrow's foot off the popup's rounded corner at any `--radius` and `--spacing`.
+   * @default corner radius + 0.21 × arrow size (≈ 10.07)
    */
   arrowPadding?: ComponentProps<typeof BaseMenu.Positioner>["arrowPadding"];
 };
@@ -68,12 +68,18 @@ function MenuContentPopup({
   side,
   align,
   alignOffset,
-  arrowPadding = ARROW_PADDING_PX,
+  arrowPadding,
   ...props
 }: MenuContentProps) {
   const m = useLoadedMotion();
   const reduced = useReducedMotion();
   const useSpring = !!m && !reduced;
+  const positioner = useRef<HTMLDivElement>(null);
+  const [arrowPaddingByDefault, setArrowPaddingByDefault] = useState<number>();
+  // Once the popup and its arrow are in the page, before the first paint
+  useLayoutEffect(() => {
+    if (positioner.current) setArrowPaddingByDefault(arrowPaddingIn(positioner.current));
+  }, []);
   const render = useSpring
     ? createPopupRenderer({
         m,
@@ -85,12 +91,13 @@ function MenuContentPopup({
 
   return (
     <BaseMenu.Positioner
+      ref={positioner}
       className="z-dropdowns"
       sideOffset={sideOffset}
       side={side}
       align={align}
       alignOffset={alignOffset}
-      arrowPadding={arrowPadding}
+      arrowPadding={arrowPadding ?? arrowPaddingByDefault}
     >
       <BaseMenu.Popup
         render={render}
