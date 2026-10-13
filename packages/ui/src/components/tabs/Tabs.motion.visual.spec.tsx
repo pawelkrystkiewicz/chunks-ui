@@ -362,11 +362,27 @@ describe("Tabs in <Activity> with Motion", () => {
   // The entry plays once, for a change of tab. A pane hidden mid-entry shows at rest, as reduced
   // motion turned on mid-entry finishes it.
   it.each([
-    ["mid-entry", slow],
-    ["after its entry", { type: "tween", duration: 0.1 }],
+    [
+      "mid-entry",
+      slow,
+      async (pane: Element) => {
+        // Fading in. Before Motion's first frame the pane is still at full opacity.
+        const fading = () => Number(poseOf(pane).opacity);
+        await expect.poll(() => fading() > 0 && fading() < 1, { timeout: 5000 }).toBe(true);
+      },
+    ],
+    [
+      "after its entry",
+      { type: "tween", duration: 0.1 },
+      async (pane: Element) => {
+        // At rest before the first frame too, so wait for the pose to be at rest after a frame
+        await nextFrame();
+        await expect.poll(() => poseOf(pane), { timeout: 5000 }).toEqual(AT_REST);
+      },
+    ],
   ] as const)(
     "shows a Tabs.Animate pane at rest when shown again after hiding it %s",
-    async (_, transition) => {
+    async (_, transition, settle) => {
       await reloadMotion();
       const ui = (mode: Mode, value: string) => (
         <Activity mode={mode}>
@@ -380,15 +396,7 @@ describe("Tabs in <Activity> with Motion", () => {
       const { rerender } = render(ui("visible", "a"));
       rerender(ui("visible", "b"));
       const pane = page.getByText("Panel b").element().parentElement as HTMLElement;
-      if (transition === slow) {
-        // Mid-entry: fading in. Before Motion's first frame the pane is still at full opacity.
-        const fading = () => Number(poseOf(pane).opacity);
-        await expect.poll(() => fading() > 0 && fading() < 1, { timeout: 5000 }).toBe(true);
-      } else {
-        // At rest before the first frame too, so let the 0.1s entry play out first
-        await new Promise((resolve) => setTimeout(resolve, 600));
-        expect(poseOf(pane)).toEqual(AT_REST);
-      }
+      await settle(pane);
 
       rerender(ui("hidden", "b"));
       await nextFrame();
@@ -438,9 +446,11 @@ describe("Tabs.Contents when reduced motion turns off at rest", () => {
     const recording = eachPaintedFrame(place, 30);
     await commands.emulateMedia({ reducedMotion: "no-preference" });
     const frames = await recording;
-    // Back on the Motion path within the frames recorded
-    expect(contents).toHaveClass("overflow-clip");
-    expect(frames).toEqual(frames.map(() => inPlace));
+    // The switch may land after the recorded frames: wait for it, then record frames on the
+    // Motion path too, so the spec never checks only frames from before the switch
+    await expect.poll(() => contents.classList.contains("overflow-clip")).toBe(true);
+    const after = await eachPaintedFrame(place, 10);
+    expect([...frames, ...after]).toEqual([...frames, ...after].map(() => inPlace));
   });
 });
 

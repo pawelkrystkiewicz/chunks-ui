@@ -308,6 +308,8 @@ describe.each(ONE_LINE_SIDES)(
             .filter((v) => /^[\d.]+px$/.test(v)),
         );
       const padding = Math.max(0, ...lengths.map(Number.parseFloat)) + overhang;
+      // The `- 1` mirrors Floating UI's arrow clamp ("less 1px"): if this fails after an upgrade,
+      // check that clamp first
       const cap = popup.clientHeight / 2 - arrowSize / 2 - 1;
       expect(padding, "the padding is too much for a one-line popup").toBeGreaterThan(cap);
       // The arrow's foot stands out `overhang` past its box; the box is `cap` from the end
