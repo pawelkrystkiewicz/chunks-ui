@@ -90,8 +90,8 @@ jobs:
           [ "$VISUAL" = failure ] && failed="$failed Chromium visual,"
           [ "$WEBKIT" = failure ] && failed="$failed WebKit smoke,"
           [ "$SHUFFLED" = failure ] && failed="$failed Chromium visual shuffled (seed ${{ github.run_number }}),"
-          # No suite failed: the install or setup did
-          [ -n "$failed" ] || failed=" setup (checkout, bun, install),"
+          # No suite step failed: a setup step did, or a later one such as the artifact upload
+          [ -n "$failed" ] || failed=" setup or another step,"
           echo "suites=${failed# }" | sed 's/,$//' >> "$GITHUB_OUTPUT"
 
       - name: Notify Slack on Failure
