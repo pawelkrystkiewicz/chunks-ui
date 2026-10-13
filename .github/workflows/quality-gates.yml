@@ -33,6 +33,10 @@ jobs:
       - name: Lint
         run: bun run lint
 
+      # Turbo's lint covers the workspaces only, not the root scripts/
+      - name: Lint the root scripts
+        run: bun run lint:scripts
+
       - name: Check the Playwright version matches everywhere
         run: bun run check:playwright
 
@@ -56,6 +60,10 @@ jobs:
       # Includes the docs snippet type-check (apps/docs check:snippets)
       - name: Typecheck
         run: bun run check-types
+
+      # Turbo's check-types covers the workspaces only, not the root scripts/
+      - name: Typecheck the root scripts
+        run: bun run check-types:scripts
 
       # check-types builds chunks-ui, so the build here is a turbo cache hit. The Tailwind 4.0
       # install is pinned by scripts/tailwind-4.0 (frozen lockfile); bun.lock stays as it is

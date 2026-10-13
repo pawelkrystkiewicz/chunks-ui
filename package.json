@@ -18,6 +18,8 @@
     "test:visual:update": "turbo run test:visual:update",
     "format": "biome format --write .",
     "lint:root": "biome check .",
+    "lint:scripts": "biome check scripts",
+    "check-types:scripts": "tsc -p scripts",
     "changeset": "changeset",
     "version-packages": "changeset version",
     "release": "turbo run build --filter=chunks-ui && changeset publish",
