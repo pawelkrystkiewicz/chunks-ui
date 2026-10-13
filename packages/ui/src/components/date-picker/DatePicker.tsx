@@ -75,7 +75,8 @@ type DatePickerOwnProps = Pick<
   required?: boolean;
   /**
    * The `id` of the `<form>` the picker belongs to, for a picker placed outside it. A reset of
-   * that form restores the picker. With `name` or `required`, the date is submitted with that form.
+   * that form restores the picker. With `name`, `required` or a named `Field.Root`, the date is
+   * submitted with that form.
    */
   form?: string;
   /**
