@@ -1,6 +1,6 @@
 # Theme
 
-Chunks UI uses a CSS variable-based design token system following the [shadcn/ui](https://ui.shadcn.com) naming convention. All colors are defined in the OKLCH color space for perceptual uniformity.
+Chunks UI uses a CSS variable-based design token system following the [shadcn/ui](https://ui.shadcn.com) naming convention. Colors are defined in the OKLCH color space for perceptual uniformity (`--ring` is an OKLab mix of two of them).
 
 ## Setup
 
@@ -53,6 +53,7 @@ The colour is computed on the element that uses it. If you set `--primary` on `:
 .brand-section {
   --primary: oklch(0.55 0.2 293); /* fills, and the text shade derived from them */
   --primary-text: oklch(0.45 0.2 293); /* optional: a shade of your choice */
+  --ring: color-mix(in oklab, var(--primary) 60%, var(--background)); /* the ring does not follow on its own */
 }
 ```
 
@@ -88,9 +89,15 @@ Relative colour syntax needs Chrome 119+, Safari 18+ or Firefox 128+. Older brow
 |---|---|---|
 | `--border` | `oklch(0.922 0 0)` | `oklch(0.269 0 0)` |
 | `--input` | `oklch(0.922 0 0)` | `oklch(0.269 0 0)` |
-| `--ring` | `oklch(0.62 0 0)` | `oklch(0.556 0 0)` |
+| `--ring` | `color-mix(in oklab, var(--primary) 60%, var(--background))` | same as light |
 | `--radius` | `0.625rem` | `0.625rem` |
 | `--touch-target-size` (optional) | `44px` (fallback, not defined) | `44px` (fallback, not defined) |
+
+### Focus Ring
+
+Controls draw their keyboard focus ring in `--ring`. By default it is 60% `--primary` and 40% `--background`, a softer shade of the primary: lighter in light mode, darker in dark mode. The mix is in OKLab, which has no hue to interpolate, so the ring keeps the primary's hue. Set `--ring` to use a colour of your choice.
+
+A custom property resolves its `var()` on the element that declares it, and its children inherit the result. `theme.css` declares `--ring` on `:root` and `.dark`, so a `--primary` or `--background` you set on `:root` changes the ring too. A nested element that sets `--primary` or `--background` keeps the ring of its parent: declare `--ring` on that element as well, as in the `.brand-section` example above.
 
 ## Tailwind Usage
 
