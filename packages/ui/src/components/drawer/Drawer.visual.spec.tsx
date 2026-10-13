@@ -1,10 +1,14 @@
 import { render, screen } from "@testing-library/react";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { commands } from "vitest/browser";
-import { enterMotionPath, renderPage, ringColor } from "../../VisualTest.utils";
+import { enterMotionPath, renderPage, ringColor, withViewport } from "../../VisualTest.utils";
 import { Drawer } from "./index";
 
 describe("Drawer", () => {
+  // Fits the runner's window, so the screenshot shows the 320px drawer at full size rather than
+  // scaled to 0.8, and a page wider than the drawer around it
+  withViewport(640, 480);
+
   it("right", async () => {
     const body = await renderPage(
       <Drawer.Root defaultOpen>
