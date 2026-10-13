@@ -41,8 +41,19 @@ jobs:
 
       # The image ships WebKit too. Runs when only the Chromium suite failed, so a PR sees both.
       - name: Run WebKit Smoke Tests
+        id: webkit
         if: success() || (failure() && steps.visual.outcome == 'failure')
         run: cd packages/ui && bun run test:webkit
+
+      # The Chromium suite again in a random order, to catch a spec that leans on state an earlier
+      # one left (an open popup, focus modality, the viewport). Master and manual runs only: it
+      # repeats the longest step, and a PR gains nothing the master run would not show a push later.
+      # The seed is the run number, printed by Vitest and named in the Slack message; reproduce with
+      #   cd packages/ui && bunx vitest run --config vitest.visual.config.ts --sequence.shuffle --sequence.seed=<seed>
+      - name: Run Visual Regression Tests in shuffled order
+        id: shuffled
+        if: (github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch') && !cancelled() && steps.visual.outcome != 'skipped'
+        run: cd packages/ui && bunx vitest run --config vitest.visual.config.ts --sequence.shuffle --sequence.seed=${{ github.run_number }}
 
       # Vitest writes each failed screenshot's actual and diff PNGs to <root>/.vitest-attachments
       - name: Upload diff screenshots on failure
@@ -66,6 +77,24 @@ jobs:
             channel: "${{ secrets.SLACK_CHANNEL_ID }}"
             text: "Visual Regression Tests passed on master\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>"
 
+      # Names the suites that failed: Chromium visual and WebKit smoke are one job.
+      - name: Name the failed suites
+        id: failed
+        if: failure() && github.ref == 'refs/heads/master'
+        env:
+          VISUAL: ${{ steps.visual.outcome }}
+          WEBKIT: ${{ steps.webkit.outcome }}
+          SHUFFLED: ${{ steps.shuffled.outcome }}
+        run: |
+          failed=()
+          [ "$VISUAL" = failure ] && failed+=("Chromium visual")
+          [ "$WEBKIT" = failure ] && failed+=("WebKit smoke")
+          [ "$SHUFFLED" = failure ] && failed+=("Chromium visual shuffled (seed ${{ github.run_number }})")
+          # No suite step failed: a setup step did, or a later one such as the artifact upload
+          [ ${#failed[@]} -gt 0 ] || failed=("setup or another step")
+          joined=$(printf '%s, ' "${failed[@]}")
+          echo "suites=${joined%, }" >> "$GITHUB_OUTPUT"
+
       - name: Notify Slack on Failure
         if: failure() && github.ref == 'refs/heads/master'
         uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
@@ -74,4 +103,4 @@ jobs:
           token: ${{ secrets.SLACK_BOT_TOKEN }}
           payload: |
             channel: "${{ secrets.SLACK_CHANNEL_ID }}"
-            text: "Visual Regression Tests failed on master\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>"
+            text: "Visual Regression Tests failed on master: ${{ steps.failed.outputs.suites }}\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>"
