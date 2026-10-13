@@ -150,6 +150,48 @@ describe("overflowPast", () => {
     expect(overflowPast(getByTestId("box"))).toEqual(none);
   });
 
+  // Floating UI portals a nested popup into its parent's portal <div>, so the walk of the parent
+  // reaches the nested portal's own <div> (it spans <body> at no height) as an ordinary child
+  it("does not count the own box of a portal nested in another portal", async () => {
+    const { getByTestId } = render(
+      <>
+        <div data-testid="box" style={{ height: 400 }}>
+          <Popover.Root defaultOpen>
+            <Popover.Trigger>Open</Popover.Trigger>
+            <Popover.Content>
+              <Popover.Root defaultOpen>
+                <Popover.Trigger>Nested</Popover.Trigger>
+                <Popover.Content>Nested popup</Popover.Content>
+              </Popover.Root>
+            </Popover.Content>
+          </Popover.Root>
+        </div>
+        {/* Pushes the portals' <div>s below the box's bottom edge */}
+        <div style={{ height: 300 }} />
+      </>,
+    );
+    const nested = page.getByText("Nested popup");
+    await expect.element(nested).toBeVisible();
+    await expect.poll(() => nested.element().getBoundingClientRect().top).toBeGreaterThan(0);
+    const nestedPortal = nested.element().closest("[data-base-ui-portal]");
+    expect(nestedPortal?.parentElement?.closest("[data-base-ui-portal]")).not.toBeNull();
+    expect(overflowPast(getByTestId("box"))).toEqual(none);
+  });
+
+  // An author's own role="presentation" element (a layout table) that Base UI marks inert behind a
+  // modal is page content, unlike the empty backdrop
+  it("counts a role=presentation element with content that Base UI marks inert", () => {
+    const { getByTestId } = render(
+      <div data-testid="box" style={{ margin: 100, width: 100, height: 50 }}>
+        <div role="presentation" data-base-ui-inert="" data-testid="layout">
+          <div style={{ width: 160, height: 10 }} />
+        </div>
+        <div role="presentation" data-base-ui-inert="" data-testid="backdrop" />
+      </div>,
+    );
+    expect(overflowPast(getByTestId("box"))).toEqual({ ...none, right: 60 });
+  });
+
   it("does not measure the popup around the element it checks", async () => {
     render(
       <Popover.Root defaultOpen>

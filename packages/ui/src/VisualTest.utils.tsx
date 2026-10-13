@@ -9,9 +9,12 @@ import { reloadMotion } from "./lib/use-motion";
  * Base UI's InternalBackdrop: an empty, transparent `position: fixed; inset: 0` element that a
  * modal popup (Menu, Select, a modal Popover) lays over the page to catch outside clicks. The
  * role tells it apart from the page content that Base UI marks `data-base-ui-inert` behind a
- * popup, which has none.
+ * popup, which has none. An author's own `role="presentation"` element (a layout table) that Base
+ * UI marks inert has content, so `isInvisibleBackdrop` also requires the element to be empty.
  */
 const INVISIBLE_BACKDROP = '[role="presentation"][data-base-ui-inert]';
+const PORTAL = "[data-base-ui-portal]";
+const isInvisibleBackdrop = (el: Element) => el.matches(INVISIBLE_BACKDROP) && !el.hasChildNodes();
 
 /**
  * How far in CSS px the content of `fixture` reaches past each of its edges, 0 where it fits.
@@ -24,13 +27,15 @@ const INVISIBLE_BACKDROP = '[role="presentation"][data-base-ui-inert]';
  * Portalled content counts too. A Base UI popup portals to a `<div data-base-ui-portal>` on
  * <body>, outside the fixture that opened it, and a screenshot of the fixture shows the popup
  * only where it lies inside the fixture's box. What belongs to `fixture`: its descendants, and the
- * content of every Base UI portal on the page outside it, but not a portal that holds the fixture
+ * content of every Base UI portal on the page, but not a portal that holds the fixture
  * (the popup's own boxes surround it). A test renders one tree, and Testing
  * Library removes it and its portals after the test, so the portals on the page belong to what
  * the test screenshots. Screenshot the whole fixture, or the page, while a popup is open: a part
  * of the fixture fails for a popup outside that part. Two things in a portal don't count, as they
  * paint nothing: the portal's own `<div>` (it spans <body> at no height), and the empty,
- * transparent backdrop that a modal popup lays over the whole page (`INVISIBLE_BACKDROP`).
+ * transparent backdrop that a modal popup lays over the whole page (an empty `INVISIBLE_BACKDROP`). The
+ * portal of a nested popup, which Floating UI puts inside its parent's portal, is walked as a portal
+ * of its own, not as a child of the parent's.
  *
  * Limits: the walk skips what an `overflow` ancestor holds, so a `position: absolute` or `fixed`
  * descendant whose containing block lies outside that ancestor is skipped too, although the
@@ -56,7 +61,8 @@ export function overflowPast(fixture: Element, { portals = true }: { portals?: b
   const walk = (el: Element) => {
     for (const child of el.childNodes) {
       if (child instanceof Element) {
-        if (child.matches(INVISIBLE_BACKDROP)) continue;
+        // A nested portal sits in its parent's portal: the loop below walks every portal
+        if (isInvisibleBackdrop(child) || child.matches(PORTAL)) continue;
         measure(child.getBoundingClientRect());
         if (getComputedStyle(child).overflow === "visible") walk(child);
       } else if (child.nodeType === Node.TEXT_NODE && child.textContent?.trim()) {
@@ -67,8 +73,8 @@ export function overflowPast(fixture: Element, { portals = true }: { portals?: b
   };
   walk(fixture);
   if (portals) {
-    for (const portal of document.querySelectorAll("[data-base-ui-portal]")) {
-      if (!fixture.contains(portal) && !portal.contains(fixture)) walk(portal);
+    for (const portal of document.querySelectorAll(PORTAL)) {
+      if (!portal.contains(fixture)) walk(portal);
     }
   }
   return past;
