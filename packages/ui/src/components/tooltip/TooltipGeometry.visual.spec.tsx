@@ -289,12 +289,30 @@ describe.each(ONE_LINE_SIDES)(
       const p = popup.getBoundingClientRect();
       const physical = physicalSide(side, dir) as "left" | "right";
       const [top, bottom] = ARROW_EDGE_CORNERS[physical];
-      // The gap to the corner isn't bounded above: Floating UI holds the arrow at the middle of a
-      // popup too short for the padding. `verticalRadius` rejects a radius of 0.
+      // `verticalRadius` rejects a radius of 0.
       expect(a.top - p.top).toBeGreaterThanOrEqual(verticalRadius(popup, top) - LAYOUT_ROUNDING_PX);
       expect(p.bottom - a.bottom).toBeGreaterThanOrEqual(
         verticalRadius(popup, bottom) - LAYOUT_ROUNDING_PX,
       );
+      // Upper bound: the gap Floating UI computes. The popup is too short for the padding (a corner
+      // radius, and the arrow's overhang), so it holds the arrow at the middle, less 1px: the padding
+      // is capped at half the popup's height less half the arrow's, less 1px.
+      const arrowSize = Number.parseFloat(getComputedStyle(arrow).width);
+      const overhang = arrowOverhang(arrow);
+      // The larger radius of a corner, in px; `min(8px, 50% - 8px)` is a function, not a length
+      const lengths = (Object.keys(ARROW_EDGE_CORNERS) as Array<keyof typeof ARROW_EDGE_CORNERS>)
+        .flatMap((edge) => ARROW_EDGE_CORNERS[edge])
+        .flatMap((corner) =>
+          getComputedStyle(popup)
+            [corner].split(/\s+/)
+            .filter((v) => /^[\d.]+px$/.test(v)),
+        );
+      const padding = Math.max(0, ...lengths.map(Number.parseFloat)) + overhang;
+      const cap = popup.clientHeight / 2 - arrowSize / 2 - 1;
+      expect(padding, "the padding is too much for a one-line popup").toBeGreaterThan(cap);
+      // The arrow's foot stands out `overhang` past its box; the box is `cap` from the end
+      const nearGap = align === "start" ? a.top - p.top : p.bottom - a.bottom;
+      expect(Math.abs(nearGap - (cap - overhang))).toBeLessThanOrEqual(POSITION_ROUNDING_PX);
     });
   },
 );
