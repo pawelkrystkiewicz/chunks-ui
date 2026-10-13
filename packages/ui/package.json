@@ -54,7 +54,7 @@
     "test:visual:update": "vitest run --config vitest.visual.config.ts --update=true",
     "test:webkit": "vitest run --config vitest.webkit.config.ts",
     "lint": "biome check .",
-    "check-types": "tsc --noEmit && tsc --noEmit --project tsconfig.visual.json && tsc -p scripts",
+    "check-types": "tsc --noEmit && tsc --noEmit --project tsconfig.visual.json && tsc -p scripts && tsc --noEmit -p tsconfig.node.json",
     "check:dist": "bun run scripts/check-dist.ts",
     "check:exports": "attw --pack . --exclude-entrypoints ./theme.css",
     "clean": "rm -rf .turbo node_modules dist coverage"
