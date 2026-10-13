@@ -92,11 +92,19 @@ it("has no a11y violations", async () => {
 
 Setup: `jest-axe` is globally configured in `vitest.setup.ts` — `toHaveNoViolations` is available on all `expect()` calls.
 
+### Accessible names in Chromium
+
+The jsdom specs compute roles and names with Testing Library, which has its own implementation of the accessible-name spec. To check the name Chromium computes, which is what assistive tech gets, use `accessibilityTreeOf(element)` from `VisualTest.utils.tsx` in a visual spec.
+
+It returns roles and names for the element and the nodes below it, with ignored nodes left out and `InlineTextBox` dropped; Chromium only. See `ChipRemoveName.visual.spec.tsx` for usage.
+
 ## Visual Regression Tests (`*.visual.spec.tsx`)
 
 Browser specs (Vitest browser mode, Playwright Chromium) in `packages/ui`. They screenshot components and compare them with committed baselines, and they cover the geometry that jsdom can't measure (positions, sizes, overflow).
 
 - **Mismatch tolerance is 0; the colour threshold is 0.02.** `toMatchScreenshot` runs with `allowedMismatchedPixelRatio: 0` (`vitest.visual.config.ts`), so one detected differing pixel fails the spec. "Detected" means a pixel's colour differs by more than pixelmatch's threshold, which the config sets to 0.02 instead of the default 0.1, and anti-aliased pixels are ignored. At 0.1, removing a `--border` line (oklch 0.922) on white leaves no pixel detected. 0.02 still ignores a shift of about 5 grey levels (a 0.97 fill at half opacity), and is not 0 so rounding noise between Chromium builds doesn't fail a run.
+- **`renderFixture` fails when the content overflows the fixture**, as a screenshot of the fixture would crop it. Give the spec a wider page with `withViewport(width)` at the top of its `describe` block, or pass `{ allowOverflow: true }` when the overflow is what the spec shows; the rules of the check are in the `overflowPast` JSDoc in `VisualTest.utils.tsx`.
+- **Screenshots are at 0.8 scale by default.** The test page is 414 × 896 CSS px, and the runner scales it to fit its 1280 × 720 window, so a screenshot has about 0.8 pixels per CSS px. A page that fits the window is captured at full size, like Drawer's `withViewport(640, 480)`. `withViewport(width)` keeps the 896px height, so it stays at 0.8 (as the Chip baselines do).
 - **Only Linux baselines are committed** (`*-linux.png`), and CI compares against them. macOS baselines (`*-darwin.png`) are gitignored and exist only on your machine. With zero tolerance, a macOS baseline left over from an older checkout fails locally although nothing is wrong: refresh it with `bun run test:visual:update` (in `packages/ui`) before you treat a local failure as a regression. Both `bun run test:visual` and `bun run test:visual:update` take a path filter (a substring of the spec path): `bun run test:visual:update button` refreshes only the matching specs. In `packages/ui` the script passes `--update=true`, because a bare `--update` would take the filter as its value and refresh every spec.
 - **Regenerate Linux baselines in Docker** after you commit the change. CI renders on x86 in the same image, so force `linux/amd64`; an arm64 render can differ from the CI render. Under emulation on Apple silicon the run takes minutes, which is not a hang. `<wt>` is your checkout or worktree, `<scratchpad>` any scratch directory outside it:
 

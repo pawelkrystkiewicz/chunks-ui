@@ -146,11 +146,27 @@ describe("overlays opened from an overlay", () => {
       </Parent>,
     );
     const parentPopup = page.getByRole("dialog", { name: "Parent" }).element();
+    const parentBox = await waitForStable(() => parentPopup.getBoundingClientRect());
+    // 4px inside the middle of each edge. Not the corners: 4px in from a corner lies just outside
+    // the Dialog's rounded corner, where the point can miss the parent and land on its backdrop
+    const { left, right, top, bottom } = parentBox;
+    const midX = (left + right) / 2;
+    const midY = (top + bottom) / 2;
+    const probes: [number, number][] = [
+      [midX, top + 4],
+      [right - 4, midY],
+      [midX, bottom - 4],
+      [left + 4, midY],
+    ];
+    // Each probe lands on the parent while nothing covers it, or the check below proves nothing
+    for (const probe of probes) {
+      expect(parentPopup.contains(document.elementFromPoint(...probe))).toBe(true);
+    }
+
     await page.getByRole("button", { name: "Open Child" }).click();
     const childLocator = page.getByRole("dialog", { name: "Child" });
     await expect.element(childLocator).toBeVisible();
     const childPopup = childLocator.element();
-    const parentBox = parentPopup.getBoundingClientRect();
     const childCentre = (): [number, number] => {
       const box = childPopup.getBoundingClientRect();
       return [box.left + box.width / 2, box.top + box.height / 2];
@@ -160,20 +176,18 @@ describe("overlays opened from an overlay", () => {
     await expect.poll(() => inside(parentBox, childCentre())).toBe(true);
     expect(childPopup.contains(document.elementFromPoint(...childCentre()))).toBe(true);
 
-    // Where the parent still shows, a layer that dims it sits on top
-    const childBox = childPopup.getBoundingClientRect();
-    const parentOnly = (
-      [
-        [parentBox.left + 4, parentBox.top + 4],
-        [parentBox.right - 4, parentBox.top + 4],
-        [parentBox.left + 4, parentBox.bottom - 4],
-        [parentBox.right - 4, parentBox.bottom - 4],
-      ] as [number, number][]
-    ).find((point) => !inside(childBox, point));
-    expect(parentOnly).toBeDefined();
-    const cover = parentOnly && document.elementFromPoint(...parentOnly);
-    expect(cover && parentPopup.contains(cover)).toBe(false);
-    expect(cover && getComputedStyle(cover).backgroundColor).not.toBe("rgba(0, 0, 0, 0)");
+    // The parent stayed where the probes were checked
+    expect(parentPopup.getBoundingClientRect().toJSON()).toEqual(parentBox.toJSON());
+    // Where the parent still shows, the child's backdrop sits on top and dims it
+    const childBox = await waitForStable(() => childPopup.getBoundingClientRect());
+    const parentOnly = probes.find((point) => !inside(childBox, point));
+    if (!parentOnly) throw new Error("The parent must show past the child, or this proves nothing");
+    const backdrop = page.getByTestId("Child backdrop").element();
+    expect(document.elementFromPoint(...parentOnly)).toBe(backdrop);
+    expect(getComputedStyle(backdrop).backgroundColor).not.toBe("rgba(0, 0, 0, 0)");
+    // A backdrop that is still fading in dims nothing yet
+    const opacity = await waitForStable(() => getComputedStyle(backdrop).opacity);
+    expect(Number(opacity)).toBeGreaterThan(0);
 
     // The child is interactive; closing it leaves the parent open
     await page.getByRole("button", { name: "Close Child" }).click();

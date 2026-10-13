@@ -1,10 +1,13 @@
 import { render, screen } from "@testing-library/react";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { commands } from "vitest/browser";
-import { enterMotionPath, renderPage, ringColor } from "../../VisualTest.utils";
+import { enterMotionPath, renderPage, ringColor, withViewport } from "../../VisualTest.utils";
 import { Drawer } from "./index";
 
 describe("Drawer", () => {
+  // 640×480 fits the window, so the screenshot is full size, not 0.8
+  withViewport(640, 480);
+
   it("right", async () => {
     const body = await renderPage(
       <Drawer.Root defaultOpen>

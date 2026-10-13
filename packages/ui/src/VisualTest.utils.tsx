@@ -5,8 +5,56 @@ import { afterAll, beforeAll, beforeEach, describe, expect } from "vitest";
 import { commands, page } from "vitest/browser";
 import { reloadMotion } from "./lib/use-motion";
 
-/** Renders children in a padded fixture wrapper. Returns the wrapper element for screenshotting. */
-export async function renderFixture(children: ReactNode) {
+/**
+ * How far in CSS px the content of `fixture` reaches past each of its edges, 0 where it fits.
+ * Walks the box of every element and the text under it, so the direction of the page and the
+ * positioning of the content don't matter. Content that an `overflow` ancestor clips doesn't
+ * count: a screenshot doesn't show it either. Boxes of 1px or less in both dimensions don't
+ * count: they are visually hidden (`sr-only`, focus guards) and show nothing. A box that is thin
+ * in one dimension only (a 300 × 1 divider) does count.
+ *
+ * Limit: the walk skips what an `overflow` ancestor holds, so a `position: absolute` or `fixed`
+ * descendant whose containing block lies outside that ancestor is skipped too, although the
+ * ancestor doesn't clip it. The walk runs once, after the render, and measures boxes with their
+ * transforms applied: content that grows later (opened, expanded) is not measured.
+ */
+export function overflowPast(fixture: Element) {
+  const box = fixture.getBoundingClientRect();
+  const past = { top: 0, right: 0, bottom: 0, left: 0 };
+  const measure = (rect: DOMRect) => {
+    if (Math.max(rect.width, rect.height) <= 1) return;
+    past.top = Math.max(past.top, Math.round(box.top - rect.top));
+    past.right = Math.max(past.right, Math.round(rect.right - box.right));
+    past.bottom = Math.max(past.bottom, Math.round(rect.bottom - box.bottom));
+    past.left = Math.max(past.left, Math.round(box.left - rect.left));
+  };
+  const range = document.createRange();
+  const walk = (el: Element) => {
+    for (const child of el.childNodes) {
+      if (child instanceof Element) {
+        measure(child.getBoundingClientRect());
+        if (getComputedStyle(child).overflow === "visible") walk(child);
+      } else if (child.nodeType === Node.TEXT_NODE && child.textContent?.trim()) {
+        range.selectNodeContents(child);
+        measure(range.getBoundingClientRect());
+      }
+    }
+  };
+  walk(fixture);
+  return past;
+}
+
+/**
+ * Renders children in a padded fixture wrapper. Returns the wrapper element for screenshotting.
+ *
+ * Fails when the content reaches past the fixture, as a screenshot of the fixture would crop it.
+ * Give the spec a wider page with `withViewport`, or pass `allowOverflow` when the overflow is
+ * what the spec shows.
+ */
+export async function renderFixture(
+  children: ReactNode,
+  { allowOverflow = false }: { allowOverflow?: boolean } = {},
+) {
   const result = render(
     <div
       data-testid="fixture"
@@ -16,7 +64,30 @@ export async function renderFixture(children: ReactNode) {
     </div>,
   );
   await document.fonts.ready;
-  return { ...result, fixture: result.getByTestId("fixture") };
+  const fixture = result.getByTestId("fixture");
+  if (!allowOverflow) {
+    expect(overflowPast(fixture), "content past the fixture, which a screenshot crops").toEqual({
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
+    });
+  }
+  return { ...result, fixture };
+}
+
+/**
+ * Resizes the test page to `width` × `height` CSS px for the calling `describe` block, and back.
+ */
+export function withViewport(width: number, height?: number) {
+  let previous: [number, number] | undefined;
+  beforeAll(async () => {
+    previous = [innerWidth, innerHeight];
+    await page.viewport(width, height ?? innerHeight);
+  });
+  afterAll(async () => {
+    if (previous) await page.viewport(...previous);
+  });
 }
 
 /** For portal-based components (Dialog, Drawer, Tooltip, etc.) that render fixed-position content. */
@@ -59,12 +130,28 @@ export type EmulatedMedia = {
   forcedColors?: "active" | "none";
 };
 
+/** A node of Chromium's accessibility tree, as the `accessibilityTree` command returns it. */
+export type AccessibilityNode = { role: string; name: string; children: AccessibilityNode[] };
+
 declare module "vitest/browser" {
   interface BrowserCommands {
     /** Playwright `page.emulateMedia`, registered in vitest.visual.config.ts. */
     emulateMedia: (options: EmulatedMedia) => Promise<void>;
     /** Moves the mouse outside the viewport, registered in vitest.visual.config.ts. */
     parkPointer: () => Promise<void>;
+    /** Chromium's accessibility tree for a CSS selector; see vitest.visual.config.ts. */
+    accessibilityTree: (selector: string) => Promise<AccessibilityNode>;
+  }
+}
+
+/** Chromium's accessibility tree for `element`, via the `accessibilityTree` command. */
+export async function accessibilityTreeOf(element: Element) {
+  const id = crypto.randomUUID();
+  element.setAttribute("data-accessibility-tree", id);
+  try {
+    return await commands.accessibilityTree(`[data-accessibility-tree="${id}"]`);
+  } finally {
+    element.removeAttribute("data-accessibility-tree");
   }
 }
 
