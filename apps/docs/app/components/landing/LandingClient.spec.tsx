@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { CopyRow, HeroCopy } from "./LandingClient";
+import { PRESETS } from "../../create/theme-model";
+import { isLayoutFont } from "../../layout-fonts";
+import { CopyRow, HeroCopy, PresetGrid } from "./LandingClient";
 
 const CMD = "bun add chunks-ui motion";
 const MESSAGE = "Copied to clipboard";
@@ -71,4 +73,22 @@ it("clears the pending timer on unmount", async () => {
 it("HeroCopy keeps the visible command in its accessible name", () => {
   render(<HeroCopy text={CMD} />);
   expect(screen.getByRole("button", { name: CMD })).toBeTruthy();
+});
+
+// An "Aa"-only face has no unicode-range, so it would shadow the layout's full face of that family.
+// Every other preset heading font must be loaded, or its card falls back to the system font.
+it("PresetGrid's Aa subset loads each preset font exactly once, minus the layout's families", () => {
+  render(<PresetGrid />);
+  const link = document.querySelector("link[rel='stylesheet'][href*='text=Aa']");
+  expect(link, "PresetGrid renders no Aa font link").not.toBeNull();
+  const href = link?.getAttribute("href") ?? "";
+  const families = new URL(href).searchParams
+    .getAll("family")
+    .map((f) => f.replace(/:.*/, "").replaceAll("+", " "));
+  const wanted = [...new Set(PRESETS.map((p) => p.theme.fontHeading))];
+  expect(wanted.length).toBeGreaterThan(0);
+  for (const f of wanted) {
+    expect(families.filter((x) => x === f).length, f).toBe(isLayoutFont(f) ? 0 : 1);
+  }
+  expect(families.length).toBe(wanted.filter((f) => !isLayoutFont(f)).length);
 });

@@ -55,7 +55,8 @@
       // zod is pinned by `overrides` in package.json: from 4.4.0 a strict object rejects an absent
       // key even when its schema accepts undefined, and nextra-theme-docs 4.6.1 <Layout> validates
       // its props without `children` against a schema that lists it, so the docs build fails.
-      // Lift both once a Nextra release validates the props with zod 4.4+.
+      // Lift both once nextra-theme-docs 4.6.4 (fixed in git) is on npm: publishing stopped at
+      // 4.6.1. https://github.com/shuding/nextra/issues/4989
       matchPackageNames: ["zod"],
       allowedVersions: "<4.4.0",
     },
