@@ -46,7 +46,7 @@ function themeTokens(selector: ":root" | ".dark"): Record<string, string> {
 }
 
 /** The default `--ring` in theme.css, light and dark (#355). */
-const RING = "color-mix(in oklch, var(--primary) 60%, var(--background))";
+const RING = "color-mix(in oklab, var(--primary) 60%, var(--background))";
 
 const ink: Theme = { ...DEFAULT_THEME, primary: { l: 0.205, c: 0, h: 0 } };
 const amber: Theme = { ...DEFAULT_THEME, primary: { l: 0.77, c: 0.165, h: 72 } };

@@ -25,7 +25,7 @@
   --l-ill: #8d96b0;
   --l-brand: oklch(60.48% 0.2165 257.21);
   --l-brand-pale: oklch(80% 0.1 257);
-  /* One focus ring colour, the page text: the library's grey barely clears 3:1 on --l-bg. */
+  /* One focus ring colour, the page text: the library's light-primary ring is about 2:1 on --l-bg. */
   --ring: var(--l-fg);
   --l-grid:
     repeating-linear-gradient(90deg, transparent 0 20px, var(--l-ill) 20px 21px),
@@ -55,8 +55,8 @@
   --l-ill: oklch(0.55 0.04 265);
 }
 
-/* Hero, band and footer carry `dark` in both themes: white ring, as the library's dark ring is
-   under 3:1 there. */
+/* Hero, band and footer carry `dark` in both themes: white ring, as the library's dark-mode ring
+   (primary mixed with the dark background) is about 2:1 there. */
 .landing .dark {
   --ring: #fff;
 }

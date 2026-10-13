@@ -285,8 +285,9 @@ export function palette(t: Theme, mode: Mode): Record<string, string> {
     border: d ? n(0.269) : n(0.922),
     input: d ? n(0.269) : n(0.922),
     // Resolved on the element that declares it, so the preview scope and the exported :root and
-    // .dark blocks each mix their own primary and background.
-    ring: "color-mix(in oklch, var(--primary) 60%, var(--background))",
+    // .dark blocks each mix their own primary and background. OKLab has no hue to interpolate,
+    // so the ring keeps the primary's hue.
+    ring: "color-mix(in oklab, var(--primary) 60%, var(--background))",
   };
   chartList(t, mode).forEach((v, i) => {
     out[`chart-${i + 1}`] = v;
