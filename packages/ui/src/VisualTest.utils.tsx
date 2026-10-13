@@ -28,14 +28,14 @@ const isInvisibleBackdrop = (el: Element) => el.matches(INVISIBLE_BACKDROP) && !
  * <body>, outside the fixture that opened it, and a screenshot of the fixture shows the popup
  * only where it lies inside the fixture's box. What belongs to `fixture`: its descendants, and the
  * content of every Base UI portal on the page, but not a portal that holds the fixture
- * (the popup's own boxes surround it). A test renders one tree, and Testing
- * Library removes it and its portals after the test, so the portals on the page belong to what
- * the test screenshots. Screenshot the whole fixture, or the page, while a popup is open: a part
- * of the fixture fails for a popup outside that part. Two things in a portal don't count, as they
- * paint nothing: the portal's own `<div>` (it spans <body> at no height), and the empty,
- * transparent backdrop that a modal popup lays over the whole page (an empty `INVISIBLE_BACKDROP`). The
- * portal of a nested popup, which Floating UI puts inside its parent's portal, is walked as a portal
- * of its own, not as a child of the parent's.
+ * (the popup's own boxes surround it). Testing Library removes the test's tree and its portals
+ * after the test, so the portals on the page belong to what the test screenshots. Screenshot the
+ * whole fixture, or the page, while a popup is open: a part of the fixture fails for a popup
+ * outside that part. Two things in a portal don't count, as they paint nothing: the portal's own
+ * `<div>` (it spans <body> at no height), and the empty, transparent backdrop that a modal popup
+ * lays over the whole page (an empty `INVISIBLE_BACKDROP`). Each portal is walked once, on its
+ * own: a nested popup's portal, which Floating UI puts inside its parent's, is skipped in the
+ * parent's walk.
  *
  * Limits: the walk skips what an `overflow` ancestor holds, so a `position: absolute` or `fixed`
  * descendant whose containing block lies outside that ancestor is skipped too, although the
@@ -61,7 +61,6 @@ export function overflowPast(fixture: Element, { portals = true }: { portals?: b
   const walk = (el: Element) => {
     for (const child of el.childNodes) {
       if (child instanceof Element) {
-        // A nested portal sits in its parent's portal: the loop below walks every portal
         if (isInvisibleBackdrop(child) || child.matches(PORTAL)) continue;
         measure(child.getBoundingClientRect());
         if (getComputedStyle(child).overflow === "visible") walk(child);

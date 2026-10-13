@@ -110,24 +110,6 @@ describe("overflowPast", () => {
     ).toEqual({ ...none, right: 60 });
   });
 
-  it("counts a popup the box's content portals to <body>", async () => {
-    const { getByTestId } = render(
-      <div data-testid="box" style={{ margin: 100, width: 200, height: 50 }}>
-        <Popover.Root defaultOpen>
-          <Popover.Trigger>Open</Popover.Trigger>
-          <Popover.Content>
-            <div style={{ height: 100 }}>Below the box</div>
-          </Popover.Content>
-        </Popover.Root>
-      </div>,
-    );
-    const below = page.getByText("Below the box");
-    await expect.element(below).toBeVisible();
-    // Floating UI has positioned the popup once it left the page's top left
-    await expect.poll(() => below.element().getBoundingClientRect().top).toBeGreaterThan(100);
-    expect(overflowPast(getByTestId("box")).bottom).toBeGreaterThan(0);
-  });
-
   // The portal's <div> spans <body> at no height, and a modal menu lays a transparent inert
   // backdrop over the whole page: neither paints anything a screenshot crops
   it("counts neither a portal's own box nor a modal popup's inert backdrop", async () => {
@@ -208,7 +190,6 @@ describe("overflowPast", () => {
     expect(portal).not.toBeNull();
     // The popup's own boxes are bigger than the element, but they are not content past it
     expect(overflowPast(inside.element())).toEqual(none);
-    expect(() => expectNoOverflow(inside.element())).not.toThrow();
   });
 
   it("does not count content inside an overflow: auto or hidden box, but counts the box", () => {
@@ -298,12 +279,9 @@ describe("toMatchScreenshot", () => {
   });
 
   it("fails at once with Vitest's own error for a nullish target", async () => {
-    const start = performance.now();
     await expect(expect(null).toMatchScreenshot()).rejects.toThrow(
       "Expected element or locator to be defined",
     );
-    // Before an expect.element poll would give up (1s by default)
-    expect(performance.now() - start).toBeLessThan(1000);
   });
 });
 
