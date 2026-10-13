@@ -1,6 +1,7 @@
 import { act, cleanup, isInaccessible, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
+import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Calendar, createDate, DEFAULT_CALENDAR_LABELS } from "./Calendar";
 
@@ -615,6 +616,127 @@ describe("Calendar keyboard navigation", () => {
       />,
     );
     expect(await axe(container)).toHaveNoViolations();
+  });
+});
+
+describe("Calendar month", () => {
+  const APRIL_1 = new Date(2026, 3, 1);
+  const grid = (name: string) => screen.getByRole("grid", { name });
+
+  it("shows the month of a controlled `month`, not the selected day's", () => {
+    render(<Calendar value={MARCH_15_2026} month={new Date(2026, 5, 20, 14)} />);
+    expect(grid("June 2026")).toBeInTheDocument();
+  });
+
+  it("asks for the next and previous month through onMonthChange and waits for `month`", async () => {
+    const user = userEvent.setup();
+    const onMonthChange = vi.fn();
+    const { rerender } = render(<Calendar month={MARCH_15_2026} onMonthChange={onMonthChange} />);
+    await user.click(getButton("Next month"));
+    expect(onMonthChange).toHaveBeenLastCalledWith(APRIL_1);
+    expect(grid("March 2026")).toBeInTheDocument();
+    await user.click(getButton("Previous month"));
+    expect(onMonthChange).toHaveBeenLastCalledWith(new Date(2026, 1, 1));
+    expect(onMonthChange).toHaveBeenCalledTimes(2);
+    rerender(<Calendar month={APRIL_1} onMonthChange={onMonthChange} />);
+    expect(grid("April 2026")).toBeInTheDocument();
+  });
+
+  it("follows a parent that sets `month` in onMonthChange, by buttons and keys", async () => {
+    const user = userEvent.setup();
+    function Controlled() {
+      const [month, setMonth] = useState(MARCH_15_2026);
+      return <Calendar defaultValue={MARCH_15_2026} month={month} onMonthChange={setMonth} />;
+    }
+    render(<Controlled />);
+    await user.click(getButton("Next month"));
+    expect(grid("April 2026")).toBeInTheDocument();
+    await user.click(getButton("Previous month"));
+    await focusDay(MARCH_15_2026);
+    await user.keyboard("{PageDown}");
+    expect(grid("April 2026")).toBeInTheDocument();
+    expect(dayButton(new Date(2026, 3, 15))).toHaveFocus();
+  });
+
+  it("keeps focus on its day when a key leaves a `month` the parent keeps", async () => {
+    const user = userEvent.setup();
+    const onMonthChange = vi.fn();
+    const march31 = new Date(2026, 2, 31);
+    render(<Calendar defaultValue={march31} month={march31} onMonthChange={onMonthChange} />);
+    await focusDay(march31);
+    await user.keyboard("{ArrowRight}");
+    expect(onMonthChange).toHaveBeenCalledExactlyOnceWith(APRIL_1);
+    expect(grid("March 2026")).toBeInTheDocument();
+    expect(dayButton(march31)).toHaveFocus();
+    expect(tabStops()).toEqual([dayButton(march31)]);
+  });
+
+  it("selects an outside day and asks for its month", async () => {
+    const user = userEvent.setup();
+    const onMonthChange = vi.fn();
+    const onValueChange = vi.fn();
+    render(
+      <Calendar
+        month={MARCH_15_2026}
+        onMonthChange={onMonthChange}
+        onValueChange={onValueChange}
+        weekStartsOn={1}
+        showOutsideDays
+      />,
+    );
+    await user.click(getButton("Monday, February 23, 2026"));
+    expect(onValueChange).toHaveBeenCalledExactlyOnceWith(new Date(2026, 1, 23));
+    expect(onMonthChange).toHaveBeenCalledExactlyOnceWith(new Date(2026, 1, 1));
+    expect(grid("March 2026")).toBeInTheDocument();
+  });
+
+  it("keeps a controlled `month` when `value` moves to another month", () => {
+    const { rerender } = render(<Calendar value={MARCH_15_2026} month={MARCH_15_2026} />);
+    rerender(<Calendar value={new Date(2026, 6, 4)} month={MARCH_15_2026} />);
+    expect(grid("March 2026")).toBeInTheDocument();
+  });
+
+  it("calls onMonthChange when the user moves an uncontrolled month", async () => {
+    const user = userEvent.setup();
+    const onMonthChange = vi.fn();
+    render(<Calendar defaultValue={MARCH_15_2026} onMonthChange={onMonthChange} />);
+    await user.click(getButton("Next month"));
+    expect(grid("April 2026")).toBeInTheDocument();
+    expect(onMonthChange).toHaveBeenLastCalledWith(APRIL_1);
+    await focusDay(new Date(2026, 3, 1));
+    await user.keyboard("{ArrowLeft}");
+    expect(grid("March 2026")).toBeInTheDocument();
+    expect(onMonthChange).toHaveBeenLastCalledWith(new Date(2026, 2, 1));
+    expect(onMonthChange).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not call onMonthChange when a new `value` moves an uncontrolled month", () => {
+    const onMonthChange = vi.fn();
+    const { rerender } = render(<Calendar value={MARCH_15_2026} onMonthChange={onMonthChange} />);
+    rerender(<Calendar value={new Date(2026, 6, 4)} onMonthChange={onMonthChange} />);
+    expect(grid("July 2026")).toBeInTheDocument();
+    expect(onMonthChange).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { bad: "an Invalid Date", month: new Date(Number.NaN) },
+    { bad: "a date before year 1", month: createDate(0, 5, 15) },
+  ])("shows the selected day's month for $bad as the `month`", async ({ month }) => {
+    const user = userEvent.setup();
+    const onMonthChange = vi.fn();
+    render(<Calendar value={MARCH_15_2026} month={month} onMonthChange={onMonthChange} />);
+    expect(grid("March 2026")).toBeInTheDocument();
+    await user.click(getButton("Next month"));
+    expect(onMonthChange).toHaveBeenCalledExactlyOnceWith(APRIL_1);
+  });
+
+  it("does not ask for a month before January of year 1", async () => {
+    const user = userEvent.setup();
+    const onMonthChange = vi.fn();
+    render(<Calendar month={createDate(1, 0, 10)} onMonthChange={onMonthChange} />);
+    expect(getButton("Previous month")).toHaveAttribute("aria-disabled", "true");
+    await user.click(getButton("Previous month"));
+    expect(onMonthChange).not.toHaveBeenCalled();
   });
 });
 
