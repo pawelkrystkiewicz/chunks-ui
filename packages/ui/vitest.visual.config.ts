@@ -37,10 +37,15 @@ const accessibilityTree: BrowserCommand<[selector: string]> = async (
     const frameId = frameIdOf(frameTree, (await frame()).url());
     if (!frameId) throw new Error("The test page's frame is not in the CDP frame tree");
     const { executionContextId } = await cdp.send("Page.createIsolatedWorld", { frameId });
-    const { result } = await cdp.send("Runtime.evaluate", {
+    const { result, exceptionDetails } = await cdp.send("Runtime.evaluate", {
       expression: `document.querySelector(${JSON.stringify(selector)})`,
       contextId: executionContextId,
     });
+    if (exceptionDetails) {
+      throw new Error(
+        `Invalid selector ${selector}: ${exceptionDetails.exception?.description ?? exceptionDetails.text}`,
+      );
+    }
     if (!result.objectId || result.subtype === "null") {
       throw new Error(`No element matches ${selector}`);
     }
