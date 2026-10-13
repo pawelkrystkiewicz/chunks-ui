@@ -1,10 +1,43 @@
+/// <reference types="vite/client" />
 import "./src/visual-test.css";
+import cyrillicExt from "@fontsource-variable/manrope/files/manrope-cyrillic-ext-wght-normal.woff2?url";
+import cyrillic from "@fontsource-variable/manrope/files/manrope-cyrillic-wght-normal.woff2?url";
+import greek from "@fontsource-variable/manrope/files/manrope-greek-wght-normal.woff2?url";
+import latinExt from "@fontsource-variable/manrope/files/manrope-latin-ext-wght-normal.woff2?url";
+import latin from "@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2?url";
+import vietnamese from "@fontsource-variable/manrope/files/manrope-vietnamese-wght-normal.woff2?url";
+import unicodeRanges from "@fontsource-variable/manrope/unicode.json";
 import { beforeEach } from "vitest";
 import { commands } from "vitest/browser";
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean | undefined;
 }
+
+// Manrope, the theme's --font-sans, from local files: the weights (200–800) and subsets the docs
+// app loads from Google Fonts. Without it, text fell back to each machine's sans-serif, so glyph
+// widths, and with them overflow, differed between macOS and the Docker image. Added in the
+// order of Google's stylesheet, which decides the subset that draws a character two ranges
+// share. A file that fails to load fails the setup, and with it every spec.
+await Promise.all(
+  Object.entries({
+    "cyrillic-ext": cyrillicExt,
+    cyrillic,
+    greek,
+    vietnamese,
+    "latin-ext": latinExt,
+    latin,
+  } satisfies Record<keyof typeof unicodeRanges, string>).map(([subset, url]) => {
+    const face = new FontFace("Manrope", `url(${url})`, {
+      weight: "200 800",
+      unicodeRange: unicodeRanges[subset as keyof typeof unicodeRanges],
+    });
+    document.fonts.add(face);
+    return face.load().catch((error: unknown) => {
+      throw new Error(`Manrope (${subset}) did not load from ${url}`, { cause: error });
+    });
+  }),
+);
 
 // Real browser events drive these specs, and they wait with expect.element/poll, not act().
 // Testing Library turns React's act environment on in a beforeAll, so React logged
