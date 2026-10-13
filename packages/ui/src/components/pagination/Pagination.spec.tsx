@@ -1,7 +1,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { axe } from "jest-axe";
 import { afterEach, describe, expect, it } from "vitest";
-import { DEFAULT_PAGINATION_LABELS, Pagination, type PaginationRootProps } from "./Pagination";
+import { Pagination, type PaginationRootProps } from "./Pagination";
+import { DEFAULT_PAGINATION_LABELS } from "./Pagination.Labels";
 
 afterEach(cleanup);
 

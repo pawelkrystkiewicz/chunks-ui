@@ -6,6 +6,7 @@ import type { ComponentProps, ComponentType } from "react";
 import { cn, cnState } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
 import { useReducedMotion } from "../../lib/use-motion";
+import { DEFAULT_TOAST_LABELS, type ToastLabels } from "./Toast.Labels";
 
 /**
  * Per-toast slots added by chunks-ui on top of Base UI's `ToastObject`.
@@ -73,25 +74,6 @@ declare module "@base-ui/react/toast" {
 }
 
 export const createToastManager = BaseToast.createToastManager;
-
-/** The built-in English strings of `Toast`. */
-export type ToastLabels = {
-  /**
-   * Name of the `Toast.Viewport` region.
-   * @default "Notifications"
-   */
-  viewport: string;
-  /**
-   * Name of the close button of a dismissible toast.
-   * @default "Close"
-   */
-  close: string;
-};
-
-export const DEFAULT_TOAST_LABELS: Readonly<ToastLabels> = {
-  viewport: "Notifications",
-  close: "Close",
-};
 
 export type ToastProviderProps = ComponentProps<typeof BaseToast.Provider>;
 export type ToastViewportProps = ComponentProps<typeof BaseToast.Viewport> & {

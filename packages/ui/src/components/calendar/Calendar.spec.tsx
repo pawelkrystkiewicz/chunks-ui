@@ -2,7 +2,8 @@ import { act, cleanup, isInaccessible, render, screen, within } from "@testing-l
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { Calendar, createDate, DEFAULT_CALENDAR_LABELS } from "./Calendar";
+import { Calendar, createDate } from "./Calendar";
+import { DEFAULT_CALENDAR_LABELS } from "./Calendar.Labels";
 
 afterEach(cleanup);
 

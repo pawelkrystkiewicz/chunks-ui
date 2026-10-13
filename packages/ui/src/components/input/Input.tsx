@@ -5,18 +5,8 @@ import { cn, cnState } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { ClearButton } from "../clear-button";
+import { DEFAULT_INPUT_LABELS, type InputLabels } from "./Input.Labels";
 import { inputVariants } from "./Input.Variants";
-
-/** The built-in English strings of `Input`. */
-export type InputLabels = {
-  /**
-   * Name of the built-in clear button.
-   * @default "Clear"
-   */
-  clear: string;
-};
-
-export const DEFAULT_INPUT_LABELS: Readonly<InputLabels> = { clear: "Clear" };
 
 export type InputProps = ComponentProps<typeof BaseInput> &
   VariantProps<typeof inputVariants> & {

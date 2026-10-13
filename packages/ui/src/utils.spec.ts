@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-import { describe, expect, it } from "vitest";
+import { describe, expect, expectTypeOf, it } from "vitest";
 import * as main from "./index";
 import * as utils from "./utils";
 
@@ -64,8 +64,22 @@ describe("runtimeSpecifiers", () => {
 });
 
 describe("chunks-ui/utils", () => {
-  it("exports cn, cnState, the public *Variants, springs and the element constants", () => {
+  it("exports cn, cnState, the public *Variants, springs, the element constants and the label defaults", () => {
     expect(Object.keys(utils).sort()).toEqual([
+      "DEFAULT_BREADCRUMB_LABELS",
+      "DEFAULT_CALENDAR_LABELS",
+      "DEFAULT_CHIP_LABELS",
+      "DEFAULT_CLEAR_BUTTON_LABELS",
+      "DEFAULT_COMBOBOX_LABELS",
+      "DEFAULT_COPY_BUTTON_LABELS",
+      "DEFAULT_DATE_PICKER_LABELS",
+      "DEFAULT_INPUT_COPY_LABELS",
+      "DEFAULT_INPUT_LABELS",
+      "DEFAULT_NUMBER_FIELD_LABELS",
+      "DEFAULT_PAGINATION_LABELS",
+      "DEFAULT_SLIDER_LABELS",
+      "DEFAULT_THEME_TOGGLE_LABELS",
+      "DEFAULT_TOAST_LABELS",
       "ELEMENT_BASE_VARIANTS",
       "ELEMENT_COLOR",
       "ELEMENT_ORIENTATION",
@@ -90,10 +104,36 @@ describe("chunks-ui/utils", () => {
     }
   });
 
+  // A server component reads the English defaults, e.g. to build its own text from them
+  it("exports the DEFAULT_*_LABELS of every component", () => {
+    const defaults = Object.keys(main).filter((name) => /^DEFAULT_\w+_LABELS$/.test(name));
+    expect(defaults).not.toEqual([]);
+    expect(Object.keys(utils)).toEqual(expect.arrayContaining(defaults));
+  });
+
+  // Erased at runtime: `check-types` fails if utils lacks one
+  it("exports the *Labels type of every component", () => {
+    expectTypeOf<utils.BreadcrumbLabels>().toEqualTypeOf<main.BreadcrumbLabels>();
+    expectTypeOf<utils.CalendarLabels>().toEqualTypeOf<main.CalendarLabels>();
+    expectTypeOf<utils.ChipLabels>().toEqualTypeOf<main.ChipLabels>();
+    expectTypeOf<utils.ClearButtonLabels>().toEqualTypeOf<main.ClearButtonLabels>();
+    expectTypeOf<utils.ComboboxLabels>().toEqualTypeOf<main.ComboboxLabels>();
+    expectTypeOf<utils.CopyButtonLabels>().toEqualTypeOf<main.CopyButtonLabels>();
+    expectTypeOf<utils.DatePickerLabels>().toEqualTypeOf<main.DatePickerLabels>();
+    expectTypeOf<utils.InputCopyLabels>().toEqualTypeOf<main.InputCopyLabels>();
+    expectTypeOf<utils.InputLabels>().toEqualTypeOf<main.InputLabels>();
+    expectTypeOf<utils.NumberFieldLabels>().toEqualTypeOf<main.NumberFieldLabels>();
+    expectTypeOf<utils.PaginationLabels>().toEqualTypeOf<main.PaginationLabels>();
+    expectTypeOf<utils.SliderLabels>().toEqualTypeOf<main.SliderLabels>();
+    expectTypeOf<utils.ThemeToggleLabels>().toEqualTypeOf<main.ThemeToggleLabels>();
+    expectTypeOf<utils.ToastLabels>().toEqualTypeOf<main.ToastLabels>();
+  });
+
   // tsup bundles this graph into dist/utils.*, which has no "use client" banner
   it("reaches no client-only package", () => {
     const { files, packages } = importGraph("./utils.ts");
     expect(files).toContain("./components/button/Button.Variants.ts");
+    expect(files).toContain("./components/calendar/Calendar.Labels.ts");
     expect(
       packages.filter((name) => !SERVER_SAFE_PACKAGES.includes(packageName(name) ?? "")),
     ).toEqual([]);

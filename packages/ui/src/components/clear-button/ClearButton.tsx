@@ -2,17 +2,7 @@ import type { ComponentProps } from "react";
 import { cn } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
 import { BUTTON_ANIMATION_CLASSES } from "../shared";
-
-/** The built-in English strings of `ClearButton`. */
-export type ClearButtonLabels = {
-  /**
-   * Accessible name of the button.
-   * @default "Clear"
-   */
-  clear: string;
-};
-
-export const DEFAULT_CLEAR_BUTTON_LABELS: Readonly<ClearButtonLabels> = { clear: "Clear" };
+import { type ClearButtonLabels, DEFAULT_CLEAR_BUTTON_LABELS } from "./ClearButton.Labels";
 
 export type ClearButtonProps = ComponentProps<"button"> & {
   /**

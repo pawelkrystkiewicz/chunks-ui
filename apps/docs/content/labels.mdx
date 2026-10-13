@@ -48,6 +48,29 @@ export const PL_COMBOBOX: Partial<ComboboxLabels> = {
 
 Each component exports the type of its labels as `<Component>Labels` (`ComboboxLabels`) and the English defaults as `DEFAULT_<COMPONENT>_LABELS` (`DEFAULT_COMBOBOX_LABELS`). The defaults are typed read-only: change the text with `labels`, not by writing to the defaults.
 
+## Read the defaults in a server component
+
+`chunks-ui` starts with `"use client"`. In a React Server Component, each of its exports is a client reference, so `DEFAULT_COPY_BUTTON_LABELS.copy` from `chunks-ui` is not the string. Import the defaults and the `<Component>Labels` types from `chunks-ui/utils`. This entry has no `"use client"` and no React code (see [Server components](/utilities#server-components)):
+
+```tsx
+// app/keys/page.tsx: a server component
+import { CopyButton } from "chunks-ui";
+import { DEFAULT_COPY_BUTTON_LABELS } from "chunks-ui/utils";
+
+export default function KeysPage() {
+  return (
+    <CopyButton
+      value="sk-test-123"
+      labels={{ copy: `${DEFAULT_COPY_BUTTON_LABELS.copy}: API key` }}
+    />
+  );
+}
+```
+
+The button reads "Copy to clipboard: API key". `chunks-ui` and `chunks-ui/utils` export the same objects, so a client component can import the defaults from either entry.
+
+The `Calendar`, `DatePicker` and `Slider` defaults contain functions. A server component can call them, for example `DEFAULT_CALENDAR_LABELS.day(date)`, but it cannot pass them to a component.
+
 ## What takes precedence
 
 - An `aria-label` on a part wins over `labels`: `<Combobox.Trigger aria-label="Show fruits" />` keeps that name.

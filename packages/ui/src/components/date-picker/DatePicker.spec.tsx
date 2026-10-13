@@ -6,7 +6,8 @@ import { createRef } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createDate } from "../calendar/Calendar";
 import { Field } from "../field";
-import { DatePicker, DEFAULT_DATE_PICKER_LABELS } from "./DatePicker";
+import { DatePicker } from "./DatePicker";
+import { DEFAULT_DATE_PICKER_LABELS } from "./DatePicker.Labels";
 
 const MARCH_15_LABEL = "Sunday, March 15, 2026";
 

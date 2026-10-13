@@ -1,12 +1,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { axe } from "jest-axe";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  DEFAULT_SLIDER_LABELS,
-  Slider,
-  type SliderRootProps,
-  type SliderThumbProps,
-} from "./Slider";
+import { Slider, type SliderRootProps, type SliderThumbProps } from "./Slider";
+import { DEFAULT_SLIDER_LABELS } from "./Slider.Labels";
 
 afterEach(cleanup);
 

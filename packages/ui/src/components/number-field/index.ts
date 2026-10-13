@@ -3,9 +3,9 @@ export type {
   NumberFieldGroupProps,
   NumberFieldIncrementProps,
   NumberFieldInputProps,
-  NumberFieldLabels,
   NumberFieldRootProps,
   NumberFieldScrubAreaCursorProps,
   NumberFieldScrubAreaProps,
 } from "./NumberField";
-export { DEFAULT_NUMBER_FIELD_LABELS, NumberField } from "./NumberField";
+export { NumberField } from "./NumberField";
+export { DEFAULT_NUMBER_FIELD_LABELS, type NumberFieldLabels } from "./NumberField.Labels";

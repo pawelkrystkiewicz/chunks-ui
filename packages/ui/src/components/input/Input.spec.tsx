@@ -4,7 +4,8 @@ import { axe } from "jest-axe";
 import { type ChangeEvent, createRef, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Field } from "../field";
-import { DEFAULT_INPUT_LABELS, Input } from "./Input";
+import { Input } from "./Input";
+import { DEFAULT_INPUT_LABELS } from "./Input.Labels";
 
 afterEach(cleanup);
 
