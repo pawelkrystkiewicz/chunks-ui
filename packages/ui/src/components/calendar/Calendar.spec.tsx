@@ -672,6 +672,18 @@ describe("Calendar labels", () => {
     expect(dayButton(MARCH_15_2026)).toHaveAccessibleName(day(MARCH_15_2026));
   });
 
+  it("reads a custom weekday to screen readers when weekdayLong is not set", () => {
+    render(
+      <Calendar
+        value={MARCH_15_2026}
+        labels={{ weekday: (date) => PL_WEEKDAYS[date.getDay()] ?? "" }}
+      />,
+    );
+    const headers = screen.getAllByRole("columnheader");
+    expect(headers[0]).toHaveAccessibleName(PL_WEEKDAYS[0]);
+    expect(headers[1]).toHaveAccessibleName(PL_WEEKDAYS[1]);
+  });
+
   it("takes every string from labels", async () => {
     const user = userEvent.setup();
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});

@@ -95,7 +95,7 @@ export default Props
 
 `labels` replaces the built-in English text, for example to translate it. Keys you leave out keep their default from `DEFAULT_CALENDAR_LABELS`. The keys that depend on a date are functions of that date, so you can pass `Intl` formatters. They get the date at local midnight: format it in the local time zone, not with `timeZone: "UTC"`. A server component can't pass functions, so set them in a client component. See [Labels](/labels).
 
-Each column header shows the short weekday name from `weekday` ("Su"), and screen readers read the full name from `weekdayLong` ("Sunday") in its place, for example when focus moves to a day in another column. If you translate one, translate the other.
+Each column header shows the short weekday name from `weekday` ("Su"), and screen readers read the full name from `weekdayLong` ("Sunday") in its place, for example when focus moves to a day in another column. If you set `weekday` and leave out `weekdayLong`, screen readers read your `weekday` text. To show a short name and read a full one, set both.
 
 <TSDoc
   definition={generateDefinition({

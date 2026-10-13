@@ -654,11 +654,18 @@ describe("DatePicker labels", () => {
     render(
       <DatePicker
         value={new Date(2026, 2, 15)}
-        labels={{ previousMonth: "Poprzedni miesiąc", day: (date) => `Dzień ${date.getDate()}` }}
+        labels={{
+          previousMonth: "Poprzedni miesiąc",
+          weekdayLong: (date) => `Dzień tygodnia ${date.getDay()}`,
+          day: (date) => `Dzień ${date.getDate()}`,
+        }}
       />,
     );
     await user.click(screen.getByRole("button", { name: "March 15, 2026" }));
     expect(await screen.findByLabelText("Poprzedni miesiąc", { selector: "button" })).toBeVisible();
     expect(getButton("Dzień 15")).toBeInTheDocument();
+    expect(screen.getAllByRole("columnheader", { hidden: true })[0]).toHaveAccessibleName(
+      "Dzień tygodnia 0",
+    );
   });
 });

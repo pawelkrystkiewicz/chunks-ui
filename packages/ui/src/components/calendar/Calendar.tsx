@@ -176,7 +176,12 @@ export function Calendar({
   labels,
   className,
 }: CalendarProps) {
-  const names = mergeLabels(DEFAULT_CALENDAR_LABELS, labels);
+  // A consumer who translates `weekday` but not `weekdayLong` would otherwise get a translated
+  // header and an English name read aloud, so the custom `weekday` stands in for the long name
+  const names = mergeLabels(DEFAULT_CALENDAR_LABELS, {
+    ...(labels?.weekday && labels.weekdayLong === undefined ? { weekdayLong: labels.weekday } : {}),
+    ...labels,
+  });
   const isControlled = value !== undefined;
 
   const [internalValue, setInternalValue] = useState<Date | null>(defaultValue ?? null);

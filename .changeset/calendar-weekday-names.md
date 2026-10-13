@@ -2,7 +2,7 @@
 "chunks-ui": minor
 ---
 
-Added: screen readers now read the full weekday name in each `Calendar` column header, "Sunday" in place of "Su". The header still shows the short name. A new `labels.weekdayLong(date)` sets the full name, with an English default; `DatePicker` takes it too and passes it to its calendar. If you translate `labels.weekday`, translate `labels.weekdayLong` as well:
+Added: screen readers now read the full weekday name in each `Calendar` column header, "Sunday" in place of "Su". The header still shows the short name. A new `labels.weekdayLong(date)` sets the full name, with an English default; `DatePicker` takes it too and passes it to its calendar. If you set `labels.weekday` and leave out `weekdayLong`, screen readers read your `weekday` text. For a short header with a full name read aloud, set both:
 
 ```tsx
 <Calendar

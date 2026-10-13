@@ -45,7 +45,8 @@ export type CalendarLabels = {
   weekday: (date: Date) => string;
   /**
    * The full weekday name that screen readers read for a column header, in place of the short
-   * one. Gets a date that falls on that weekday, at local midnight.
+   * one. Gets a date that falls on that weekday, at local midnight. If you set `weekday` and
+   * leave this out, screen readers read your `weekday` text.
    * @default (date) => "Sunday" … "Saturday"
    */
   weekdayLong: (date: Date) => string;
