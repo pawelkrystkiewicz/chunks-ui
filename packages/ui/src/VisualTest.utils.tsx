@@ -24,7 +24,8 @@ const INVISIBLE_BACKDROP = '[role="presentation"][data-base-ui-inert]';
  * Portalled content counts too. A Base UI popup portals to a `<div data-base-ui-portal>` on
  * <body>, outside the fixture that opened it, and a screenshot of the fixture shows the popup
  * only where it lies inside the fixture's box. What belongs to `fixture`: its descendants, and the
- * content of every Base UI portal on the page outside it. A test renders one tree, and Testing
+ * content of every Base UI portal on the page outside it, but not a portal that holds the fixture
+ * (the popup's own boxes surround it). A test renders one tree, and Testing
  * Library removes it and its portals after the test, so the portals on the page belong to what
  * the test screenshots. Screenshot the whole fixture, or the page, while a popup is open: a part
  * of the fixture fails for a popup outside that part. Two things in a portal don't count, as they
@@ -67,7 +68,7 @@ export function overflowPast(fixture: Element, { portals = true }: { portals?: b
   walk(fixture);
   if (portals) {
     for (const portal of document.querySelectorAll("[data-base-ui-portal]")) {
-      if (!fixture.contains(portal)) walk(portal);
+      if (!fixture.contains(portal) && !portal.contains(fixture)) walk(portal);
     }
   }
   return past;

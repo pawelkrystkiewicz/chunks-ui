@@ -132,18 +132,41 @@ describe("overflowPast", () => {
   // backdrop over the whole page: neither paints anything a screenshot crops
   it("counts neither a portal's own box nor a modal popup's inert backdrop", async () => {
     const { getByTestId } = render(
-      <div data-testid="box" style={{ height: 300 }}>
-        <Menu.Root defaultOpen>
-          <Menu.Trigger>Options</Menu.Trigger>
-          <Menu.Content>
-            <Menu.Item>Edit</Menu.Item>
-          </Menu.Content>
-        </Menu.Root>
-      </div>,
+      <>
+        <div data-testid="box" style={{ height: 300 }}>
+          <Menu.Root defaultOpen>
+            <Menu.Trigger>Options</Menu.Trigger>
+            <Menu.Content>
+              <Menu.Item>Edit</Menu.Item>
+            </Menu.Content>
+          </Menu.Root>
+        </div>
+        {/* Pushes the portal's <div> (the last child of <body>) below the box's bottom edge */}
+        <div style={{ height: 200 }} />
+      </>,
     );
     await expect.element(page.getByRole("menuitem", { name: "Edit" })).toBeVisible();
     expect(document.querySelector("[data-base-ui-portal] [data-base-ui-inert]")).not.toBeNull();
     expect(overflowPast(getByTestId("box"))).toEqual(none);
+  });
+
+  it("does not measure the popup around the element it checks", async () => {
+    render(
+      <Popover.Root defaultOpen>
+        <Popover.Trigger>Open</Popover.Trigger>
+        <Popover.Content>
+          <div data-testid="inside" style={{ width: 60, height: 20 }} />
+        </Popover.Content>
+      </Popover.Root>,
+    );
+    const inside = page.getByTestId("inside");
+    await expect.element(inside).toBeVisible();
+    await expect.poll(() => inside.element().getBoundingClientRect().top).toBeGreaterThan(0);
+    const portal = inside.element().closest("[data-base-ui-portal]");
+    expect(portal).not.toBeNull();
+    // The popup's own boxes are bigger than the element, but they are not content past it
+    expect(overflowPast(inside.element())).toEqual(none);
+    expect(() => expectNoOverflow(inside.element())).not.toThrow();
   });
 
   it("does not count content inside an overflow: auto or hidden box, but counts the box", () => {
