@@ -7,31 +7,35 @@ import { reloadMotion } from "./lib/use-motion";
 
 /**
  * How far in CSS px the content of `fixture` reaches past each of its edges, 0 where it fits.
- * Content that an `overflow` ancestor clips doesn't count: a screenshot doesn't show it either.
+ * Walks the box of every element and the text under it, so the direction of the page and the
+ * positioning of the content don't matter. Content that an `overflow` ancestor clips doesn't
+ * count: a screenshot doesn't show it either. Boxes of 1px or less don't count: they are
+ * visually hidden (`sr-only`, focus guards) and show nothing.
  */
-function overflowPast(fixture: Element) {
+export function overflowPast(fixture: Element) {
   const box = fixture.getBoundingClientRect();
-  // The scrollable overflow covers the right and bottom edges, text included, but it never
-  // reaches past the left or top edge, so for those walk the element boxes
-  let top = 0;
-  let left = 0;
+  const past = { top: 0, right: 0, bottom: 0, left: 0 };
+  const measure = (rect: DOMRect) => {
+    if (rect.width <= 1 || rect.height <= 1) return;
+    past.top = Math.max(past.top, Math.round(box.top - rect.top));
+    past.right = Math.max(past.right, Math.round(rect.right - box.right));
+    past.bottom = Math.max(past.bottom, Math.round(rect.bottom - box.bottom));
+    past.left = Math.max(past.left, Math.round(box.left - rect.left));
+  };
+  const range = document.createRange();
   const walk = (el: Element) => {
-    for (const child of el.children) {
-      const { width, height, top: childTop, left: childLeft } = child.getBoundingClientRect();
-      if (width > 0 && height > 0) {
-        top = Math.max(top, box.top - childTop);
-        left = Math.max(left, box.left - childLeft);
+    for (const child of el.childNodes) {
+      if (child instanceof Element) {
+        measure(child.getBoundingClientRect());
+        if (getComputedStyle(child).overflow === "visible") walk(child);
+      } else if (child.nodeType === Node.TEXT_NODE && child.textContent?.trim()) {
+        range.selectNodeContents(child);
+        measure(range.getBoundingClientRect());
       }
-      if (getComputedStyle(child).overflow === "visible") walk(child);
     }
   };
   walk(fixture);
-  return {
-    top,
-    right: fixture.scrollWidth - fixture.clientWidth,
-    bottom: fixture.scrollHeight - fixture.clientHeight,
-    left,
-  };
+  return past;
 }
 
 /**
