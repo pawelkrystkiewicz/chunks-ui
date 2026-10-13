@@ -61,3 +61,6 @@ playwright-report
 
 # personal follow-up notes
 /TODO.md
+
+# BSD sed -i -e backups
+*-E
