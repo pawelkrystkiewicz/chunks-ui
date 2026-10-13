@@ -1,0 +1,4 @@
+[install]
+# Bun picks the default linker from the lockfile's configVersion, so a regenerated lockfile can
+# switch it. Isolated: a package sees only the dependencies it declares.
+linker = "isolated"
