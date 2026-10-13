@@ -63,7 +63,9 @@ Clearing empties the input the way typing does: `onChange` and `onValueChange` f
   <Input defaultValue="Hello" clearable placeholder="Search..." aria-label="Search" />
 </Container>
 
-A controlled input is cleared by the handler that sets its `value`:
+An uncontrolled input shows the button while it has text, also after a form reset. React Hook Form's `reset()` and `setValue()` write `input.value` from code, which fires no event: the button follows such a write when the input next renders, for example when the component that holds the form re-renders.
+
+A controlled input is cleared by the handler that sets its `value`, so it needs one: `onChange`, `onValueChange` or `onClear`. Without one, the button changes nothing, and each such input warns once in the console in development.
 
 ```tsx
 export const ClearableSearch = () => {

@@ -1,6 +1,13 @@
 import { Input as BaseInput } from "@base-ui/react/input";
 import type { VariantProps } from "class-variance-authority";
-import { type ComponentProps, type ReactNode, useEffect, useRef, useState } from "react";
+import {
+  type ComponentProps,
+  type ReactNode,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { cn, cnState } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
 import { useMergedRef } from "../../lib/use-merged-ref";
@@ -17,6 +24,9 @@ export type InputLabels = {
 };
 
 export const DEFAULT_INPUT_LABELS: Readonly<InputLabels> = { clear: "Clear" };
+
+// The app's bundler replaces it, as it does in @base-ui/react. The package has no Node types.
+declare const process: { env: { NODE_ENV?: string } };
 
 export type InputProps = ComponentProps<typeof BaseInput> &
   VariantProps<typeof inputVariants> & {
@@ -85,8 +95,40 @@ export function Input({
   const hasAdornments = startAdornment || endAdornment || hasClearButton;
   const tracksText = hasClearButton && !isControlled;
 
-  // A form reset restores the default value without an input event. The reset event fires
-  // before the values change, so read the value in the next task
+  // Code that writes `input.value` (React Hook Form's reset() and setValue() do) fires no event,
+  // so read the value again after every render: the button follows such a write on the next one
+  useLayoutEffect(() => {
+    const input = inputRef.current as HTMLInputElement | null;
+    if (!tracksText || !input) return;
+    // Only on a change: a set to the same value can still render the input again
+    const next = input.value.length > 0;
+    if (next !== hasUncontrolledText) setHasUncontrolledText(next);
+  });
+
+  // A controlled input changes only through a handler that sets `value`. Without one, the clear
+  // button shows and does nothing
+  const clearChangesNothing =
+    clearable &&
+    isControlled &&
+    !props.readOnly &&
+    !props.disabled &&
+    !props.onChange &&
+    !onValueChange &&
+    !onClear;
+  const warnedRef = useRef(false);
+  useEffect(() => {
+    const isDev = typeof process !== "undefined" && process.env.NODE_ENV !== "production";
+    if (!isDev || !clearChangesNothing || warnedRef.current) return;
+    warnedRef.current = true;
+    console.warn(
+      "chunks-ui: Input has `clearable` and a `value`, but no `onChange`, `onValueChange` or " +
+        "`onClear` to set it, so its clear button changes nothing. Set `value` in one of them, " +
+        "or use `defaultValue`.",
+    );
+  }, [clearChangesNothing]);
+
+  // A form reset restores the default value without an input event and re-renders nothing. The
+  // reset event fires before the values change, so read the value in the next task
   useEffect(() => {
     const form = (inputRef.current as HTMLInputElement | null)?.form;
     if (!tracksText || !form) return;
