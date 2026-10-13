@@ -81,7 +81,7 @@ const CATEGORIES: {
     tag: "PICKERS",
     href: "/components/select",
     items: { Select: "core", Combobox: "core", Calendar: "extended", DatePicker: "extended" },
-    note: "Separate components, not modes.",
+    note: "Select and Combobox are separate components with focused APIs.",
     preview: <PickersPreview />,
   },
   {
@@ -89,7 +89,7 @@ const CATEGORIES: {
     tag: "OVERLAYS",
     href: "/components/dialog",
     items: { Dialog: "core", Drawer: "core", Popover: "core", Tooltip: "core", Menu: "extended" },
-    note: "Floating UI positioning built in.",
+    note: "Placement and flipping handled by Floating UI.",
     preview: <OverlaysPreview />,
   },
   {
@@ -328,11 +328,11 @@ function Hero() {
             </span>
           </div>
           <h1 className="my-6 text-balance font-display font-semibold text-[clamp(44px,7vw,88px)] text-white leading-none tracking-[-.05em]">
-            <em className="text-white/50 not-italic">Composed,</em> not configured.
+            <em className="text-white/50 not-italic">Parts</em> for real interfaces.
           </h1>
           <p className="mb-[34px] max-w-[470px] text-pretty text-[18px] text-white/78 leading-normal">
-            Accessible React components on Base UI, styled with Tailwind CSS v4 and animated with
-            Motion. One npm package, not a copy-paste registry.
+            Accessible React parts on Base UI and Tailwind v4. Install the package and import what
+            you need.
           </p>
           <div className="flex flex-wrap items-center gap-3">
             <Cta href={DOCS}>Read the docs</Cta>
@@ -377,7 +377,7 @@ const STEPS = [
       </>
     ),
     title: "Install",
-    body: "Motion is an optional peer. Without it, components fall back to CSS transitions.",
+    body: "Install the package. Motion is an optional peer for spring animations.",
     meta: ["chunks-ui", "motion@12+"],
   },
   {
@@ -390,7 +390,7 @@ const STEPS = [
       </>
     ),
     title: "Import the theme",
-    body: "Next to Tailwind's import. Brings the tokens and the component classes. No plugin.",
+    body: "Drop it next to your Tailwind import and you get the tokens and styles.",
     meta: ["OKLCH", "light + dark"],
   },
   {
@@ -403,7 +403,7 @@ const STEPS = [
       </>
     ),
     title: "Compose",
-    body: "Named exports from one package. No copied source to keep in sync.",
+    body: "Import Button, Tabs, Input by name from one place. Updates land through npm.",
     meta: ["ESM", "CJS", ".d.ts"],
   },
 ];
@@ -414,8 +414,8 @@ function QuickStart() {
       <div className={WRAP}>
         <SectionHead
           eyebrow="Quick start"
-          title="Three lines."
-          accent="No registry."
+          title="Three steps,"
+          accent="and you're in."
           link={
             <Link href={DOCS} className={TEXT_LINK}>
               Full guide →
@@ -450,8 +450,8 @@ function ComponentsSection() {
       <div className={WRAP}>
         <SectionHead
           eyebrow="Components"
-          title={`${TOTAL.core} core.`}
-          accent={`${TOTAL.extended} extended.`}
+          title="The full"
+          accent="set."
           link={
             <Link href={COMPONENTS} className={TEXT_LINK}>
               All components →
@@ -502,21 +502,21 @@ const PRINCIPLES = [
     tag: "SCOPE",
     art: <ScopeArt />,
     title: "One component, one job.",
-    body: "Select and Combobox are separate components. No god-component with a mode prop.",
+    body: "Select and Combobox are separate components. Each covers its own use case.",
     meta: ["<Select />", "<Combobox />"],
   },
   {
     tag: "SIZE",
     art: <SizeArt />,
-    title: "Lean set.",
-    body: "If Tailwind can do it inline, it doesn't need a component.",
+    title: "Stays small on purpose.",
+    body: "Style with className and cn().",
     meta: ["className", "cn()"],
   },
   {
     tag: "API",
     art: <ApiArt />,
-    title: "LLM-friendly.",
-    body: "Props over config objects. Conventional names an agent can guess without opening the source.",
+    title: "Readable by people and agents.",
+    body: "Props are plain and readable. An llms.txt gives agents the same docs.",
     meta: ["llms.txt", "AGENTS.md"],
   },
 ];
@@ -525,11 +525,7 @@ function Principles() {
   return (
     <section id="principles" className="pt-6 pb-24">
       <div className={WRAP}>
-        <SectionHead
-          eyebrow="Principles"
-          title="Conventional APIs."
-          accent="Minimal indirection."
-        />
+        <SectionHead eyebrow="Principles" title="Small API," accent="explicit behavior." />
         <Grid className="lg:grid-cols-3">
           {PRINCIPLES.map((p, i) => (
             <div key={p.tag} className={`${CELL} group/pr`}>
@@ -552,20 +548,20 @@ function MotionSection() {
   return (
     <section id="motion" className="pt-6 pb-24">
       <div className={WRAP}>
-        <SectionHead eyebrow="Motion" title="Animated from day one." accent="Not retrofitted." />
+        <SectionHead eyebrow="Motion" title="Animation" accent="with CSS fallback." />
         <Grid className="lg:grid-cols-2">
           <div className={`${STATEMENT} gap-3.5`}>
             <span className={STATEMENT_LABEL}>{"// The default"}</span>
             <p className={STATEMENT_TEXT}>
-              Motion v12 is a first-class peer. Five spring presets cover tab indicators, content,
-              popups, overlays and hover.
+              Motion v12 is optional. Add it and you get five tuned springs for indicators, content,
+              popups, overlays and small nudges.
             </p>
           </div>
           <div className={`${STATEMENT} gap-3.5`}>
             <span className={STATEMENT_LABEL}>{"// The fallback"}</span>
             <p className={STATEMENT_TEXT}>
-              No Motion installed? Components detect that at runtime and fall back to CSS
-              transitions. Every one respects prefers-reduced-motion.
+              Components animate with CSS transitions by default. Reduced-motion preferences are
+              respected.
             </p>
           </div>
         </Grid>
@@ -587,13 +583,13 @@ function CreateSection() {
   return (
     <section id="create" className="pt-6">
       <div className={WRAP}>
-        <SectionHead eyebrow="Create" title="Theme it" accent="in the browser." />
+        <SectionHead eyebrow="Create" title="Theme" accent="in the browser." />
         <Grid className="lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)]">
           <div className={`${STATEMENT} gap-5`}>
             <span className={STATEMENT_LABEL}>{"// The configurator"}</span>
             <p className={STATEMENT_TEXT}>
-              Pick a preset or tune color, type, radius and density. Every change previews live
-              across real screens. Copy one CSS block when it looks right.
+              Start from a preset. Adjust color, type, radius and spacing in the live preview, then
+              copy the CSS.
             </p>
             <div className="mt-auto pt-2">
               <Cta href="/create">Open Create</Cta>
@@ -632,9 +628,9 @@ function GetStarted() {
         className={`${WRAP} relative grid grid-cols-1 items-end gap-14 pt-[180px] pb-24 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]`}
       >
         <h2 className="text-balance font-display font-semibold text-[clamp(36px,5vw,60px)] text-white leading-[1.02] tracking-[-.045em]">
-          Install once.
+          One install.
           <br />
-          <em className="text-white/70 not-italic">Compose the rest.</em>
+          <em className="text-white/70 not-italic">Then back to building.</em>
         </h2>
         <div className="flex flex-col border-white/15 border-t">
           <CopyRow
@@ -695,7 +691,7 @@ function Footer() {
               Chunks UI
             </Link>
             <p className="mt-3.5 text-white/55">
-              React components on Base UI. A Chunk Creations project.
+              Small React pieces on Base UI, looked after by Chunk Creations.
             </p>
           </div>
           <nav aria-label="Footer" className="grid grid-cols-2 gap-6 lg:grid-cols-3">
