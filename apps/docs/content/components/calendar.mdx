@@ -37,7 +37,7 @@ When `value` changes to another day, the calendar shows that day's month. A re-r
 
 ## Shown Month
 
-The calendar opens on the month of the selected day, else today's, and the arrows and keys move it. To control the shown month, pass `month`, any date in that month, and `onMonthChange`. `onMonthChange` gets the first day of the month the user moves to, at local midnight: by the arrows, by a key that moves focus out of the shown month, or by a click on a day from a neighbouring month. The view then waits for a new `month`. If you keep the month, a key that would leave it leaves focus where it is.
+The calendar opens on the month of the selected day, else today's, and the arrows and keys move it. To control the shown month, pass `month`, any date in that month, and `onMonthChange`. `onMonthChange` gets the first day of the month the user moves to, at local midnight: by the arrows, by a key that moves focus out of the shown month, or by a click on a day from a neighbouring month. The view then waits for a new `month`. If you keep the month, a key that would leave it leaves focus where it is. When the new `month` comes later, for example from a transition, focus moves with the view to the day the key moved to. If you set another month instead, for example to keep the view inside a range, focus goes to that month's Tab stop.
 
 ```tsx
 function MonthCalendar() {

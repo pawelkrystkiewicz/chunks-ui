@@ -152,9 +152,16 @@ function isSameDay(a: Date, b: Date): boolean {
   );
 }
 
+/** A year and month: the view's state. */
+type YearMonth = { year: number; month: number };
+
 /** The year and month of `date`, the view's state. */
-function monthOf(date: Date): { year: number; month: number } {
+function monthOf(date: Date): YearMonth {
   return { year: date.getFullYear(), month: date.getMonth() };
+}
+
+function isSameMonth(a: YearMonth, b: YearMonth): boolean {
+  return a.year === b.year && a.month === b.month;
 }
 
 function startOfDay(date: Date): Date {
@@ -285,7 +292,7 @@ export function Calendar({
   useEffect(() => {
     if (controlledDay === null || isMonthControlled) return;
     const next = monthOf(new Date(controlledDay));
-    setInternalView((v) => (v.year === next.year && v.month === next.month ? v : next));
+    setInternalView((v) => (isSameMonth(v, next) ? v : next));
   }, [controlledDay, isMonthControlled]);
 
   // The month on screen after the last commit, which the key handler reads after a flushSync
@@ -296,11 +303,30 @@ export function Calendar({
 
   // Roving tabindex: the last focused day, if still in view, keeps the grid's single tab stop.
   const [focusedDate, setFocusedDate] = useState<Date | null>(null);
+  // A key that left a controlled `month` the parent has not changed yet: the day it moved to, and
+  // the month it left. A parent that sets `month` later, in a transition or a timeout, removes the
+  // focused day, so focus then moves to the new grid: to that day, if it is in view.
+  const [pendingFocus, setPendingFocus] = useState<{ target: Date; from: YearMonth } | null>(null);
   const gridRef = useRef<HTMLTableElement>(null);
   const isInView = (date: Date | null): date is Date =>
     date !== null && date.getFullYear() === viewYear && date.getMonth() === viewMonth;
   const tabStop =
-    [focusedDate, selectedDate, today].find(isInView) ?? createDate(viewYear, viewMonth, 1);
+    [pendingFocus?.target ?? null, focusedDate, selectedDate, today].find(isInView) ??
+    createDate(viewYear, viewMonth, 1);
+
+  useLayoutEffect(() => {
+    if (!pendingFocus || isSameMonth(pendingFocus.from, { year: viewYear, month: viewMonth })) {
+      return;
+    }
+    setPendingFocus(null);
+    // Unless the user has moved focus out of the grid in the meantime. Focus on the body was on
+    // the removed day.
+    const grid = gridRef.current;
+    const active = grid?.ownerDocument.activeElement;
+    if (grid && (active === grid.ownerDocument.body || grid.contains(active ?? null))) {
+      grid.querySelector<HTMLButtonElement>('button[tabindex="0"]')?.focus();
+    }
+  }, [pendingFocus, viewYear, viewMonth]);
 
   const monthYearLabel = names.heading(createDate(viewYear, viewMonth, 1));
   const monthYearLabelId = useId();
@@ -350,13 +376,29 @@ export function Calendar({
     if (!target) return;
     event.preventDefault();
     if (target < FIRST_DAY) return;
+    const before = shownMonthRef.current;
     // Render the target's month synchronously so its button exists before it takes focus. A
-    // parent that sets `month` in onMonthChange renders in the same flush.
-    if (!isInView(target)) flushSync(() => showMonth(target));
-    // The parent kept a controlled `month`: focus stays on the day it is on
+    // parent that sets `month` in onMonthChange renders in the same flush. A new key replaces a
+    // pending focus move.
+    if (!isInView(target)) {
+      flushSync(() => {
+        setPendingFocus(null);
+        showMonth(target);
+      });
+    }
     const shown = shownMonthRef.current;
-    if (shown.year !== target.getFullYear() || shown.month !== target.getMonth()) return;
-    flushSync(() => setFocusedDate(target));
+    if (isSameMonth(shown, monthOf(target))) {
+      flushSync(() => {
+        setPendingFocus(null);
+        setFocusedDate(target);
+      });
+    } else if (isSameMonth(shown, before)) {
+      // The parent kept a controlled `month`, for now: focus stays on the day it is on
+      setPendingFocus({ target, from: before });
+      return;
+    }
+    // The target's day, or the tab stop of another month the parent showed, whose grid no
+    // longer has the focused day
     gridRef.current?.querySelector<HTMLButtonElement>('button[tabindex="0"]')?.focus();
   };
 

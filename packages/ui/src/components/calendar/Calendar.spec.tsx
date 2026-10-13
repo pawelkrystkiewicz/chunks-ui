@@ -1,7 +1,7 @@
 import { act, cleanup, isInaccessible, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
-import { useState } from "react";
+import { startTransition, useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Calendar, createDate, DEFAULT_CALENDAR_LABELS } from "./Calendar";
 
@@ -669,6 +669,100 @@ describe("Calendar month", () => {
     expect(grid("March 2026")).toBeInTheDocument();
     expect(dayButton(march31)).toHaveFocus();
     expect(tabStops()).toEqual([dayButton(march31)]);
+  });
+
+  // A parent that answers with a month other than the asked-for one removes the focused day
+  const JUNE_1 = new Date(2026, 5, 1);
+  const clampToJune = (month: Date) => (month > JUNE_1 ? JUNE_1 : month);
+
+  it("focuses the tab stop of the month a parent shows instead of the asked-for one", async () => {
+    const user = userEvent.setup();
+    function Clamped() {
+      const [month, setMonth] = useState(MARCH_15_2026);
+      return (
+        <Calendar
+          defaultValue={MARCH_15_2026}
+          month={month}
+          onMonthChange={(next) => setMonth(clampToJune(next))}
+        />
+      );
+    }
+    render(<Clamped />);
+    await focusDay(MARCH_15_2026);
+    await user.keyboard("{Shift>}{PageDown}{/Shift}");
+    expect(grid("June 2026")).toBeInTheDocument();
+    expect(document.activeElement).not.toBe(document.body);
+    expect(tabStops()).toEqual([document.activeElement]);
+  });
+
+  it("moves focus to the asked-for day when the parent sets `month` later", async () => {
+    const user = userEvent.setup();
+    let applyMonth = () => {};
+    function Deferred() {
+      const [month, setMonth] = useState(MARCH_15_2026);
+      return (
+        <Calendar
+          defaultValue={MARCH_15_2026}
+          month={month}
+          onMonthChange={(next) => {
+            applyMonth = () => setMonth(next);
+          }}
+        />
+      );
+    }
+    render(<Deferred />);
+    await focusDay(MARCH_15_2026);
+    await user.keyboard("{PageDown}");
+    expect(grid("March 2026")).toBeInTheDocument();
+    expect(dayButton(MARCH_15_2026)).toHaveFocus();
+    act(() => applyMonth());
+    expect(grid("April 2026")).toBeInTheDocument();
+    expect(dayButton(new Date(2026, 3, 15))).toHaveFocus();
+    expect(tabStops()).toEqual([dayButton(new Date(2026, 3, 15))]);
+  });
+
+  it("focuses the tab stop of another month that a parent shows in a transition", async () => {
+    const user = userEvent.setup();
+    function ClampedTransition() {
+      const [month, setMonth] = useState(MARCH_15_2026);
+      return (
+        <Calendar
+          defaultValue={MARCH_15_2026}
+          month={month}
+          onMonthChange={(next) => startTransition(() => setMonth(clampToJune(next)))}
+        />
+      );
+    }
+    render(<ClampedTransition />);
+    await focusDay(MARCH_15_2026);
+    await user.keyboard("{Shift>}{PageDown}{/Shift}");
+    expect(grid("June 2026")).toBeInTheDocument();
+    expect(document.activeElement).not.toBe(document.body);
+    expect(tabStops()).toEqual([document.activeElement]);
+  });
+
+  it("leaves focus where the user moved it before the parent sets `month`", async () => {
+    const user = userEvent.setup();
+    let applyMonth = () => {};
+    function Deferred() {
+      const [month, setMonth] = useState(MARCH_15_2026);
+      return (
+        <Calendar
+          defaultValue={MARCH_15_2026}
+          month={month}
+          onMonthChange={(next) => {
+            applyMonth = () => setMonth(next);
+          }}
+        />
+      );
+    }
+    render(<Deferred />);
+    await focusDay(MARCH_15_2026);
+    await user.keyboard("{PageDown}");
+    act(() => getButton("Next month").focus());
+    act(() => applyMonth());
+    expect(grid("April 2026")).toBeInTheDocument();
+    expect(getButton("Next month")).toHaveFocus();
   });
 
   it("selects an outside day and asks for its month", async () => {
