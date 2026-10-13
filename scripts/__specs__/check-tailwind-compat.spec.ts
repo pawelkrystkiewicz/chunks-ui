@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "bun:test";
 import { classNames, missingClasses, scanProblem, themeUtilities } from "../check-tailwind-compat";
 
 // Shaped like Tailwind CLI output: a banner comment with a URL, nested variants, media queries
