@@ -1,12 +1,13 @@
 "use client";
 
 import { Menu as BaseMenu } from "@base-ui/react/menu";
-import { type ComponentProps, useLayoutEffect, useRef, useState } from "react";
+import type { ComponentProps } from "react";
 import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
-import { arrowClasses, arrowPaddingIn, arrowPopupClasses } from "../../lib/popup-arrow";
+import { arrowClasses, arrowPopupClasses } from "../../lib/popup-arrow";
 import { usePortalContainer } from "../../lib/portal-container";
+import { useArrowPadding } from "../../lib/use-arrow-padding";
 import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
 
 export type MenuRootProps = ComponentProps<typeof BaseMenu.Root>;
@@ -74,12 +75,7 @@ function MenuContentPopup({
   const m = useLoadedMotion();
   const reduced = useReducedMotion();
   const useSpring = !!m && !reduced;
-  const positioner = useRef<HTMLDivElement>(null);
-  const [arrowPaddingByDefault, setArrowPaddingByDefault] = useState<number>();
-  // Once the popup and its arrow are in the page, before the first paint
-  useLayoutEffect(() => {
-    if (positioner.current) setArrowPaddingByDefault(arrowPaddingIn(positioner.current));
-  }, []);
+  const [positioner, arrowPaddingByDefault] = useArrowPadding();
   const render = useSpring
     ? createPopupRenderer({
         m,

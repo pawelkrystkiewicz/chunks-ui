@@ -1,19 +1,12 @@
 "use client";
 
 import { Tooltip as BaseTooltip } from "@base-ui/react/tooltip";
-import {
-  type ComponentProps,
-  createContext,
-  useContext,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import { type ComponentProps, createContext, useContext } from "react";
 import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
-import { arrowPaddingIn } from "../../lib/popup-arrow";
 import { usePortalContainer } from "../../lib/portal-container";
+import { useArrowPadding } from "../../lib/use-arrow-padding";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
 
@@ -100,13 +93,8 @@ function TooltipArrow({ className, ...props }: TooltipArrowProps) {
 }
 
 function TooltipPositioner({ className, arrowPadding, ref, ...props }: TooltipPositionerProps) {
-  const positioner = useRef<HTMLDivElement>(null);
+  const [positioner, arrowPaddingByDefault] = useArrowPadding();
   const mergedRef = useMergedRef(positioner, ref);
-  const [arrowPaddingByDefault, setArrowPaddingByDefault] = useState<number>();
-  // Once the popup and its arrow are in the page, before the first paint
-  useLayoutEffect(() => {
-    if (positioner.current) setArrowPaddingByDefault(arrowPaddingIn(positioner.current));
-  }, []);
   return (
     <BaseTooltip.Positioner
       ref={mergedRef}

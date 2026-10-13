@@ -47,8 +47,8 @@ export function arrowPaddingIn(positioner: Element): number | undefined {
  * positioned and raised so it paints above the arrow. Chromium draws the ring of a bordered box up
  * to 1px over the border, so the overlay takes the popup's border box: the popup's padding box (its
  * containing block) with the popup's border widths, transparent, around it, centred on it. Where
- * `place-self` doesn't align an absolutely positioned box, `-inset-px` still fits a 1px border. It
- * takes the popup's radius too. Forced colours name `Highlight`, the system focus colour. A popup
+ * `place-self` doesn't align an absolutely positioned box, `-inset-px` still fits a 1px border (with
+ * `border-0` that browser draws the overlay 1px up and to the left). It takes the popup's radius too. Forced colours name `Highlight`, the system focus colour. A popup
  * without an arrow keeps the browser's ring on itself: an overlay would be clipped by its `overflow`.
  */
 export const arrowPopupClasses = [
