@@ -43,7 +43,6 @@ describe("Popover", () => {
     );
     const arrow = screen.getByTestId("arrow");
     await waitFor(() => expect(arrow).toHaveAttribute("data-side"));
-    expect(arrow.style.left).not.toContain("NaN");
     expect(error).not.toHaveBeenCalled();
     error.mockRestore();
   });

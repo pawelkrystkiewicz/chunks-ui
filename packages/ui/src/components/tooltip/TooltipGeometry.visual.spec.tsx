@@ -295,6 +295,10 @@ describe.each(ONE_LINE_SIDES)(
       expect(p.bottom - a.bottom).toBeGreaterThanOrEqual(
         verticalRadius(popup, bottom) - LAYOUT_ROUNDING_PX,
       );
+      // The lower bound alone passes squared corners (a radius of 0). The gap to the corner isn't
+      // bounded above: Floating UI holds the arrow at the middle of a popup too short for the padding.
+      expect(verticalRadius(popup, top)).toBeGreaterThan(0);
+      expect(verticalRadius(popup, bottom)).toBeGreaterThan(0);
     });
   },
 );
