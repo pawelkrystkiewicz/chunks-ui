@@ -359,19 +359,18 @@ async function auditPopup(
   if (!id) throw new Error(`The open ${popup.popup} has no id to scope axe to`);
   const problems = await axe(page, popup.page, theme, matched, { selector: `[id="${id}"]`, label });
   // The trigger tells assistive technology the popup is open, and which element it is
-  const state = await handle?.evaluate((el) => ({
+  const state = await handle.evaluate((el) => ({
     expanded: el.getAttribute("aria-expanded"),
     controls: el.getAttribute("aria-controls"),
   }));
-  if (state?.expanded !== "true" || state.controls !== id) {
+  await handle.dispose();
+  if (state.expanded !== "true" || state.controls !== id) {
     problems.push({
       page: label,
       theme,
       rule: "popup-trigger",
       help: "The open popup's trigger must have aria-expanded=\"true\" and aria-controls set to the popup's id",
-      targets: [
-        `aria-expanded=${state?.expanded}, aria-controls=${state?.controls}, popup id=${id}`,
-      ],
+      targets: [`aria-expanded=${state.expanded}, aria-controls=${state.controls}, popup id=${id}`],
     });
   }
   // The violations found above must survive a popup that won't close
