@@ -182,9 +182,9 @@ describe("overlays opened from an overlay", () => {
     const childBox = await waitForStable(() => childPopup.getBoundingClientRect());
     const parentOnly = probes.find((point) => !inside(childBox, point));
     if (!parentOnly) throw new Error("The parent must show past the child, or this proves nothing");
-    expect(document.elementFromPoint(...parentOnly)).toBe(
-      page.getByTestId("Child backdrop").element(),
-    );
+    const backdrop = page.getByTestId("Child backdrop").element();
+    expect(document.elementFromPoint(...parentOnly)).toBe(backdrop);
+    expect(getComputedStyle(backdrop).backgroundColor).not.toBe("rgba(0, 0, 0, 0)");
 
     // The child is interactive; closing it leaves the parent open
     await page.getByRole("button", { name: "Close Child" }).click();
