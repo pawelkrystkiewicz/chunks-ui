@@ -21,8 +21,4 @@ export const RING_TRANSITION =
   "[transition-property:color,background-color,border-color,opacity,box-shadow,scale]";
 
 /** The same list, with the class's fade (300ms) for a part that animates its colours */
-export const RING_ANIMATION_CLASSES = [
-  "micro-interactions",
-  "[transition-property:color,background-color,border-color,opacity,box-shadow,scale]",
-  "duration-300",
-];
+export const RING_ANIMATION_CLASSES = ["micro-interactions", RING_TRANSITION, "duration-300"];
