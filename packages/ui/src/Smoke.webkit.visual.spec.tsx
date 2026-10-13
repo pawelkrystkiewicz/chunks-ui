@@ -203,11 +203,17 @@ describe("Tabs.Contents in WebKit", () => {
       expect(hit, "hit testing finds the field where it is laid out").toBe(note);
     });
 
-    // A WebKit bug: Chromium paints the panel. If this spec fails, its assertion passed and
-    // WebKit paints the panel now: make it a plain `it`, and drop the workaround spec below.
-    it.fails("paints the panel", async () => {
+    // A WebKit bug: Chromium paints the panel. If this spec fails, WebKit paints the panel now:
+    // flip the assertion to `toBeGreaterThan(0)` and rename the spec. Keep the workaround spec
+    // below: users' Safari lags behind, and #295 depends on it.
+    it("paints none of the panel: WebKit bug (W80); when this fails, WebKit is fixed", async () => {
       const note = await openNotes();
-      expect(await paintedPixels(note)).toBeGreaterThan(0);
+      const { width, height } = note.getBoundingClientRect();
+      expect(
+        width * height,
+        "the field has a box, so 0 painted pixels means a bug",
+      ).toBeGreaterThan(0);
+      expect(await paintedPixels(note)).toBe(0);
     });
 
     // With the columns container on its own composited layer WebKit paints the panel, so a page
