@@ -16,6 +16,7 @@ import {
 } from "react";
 import { cn, cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
+import { renderNow } from "../../lib/render-now";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { useMotion, useReducedMotion } from "../../lib/use-motion";
 import { useMotionAnimate } from "../../lib/use-motion-animate";
@@ -355,10 +356,9 @@ function TabsContents({ className, children, transition, ref, ...props }: TabsCo
       { x: `${safeIndex * -100}%` },
       jump ? { duration: 0 } : transitionRef.current,
     );
-    // Motion only writes values that change: on a jump, render all, so a transform the CSS
-    // fallback removed while Motion still held it comes back (reduced motion turned off at rest).
-    // visualElementStore is Motion internals, hence the optional chaining.
-    if (jump) motion.visualElementStore?.get(track)?.scheduleRender?.();
+    // On a jump, render all values, so a transform the CSS fallback removed while Motion still
+    // held it comes back (reduced motion turned off at rest)
+    if (jump) renderNow(motion, track);
   }, [m, motion, safeIndex]);
 
   const resize = useRef<{ stop(): void } | null>(null);
@@ -384,7 +384,7 @@ function TabsContents({ className, children, transition, ref, ...props }: TabsCo
       jump ? { duration: 0 } : transitionRef.current,
     );
     // As for the slide: a height the CSS fallback removed comes back
-    if (jump) motion.visualElementStore?.get(container)?.scheduleRender?.();
+    if (jump) renderNow(motion, container);
   }, [m, motion, height]);
 
   // Stop on unmount, or Motion keeps writing to the detached elements until it settles.
@@ -532,7 +532,9 @@ function TabsAnimatePane({
     if (!enterOnMount || !pane) return;
     const { m, initial, animate, transition } = enterOnMount;
     if (entryShown.current) {
-      // <Activity> shows the pane again after hiding it: finish the entry, don't play it again
+      // <Activity> shows the pane again after hiding it, once a frame of the entry has painted:
+      // finish the entry, don't play it again. A pane hidden before its first frame paints plays
+      // the entry again, on purpose, as StrictMode's re-run does.
       const controls = m.animate(pane, animate as never, { duration: 0 });
       return () => controls.stop();
     }
