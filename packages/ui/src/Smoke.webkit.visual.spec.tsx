@@ -64,24 +64,24 @@ function changedPixels(a: Uint8ClampedArray, b: Uint8ClampedArray) {
   return changed;
 }
 
-/** How many pixels of its box `el` paints: those that change when it is hidden */
+/**
+ * How many pixels of its box `el` paints: those that change when it and everything inside it is
+ * hidden. Hiding `el` alone leaves a descendant that sets its own `visibility: visible` painting.
+ */
 async function paintedPixels(el: HTMLElement) {
   const box = pixelBox(el);
   const shown = await capture(box);
   // micro-interactions transitions every property, visibility included: hide at once
-  const props = ["transition", "visibility"] as const;
-  const saved = props.map(
-    (name) => [name, el.style.getPropertyValue(name), el.style.getPropertyPriority(name)] as const,
-  );
-  for (const name of props)
-    el.style.setProperty(name, name === "transition" ? "none" : "hidden", "important");
+  const attribute = "data-paint-probe";
+  const probe = document.createElement("style");
+  probe.textContent = `[${attribute}], [${attribute}] * { transition: none !important; visibility: hidden !important; }`;
+  document.head.append(probe);
+  el.setAttribute(attribute, "");
   try {
     return changedPixels(shown, await capture(box));
   } finally {
-    for (const [name, value, priority] of saved) {
-      if (value) el.style.setProperty(name, value, priority);
-      else el.style.removeProperty(name);
-    }
+    el.removeAttribute(attribute);
+    probe.remove();
   }
 }
 
@@ -109,6 +109,22 @@ withViewport(1000, 700);
 
 // Safari users mostly have no reduced-motion preference: Motion drives the springs here
 beforeEach(() => enterMotionPath(true));
+
+describe("The paint probe", () => {
+  it("counts a child that paints although its parent is hidden", async () => {
+    render(
+      <div style={{ padding: 40 }}>
+        <div data-testid="parent" style={{ width: 80, height: 40 }}>
+          <div style={{ width: 80, height: 40, background: "red", visibility: "visible" }} />
+        </div>
+        <div data-testid="empty" style={{ width: 80, height: 40 }} />
+      </div>,
+    );
+    expect(await paintedPixels(screen.getByTestId("parent"))).toBe(80 * 40);
+    expect(await paintedPixels(screen.getByTestId("empty"))).toBe(0);
+    expect(document.head.querySelector("style[data-paint-probe]")).toBeNull();
+  });
+});
 
 describe("Tabs.Contents in WebKit", () => {
   it("slides to the last panel, sizes to it, and paints it", async () => {
