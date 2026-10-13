@@ -1,7 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import type { CSSProperties } from "react";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { page, userEvent } from "vitest/browser";
+import { commands, page, userEvent } from "vitest/browser";
 import { Button } from "./components/button";
 import { Card } from "./components/card";
 import { Checkbox } from "./components/checkbox";
@@ -11,7 +11,7 @@ import { Select } from "./components/select";
 import { Switch } from "./components/switch";
 import { Tabs } from "./components/tabs";
 import { Textarea } from "./components/textarea";
-import { enterMotionPath, insetsWithin, waitForStable } from "./VisualTest.utils";
+import { enterMotionPath, insetsWithin, ringColor, waitForStable } from "./VisualTest.utils";
 
 /*
  * WebKit smoke set (vitest.webkit.config.ts): geometry and paint checks, no screenshot
@@ -343,5 +343,39 @@ describe("Form controls in WebKit", () => {
     const insets = insetsWithin(track, thumb);
     expect(insets.left).toBeGreaterThan(insets.right);
     expect(await paintedPixels(thumb)).toBeGreaterThan(0);
+  });
+});
+
+describe("Focus rings in WebKit", () => {
+  // `.micro-interactions` lists `outline` after `all`: WebKit must let that later entry win
+  it("shows a Tabs.Tab's ring at once with motion on", async () => {
+    await commands.emulateMedia({ reducedMotion: "no-preference" });
+    try {
+      render(
+        <>
+          <button type="button">Before</button>
+          <Tabs.Root defaultValue="a">
+            <Tabs.List>
+              <Tabs.Tab value="a">First</Tabs.Tab>
+              <Tabs.Tab value="b">Target</Tabs.Tab>
+            </Tabs.List>
+          </Tabs.Root>
+        </>,
+      );
+      await expect.poll(() => matchMedia("(prefers-reduced-motion: reduce)").matches).toBe(false);
+      await userEvent.tab();
+      const tab = screen.getByRole("tab", { name: "Target" });
+      tab.focus();
+      expect(tab.matches(":focus-visible")).toBe(true);
+      // Read in the same task as the focus: a transition would still be at its start
+      expect(getComputedStyle(tab).outlineColor).toBe(ringColor());
+      const outline = tab
+        .getAnimations()
+        .map((animation) => (animation as CSSTransition).transitionProperty)
+        .filter((property) => property?.startsWith("outline"));
+      expect(outline).toEqual([]);
+    } finally {
+      await commands.emulateMedia({ reducedMotion: "reduce" });
+    }
   });
 });

@@ -44,7 +44,8 @@ const plain = (className?: string) => (
   </span>
 );
 
-// These set `transition-colors` next to the class, so they fade colours only
+// Table.Row sets `transition-colors` next to the class, Slider.Thumb and Textarea a list of
+// three colours: they fade colours only
 const COLOR_FADES = [
   {
     component: "Slider.Thumb",
