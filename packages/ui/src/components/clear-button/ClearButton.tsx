@@ -26,7 +26,7 @@ export function ClearButton({ className, label, labels, ...props }: ClearButtonP
   const defaultLabel = props["aria-labelledby"]
     ? undefined
     : mergeLabels(DEFAULT_CLEAR_BUTTON_LABELS, labels).clear;
-  const resolvedLabel = label ?? props["aria-label"] ?? defaultLabel;
+  const resolvedLabel = props["aria-label"] ?? label ?? defaultLabel;
   return (
     <button
       type="button"
