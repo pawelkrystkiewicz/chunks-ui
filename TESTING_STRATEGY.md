@@ -185,7 +185,7 @@ bun run test:unit:coverage # with V8 coverage report
 ## CI
 
 - **Unit tests + coverage** run on every PR and master push (`unit.tests.yml`), and so do the tests of the root `scripts/` (`bun test ./scripts`)
-- **Visual regression** runs on every PR and master push (`visual-regression.tests.yml`); the master result goes to Slack
+- **Visual regression** runs on every PR and master push (`visual-regression.tests.yml`); the master result goes to Slack. The WebKit smoke tests run in the same job and container after the Chromium suite, also when only the Chromium suite failed.
 - **Lint + typecheck** run on every PR and master push (`quality-gates.yml`)
 - **Version checks** run in `quality-gates.yml` (`check:playwright` in the `lint` job, `check:tailwind` in the `typecheck` job):
   - `bun run check:playwright` fails when `@playwright/test`, the docs' `playwright`, a workflow `mcr.microsoft.com/playwright` image tag or the Docker recipe above name different versions. It also fails on a reference without a `v<version>` tag. It checks no digest: they are bumped with the tag by hand or by Renovate. It makes no network calls.
