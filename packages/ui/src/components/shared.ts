@@ -18,7 +18,7 @@ export const BUTTON_ANIMATION_CLASSES = [
  * the CSS.
  */
 export const RING_TRANSITION =
-  "[transition-property:color,background-color,border-color,opacity,box-shadow,scale]";
+  "[transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,translate,scale,rotate,filter,backdrop-filter,width,height,border-radius]";
 
 /** The same list, with the class's fade (300ms) for a part that animates its colours */
 export const RING_ANIMATION_CLASSES = ["micro-interactions", RING_TRANSITION, "duration-300"];
