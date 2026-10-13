@@ -185,6 +185,9 @@ describe("overlays opened from an overlay", () => {
     const backdrop = page.getByTestId("Child backdrop").element();
     expect(document.elementFromPoint(...parentOnly)).toBe(backdrop);
     expect(getComputedStyle(backdrop).backgroundColor).not.toBe("rgba(0, 0, 0, 0)");
+    // A backdrop that is still fading in dims nothing yet
+    const opacity = await waitForStable(() => getComputedStyle(backdrop).opacity);
+    expect(Number(opacity)).toBeGreaterThan(0);
 
     // The child is interactive; closing it leaves the parent open
     await page.getByRole("button", { name: "Close Child" }).click();
