@@ -5,6 +5,7 @@ import {
   useCallback,
   useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -21,6 +22,19 @@ export type CalendarProps = {
   defaultValue?: Date | null;
   /** Called when the selected date changes. */
   onValueChange?: (date: Date | null) => void;
+  /**
+   * The shown month (controlled): any date in it. The arrows, the keys and a click on an outside
+   * day then call `onMonthChange` and wait for a new `month`, and a new `value` does not move the
+   * view. An Invalid Date, or one before year 1, shows the selected day's month, else today's.
+   * Without it, the calendar opens on the selected day's month, else today's, and moves by itself.
+   */
+  month?: Date;
+  /**
+   * Called with the first day of a month, at local midnight, when the user moves to that month:
+   * the previous or next month arrow, a key that moves focus out of the shown month, or a click
+   * on an outside day. A new `value` that moves the view does not call it.
+   */
+  onMonthChange?: (month: Date) => void;
   /** Dates to disable — return true to disable a given date. */
   isDateDisabled?: (date: Date) => boolean;
   /** Minimum selectable date (inclusive). */
@@ -72,6 +86,18 @@ function isSameDay(a: Date, b: Date): boolean {
     a.getMonth() === b.getMonth() &&
     a.getDate() === b.getDate()
   );
+}
+
+/** A year and month: the view's state. */
+type YearMonth = { year: number; month: number };
+
+/** The year and month of `date`, the view's state. */
+function monthOf(date: Date): YearMonth {
+  return { year: date.getFullYear(), month: date.getMonth() };
+}
+
+function isSameMonth(a: YearMonth, b: YearMonth): boolean {
+  return a.year === b.year && a.month === b.month;
 }
 
 function startOfDay(date: Date): Date {
@@ -168,6 +194,8 @@ export function Calendar({
   value,
   defaultValue,
   onValueChange,
+  month,
+  onMonthChange,
   isDateDisabled,
   min,
   max,
@@ -188,51 +216,74 @@ export function Calendar({
 
   const selectedDate = validDate(isControlled ? value : internalValue);
 
-  const initialViewDate = selectedDate ?? new Date();
-  // Year and month live in one state so navigation updaters stay pure (StrictMode double-invokes them).
-  const [view, setView] = useState({
-    year: initialViewDate.getFullYear(),
-    month: initialViewDate.getMonth(),
-  });
+  const today = useMemo(() => startOfDay(new Date()), []);
+
+  // Year and month live in one state, so a move to another month is one update.
+  const [internalView, setInternalView] = useState(() => monthOf(selectedDate ?? today));
+  const isMonthControlled = month !== undefined;
+  const view = isMonthControlled
+    ? monthOf(validDate(month) ?? selectedDate ?? today)
+    : internalView;
   const { year: viewYear, month: viewMonth } = view;
 
   // Show the month of a controlled value when it moves to another day. Keyed by the day, not
-  // the Date object: an inline `value={new Date()}` is a new object on every render.
+  // the Date object: an inline `value={new Date()}` is a new object on every render. A controlled
+  // `month` stays where the parent puts it.
   const controlledDay = isControlled && selectedDate ? startOfDay(selectedDate).getTime() : null;
   useEffect(() => {
-    if (controlledDay === null) return;
-    const day = new Date(controlledDay);
-    const year = day.getFullYear();
-    const month = day.getMonth();
-    setView((v) => (v.year === year && v.month === month ? v : { year, month }));
-  }, [controlledDay]);
+    if (controlledDay === null || isMonthControlled) return;
+    const next = monthOf(new Date(controlledDay));
+    setInternalView((v) => (isSameMonth(v, next) ? v : next));
+  }, [controlledDay, isMonthControlled]);
 
-  const today = useMemo(() => startOfDay(new Date()), []);
+  // The month on screen after the last commit, which the key handler reads after a flushSync
+  const shownMonthRef = useRef(view);
+  useLayoutEffect(() => {
+    shownMonthRef.current = view;
+  });
 
   // Roving tabindex: the last focused day, if still in view, keeps the grid's single tab stop.
   const [focusedDate, setFocusedDate] = useState<Date | null>(null);
+  // A key that left a controlled `month` the parent has not changed yet: the day it moved to, and
+  // the month it left. A parent that sets `month` later, in a transition or a timeout, removes the
+  // focused day, so focus then moves to the new grid: to that day, if it is in view.
+  const [pendingFocus, setPendingFocus] = useState<{ target: Date; from: YearMonth } | null>(null);
   const gridRef = useRef<HTMLTableElement>(null);
   const isInView = (date: Date | null): date is Date =>
     date !== null && date.getFullYear() === viewYear && date.getMonth() === viewMonth;
   const tabStop =
-    [focusedDate, selectedDate, today].find(isInView) ?? createDate(viewYear, viewMonth, 1);
+    [pendingFocus?.target ?? null, focusedDate, selectedDate, today].find(isInView) ??
+    createDate(viewYear, viewMonth, 1);
+
+  useLayoutEffect(() => {
+    if (!pendingFocus || isSameMonth(pendingFocus.from, { year: viewYear, month: viewMonth })) {
+      return;
+    }
+    setPendingFocus(null);
+    // Unless the user has moved focus out of the grid in the meantime. Focus on the body was on
+    // the removed day.
+    const grid = gridRef.current;
+    const active = grid?.ownerDocument.activeElement;
+    if (grid && (active === grid.ownerDocument.body || grid.contains(active ?? null))) {
+      grid.querySelector<HTMLButtonElement>('button[tabindex="0"]')?.focus();
+    }
+  }, [pendingFocus, viewYear, viewMonth]);
 
   const monthYearLabel = names.heading(createDate(viewYear, viewMonth, 1));
   const monthYearLabelId = useId();
 
-  const atFirstMonth = viewYear === 1 && viewMonth === 0;
-  const prevMonth = useCallback(() => {
-    setView((v) => {
-      if (v.year === 1 && v.month === 0) return v;
-      return v.month === 0 ? { year: v.year - 1, month: 11 } : { ...v, month: v.month - 1 };
-    });
-  }, []);
+  /** Moves the view to the month of `date`, or asks the parent to, with a controlled `month`. */
+  const showMonth = (date: Date) => {
+    const next = monthOf(date);
+    if (!isMonthControlled) setInternalView(next);
+    onMonthChange?.(createDate(next.year, next.month, 1));
+  };
 
-  const nextMonth = useCallback(() => {
-    setView(({ year, month }) =>
-      month === 11 ? { year: year + 1, month: 0 } : { year, month: month + 1 },
-    );
-  }, []);
+  const atFirstMonth = viewYear === 1 && viewMonth === 0;
+  const prevMonth = () => {
+    if (!atFirstMonth) showMonth(createDate(viewYear, viewMonth - 1, 1));
+  };
+  const nextMonth = () => showMonth(createDate(viewYear, viewMonth + 1, 1));
 
   const weekRows = useMemo(
     () => buildWeekRows(viewYear, viewMonth, weekStartsOn, showOutsideDays),
@@ -244,18 +295,13 @@ export function Calendar({
     addDays(firstOfMonth, i - weekdayIndex(firstOfMonth, weekStartsOn)),
   );
 
-  const handleDayClick = useCallback(
-    (date: Date) => {
-      if (!isControlled) {
-        setInternalValue(date);
-      }
-      if (date.getMonth() !== viewMonth || date.getFullYear() !== viewYear) {
-        setView({ year: date.getFullYear(), month: date.getMonth() });
-      }
-      onValueChange?.(date);
-    },
-    [isControlled, onValueChange, viewMonth, viewYear],
-  );
+  const handleDayClick = (date: Date) => {
+    if (!isControlled) {
+      setInternalValue(date);
+    }
+    if (!isInView(date)) showMonth(date);
+    onValueChange?.(date);
+  };
 
   const isDayDisabled = useCallback(
     (date: Date): boolean => {
@@ -271,16 +317,36 @@ export function Calendar({
     if (!target) return;
     event.preventDefault();
     if (target < FIRST_DAY) return;
-    // Render the target's month synchronously so its button exists before it takes focus.
-    flushSync(() => {
-      setFocusedDate(target);
-      setView({ year: target.getFullYear(), month: target.getMonth() });
-    });
+    const before = shownMonthRef.current;
+    // Render the target's month synchronously so its button exists before it takes focus. A
+    // parent that sets `month` in onMonthChange renders in the same flush. A new key replaces a
+    // pending focus move.
+    if (!isInView(target)) {
+      flushSync(() => {
+        setPendingFocus(null);
+        showMonth(target);
+      });
+    }
+    const shown = shownMonthRef.current;
+    if (isSameMonth(shown, monthOf(target))) {
+      flushSync(() => {
+        setPendingFocus(null);
+        setFocusedDate(target);
+      });
+    } else if (isSameMonth(shown, before)) {
+      // The parent kept a controlled `month`, for now: focus stays on the day it is on
+      setPendingFocus({ target, from: before });
+      return;
+    }
+    // The target's day, or the tab stop of another month the parent showed, whose grid no
+    // longer has the focused day
     gridRef.current?.querySelector<HTMLButtonElement>('button[tabindex="0"]')?.focus();
   };
 
   return (
-    <div className={cn("w-fit p-3", className)}>
+    // A pointer interaction means the user left the keyboard: a month the parent applies later
+    // must not pull focus into the grid, as in Safari, where a clicked button leaves it on the body.
+    <div className={cn("w-fit p-3", className)} onPointerDown={() => setPendingFocus(null)}>
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <button

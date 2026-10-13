@@ -120,6 +120,21 @@ describe("DatePicker", () => {
     expect(headers[6]).toHaveAccessibleName("Sunday");
   });
 
+  it("passes month and onMonthChange to the calendar", async () => {
+    const onMonthChange = vi.fn();
+    render(
+      <DatePicker
+        defaultValue={new Date(2026, 2, 15)}
+        month={new Date(2026, 5, 1)}
+        onMonthChange={onMonthChange}
+      />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "March 15, 2026" }));
+    expect(screen.getByRole("grid", { name: "June 2026" })).toBeInTheDocument();
+    await userEvent.click(getButton("Next month"));
+    expect(onMonthChange).toHaveBeenCalledExactlyOnceWith(new Date(2026, 6, 1));
+  });
+
   it("shows dimmed outside days, none of them a Tab stop, with showOutsideDays", async () => {
     render(<DatePicker defaultValue={new Date(2026, 2, 15)} showOutsideDays />);
     await userEvent.click(screen.getByRole("button", { name: "March 15, 2026" }));
@@ -384,6 +399,43 @@ describe("DatePicker in a form", () => {
     expect(trigger).toHaveFocus();
   });
 
+  it("shows a Base UI Form's error for its name until a date is picked", async () => {
+    const user = userEvent.setup();
+    render(
+      <Form aria-label="Task" errors={{ due: "Pick a later date" }}>
+        <Field.Root>
+          <Field.Label>Due date</Field.Label>
+          <DatePicker name="due" defaultValue={new Date(2026, 2, 15)} />
+          <Field.Error />
+        </Field.Root>
+      </Form>,
+    );
+    const trigger = screen.getByRole("button", { name: "Due date March 15, 2026" });
+    expect(trigger).toHaveAccessibleDescription("Pick a later date");
+    expect(trigger).toHaveAttribute("aria-invalid", "true");
+    await user.click(trigger);
+    await user.click(getButton("Friday, March 20, 2026"));
+    expect(screen.queryByText("Pick a later date")).not.toBeInTheDocument();
+    expect(trigger).not.toHaveAttribute("aria-invalid");
+  });
+
+  it("is in a Base UI Form's onFormSubmit values under its name", async () => {
+    const user = userEvent.setup();
+    const onFormSubmit = vi.fn();
+    render(
+      <Form aria-label="Task" onFormSubmit={onFormSubmit}>
+        <Field.Root>
+          <Field.Label>Due date</Field.Label>
+          <DatePicker name="due" defaultValue={new Date(2026, 2, 15)} />
+        </Field.Root>
+        <button type="submit">Save</button>
+      </Form>,
+    );
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    expect(onFormSubmit).toHaveBeenCalledOnce();
+    expect(onFormSubmit.mock.calls[0]?.[0]).toEqual({ due: "2026-03-15" });
+  });
+
   it("does not submit a value while disabled", () => {
     render(
       <form aria-label="Task">
@@ -468,19 +520,50 @@ describe("DatePicker form reset", () => {
     if (props.name) expect(formData()).toBe(props.defaultValue ? "2026-03-15" : "");
   });
 
-  it("restores its default date when it is outside the form, linked by `form`", async () => {
+  // With no name or required there is no form input, so only `form` links the picker to the form
+  it.each([
+    { with: "a name", name: "due" },
+    { with: "no name", name: undefined },
+  ])(
+    "restores its default date when it is outside the form, linked by `form`, with $with",
+    async ({ name }) => {
+      render(
+        <>
+          <form id="task" aria-label="Task">
+            <button type="reset">Reset</button>
+          </form>
+          <DatePicker name={name} form="task" defaultValue={MARCH_15} />
+        </>,
+      );
+      await pickMarch20("March 15, 2026");
+      await userEvent.click(screen.getByRole("button", { name: "Reset" }));
+      expect(screen.getByRole("button", { name: "March 15, 2026" })).toBeInTheDocument();
+      if (name) expect(formData()).toBe("2026-03-15");
+    },
+  );
+
+  // The form renders in a root of its own, so the picker does not render again when it changes
+  const renderForm = () =>
     render(
-      <>
-        <form id="task" aria-label="Task">
-          <button type="reset">Reset</button>
-        </form>
-        <DatePicker name="due" form="task" defaultValue={MARCH_15} />
-      </>,
+      <form id="task" aria-label="Task">
+        <button type="reset">Reset</button>
+      </form>,
     );
+
+  it("restores its default date with a `form` that mounts after it or remounts with the same id", async () => {
+    const picker = render(<DatePicker form="task" defaultValue={MARCH_15} />);
     await pickMarch20("March 15, 2026");
+    const form = renderForm();
     await userEvent.click(screen.getByRole("button", { name: "Reset" }));
     expect(screen.getByRole("button", { name: "March 15, 2026" })).toBeInTheDocument();
-    expect(formData()).toBe("2026-03-15");
+
+    picker.unmount();
+    render(<DatePicker form="task" defaultValue={MARCH_15} />);
+    await pickMarch20("March 15, 2026");
+    form.unmount();
+    renderForm();
+    await userEvent.click(screen.getByRole("button", { name: "Reset" }));
+    expect(screen.getByRole("button", { name: "March 15, 2026" })).toBeInTheDocument();
   });
 
   it("keeps the picked date when the reset is cancelled", async () => {
@@ -512,19 +595,35 @@ describe("DatePicker form reset", () => {
 describe("DatePicker form reset scope", () => {
   const MARCH_15 = new Date(2026, 2, 15);
 
-  it("restores its default in a form inside a shadow root", async () => {
+  it.each([
+    {
+      form: "a form inside a shadow root",
+      ui: (
+        <form aria-label="Task">
+          <DatePicker name="due" defaultValue={MARCH_15} />
+          <button type="reset">Reset</button>
+        </form>
+      ),
+    },
+    {
+      // `form` finds the form by id in the shadow root, not in the document
+      form: "the form in its shadow root that `form` names",
+      ui: (
+        <>
+          <form id="task" aria-label="Task">
+            <button type="reset">Reset</button>
+          </form>
+          <DatePicker form="task" defaultValue={MARCH_15} />
+        </>
+      ),
+    },
+  ])("restores its default in $form", async ({ ui }) => {
     const host = document.createElement("div");
     document.body.append(host);
     const shadow = host.attachShadow({ mode: "open" });
     const container = document.createElement("div");
     shadow.append(container);
-    const { unmount } = render(
-      <form aria-label="Task">
-        <DatePicker name="due" defaultValue={MARCH_15} />
-        <button type="reset">Reset</button>
-      </form>,
-      { container },
-    );
+    const { unmount } = render(ui, { container });
     // Testing Library's cleanup doesn't know the host, so remove it even when an assertion fails
     try {
       const q = (name: string) => within(container).getByRole("button", { name });
