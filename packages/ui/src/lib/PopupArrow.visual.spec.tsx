@@ -6,7 +6,15 @@ import { commands, page, userEvent } from "vitest/browser";
 import { Button } from "../components/button";
 import { Menu } from "../components/menu";
 import { Popover } from "../components/popover";
-import { describeMotionPaths, eachPaintedFrame, waitForStable } from "../VisualTest.utils";
+import {
+  applyTheme,
+  describeMotionPaths,
+  eachPaintedFrame,
+  LAYOUT_ROUNDING_PX,
+  resetTheme,
+  THEMES,
+  waitForStable,
+} from "../VisualTest.utils";
 import { PortalContainerProvider } from "./portal-container";
 import { reloadMotion } from "./use-motion";
 
@@ -49,28 +57,6 @@ function physicalSide(side: Side, dir: Direction): PhysicalSide {
 
 /** Floating UI rounds the popup position to whole device pixels (DPR 1 here). */
 const POSITION_ROUNDING_PX = 0.5;
-
-/** Chromium lays boxes out in 1/64 px, so an arrow held a fraction of a pixel in rounds to it. */
-const LAYOUT_ROUNDING_PX = 1 / 64;
-
-type Theme = { theme: string; vars: Record<string, string> };
-
-/** The default theme, and one with a larger corner radius and a larger `--spacing` (and arrow). */
-const THEMES: Theme[] = [
-  { theme: "default theme", vars: {} },
-  { theme: "--radius 1rem, --spacing 5px", vars: { "--radius": "1rem", "--spacing": "5px" } },
-];
-
-/** The popup is portalled to <body>, so the theme goes on the root element. */
-function applyTheme(vars: Theme["vars"]) {
-  for (const [name, value] of Object.entries(vars)) {
-    document.documentElement.style.setProperty(name, value);
-  }
-}
-
-function resetTheme(vars: Theme["vars"]) {
-  for (const name of Object.keys(vars)) document.documentElement.style.removeProperty(name);
-}
 
 /** The documented default `sideOffset` of each popup. */
 const SIDE_OFFSET_PX: Record<Kind, number> = { Popover: 8, Menu: 4 };
@@ -319,8 +305,12 @@ describe.each(NEAR_CORNER)(
     it("keeps its foot off the popup's rounded corner", async () => {
       applyTheme(vars);
       const { foot, radius } = await footNearCorner(kind, side, align);
-      // The corner curves this far along the edge; past it, the edge is straight
+      // The corner curves this far along the edge; past it, the edge is straight. The foot starts
+      // there, and no further: the popup's 1px border and the arrow's -1px margin add up to 0 at
+      // the start, and to 2px at the end, where the margin moves the arrow away from the end.
+      const slack = align === "end" ? 2 : 0;
       expect(foot).toBeGreaterThanOrEqual(radius - LAYOUT_ROUNDING_PX);
+      expect(foot).toBeLessThanOrEqual(radius + slack + LAYOUT_ROUNDING_PX);
     });
   },
 );
@@ -467,8 +457,13 @@ async function focusedEdges(kind: Kind, className: string, arrow: boolean) {
 
 describe.each(KINDS)("%s with an arrow and a consumer's border width", (kind) => {
   // The test page scales a taller iframe down to fit its window; this one it shows at full size
-  beforeAll(() => page.viewport(414, 600));
-  afterAll(() => page.viewport(414, 896));
+  let width = 0;
+  let height = 0;
+  beforeAll(() => {
+    ({ innerWidth: width, innerHeight: height } = window);
+    return page.viewport(414, 600);
+  });
+  afterAll(() => page.viewport(width, height));
 
   it.each(["border-0", "border-2"])(
     "with `%s`, draws its overlay's ring where the browser draws the popup's own",

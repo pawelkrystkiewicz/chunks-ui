@@ -1,7 +1,13 @@
 import { DirectionProvider } from "@base-ui/react/direction-provider";
 import { render } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import { waitForStable } from "../../VisualTest.utils";
+import {
+  applyTheme,
+  LAYOUT_ROUNDING_PX,
+  resetTheme,
+  THEMES,
+  waitForStable,
+} from "../../VisualTest.utils";
 import { Button } from "../button";
 import { Tooltip } from "./index";
 
@@ -146,28 +152,6 @@ describe.each(CASES)("Tooltip arrow geometry, side $side ($dir)", ({ side, dir }
 
 type Align = "start" | "end";
 
-/** Chromium lays boxes out in 1/64 px, so an arrow held a fraction of a pixel in rounds to it. */
-const LAYOUT_ROUNDING_PX = 1 / 64;
-
-type Theme = { theme: string; vars: Record<string, string> };
-
-/** The default theme, and one with a larger corner radius and a larger `--spacing` (and arrow). */
-const THEMES: Theme[] = [
-  { theme: "default theme", vars: {} },
-  { theme: "--radius 1rem, --spacing 5px", vars: { "--radius": "1rem", "--spacing": "5px" } },
-];
-
-/** The popup is portalled to <body>, so the theme goes on the root element. */
-function applyTheme(vars: Theme["vars"]) {
-  for (const [name, value] of Object.entries(vars)) {
-    document.documentElement.style.setProperty(name, value);
-  }
-}
-
-function resetTheme(vars: Theme["vars"]) {
-  for (const name of Object.keys(vars)) document.documentElement.style.removeProperty(name);
-}
-
 /**
  * Opens a one-line tooltip on `side` of a 20px trigger, aligned to its `align` edge. The trigger's
  * centre is nearer that end of the popup than the arrow may come, so Base UI holds the arrow
@@ -233,6 +217,10 @@ describe.each(NEAR_CORNER)(
       const { foot, radius } = await footNearCorner(side, align);
       // The corner curves this far along the edge; past it, the edge is straight
       expect(foot).toBeGreaterThanOrEqual(radius - LAYOUT_ROUNDING_PX);
+      // No border or margin: the foot starts where the corner ends. At the end, Floating UI
+      // measures the popup by its `clientWidth`, which rounds to a whole pixel: up to half a pixel.
+      const rounding = align === "end" ? POSITION_ROUNDING_PX : LAYOUT_ROUNDING_PX;
+      expect(foot).toBeLessThanOrEqual(radius + rounding);
     });
   },
 );
@@ -265,7 +253,11 @@ function verticalRadius(popup: Element, corner: Corner) {
   box.append(probe);
   document.body.append(box);
   const radius = probe.getBoundingClientRect().height;
+  // A radius the probe rejects would measure 0 and let every bound above it pass
+  const accepted = probe.style.height !== "";
   box.remove();
+  expect(accepted).toBe(true);
+  expect(radius).toBeGreaterThan(0);
   return radius;
 }
 
