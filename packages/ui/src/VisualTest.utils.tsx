@@ -9,14 +9,19 @@ import { reloadMotion } from "./lib/use-motion";
  * How far in CSS px the content of `fixture` reaches past each of its edges, 0 where it fits.
  * Walks the box of every element and the text under it, so the direction of the page and the
  * positioning of the content don't matter. Content that an `overflow` ancestor clips doesn't
- * count: a screenshot doesn't show it either. Boxes of 1px or less don't count: they are
- * visually hidden (`sr-only`, focus guards) and show nothing.
+ * count: a screenshot doesn't show it either. Boxes of 1px or less in both dimensions don't
+ * count: they are visually hidden (`sr-only`, focus guards) and show nothing. A box that is thin
+ * in one dimension only (a 300 × 1 divider) does count.
+ *
+ * Limit: the walk skips what an `overflow` ancestor holds, so a `position: absolute` or `fixed`
+ * descendant whose containing block lies outside that ancestor is skipped too, although the
+ * ancestor doesn't clip it.
  */
 export function overflowPast(fixture: Element) {
   const box = fixture.getBoundingClientRect();
   const past = { top: 0, right: 0, bottom: 0, left: 0 };
   const measure = (rect: DOMRect) => {
-    if (rect.width <= 1 || rect.height <= 1) return;
+    if (Math.max(rect.width, rect.height) <= 1) return;
     past.top = Math.max(past.top, Math.round(box.top - rect.top));
     past.right = Math.max(past.right, Math.round(rect.right - box.right));
     past.bottom = Math.max(past.bottom, Math.round(rect.bottom - box.bottom));

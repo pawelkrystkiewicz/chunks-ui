@@ -76,6 +76,48 @@ describe("overflowPast", () => {
     ).toEqual(none);
   });
 
+  it("reports a box thin in one dimension that spills past the edge", () => {
+    expect(
+      box(<div style={{ position: "absolute", top: 0, left: 0, width: 300, height: 1 }} />),
+    ).toEqual({
+      ...none,
+      right: 200,
+    });
+    expect(
+      box(<div style={{ position: "absolute", top: 0, left: 0, width: 1, height: 300 }} />),
+    ).toEqual({
+      ...none,
+      bottom: 250,
+    });
+  });
+
+  it("reports content under a display: contents wrapper", () => {
+    expect(
+      box(
+        <div style={{ display: "contents" }}>
+          <div style={{ width: 160, height: 10 }} />
+        </div>,
+      ),
+    ).toEqual({ ...none, right: 60 });
+  });
+
+  it("counts the box of an overflow: auto child but not its inner content", () => {
+    expect(
+      box(
+        <div style={{ width: 100, height: 50, overflow: "auto" }}>
+          <div style={{ width: 500, height: 10 }} />
+        </div>,
+      ),
+    ).toEqual(none);
+    expect(
+      box(
+        <div style={{ width: 160, height: 50, overflow: "auto" }}>
+          <div style={{ width: 500, height: 10 }} />
+        </div>,
+      ),
+    ).toEqual({ ...none, right: 60 });
+  });
+
   it("does not count content that an overflow ancestor clips", () => {
     expect(
       box(
