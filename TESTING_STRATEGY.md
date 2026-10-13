@@ -128,7 +128,7 @@ The visual suite runs in Chromium only, so a bug that only Safari has does not s
   bun run test:webkit
   ```
 
-  On macOS this runs Playwright's macOS WebKit. CI runs the Linux build from the Playwright image, and the results are the same.
+  On macOS this runs Playwright's macOS WebKit. CI runs the Linux build from the Playwright image. The suite was run in the pinned `linux/amd64` image (v1.64.0-noble) too: all specs pass, and W80 reproduces there with 0 painted pixels, as on macOS.
 - **Name new specs `*.webkit.visual.spec.tsx`.** The Chromium projects exclude them, and the unit run and `tsconfig.json` skip every `*.visual.spec.tsx` file. Keep the set small. It is a smoke test, not a second visual suite.
 
 ## Coverage Targets

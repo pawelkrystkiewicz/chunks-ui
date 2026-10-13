@@ -61,14 +61,20 @@ function changedPixels(a: Uint8ClampedArray, b: Uint8ClampedArray) {
 async function paintedPixels(el: HTMLElement) {
   const box = pixelBox(el);
   const shown = await capture(box);
-  const { cssText } = el.style;
   // micro-interactions transitions every property, visibility included: hide at once
-  el.style.setProperty("transition", "none", "important");
-  el.style.setProperty("visibility", "hidden", "important");
+  const props = ["transition", "visibility"] as const;
+  const saved = props.map(
+    (name) => [name, el.style.getPropertyValue(name), el.style.getPropertyPriority(name)] as const,
+  );
+  for (const name of props)
+    el.style.setProperty(name, name === "transition" ? "none" : "hidden", "important");
   try {
     return changedPixels(shown, await capture(box));
   } finally {
-    el.style.cssText = cssText;
+    for (const [name, value, priority] of saved) {
+      if (value) el.style.setProperty(name, value, priority);
+      else el.style.removeProperty(name);
+    }
   }
 }
 
@@ -81,7 +87,7 @@ const settle = (el: Element) =>
 
 /** Waits for `el`'s CSS transitions, e.g. a colour change on check */
 const finishTransitions = (el: Element) =>
-  Promise.all(el.getAnimations().map((animation) => animation.finished));
+  Promise.allSettled(el.getAnimations().map((animation) => animation.finished));
 
 /** Waits until Tabs.Contents stops sliding and resizing */
 const settleContents = (contents: HTMLElement) =>
@@ -206,6 +212,8 @@ describe("Tabs.Contents in WebKit", () => {
     // A WebKit bug: Chromium paints the panel. If this spec fails, WebKit paints the panel now:
     // flip the assertion to `toBeGreaterThan(0)` and rename the spec. Keep the workaround spec
     // below: users' Safari lags behind, and #295 depends on it.
+    // The two specs form a pair: `toBe(0)` here proves a bug only because the workaround spec
+    // below uses the same layout and must paint more than 0. Change them together.
     it("paints none of the panel: WebKit bug (W80); when this fails, WebKit is fixed", async () => {
       const note = await openNotes();
       const { width, height } = note.getBoundingClientRect();
@@ -300,9 +308,12 @@ describe("Form controls in WebKit", () => {
       "--spacing-ui-height",
     );
     expect(input.getBoundingClientRect().height).toBeCloseTo(Number.parseFloat(controlHeight), 1);
+    // Focus first: the empty baseline includes the focus ring, so only the typed text adds pixels
+    await userEvent.click(input);
     const empty = await paintedPixels(input);
     expect(empty).toBeGreaterThan(0);
 
+    // Hiding the input for the probe drops its focus: click again before typing
     await userEvent.click(input);
     await userEvent.keyboard("Ada Lovelace");
     expect(input.value).toBe("Ada Lovelace");
