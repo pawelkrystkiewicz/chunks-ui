@@ -1,6 +1,6 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { axe } from "jest-axe";
-import type { ReactNode } from "react";
+import { createRef, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { reloadMotion } from "../../lib/use-motion";
 import { Tooltip } from "./Tooltip";
@@ -70,6 +70,22 @@ describe("Tooltip", () => {
       </Tooltip.Root>,
     );
     expect(screen.getByTestId("pos")).toHaveClass("custom");
+  });
+
+  // Positioner keeps a ref of its own, to read the arrow's default padding
+  it("passes a ref on Positioner to the positioner element", () => {
+    const ref = createRef<HTMLDivElement>();
+    render(
+      <Tooltip.Root open>
+        <Tooltip.Trigger>Hover</Tooltip.Trigger>
+        <Tooltip.Portal>
+          <Tooltip.Positioner ref={ref} data-testid="pos">
+            <Tooltip.Popup>Tip</Tooltip.Popup>
+          </Tooltip.Positioner>
+        </Tooltip.Portal>
+      </Tooltip.Root>,
+    );
+    expect(ref.current).toBe(screen.getByTestId("pos"));
   });
 
   it("has no a11y violations", async () => {
