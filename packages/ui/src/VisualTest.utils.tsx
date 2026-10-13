@@ -13,10 +13,11 @@ import { reloadMotion } from "./lib/use-motion";
  * count: they are visually hidden (`sr-only`, focus guards) and show nothing. A box that is thin
  * in one dimension only (a 300 × 1 divider) does count.
  *
- * Limit: the walk skips what an `overflow` ancestor holds, so a `position: absolute` or `fixed`
+ * Limits: the walk skips what an `overflow` ancestor holds, so a `position: absolute` or `fixed`
  * descendant whose containing block lies outside that ancestor is skipped too, although the
- * ancestor doesn't clip it. The walk runs once, after the render, and measures boxes with their
- * transforms applied: content that grows later (opened, expanded) is not measured.
+ * ancestor doesn't clip it. Boxes are measured with their transforms applied, as they are at the
+ * moment of the call. Only `fixture`'s descendants count: a popup portals to <body>, outside a
+ * fixture, so a spec that screenshots an open popup screenshots the page (`renderPage`).
  */
 export function overflowPast(fixture: Element) {
   const box = fixture.getBoundingClientRect();
@@ -45,11 +46,26 @@ export function overflowPast(fixture: Element) {
 }
 
 /**
+ * Fails when content reaches past `el`, as a screenshot of `el` would crop it. Passes for an
+ * element in a fixture rendered with `allowOverflow`. `renderFixture` runs it after the render,
+ * and vitest.visual.setup.ts before every `toMatchScreenshot`, on the element it captures.
+ */
+export function expectNoOverflow(el: Element) {
+  if (el.closest("[data-allow-overflow]")) return;
+  expect(overflowPast(el), "content past the fixture, which a screenshot crops").toEqual({
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+  });
+}
+
+/**
  * Renders children in a padded fixture wrapper. Returns the wrapper element for screenshotting.
  *
- * Fails when the content reaches past the fixture, as a screenshot of the fixture would crop it.
- * Give the spec a wider page with `withViewport`, or pass `allowOverflow` when the overflow is
- * what the spec shows.
+ * Fails when the content reaches past the fixture, as a screenshot of the fixture would crop it,
+ * after the render and again at each screenshot (`expectNoOverflow`). Give the spec a wider page
+ * with `withViewport`, or pass `allowOverflow` when the overflow is what the spec shows.
  */
 export async function renderFixture(
   children: ReactNode,
@@ -58,6 +74,7 @@ export async function renderFixture(
   const result = render(
     <div
       data-testid="fixture"
+      data-allow-overflow={allowOverflow || undefined}
       style={{ padding: 40, display: "flex", alignItems: "center", justifyContent: "center" }}
     >
       {children}
@@ -65,14 +82,7 @@ export async function renderFixture(
   );
   await document.fonts.ready;
   const fixture = result.getByTestId("fixture");
-  if (!allowOverflow) {
-    expect(overflowPast(fixture), "content past the fixture, which a screenshot crops").toEqual({
-      top: 0,
-      right: 0,
-      bottom: 0,
-      left: 0,
-    });
-  }
+  expectNoOverflow(fixture);
   return { ...result, fixture };
 }
 

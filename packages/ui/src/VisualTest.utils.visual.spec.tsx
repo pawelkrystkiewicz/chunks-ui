@@ -1,8 +1,9 @@
 import { render } from "@testing-library/react";
 import type { CSSProperties, ReactNode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
-import { page } from "vitest/browser";
-import { overflowPast, withViewport } from "./VisualTest.utils";
+import { page, userEvent } from "vitest/browser";
+import { Popover } from "./components/popover";
+import { overflowPast, renderFixture, renderPage, withViewport } from "./VisualTest.utils";
 
 /** A 100 × 50 box, off the page's origin, with `children` inside */
 function box(children: ReactNode, style?: CSSProperties) {
@@ -119,6 +120,32 @@ describe("overflowPast", () => {
         ),
       ).toEqual({ ...none, right: 60 });
     }
+  });
+});
+
+describe("toMatchScreenshot", () => {
+  const cropped = "content past the fixture, which a screenshot crops";
+
+  it("fails when the fixture's content grows past it after the render", async () => {
+    const { fixture, getByTestId } = await renderFixture(
+      <div data-testid="panel" style={{ width: 100, height: 20 }} />,
+    );
+    getByTestId("panel").style.minWidth = "600px";
+    await expect(expect(fixture).toMatchScreenshot()).rejects.toThrow(cropped);
+  });
+
+  it("fails when a popup opened on the page reaches past it", async () => {
+    const body = await renderPage(
+      <Popover.Root>
+        <Popover.Trigger>Open</Popover.Trigger>
+        <Popover.Content>
+          <div style={{ width: 600 }}>Wider than the page</div>
+        </Popover.Content>
+      </Popover.Root>,
+    );
+    await userEvent.click(page.getByRole("button", { name: "Open" }));
+    await expect.element(page.getByText("Wider than the page")).toBeVisible();
+    await expect(expect(body).toMatchScreenshot()).rejects.toThrow(cropped);
   });
 });
 

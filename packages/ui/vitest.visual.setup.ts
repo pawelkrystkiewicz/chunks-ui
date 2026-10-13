@@ -7,8 +7,9 @@ import latinExt from "@fontsource-variable/manrope/files/manrope-latin-ext-wght-
 import latin from "@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2?url";
 import vietnamese from "@fontsource-variable/manrope/files/manrope-vietnamese-wght-normal.woff2?url";
 import unicodeRanges from "@fontsource-variable/manrope/unicode.json";
-import { beforeEach } from "vitest";
-import { commands } from "vitest/browser";
+import { beforeEach, chai } from "vitest";
+import { commands, type Locator } from "vitest/browser";
+import { expectNoOverflow } from "./src/VisualTest.utils";
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean | undefined;
@@ -37,6 +38,20 @@ await Promise.all(
       throw new Error(`Manrope (${subset}) did not load from ${url}`, { cause: error });
     });
   }),
+);
+
+// renderFixture checks for overflow once, after the render. Content that opens or grows later
+// (an expanded panel, a popup on the page) is checked here, before every screenshot, by the
+// same rule, on the element the screenshot captures.
+chai.util.overwriteMethod(
+  chai.Assertion.prototype,
+  "toMatchScreenshot",
+  (toMatchScreenshot: (...args: unknown[]) => Promise<void>) =>
+    async function (this: object, ...args: unknown[]) {
+      const target: Element | Locator = chai.util.flag(this, "object");
+      expectNoOverflow(target instanceof Element ? target : target.element());
+      return toMatchScreenshot.apply(this, args);
+    },
 );
 
 // Real browser events drive these specs, and they wait with expect.element/poll, not act().
