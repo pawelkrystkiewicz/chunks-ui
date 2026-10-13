@@ -5,7 +5,7 @@ import { enterMotionPath, renderPage, ringColor, withViewport } from "../../Visu
 import { Drawer } from "./index";
 
 describe("Drawer", () => {
-  // 640×480 fits the window, so the screenshot is full size, not 0.8
+  // The page is 640 × 480, kept as it was: the existing baselines use this size
   withViewport(640, 480);
 
   it("right", async () => {

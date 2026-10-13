@@ -39,7 +39,7 @@ async function paintedAt(points: Point[]): Promise<Rgb[]> {
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
   if (!ctx) throw new Error("No 2D canvas context");
   ctx.drawImage(image, 0, 0);
-  // One image px per CSS px (see the viewport below): scaled, a thin line blurs into its
+  // One image px per CSS px, as the runner window fits the page: scaled, a thin line blurs into its
   // neighbours. The screenshot covers the whole viewport, a scrollbar included.
   expect(image.naturalWidth).toBe(window.innerWidth);
   return points.map(({ x, y }) => {
@@ -48,7 +48,7 @@ async function paintedAt(points: Point[]): Promise<Rgb[]> {
   });
 }
 
-// The test page scales a taller iframe down to fit its window; this one it shows at full size
+// The page is 414 × 600, kept as it was: the existing baselines use this size
 beforeAll(() => page.viewport(414, 600));
 
 const close = (a: Rgb, b: Rgb) => a.every((channel, i) => Math.abs(channel - (b[i] ?? 0)) <= 2);

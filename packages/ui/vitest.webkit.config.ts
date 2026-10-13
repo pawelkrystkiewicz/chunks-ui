@@ -1,11 +1,11 @@
-import { playwright } from "@vitest/browser-playwright";
 import { defineConfig } from "vitest/config";
-import visual from "./vitest.visual.config";
+import visual, { playwrightProvider } from "./vitest.visual.config";
 
 /**
  * WebKit (Playwright's Safari engine) smoke project: a few geometry and paint checks, no
- * screenshot baselines. It shares the plugins, CSS, setup file and commands of the Chromium
- * visual suite, and runs only the `*.webkit.visual.spec.tsx` specs, which that suite excludes.
+ * screenshot baselines. It shares the plugins, CSS, setup file, commands and runner window of
+ * the Chromium visual suite, and runs only the `*.webkit.visual.spec.tsx` specs, which that
+ * suite excludes.
  */
 export default defineConfig({
   ...visual,
@@ -21,7 +21,7 @@ export default defineConfig({
       instances: [
         {
           browser: "webkit",
-          provider: playwright({ contextOptions: { reducedMotion: "no-preference" } }),
+          provider: playwrightProvider("no-preference"),
         },
       ],
     },

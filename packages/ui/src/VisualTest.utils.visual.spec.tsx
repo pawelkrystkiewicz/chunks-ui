@@ -1,7 +1,15 @@
 import { render } from "@testing-library/react";
 import type { CSSProperties, ReactNode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
-import { overflowPast } from "./VisualTest.utils";
+import { page, userEvent } from "vitest/browser";
+import { Popover } from "./components/popover";
+import {
+  expectNoOverflow,
+  overflowPast,
+  renderFixture,
+  renderPage,
+  withViewport,
+} from "./VisualTest.utils";
 
 /** A 100 × 50 box, off the page's origin, with `children` inside */
 function box(children: ReactNode, style?: CSSProperties) {
@@ -118,5 +126,71 @@ describe("overflowPast", () => {
         ),
       ).toEqual({ ...none, right: 60 });
     }
+  });
+});
+
+describe("toMatchScreenshot", () => {
+  const cropped = "content past the screenshotted element, which a screenshot crops";
+
+  it("fails when the fixture's content grows past it after the render", async () => {
+    const { fixture, getByTestId } = await renderFixture(
+      <div data-testid="panel" style={{ width: 100, height: 20 }} />,
+    );
+    getByTestId("panel").style.minWidth = "600px";
+    await expect(expect(fixture).toMatchScreenshot()).rejects.toThrow(cropped);
+  });
+
+  it("passes when a fixture rendered with allowOverflow grows past itself", async () => {
+    const { fixture, getByTestId } = await renderFixture(
+      <div data-testid="panel" style={{ width: 100, height: 20 }} />,
+      { allowOverflow: true },
+    );
+    getByTestId("panel").style.minWidth = "600px";
+    expect(overflowPast(fixture).right).toBeGreaterThan(0);
+    expect(() => expectNoOverflow(fixture)).not.toThrow();
+  });
+
+  it("fails when a popup opened on the page reaches past it", async () => {
+    const body = await renderPage(
+      <Popover.Root>
+        <Popover.Trigger>Open</Popover.Trigger>
+        <Popover.Content>
+          <div style={{ width: 600 }}>Wider than the page</div>
+        </Popover.Content>
+      </Popover.Root>,
+    );
+    await userEvent.click(page.getByRole("button", { name: "Open" }));
+    await expect.element(page.getByText("Wider than the page")).toBeVisible();
+    await expect(expect(body).toMatchScreenshot()).rejects.toThrow(cropped);
+  });
+});
+
+/** Width and height in px of a screenshot of the test page */
+async function screenshotSize() {
+  const image = new Image();
+  image.src = `data:image/png;base64,${await page.screenshot({ save: false })}`;
+  await image.decode();
+  return { width: image.naturalWidth, height: image.naturalHeight };
+}
+
+describe("withViewport", () => {
+  it("rejects a page wider or taller than the runner window", () => {
+    const message = /raise RUNNER_WINDOW in vitest\.visual\.config\.ts/;
+    expect(() => withViewport(2000)).toThrow(message);
+    expect(() => withViewport(500, 5000)).toThrow(message);
+  });
+});
+
+describe("a screenshot of the page", () => {
+  it("has one px per CSS px on the default 414 × 896 page", async () => {
+    expect(await screenshotSize()).toEqual({ width: 414, height: 896 });
+  });
+
+  describe("set wider by withViewport", () => {
+    withViewport(1000);
+
+    it("has one px per CSS px too", async () => {
+      expect(await screenshotSize()).toEqual({ width: 1000, height: 896 });
+    });
   });
 });
