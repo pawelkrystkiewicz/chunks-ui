@@ -75,6 +75,16 @@ The indeterminate state is used for "select all" patterns where some items are c
 
 <CheckboxDisabledExample />
 
+## Touch Target
+
+The box is 16px. To make it easier to tap, add [`touch-target`](/utilities#touch-target) to `Checkbox.Root`: the hit area grows to 44×44px, and the box's size and the layout stay the same. A [label](#with-label) is pressable too, so it also makes the target larger.
+
+```tsx
+<Checkbox.Root aria-label="Accept terms" className="touch-target">
+  <Checkbox.Indicator />
+</Checkbox.Root>
+```
+
 ## Compound Parts
 
 | Part | Description |
