@@ -168,7 +168,7 @@ export function Input({
         <span className="absolute end-3 flex items-center">
           {showsClearButton ? (
             <ClearButton
-              label={clearLabel}
+              labels={{ clear: clearLabel }}
               onClick={handleClear}
               // A mousedown would move focus to the button and blur the input, which validates
               // a validationMode="onBlur" field mid-clear

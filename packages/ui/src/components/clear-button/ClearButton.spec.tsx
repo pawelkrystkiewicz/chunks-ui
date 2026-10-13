@@ -13,7 +13,8 @@ describe("ClearButton", () => {
     expect(screen.getByRole("button", { name: "Clear" })).toBeInTheDocument();
   });
 
-  it("renders with custom label", () => {
+  // Deprecated in favour of labels.clear, and still working
+  it("renders with the deprecated label prop", () => {
     render(<ClearButton label="Remove" />);
     expect(screen.getByRole("button", { name: "Remove" })).toBeInTheDocument();
   });
@@ -36,7 +37,7 @@ describe("ClearButton", () => {
   });
 
   it("has no a11y violations", async () => {
-    const { container } = render(<ClearButton label="Clear" onClick={() => {}} />);
+    const { container } = render(<ClearButton labels={{ clear: "Remove" }} onClick={() => {}} />);
     expect(await axe(container)).toHaveNoViolations();
   });
 });

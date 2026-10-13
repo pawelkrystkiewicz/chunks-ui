@@ -8,6 +8,8 @@ export type ClearButtonProps = ComponentProps<"button"> & {
   /**
    * Accessible label for the clear button, used as `aria-label`. Takes precedence over `labels`.
    * @default "Clear"
+   * @deprecated Use `labels={{ clear: "…" }}`, as on the other components, or `aria-label`.
+   * `label` still works, and still takes precedence over `labels`.
    */
   label?: string;
   /**
