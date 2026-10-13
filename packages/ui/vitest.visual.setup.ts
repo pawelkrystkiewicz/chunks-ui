@@ -7,6 +7,7 @@ import latinExt from "@fontsource-variable/manrope/files/manrope-latin-ext-wght-
 import latin from "@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2?url";
 import vietnamese from "@fontsource-variable/manrope/files/manrope-vietnamese-wght-normal.woff2?url";
 import unicodeRanges from "@fontsource-variable/manrope/unicode.json";
+import { configure } from "@testing-library/react";
 import { beforeEach, chai, expect } from "vitest";
 import { commands, type Locator } from "vitest/browser";
 import { expectNoOverflow } from "./src/VisualTest.utils";
@@ -14,6 +15,12 @@ import { expectNoOverflow } from "./src/VisualTest.utils";
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean | undefined;
 }
+
+// Consumers develop under StrictMode (Next.js turns it on), which double-renders and re-runs
+// effects, as in the unit suite (vitest.setup.ts). Every render() here runs under it too, so an
+// effect that misbehaves when run again shows in the browser: in geometry, in a spring, or in a
+// screenshot.
+configure({ reactStrictMode: true });
 
 // Manrope, the theme's --font-sans, from local files: the weights (200–800) and subsets the docs
 // app loads from Google Fonts. Without it, text fell back to each machine's sans-serif, so glyph
