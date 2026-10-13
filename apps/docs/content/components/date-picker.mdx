@@ -149,7 +149,7 @@ With `required`, the form does not submit until a date is selected, and focus mo
 
 Inside `Field.Root`, the field's `name` wins over the picker's, as it does for Base UI's `Field.Control`. For example, with `<Field.Root name="due">` around `<DatePicker name="deadline" />`, the picker submits its date as `due`. A picker whose `Field.Root` has no name submits under its own `name`. A disabled field disables the hidden input too. For a picker outside its `<form>`, set `form` to the form's `id`.
 
-Inside `Field.Root` in Base UI's `Form`, an entry for it in the form's `errors`, for example `errors={{ due: "Pick a later date" }}`, shows in `Field.Error` and sets `aria-invalid` on the trigger until the user picks a date. `onFormSubmit` gets the date under the same name: `{ due: "2026-10-10" }`.
+Inside `Field.Root` in Base UI's `Form`, an entry for the field's name in the form's `errors`, for example `errors={{ due: "Pick a later date" }}`, shows in `Field.Error` and sets `aria-invalid` on the trigger until the user picks a date. `onFormSubmit` gets the date under the same name: `{ due: "2026-10-10" }`.
 
 A form reset sets the picker back to its `defaultValue`, or to no date. This includes a picker that `form` links to a form it is outside of, with or without a `name`. A controlled picker keeps its `value`, as a controlled input does: set it back in the form's `onReset`. A reset that `onReset` cancels with `event.preventDefault()` leaves the picker as it is. As with native controls, a reset does not call `onValueChange`: an uncontrolled picker that you mirror in state through `onValueChange` is out of date after a reset, so reset that state in the form's `onReset` too.
 
