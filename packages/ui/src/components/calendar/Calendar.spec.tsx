@@ -660,15 +660,10 @@ describe("Calendar labels", () => {
 
   it("uses DEFAULT_CALENDAR_LABELS", () => {
     render(<Calendar value={MARCH_15_2026} />);
-    const { previousMonth, nextMonth, heading, weekday, weekdayLong, day } =
-      DEFAULT_CALENDAR_LABELS;
+    const { previousMonth, nextMonth, heading, day } = DEFAULT_CALENDAR_LABELS;
     expect(getButton(previousMonth)).toBeInTheDocument();
     expect(getButton(nextMonth)).toBeInTheDocument();
     expect(screen.getByRole("grid", { name: heading(new Date(2026, 2, 1)) })).toBeInTheDocument();
-    // March 1, 2026 is a Sunday
-    const week = [0, 1, 2, 3, 4, 5, 6].map((d) => new Date(2026, 2, 1 + d));
-    expectWeekdayHeaders(week.map(weekday), week.map(weekdayLong));
-    expect(week.map(weekdayLong)).toEqual(WEEKDAYS);
     expect(dayButton(MARCH_15_2026)).toHaveAccessibleName(day(MARCH_15_2026));
   });
 

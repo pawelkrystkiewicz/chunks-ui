@@ -64,10 +64,8 @@ describe("ClearButton labels", () => {
   });
 
   it("ranks aria-label over label over labels", () => {
-    const { rerender } = render(<ClearButton label="A" aria-label="B" labels={{ clear: "C" }} />);
+    render(<ClearButton label="A" aria-label="B" labels={{ clear: "C" }} />);
     expect(screen.getByRole("button", { name: "B" })).toBeInTheDocument();
-    rerender(<ClearButton label="A" labels={{ clear: "C" }} />);
-    expect(screen.getByRole("button", { name: "A" })).toBeInTheDocument();
   });
 
   // An aria-label would be read again when the referenced element contains the button

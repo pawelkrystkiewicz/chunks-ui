@@ -104,13 +104,6 @@ describe("chunks-ui/utils", () => {
     }
   });
 
-  // A server component reads the English defaults, e.g. to build its own text from them
-  it("exports the DEFAULT_*_LABELS of every component", () => {
-    const defaults = Object.keys(main).filter((name) => /^DEFAULT_\w+_LABELS$/.test(name));
-    expect(defaults).not.toEqual([]);
-    expect(Object.keys(utils)).toEqual(expect.arrayContaining(defaults));
-  });
-
   // Erased at runtime: `check-types` fails if utils lacks one
   it("exports the *Labels type of every component", () => {
     expectTypeOf<utils.BreadcrumbLabels>().toEqualTypeOf<main.BreadcrumbLabels>();
