@@ -180,8 +180,9 @@ function ComboboxPopup({ className, ...props }: ComboboxPopupProps) {
         "max-h-[var(--available-height)] overflow-y-auto overscroll-contain scroll-py-1",
         !useSpring && "data-starting-style:opacity-0",
         !useSpring && "data-ending-style:opacity-0",
-        // Only the fade: `all` would also animate the max-height that --available-height drives
-        !useSpring && "micro-interactions [transition-property:opacity]",
+        // Only the fade: `all` would also animate the max-height that --available-height drives.
+        // One duration, so a consumer list of several properties keeps it (theme.css)
+        !useSpring && "micro-interactions [transition-property:opacity] duration-300",
         className,
       )}
       {...props}

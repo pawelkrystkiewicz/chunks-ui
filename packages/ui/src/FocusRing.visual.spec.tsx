@@ -3,6 +3,7 @@ import { type ReactNode, useEffect, useRef } from "react";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { commands, userEvent } from "vitest/browser";
 import { Accordion } from "./components/accordion";
+import { Breadcrumb } from "./components/breadcrumb";
 import { Button } from "./components/button";
 import { Calendar, DEFAULT_CALENDAR_LABELS } from "./components/calendar";
 import { Checkbox } from "./components/checkbox";
@@ -10,6 +11,7 @@ import { ClearButton } from "./components/clear-button";
 import { Collapsible } from "./components/collapsible";
 import { Combobox } from "./components/combobox";
 import { DatePicker, DEFAULT_DATE_PICKER_LABELS } from "./components/date-picker";
+import { Drawer } from "./components/drawer";
 import { Input } from "./components/input";
 import { Menu } from "./components/menu";
 import { NumberField } from "./components/number-field";
@@ -29,8 +31,8 @@ import { enterMotionPath, ringColor } from "./VisualTest.utils";
 
 /*
  * With motion on, a keyboard focus ring shows in the ring colour, width and offset in the same
- * task the part takes focus. `.micro-interactions` transitions `all`, and Tailwind's
- * `transition-colors` lists `outline-color`, so rings used to fade in from the text colour
+ * task the part takes focus. `.micro-interactions` used to transition `all`, and Tailwind's
+ * `transition-colors` lists `outline-color`, so rings faded in from the text colour
  * (#362). Button, IconButton and the Drawer popup have the same check in their own specs.
  *
  * NumberField's increment and decrement and Combobox's clear and chip remove buttons are out of
@@ -323,6 +325,33 @@ describe("focus ring with no reduced-motion preference", () => {
   );
 });
 
+describe("Breadcrumb.Link with no reduced-motion preference", () => {
+  beforeEach(emulateMotion);
+  afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
+
+  // The ring is the browser's default, not `--ring`, so only its transition is checked
+  it("draws no outline transition when it takes keyboard focus", async () => {
+    render(
+      <>
+        <button type="button">Before</button>
+        <Breadcrumb.Root>
+          <Breadcrumb.List>
+            <Breadcrumb.Item>
+              <Breadcrumb.Link href="#">Target</Breadcrumb.Link>
+            </Breadcrumb.Item>
+          </Breadcrumb.List>
+        </Breadcrumb.Root>
+      </>,
+    );
+    await userEvent.tab();
+    const link = screen.getByRole("link", { name: "Target" });
+    link.focus();
+    expect(link.matches(":focus-visible")).toBe(true);
+    expect(getComputedStyle(link).outlineStyle).not.toBe("none");
+    expect(outlineTransitions(link)).toEqual([]);
+  });
+});
+
 describe("colour fades with no reduced-motion preference", () => {
   beforeEach(emulateMotion);
   afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
@@ -347,10 +376,35 @@ describe("colour fades with no reduced-motion preference", () => {
   });
 });
 
+const comboboxPopup = (className?: string) => (
+  <Combobox.Root items={["Apple"]} defaultOpen>
+    <Combobox.Input aria-label="Fruit" />
+    <Combobox.Portal>
+      <Combobox.Positioner>
+        <Combobox.Popup data-testid="target" className={className}>
+          <Combobox.List>
+            <Combobox.Item value="Apple">Apple</Combobox.Item>
+          </Combobox.List>
+        </Combobox.Popup>
+      </Combobox.Positioner>
+    </Combobox.Portal>
+  </Combobox.Root>
+);
+
+const drawerPopup = (className?: string) => (
+  <Drawer.Root defaultOpen>
+    <Drawer.Portal>
+      <Drawer.Popup data-testid="target" className={className}>
+        <Drawer.Title>Title</Drawer.Title>
+      </Drawer.Popup>
+    </Drawer.Portal>
+  </Drawer.Root>
+);
+
 /*
  * A part that sets its own `[transition-property:…]` list keeps one duration for all of it: the
  * class's list of durations would repeat over the part's list, and give some of its properties
- * the ring's 0s.
+ * the ring's 0s. A consumer list on a popup (theme.mdx) keeps that duration too.
  */
 describe("own transition lists with no reduced-motion preference", () => {
   // The popups' CSS fallback: Motion never arrives
@@ -404,6 +458,26 @@ describe("own transition lists with no reduced-motion preference", () => {
         </Tooltip.Provider>
       ),
       properties: ["opacity", "scale"],
+    },
+    {
+      part: "Combobox.Popup",
+      ui: comboboxPopup(),
+      properties: ["opacity"],
+    },
+    {
+      part: "Drawer.Popup",
+      ui: drawerPopup(),
+      properties: ["translate"],
+    },
+    {
+      part: "Combobox.Popup with a consumer list of two",
+      ui: comboboxPopup("[transition-property:opacity,scale]"),
+      properties: ["opacity", "scale"],
+    },
+    {
+      part: "Drawer.Popup with a consumer list of two",
+      ui: drawerPopup("[transition-property:translate,opacity]"),
+      properties: ["translate", "opacity"],
     },
   ])("fades every property $part lists for the same time", async ({ ui, properties }) => {
     render(ui);
