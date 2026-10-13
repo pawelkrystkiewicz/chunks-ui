@@ -623,8 +623,12 @@ describe("Calendar month", () => {
   const APRIL_1 = new Date(2026, 3, 1);
   const grid = (name: string) => screen.getByRole("grid", { name });
 
-  it("shows the month of a controlled `month`, not the selected day's", () => {
-    render(<Calendar value={MARCH_15_2026} month={new Date(2026, 5, 20, 14)} />);
+  it("shows the month of a controlled `month`, not the selected day's, and keeps it when `value` moves", () => {
+    const { rerender } = render(
+      <Calendar value={MARCH_15_2026} month={new Date(2026, 5, 20, 14)} />,
+    );
+    expect(grid("June 2026")).toBeInTheDocument();
+    rerender(<Calendar value={new Date(2026, 6, 4)} month={new Date(2026, 5, 20, 14)} />);
     expect(grid("June 2026")).toBeInTheDocument();
   });
 
@@ -808,12 +812,6 @@ describe("Calendar month", () => {
     await user.click(getButton("Monday, February 23, 2026"));
     expect(onValueChange).toHaveBeenCalledExactlyOnceWith(new Date(2026, 1, 23));
     expect(onMonthChange).toHaveBeenCalledExactlyOnceWith(new Date(2026, 1, 1));
-    expect(grid("March 2026")).toBeInTheDocument();
-  });
-
-  it("keeps a controlled `month` when `value` moves to another month", () => {
-    const { rerender } = render(<Calendar value={MARCH_15_2026} month={MARCH_15_2026} />);
-    rerender(<Calendar value={new Date(2026, 6, 4)} month={MARCH_15_2026} />);
     expect(grid("March 2026")).toBeInTheDocument();
   });
 

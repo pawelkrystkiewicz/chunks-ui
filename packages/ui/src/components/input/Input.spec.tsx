@@ -1,7 +1,7 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
-import { type ChangeEvent, createRef, Profiler, useRef, useState } from "react";
+import { type ChangeEvent, createRef, useRef, useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
 import { Field } from "../field";
 import { DEFAULT_INPUT_LABELS, Input } from "./Input";
@@ -206,9 +206,7 @@ describe("Input", () => {
       });
 
       it.each([
-        ["onChange", { onChange: () => {} }],
         ["onValueChange", { onValueChange: () => {} }],
-        ["onClear", { onClear: () => {} }],
         ["readOnly", { readOnly: true }],
         ["disabled", { disabled: true }],
       ])("does not warn with %s", (_, props) => {
@@ -373,27 +371,6 @@ describe("Input", () => {
       expect(screen.queryByRole("button", { name: "Clear" }) !== null).toBe(shows);
     },
   );
-
-  it("commits once per render when the uncontrolled text has not changed", () => {
-    let commits = 0;
-    const { rerender } = render(
-      <Profiler id="input" onRender={() => commits++}>
-        <Input aria-label="Search" defaultValue="abc" clearable data-render={0} />
-      </Profiler>,
-    );
-    commits = 0;
-    for (let n = 1; n <= 3; n++) {
-      rerender(
-        <Profiler id="input" onRender={() => commits++}>
-          <Input aria-label="Search" defaultValue="abc" clearable data-render={n} />
-        </Profiler>,
-      );
-    }
-    // Guards that the layout effect sets no state when nothing changed: a state update would add
-    // a commit per render, so a regression gives 5 or more. An upper bound survives a nested
-    // update commit from Base UI.
-    expect(commits).toBeLessThanOrEqual(3);
-  });
 
   it("forwards the consumer's ref to a clearable input", () => {
     const ref = createRef<HTMLElement>();

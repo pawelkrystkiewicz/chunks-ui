@@ -539,19 +539,17 @@ describe("DatePicker form reset", () => {
       </form>,
     );
 
-  it("restores its default date with a `form` that mounts after it", async () => {
-    render(<DatePicker form="task" defaultValue={MARCH_15} />);
+  it("restores its default date with a `form` that mounts after it or remounts with the same id", async () => {
+    const picker = render(<DatePicker form="task" defaultValue={MARCH_15} />);
     await pickMarch20("March 15, 2026");
-    renderForm();
+    const form = renderForm();
     await userEvent.click(screen.getByRole("button", { name: "Reset" }));
     expect(screen.getByRole("button", { name: "March 15, 2026" })).toBeInTheDocument();
-  });
 
-  it("restores its default date with a `form` that remounts with the same id", async () => {
-    const { unmount } = renderForm();
+    picker.unmount();
     render(<DatePicker form="task" defaultValue={MARCH_15} />);
     await pickMarch20("March 15, 2026");
-    unmount();
+    form.unmount();
     renderForm();
     await userEvent.click(screen.getByRole("button", { name: "Reset" }));
     expect(screen.getByRole("button", { name: "March 15, 2026" })).toBeInTheDocument();
