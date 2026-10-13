@@ -104,7 +104,6 @@ function MenuContentPopup({
           !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
           !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
           // Only the fade and scale: `all` would also animate the max-height that --available-height drives
-          // One duration for both: the class's three durations would repeat over the list (theme.css)
           !useSpring && "micro-interactions [transition-property:opacity,scale] duration-300",
           className,
         )}

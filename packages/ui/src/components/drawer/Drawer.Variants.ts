@@ -11,7 +11,7 @@ export const drawerBase = [
   "focus-visible:outline-2 focus-visible:-outline-offset-3 focus-visible:outline-ring",
 ];
 
-// Only the slide. One duration, so a consumer list of several properties keeps it (theme.css)
+// Only the slide
 const cssSlide = "micro-interactions [transition-property:translate] duration-300";
 
 export const drawerPopupVariants = cva([drawerBase, cssSlide], {

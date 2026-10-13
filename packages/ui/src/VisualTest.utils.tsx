@@ -139,6 +139,14 @@ export function ringColor() {
   return color;
 }
 
+/** The outline properties `el` is transitioning */
+export function outlineTransitions(el: Element) {
+  return el
+    .getAnimations()
+    .map((animation) => (animation as CSSTransition).transitionProperty)
+    .filter((property) => property?.startsWith("outline"));
+}
+
 /** Pauses all CSS animations — use for components with loaders/spinners. */
 export function pauseAnimations() {
   for (const el of document.querySelectorAll("*")) {

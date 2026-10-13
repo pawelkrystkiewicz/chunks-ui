@@ -11,7 +11,13 @@ import { Select } from "./components/select";
 import { Switch } from "./components/switch";
 import { Tabs } from "./components/tabs";
 import { Textarea } from "./components/textarea";
-import { enterMotionPath, insetsWithin, ringColor, waitForStable } from "./VisualTest.utils";
+import {
+  enterMotionPath,
+  insetsWithin,
+  outlineTransitions,
+  ringColor,
+  waitForStable,
+} from "./VisualTest.utils";
 
 /*
  * WebKit smoke set (vitest.webkit.config.ts): geometry and paint checks, no screenshot
@@ -369,11 +375,7 @@ describe("Focus rings in WebKit", () => {
       expect(tab.matches(":focus-visible")).toBe(true);
       // Read in the same task as the focus: a transition would still be at its start
       expect(getComputedStyle(tab).outlineColor).toBe(ringColor());
-      const outline = tab
-        .getAnimations()
-        .map((animation) => (animation as CSSTransition).transitionProperty)
-        .filter((property) => property?.startsWith("outline"));
-      expect(outline).toEqual([]);
+      expect(outlineTransitions(tab)).toEqual([]);
     } finally {
       await commands.emulateMedia({ reducedMotion: "reduce" });
     }

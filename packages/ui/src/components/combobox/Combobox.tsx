@@ -181,7 +181,6 @@ function ComboboxPopup({ className, ...props }: ComboboxPopupProps) {
         !useSpring && "data-starting-style:opacity-0",
         !useSpring && "data-ending-style:opacity-0",
         // Only the fade: `all` would also animate the max-height that --available-height drives.
-        // One duration, so a consumer list of several properties keeps it (theme.css)
         !useSpring && "micro-interactions [transition-property:opacity] duration-300",
         className,
       )}

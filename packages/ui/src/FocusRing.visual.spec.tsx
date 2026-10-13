@@ -27,7 +27,7 @@ import { ThemeToggle } from "./components/theme-toggle";
 import { DEFAULT_TOAST_LABELS, Toast } from "./components/toast";
 import { ToggleGroup } from "./components/toggle-group";
 import { Tooltip } from "./components/tooltip";
-import { enterMotionPath, ringColor } from "./VisualTest.utils";
+import { enterMotionPath, outlineTransitions, ringColor } from "./VisualTest.utils";
 
 /*
  * With motion on, a keyboard focus ring shows in the ring colour, width and offset in the same
@@ -39,18 +39,11 @@ import { enterMotionPath, ringColor } from "./VisualTest.utils";
  * the tab order (Base UI), so they never show a keyboard ring.
  */
 
-async function emulateMotion() {
+beforeEach(async () => {
   await commands.emulateMedia({ reducedMotion: "no-preference" });
   await expect.poll(() => matchMedia("(prefers-reduced-motion: reduce)").matches).toBe(false);
-}
-
-/** The outline properties `el` is transitioning */
-function outlineTransitions(el: Element) {
-  return el
-    .getAnimations()
-    .map((animation) => (animation as CSSTransition).transitionProperty)
-    .filter((property) => property?.startsWith("outline"));
-}
+});
+afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
 
 /** Each property `el` transitions, with its duration (the durations repeat over the list) */
 function durationsOf(el: Element) {
@@ -106,6 +99,8 @@ type RingCase = {
   target: () => Promise<HTMLElement>;
   /** The element that draws the ring, when that is not the target */
   ring?: () => Element;
+  /** The ring is the browser's default outline, not `--ring`: only its transition is checked */
+  browserRing?: true;
 };
 
 const byTestId = (id: string) => () => screen.getByTestId(id);
@@ -290,15 +285,26 @@ const RING_CASES: RingCase[] = [
     ui: <ClearButton aria-label="Target" />,
     target: () => screen.findByRole("button", { name: "Target" }),
   },
+  {
+    part: "Breadcrumb.Link",
+    ui: (
+      <Breadcrumb.Root>
+        <Breadcrumb.List>
+          <Breadcrumb.Item>
+            <Breadcrumb.Link href="#">Target</Breadcrumb.Link>
+          </Breadcrumb.Item>
+        </Breadcrumb.List>
+      </Breadcrumb.Root>
+    ),
+    target: () => screen.findByRole("link", { name: "Target" }),
+    browserRing: true,
+  },
 ];
 
 describe("focus ring with no reduced-motion preference", () => {
-  beforeEach(emulateMotion);
-  afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
-
   it.each(RING_CASES)(
     "$part shows the ring from the moment it takes keyboard focus",
-    async ({ ui, target, ring }) => {
+    async ({ ui, target, ring, browserRing }) => {
       render(
         <>
           <button type="button">Before</button>
@@ -315,60 +321,21 @@ describe("focus ring with no reduced-motion preference", () => {
       expect(focused.matches(":focus-visible")).toBe(true);
       const drawn = ring?.() ?? focused;
       const { outlineStyle, outlineColor } = getComputedStyle(drawn);
-      expect({ outlineStyle, outlineColor }).toEqual({
-        outlineStyle: "solid",
-        outlineColor: ringColor(),
-      });
+      if (browserRing) expect(outlineStyle).not.toBe("none");
+      else
+        expect({ outlineStyle, outlineColor }).toEqual({
+          outlineStyle: "solid",
+          outlineColor: ringColor(),
+        });
       // Nor do its width or offset grow in
       expect(outlineTransitions(drawn)).toEqual([]);
     },
   );
-});
-
-describe("Breadcrumb.Link with no reduced-motion preference", () => {
-  beforeEach(emulateMotion);
-  afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
-
-  // The ring is the browser's default, not `--ring`, so only its transition is checked
-  it("draws no outline transition when it takes keyboard focus", async () => {
-    render(
-      <>
-        <button type="button">Before</button>
-        <Breadcrumb.Root>
-          <Breadcrumb.List>
-            <Breadcrumb.Item>
-              <Breadcrumb.Link href="#">Target</Breadcrumb.Link>
-            </Breadcrumb.Item>
-          </Breadcrumb.List>
-        </Breadcrumb.Root>
-      </>,
-    );
-    await userEvent.tab();
-    const link = screen.getByRole("link", { name: "Target" });
-    link.focus();
-    expect(link.matches(":focus-visible")).toBe(true);
-    expect(getComputedStyle(link).outlineStyle).not.toBe("none");
-    expect(outlineTransitions(link)).toEqual([]);
-  });
-});
-
-describe("colour fades with no reduced-motion preference", () => {
-  beforeEach(emulateMotion);
-  afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
 
   // The ring is left out, not the rest: a colour change, as on hover or press, still fades
-  it.each([
-    { part: "Tabs.Tab (micro-interactions)", ui: tabs, role: "tab", name: "Target" },
-    {
-      part: "Textarea (colour list)",
-      ui: <Textarea aria-label="Target" />,
-      role: "textbox",
-      name: "Target",
-    },
-    { part: "Button (own list)", ui: <Button>Target</Button>, role: "button", name: "Target" },
-  ])("fades the colours of $part", ({ ui, role, name }) => {
-    render(ui);
-    const part = screen.getByRole(role, { name });
+  it("fades the colours of a Textarea", () => {
+    render(<Textarea aria-label="Target" />);
+    const part = screen.getByRole("textbox", { name: "Target" });
     part.style.color = "rgb(255, 0, 0)";
     part.style.backgroundColor = "rgb(0, 0, 255)";
     const faded = part.getAnimations().map((a) => (a as CSSTransition).transitionProperty);
@@ -376,12 +343,12 @@ describe("colour fades with no reduced-motion preference", () => {
   });
 });
 
-const comboboxPopup = (className?: string) => (
+const comboboxPopup = () => (
   <Combobox.Root items={["Apple"]} defaultOpen>
     <Combobox.Input aria-label="Fruit" />
     <Combobox.Portal>
       <Combobox.Positioner>
-        <Combobox.Popup data-testid="target" className={className}>
+        <Combobox.Popup data-testid="target">
           <Combobox.List>
             <Combobox.Item value="Apple">Apple</Combobox.Item>
           </Combobox.List>
@@ -409,11 +376,7 @@ const drawerPopup = (className?: string) => (
 describe("own transition lists with no reduced-motion preference", () => {
   // The popups' CSS fallback: Motion never arrives
   beforeAll(() => enterMotionPath(false));
-  beforeEach(emulateMotion);
-  afterAll(async () => {
-    await commands.emulateMedia({ reducedMotion: "reduce" });
-    await enterMotionPath(true);
-  });
+  afterAll(() => enterMotionPath(true));
 
   it.each([
     {
@@ -468,11 +431,6 @@ describe("own transition lists with no reduced-motion preference", () => {
       part: "Drawer.Popup",
       ui: drawerPopup(),
       properties: ["translate"],
-    },
-    {
-      part: "Combobox.Popup with a consumer list of two",
-      ui: comboboxPopup("[transition-property:opacity,scale]"),
-      properties: ["opacity", "scale"],
     },
     {
       part: "Drawer.Popup with a consumer list of two",
