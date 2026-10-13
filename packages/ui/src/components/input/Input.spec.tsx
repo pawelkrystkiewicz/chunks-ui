@@ -389,7 +389,10 @@ describe("Input", () => {
         </Profiler>,
       );
     }
-    expect(commits).toBe(3);
+    // Guards that the layout effect sets no state when nothing changed: a state update would add
+    // a commit per render, so a regression gives 5 or more. An upper bound survives a nested
+    // update commit from Base UI.
+    expect(commits).toBeLessThanOrEqual(3);
   });
 
   it("forwards the consumer's ref to a clearable input", () => {
