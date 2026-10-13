@@ -12,14 +12,10 @@ const CORNERS = [
 
 /**
  * The default `arrowPadding` for the popup in `positioner`, or `undefined` while it holds no
- * `.PopupArrow`. Base UI holds the arrow's box at least `arrowPadding` from the popup's ends; its
- * foot, the turned square's diagonal, reaches (√2 − 1)/2 of its size past that box on each side.
- * The padding is the popup's largest corner radius plus that reach, so the foot starts where the
- * edge after the curve is straight. The largest of the four corners counts, and of an elliptical
- * corner's two components the larger; a percentage radius counts as 0. Both the radius and the
- * arrow's size come from CSS variables (`--radius`, `--spacing`), so they're read from the open
- * popup. A popup too short for the padding (Floating UI caps it at the
- * middle, less 1px) needs a smaller radius on the arrow's edge, as the Tooltip has.
+ * `.PopupArrow`: the largest of the four corner radii (the larger component of an elliptical
+ * corner; a percentage counts as 0) plus the arrow's overhang, (√2 − 1)/2 of its size, so the foot
+ * starts on the straight edge. Read from the open popup, as `--radius` and `--spacing` are CSS
+ * variables.
  */
 export function arrowPaddingIn(positioner: Element): number | undefined {
   const arrow = positioner.querySelector(".PopupArrow");

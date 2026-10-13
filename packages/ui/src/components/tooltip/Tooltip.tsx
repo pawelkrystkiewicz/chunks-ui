@@ -51,12 +51,9 @@ function TooltipPopup({ className, ...props }: TooltipPopupProps) {
         // arrow and the tip clears the trigger at any --spacing.
         "data-[side=top]:mb-2 data-[side=bottom]:mt-2 data-[side=left]:mr-2 data-[side=right]:ml-2",
         "data-[side=inline-start]:me-2 data-[side=inline-end]:ms-2",
-        // On the left or right, one line is too short for the arrow's foot (2.5/√2 ≈ 1.77 units
-        // either side of its centre, for the default `size-2.5` arrow) between two full corners:
-        // Floating UI caps the padding and holds the arrow's centre within 1px of the middle. So
-        // the two corners on the arrow's edge become elliptical: the radius along the edge shrinks
-        // to where the foot can start, and the one across it stays, so a short tooltip is not
-        // squarer there than a tall one.
+        // Arrow-edge corners: the foot reaches 1.77 units (= 2.5/√2, the default `size-2.5` arrow)
+        // either side of the arrow's centre, so they go elliptical on short tooltips. See the
+        // Tooltip docs.
         "[--tooltip-arrow-corner:min(var(--radius-md),calc(50%-1px-var(--spacing)*1.77))]",
         "has-[.PopupArrow]:data-[side=left]:rounded-r-(--tooltip-arrow-corner)",
         "has-[.PopupArrow]:data-[side=right]:rounded-l-(--tooltip-arrow-corner)",
