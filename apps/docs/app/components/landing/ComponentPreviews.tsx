@@ -133,9 +133,7 @@ export function StructurePreview() {
             <span className="font-medium text-[13px]">Installation</span>
             <ChevronDown className="size-3.5 rotate-180 text-muted-foreground" />
           </div>
-          <span className="text-muted-foreground text-[12px]">
-            Import theme.css once at the entry.
-          </span>
+          <span className="text-muted-foreground text-[12px]">Import theme.css once.</span>
         </div>
         <div className="flex items-center justify-between px-0.5 py-[9px]">
           <span className="font-medium text-[13px]">Motion</span>
