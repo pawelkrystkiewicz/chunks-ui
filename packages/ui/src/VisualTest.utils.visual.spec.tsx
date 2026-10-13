@@ -2,6 +2,7 @@ import { render } from "@testing-library/react";
 import type { CSSProperties, ReactNode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { page, userEvent } from "vitest/browser";
+import { Menu } from "./components/menu";
 import { Popover } from "./components/popover";
 import {
   expectNoOverflow,
@@ -109,6 +110,42 @@ describe("overflowPast", () => {
     ).toEqual({ ...none, right: 60 });
   });
 
+  it("counts a popup the box's content portals to <body>", async () => {
+    const { getByTestId } = render(
+      <div data-testid="box" style={{ margin: 100, width: 200, height: 50 }}>
+        <Popover.Root defaultOpen>
+          <Popover.Trigger>Open</Popover.Trigger>
+          <Popover.Content>
+            <div style={{ height: 100 }}>Below the box</div>
+          </Popover.Content>
+        </Popover.Root>
+      </div>,
+    );
+    const below = page.getByText("Below the box");
+    await expect.element(below).toBeVisible();
+    // Floating UI has positioned the popup once it left the page's top left
+    await expect.poll(() => below.element().getBoundingClientRect().top).toBeGreaterThan(100);
+    expect(overflowPast(getByTestId("box")).bottom).toBeGreaterThan(0);
+  });
+
+  // The portal's <div> spans <body> at no height, and a modal menu lays a transparent inert
+  // backdrop over the whole page: neither paints anything a screenshot crops
+  it("counts neither a portal's own box nor a modal popup's inert backdrop", async () => {
+    const { getByTestId } = render(
+      <div data-testid="box" style={{ height: 300 }}>
+        <Menu.Root defaultOpen>
+          <Menu.Trigger>Options</Menu.Trigger>
+          <Menu.Content>
+            <Menu.Item>Edit</Menu.Item>
+          </Menu.Content>
+        </Menu.Root>
+      </div>,
+    );
+    await expect.element(page.getByRole("menuitem", { name: "Edit" })).toBeVisible();
+    expect(document.querySelector("[data-base-ui-portal] [data-base-ui-inert]")).not.toBeNull();
+    expect(overflowPast(getByTestId("box"))).toEqual(none);
+  });
+
   it("does not count content inside an overflow: auto or hidden box, but counts the box", () => {
     for (const overflow of ["auto", "hidden"]) {
       expect(
@@ -162,6 +199,46 @@ describe("toMatchScreenshot", () => {
     await userEvent.click(page.getByRole("button", { name: "Open" }));
     await expect.element(page.getByText("Wider than the page")).toBeVisible();
     await expect(expect(body).toMatchScreenshot()).rejects.toThrow(cropped);
+  });
+
+  // The popup portals to <body>, outside the fixture, and opens below the trigger, past the
+  // fixture's bottom edge
+  it("fails when a popup the fixture opens reaches past the fixture", async () => {
+    const { fixture } = await renderFixture(
+      <Popover.Root>
+        <Popover.Trigger>Open</Popover.Trigger>
+        <Popover.Content>
+          <div style={{ height: 100 }}>Below the fixture</div>
+        </Popover.Content>
+      </Popover.Root>,
+    );
+    await userEvent.click(page.getByRole("button", { name: "Open" }));
+    const popup = page.getByText("Below the fixture");
+    await expect.element(popup).toBeVisible();
+    expect(fixture.contains(popup.element())).toBe(false);
+    await expect(expect(fixture).toMatchScreenshot()).rejects.toThrow(cropped);
+  });
+
+  it("waits for a locator's element that renders after the call, then checks it", async () => {
+    const late = page.getByTestId("late");
+    expect(late.query()).toBeNull();
+    const screenshot = expect(late).toMatchScreenshot();
+    // 200px of content in a 100px box: the overflow check, not a missing element, fails the call
+    render(
+      <div data-testid="late" style={{ width: 100 }}>
+        <div style={{ width: 300, height: 10 }} />
+      </div>,
+    );
+    await expect(screenshot).rejects.toThrow(cropped);
+  });
+
+  it("fails at once with Vitest's own error for a nullish target", async () => {
+    const start = performance.now();
+    await expect(expect(null).toMatchScreenshot()).rejects.toThrow(
+      "Expected element or locator to be defined",
+    );
+    // Before an expect.element poll would give up (1s by default)
+    expect(performance.now() - start).toBeLessThan(1000);
   });
 });
 
