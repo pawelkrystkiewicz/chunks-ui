@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { classNames, missingClasses, scanProblem } from "../check-tailwind-compat";
+import { classNames, missingClasses, scanProblem, themeUtilities } from "../check-tailwind-compat";
 
 // Shaped like Tailwind CLI output: a banner comment with a URL, nested variants, media queries
 const OLDEST = `/*! tailwindcss v4.0.0 | MIT License | https://tailwindcss.com */
@@ -64,6 +64,41 @@ describe("scanProblem", () => {
     expect(scanProblem(new Set(["p-1"]), "4.0.0")).toMatch(
       /4\.0\.0 .*disabled:pointer-events-none/,
     );
+  });
+
+  it("accepts a set with every utility the theme defines", () => {
+    const names = new Set(["disabled:pointer-events-none", "font-heading", "touch-target"]);
+    expect(scanProblem(names, "4.3.3", ["font-heading", "touch-target"])).toBeUndefined();
+  });
+
+  it("reports the utilities the theme defines that the set lacks", () => {
+    const names = new Set(["disabled:pointer-events-none", "font-heading"]);
+    const problem = scanProblem(names, "4.3.3", ["font-heading", "touch-target"]);
+    expect(problem).toMatch(/4\.3\.3 .*touch-target/);
+    expect(problem).not.toMatch(/font-heading/);
+  });
+});
+
+describe("themeUtilities", () => {
+  it("lists the utilities a stylesheet defines with @utility", () => {
+    const css = `@source "./";
+/* @utility in-a-comment { } */
+@utility font-heading {
+  font-family: var(--font-heading);
+}
+
+@utility touch-target {
+  :where(&) {
+    position: relative;
+  }
+}
+`;
+    expect(themeUtilities(css)).toEqual(["font-heading", "touch-target"]);
+  });
+
+  // A functional utility has no class of its own: only `tab-2`, `tab-4`... are classes
+  it("skips functional utilities", () => {
+    expect(themeUtilities("@utility tab-* {\n  tab-size: --value(integer);\n}\n")).toEqual([]);
   });
 });
 
