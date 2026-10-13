@@ -17,11 +17,8 @@ function AddToast({
   actionProps?: ComponentPropsWithoutRef<"button">;
 }) {
   const manager = Toast.useToast();
-  // A fixed id: if the component mounts again (<Activity> showing it, a remount), adding again
-  // updates this toast instead of adding a second one. (StrictMode's second run is not the
-  // reason: a ref guard would cover that.) The effect runs on mount only: `useToast()` returns a
-  // new `manager` on every render and `actionProps` is a new object, and updating the toast
-  // renders again.
+  // A fixed id: a remount updates this toast instead of adding a second one. Mount-only on
+  // purpose: `manager` and `actionProps` change every render, and updating the toast renders again.
   // biome-ignore lint/correctness/useExhaustiveDependencies: the props are fixed in each spec
   useEffect(() => {
     manager.add({ id: "visual-toast", title, description, actionProps });

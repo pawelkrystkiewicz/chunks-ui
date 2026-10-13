@@ -16,10 +16,8 @@ declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean | undefined;
 }
 
-// Consumers develop under StrictMode (Next.js turns it on), which double-renders and re-runs
-// effects, as in the unit suite (vitest.setup.ts). Every render() here runs under it too, so an
-// effect that misbehaves when run again shows in the browser: in geometry, in a spring, or in a
-// screenshot.
+// StrictMode on, as consumers (Next.js) and the unit suite run: an effect that misbehaves when
+// run again shows in geometry, a spring or a screenshot.
 configure({ reactStrictMode: true });
 
 // Manrope, the theme's --font-sans, from local files: the weights (200–800) and subsets the docs
