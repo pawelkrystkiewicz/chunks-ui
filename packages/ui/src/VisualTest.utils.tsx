@@ -200,6 +200,11 @@ export function contentSpan(el: Element, dir: Dir) {
   };
 }
 
+/** How far an arrow's foot reaches past its unturned box on each side: (√2 − 1)/2 of its size. */
+export function arrowOverhang(arrow: Element) {
+  return (px(getComputedStyle(arrow).width) * (Math.SQRT2 - 1)) / 2;
+}
+
 /** Chromium lays boxes out in 1/64 px, so an arrow held a fraction of a pixel in rounds to it. */
 export const LAYOUT_ROUNDING_PX = 1 / 64;
 

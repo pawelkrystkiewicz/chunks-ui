@@ -3,6 +3,7 @@ import { render } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import {
   applyTheme,
+  arrowOverhang,
   LAYOUT_ROUNDING_PX,
   resetTheme,
   THEMES,
@@ -185,10 +186,9 @@ async function openNearCorner(side: Side, align: Align, dir: Direction, arrowPad
 }
 
 /**
- * Opens a tooltip on the top or bottom `side` with `openNearCorner` and measures, along the edge
- * the arrow stands on, the distance from the popup's `align` end to the nearer end of the arrow's
- * foot (its widest point, on the popup edge). Also returns the popup's corner radius, and how far
- * the foot reaches past the arrow's unturned box on each side: (√2 − 1)/2 of its size.
+ * With `openNearCorner` on the top or bottom `side`, measures along the arrow's edge the distance
+ * from the popup's `align` end to the nearer end of the arrow's foot (its widest point). Also
+ * returns the popup's corner radius and the arrow's overhang.
  */
 async function footNearCorner(side: "top" | "bottom", align: Align, arrowPadding?: number) {
   const { arrow, popup, unmount } = await openNearCorner(side, align, "ltr", arrowPadding);
@@ -196,7 +196,7 @@ async function footNearCorner(side: "top" | "bottom", align: Align, arrowPadding
   const p = popup.getBoundingClientRect();
   const foot = align === "start" ? a.left - p.left : p.right - a.right;
   const radius = Number.parseFloat(getComputedStyle(popup).borderTopLeftRadius);
-  const overhang = (Number.parseFloat(getComputedStyle(arrow).width) * (Math.SQRT2 - 1)) / 2;
+  const overhang = arrowOverhang(arrow);
   unmount();
   return { foot, radius, overhang };
 }
@@ -253,10 +253,8 @@ function verticalRadius(popup: Element, corner: Corner) {
   box.append(probe);
   document.body.append(box);
   const radius = probe.getBoundingClientRect().height;
-  // A radius the probe rejects would measure 0 and let every bound above it pass
-  const accepted = probe.style.height !== "";
   box.remove();
-  expect(accepted).toBe(true);
+  // A radius the probe rejects would measure 0 and let every bound above it pass
   expect(radius).toBeGreaterThan(0);
   return radius;
 }
@@ -291,14 +289,12 @@ describe.each(ONE_LINE_SIDES)(
       const p = popup.getBoundingClientRect();
       const physical = physicalSide(side, dir) as "left" | "right";
       const [top, bottom] = ARROW_EDGE_CORNERS[physical];
+      // The gap to the corner isn't bounded above: Floating UI holds the arrow at the middle of a
+      // popup too short for the padding. `verticalRadius` rejects a radius of 0.
       expect(a.top - p.top).toBeGreaterThanOrEqual(verticalRadius(popup, top) - LAYOUT_ROUNDING_PX);
       expect(p.bottom - a.bottom).toBeGreaterThanOrEqual(
         verticalRadius(popup, bottom) - LAYOUT_ROUNDING_PX,
       );
-      // The lower bound alone passes squared corners (a radius of 0). The gap to the corner isn't
-      // bounded above: Floating UI holds the arrow at the middle of a popup too short for the padding.
-      expect(verticalRadius(popup, top)).toBeGreaterThan(0);
-      expect(verticalRadius(popup, bottom)).toBeGreaterThan(0);
     });
   },
 );

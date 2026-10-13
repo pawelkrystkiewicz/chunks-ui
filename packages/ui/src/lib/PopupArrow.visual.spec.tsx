@@ -8,6 +8,7 @@ import { Menu } from "../components/menu";
 import { Popover } from "../components/popover";
 import {
   applyTheme,
+  arrowOverhang,
   describeMotionPaths,
   eachPaintedFrame,
   LAYOUT_ROUNDING_PX,
@@ -267,8 +268,7 @@ function nearCorner(kind: Kind, side: PhysicalSide, align: Align, arrowPadding?:
 /**
  * Renders `nearCorner` and measures, along the edge the arrow stands on, the distance from the
  * popup's `align` end to the nearer corner of the arrow's foot (its widest point, on the inner edge
- * of the popup's border). Also returns the popup's corner radius, and how far the foot reaches past
- * the arrow's unturned box on each side: (√2 − 1)/2 of its size.
+ * of the popup's border). Also returns the popup's corner radius and the arrow's overhang.
  */
 async function footNearCorner(kind: Kind, side: PhysicalSide, align: Align, arrowPadding?: number) {
   const { unmount } = render(nearCorner(kind, side, align, arrowPadding));
@@ -283,7 +283,7 @@ async function footNearCorner(kind: Kind, side: PhysicalSide, align: Align, arro
     return align === "start" ? a.top - p.top : p.bottom - a.bottom;
   });
   const radius = Number.parseFloat(getComputedStyle(popup).borderTopLeftRadius);
-  const overhang = (Number.parseFloat(getComputedStyle(arrow).width) * (Math.SQRT2 - 1)) / 2;
+  const overhang = arrowOverhang(arrow);
   unmount();
   return { foot, radius, overhang };
 }
