@@ -525,15 +525,15 @@ function TabsAnimatePane({
   const mergedRef = useMergedRef(ref, consumerRef);
   const [enterOnMount] = useState(enter);
   const entry = useRef<{ complete(): void } | null>(null);
-  // Whether a frame of the entry has painted
+  // Whether Motion has rendered a frame of the entry
   const entryShown = useRef(false);
   useLayoutEffect(() => {
     const pane = ref.current;
     if (!enterOnMount || !pane) return;
     const { m, initial, animate, transition } = enterOnMount;
     if (entryShown.current) {
-      // <Activity> shows the pane again after hiding it, once a frame of the entry has painted:
-      // finish the entry, don't play it again. A pane hidden before its first frame paints plays
+      // <Activity> shows the pane again after hiding it, once Motion has rendered a frame of the entry:
+      // finish the entry, don't play it again. A pane hidden before that first frame plays
       // the entry again, on purpose, as StrictMode's re-run does.
       const controls = m.animate(pane, animate as never, { duration: 0 });
       return () => controls.stop();
