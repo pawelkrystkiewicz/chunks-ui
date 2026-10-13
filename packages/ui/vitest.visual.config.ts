@@ -4,6 +4,18 @@ import { defineConfig } from "vitest/config";
 import type { BrowserCommand } from "vitest/node";
 import type { AccessibilityNode, EmulatedMedia } from "./src/VisualTest.utils";
 
+/**
+ * The runner's browser window, in CSS px. Vitest scales the test page down until it fits the
+ * window, and Playwright's default window (1280 × 720) is shorter than the 414 × 896 page, so
+ * screenshots came out at 0.8 scale. This window holds every page size the specs set, so a
+ * screenshot has one px per CSS px.
+ */
+const RUNNER_WINDOW = { width: 1280, height: 1024 };
+
+/** Playwright with the runner window above and the given reduced-motion preference */
+export const playwrightProvider = (reducedMotion: "reduce" | "no-preference") =>
+  playwright({ contextOptions: { reducedMotion, viewport: RUNNER_WINDOW } });
+
 /** Emulates media features (e.g. no reduced-motion preference, to reach the Motion path). */
 const emulateMedia: BrowserCommand<[options: EmulatedMedia]> = async ({ page }, options) => {
   await page.emulateMedia(options);
@@ -86,13 +98,13 @@ export default defineConfig({
     browser: {
       enabled: true,
       headless: true,
-      provider: playwright(),
+      provider: playwrightProvider("reduce"),
       commands: { emulateMedia, parkPointer, accessibilityTree },
       instances: [
         // Reduced motion: components skip Motion springs, so screenshots never catch one mid-way
         {
           browser: "chromium",
-          provider: playwright({ contextOptions: { reducedMotion: "reduce" } }),
+          provider: playwrightProvider("reduce"),
           // The WebKit smoke specs run in their own project, vitest.webkit.config.ts
           exclude: ["src/**/*.motion.visual.spec.tsx", "src/**/*.webkit.visual.spec.tsx"],
         },
@@ -100,7 +112,7 @@ export default defineConfig({
         {
           browser: "chromium",
           name: "chromium-motion",
-          provider: playwright({ contextOptions: { reducedMotion: "no-preference" } }),
+          provider: playwrightProvider("no-preference"),
           include: ["src/**/*.motion.visual.spec.tsx"],
         },
       ],

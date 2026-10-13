@@ -1,7 +1,8 @@
 import { render } from "@testing-library/react";
 import type { CSSProperties, ReactNode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
-import { overflowPast } from "./VisualTest.utils";
+import { page } from "vitest/browser";
+import { overflowPast, withViewport } from "./VisualTest.utils";
 
 /** A 100 × 50 box, off the page's origin, with `children` inside */
 function box(children: ReactNode, style?: CSSProperties) {
@@ -118,5 +119,27 @@ describe("overflowPast", () => {
         ),
       ).toEqual({ ...none, right: 60 });
     }
+  });
+});
+
+/** Width and height in px of a screenshot of the test page */
+async function screenshotSize() {
+  const image = new Image();
+  image.src = `data:image/png;base64,${await page.screenshot({ save: false })}`;
+  await image.decode();
+  return { width: image.naturalWidth, height: image.naturalHeight };
+}
+
+describe("a screenshot of the page", () => {
+  it("has one px per CSS px on the default 414 × 896 page", async () => {
+    expect(await screenshotSize()).toEqual({ width: 414, height: 896 });
+  });
+
+  describe("set wider by withViewport", () => {
+    withViewport(1000);
+
+    it("has one px per CSS px too", async () => {
+      expect(await screenshotSize()).toEqual({ width: 1000, height: 896 });
+    });
   });
 });
