@@ -4,7 +4,9 @@
     "src/**/*.visual.spec.tsx",
     "src/VisualTest.utils.tsx",
     "src/VisualTest.overlays.tsx",
-    "vitest.visual.setup.ts"
+    "vitest.visual.setup.ts",
+    "vitest.visual.config.ts",
+    "vitest.webkit.config.ts"
   ],
   "exclude": ["dist", "node_modules"],
   "compilerOptions": {

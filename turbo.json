@@ -35,6 +35,9 @@
     "test:visual:update": {
       "cache": false
     },
+    "test:webkit": {
+      "cache": false
+    },
     "generate:llm": {
       "cache": false
     }

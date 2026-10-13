@@ -127,7 +127,7 @@ The visual suite runs in Chromium only, so a bug that only Safari has does not s
 
 - **Geometry and paint, no screenshot baselines.** There is no second set of PNGs to keep up to date. A paint check reads a screenshot as data: it counts the pixels in an element's box that change when the element is hidden. 0 means that WebKit laid the element out but painted none of it. A geometry check alone does not find that.
 - **A known WebKit bug is asserted by a plain `it`** (W80, #341). WebKit paints nothing of a `Tabs.Contents` panel when both conditions are true: the panel is in a CSS column after the first, and the slid track reaches over a composited layer that paints before it. On `/create`, once #295 moves TabsCard back to `Tabs.Contents`, that layer is the sticky theme sidebar, which is composited while the page scrolls. Layout and hit testing are correct, and Chromium paints the panel. The bug is in WebKit's compositing inside CSS columns, and no change to `Tabs.Contents` prevents it. Tried and failed: `will-change`, `contain`, `isolation`, clipping, a 3D transform, a margin or `left` instead of the transform. The page can work around it: give the columns container its own composited layer (`will-change: transform`), and the panel paints. A spec checks this workaround. The bug spec asserts that 0 pixels paint, so when it starts to fail, WebKit has fixed the bug: flip it to expect painted pixels and rename it. Keep the workaround spec: users' Safari lags behind WebKit.
-- **Run it locally** in `packages/ui`:
+- **Run it locally** from the repo root or `packages/ui`:
 
   ```bash
   bunx playwright install webkit   # once
