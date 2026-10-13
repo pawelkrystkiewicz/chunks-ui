@@ -123,12 +123,35 @@ export type EmulatedMedia = {
   forcedColors?: "active" | "none";
 };
 
+/** A node of Chromium's accessibility tree, as the `accessibilityTree` command returns it. */
+export type AccessibilityNode = { role: string; name: string; children: AccessibilityNode[] };
+
 declare module "vitest/browser" {
   interface BrowserCommands {
     /** Playwright `page.emulateMedia`, registered in vitest.visual.config.ts. */
     emulateMedia: (options: EmulatedMedia) => Promise<void>;
     /** Moves the mouse outside the viewport, registered in vitest.visual.config.ts. */
     parkPointer: () => Promise<void>;
+    /**
+     * Chromium's accessibility tree for the element a CSS selector matches, read over CDP;
+     * registered in vitest.visual.config.ts. `accessibilityTreeOf` takes an element instead.
+     */
+    accessibilityTree: (selector: string) => Promise<AccessibilityNode>;
+  }
+}
+
+/**
+ * Chromium's accessibility tree for `element`: its role and the name Chromium computes, which
+ * is what assistive tech gets, and the same for the nodes below it (ignored ones left out).
+ * Testing Library computes names with its own implementation of the spec, which can differ.
+ */
+export async function accessibilityTreeOf(element: Element) {
+  const id = crypto.randomUUID();
+  element.setAttribute("data-accessibility-tree", id);
+  try {
+    return await commands.accessibilityTree(`[data-accessibility-tree="${id}"]`);
+  } finally {
+    element.removeAttribute("data-accessibility-tree");
   }
 }
 

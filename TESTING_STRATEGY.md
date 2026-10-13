@@ -92,6 +92,24 @@ it("has no a11y violations", async () => {
 
 Setup: `jest-axe` is globally configured in `vitest.setup.ts` — `toHaveNoViolations` is available on all `expect()` calls.
 
+### Accessible names in Chromium
+
+The jsdom specs compute roles and names with Testing Library, which has its own implementation of the accessible-name spec. To check the name Chromium computes, which is what assistive tech gets, use `accessibilityTreeOf(element)` from `VisualTest.utils.tsx` in a visual spec:
+
+```tsx
+render(<Chip data-testid="chip" onRemove={() => {}}>Apple</Chip>);
+expect(await accessibilityTreeOf(page.getByTestId("chip").element())).toEqual({
+  role: "generic",
+  name: "",
+  children: [
+    { role: "StaticText", name: "Apple", children: [] },
+    { role: "button", name: "Remove Apple", children: [] },
+  ],
+});
+```
+
+It runs the `accessibilityTree` browser command (`vitest.visual.config.ts`), which takes a CSS selector, reads Chromium's accessibility tree over CDP (`Accessibility.getFullAXTree`) and returns `{ role, name, children }` for the element and each node below it. Ignored nodes below it are left out and their children take their place; `InlineTextBox` nodes are left out. Chromium only. `ChipRemoveName.visual.spec.tsx` uses it.
+
 ## Visual Regression Tests (`*.visual.spec.tsx`)
 
 Browser specs (Vitest browser mode, Playwright Chromium) in `packages/ui`. They screenshot components and compare them with committed baselines, and they cover the geometry that jsdom can't measure (positions, sizes, overflow).
