@@ -212,11 +212,9 @@ export function DatePicker({
           // The field reads its value from here, not from the button's empty value
           value={isoValue}
           render={(controlProps, state) => {
-            // The name Field.Control resolves comes through here: Field.Root's, else the
-            // picker's (`const name = fieldName ?? nameProp` in Base UI's FieldControl), so the
-            // form data uses the name a Base UI Form uses for `errors` and `onFormSubmit`. It
-            // goes on the form input, not the button. `fieldRef` tells the field which element
-            // to validate and to focus when invalid.
+            // Field.Control's resolved name (`fieldName ?? nameProp`) goes on the form input, not
+            // the button, so form data matches Base UI Form's keys. `fieldRef` is the element
+            // the field validates and focuses.
             const {
               name: formName,
               ref: fieldRef,
