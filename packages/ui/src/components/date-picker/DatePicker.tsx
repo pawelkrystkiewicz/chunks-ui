@@ -16,6 +16,7 @@ import { mergeLabels } from "../../lib/labels";
 import { usePortalContainer } from "../../lib/portal-container";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { Calendar, type CalendarProps, validDate } from "../calendar/Calendar";
+import { RING_TRANSITION } from "../shared";
 import { type DatePickerLabels, DEFAULT_DATE_PICKER_LABELS } from "./DatePicker.Labels";
 
 type DatePickerOwnProps = Pick<
@@ -241,6 +242,7 @@ export function DatePicker({
                   className={cn(
                     "flex h-ui-height w-full cursor-pointer items-center rounded-md border border-input bg-background px-3 text-left text-sm",
                     "focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
+                    RING_TRANSITION,
                     "disabled:pointer-events-none disabled:opacity-50",
                     !displayValue && "text-muted-foreground",
                   )}

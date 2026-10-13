@@ -11,6 +11,7 @@ import { ClearButton } from "./components/clear-button";
 import { Collapsible } from "./components/collapsible";
 import { Combobox } from "./components/combobox";
 import { DatePicker, DEFAULT_DATE_PICKER_LABELS } from "./components/date-picker";
+import { Dialog } from "./components/dialog";
 import { Drawer } from "./components/drawer";
 import { Input } from "./components/input";
 import { Menu } from "./components/menu";
@@ -56,7 +57,7 @@ function durationsOf(el: Element) {
   );
 }
 
-function AddToast() {
+function AddToast({ action }: { action?: string }) {
   const manager = Toast.useToast();
   const added = useRef(false);
   useEffect(() => {
@@ -66,83 +67,98 @@ function AddToast() {
       title: "Saved",
       dismissible: true,
       timeout: 0,
-      actionProps: { children: "Undo" },
+      actionProps: { children: "Undo", className: action },
     });
-  }, [manager]);
+  }, [manager, action]);
   return null;
 }
 
-const toast = (
+const toast = (action?: string) => (
   <Toast.Provider>
-    <AddToast />
+    <AddToast action={action} />
     <Toast.Viewport />
   </Toast.Provider>
 );
 
-const tabs = (
+const tabs = ({ tab, panel }: { tab?: string; panel?: string }) => (
   <Tabs.Root defaultValue="a">
     <Tabs.List>
       <Tabs.Tab value="a">First</Tabs.Tab>
-      <Tabs.Tab value="b">Target</Tabs.Tab>
+      <Tabs.Tab value="b" className={tab}>
+        Target
+      </Tabs.Tab>
     </Tabs.List>
-    <Tabs.Panel value="a">Panel</Tabs.Panel>
+    <Tabs.Panel value="a" className={panel}>
+      Panel
+    </Tabs.Panel>
   </Tabs.Root>
 );
 
 // A fixed month, so the grid is the same whatever the date
-const calendar = <Calendar defaultValue={new Date(2026, 2, 15)} />;
+const calendar = () => <Calendar defaultValue={new Date(2026, 2, 15)} />;
 
 type RingCase = {
   part: string;
-  ui: ReactNode;
+  /** Renders the part, with `className` on it */
+  ui: (className?: string) => ReactNode;
   /** The element that takes keyboard focus */
   target: () => Promise<HTMLElement>;
   /** The element that draws the ring, when that is not the target */
   ring?: () => Element;
-  /** The ring is the browser's default outline, not `--ring`: only its transition is checked */
-  browserRing?: true;
+  /** The part takes no `className` of its own: a utility goes on its element */
+  internal?: true;
+  /** A modal popup makes the button before it inert, so the keyboard modality comes from the tab alone */
+  modal?: true;
 };
 
 const byTestId = (id: string) => () => screen.getByTestId(id);
 
+const INPUT: RingCase = {
+  part: "Input",
+  ui: (className) => <Input aria-label="Target" className={className} />,
+  target: () => screen.findByRole("textbox", { name: "Target" }),
+};
+
 const RING_CASES: RingCase[] = [
   {
     part: "Tabs.Tab",
-    ui: tabs,
+    ui: (tab) => tabs({ tab }),
     target: () => screen.findByRole("tab", { name: "Target" }),
   },
   {
     part: "Tabs.Panel",
-    ui: tabs,
+    ui: (panel) => tabs({ panel }),
     target: () => screen.findByRole("tabpanel"),
   },
   {
     part: "ToggleGroup.Item",
-    ui: (
+    ui: (className) => (
       <ToggleGroup.Root>
-        <ToggleGroup.Item value="a">Target</ToggleGroup.Item>
+        <ToggleGroup.Item value="a" className={className}>
+          Target
+        </ToggleGroup.Item>
       </ToggleGroup.Root>
     ),
     target: () => screen.findByRole("button", { name: "Target" }),
   },
   {
     part: "Checkbox.Root",
-    ui: <Checkbox.Root aria-label="Target" />,
+    ui: (className) => <Checkbox.Root aria-label="Target" className={className} />,
     target: () => screen.findByRole("checkbox", { name: "Target" }),
   },
   {
     part: "Radio.Root",
-    ui: (
+    ui: (className) => (
       <Radio.Group>
-        <Radio.Root value="a" aria-label="Target" />
+        <Radio.Root value="a" aria-label="Target" className={className} />
       </Radio.Group>
     ),
     target: () => screen.findByRole("radio", { name: "Target" }),
   },
   {
     part: "Switch.Root",
-    ui: (
-      <Switch.Root aria-label="Target">
+    ui: (className) => (
+      <Switch.Root aria-label="Target" className={className}>
         <Switch.Thumb />
       </Switch.Root>
     ),
@@ -150,23 +166,70 @@ const RING_CASES: RingCase[] = [
   },
   {
     part: "ThemeToggle",
-    ui: <ThemeToggle theme="light" aria-label="Target" />,
+    ui: (className) => <ThemeToggle theme="light" aria-label="Target" className={className} />,
     target: () => screen.findByRole("button", { name: "Target" }),
+  },
+  {
+    part: "Tabs.Content",
+    ui: (className) => (
+      <Tabs.Root defaultValue="a">
+        <Tabs.List>
+          <Tabs.Tab value="a">First</Tabs.Tab>
+        </Tabs.List>
+        <Tabs.Contents>
+          <Tabs.Content value="a" className={className}>
+            Panel
+          </Tabs.Content>
+        </Tabs.Contents>
+      </Tabs.Root>
+    ),
+    target: () => screen.findByRole("tabpanel"),
+  },
+  {
+    part: "Dialog body",
+    ui: (className) => (
+      <Dialog.Root defaultOpen>
+        <Dialog.Portal>
+          <Dialog.Popup>
+            <Dialog.Title>Terms</Dialog.Title>
+            <Dialog.Body className={className}>Text</Dialog.Body>
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>
+    ),
+    target: () => screen.findByRole("region", { name: "Terms" }),
+    modal: true,
+  },
+  {
+    part: "Combobox.Control",
+    // The wrapper draws the ring while the input inside has the focus
+    ui: (className) => (
+      <Combobox.Root items={["Apple"]}>
+        <Combobox.Control data-testid="ring" className={className}>
+          <Combobox.Input aria-label="Target" />
+        </Combobox.Control>
+      </Combobox.Root>
+    ),
+    target: () => screen.findByRole("combobox", { name: "Target" }),
+    ring: byTestId("ring"),
   },
   {
     part: "Calendar previous month",
     ui: calendar,
     target: () => screen.findByRole("button", { name: DEFAULT_CALENDAR_LABELS.previousMonth }),
+    internal: true,
   },
   {
     part: "Calendar next month",
     ui: calendar,
     target: () => screen.findByRole("button", { name: DEFAULT_CALENDAR_LABELS.nextMonth }),
+    internal: true,
   },
   {
     part: "Calendar day",
     ui: calendar,
     target: () => screen.findByRole("button", { name: "Sunday, March 15, 2026" }),
+    internal: true,
   },
   {
     part: "Toast.Action",
@@ -175,15 +238,16 @@ const RING_CASES: RingCase[] = [
   },
   {
     part: "Toast.Close",
-    ui: toast,
+    ui: () => toast(),
     // Base UI hides the close button from assistive tech, so it has no accessible role
     target: () => screen.findByLabelText(DEFAULT_TOAST_LABELS.close),
+    internal: true,
   },
   {
     part: "NumberField.Group",
-    ui: (
+    ui: (className) => (
       <NumberField.Root defaultValue={1}>
-        <NumberField.Group data-testid="ring">
+        <NumberField.Group data-testid="ring" className={className}>
           <NumberField.Decrement />
           <NumberField.Input aria-label="Target" />
           <NumberField.Increment />
@@ -195,28 +259,24 @@ const RING_CASES: RingCase[] = [
   },
   {
     part: "Combobox.Input",
-    ui: (
+    ui: (className) => (
       <Combobox.Root items={["Apple"]}>
-        <Combobox.Input aria-label="Target" />
+        <Combobox.Input aria-label="Target" className={className} />
       </Combobox.Root>
     ),
     target: () => screen.findByRole("combobox", { name: "Target" }),
   },
   {
     part: "Textarea",
-    ui: <Textarea aria-label="Target" />,
+    ui: (className) => <Textarea aria-label="Target" className={className} />,
     target: () => screen.findByRole("textbox", { name: "Target" }),
   },
-  {
-    part: "Input",
-    ui: <Input aria-label="Target" />,
-    target: () => screen.findByRole("textbox", { name: "Target" }),
-  },
+  INPUT,
   {
     part: "Select.Trigger",
-    ui: (
+    ui: (className) => (
       <Select.Root>
-        <Select.Trigger aria-label="Target">
+        <Select.Trigger aria-label="Target" className={className}>
           <Select.Value />
         </Select.Trigger>
       </Select.Root>
@@ -225,11 +285,11 @@ const RING_CASES: RingCase[] = [
   },
   {
     part: "Slider.Thumb",
-    ui: (
+    ui: (className) => (
       <Slider.Root defaultValue={[40]} aria-label="Target">
         <Slider.Control>
           <Slider.Track>
-            <Slider.Thumb index={0} data-testid="ring" />
+            <Slider.Thumb index={0} data-testid="ring" className={className} />
           </Slider.Track>
         </Slider.Control>
       </Slider.Root>
@@ -240,11 +300,11 @@ const RING_CASES: RingCase[] = [
   },
   {
     part: "Accordion.Trigger",
-    ui: (
+    ui: (className) => (
       <Accordion.Root>
         <Accordion.Item value="a">
           <Accordion.Header>
-            <Accordion.Trigger>Target</Accordion.Trigger>
+            <Accordion.Trigger className={className}>Target</Accordion.Trigger>
           </Accordion.Header>
           <Accordion.Panel>Content</Accordion.Panel>
         </Accordion.Item>
@@ -254,9 +314,9 @@ const RING_CASES: RingCase[] = [
   },
   {
     part: "Collapsible.Trigger",
-    ui: (
+    ui: (className) => (
       <Collapsible.Root>
-        <Collapsible.Trigger>Target</Collapsible.Trigger>
+        <Collapsible.Trigger className={className}>Target</Collapsible.Trigger>
         <Collapsible.Panel>Content</Collapsible.Panel>
       </Collapsible.Root>
     ),
@@ -264,16 +324,20 @@ const RING_CASES: RingCase[] = [
   },
   {
     part: "DatePicker trigger",
-    ui: <DatePicker />,
+    // `className` goes on the wrapper
+    ui: () => <DatePicker />,
     target: () => screen.findByRole("button", { name: DEFAULT_DATE_PICKER_LABELS.placeholder }),
+    internal: true,
   },
   {
     part: "Pagination.Link",
-    ui: (
+    ui: (className) => (
       <Pagination.Root>
         <Pagination.Content>
           <Pagination.Item>
-            <Pagination.Link href="#">Target</Pagination.Link>
+            <Pagination.Link href="#" className={className}>
+              Target
+            </Pagination.Link>
           </Pagination.Item>
         </Pagination.Content>
       </Pagination.Root>
@@ -282,55 +346,90 @@ const RING_CASES: RingCase[] = [
   },
   {
     part: "ClearButton",
-    ui: <ClearButton aria-label="Target" />,
+    ui: (className) => <ClearButton aria-label="Target" className={className} />,
     target: () => screen.findByRole("button", { name: "Target" }),
   },
   {
     part: "Breadcrumb.Link",
-    ui: (
+    ui: (className) => (
       <Breadcrumb.Root>
         <Breadcrumb.List>
           <Breadcrumb.Item>
-            <Breadcrumb.Link href="#">Target</Breadcrumb.Link>
+            <Breadcrumb.Link href="#" className={className}>
+              Target
+            </Breadcrumb.Link>
           </Breadcrumb.Item>
         </Breadcrumb.List>
       </Breadcrumb.Root>
     ),
     target: () => screen.findByRole("link", { name: "Target" }),
-    browserRing: true,
   },
 ];
 
-describe("focus ring with no reduced-motion preference", () => {
-  it.each(RING_CASES)(
-    "$part shows the ring from the moment it takes keyboard focus",
-    async ({ ui, target, ring, browserRing }) => {
-      render(
-        <>
-          <button type="button">Before</button>
-          {ui}
-        </>,
-      );
-      await userEvent.tab();
-      expect(document.activeElement).toBe(screen.getByRole("button", { name: "Before" }));
-      const focused = await target();
-      // Focus moves on from a keyboard-focused element, so the target matches :focus-visible.
-      // Moved in the page, so the style below is read in the same task: a transition would
-      // still be at its start.
-      focused.focus();
-      expect(focused.matches(":focus-visible")).toBe(true);
-      const drawn = ring?.() ?? focused;
-      const { outlineStyle, outlineColor } = getComputedStyle(drawn);
-      if (browserRing) expect(outlineStyle).not.toBe("none");
-      else
-        expect({ outlineStyle, outlineColor }).toEqual({
-          outlineStyle: "solid",
-          outlineColor: ringColor(),
-        });
-      // Nor do its width or offset grow in
-      expect(outlineTransitions(drawn)).toEqual([]);
-    },
+/** Renders `ui` after a button, tabs to the button, then moves focus to the target */
+async function focusRing({ ui, target, ring, internal, modal }: RingCase, utility?: string) {
+  render(
+    <>
+      <button type="button">Before</button>
+      {ui(utility)}
+    </>,
   );
+  await userEvent.tab();
+  if (!modal) expect(document.activeElement).toBe(screen.getByRole("button", { name: "Before" }));
+  const focused = await target();
+  const drawn = ring?.() ?? focused;
+  if (utility) {
+    // Added after render, so this checks the CSS order of the utility, not the `cn` merge
+    if (internal) drawn.classList.add(utility);
+    expect(drawn).toHaveClass(utility);
+  }
+  // Focus moves on from a keyboard-focused element, so the target matches :focus-visible.
+  // Moved in the page, so the style below is read in the same task: a transition would
+  // still be at its start.
+  focused.focus();
+  expect(focused.matches(":focus-visible")).toBe(true);
+  return drawn;
+}
+
+function expectInstantRing(drawn: Element) {
+  const { outlineStyle, outlineColor } = getComputedStyle(drawn);
+  expect({ outlineStyle, outlineColor }).toEqual({
+    outlineStyle: "solid",
+    outlineColor: ringColor(),
+  });
+  // Nor do its width or offset grow in
+  expect(outlineTransitions(drawn)).toEqual([]);
+}
+
+// Timing a consumer may put in `className`: none of it fades or delays the ring
+const UTILITIES = ["duration-500", "delay-200", "transition-all"];
+
+describe("focus ring with no reduced-motion preference", () => {
+  it.each(RING_CASES)("$part shows the ring from the moment it takes keyboard focus", async (c) => {
+    expectInstantRing(await focusRing(c));
+  });
+
+  describe.each(UTILITIES)("with %s in className", (utility) => {
+    it.each(RING_CASES)(
+      "$part shows the ring from the moment it takes keyboard focus",
+      async (c) => {
+        expectInstantRing(await focusRing(c, utility));
+      },
+    );
+  });
+
+  // Guards against a list that drops a property the part changes with its state
+  it.each([
+    { part: "Switch.Root", property: "background-color" },
+    { part: "Calendar day", property: "box-shadow" },
+    { part: "ToggleGroup.Item", property: "box-shadow" },
+    { part: "Checkbox.Root", property: "border-color" },
+  ])("lists $property in the transitions of $part", async ({ part, property }) => {
+    const c = RING_CASES.find((r) => r.part === part);
+    if (!c) throw new Error(`No ring case for ${part}`);
+    const drawn = await focusRing(c);
+    expect(getComputedStyle(drawn).transitionProperty).toContain(property);
+  });
 
   // The ring is left out, not the rest: a colour change, as on hover or press, still fades
   it("fades the colours of a Textarea", () => {
@@ -340,6 +439,27 @@ describe("focus ring with no reduced-motion preference", () => {
     part.style.backgroundColor = "rgb(0, 0, 255)";
     const faded = part.getAnimations().map((a) => (a as CSSTransition).transitionProperty);
     expect(faded.sort()).toEqual(["background-color", "color"]);
+  });
+
+  // With the consumer's timing, while the part has keyboard focus
+  it.each([
+    { utility: "duration-500", duration: 500, delay: 0 },
+    { utility: "delay-200", duration: 300, delay: 200 },
+    // The part's own list and 300ms come after the utility in the CSS
+    { utility: "transition-colors", duration: 300, delay: 0 },
+    { utility: "transition", duration: 300, delay: 0 },
+  ])("fades the colours of a focused Input with $utility", async ({ utility, ...timing }) => {
+    const input = (await focusRing(INPUT, utility)) as HTMLElement;
+    input.style.color = "rgb(255, 0, 0)";
+    input.style.backgroundColor = "rgb(0, 0, 255)";
+    const faded = input.getAnimations().map((a) => {
+      const { duration, delay } = a.effect?.getTiming() ?? {};
+      return { property: (a as CSSTransition).transitionProperty, duration, delay };
+    });
+    expect(faded.sort((a, z) => a.property.localeCompare(z.property))).toEqual([
+      { property: "background-color", ...timing },
+      { property: "color", ...timing },
+    ]);
   });
 });
 

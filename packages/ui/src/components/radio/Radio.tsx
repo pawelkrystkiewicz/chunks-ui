@@ -8,6 +8,7 @@ import { springs } from "../../lib/motion";
 import { useMotion, useReducedMotion } from "../../lib/use-motion";
 import { useMotionAnimate } from "../../lib/use-motion-animate";
 import { type PartRenderProp, useRenderPart } from "../../lib/use-render-part";
+import { RING_ANIMATION_CLASSES } from "../shared";
 
 export type RadioGroupProps = ComponentProps<typeof BaseRadioGroup>;
 
@@ -30,7 +31,8 @@ function RadioRoot({ className, ...props }: RadioRootProps) {
     <BaseRadio.Root
       className={cnState(
         "peer inline-flex size-4 shrink-0 items-center justify-center rounded-full border border-input",
-        "micro-interactions cursor-pointer",
+        ...RING_ANIMATION_CLASSES,
+        "cursor-pointer",
         "focus-visible:outline-2 focus-visible:outline-ring",
         "data-[checked]:border-primary",
         // No pointer-events-none: it would hide the cursor, and Base UI ignores the click anyway.

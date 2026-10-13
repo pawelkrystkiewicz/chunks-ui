@@ -18,6 +18,7 @@ import { springs } from "../../lib/motion";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { useReducedMotion } from "../../lib/use-motion";
 import { useHeldWhileDriving, useMotionAnimate } from "../../lib/use-motion-animate";
+import { RING_ANIMATION_CLASSES } from "../shared";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -300,8 +301,8 @@ function ToggleGroupItem({ className, value, ref, ...props }: ToggleGroupItemPro
       value={value}
       className={cnState(
         "relative z-[1] inline-flex items-center justify-center gap-2 rounded-md px-3 py-1.5 font-medium text-sm",
-        "micro-interactions text-muted-foreground",
-        "hover:text-foreground",
+        ...RING_ANIMATION_CLASSES,
+        "text-muted-foreground hover:text-foreground",
         "data-pressed:text-foreground",
         "focus-visible:outline-2 focus-visible:outline-ring",
         "disabled:pointer-events-none disabled:opacity-50",

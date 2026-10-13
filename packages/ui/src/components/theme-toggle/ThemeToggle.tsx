@@ -4,6 +4,7 @@ import type { ComponentProps, MouseEventHandler, ReactNode } from "react";
 import { cn } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
 import { useReducedMotion } from "../../lib/use-motion";
+import { RING_ANIMATION_CLASSES } from "../shared";
 import { DEFAULT_THEME_TOGGLE_LABELS, type ThemeToggleLabels } from "./ThemeToggle.Labels";
 
 export type Theme = "light" | "dark";
@@ -87,7 +88,7 @@ export function ThemeToggle({
         "relative size-9 cursor-pointer rounded-md",
         "text-muted-foreground hover:bg-accent hover:text-foreground",
         "focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
-        "micro-interactions",
+        ...RING_ANIMATION_CLASSES,
         className,
       )}
     >

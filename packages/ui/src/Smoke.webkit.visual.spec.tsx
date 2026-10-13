@@ -370,31 +370,37 @@ describe("Form controls in WebKit", () => {
 });
 
 describe("Focus rings in WebKit", () => {
-  // `.micro-interactions` lists `outline` after `all`: WebKit must let that later entry win
-  it("shows a Tabs.Tab's ring at once with motion on", async () => {
-    await commands.emulateMedia({ reducedMotion: "no-preference" });
-    try {
-      render(
-        <>
-          <button type="button">Before</button>
-          <Tabs.Root defaultValue="a">
-            <Tabs.List>
-              <Tabs.Tab value="a">First</Tabs.Tab>
-              <Tabs.Tab value="b">Target</Tabs.Tab>
-            </Tabs.List>
-          </Tabs.Root>
-        </>,
-      );
-      await expect.poll(() => matchMedia("(prefers-reduced-motion: reduce)").matches).toBe(false);
-      await userEvent.tab();
-      const tab = screen.getByRole("tab", { name: "Target" });
-      tab.focus();
-      expect(tab.matches(":focus-visible")).toBe(true);
-      // Read in the same task as the focus: a transition would still be at its start
-      expect(getComputedStyle(tab).outlineColor).toBe(ringColor());
-      expect(outlineTransitions(tab)).toEqual([]);
-    } finally {
-      await commands.emulateMedia({ reducedMotion: "reduce" });
-    }
-  });
+  // The ring parts' `[transition-property:…]` list has no outline and sorts after `transition-*`
+  // utilities: WebKit must agree with Chromium
+  it.each(["", "duration-500", "transition-all"])(
+    "shows a Tabs.Tab's ring at once with motion on, with '%s' in className",
+    async (utility) => {
+      await commands.emulateMedia({ reducedMotion: "no-preference" });
+      try {
+        render(
+          <>
+            <button type="button">Before</button>
+            <Tabs.Root defaultValue="a">
+              <Tabs.List>
+                <Tabs.Tab value="a">First</Tabs.Tab>
+                <Tabs.Tab value="b" className={utility}>
+                  Target
+                </Tabs.Tab>
+              </Tabs.List>
+            </Tabs.Root>
+          </>,
+        );
+        await expect.poll(() => matchMedia("(prefers-reduced-motion: reduce)").matches).toBe(false);
+        await userEvent.tab();
+        const tab = screen.getByRole("tab", { name: "Target" });
+        tab.focus();
+        expect(tab.matches(":focus-visible")).toBe(true);
+        // Read in the same task as the focus: a transition would still be at its start
+        expect(getComputedStyle(tab).outlineColor).toBe(ringColor());
+        expect(outlineTransitions(tab)).toEqual([]);
+      } finally {
+        await commands.emulateMedia({ reducedMotion: "reduce" });
+      }
+    },
+  );
 });
