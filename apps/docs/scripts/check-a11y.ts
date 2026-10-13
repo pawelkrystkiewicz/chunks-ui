@@ -97,7 +97,8 @@ type Role = Parameters<Page["getByRole"]>[0];
 /**
  * A popup the run opens and audits on its own, after its page, in every theme: it clicks the first
  * element of role `trigger` named `name` (the page's first example), waits for the one element of
- * role `popup`, runs axe on that element alone, and closes it with Escape. ALLOWED applies to the
+ * role `popup`, runs axe on that element alone, checks the trigger has aria-expanded="true" and
+ * aria-controls set to the popup's id, and closes it with Escape. ALLOWED applies to the
  * popup as to its page.
  */
 type Popup = { page: string; trigger: Role; name: string; popup: Role };
@@ -349,12 +350,30 @@ async function auditPopup(
   matched: Map<Allowed, Set<string>>,
 ) {
   const trigger = page.getByRole(popup.trigger, { name: popup.name, exact: true }).first();
+  // A handle, as some triggers change their name while open (Combobox: "Hide options")
+  const handle = await trigger.elementHandle({ timeout: POPUP_MS });
   await trigger.click({ timeout: POPUP_MS });
   const element = page.getByRole(popup.popup);
   await element.waitFor({ timeout: POPUP_MS });
   const id = await element.getAttribute("id");
   if (!id) throw new Error(`The open ${popup.popup} has no id to scope axe to`);
   const problems = await axe(page, popup.page, theme, matched, { selector: `[id="${id}"]`, label });
+  // The trigger tells assistive technology the popup is open, and which element it is
+  const state = await handle?.evaluate((el) => ({
+    expanded: el.getAttribute("aria-expanded"),
+    controls: el.getAttribute("aria-controls"),
+  }));
+  if (state?.expanded !== "true" || state.controls !== id) {
+    problems.push({
+      page: label,
+      theme,
+      rule: "popup-trigger",
+      help: "The open popup's trigger must have aria-expanded=\"true\" and aria-controls set to the popup's id",
+      targets: [
+        `aria-expanded=${state?.expanded}, aria-controls=${state?.controls}, popup id=${id}`,
+      ],
+    });
+  }
   // The violations found above must survive a popup that won't close
   try {
     await page.keyboard.press("Escape");
