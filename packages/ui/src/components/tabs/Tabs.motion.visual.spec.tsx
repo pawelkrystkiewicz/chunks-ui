@@ -241,12 +241,21 @@ describe("Tabs animations that must stop", () => {
       </Tabs.Root>
     );
     const { rerender, unmount } = render(tabs("a"));
-    rerender(tabs("b"));
-    await nextFrame();
-    await nextFrame();
     // Content › panel wrapper › track
     const track = page.getByText("Panel B").element().parentElement?.parentElement as HTMLElement;
+    const width = track.offsetWidth;
+    const x = () => new DOMMatrix(getComputedStyle(track).transform).m41;
+    rerender(tabs("b"));
+    // Mid-slide: between panel A (0) and panel B (-width). Waits for the track to move rather than
+    // for a set number of frames, as Motion can start the slide a frame or two later under load
+    await expect.poll(x, { timeout: 5000 }).toBeLessThan(-1);
+    expect(x()).toBeGreaterThan(-width + 1);
+    // Still moving, so an animation left running would go on writing below
+    const moving = track.style.transform;
+    await nextFrame();
+    expect(track.style.transform).not.toBe(moving);
     unmount();
+    // Stopping may write the value it stopped at once; after that nothing moves
     await nextFrame();
     const transform = track.style.transform;
     for (let frame = 0; frame < 5; frame++) {
