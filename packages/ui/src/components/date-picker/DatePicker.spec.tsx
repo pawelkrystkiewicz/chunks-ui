@@ -471,6 +471,25 @@ describe("DatePicker in a form", () => {
     expect(formData(screen.getByRole<HTMLFormElement>("form"))).toBe("2026-03-15");
   });
 
+  it("submits under the Field.Root name over its own, as onFormSubmit reports it", async () => {
+    const user = userEvent.setup();
+    const onFormSubmit = vi.fn();
+    render(
+      <Form aria-label="Task" onFormSubmit={onFormSubmit}>
+        <Field.Root name="due">
+          <Field.Label>Due date</Field.Label>
+          <DatePicker name="deadline" defaultValue={new Date(2026, 2, 15)} />
+        </Field.Root>
+        <button type="submit">Save</button>
+      </Form>,
+    );
+    const form = screen.getByRole<HTMLFormElement>("form");
+    expect(Object.fromEntries(new FormData(form))).toEqual({ due: "2026-03-15" });
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    expect(onFormSubmit).toHaveBeenCalledOnce();
+    expect(onFormSubmit.mock.calls[0]?.[0]).toEqual({ due: "2026-03-15" });
+  });
+
   it("submits with the form named by `form` when it is outside that form", () => {
     render(
       <>
