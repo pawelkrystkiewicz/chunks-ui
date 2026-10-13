@@ -55,12 +55,6 @@
   --ring: oklch(0.62 0 0);
   --radius: 0.625rem;
 
-  /*
-   * The smallest hit area, on each axis, that `touch-target` gives a control. Set it on any
-   * element to change it for the controls inside.
-   */
-  --touch-target-size: 44px;
-
   /* Chart colors (shadcn compat) */
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
@@ -225,7 +219,9 @@
 
 /*
  * Grows the hit area of a small control to at least `--touch-target-size` (44px) on each axis,
- * centred on it, without changing its size or layout. Opt-in: no component applies it.
+ * centred on it, without changing its size or layout. Opt-in: no component applies it. The token is
+ * not defined here: it falls back to 44px, and can be set on any scope, in any layer, to change
+ * it (a `:root` declaration here would beat a consumer's `@theme` value).
  *
  * The area is an empty `::after` box. It is absolutely positioned, so it takes no space, and each
  * inset is half of (size - --touch-target-size) when that is negative, 0 otherwise. `::after`

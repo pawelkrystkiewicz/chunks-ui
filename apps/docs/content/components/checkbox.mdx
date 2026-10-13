@@ -77,7 +77,7 @@ The indeterminate state is used for "select all" patterns where some items are c
 
 ## Touch Target
 
-The box is 16px. To make it easier to tap, add [`touch-target`](/utilities#touch-target) to `Checkbox.Root`: the hit area grows to 44×44px, and the box's size and the layout stay the same. A [label](#with-label) is pressable too, so it also makes the target larger.
+The box is 16px. To make it easier to tap, add [`touch-target`](/utilities#touch-target) to `Checkbox.Root`: the hit area grows to 44×44px, and the box's size and the layout stay the same. A [label](#with-label) is pressable too, so it also makes the target larger. In a stacked list, keep rows at least the area size apart centre to centre, or let the label enlarge the target instead: overlapping areas send presses to the next row.
 
 ```tsx
 <Checkbox.Root aria-label="Accept terms" className="touch-target">

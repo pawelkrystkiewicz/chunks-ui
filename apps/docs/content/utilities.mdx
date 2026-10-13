@@ -197,7 +197,7 @@ Use media-style variants (`pointer-coarse:`, `any-pointer-coarse:`, `min-[…]:`
 
 ### Area size
 
-The `--touch-target-size` token sets the smallest size of the area on each axis. It is 44px by default, the size that WCAG 2.5.5 (Target Size, Enhanced) asks for, and `chunks-ui/theme.css` defines it on `:root`. Set it on any element to change it for the controls inside, with an arbitrary property or in CSS:
+The `--touch-target-size` token sets the smallest size of the area on each axis. It is not defined by default: without it the area is 44px, the size that WCAG 2.5.5 (Target Size, Enhanced) asks for. Set it on any scope (an element, `:root`, or `@theme`) to change it for the controls inside, with an arbitrary property or in CSS:
 
 ```tsx
 <div className="[--touch-target-size:48px]">

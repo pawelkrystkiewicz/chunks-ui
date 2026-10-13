@@ -273,7 +273,7 @@ Inside `Field.Root`, Base UI sets `aria-labelledby` on `Combobox.Trigger` to the
 
 ## Touch Targets
 
-`Combobox.Clear` is 14px wide and `Combobox.Trigger` is 24px wide. To make the clear button easier to tap, add [`touch-target`](/utilities#touch-target) to it: its hit area grows to 44×44px, and the layout stays the same. The area also covers the last 15px of the input before the button.
+`Combobox.Clear` is 14px wide and `Combobox.Trigger` is 24px wide. To make the clear button easier to tap, add [`touch-target`](/utilities#touch-target) to it: its hit area grows to 44×44px, and the layout stays the same. The area also covers the last 15px of the input before the button. Keep `Combobox.Clear` before `Combobox.Trigger` in the DOM, as in the examples: the clear button's area covers part of the trigger, and DOM order makes the trigger paint above it.
 
 ```tsx
 <div className="relative">
