@@ -384,7 +384,8 @@ describe("focus ring with no reduced-motion preference", () => {
   it.each([
     { utility: "duration-500", duration: 500, delay: 0 },
     { utility: "delay-200", duration: 300, delay: 200 },
-    { utility: "transition-colors", duration: 150, delay: 0 },
+    // The part's own list and 300ms come after the utility in the CSS
+    { utility: "transition-colors", duration: 300, delay: 0 },
   ])("fades the colours of a focused Input with $utility", async ({ utility, ...timing }) => {
     const input = (await focusRing(INPUT, utility)) as HTMLElement;
     input.style.color = "rgb(255, 0, 0)";

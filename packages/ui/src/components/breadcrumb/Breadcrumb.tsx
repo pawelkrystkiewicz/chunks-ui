@@ -9,6 +9,7 @@ import {
 } from "react";
 import { cn } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
+import { RING_ANIMATION_CLASSES } from "../shared";
 import { type BreadcrumbLabels, DEFAULT_BREADCRUMB_LABELS } from "./Breadcrumb.Labels";
 
 type RenderProps = { className?: string; children?: ReactNode; [key: string]: unknown };
@@ -68,7 +69,8 @@ function BreadcrumbItem({ className, ...props }: BreadcrumbItemProps) {
 
 function BreadcrumbLink({ className, render, children, ...props }: BreadcrumbLinkProps) {
   const classes = cn(
-    "micro-interactions hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
+    RING_ANIMATION_CLASSES,
+    "hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
     className,
   );
 

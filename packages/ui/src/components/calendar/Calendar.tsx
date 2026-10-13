@@ -13,6 +13,7 @@ import {
 import { flushSync } from "react-dom";
 import { cn } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
+import { RING_ANIMATION_CLASSES } from "../shared";
 import { type CalendarLabels, DEFAULT_CALENDAR_LABELS } from "./Calendar.Labels";
 
 export type CalendarProps = {
@@ -356,7 +357,8 @@ export function Calendar({
           onClick={prevMonth}
           className={cn(
             "inline-flex size-7 items-center justify-center rounded-sm",
-            "micro-interactions text-foreground/70",
+            ...RING_ANIMATION_CLASSES,
+            "text-foreground/70",
             "focus-visible:outline-2 focus-visible:outline-ring",
             atFirstMonth
               ? "cursor-not-allowed opacity-40"
@@ -387,7 +389,8 @@ export function Calendar({
           onClick={nextMonth}
           className={cn(
             "inline-flex size-7 items-center justify-center rounded-sm",
-            "micro-interactions text-foreground/70",
+            ...RING_ANIMATION_CLASSES,
+            "text-foreground/70",
             "hover:bg-accent hover:text-accent-foreground",
             "focus-visible:outline-2 focus-visible:outline-ring",
           )}
@@ -466,7 +469,8 @@ export function Calendar({
                         onKeyDown={(event) => handleDayKeyDown(event, date)}
                         className={cn(
                           "inline-flex size-8 items-center justify-center rounded-md text-sm",
-                          "micro-interactions focus-visible:outline-2 focus-visible:outline-ring",
+                          ...RING_ANIMATION_CLASSES,
+                          "focus-visible:outline-2 focus-visible:outline-ring",
                           !isSelected && !isToday && "hover:bg-accent hover:text-accent-foreground",
                           isSelected && "bg-primary text-primary-foreground",
                           isToday &&

@@ -20,6 +20,7 @@ import { useMergedRef } from "../../lib/use-merged-ref";
 import { useMotion, useReducedMotion } from "../../lib/use-motion";
 import { useMotionAnimate } from "../../lib/use-motion-animate";
 import { type PartRenderProp, useRenderPart } from "../../lib/use-render-part";
+import { RING_ANIMATION_CLASSES, RING_TRANSITION } from "../shared";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -131,8 +132,8 @@ function TabsTab({ className, ...props }: TabsTabProps) {
     <BaseTabs.Tab
       className={cnState(
         "relative z-[1] inline-flex items-center justify-center px-4 py-2 font-medium text-sm",
-        "micro-interactions text-muted-foreground",
-        "hover:text-foreground",
+        ...RING_ANIMATION_CLASSES,
+        "text-muted-foreground hover:text-foreground",
         "data-active:text-foreground",
         "focus-visible:outline-2 focus-visible:outline-ring",
         // Base UI keeps a disabled tab focusable: aria-disabled, never the disabled attribute
@@ -147,7 +148,11 @@ function TabsTab({ className, ...props }: TabsTabProps) {
 function TabsPanel({ className, ...props }: TabsPanelProps) {
   return (
     <BaseTabs.Panel
-      className={cnState("mt-2 focus-visible:outline-2 focus-visible:outline-ring", className)}
+      className={cnState(
+        "mt-2 focus-visible:outline-2 focus-visible:outline-ring",
+        RING_TRANSITION,
+        className,
+      )}
       {...props}
     />
   );
@@ -437,6 +442,7 @@ function TabsContent({ className, ...props }: TabsContentProps) {
       className={cnState(
         // Inset, so Tabs.Contents never clips it, in browsers without overflow-clip-margin too
         "focus-visible:-outline-offset-2 focus-visible:outline-2 focus-visible:outline-ring",
+        RING_TRANSITION,
         className,
       )}
       {...props}

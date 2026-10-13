@@ -167,16 +167,20 @@ describe(".micro-interactions with no reduced-motion preference", () => {
     expect(properties).not.toContain("all");
   });
 
-  it.each(COLOR_FADES)(
-    "lets a transition utility replace the colour fade on $component",
+  // Textarea and Slider.Thumb have a ring: their list comes after the utility in the CSS, as on Button
+  it.each(COLOR_FADES.filter(({ component }) => component !== "Table.Row"))(
+    "keeps its list when a transition utility is added to $component",
     ({ ui }) => {
-      // The ring parts keep the colour list's place with one that has no outline (theme.css)
-      const properties = transitionOf(renderTarget(ui("transition-opacity"))).property.split(", ");
-      expect(properties).toContain("opacity");
-      expect(properties).not.toContain("all");
-      expect(properties).not.toContain("outline-color");
+      expect(transitionOf(renderTarget(ui("transition-all"))).property).toBe(
+        "color, background-color, border-color",
+      );
     },
   );
+
+  it("lets a transition utility replace the colour fade on Table.Row", () => {
+    const row = COLOR_FADES.find(({ component }) => component === "Table.Row");
+    expect(transitionOf(renderTarget(row?.ui("transition-opacity"))).property).toBe("opacity");
+  });
 });
 
 describe(".micro-interactions with reduced motion", () => {

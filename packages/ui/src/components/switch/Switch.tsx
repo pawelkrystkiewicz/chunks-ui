@@ -7,6 +7,7 @@ import { springs } from "../../lib/motion";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { useMotionAnimate } from "../../lib/use-motion-animate";
 import { type PartRenderProp, useRenderPart } from "../../lib/use-render-part";
+import { RING_ANIMATION_CLASSES } from "../shared";
 
 export type SwitchRootProps = ComponentProps<typeof BaseSwitch.Root>;
 
@@ -21,7 +22,8 @@ function SwitchRoot({ className, ...props }: SwitchRootProps) {
         // without changing the layout.
         "forced-colors:relative forced-colors:before:absolute forced-colors:before:inset-0",
         "forced-colors:before:rounded-full forced-colors:before:border-2",
-        "micro-interactions bg-input",
+        ...RING_ANIMATION_CLASSES,
+        "bg-input",
         "focus-visible:outline-2 focus-visible:outline-ring",
         "data-checked:bg-primary",
         "data-disabled:pointer-events-none data-disabled:opacity-50",

@@ -10,6 +10,7 @@ import { createPopupRenderer } from "../../lib/PopupMotion";
 import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
 import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
 import { removeButtonName } from "../chip/Chip";
+import { RING_TRANSITION } from "../shared";
 import { type ComboboxLabels, DEFAULT_COMBOBOX_LABELS } from "./Combobox.Labels";
 
 const ComboboxLabelsContext = createContext(DEFAULT_COMBOBOX_LABELS);
@@ -62,6 +63,7 @@ function ComboboxControl({ className, ...props }: ComboboxControlProps) {
       className={cn(
         "relative flex flex-wrap items-center gap-1 rounded-md border border-input bg-background px-3 py-1.5",
         "has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ring",
+        RING_TRANSITION,
         "has-[:disabled]:pointer-events-none has-[:disabled]:opacity-50",
         className,
       )}
@@ -77,6 +79,7 @@ function ComboboxInput({ className, ...props }: ComboboxInputProps) {
         "flex h-ui-height w-full rounded-md border border-input bg-background px-3 text-sm",
         "placeholder:text-muted-foreground",
         "focus-visible:outline-2 focus-visible:outline-ring",
+        RING_TRANSITION,
         "disabled:pointer-events-none disabled:opacity-50",
         className,
       )}

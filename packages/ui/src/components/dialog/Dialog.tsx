@@ -16,6 +16,7 @@ import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
 import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
 import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
+import { RING_TRANSITION } from "../shared";
 
 export type DialogRootProps = ComponentProps<typeof BaseDialog.Root>;
 export type DialogTriggerProps = ComponentProps<typeof BaseDialog.Trigger>;
@@ -167,6 +168,7 @@ function DialogBody({ className, ...props }: DialogBodyProps) {
         // The -m-1 p-1 gutter keeps the focus rings of full-width fields inside the scroll box, without moving them
         "DialogBody -m-1 min-h-0 flex-1 overflow-y-auto overscroll-contain p-1",
         "focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
+        RING_TRANSITION,
         className,
       )}
       {...props}

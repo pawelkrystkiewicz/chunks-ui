@@ -7,6 +7,7 @@ import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
 import { usePortalContainer } from "../../lib/portal-container";
 import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
+import { RING_TRANSITION } from "../shared";
 
 export type SelectRootProps = ComponentProps<typeof BaseSelect.Root>;
 export type SelectTriggerProps = ComponentProps<typeof BaseSelect.Trigger>;
@@ -27,6 +28,7 @@ function SelectTrigger({ className, ...props }: SelectTriggerProps) {
         "flex h-ui-height w-full items-center justify-between rounded-md border border-input bg-background px-3 text-sm",
         "placeholder:text-muted-foreground",
         "focus-visible:outline-2 focus-visible:outline-ring",
+        RING_TRANSITION,
         "disabled:pointer-events-none disabled:opacity-50",
         "data-placeholder:text-muted-foreground",
         className,

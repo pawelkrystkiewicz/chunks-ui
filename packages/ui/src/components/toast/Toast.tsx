@@ -6,6 +6,7 @@ import type { ComponentProps, ComponentType } from "react";
 import { cn, cnState } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
 import { useReducedMotion } from "../../lib/use-motion";
+import { RING_ANIMATION_CLASSES } from "../shared";
 import { DEFAULT_TOAST_LABELS, type ToastLabels } from "./Toast.Labels";
 
 /**
@@ -186,7 +187,8 @@ function ToastClose({ className, children, ...props }: ToastCloseProps) {
     <BaseToast.Close
       aria-label={DEFAULT_TOAST_LABELS.close}
       className={cnState(
-        "micro-interactions absolute end-2 top-5 flex size-6 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground",
+        ...RING_ANIMATION_CLASSES,
+        "absolute end-2 top-5 flex size-6 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground",
         "focus-visible:outline-2 focus-visible:outline-ring",
         className,
       )}
@@ -201,7 +203,8 @@ function ToastAction({ className, ...props }: ToastActionProps) {
   return (
     <BaseToast.Action
       className={cnState(
-        "micro-interactions mt-1 inline-flex h-7 w-fit items-center rounded-md border border-border px-3 font-medium text-xs hover:bg-accent hover:text-accent-foreground",
+        ...RING_ANIMATION_CLASSES,
+        "mt-1 inline-flex h-7 w-fit items-center rounded-md border border-border px-3 font-medium text-xs hover:bg-accent hover:text-accent-foreground",
         "focus-visible:outline-2 focus-visible:outline-ring",
         className,
       )}
