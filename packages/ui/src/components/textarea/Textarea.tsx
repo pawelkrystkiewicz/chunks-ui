@@ -28,8 +28,8 @@ export function Textarea({ autoResize, className, ...props }: TextareaProps) {
       className={cnState(
         "flex min-h-ui-height w-full rounded-md border border-input bg-background px-3 py-2 text-sm",
         "text-foreground placeholder:text-muted-foreground",
-        // animate only colors to avoid resize slugishness
-        "micro-interactions transition-colors",
+        // Only the colours (`transition-colors` also lists `outline-color`: the ring would fade in)
+        "micro-interactions transition-[color,background-color,border-color]",
         "focus-visible:outline-2 focus-visible:outline-ring",
         "disabled:pointer-events-none disabled:opacity-50",
         "data-[invalid]:border-destructive",

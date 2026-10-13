@@ -98,7 +98,7 @@ function PopoverContentPopup({
           !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
           !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
           // Only the fade and scale: `all` would also slide an arrow's margin when the side flips
-          !useSpring && "micro-interactions [transition-property:opacity,scale]",
+          !useSpring && "micro-interactions [transition-property:opacity,scale] duration-300",
           className,
         )}
         {...props}

@@ -1,0 +1,450 @@
+import { render, screen } from "@testing-library/react";
+import { type ReactNode, useEffect, useRef } from "react";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { commands, userEvent } from "vitest/browser";
+import { Accordion } from "./components/accordion";
+import { Breadcrumb } from "./components/breadcrumb";
+import { Button } from "./components/button";
+import { Calendar, DEFAULT_CALENDAR_LABELS } from "./components/calendar";
+import { Checkbox } from "./components/checkbox";
+import { ClearButton } from "./components/clear-button";
+import { Collapsible } from "./components/collapsible";
+import { Combobox } from "./components/combobox";
+import { DatePicker, DEFAULT_DATE_PICKER_LABELS } from "./components/date-picker";
+import { Drawer } from "./components/drawer";
+import { Input } from "./components/input";
+import { Menu } from "./components/menu";
+import { NumberField } from "./components/number-field";
+import { Pagination } from "./components/pagination";
+import { Popover } from "./components/popover";
+import { Radio } from "./components/radio";
+import { Select } from "./components/select";
+import { Slider } from "./components/slider";
+import { Switch } from "./components/switch";
+import { Tabs } from "./components/tabs";
+import { Textarea } from "./components/textarea";
+import { ThemeToggle } from "./components/theme-toggle";
+import { DEFAULT_TOAST_LABELS, Toast } from "./components/toast";
+import { ToggleGroup } from "./components/toggle-group";
+import { Tooltip } from "./components/tooltip";
+import { enterMotionPath, outlineTransitions, ringColor } from "./VisualTest.utils";
+
+/*
+ * With motion on, a keyboard focus ring shows in the ring colour, width and offset in the same
+ * task the part takes focus. `.micro-interactions` used to transition `all`, and Tailwind's
+ * `transition-colors` lists `outline-color`, so rings faded in from the text colour
+ * (#362). Button, IconButton and the Drawer popup have the same check in their own specs.
+ *
+ * NumberField's increment and decrement and Combobox's clear and chip remove buttons are out of
+ * the tab order (Base UI), so they never show a keyboard ring.
+ */
+
+beforeEach(async () => {
+  await commands.emulateMedia({ reducedMotion: "no-preference" });
+  await expect.poll(() => matchMedia("(prefers-reduced-motion: reduce)").matches).toBe(false);
+});
+afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
+
+/** Each property `el` transitions, with its duration (the durations repeat over the list) */
+function durationsOf(el: Element) {
+  const style = getComputedStyle(el);
+  const durations = style.transitionDuration.split(", ");
+  return Object.fromEntries(
+    style.transitionProperty
+      .split(", ")
+      .map((property, i) => [property, durations[i % durations.length]]),
+  );
+}
+
+function AddToast() {
+  const manager = Toast.useToast();
+  const added = useRef(false);
+  useEffect(() => {
+    if (added.current) return;
+    added.current = true;
+    manager.add({
+      title: "Saved",
+      dismissible: true,
+      timeout: 0,
+      actionProps: { children: "Undo" },
+    });
+  }, [manager]);
+  return null;
+}
+
+const toast = (
+  <Toast.Provider>
+    <AddToast />
+    <Toast.Viewport />
+  </Toast.Provider>
+);
+
+const tabs = (
+  <Tabs.Root defaultValue="a">
+    <Tabs.List>
+      <Tabs.Tab value="a">First</Tabs.Tab>
+      <Tabs.Tab value="b">Target</Tabs.Tab>
+    </Tabs.List>
+    <Tabs.Panel value="a">Panel</Tabs.Panel>
+  </Tabs.Root>
+);
+
+// A fixed month, so the grid is the same whatever the date
+const calendar = <Calendar defaultValue={new Date(2026, 2, 15)} />;
+
+type RingCase = {
+  part: string;
+  ui: ReactNode;
+  /** The element that takes keyboard focus */
+  target: () => Promise<HTMLElement>;
+  /** The element that draws the ring, when that is not the target */
+  ring?: () => Element;
+  /** The ring is the browser's default outline, not `--ring`: only its transition is checked */
+  browserRing?: true;
+};
+
+const byTestId = (id: string) => () => screen.getByTestId(id);
+
+const RING_CASES: RingCase[] = [
+  {
+    part: "Tabs.Tab",
+    ui: tabs,
+    target: () => screen.findByRole("tab", { name: "Target" }),
+  },
+  {
+    part: "Tabs.Panel",
+    ui: tabs,
+    target: () => screen.findByRole("tabpanel"),
+  },
+  {
+    part: "ToggleGroup.Item",
+    ui: (
+      <ToggleGroup.Root>
+        <ToggleGroup.Item value="a">Target</ToggleGroup.Item>
+      </ToggleGroup.Root>
+    ),
+    target: () => screen.findByRole("button", { name: "Target" }),
+  },
+  {
+    part: "Checkbox.Root",
+    ui: <Checkbox.Root aria-label="Target" />,
+    target: () => screen.findByRole("checkbox", { name: "Target" }),
+  },
+  {
+    part: "Radio.Root",
+    ui: (
+      <Radio.Group>
+        <Radio.Root value="a" aria-label="Target" />
+      </Radio.Group>
+    ),
+    target: () => screen.findByRole("radio", { name: "Target" }),
+  },
+  {
+    part: "Switch.Root",
+    ui: (
+      <Switch.Root aria-label="Target">
+        <Switch.Thumb />
+      </Switch.Root>
+    ),
+    target: () => screen.findByRole("switch", { name: "Target" }),
+  },
+  {
+    part: "ThemeToggle",
+    ui: <ThemeToggle theme="light" aria-label="Target" />,
+    target: () => screen.findByRole("button", { name: "Target" }),
+  },
+  {
+    part: "Calendar previous month",
+    ui: calendar,
+    target: () => screen.findByRole("button", { name: DEFAULT_CALENDAR_LABELS.previousMonth }),
+  },
+  {
+    part: "Calendar next month",
+    ui: calendar,
+    target: () => screen.findByRole("button", { name: DEFAULT_CALENDAR_LABELS.nextMonth }),
+  },
+  {
+    part: "Calendar day",
+    ui: calendar,
+    target: () => screen.findByRole("button", { name: "Sunday, March 15, 2026" }),
+  },
+  {
+    part: "Toast.Action",
+    ui: toast,
+    target: () => screen.findByRole("button", { name: "Undo" }),
+  },
+  {
+    part: "Toast.Close",
+    ui: toast,
+    // Base UI hides the close button from assistive tech, so it has no accessible role
+    target: () => screen.findByLabelText(DEFAULT_TOAST_LABELS.close),
+  },
+  {
+    part: "NumberField.Group",
+    ui: (
+      <NumberField.Root defaultValue={1}>
+        <NumberField.Group data-testid="ring">
+          <NumberField.Decrement />
+          <NumberField.Input aria-label="Target" />
+          <NumberField.Increment />
+        </NumberField.Group>
+      </NumberField.Root>
+    ),
+    target: () => screen.findByRole("textbox", { name: "Target" }),
+    ring: byTestId("ring"),
+  },
+  {
+    part: "Combobox.Input",
+    ui: (
+      <Combobox.Root items={["Apple"]}>
+        <Combobox.Input aria-label="Target" />
+      </Combobox.Root>
+    ),
+    target: () => screen.findByRole("combobox", { name: "Target" }),
+  },
+  {
+    part: "Textarea",
+    ui: <Textarea aria-label="Target" />,
+    target: () => screen.findByRole("textbox", { name: "Target" }),
+  },
+  {
+    part: "Input",
+    ui: <Input aria-label="Target" />,
+    target: () => screen.findByRole("textbox", { name: "Target" }),
+  },
+  {
+    part: "Select.Trigger",
+    ui: (
+      <Select.Root>
+        <Select.Trigger aria-label="Target">
+          <Select.Value />
+        </Select.Trigger>
+      </Select.Root>
+    ),
+    target: () => screen.findByRole("combobox", { name: "Target" }),
+  },
+  {
+    part: "Slider.Thumb",
+    ui: (
+      <Slider.Root defaultValue={[40]} aria-label="Target">
+        <Slider.Control>
+          <Slider.Track>
+            <Slider.Thumb index={0} data-testid="ring" />
+          </Slider.Track>
+        </Slider.Control>
+      </Slider.Root>
+    ),
+    // Keyboard focus lands on the range input inside the thumb, which draws the ring
+    target: () => screen.findByRole("slider"),
+    ring: byTestId("ring"),
+  },
+  {
+    part: "Accordion.Trigger",
+    ui: (
+      <Accordion.Root>
+        <Accordion.Item value="a">
+          <Accordion.Header>
+            <Accordion.Trigger>Target</Accordion.Trigger>
+          </Accordion.Header>
+          <Accordion.Panel>Content</Accordion.Panel>
+        </Accordion.Item>
+      </Accordion.Root>
+    ),
+    target: () => screen.findByRole("button", { name: "Target" }),
+  },
+  {
+    part: "Collapsible.Trigger",
+    ui: (
+      <Collapsible.Root>
+        <Collapsible.Trigger>Target</Collapsible.Trigger>
+        <Collapsible.Panel>Content</Collapsible.Panel>
+      </Collapsible.Root>
+    ),
+    target: () => screen.findByRole("button", { name: "Target" }),
+  },
+  {
+    part: "DatePicker trigger",
+    ui: <DatePicker />,
+    target: () => screen.findByRole("button", { name: DEFAULT_DATE_PICKER_LABELS.placeholder }),
+  },
+  {
+    part: "Pagination.Link",
+    ui: (
+      <Pagination.Root>
+        <Pagination.Content>
+          <Pagination.Item>
+            <Pagination.Link href="#">Target</Pagination.Link>
+          </Pagination.Item>
+        </Pagination.Content>
+      </Pagination.Root>
+    ),
+    target: () => screen.findByRole("link", { name: "Target" }),
+  },
+  {
+    part: "ClearButton",
+    ui: <ClearButton aria-label="Target" />,
+    target: () => screen.findByRole("button", { name: "Target" }),
+  },
+  {
+    part: "Breadcrumb.Link",
+    ui: (
+      <Breadcrumb.Root>
+        <Breadcrumb.List>
+          <Breadcrumb.Item>
+            <Breadcrumb.Link href="#">Target</Breadcrumb.Link>
+          </Breadcrumb.Item>
+        </Breadcrumb.List>
+      </Breadcrumb.Root>
+    ),
+    target: () => screen.findByRole("link", { name: "Target" }),
+    browserRing: true,
+  },
+];
+
+describe("focus ring with no reduced-motion preference", () => {
+  it.each(RING_CASES)(
+    "$part shows the ring from the moment it takes keyboard focus",
+    async ({ ui, target, ring, browserRing }) => {
+      render(
+        <>
+          <button type="button">Before</button>
+          {ui}
+        </>,
+      );
+      await userEvent.tab();
+      expect(document.activeElement).toBe(screen.getByRole("button", { name: "Before" }));
+      const focused = await target();
+      // Focus moves on from a keyboard-focused element, so the target matches :focus-visible.
+      // Moved in the page, so the style below is read in the same task: a transition would
+      // still be at its start.
+      focused.focus();
+      expect(focused.matches(":focus-visible")).toBe(true);
+      const drawn = ring?.() ?? focused;
+      const { outlineStyle, outlineColor } = getComputedStyle(drawn);
+      if (browserRing) expect(outlineStyle).not.toBe("none");
+      else
+        expect({ outlineStyle, outlineColor }).toEqual({
+          outlineStyle: "solid",
+          outlineColor: ringColor(),
+        });
+      // Nor do its width or offset grow in
+      expect(outlineTransitions(drawn)).toEqual([]);
+    },
+  );
+
+  // The ring is left out, not the rest: a colour change, as on hover or press, still fades
+  it("fades the colours of a Textarea", () => {
+    render(<Textarea aria-label="Target" />);
+    const part = screen.getByRole("textbox", { name: "Target" });
+    part.style.color = "rgb(255, 0, 0)";
+    part.style.backgroundColor = "rgb(0, 0, 255)";
+    const faded = part.getAnimations().map((a) => (a as CSSTransition).transitionProperty);
+    expect(faded.sort()).toEqual(["background-color", "color"]);
+  });
+});
+
+const comboboxPopup = () => (
+  <Combobox.Root items={["Apple"]} defaultOpen>
+    <Combobox.Input aria-label="Fruit" />
+    <Combobox.Portal>
+      <Combobox.Positioner>
+        <Combobox.Popup data-testid="target">
+          <Combobox.List>
+            <Combobox.Item value="Apple">Apple</Combobox.Item>
+          </Combobox.List>
+        </Combobox.Popup>
+      </Combobox.Positioner>
+    </Combobox.Portal>
+  </Combobox.Root>
+);
+
+const drawerPopup = (className?: string) => (
+  <Drawer.Root defaultOpen>
+    <Drawer.Portal>
+      <Drawer.Popup data-testid="target" className={className}>
+        <Drawer.Title>Title</Drawer.Title>
+      </Drawer.Popup>
+    </Drawer.Portal>
+  </Drawer.Root>
+);
+
+/*
+ * A part that sets its own `[transition-property:…]` list keeps one duration for all of it: the
+ * class's list of durations would repeat over the part's list, and give some of its properties
+ * the ring's 0s. A consumer list on a popup (theme.mdx) keeps that duration too.
+ */
+describe("own transition lists with no reduced-motion preference", () => {
+  // The popups' CSS fallback: Motion never arrives
+  beforeAll(() => enterMotionPath(false));
+  afterAll(() => enterMotionPath(true));
+
+  it.each([
+    {
+      part: "Button",
+      ui: <Button data-testid="target">Target</Button>,
+      properties: ["color", "background-color", "border-color", "opacity", "scale"],
+    },
+    {
+      part: "Popover.Content",
+      ui: (
+        <Popover.Root defaultOpen>
+          <Popover.Trigger>Trigger</Popover.Trigger>
+          <Popover.Content data-testid="target">Content</Popover.Content>
+        </Popover.Root>
+      ),
+      properties: ["opacity", "scale"],
+    },
+    {
+      part: "Menu.Content",
+      ui: (
+        <Menu.Root defaultOpen>
+          <Menu.Trigger>Trigger</Menu.Trigger>
+          <Menu.Content data-testid="target">
+            <Menu.Item>Item</Menu.Item>
+          </Menu.Content>
+        </Menu.Root>
+      ),
+      properties: ["opacity", "scale"],
+    },
+    {
+      part: "Tooltip.Popup",
+      ui: (
+        <Tooltip.Provider>
+          <Tooltip.Root defaultOpen>
+            <Tooltip.Trigger>Trigger</Tooltip.Trigger>
+            <Tooltip.Portal>
+              <Tooltip.Positioner>
+                <Tooltip.Popup data-testid="target">Content</Tooltip.Popup>
+              </Tooltip.Positioner>
+            </Tooltip.Portal>
+          </Tooltip.Root>
+        </Tooltip.Provider>
+      ),
+      properties: ["opacity", "scale"],
+    },
+    {
+      part: "Combobox.Popup",
+      ui: comboboxPopup(),
+      properties: ["opacity"],
+    },
+    {
+      part: "Drawer.Popup",
+      ui: drawerPopup(),
+      properties: ["translate"],
+    },
+    {
+      part: "Drawer.Popup with a consumer list of two",
+      ui: drawerPopup("[transition-property:translate,opacity]"),
+      properties: ["translate", "opacity"],
+    },
+  ])("fades every property $part lists for the same time", async ({ ui, properties }) => {
+    render(ui);
+    const part = await screen.findByTestId("target");
+    expect(part).toHaveClass("micro-interactions");
+    const durations = durationsOf(part);
+    expect(Object.keys(durations)).toEqual(properties);
+    expect(new Set(Object.values(durations))).toEqual(new Set(["0.3s"]));
+    // One duration of its own, not the class's three: a one-item list hides the repeat above
+    expect(getComputedStyle(part).transitionDuration).toBe("0.3s");
+  });
+});
