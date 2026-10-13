@@ -67,7 +67,10 @@ function BreadcrumbItem({ className, ...props }: BreadcrumbItemProps) {
 }
 
 function BreadcrumbLink({ className, render, children, ...props }: BreadcrumbLinkProps) {
-  const classes = cn("micro-interactions hover:text-foreground", className);
+  const classes = cn(
+    "micro-interactions hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
+    className,
+  );
 
   if (isValidElement(render)) {
     return cloneElement(render, {

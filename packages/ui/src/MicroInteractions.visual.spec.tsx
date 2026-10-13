@@ -170,7 +170,11 @@ describe(".micro-interactions with no reduced-motion preference", () => {
   it.each(COLOR_FADES)(
     "lets a transition utility replace the colour fade on $component",
     ({ ui }) => {
-      expect(transitionOf(renderTarget(ui("transition-opacity"))).property).toBe("opacity");
+      // The ring parts keep the colour list's place with one that has no outline (theme.css)
+      const properties = transitionOf(renderTarget(ui("transition-opacity"))).property.split(", ");
+      expect(properties).toContain("opacity");
+      expect(properties).not.toContain("all");
+      expect(properties).not.toContain("outline-color");
     },
   );
 });

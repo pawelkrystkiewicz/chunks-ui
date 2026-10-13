@@ -267,6 +267,14 @@
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   }
 
+  /* One duration, so the three above do not repeat over the list set below */
+  .micro-interactions[class*="outline-ring"]:not(
+    [class*="transition-property:"],
+    [class*="transition-["]
+  ) {
+    transition-duration: 300ms;
+  }
+
   /*
    * `!important` in an earlier layer beats `!important` in a later one, so no `transition-*`
    * utility, `transition-colors!` included, turns the transition back on.
@@ -277,6 +285,21 @@
       transition: none !important;
     }
   }
+}
+
+/*
+ * A part with an outline ring (`outline-ring` in its class) transitions every property but the
+ * outline. Unlayered, so it beats any `transition-*`, `duration-*` or `delay-*` utility: a utility
+ * cannot bring the ring fade back, because the ring is not in the list, and a duration or delay
+ * still applies to the other properties. The parts without `micro-interactions` have no
+ * transition of their own: without this, `duration-500` alone would transition `all`, ring
+ * included. A part with its own `[transition-property:…]` or `transition-[…]` list is left out.
+ * Reduced motion still wins: its `!important` is in an earlier layer.
+ */
+[class*="outline-ring"]:not([class*="transition-property:"], [class*="transition-["]) {
+  transition-property:
+    color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow,
+    transform, translate, scale, rotate, filter, backdrop-filter, width, height, border-radius;
 }
 
 /*
