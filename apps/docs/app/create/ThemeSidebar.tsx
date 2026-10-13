@@ -297,7 +297,7 @@ export function ThemeSidebar({
                   aria-pressed={v === theme.radius}
                   onClick={() => onChange({ radius: v })}
                   className={cn(
-                    "flex h-[34px] items-center justify-center rounded-[7px] border border-border transition-colors hover:border-ring",
+                    "flex h-[34px] items-center justify-center rounded-[7px] border border-border transition-colors hover:border-muted-foreground",
                     v === theme.radius
                       ? "bg-foreground text-background"
                       : "bg-background text-foreground",

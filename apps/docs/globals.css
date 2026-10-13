@@ -56,7 +56,7 @@
 }
 
 /* Hero, band and footer carry `dark` in both themes: white ring, as the library's dark-mode ring
-   (primary mixed with the dark background) is about 2:1 there. */
+   (primary mixed with the dark background) is 2:1 or less there. */
 .landing .dark {
   --ring: #fff;
 }

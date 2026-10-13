@@ -79,7 +79,7 @@ describe("palette", () => {
     expect(drift).toEqual([]);
   });
 
-  it("mixes the ring from the primary and the background of the element that sets it", () => {
+  it("emits the ring as a mix of the scope's own primary and background tokens", () => {
     // var() resolves where `--ring` is declared, so the mix follows the primary and base of the
     // scope that sets it (the /create preview, or the pasted :root and .dark blocks).
     const stone: Theme = { ...amber, base: "stone" };
