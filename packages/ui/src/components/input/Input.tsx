@@ -117,7 +117,8 @@ export function Input({
     !onClear;
   const warnedRef = useRef(false);
   useEffect(() => {
-    if (process.env.NODE_ENV === "production" || !clearChangesNothing || warnedRef.current) return;
+    const isDev = typeof process !== "undefined" && process.env.NODE_ENV !== "production";
+    if (!isDev || !clearChangesNothing || warnedRef.current) return;
     warnedRef.current = true;
     console.warn(
       "chunks-ui: Input has `clearable` and a `value`, but no `onChange`, `onValueChange` or " +
