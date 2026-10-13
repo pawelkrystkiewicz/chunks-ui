@@ -47,7 +47,9 @@ describe("checkBunVersions", () => {
       text.replace("bun-version-file: package.json", 'bun-version: "0.0.1"'),
     );
     expect(await checkBunVersions(dir)).toEqual([
-      expect.stringMatching(/^\.github\/workflows\/unit\.tests\.yml:\d+ has 0\.0\.1, /),
+      expect.stringMatching(
+        /^\.github\/workflows\/unit\.tests\.yml job \w+ step "Setup Bun" has 0\.0\.1, /,
+      ),
     ]);
   });
 
@@ -56,7 +58,9 @@ describe("checkBunVersions", () => {
       text.replace("bun-version-file: package.json", "bun-version-file: .bun-version"),
     );
     expect(await checkBunVersions(dir)).toEqual([
-      expect.stringMatching(/^\.github\/workflows\/unit\.tests\.yml:\d+ reads \.bun-version, /),
+      expect.stringMatching(
+        /^\.github\/workflows\/unit\.tests\.yml job \w+ step "Setup Bun" reads \.bun-version, /,
+      ),
     ]);
   });
 
@@ -67,5 +71,43 @@ describe("checkBunVersions", () => {
     expect(await checkBunVersions(dir)).toEqual([
       expect.stringContaining("package.json names no bun@<version> packageManager"),
     ]);
+  });
+
+  it("reads a recipe version without the punctuation after it", async () => {
+    const dir = copyWith("TESTING_STRATEGY.md", (text) =>
+      text.replace(/bun@(\d+\.\d+\.\d+) >/, "bun@$1. >"),
+    );
+    expect(await checkBunVersions(dir)).toEqual([]);
+  });
+
+  it("ignores a bun@ version outside the Docker recipe", async () => {
+    const dir = copyWith(
+      "TESTING_STRATEGY.md",
+      (text) => `${text}\nOld note: use bun@0.0.1 here.\n`,
+    );
+    expect(await checkBunVersions(dir)).toEqual([]);
+  });
+
+  it("finds a bun-version in a list item and in flow style", async () => {
+    const dir = copyWith(".github/workflows/unit.tests.yml", (text) =>
+      text.replace(
+        "bun-version-file: package.json",
+        "bun-version-file: package.json\n          bun-version: 0.0.1",
+      ),
+    );
+    expect(await checkBunVersions(dir)).toEqual([
+      expect.stringMatching(/^\.github\/workflows\/unit\.tests\.yml job .* has 0\.0\.1, /),
+    ]);
+    const flow = copyWith(".github/workflows/unit.tests.yml", (text) =>
+      text.replace(/with:\n\s+bun-version-file: package.json/, "with: { bun-version: '0.0.2' }"),
+    );
+    expect(await checkBunVersions(flow)).toEqual([expect.stringMatching(/ has 0\.0\.2, /)]);
+  });
+
+  it("skips an expression, which is not a literal pin", async () => {
+    const dir = copyWith(".github/workflows/unit.tests.yml", (text) =>
+      text.replace("bun-version-file: package.json", "bun-version: $" + "{{ matrix.bun }}"),
+    );
+    expect(await checkBunVersions(dir)).toEqual([]);
   });
 });
