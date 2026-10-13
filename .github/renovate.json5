@@ -52,6 +52,14 @@
       platformAutomerge: false,
     },
     {
+      // zod is pinned by `overrides` in package.json: from 4.4.0 a strict object rejects an absent
+      // key even when its schema accepts undefined, and nextra-theme-docs 4.6.1 <Layout> validates
+      // its props without `children` against a schema that lists it, so the docs build fails.
+      // Lift both once a Nextra release validates the props with zod 4.4+.
+      matchPackageNames: ["zod"],
+      allowedVersions: "<4.4.0",
+    },
+    {
       matchUpdateTypes: ["major"],
       minimumReleaseAge: "3 days",
       dependencyDashboardApproval: true,

@@ -20,7 +20,7 @@
  */
 import { cpSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 
 const OLDEST = "4.0.0";
 const UI = join(import.meta.dirname, "../packages/ui");
@@ -93,7 +93,9 @@ function run(cmd: string[], cwd: string) {
 
 /** The CSS of the installed Tailwind (the repo's lockfile) for `css`. */
 async function compileInstalled(css: string): Promise<string> {
-  const load = async (name: string) => import(Bun.resolveSync(name, UI));
+  // Not deps of packages/ui itself: resolved as @tailwindcss/postcss, the build's plugin, gets them
+  const postcss = dirname(Bun.resolveSync("@tailwindcss/postcss/package.json", UI));
+  const load = async (name: string) => import(Bun.resolveSync(name, postcss));
   const { compile } = await load("@tailwindcss/node");
   const { Scanner } = await load("@tailwindcss/oxide");
   const compiler = await compile(css, { base: UI, onDependency() {} });
