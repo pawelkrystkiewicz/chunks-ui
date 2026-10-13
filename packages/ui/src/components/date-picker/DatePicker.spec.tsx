@@ -106,8 +106,18 @@ describe("DatePicker", () => {
   it("starts the calendar week on Monday with weekStartsOn={1}", async () => {
     render(<DatePicker defaultValue={new Date(2026, 2, 15)} weekStartsOn={1} />);
     await userEvent.click(screen.getByRole("button", { name: "March 15, 2026" }));
-    const headers = screen.getAllByRole("columnheader").map((th) => th.textContent);
-    expect(headers).toEqual(["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]);
+    const headers = screen.getAllByRole("columnheader");
+    expect(headers.map((th) => th.querySelector('[aria-hidden="true"]')?.textContent)).toEqual([
+      "Mo",
+      "Tu",
+      "We",
+      "Th",
+      "Fr",
+      "Sa",
+      "Su",
+    ]);
+    expect(headers[0]).toHaveAccessibleName("Monday");
+    expect(headers[6]).toHaveAccessibleName("Sunday");
   });
 
   it("shows dimmed outside days, none of them a Tab stop, with showOutsideDays", async () => {

@@ -354,7 +354,11 @@ export function Calendar({
                 scope="col"
                 className="w-8 py-1 text-center font-normal text-muted-foreground text-xs"
               >
-                {names.weekday(date)}
+                {/* Screen readers read a column header as focus enters its column: a full name
+                    in place of the short one, which can be unclear ("Th", or "T" for two days).
+                    Text, not aria-label, which not every screen reader reads on a header cell */}
+                <span aria-hidden="true">{names.weekday(date)}</span>
+                <span className="sr-only">{names.weekdayLong(date)}</span>
               </th>
             ))}
           </tr>

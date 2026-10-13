@@ -39,6 +39,21 @@ const tabStops = () =>
     .filter((b) => b.tabIndex === 0);
 const focusDay = (date: Date) => act(() => dayButton(date).focus());
 
+const SHORT_WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+/** Moves Sunday, the first item, to the end. */
+const fromMonday = (week: string[]) => [...week.slice(1), ...week.slice(0, 1)];
+
+/** Checks the column headers: the weekday name each shows, and the name screen readers read. */
+function expectWeekdayHeaders(shown: string[], read: string[]) {
+  const headers = screen.getAllByRole("columnheader");
+  expect(headers.map((th) => th.querySelector('[aria-hidden="true"]')?.textContent)).toEqual(shown);
+  expect(headers).toHaveLength(read.length);
+  headers.forEach((th, i) => {
+    expect(th).toHaveAccessibleName(read[i]);
+  });
+}
+
 describe("Calendar", () => {
   it("renders the current month and year when no value is provided", () => {
     vi.useFakeTimers({ toFake: ["Date"] });
@@ -66,10 +81,15 @@ describe("Calendar", () => {
     }
   });
 
+  // Screen readers read a column header when focus moves to another column: "Su" alone is unclear
+  it("shows a short weekday name in each column header and names it by the full one", () => {
+    render(<Calendar value={MARCH_15_2026} />);
+    expectWeekdayHeaders(SHORT_WEEKDAYS, WEEKDAYS);
+  });
+
   it("starts the week on Monday with weekStartsOn={1}", () => {
     render(<Calendar value={MARCH_15_2026} weekStartsOn={1} />);
-    const headers = screen.getAllByRole("columnheader").map((th) => th.textContent);
-    expect(headers).toEqual(["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]);
+    expectWeekdayHeaders(fromMonday(SHORT_WEEKDAYS), fromMonday(WEEKDAYS));
     // March 1, 2026 is a Sunday: last cell of the first row
     const firstRow = screen.getAllByRole("row")[1];
     expect(firstRow?.querySelectorAll("td")[6]).toHaveTextContent("1");
@@ -628,16 +648,27 @@ describe("Calendar labels", () => {
   });
 
   const PL_NARROW_WEEKDAYS = ["N", "P", "W", "Ś", "C", "P", "S"];
+  const PL_WEEKDAYS = [
+    "niedziela",
+    "poniedziałek",
+    "wtorek",
+    "środa",
+    "czwartek",
+    "piątek",
+    "sobota",
+  ];
 
   it("uses DEFAULT_CALENDAR_LABELS", () => {
     render(<Calendar value={MARCH_15_2026} />);
-    const { previousMonth, nextMonth, heading, weekday, day } = DEFAULT_CALENDAR_LABELS;
+    const { previousMonth, nextMonth, heading, weekday, weekdayLong, day } =
+      DEFAULT_CALENDAR_LABELS;
     expect(getButton(previousMonth)).toBeInTheDocument();
     expect(getButton(nextMonth)).toBeInTheDocument();
     expect(screen.getByRole("grid", { name: heading(new Date(2026, 2, 1)) })).toBeInTheDocument();
-    const headers = screen.getAllByRole("columnheader").map((th) => th.textContent);
     // March 1, 2026 is a Sunday
-    expect(headers).toEqual([0, 1, 2, 3, 4, 5, 6].map((d) => weekday(new Date(2026, 2, 1 + d))));
+    const week = [0, 1, 2, 3, 4, 5, 6].map((d) => new Date(2026, 2, 1 + d));
+    expectWeekdayHeaders(week.map(weekday), week.map(weekdayLong));
+    expect(week.map(weekdayLong)).toEqual(WEEKDAYS);
     expect(dayButton(MARCH_15_2026)).toHaveAccessibleName(day(MARCH_15_2026));
   });
 
@@ -654,14 +685,14 @@ describe("Calendar labels", () => {
             nextMonth: "Następny miesiąc",
             heading: (date) => `${date.getMonth() + 1}/${date.getFullYear()}`,
             weekday: (date) => PL_NARROW_WEEKDAYS[date.getDay()] ?? "",
+            weekdayLong: (date) => PL_WEEKDAYS[date.getDay()] ?? "",
             day: (date) => `Dzień ${date.getDate()}`,
           }}
         />,
       );
       expect(screen.getByRole("grid", { name: "3/2026" })).toBeInTheDocument();
       expect(screen.getByText("3/2026")).toBeInTheDocument();
-      const headers = screen.getAllByRole("columnheader").map((th) => th.textContent);
-      expect(headers).toEqual(["P", "W", "Ś", "C", "P", "S", "N"]);
+      expectWeekdayHeaders(fromMonday(PL_NARROW_WEEKDAYS), fromMonday(PL_WEEKDAYS));
       expect(getButton("Dzień 15")).toBeInTheDocument();
       await user.click(getButton("Następny miesiąc"));
       expect(screen.getByRole("grid", { name: "4/2026" })).toBeInTheDocument();

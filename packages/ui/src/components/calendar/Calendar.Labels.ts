@@ -38,10 +38,17 @@ export type CalendarLabels = {
    */
   heading: (date: Date) => string;
   /**
-   * The column header of a weekday. Gets a date that falls on that weekday, at local midnight.
+   * The short weekday name that a column header shows. Gets a date that falls on that weekday,
+   * at local midnight.
    * @default (date) => "Su" … "Sa"
    */
   weekday: (date: Date) => string;
+  /**
+   * The full weekday name that screen readers read for a column header, in place of the short
+   * one. Gets a date that falls on that weekday, at local midnight.
+   * @default (date) => "Sunday" … "Saturday"
+   */
+  weekdayLong: (date: Date) => string;
   /**
    * Accessible name of a day button. Gets its day, at local midnight.
    * @default (date) => "Sunday, March 15, 2026"
@@ -54,6 +61,7 @@ export const DEFAULT_CALENDAR_LABELS: Readonly<CalendarLabels> = {
   nextMonth: "Next month",
   heading: (date) => `${MONTH_NAMES[date.getMonth()]} ${date.getFullYear()}`,
   weekday: (date) => DAY_NAMES[date.getDay()] ?? "",
+  weekdayLong: (date) => date.toLocaleDateString("en-US", { weekday: "long" }),
   day: (date) =>
     date.toLocaleDateString("en-US", {
       weekday: "long",
