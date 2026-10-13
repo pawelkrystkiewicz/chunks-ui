@@ -64,6 +64,11 @@ describe("arrowPaddingIn", () => {
     expect(arrowPaddingIn(positioner)).toBeCloseTo(12 + 2.0711, 3);
   });
 
+  it("counts the larger component of an elliptical corner", () => {
+    expect(arrowPaddingIn(build({ radius: "8px 12px" }))).toBeCloseTo(12 + 2.0711, 3);
+    expect(arrowPaddingIn(build({ radius: "12px 8px" }))).toBeCloseTo(12 + 2.0711, 3);
+  });
+
   it("is undefined while the popup holds no arrow", () => {
     expect(arrowPaddingIn(build({ radius: "8px", arrow: false }))).toBeUndefined();
   });

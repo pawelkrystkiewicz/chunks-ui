@@ -15,8 +15,10 @@ const CORNERS = [
  * `.PopupArrow`. Base UI holds the arrow's box at least `arrowPadding` from the popup's ends; its
  * foot, the turned square's diagonal, reaches (√2 − 1)/2 of its size past that box on each side.
  * The padding is the popup's largest corner radius plus that reach, so the foot starts where the
- * edge after the curve is straight. Both come from CSS variables (`--radius`, `--spacing`), so
- * they're read from the open popup. A popup too short for the padding (Floating UI caps it at the
+ * edge after the curve is straight. The largest of the four corners counts, and of an elliptical
+ * corner's two components the larger; a percentage radius counts as 0. Both the radius and the
+ * arrow's size come from CSS variables (`--radius`, `--spacing`), so they're read from the open
+ * popup. A popup too short for the padding (Floating UI caps it at the
  * middle, less 1px) needs a smaller radius on the arrow's edge, as the Tooltip has.
  */
 export function arrowPaddingIn(positioner: Element): number | undefined {
@@ -25,8 +27,16 @@ export function arrowPaddingIn(positioner: Element): number | undefined {
   const popup = arrow && [...positioner.children].find((child) => child.contains(arrow));
   if (!arrow || !popup) return undefined;
   const corners = getComputedStyle(popup);
-  // A value with a percentage (`min(8px, 50% - 8px)`) parses as NaN, and leaves the others to count
-  const radius = Math.max(0, ...CORNERS.map((corner) => Number.parseFloat(corners[corner]) || 0));
+  // An elliptical corner is "<horizontal> <vertical>": the larger counts. Only a length in pixels
+  // does; a percentage, or a function (`min(8px, 50% - 8px)`), counts as 0.
+  const radius = Math.max(
+    0,
+    ...CORNERS.flatMap((corner) =>
+      corners[corner]
+        .split(/\s+/)
+        .map((value) => (/^[\d.]+px$/.test(value) ? Number.parseFloat(value) : 0)),
+    ),
+  );
   const size = Number.parseFloat(getComputedStyle(arrow).width);
   const padding = radius + (size * (Math.SQRT2 - 1)) / 2;
   // Without layout (jsdom, happy-dom) the width is "" and the padding NaN: Base UI's own default
@@ -46,9 +56,10 @@ export function arrowPaddingIn(positioner: Element): number | undefined {
  * In a popup that holds an arrow (`has-[.PopupArrow]:`), the ring moves to an `::after` overlay,
  * positioned and raised so it paints above the arrow. Chromium draws the ring of a bordered box up
  * to 1px over the border, so the overlay takes the popup's border box: the popup's padding box (its
- * containing block) with the popup's border widths, transparent, around it, centred on it. Where
- * `place-self` doesn't align an absolutely positioned box, `-inset-px` still fits a 1px border (with
- * `border-0` that browser draws the overlay 1px up and to the left). It takes the popup's radius too. Forced colours name `Highlight`, the system focus colour. A popup
+ * containing block) with the popup's border widths, transparent, around it, centred on it. In a
+ * browser without `place-self` on absolutely positioned boxes, `-inset-px` still fits a 1px border
+ * (with `border-0` that browser draws the overlay 1px up and to the left).
+ * It takes the popup's radius too. Forced colours name `Highlight`, the system focus colour. A popup
  * without an arrow keeps the browser's ring on itself: an overlay would be clipped by its `overflow`.
  */
 export const arrowPopupClasses = [
