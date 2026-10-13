@@ -11,6 +11,7 @@ import { ClearButton } from "./components/clear-button";
 import { Collapsible } from "./components/collapsible";
 import { Combobox } from "./components/combobox";
 import { DatePicker, DEFAULT_DATE_PICKER_LABELS } from "./components/date-picker";
+import { Dialog } from "./components/dialog";
 import { Drawer } from "./components/drawer";
 import { Input } from "./components/input";
 import { Menu } from "./components/menu";
@@ -106,6 +107,8 @@ type RingCase = {
   ring?: () => Element;
   /** The part takes no `className` of its own: a utility goes on its element */
   internal?: true;
+  /** A modal popup makes the button before it inert, so the keyboard modality comes from the tab alone */
+  modal?: true;
 };
 
 const byTestId = (id: string) => () => screen.getByTestId(id);
@@ -165,6 +168,50 @@ const RING_CASES: RingCase[] = [
     part: "ThemeToggle",
     ui: (className) => <ThemeToggle theme="light" aria-label="Target" className={className} />,
     target: () => screen.findByRole("button", { name: "Target" }),
+  },
+  {
+    part: "Tabs.Content",
+    ui: (className) => (
+      <Tabs.Root defaultValue="a">
+        <Tabs.List>
+          <Tabs.Tab value="a">First</Tabs.Tab>
+        </Tabs.List>
+        <Tabs.Contents>
+          <Tabs.Content value="a" className={className}>
+            Panel
+          </Tabs.Content>
+        </Tabs.Contents>
+      </Tabs.Root>
+    ),
+    target: () => screen.findByRole("tabpanel"),
+  },
+  {
+    part: "Dialog body",
+    ui: (className) => (
+      <Dialog.Root defaultOpen>
+        <Dialog.Portal>
+          <Dialog.Popup>
+            <Dialog.Title>Terms</Dialog.Title>
+            <Dialog.Body className={className}>Text</Dialog.Body>
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>
+    ),
+    target: () => screen.findByRole("region", { name: "Terms" }),
+    modal: true,
+  },
+  {
+    part: "Combobox.Control",
+    // The wrapper draws the ring while the input inside has the focus
+    ui: (className) => (
+      <Combobox.Root items={["Apple"]}>
+        <Combobox.Control data-testid="ring" className={className}>
+          <Combobox.Input aria-label="Target" />
+        </Combobox.Control>
+      </Combobox.Root>
+    ),
+    target: () => screen.findByRole("combobox", { name: "Target" }),
+    ring: byTestId("ring"),
   },
   {
     part: "Calendar previous month",
@@ -320,7 +367,7 @@ const RING_CASES: RingCase[] = [
 ];
 
 /** Renders `ui` after a button, tabs to the button, then moves focus to the target */
-async function focusRing({ ui, target, ring, internal }: RingCase, utility?: string) {
+async function focusRing({ ui, target, ring, internal, modal }: RingCase, utility?: string) {
   render(
     <>
       <button type="button">Before</button>
@@ -328,10 +375,11 @@ async function focusRing({ ui, target, ring, internal }: RingCase, utility?: str
     </>,
   );
   await userEvent.tab();
-  expect(document.activeElement).toBe(screen.getByRole("button", { name: "Before" }));
+  if (!modal) expect(document.activeElement).toBe(screen.getByRole("button", { name: "Before" }));
   const focused = await target();
   const drawn = ring?.() ?? focused;
   if (utility) {
+    // Added after render, so this checks the CSS order of the utility, not the `cn` merge
     if (internal) drawn.classList.add(utility);
     expect(drawn).toHaveClass(utility);
   }
