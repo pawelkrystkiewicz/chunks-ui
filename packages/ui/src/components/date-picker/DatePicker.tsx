@@ -63,9 +63,9 @@ type DatePickerOwnProps = Pick<
   isDateDisabled?: (date: Date) => boolean;
   /**
    * Name of the form field. Renders a hidden input that submits the selected date as
-   * `yyyy-mm-dd`, or an empty string when no date is selected. If `Field.Root` has a name, Base
-   * UI's `Form` uses it for `errors` and `onFormSubmit`, but the form data uses this one: set the
-   * name in one place.
+   * `yyyy-mm-dd`, or an empty string when no date is selected. A name on a surrounding
+   * `Field.Root` wins over this one, as with Base UI's `Field.Control`: the form data, and a Base
+   * UI `Form`'s `errors` and `onFormSubmit`, then use the field's name.
    */
   name?: string;
   /**
@@ -211,14 +211,16 @@ export function DatePicker({
           // The field reads its value from here, not from the button's empty value
           value={isoValue}
           render={(controlProps, state) => {
-            // Field.Root's name comes through here. It goes on the form input, not the button.
-            // `fieldRef` tells the field which element to validate and to focus when invalid.
+            // The name Field.Control resolves comes through here: Field.Root's, else the
+            // picker's (`const name = fieldName ?? nameProp` in Base UI's FieldControl), so the
+            // form data uses the name a Base UI Form uses for `errors` and `onFormSubmit`. It
+            // goes on the form input, not the button. `fieldRef` tells the field which element
+            // to validate and to focus when invalid.
             const {
-              name: fieldName,
+              name: formName,
               ref: fieldRef,
               ...buttonProps
             } = controlProps as typeof controlProps & { name?: string };
-            const formName = name ?? fieldName;
             const hasFormInput = formName !== undefined || required;
             // A label replaces a button's text as its name. The trigger has no other way to
             // expose the date, so name it by its label and then the date. The label comes from

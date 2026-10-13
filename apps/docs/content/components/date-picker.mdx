@@ -147,9 +147,9 @@ With `required`, the form does not submit until a date is selected, and focus mo
 
 <DatePickerFormExample />
 
-Inside `Field.Root`, the field's `name` is used when the picker has none, and a disabled field disables the hidden input too. For a picker outside its `<form>`, set `form` to the form's `id`.
+Inside `Field.Root`, the field's `name` wins over the picker's, as it does for Base UI's `Field.Control`, and a disabled field disables the hidden input too. For a picker outside its `<form>`, set `form` to the form's `id`.
 
-Inside `Field.Root` in Base UI's `Form`, the picker's `name` is the field's name when `Field.Root` has none. An entry for it in the form's `errors`, for example `errors={{ due: "Pick a later date" }}`, shows in `Field.Error` and sets `aria-invalid` on the trigger until the user picks a date. `onFormSubmit` gets the date under the same name: `{ due: "2026-10-10" }`. If `Field.Root` has a name, Base UI's `Form` uses it for `errors` and `onFormSubmit`, but a `name` on the picker still names the date in the submitted form data. Set the name in one place.
+Inside `Field.Root` in Base UI's `Form`, the field's name is the `Field.Root` name, else the picker's. An entry for it in the form's `errors`, for example `errors={{ due: "Pick a later date" }}`, shows in `Field.Error` and sets `aria-invalid` on the trigger until the user picks a date. `onFormSubmit` gets the date under the same name: `{ due: "2026-10-10" }`. The submitted form data uses that name too, so with `<Field.Root name="due">` around `<DatePicker name="deadline" />`, the form data, `errors` and `onFormSubmit` all use `due`.
 
 A form reset sets the picker back to its `defaultValue`, or to no date. This includes a picker that `form` links to a form it is outside of, with or without a `name`. A controlled picker keeps its `value`, as a controlled input does: set it back in the form's `onReset`. A reset that `onReset` cancels with `event.preventDefault()` leaves the picker as it is. As with native controls, a reset does not call `onValueChange`: an uncontrolled picker that you mirror in state through `onValueChange` is out of date after a reset, so reset that state in the form's `onReset` too.
 
