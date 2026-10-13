@@ -444,5 +444,7 @@ describe("own transition lists with no reduced-motion preference", () => {
     const durations = durationsOf(part);
     expect(Object.keys(durations)).toEqual(properties);
     expect(new Set(Object.values(durations))).toEqual(new Set(["0.3s"]));
+    // One duration of its own, not the class's three: a one-item list hides the repeat above
+    expect(getComputedStyle(part).transitionDuration).toBe("0.3s");
   });
 });
