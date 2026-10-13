@@ -15,31 +15,8 @@ import { cn } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
 import { usePortalContainer } from "../../lib/portal-container";
 import { useMergedRef } from "../../lib/use-merged-ref";
-import {
-  Calendar,
-  type CalendarLabels,
-  type CalendarProps,
-  DEFAULT_CALENDAR_LABELS,
-  validDate,
-} from "../calendar/Calendar";
-
-/**
- * The built-in English strings of `DatePicker`: those of its trigger and of its calendar. A React
- * Server Component can't pass the functions to `DatePicker`, a client component.
- */
-export type DatePickerLabels = CalendarLabels & {
-  /**
-   * Trigger text while no date is selected. The `placeholder` prop takes precedence.
-   * @default "Pick a date"
-   */
-  placeholder: string;
-  /**
-   * Trigger text for the selected date. Gets a picked date at local midnight, and `value` as you
-   * pass it: format it in the local time zone, not with `timeZone: "UTC"`.
-   * @default (date) => "March 15, 2026"
-   */
-  selectedDate: (date: Date) => string;
-};
+import { Calendar, type CalendarProps, validDate } from "../calendar/Calendar";
+import { type DatePickerLabels, DEFAULT_DATE_PICKER_LABELS } from "./DatePicker.Labels";
 
 type DatePickerOwnProps = Pick<
   CalendarProps,
@@ -141,17 +118,6 @@ function getForm(
   const element = root.getElementById?.(formId);
   return element?.tagName === "FORM" ? (element as HTMLFormElement) : null;
 }
-
-export const DEFAULT_DATE_PICKER_LABELS: Readonly<DatePickerLabels> = {
-  ...DEFAULT_CALENDAR_LABELS,
-  placeholder: "Pick a date",
-  selectedDate: (date) =>
-    date.toLocaleDateString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    }),
-};
 
 export function DatePicker({
   value,
@@ -332,7 +298,7 @@ export function DatePicker({
                 showOutsideDays={showOutsideDays}
                 month={month}
                 onMonthChange={onMonthChange}
-                labels={names}
+                labels={labels}
               />
             </BasePopover.Popup>
           </BasePopover.Positioner>

@@ -3,7 +3,8 @@ import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { Chip, DEFAULT_CHIP_LABELS } from "./Chip";
+import { Chip } from "./Chip";
+import { DEFAULT_CHIP_LABELS } from "./Chip.Labels";
 
 afterEach(cleanup);
 

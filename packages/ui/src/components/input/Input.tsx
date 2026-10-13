@@ -12,18 +12,8 @@ import { cn, cnState } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { ClearButton } from "../clear-button";
+import { DEFAULT_INPUT_LABELS, type InputLabels } from "./Input.Labels";
 import { inputVariants } from "./Input.Variants";
-
-/** The built-in English strings of `Input`. */
-export type InputLabels = {
-  /**
-   * Name of the built-in clear button.
-   * @default "Clear"
-   */
-  clear: string;
-};
-
-export const DEFAULT_INPUT_LABELS: Readonly<InputLabels> = { clear: "Clear" };
 
 // The app's bundler replaces it, as it does in @base-ui/react. The package has no Node types.
 declare const process: { env: { NODE_ENV?: string } };
@@ -220,7 +210,7 @@ export function Input({
         <span className="absolute end-3 flex items-center">
           {showsClearButton ? (
             <ClearButton
-              label={clearLabel}
+              labels={{ clear: clearLabel }}
               onClick={handleClear}
               // A mousedown would move focus to the button and blur the input, which validates
               // a validationMode="onBlur" field mid-clear

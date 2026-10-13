@@ -2,7 +2,8 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { afterEach, describe, expect, it } from "vitest";
-import { createToastManager, DEFAULT_TOAST_LABELS, Toast } from "./Toast";
+import { createToastManager, Toast } from "./Toast";
+import { DEFAULT_TOAST_LABELS } from "./Toast.Labels";
 
 afterEach(cleanup);
 

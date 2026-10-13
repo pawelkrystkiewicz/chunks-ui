@@ -24,14 +24,14 @@ import { ClearButton } from 'chunks-ui'
 
 ## Custom Label
 
-Use the `label` prop to override the default accessible label:
+Use `labels` to replace the default accessible name, "Clear":
 
 ```tsx
-<ClearButton label="Remove tag" />
+<ClearButton labels={{ clear: "Remove tag" }} />
 ```
 
 <Container>
-  <ClearButton label="Remove tag" />
+  <ClearButton labels={{ clear: "Remove tag" }} />
 </Container>
 
 ## Props
@@ -50,7 +50,7 @@ All other props are forwarded to the underlying `<button>` element.
 
 ## Labels
 
-`labels` replaces the built-in English text, for example to translate it. Keys you leave out keep their default from `DEFAULT_CLEAR_BUTTON_LABELS`. `label` and `aria-label` take precedence. See [Labels](/labels).
+`labels` replaces the built-in English text, for example to translate it. Keys you leave out keep their default from `DEFAULT_CLEAR_BUTTON_LABELS`. `aria-label` and the deprecated `label` take precedence. See [Labels](/labels).
 
 <TSDoc
   definition={generateDefinition({

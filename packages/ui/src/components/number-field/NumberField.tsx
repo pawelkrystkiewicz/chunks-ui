@@ -4,35 +4,11 @@ import { NumberField as BaseNumberField } from "@base-ui/react/number-field";
 import { type ComponentProps, createContext, useContext } from "react";
 import { cnState } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
+import { DEFAULT_NUMBER_FIELD_LABELS, type NumberFieldLabels } from "./NumberField.Labels";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-
-/** The built-in English strings of `NumberField`, which come from Base UI. */
-export type NumberFieldLabels = {
-  /**
-   * Name of `NumberField.Increment`.
-   * @default "Increase"
-   */
-  increment: string;
-  /**
-   * Name of `NumberField.Decrement`.
-   * @default "Decrease"
-   */
-  decrement: string;
-  /**
-   * The `aria-roledescription` of `NumberField.Input`, which a screen reader reads as its role.
-   * @default "Number field"
-   */
-  roleDescription: string;
-};
-
-export const DEFAULT_NUMBER_FIELD_LABELS: Readonly<NumberFieldLabels> = {
-  increment: "Increase",
-  decrement: "Decrease",
-  roleDescription: "Number field",
-};
 
 const NumberFieldLabelsContext = createContext(DEFAULT_NUMBER_FIELD_LABELS);
 

@@ -6,7 +6,8 @@ import { createRef } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createDate } from "../calendar/Calendar";
 import { Field } from "../field";
-import { DatePicker, DEFAULT_DATE_PICKER_LABELS } from "./DatePicker";
+import { DatePicker } from "./DatePicker";
+import { DEFAULT_DATE_PICKER_LABELS } from "./DatePicker.Labels";
 
 const MARCH_15_LABEL = "Sunday, March 15, 2026";
 
@@ -105,8 +106,18 @@ describe("DatePicker", () => {
   it("starts the calendar week on Monday with weekStartsOn={1}", async () => {
     render(<DatePicker defaultValue={new Date(2026, 2, 15)} weekStartsOn={1} />);
     await userEvent.click(screen.getByRole("button", { name: "March 15, 2026" }));
-    const headers = screen.getAllByRole("columnheader").map((th) => th.textContent);
-    expect(headers).toEqual(["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]);
+    const headers = screen.getAllByRole("columnheader");
+    expect(headers.map((th) => th.querySelector('[aria-hidden="true"]')?.textContent)).toEqual([
+      "Mo",
+      "Tu",
+      "We",
+      "Th",
+      "Fr",
+      "Sa",
+      "Su",
+    ]);
+    expect(headers[0]).toHaveAccessibleName("Monday");
+    expect(headers[6]).toHaveAccessibleName("Sunday");
   });
 
   it("passes month and onMonthChange to the calendar", async () => {
@@ -742,11 +753,33 @@ describe("DatePicker labels", () => {
     render(
       <DatePicker
         value={new Date(2026, 2, 15)}
-        labels={{ previousMonth: "Poprzedni miesiąc", day: (date) => `Dzień ${date.getDate()}` }}
+        labels={{
+          previousMonth: "Poprzedni miesiąc",
+          weekdayLong: (date) => `Dzień tygodnia ${date.getDay()}`,
+          day: (date) => `Dzień ${date.getDate()}`,
+        }}
       />,
     );
     await user.click(screen.getByRole("button", { name: "March 15, 2026" }));
     expect(await screen.findByLabelText("Poprzedni miesiąc", { selector: "button" })).toBeVisible();
     expect(getButton("Dzień 15")).toBeInTheDocument();
+    expect(screen.getAllByRole("columnheader", { hidden: true })[0]).toHaveAccessibleName(
+      "Dzień tygodnia 0",
+    );
+  });
+
+  it("names the column headers by a custom weekday when weekdayLong is unset", async () => {
+    const user = userEvent.setup();
+    render(
+      <DatePicker
+        value={new Date(2026, 2, 15)}
+        labels={{ weekday: (date) => `Dzień ${date.getDay()}` }}
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: "March 15, 2026" }));
+    expect(await screen.findByLabelText("Previous month", { selector: "button" })).toBeVisible();
+    expect(screen.getAllByRole("columnheader", { hidden: true })[0]).toHaveAccessibleName(
+      "Dzień 0",
+    );
   });
 });
