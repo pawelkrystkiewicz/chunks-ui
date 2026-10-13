@@ -75,13 +75,6 @@ describe("Calendar", () => {
     expect(screen.getByText("March 2026")).toBeInTheDocument();
   });
 
-  it("renders all day-name headers", () => {
-    render(<Calendar value={MARCH_15_2026} />);
-    for (const name of ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]) {
-      expect(screen.getByText(name)).toBeInTheDocument();
-    }
-  });
-
   // Screen readers read a column header when focus moves to another column: "Su" alone is unclear
   it("shows a short weekday name in each column header and names it by the full one", () => {
     render(<Calendar value={MARCH_15_2026} />);
