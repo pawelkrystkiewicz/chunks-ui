@@ -45,9 +45,6 @@ function themeTokens(selector: ":root" | ".dark"): Record<string, string> {
   return Object.fromEntries([...body.matchAll(/--([\w-]+): ([^;]+);/g)].map(([, k, v]) => [k, v]));
 }
 
-/** The default `--ring` in theme.css, light and dark (#355). */
-const RING = "color-mix(in oklab, var(--primary) 60%, var(--background))";
-
 const ink: Theme = { ...DEFAULT_THEME, primary: { l: 0.205, c: 0, h: 0 } };
 const amber: Theme = { ...DEFAULT_THEME, primary: { l: 0.77, c: 0.165, h: 72 } };
 
@@ -58,7 +55,7 @@ describe("palette", () => {
   ] as const)("emits theme.css's %s colour tokens for the default theme", (mode, selector) => {
     // theme.css is the source of truth. It writes some lightness as a percentage
     // (`75.14%`) and palette() as a number (`0.7514`), so the numbers are compared.
-    // A `color-mix()` of other tokens (`--ring`) is compared as text. Only non-colour tokens are
+    // `--ring`, a `color-mix()` of other tokens, is compared as text. Only non-colour tokens are
     // skipped, by name, so any other colour format fails in parseOklch.
     const css = Object.fromEntries(
       Object.entries(themeTokens(selector)).filter(
@@ -70,22 +67,11 @@ describe("palette", () => {
     const close = (a: Oklch, b: Oklch) =>
       Math.abs(a.l - b.l) < 1e-4 && Math.abs(a.c - b.c) < 1e-4 && Math.abs(a.h - b.h) < 1e-2;
     const same = (a: string, b = "") =>
-      a.startsWith("color-mix(") || b.startsWith("color-mix(")
-        ? a === b
-        : close(parseOklch(a), parseOklch(b));
+      a.startsWith("color-mix(") ? a === b : close(parseOklch(a), parseOklch(b));
     const drift = Object.entries(pal)
       .filter(([k, v]) => !same(v, css[k]))
       .map(([k, v]) => `--${k}: ${v} in /create, ${css[k]} in theme.css`);
     expect(drift).toEqual([]);
-  });
-
-  it("emits the ring as a mix of the scope's own primary and background tokens", () => {
-    // var() resolves where `--ring` is declared, so the mix follows the primary and base of the
-    // scope that sets it (the /create preview, or the pasted :root and .dark blocks).
-    const stone: Theme = { ...amber, base: "stone" };
-    for (const mode of ["light", "dark"] as const) {
-      expect(palette(stone, mode).ring).toBe(RING);
-    }
   });
 
   it("turns the Ink primary into the base neutral per mode", () => {
@@ -214,28 +200,23 @@ describe("toScopeStyle", () => {
     expect(style["--preview-shadow"]).toBe("0 0 #0000");
   });
 
-  it.each(["--colored-text-lightness", "--success-border-lightness", "--warning-border-lightness"])(
-    "sets %s for the preview's mode, as theme.css does for the page's",
-    (name) => {
-      // theme.css clamps the lightness of text-primary-text and co., and of the outlined success
-      // and warning borders, on :root (light) and .dark. The scope must set its own, or a light
-      // preview on a dark page gets the dark-mode shades.
-      const token = name.slice(2);
-      const scoped = (mode: Mode) =>
-        (toScopeStyle({ ...DEFAULT_THEME, mode }) as Record<string, string>)[name];
-      expect(themeTokens(":root")[token]).toBeDefined();
-      expect(themeTokens(".dark")[token]).toBeDefined();
-      expect(scoped("light")).toBe(themeTokens(":root")[token]);
-      expect(scoped("dark")).toBe(themeTokens(".dark")[token]);
-    },
-  );
-
-  it("sets --ring on the scope, so the preview's ring follows its own primary", () => {
-    // theme.css's :root ring resolves the page's --primary; the scope must declare its own.
-    for (const mode of ["light", "dark"] as const) {
-      const style = toScopeStyle({ ...amber, mode }) as Record<string, string>;
-      expect(style["--ring"]).toBe(RING);
-    }
+  it.each([
+    "--colored-text-lightness",
+    "--success-border-lightness",
+    "--warning-border-lightness",
+    "--ring",
+  ])("sets %s for the preview's mode, as theme.css does for the page's", (name) => {
+    // theme.css clamps the lightness of text-primary-text and co., and of the outlined success
+    // and warning borders, on :root (light) and .dark. The scope must set its own, or a light
+    // preview on a dark page gets the dark-mode shades. Likewise `--ring`, which resolves the
+    // primary where it is declared.
+    const token = name.slice(2);
+    const scoped = (mode: Mode) =>
+      (toScopeStyle({ ...DEFAULT_THEME, mode }) as Record<string, string>)[name];
+    expect(themeTokens(":root")[token]).toBeDefined();
+    expect(themeTokens(".dark")[token]).toBeDefined();
+    expect(scoped("light")).toBe(themeTokens(":root")[token]);
+    expect(scoped("dark")).toBe(themeTokens(".dark")[token]);
   });
 
   it("writes px tokens and scales text by base size", () => {
@@ -290,12 +271,8 @@ describe("buildCss", () => {
       "  --radius: 0.625rem;\n  --spacing: 0.25rem;\n  --spacing-ui-height: 35px;\n",
     );
     expect(css).toContain("\n}\n\n.dark {\n  --primary: oklch(0.56 0.2165 257.21);");
-  });
-
-  it("exports the ring as a mix of the primary and the background in both blocks", () => {
-    const blocks = buildCss(amber).split("\n\n.dark {");
-    expect(blocks).toHaveLength(2);
-    for (const block of blocks) expect(block).toContain(`\n  --ring: ${RING};\n`);
+    // Both blocks declare their own `--ring`.
+    expect(css.split(`\n  --ring: ${themeTokens(":root").ring};\n`)).toHaveLength(3);
   });
 
   it("leaves the coloured-text tokens out", () => {

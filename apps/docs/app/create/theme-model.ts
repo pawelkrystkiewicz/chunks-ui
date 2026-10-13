@@ -284,9 +284,7 @@ export function palette(t: Theme, mode: Mode): Record<string, string> {
     "accent-foreground": d ? n(0.985) : n(0.205),
     border: d ? n(0.269) : n(0.922),
     input: d ? n(0.269) : n(0.922),
-    // Resolved on the element that declares it, so the preview scope and the exported :root and
-    // .dark blocks each mix their own primary and background. OKLab has no hue to interpolate,
-    // so the ring keeps the primary's hue.
+    // Same mix as theme.css, so --ring resolves against the scope's own tokens.
     ring: "color-mix(in oklab, var(--primary) 60%, var(--background))",
   };
   chartList(t, mode).forEach((v, i) => {

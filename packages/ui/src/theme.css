@@ -53,11 +53,8 @@
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   /*
-   * The focus ring: 60% primary, 40% background. Mixed in OKLab, which has no hue to
-   * interpolate, so the ring keeps the primary's hue: an OKLCH mix would interpolate the hue
-   * towards the background's hue 0 (violet for the default blue). var() resolves on the
-   * element that declares `--ring`, so a nested element that sets `--primary` or
-   * `--background` keeps this one's ring until it declares `--ring` too.
+   * Focus ring: 60% primary in OKLab, which keeps the primary's hue (OKLCH drifts to the
+   * background's hue 0). A nested element that sets `--primary` or `--background` needs its own `--ring`.
    */
   --ring: color-mix(in oklab, var(--primary) 60%, var(--background));
   --radius: 0.625rem;
