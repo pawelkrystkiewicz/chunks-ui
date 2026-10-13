@@ -4,6 +4,7 @@ import { Footer, Layout, Navbar } from "nextra-theme-docs";
 import "nextra-theme-docs/style.css";
 import "../globals.css";
 import Image from "next/image";
+import { LAYOUT_FONTS_HREF } from "./layout-fonts";
 
 export const metadata = {
   title: "Chunks UI",
@@ -17,11 +18,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="en" dir="ltr" suppressHydrationWarning>
       <Head />
       <body>
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&family=Outfit:wght@400..800&family=Fira+Code:wght@300..700&display=swap"
-          precedence="default"
-        />
+        <link rel="stylesheet" href={LAYOUT_FONTS_HREF} precedence="default" />
         <Layout
           navbar={
             <Navbar
