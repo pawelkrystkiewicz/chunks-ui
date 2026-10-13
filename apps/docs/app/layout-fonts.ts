@@ -8,3 +8,6 @@ export const LAYOUT_FONTS = {
 export const LAYOUT_FONTS_HREF = `https://fonts.googleapis.com/css2?${Object.entries(LAYOUT_FONTS)
   .map(([family, weights]) => `family=${family.replaceAll(" ", "+")}:wght@${weights}`)
   .join("&")}&display=swap`;
+
+/** `Object.hasOwn`, so inherited keys such as "constructor" do not count. */
+export const isLayoutFont = (family: string): boolean => Object.hasOwn(LAYOUT_FONTS, family);

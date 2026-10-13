@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { LAYOUT_FONTS } from "../../layout-fonts";
+import { PRESETS } from "../../create/theme-model";
+import { isLayoutFont } from "../../layout-fonts";
 import { CopyRow, HeroCopy, PresetGrid } from "./LandingClient";
 
 const CMD = "bun add chunks-ui motion";
@@ -75,10 +76,19 @@ it("HeroCopy keeps the visible command in its accessible name", () => {
 });
 
 // An "Aa"-only face has no unicode-range, so it would shadow the layout's full face of that family.
-it("PresetGrid's Aa subset leaves out every family the layout loads in full", () => {
-  const { container } = render(<PresetGrid />);
-  const href = container.querySelector("link[rel='stylesheet']")?.getAttribute("href") ?? "";
-  const families = new URL(href).searchParams.getAll("family").map((f) => f.replace(/:.*/, ""));
-  expect(families.length).toBeGreaterThan(0);
-  expect(families.filter((f) => f in LAYOUT_FONTS)).toEqual([]);
+// Every other preset heading font must be loaded, or its card falls back to the system font.
+it("PresetGrid's Aa subset loads each preset font exactly once, minus the layout's families", () => {
+  render(<PresetGrid />);
+  const link = document.querySelector("link[rel='stylesheet'][href*='text=Aa']");
+  expect(link, "PresetGrid renders no Aa font link").not.toBeNull();
+  const href = link?.getAttribute("href") ?? "";
+  const families = new URL(href).searchParams
+    .getAll("family")
+    .map((f) => f.replace(/:.*/, "").replaceAll("+", " "));
+  const wanted = [...new Set(PRESETS.map((p) => p.theme.fontHeading))];
+  expect(wanted.length).toBeGreaterThan(0);
+  for (const f of wanted) {
+    expect(families.filter((x) => x === f).length, f).toBe(isLayoutFont(f) ? 0 : 1);
+  }
+  expect(families.length).toBe(wanted.filter((f) => !isLayoutFont(f)).length);
 });

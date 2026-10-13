@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { isLayoutFont } from "../layout-fonts";
 
 export type FontKind = "Sans" | "Grotesk" | "Serif" | "Mono";
 export type Font = { name: string; kind: FontKind; stack: string };
@@ -40,9 +41,9 @@ export const FONTS: Font[] = [
 export const fontOf = (name: string): Font =>
   FONTS.find((f) => f.name === name) ?? (FONTS[0] as Font);
 
-/** The docs layout already loads Manrope and Fira Code. */
+/** Skips families the docs layout already loads; its weight ranges cover 400-700. */
 export const FONTS_HREF = `https://fonts.googleapis.com/css2?${FONTS.filter(
-  (f) => f.name !== "Manrope" && f.name !== "Fira Code",
+  (f) => !isLayoutFont(f.name),
 )
   .map((f) => `family=${f.name.replaceAll(" ", "+")}:wght@400;500;600;700`)
   .join("&")}&display=swap`;
