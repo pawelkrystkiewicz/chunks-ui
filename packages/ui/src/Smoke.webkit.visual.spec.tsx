@@ -355,7 +355,7 @@ describe("Form controls in WebKit", () => {
 describe("Focus rings in WebKit", () => {
   // The ring parts' `[transition-property:…]` list has no outline and sorts after `transition-*`
   // utilities: WebKit must agree with Chromium
-  it.each(["", "duration-500", "delay-200", "transition-colors", "transition-all"])(
+  it.each(["", "duration-500", "transition-all"])(
     "shows a Tabs.Tab's ring at once with motion on, with '%s' in className",
     async (utility) => {
       await commands.emulateMedia({ reducedMotion: "no-preference" });

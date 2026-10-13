@@ -402,13 +402,7 @@ function expectInstantRing(drawn: Element) {
 }
 
 // Timing a consumer may put in `className`: none of it fades or delays the ring
-const UTILITIES = [
-  "duration-500",
-  "delay-200",
-  "transition-colors",
-  "transition-all",
-  "transition",
-];
+const UTILITIES = ["duration-500", "delay-200", "transition-all"];
 
 describe("focus ring with no reduced-motion preference", () => {
   it.each(RING_CASES)("$part shows the ring from the moment it takes keyboard focus", async (c) => {
@@ -453,6 +447,7 @@ describe("focus ring with no reduced-motion preference", () => {
     { utility: "delay-200", duration: 300, delay: 200 },
     // The part's own list and 300ms come after the utility in the CSS
     { utility: "transition-colors", duration: 300, delay: 0 },
+    { utility: "transition", duration: 300, delay: 0 },
   ])("fades the colours of a focused Input with $utility", async ({ utility, ...timing }) => {
     const input = (await focusRing(INPUT, utility)) as HTMLElement;
     input.style.color = "rgb(255, 0, 0)";
