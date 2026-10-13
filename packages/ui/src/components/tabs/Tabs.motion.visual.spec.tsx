@@ -1,5 +1,5 @@
 import { render } from "@testing-library/react";
-import { createRef, useEffect } from "react";
+import { Activity, createRef, useEffect, useRef } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { commands, page } from "vitest/browser";
 import { reloadMotion } from "../../lib/use-motion";
@@ -64,13 +64,20 @@ async function switchPanels(from: Panel, to: Panel, options?: ContentsOptions) {
 const passedThrough = (heights: number[], from: number, to: number) =>
   heights.some((h) => h > Math.min(from, to) + 1 && h < Math.max(from, to) - 1);
 
+// Slow and linear, so each check below happens mid-animation, even in a loaded run where a few
+// frames can take seconds
+const slow = { type: "tween", ease: "linear", duration: 10 } as const;
+const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+
 describe("Tabs with Motion", () => {
   it("mounts a panel's children once when Motion has already loaded", async () => {
     await reloadMotion();
-    let mounts = 0;
+    // StrictMode runs a mount's effects twice on one instance; a remount is a new instance
+    const instances = new Set<object>();
     function Panel() {
+      const instance = useRef({});
       useEffect(() => {
-        mounts++;
+        instances.add(instance.current);
       }, []);
       return <p>Panel A</p>;
     }
@@ -85,7 +92,7 @@ describe("Tabs with Motion", () => {
       </Tabs.Root>,
     );
     await new Promise((resolve) => setTimeout(resolve, 100));
-    expect(mounts).toBe(1);
+    expect(instances.size).toBe(1);
   });
 
   // Motion's import settles in a later task, so the synchronous steps after render() happen
@@ -172,11 +179,6 @@ describe("Tabs with Motion", () => {
 });
 
 describe("Tabs animations that must stop", () => {
-  // Slow and linear, so each check below happens mid-animation, even in a loaded run where a
-  // few frames can take seconds
-  const slow = { type: "tween", ease: "linear", duration: 10 } as const;
-  const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
-
   afterEach(async () => {
     await commands.emulateMedia({ reducedMotion: "no-preference" });
     // Motion reads the preference from the media query's change event
@@ -306,6 +308,142 @@ describe("Tabs animations that must stop", () => {
   });
 });
 
+/** Where `panel` is in Tabs.Contents, and how tall the container is, to the pixel */
+const placeIn = (contents: HTMLElement, panel: Element) => () => {
+  const box = contents.getBoundingClientRect();
+  return {
+    offset: Math.round(panel.getBoundingClientRect().left - box.left),
+    height: Math.round(box.height),
+  };
+};
+
+describe("Tabs in <Activity> with Motion", () => {
+  // <Activity mode="hidden"> hides its children with display:none and cleans their effects up,
+  // then runs them again when it shows them. The re-run must show the panel where the hide left
+  // it, at rest: no transform stuck mid-slide, and no entry played again.
+  type Mode = "visible" | "hidden";
+
+  it("shows Tabs.Contents at rest on its panel when shown again after hiding mid-slide", async () => {
+    await reloadMotion();
+    const ui = (mode: Mode, value: Panel) => (
+      <Activity mode={mode}>{panelsOfTwoHeights(value, { transition: slow })}</Activity>
+    );
+    const { rerender, getByTestId } = render(ui("visible", "short"));
+    const contents = getByTestId("contents");
+    const place = placeIn(contents, page.getByText("Tall panel").element());
+    const start = await waitForStable(place);
+
+    rerender(ui("visible", "tall"));
+    // Mid-slide and mid-resize. Waits for both to move rather than for a set number of frames,
+    // as Motion can start them a frame or two later under load
+    await expect
+      .poll(() => place().offset < start.offset - 1 && place().height > HEIGHTS.short + 1, {
+        timeout: 5000,
+      })
+      .toBe(true);
+    expect(place().offset).toBeGreaterThan(1);
+    expect(place().height).toBeLessThan(HEIGHTS.tall - 1);
+
+    rerender(ui("hidden", "tall"));
+    await nextFrame();
+    await nextFrame();
+    rerender(ui("visible", "tall"));
+    const frames = await eachPaintedFrame(place, 20);
+    expect(frames).toEqual(frames.map(() => ({ offset: 0, height: HEIGHTS.tall })));
+  });
+
+  /** The pane's opacity and vertical offset, as painted */
+  const poseOf = (pane: Element) => {
+    const { opacity, transform } = getComputedStyle(pane);
+    return { opacity, y: new DOMMatrix(transform).m42 };
+  };
+  const AT_REST = { opacity: "1", y: 0 };
+
+  // The entry plays once, for a change of tab. A pane hidden mid-entry shows at rest, as reduced
+  // motion turned on mid-entry finishes it.
+  it.each([
+    ["mid-entry", slow],
+    ["after its entry", { type: "tween", duration: 0.1 }],
+  ] as const)(
+    "shows a Tabs.Animate pane at rest when shown again after hiding it %s",
+    async (_, transition) => {
+      await reloadMotion();
+      const ui = (mode: Mode, value: string) => (
+        <Activity mode={mode}>
+          <Tabs.Root value={value}>
+            <Tabs.Animate transition={transition}>
+              <p>Panel {value}</p>
+            </Tabs.Animate>
+          </Tabs.Root>
+        </Activity>
+      );
+      const { rerender } = render(ui("visible", "a"));
+      rerender(ui("visible", "b"));
+      const pane = page.getByText("Panel b").element().parentElement as HTMLElement;
+      if (transition === slow) {
+        // Mid-entry: fading in. Before Motion's first frame the pane is still at full opacity.
+        const fading = () => Number(poseOf(pane).opacity);
+        await expect.poll(() => fading() > 0 && fading() < 1, { timeout: 5000 }).toBe(true);
+      } else {
+        // At rest before the first frame too, so let the 0.1s entry play out first
+        await new Promise((resolve) => setTimeout(resolve, 600));
+        expect(poseOf(pane)).toEqual(AT_REST);
+      }
+
+      rerender(ui("hidden", "b"));
+      await nextFrame();
+      await nextFrame();
+      rerender(ui("visible", "b"));
+      const frames = await eachPaintedFrame(() => poseOf(pane), 20);
+      expect(frames).toEqual(frames.map(() => AT_REST));
+    },
+  );
+});
+
+describe("Tabs.Contents when reduced motion turns off at rest", () => {
+  afterEach(async () => {
+    await commands.emulateMedia({ reducedMotion: "no-preference" });
+    await nextFrame();
+  });
+
+  // The CSS fallback removes Motion's inline transform and height, while Motion still holds
+  // them. Back with Motion, they must be written again: the active panel here is the second and
+  // the shorter, so without them the track would show the first panel, and the container would
+  // be as tall as the tallest.
+  it("keeps the active panel in place and the container at its height on every frame", async () => {
+    await reloadMotion();
+    const { getByTestId } = render(
+      <Tabs.Root defaultValue="short">
+        <Tabs.Contents data-testid="contents">
+          <Tabs.Content value="tall">
+            <div style={{ height: HEIGHTS.tall }}>Tall panel</div>
+          </Tabs.Content>
+          <Tabs.Content value="short">
+            <div style={{ height: HEIGHTS.short }}>Short panel</div>
+          </Tabs.Content>
+        </Tabs.Contents>
+      </Tabs.Root>,
+    );
+    const contents = getByTestId("contents");
+    const place = placeIn(contents, page.getByText("Short panel").element());
+    const inPlace = { offset: 0, height: HEIGHTS.short };
+    await expect.poll(() => contents.style.height).not.toBe("");
+    expect(await waitForStable(place)).toEqual(inPlace);
+
+    await commands.emulateMedia({ reducedMotion: "reduce" });
+    await expect.poll(() => contents.style.height).toBe("");
+    expect(await waitForStable(place)).toEqual(inPlace);
+
+    // Recorded from before the switch, so a frame between the two paths counts too
+    const recording = eachPaintedFrame(place, 30);
+    await commands.emulateMedia({ reducedMotion: "no-preference" });
+    const frames = await recording;
+    // Back on the Motion path within the frames recorded
+    expect(contents).toHaveClass("overflow-clip");
+    expect(frames).toEqual(frames.map(() => inPlace));
+  });
+});
+
 describe("Tabs.Contents height with Motion", () => {
   it.each([
     ["short", "tall"],
@@ -334,7 +472,6 @@ describe("Tabs.Contents height with Motion", () => {
     await reloadMotion();
     // Instant, so each frame shows the height the container was last told to have
     const transition = { type: "tween", duration: 0 } as const;
-    const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
     const { rerender, getByTestId } = render(panelsOfTwoHeights("short", { transition }));
     const contents = getByTestId("contents");
     // Resolves inside an animation frame, so the switches below happen there too
