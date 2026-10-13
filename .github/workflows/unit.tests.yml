@@ -49,4 +49,5 @@ jobs:
           working-directory: packages/ui
 
       - name: Test the repo scripts
+        if: ${{ !cancelled() }}
         run: bun test ./scripts

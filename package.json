@@ -17,7 +17,6 @@
     "test:visual": "turbo run test:visual --",
     "test:visual:update": "turbo run test:visual:update --",
     "format": "biome format --write .",
-    "lint:root": "biome check .",
     "lint:scripts": "biome check scripts",
     "check-types:scripts": "tsc -p scripts",
     "changeset": "changeset",
