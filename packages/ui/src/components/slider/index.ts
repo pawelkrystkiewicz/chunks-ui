@@ -1,10 +1,10 @@
 export type {
   SliderControlProps,
   SliderIndicatorProps,
-  SliderLabels,
   SliderRootProps,
   SliderThumbProps,
   SliderTrackProps,
   SliderValueProps,
 } from "./Slider";
-export { DEFAULT_SLIDER_LABELS, Slider } from "./Slider";
+export { Slider } from "./Slider";
+export { DEFAULT_SLIDER_LABELS, type SliderLabels } from "./Slider.Labels";

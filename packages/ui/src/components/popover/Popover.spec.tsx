@@ -1,6 +1,6 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { axe } from "jest-axe";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { Popover } from "./Popover";
 
 afterEach(cleanup);
@@ -28,6 +28,23 @@ describe("Popover", () => {
       </Popover.Root>,
     );
     expect(screen.getByTestId("arrow")).toHaveClass("custom");
+  });
+
+  it("leaves the arrow's padding to Base UI where there is no layout", async () => {
+    // jsdom has no layout: the arrow's computed width is "", which must not become a NaN padding
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    render(
+      <Popover.Root open>
+        <Popover.Trigger>Open</Popover.Trigger>
+        <Popover.Content>
+          <Popover.Arrow data-testid="arrow" />
+        </Popover.Content>
+      </Popover.Root>,
+    );
+    const arrow = screen.getByTestId("arrow");
+    await waitFor(() => expect(arrow).toHaveAttribute("data-side"));
+    expect(error).not.toHaveBeenCalled();
+    error.mockRestore();
   });
 
   it("renders Title with custom className", () => {

@@ -15,33 +15,13 @@ import { cn } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
 import { usePortalContainer } from "../../lib/portal-container";
 import { useMergedRef } from "../../lib/use-merged-ref";
-import {
-  Calendar,
-  type CalendarLabels,
-  type CalendarProps,
-  DEFAULT_CALENDAR_LABELS,
-  validDate,
-} from "../calendar/Calendar";
+import { Calendar, type CalendarProps, validDate } from "../calendar/Calendar";
+import { type DatePickerLabels, DEFAULT_DATE_PICKER_LABELS } from "./DatePicker.Labels";
 
-/**
- * The built-in English strings of `DatePicker`: those of its trigger and of its calendar. A React
- * Server Component can't pass the functions to `DatePicker`, a client component.
- */
-export type DatePickerLabels = CalendarLabels & {
-  /**
-   * Trigger text while no date is selected. The `placeholder` prop takes precedence.
-   * @default "Pick a date"
-   */
-  placeholder: string;
-  /**
-   * Trigger text for the selected date. Gets a picked date at local midnight, and `value` as you
-   * pass it: format it in the local time zone, not with `timeZone: "UTC"`.
-   * @default (date) => "March 15, 2026"
-   */
-  selectedDate: (date: Date) => string;
-};
-
-type DatePickerOwnProps = Pick<CalendarProps, "weekStartsOn" | "showOutsideDays"> & {
+type DatePickerOwnProps = Pick<
+  CalendarProps,
+  "weekStartsOn" | "showOutsideDays" | "month" | "onMonthChange"
+> & {
   /**
    * The currently selected date (controlled). An Invalid Date counts as no date.
    */
@@ -83,7 +63,9 @@ type DatePickerOwnProps = Pick<CalendarProps, "weekStartsOn" | "showOutsideDays"
   isDateDisabled?: (date: Date) => boolean;
   /**
    * Name of the form field. Renders a hidden input that submits the selected date as
-   * `yyyy-mm-dd`, or an empty string when no date is selected.
+   * `yyyy-mm-dd`, or an empty string when no date is selected. If `Field.Root` has a name, Base
+   * UI's `Form` uses it for `errors` and `onFormSubmit`, but the form data uses this one: set the
+   * name in one place.
    */
   name?: string;
   /**
@@ -92,7 +74,8 @@ type DatePickerOwnProps = Pick<CalendarProps, "weekStartsOn" | "showOutsideDays"
    */
   required?: boolean;
   /**
-   * The `id` of the `<form>` the hidden input belongs to, for a picker placed outside it.
+   * The `id` of the `<form>` the picker belongs to, for a picker placed outside it. A reset of
+   * that form restores the picker. With `name` or `required`, the date is submitted with that form.
    */
   form?: string;
   /**
@@ -121,16 +104,20 @@ function toIsoDate(date: Date): string {
   return `${pad(date.getFullYear(), 4)}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
-export const DEFAULT_DATE_PICKER_LABELS: Readonly<DatePickerLabels> = {
-  ...DEFAULT_CALENDAR_LABELS,
-  placeholder: "Pick a date",
-  selectedDate: (date) =>
-    date.toLocaleDateString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    }),
-};
+/**
+ * The form `control` belongs to. With `formId`, that is the form with that id in the control's
+ * tree (document or shadow root), as the browser resolves a `form` attribute: the trigger, the
+ * control when there is no form input, does not carry the attribute.
+ */
+function getForm(
+  control: HTMLInputElement | HTMLButtonElement | null,
+  formId: string | undefined,
+): HTMLFormElement | null {
+  if (!control || formId === undefined) return control?.form ?? null;
+  const root = control.getRootNode() as Partial<Pick<Document, "getElementById">>;
+  const element = root.getElementById?.(formId);
+  return element?.tagName === "FORM" ? (element as HTMLFormElement) : null;
+}
 
 export function DatePicker({
   value,
@@ -143,6 +130,8 @@ export function DatePicker({
   isDateDisabled,
   weekStartsOn,
   showOutsideDays,
+  month,
+  onMonthChange,
   name,
   required,
   form,
@@ -171,18 +160,20 @@ export function DatePicker({
   // the form input, which `form` can link to a form it is outside of, else the trigger.
   const fieldControlRef = useRef<HTMLInputElement | HTMLButtonElement>(null);
   useEffect(() => {
-    const formElement = fieldControlRef.current?.form;
-    if (!formElement || value !== undefined) return;
-    // Listen on the form's root node (the document, or a shadow root, as `reset` is not composed),
-    // in the bubble phase: it runs after React's root listener, so a consumer's `onReset` has had
-    // the chance to cancel the reset, which leaves the controls as they are.
-    const doc = formElement.getRootNode();
+    const control = fieldControlRef.current;
+    if (!control || value !== undefined) return;
+    // Listen on the control's root node (the document, or a shadow root, as `reset` is not
+    // composed), in the bubble phase: it runs after React's root listener, so a consumer's
+    // `onReset` has had the chance to cancel the reset, which leaves the controls as they are.
+    // The form is found when it resets, so one that mounts later, or remounts, counts.
+    const root = control.getRootNode();
     const reset = (event: Event) => {
-      if (event.target !== formElement || event.defaultPrevented) return;
+      if (event.defaultPrevented) return;
+      if (event.target !== getForm(fieldControlRef.current, form)) return;
       setInternalDate(defaultValue ?? null);
     };
-    doc.addEventListener("reset", reset);
-    return () => doc.removeEventListener("reset", reset);
+    root.addEventListener("reset", reset);
+    return () => root.removeEventListener("reset", reset);
   });
 
   const displayValue = selectedDate ? names.selectedDate(selectedDate) : "";
@@ -213,6 +204,9 @@ export function DatePicker({
           // Field.Control types its props for <input>; they reach the trigger <button> unchanged
           {...(triggerProps as BaseField.Control.Props)}
           ref={fieldControlRef as RefObject<HTMLInputElement>}
+          // Registers the name with Field.Root when it has none, so a Base UI Form's `errors`
+          // and `onFormSubmit` values find the field under it
+          name={name}
           disabled={disabled}
           // The field reads its value from here, not from the button's empty value
           value={isoValue}
@@ -302,7 +296,9 @@ export function DatePicker({
                 isDateDisabled={isDateDisabled}
                 weekStartsOn={weekStartsOn}
                 showOutsideDays={showOutsideDays}
-                labels={names}
+                month={month}
+                onMonthChange={onMonthChange}
+                labels={labels}
               />
             </BasePopover.Popup>
           </BasePopover.Positioner>

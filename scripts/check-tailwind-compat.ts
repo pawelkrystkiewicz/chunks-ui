@@ -5,6 +5,10 @@
  * the oldest does not generate a class the installed one does: a consumer on that version would
  * get no CSS for it, and no error.
  *
+ * Tailwind does not scan CSS files, so a utility that theme.css defines with `@utility` and that no
+ * component uses (`touch-target`) would not be compiled. Both versions also scan a file that lists
+ * each of those utilities, and the installed one must generate them all.
+ *
  * The installed version compiles in this process, with the `@tailwindcss/node` and
  * `@tailwindcss/oxide` from bun.lock. The oldest compiles with the CLI installed from the
  * committed fixture in scripts/tailwind-4.0 (`bun install --frozen-lockfile` in a throwaway
@@ -25,8 +29,13 @@ const THEME = join(UI, "dist/theme.css");
 const CLASS = /\.(-?(?:[\w-]|\\[0-9a-fA-F]{1,6} ?|\\.)+)/g;
 /** A class from Button's base variants, which stays in chunks-ui. */
 const KNOWN_CLASS = "disabled:pointer-events-none";
-const INPUT = `@import "tailwindcss" source(none);\n@import ${JSON.stringify(THEME.replaceAll("\\", "/"))};\n`;
 const ESCAPE = /\\([0-9a-fA-F]{1,6}) ?|\\(.)/g;
+
+/** The names of the utilities that `css` defines with `@utility`, without functional ones (`tab-*`). */
+export function themeUtilities(css: string): string[] {
+  const rules = css.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/@utility\s+([\w-]+)\s*\{/g);
+  return [...rules].map(([, name = ""]) => name);
+}
 
 /** The class names in the selectors of compiled CSS, unescaped. */
 export function classNames(css: string): Set<string> {
@@ -53,11 +62,28 @@ export function missingClasses(oldest: string, installed: string): string[] {
   return [...classNames(installed)].filter((name) => !generated.has(name)).sort();
 }
 
-/** Why `names` cannot be a real scan of chunks-ui, or undefined. Guards against both versions generating nothing. */
-export function scanProblem(names: Set<string>, version: string): string | undefined {
+/**
+ * Why `names` cannot be a real scan of chunks-ui, or undefined. Guards against both versions
+ * generating nothing, and, given the theme's `utilities`, against both skipping them.
+ */
+export function scanProblem(
+  names: Set<string>,
+  version: string,
+  utilities: readonly string[] = [],
+): string | undefined {
   if (!names.has(KNOWN_CLASS)) {
     return `Tailwind ${version} did not generate ${KNOWN_CLASS}, a class of chunks-ui's Button: the scan of ${THEME} is broken.`;
   }
+  const absent = utilities.filter((name) => !names.has(name));
+  if (absent.length > 0) {
+    return `Tailwind ${version} did not generate ${absent.join(", ")}, defined with @utility in ${THEME}: the scan of the file that lists them is broken.`;
+  }
+}
+
+/** The input both versions compile: the built theme, and `utilities`, a file that names the theme's own utilities. */
+function input(utilities: string): string {
+  const path = (file: string) => JSON.stringify(file.replaceAll("\\", "/"));
+  return `@import "tailwindcss" source(none);\n@import ${path(THEME)};\n@source ${path(utilities)};\n`;
 }
 
 function run(cmd: string[], cwd: string) {
@@ -65,25 +91,38 @@ function run(cmd: string[], cwd: string) {
   if (exitCode !== 0) throw new Error(`${cmd.join(" ")} failed in ${cwd}:\n${stderr}`);
 }
 
-/** The CSS of the installed Tailwind (the repo's lockfile) for the package. */
-async function compileInstalled(): Promise<string> {
+/** The CSS of the installed Tailwind (the repo's lockfile) for `css`. */
+async function compileInstalled(css: string): Promise<string> {
   const load = async (name: string) => import(Bun.resolveSync(name, UI));
   const { compile } = await load("@tailwindcss/node");
   const { Scanner } = await load("@tailwindcss/oxide");
-  const compiler = await compile(INPUT, { base: UI, onDependency() {} });
+  const compiler = await compile(css, { base: UI, onDependency() {} });
   return compiler.build(new Scanner({ sources: compiler.sources }).scan());
 }
 
-/** The CSS of Tailwind OLDEST, from the fixture's lockfile, compiled in a throwaway directory. */
-async function compileOldest(): Promise<string> {
+/** The CSS of Tailwind OLDEST, from the fixture's lockfile, for `css`, compiled in `dir`. */
+async function compileOldest(css: string, dir: string): Promise<string> {
+  cpSync(join(FIXTURE, "package.fixture.json"), join(dir, "package.json"));
+  cpSync(join(FIXTURE, "bun.fixture.lock"), join(dir, "bun.lock"));
+  await Bun.write(join(dir, "input.css"), css);
+  run(["bun", "install", "--frozen-lockfile"], dir);
+  run(["bun", "x", "tailwindcss", "--input", "input.css", "--output", "output.css"], dir);
+  return await Bun.file(join(dir, "output.css")).text();
+}
+
+/** The CSS of the installed version and of OLDEST, and the utilities theme.css defines. */
+async function compileBoth() {
+  const utilities = themeUtilities(await Bun.file(THEME).text());
   const dir = mkdtempSync(join(tmpdir(), `tailwind-${OLDEST}-`));
   try {
-    cpSync(join(FIXTURE, "package.fixture.json"), join(dir, "package.json"));
-    cpSync(join(FIXTURE, "bun.fixture.lock"), join(dir, "bun.lock"));
-    await Bun.write(join(dir, "input.css"), INPUT);
-    run(["bun", "install", "--frozen-lockfile"], dir);
-    run(["bun", "x", "tailwindcss", "--input", "input.css", "--output", "output.css"], dir);
-    return await Bun.file(join(dir, "output.css")).text();
+    const list = join(dir, "theme-utilities.html");
+    await Bun.write(list, `${utilities.join("\n")}\n`);
+    const css = input(list);
+    return {
+      utilities,
+      installed: await compileInstalled(css),
+      oldest: await compileOldest(css, dir),
+    };
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -91,11 +130,10 @@ async function compileOldest(): Promise<string> {
 
 if (import.meta.main) {
   const { version } = await Bun.file(Bun.resolveSync("tailwindcss/package.json", UI)).json();
-  const installed = await compileInstalled();
-  const oldest = await compileOldest();
+  const { utilities, installed, oldest } = await compileBoth();
   const problems = [
     scanProblem(classNames(oldest), OLDEST),
-    scanProblem(classNames(installed), version),
+    scanProblem(classNames(installed), version, utilities),
   ].filter(Boolean);
   const missing = missingClasses(oldest, installed);
   if (missing.length > 0) {

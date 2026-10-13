@@ -11,11 +11,11 @@ export type {
   ComboboxInputProps,
   ComboboxItemIndicatorProps,
   ComboboxItemProps,
-  ComboboxLabels,
   ComboboxListProps,
   ComboboxPopupProps,
   ComboboxPositionerProps,
   ComboboxRootProps,
   ComboboxTriggerProps,
 } from "./Combobox";
-export { Combobox, DEFAULT_COMBOBOX_LABELS } from "./Combobox";
+export { Combobox } from "./Combobox";
+export { type ComboboxLabels, DEFAULT_COMBOBOX_LABELS } from "./Combobox.Labels";

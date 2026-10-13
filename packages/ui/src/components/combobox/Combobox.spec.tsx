@@ -7,11 +7,10 @@ import {
   Combobox,
   type ComboboxChipRemoveProps,
   type ComboboxClearProps,
-  type ComboboxLabels,
   type ComboboxRootProps,
   type ComboboxTriggerProps,
-  DEFAULT_COMBOBOX_LABELS,
 } from "./Combobox";
+import { type ComboboxLabels, DEFAULT_COMBOBOX_LABELS } from "./Combobox.Labels";
 
 afterEach(cleanup);
 

@@ -93,7 +93,8 @@ export default defineConfig({
         {
           browser: "chromium",
           provider: playwright({ contextOptions: { reducedMotion: "reduce" } }),
-          exclude: ["src/**/*.motion.visual.spec.tsx"],
+          // The WebKit smoke specs run in their own project, vitest.webkit.config.ts
+          exclude: ["src/**/*.motion.visual.spec.tsx", "src/**/*.webkit.visual.spec.tsx"],
         },
         // Motion only animates when reduced motion is off
         {

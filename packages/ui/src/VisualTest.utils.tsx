@@ -286,3 +286,30 @@ export function contentSpan(el: Element, dir: Dir) {
     end: end - px(style.borderInlineEndWidth) - px(style.paddingInlineEnd),
   };
 }
+
+/** How far an arrow's foot reaches past its unturned box on each side: (√2 − 1)/2 of its size. */
+export function arrowOverhang(arrow: Element) {
+  return (px(getComputedStyle(arrow).width) * (Math.SQRT2 - 1)) / 2;
+}
+
+/** Chromium lays boxes out in 1/64 px, so an arrow held a fraction of a pixel in rounds to it. */
+export const LAYOUT_ROUNDING_PX = 1 / 64;
+
+export type Theme = { theme: string; vars: Record<string, string> };
+
+/** The default theme, and one with a larger corner radius and a larger `--spacing` (and arrow). */
+export const THEMES: Theme[] = [
+  { theme: "default theme", vars: {} },
+  { theme: "--radius 1rem, --spacing 5px", vars: { "--radius": "1rem", "--spacing": "5px" } },
+];
+
+/** The popup is portalled to <body>, so the theme goes on the root element. */
+export function applyTheme(vars: Theme["vars"]) {
+  for (const [name, value] of Object.entries(vars)) {
+    document.documentElement.style.setProperty(name, value);
+  }
+}
+
+export function resetTheme(vars: Theme["vars"]) {
+  for (const name of Object.keys(vars)) document.documentElement.style.removeProperty(name);
+}

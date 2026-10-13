@@ -86,6 +86,16 @@ Because the button has no visible text, you **must** provide an `aria-label` des
 </IconButton>
 ```
 
+### Touch Target
+
+The button is 32px square. To make it easier to tap, add [`touch-target`](/utilities#touch-target): the hit area grows to 44×44px, and the button's size and the layout stay the same. With `pointer-coarse:` (Tailwind 4.1 or later), it grows only on touch screens:
+
+```tsx
+<IconButton aria-label="Close" className="pointer-coarse:touch-target">
+  <XIcon />
+</IconButton>
+```
+
 ## Props
 
 | Prop | Type | Default | Description |

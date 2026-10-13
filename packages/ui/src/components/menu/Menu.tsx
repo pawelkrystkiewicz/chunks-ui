@@ -5,8 +5,9 @@ import type { ComponentProps } from "react";
 import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
-import { ARROW_PADDING_PX, arrowClasses, arrowPopupClasses } from "../../lib/popup-arrow";
+import { arrowClasses, arrowPopupClasses } from "../../lib/popup-arrow";
 import { usePortalContainer } from "../../lib/portal-container";
+import { useArrowPadding } from "../../lib/use-arrow-padding";
 import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
 
 export type MenuRootProps = ComponentProps<typeof BaseMenu.Root>;
@@ -39,9 +40,9 @@ export type MenuContentProps = ComponentProps<typeof BaseMenu.Popup> & {
    */
   alignOffset?: ComponentProps<typeof BaseMenu.Positioner>["alignOffset"];
   /**
-   * How close the arrow may come to the popup's ends, in pixels. The default keeps the arrow's
-   * foot off the 8px rounded corner; raise it with a larger corner radius or a larger `--spacing`.
-   * @default 10
+   * How close the arrow may come to the popup's ends, in pixels. The default, read when the popup
+   * mounts, keeps the arrow's foot off the popup's rounded corner at any `--radius` and `--spacing`.
+   * @default corner radius + 0.21 × arrow size (≈ 10.07)
    */
   arrowPadding?: ComponentProps<typeof BaseMenu.Positioner>["arrowPadding"];
 };
@@ -68,12 +69,13 @@ function MenuContentPopup({
   side,
   align,
   alignOffset,
-  arrowPadding = ARROW_PADDING_PX,
+  arrowPadding,
   ...props
 }: MenuContentProps) {
   const m = useLoadedMotion();
   const reduced = useReducedMotion();
   const useSpring = !!m && !reduced;
+  const [positioner, arrowPaddingByDefault] = useArrowPadding();
   const render = useSpring
     ? createPopupRenderer({
         m,
@@ -85,12 +87,13 @@ function MenuContentPopup({
 
   return (
     <BaseMenu.Positioner
+      ref={positioner}
       className="z-dropdowns"
       sideOffset={sideOffset}
       side={side}
       align={align}
       alignOffset={alignOffset}
-      arrowPadding={arrowPadding}
+      arrowPadding={arrowPadding ?? arrowPaddingByDefault}
     >
       <BaseMenu.Popup
         render={render}
