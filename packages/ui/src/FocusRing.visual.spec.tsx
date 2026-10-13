@@ -354,7 +354,13 @@ function expectInstantRing(drawn: Element) {
 }
 
 // Timing a consumer may put in `className`: none of it fades or delays the ring
-const UTILITIES = ["duration-500", "delay-200", "transition-colors"];
+const UTILITIES = [
+  "duration-500",
+  "delay-200",
+  "transition-colors",
+  "transition-all",
+  "transition",
+];
 
 describe("focus ring with no reduced-motion preference", () => {
   it.each(RING_CASES)("$part shows the ring from the moment it takes keyboard focus", async (c) => {
@@ -368,6 +374,19 @@ describe("focus ring with no reduced-motion preference", () => {
         expectInstantRing(await focusRing(c, utility));
       },
     );
+  });
+
+  // Guards against a list that drops a property the part changes with its state
+  it.each([
+    { part: "Switch.Root", property: "background-color" },
+    { part: "Calendar day", property: "box-shadow" },
+    { part: "ToggleGroup.Item", property: "box-shadow" },
+    { part: "Checkbox.Root", property: "border-color" },
+  ])("lists $property in the transitions of $part", async ({ part, property }) => {
+    const c = RING_CASES.find((r) => r.part === part);
+    if (!c) throw new Error(`No ring case for ${part}`);
+    const drawn = await focusRing(c);
+    expect(getComputedStyle(drawn).transitionProperty).toContain(property);
   });
 
   // The ring is left out, not the rest: a colour change, as on hover or press, still fades
