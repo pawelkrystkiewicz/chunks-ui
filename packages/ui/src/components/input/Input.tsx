@@ -99,7 +99,10 @@ export function Input({
   // so read the value again after every render: the button follows such a write on the next one
   useLayoutEffect(() => {
     const input = inputRef.current as HTMLInputElement | null;
-    if (tracksText && input) setHasUncontrolledText(input.value.length > 0);
+    if (!tracksText || !input) return;
+    // Only on a change: a set to the same value can still render the input again
+    const next = input.value.length > 0;
+    if (next !== hasUncontrolledText) setHasUncontrolledText(next);
   });
 
   // A controlled input changes only through a handler that sets `value`. Without one, the clear
