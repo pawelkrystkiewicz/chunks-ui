@@ -99,6 +99,32 @@ describe.each(SIZES)("touch-target on a $width×$height element", ({ width, heig
   });
 });
 
+describe("touch-target with --touch-target-size", () => {
+  const SIZE = 48;
+  // Halfway between the edge of the default area (22px from the centre) and of this one (24px)
+  const between = (MIN_AREA + SIZE) / 4;
+
+  it("grows the area to the size set on a scope", async () => {
+    const { stage, getByTestId } = renderStage(
+      <span data-testid="target" className="touch-target" style={{ width: 16, height: 16 }} />,
+    );
+    stage.style.setProperty("--touch-target-size", `${SIZE}px`);
+    const target = getByTestId("target");
+    const { x, y } = centreOf(target);
+    for (const [dx, dy] of [
+      [-between, 0],
+      [between, 0],
+      [0, -between],
+      [0, between],
+    ] as const) {
+      expect(await pressAt(stage, x + dx, y + dy), `${dx}, ${dy}`).toBe(target);
+    }
+    const outside = SIZE / 2 + MARGIN;
+    expect(await pressAt(stage, x + outside, y)).toBe(stage);
+    expect(await pressAt(stage, x, y - outside)).toBe(stage);
+  });
+});
+
 describe("touch-target layout", () => {
   it("moves neither the element, its content nor its neighbours", () => {
     const { getByTestId, getByRole } = renderStage(
