@@ -16,6 +16,7 @@ import {
   palette,
   saveTheme,
 } from "../../create/theme-model";
+import { LAYOUT_FONTS } from "../../layout-fonts";
 import { FOCUS_RING, FOCUS_RING_INSET } from "./focus";
 
 const ICON_BUTTON =
@@ -155,12 +156,12 @@ export function SpringList() {
   ));
 }
 
-// Only the "Aa" glyphs at 600. Manrope stays out: the layout loads it in full, and a
-// subset face (no unicode-range) for the same family and weight would shadow it.
+// Only the "Aa" glyphs at 600. Families the layout loads in full stay out: a subset face
+// (no unicode-range) for the same family and weight would shadow the full one.
 const PRESET_FONTS_HREF = `https://fonts.googleapis.com/css2?${[
   ...new Set(PRESETS.map((p) => p.theme.fontHeading)),
 ]
-  .filter((f) => f !== "Manrope")
+  .filter((f) => !(f in LAYOUT_FONTS))
   .map((f) => `family=${f.replaceAll(" ", "+")}:wght@600`)
   .join("&")}&text=Aa&display=swap`;
 

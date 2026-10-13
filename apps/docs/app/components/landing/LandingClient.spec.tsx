@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { CopyRow, HeroCopy } from "./LandingClient";
+import { LAYOUT_FONTS } from "../../layout-fonts";
+import { CopyRow, HeroCopy, PresetGrid } from "./LandingClient";
 
 const CMD = "bun add chunks-ui motion";
 const MESSAGE = "Copied to clipboard";
@@ -71,4 +72,13 @@ it("clears the pending timer on unmount", async () => {
 it("HeroCopy keeps the visible command in its accessible name", () => {
   render(<HeroCopy text={CMD} />);
   expect(screen.getByRole("button", { name: CMD })).toBeTruthy();
+});
+
+// An "Aa"-only face has no unicode-range, so it would shadow the layout's full face of that family.
+it("PresetGrid's Aa subset leaves out every family the layout loads in full", () => {
+  const { container } = render(<PresetGrid />);
+  const href = container.querySelector("link[rel='stylesheet']")?.getAttribute("href") ?? "";
+  const families = new URL(href).searchParams.getAll("family").map((f) => f.replace(/:.*/, ""));
+  expect(families.length).toBeGreaterThan(0);
+  expect(families.filter((f) => f in LAYOUT_FONTS)).toEqual([]);
 });
