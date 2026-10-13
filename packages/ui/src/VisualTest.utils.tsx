@@ -6,6 +6,17 @@ import { commands, page } from "vitest/browser";
 import { reloadMotion } from "./lib/use-motion";
 
 /**
+ * Base UI's InternalBackdrop: an empty, transparent `position: fixed; inset: 0` element that a
+ * modal popup (Menu, Select, a modal Popover) lays over the page to catch outside clicks. The
+ * role tells it apart from the page content that Base UI marks `data-base-ui-inert` behind a
+ * popup, which has none. An author's own `role="presentation"` element (a layout table) that Base
+ * UI marks inert has content, so `isInvisibleBackdrop` also requires the element to be empty.
+ */
+const INVISIBLE_BACKDROP = '[role="presentation"][data-base-ui-inert]';
+const PORTAL = "[data-base-ui-portal]";
+const isInvisibleBackdrop = (el: Element) => el.matches(INVISIBLE_BACKDROP) && !el.hasChildNodes();
+
+/**
  * How far in CSS px the content of `fixture` reaches past each of its edges, 0 where it fits.
  * Walks the box of every element and the text under it, so the direction of the page and the
  * positioning of the content don't matter. Content that an `overflow` ancestor clips doesn't
@@ -13,13 +24,30 @@ import { reloadMotion } from "./lib/use-motion";
  * count: they are visually hidden (`sr-only`, focus guards) and show nothing. A box that is thin
  * in one dimension only (a 300 × 1 divider) does count.
  *
+ * Portalled content counts too. A Base UI popup portals to a `<div data-base-ui-portal>` on
+ * <body>, outside the fixture that opened it, and a screenshot of the fixture shows the popup
+ * only where it lies inside the fixture's box. What belongs to `fixture`: its descendants, and the
+ * content of every Base UI portal on the page, but not a portal that holds the fixture
+ * (the popup's own boxes surround it). Testing Library removes the test's tree and its portals
+ * after the test, so the portals on the page belong to what the test screenshots. Screenshot the
+ * whole fixture, or the page, while a popup is open: a part of the fixture fails for a popup
+ * outside that part. Two things in a portal don't count, as they paint nothing: the portal's own
+ * `<div>` (it spans <body> at no height), and the empty, transparent backdrop that a modal popup
+ * lays over the whole page (an empty `INVISIBLE_BACKDROP`). Each portal is walked once, on its
+ * own: a nested popup's portal, which Floating UI puts inside its parent's, is skipped in the
+ * parent's walk.
+ *
  * Limits: the walk skips what an `overflow` ancestor holds, so a `position: absolute` or `fixed`
  * descendant whose containing block lies outside that ancestor is skipped too, although the
  * ancestor doesn't clip it. Boxes are measured with their transforms applied, as they are at the
- * moment of the call. Only `fixture`'s descendants count: a popup portals to <body>, outside a
- * fixture, so a spec that screenshots an open popup screenshots the page (`renderPage`).
+ * moment of the call: a popup sits at the page's top left, transparent, until Floating UI has
+ * positioned it, so wait for it to settle before a screenshot of a fixture.
+ *
+ * `portals: false` leaves the portalled content out. `renderFixture` does that for its check
+ * after the render: a modal that is open from the start (a Dialog) fills the page, which no
+ * fixture screenshot is meant to show; the check before a screenshot counts it.
  */
-export function overflowPast(fixture: Element) {
+export function overflowPast(fixture: Element, { portals = true }: { portals?: boolean } = {}) {
   const box = fixture.getBoundingClientRect();
   const past = { top: 0, right: 0, bottom: 0, left: 0 };
   const measure = (rect: DOMRect) => {
@@ -33,6 +61,7 @@ export function overflowPast(fixture: Element) {
   const walk = (el: Element) => {
     for (const child of el.childNodes) {
       if (child instanceof Element) {
+        if (isInvisibleBackdrop(child) || child.matches(PORTAL)) continue;
         measure(child.getBoundingClientRect());
         if (getComputedStyle(child).overflow === "visible") walk(child);
       } else if (child.nodeType === Node.TEXT_NODE && child.textContent?.trim()) {
@@ -42,6 +71,11 @@ export function overflowPast(fixture: Element) {
     }
   };
   walk(fixture);
+  if (portals) {
+    for (const portal of document.querySelectorAll(PORTAL)) {
+      if (!portal.contains(fixture)) walk(portal);
+    }
+  }
   return past;
 }
 
@@ -50,10 +84,10 @@ export function overflowPast(fixture: Element) {
  * element in a fixture rendered with `allowOverflow`. `renderFixture` runs it after the render,
  * and vitest.visual.setup.ts before every `toMatchScreenshot`, on the element it captures.
  */
-export function expectNoOverflow(el: Element) {
+export function expectNoOverflow(el: Element, options?: { portals?: boolean }) {
   if (el.closest("[data-allow-overflow]")) return;
   expect(
-    overflowPast(el),
+    overflowPast(el, options),
     "content past the screenshotted element, which a screenshot crops",
   ).toEqual({
     top: 0,
@@ -67,7 +101,8 @@ export function expectNoOverflow(el: Element) {
  * Renders children in a padded fixture wrapper. Returns the wrapper element for screenshotting.
  *
  * Fails when the content reaches past the fixture, as a screenshot of the fixture would crop it,
- * after the render and again at each screenshot (`expectNoOverflow`). Give the spec a wider page
+ * after the render (its descendants only) and again at each screenshot (`expectNoOverflow`, which
+ * counts the portalled content too). Give the spec a wider page
  * with `withViewport`, or pass `allowOverflow` when the overflow is what the spec shows.
  */
 export async function renderFixture(
@@ -85,7 +120,7 @@ export async function renderFixture(
   );
   await document.fonts.ready;
   const fixture = result.getByTestId("fixture");
-  expectNoOverflow(fixture);
+  expectNoOverflow(fixture, { portals: false });
   return { ...result, fixture };
 }
 

@@ -1,6 +1,6 @@
 import { render } from "@testing-library/react";
 import { StrictMode } from "react";
-import { beforeAll, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import {
   eachPaintedFrame,
@@ -47,9 +47,6 @@ async function paintedAt(points: Point[]): Promise<Rgb[]> {
     return [r, g, b];
   });
 }
-
-// The page is 414 × 600, kept as it was: the existing baselines use this size
-beforeAll(() => page.viewport(414, 600));
 
 const close = (a: Rgb, b: Rgb) => a.every((channel, i) => Math.abs(channel - (b[i] ?? 0)) <= 2);
 

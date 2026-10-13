@@ -16,6 +16,7 @@ import {
 } from "react";
 import { cn, cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
+import { renderNow } from "../../lib/render-now";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { useMotion, useReducedMotion } from "../../lib/use-motion";
 import { useMotionAnimate } from "../../lib/use-motion-animate";
@@ -349,8 +350,15 @@ function TabsContents({ className, children, transition, ref, ...props }: TabsCo
       track.style.transform = "";
       return;
     }
-    const options = slide.current ? transitionRef.current : { duration: 0 };
-    slide.current = motion.animate(track, { x: `${safeIndex * -100}%` }, options);
+    const jump = !slide.current;
+    slide.current = motion.animate(
+      track,
+      { x: `${safeIndex * -100}%` },
+      jump ? { duration: 0 } : transitionRef.current,
+    );
+    // On a jump, render all values, so a transform the CSS fallback removed while Motion still
+    // held it comes back (reduced motion turned off at rest)
+    if (jump) renderNow(motion, track);
   }, [m, motion, safeIndex]);
 
   const resize = useRef<{ stop(): void } | null>(null);
@@ -369,8 +377,14 @@ function TabsContents({ className, children, transition, ref, ...props }: TabsCo
       return;
     }
     if (height === "auto") return;
-    const options = resize.current ? transitionRef.current : { duration: 0 };
-    resize.current = motion.animate(container, { height }, options);
+    const jump = !resize.current;
+    resize.current = motion.animate(
+      container,
+      { height },
+      jump ? { duration: 0 } : transitionRef.current,
+    );
+    // As for the slide: a height the CSS fallback removed comes back
+    if (jump) renderNow(motion, container);
   }, [m, motion, height]);
 
   // Stop on unmount, or Motion keeps writing to the detached elements until it settles.
@@ -511,10 +525,19 @@ function TabsAnimatePane({
   const mergedRef = useMergedRef(ref, consumerRef);
   const [enterOnMount] = useState(enter);
   const entry = useRef<{ complete(): void } | null>(null);
+  // Whether Motion has rendered a frame of the entry
+  const entryShown = useRef(false);
   useLayoutEffect(() => {
     const pane = ref.current;
     if (!enterOnMount || !pane) return;
     const { m, initial, animate, transition } = enterOnMount;
+    if (entryShown.current) {
+      // <Activity> shows the pane again after hiding it, once Motion has rendered a frame of the entry:
+      // finish the entry, don't play it again. A pane hidden before that first frame plays
+      // the entry again, on purpose, as StrictMode's re-run does.
+      const controls = m.animate(pane, animate as never, { duration: 0 });
+      return () => controls.stop();
+    }
     // From each `initial` value to its `animate` value, like motion.div's initial/animate
     const keyframes = Object.fromEntries(
       Object.entries(animate).map(([name, to]) => [
@@ -524,8 +547,16 @@ function TabsAnimatePane({
     );
     const controls = m.animate(pane, keyframes as never, transition);
     entry.current = controls;
-    // Stop on unmount, or Motion keeps writing to the detached pane until it settles
-    return () => controls.stop();
+    const shown = () => {
+      entryShown.current = true;
+    };
+    m.frame.postRender(shown);
+    return () => {
+      // StrictMode cleans up before the first frame, so its re-run still plays the entry
+      m.cancelFrame(shown);
+      // Stop on unmount, or Motion keeps writing to the detached pane until it settles
+      controls.stop();
+    };
   }, [enterOnMount]);
 
   // Reduced motion turned on mid-entry: finish it now. Turning it off again doesn't replay it.

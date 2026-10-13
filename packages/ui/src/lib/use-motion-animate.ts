@@ -2,6 +2,7 @@
 
 import { type Ref, type RefCallback, useLayoutEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
+import { renderNow } from "./render-now";
 import { useMergedRef } from "./use-merged-ref";
 import { useMotion, useReducedMotion } from "./use-motion";
 
@@ -111,10 +112,9 @@ export function useMotionAnimate<E extends HTMLElement | SVGElement>(
         if (pendingUndo.current) m.cancelFrame(pendingUndo.current);
         pendingUndo.current = null;
         controls.current = m.animate(node, JSON.parse(target), { duration: 0 });
-        // Motion only writes values that change: render all, so the values it still holds come
-        // back after the CSS fallback removed them. visualElementStore is Motion internals,
-        // hence the optional chaining for other Motion versions.
-        m.visualElementStore?.get(node)?.scheduleRender?.();
+        // Render all values, so the ones Motion still holds come back after the CSS fallback
+        // removed them
+        renderNow(m, node);
         animated.current = node;
         instant = node;
       }
@@ -183,9 +183,8 @@ export function useMotionAnimate<E extends HTMLElement | SVGElement>(
       JSON.parse(target),
       first ? { duration: 0 } : latest.current.transition,
     );
-    // Motion only writes values that change: on a jump, render all, so values the CSS fallback
-    // removed while Motion still held them come back (as in the hand-off above)
-    if (first) m.visualElementStore?.get(node)?.scheduleRender?.();
+    // On a jump, render all values, as in the hand-off above
+    if (first) renderNow(m, node);
   }, [driving, available, m, target]);
 
   // On unmount, and when StrictMode or <Activity> clean effects up before running them again:
