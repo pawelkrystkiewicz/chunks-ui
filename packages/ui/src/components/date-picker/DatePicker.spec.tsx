@@ -531,6 +531,32 @@ describe("DatePicker form reset", () => {
     },
   );
 
+  // The form renders in a root of its own, so the picker does not render again when it changes
+  const renderForm = () =>
+    render(
+      <form id="task" aria-label="Task">
+        <button type="reset">Reset</button>
+      </form>,
+    );
+
+  it("restores its default date with a `form` that mounts after it", async () => {
+    render(<DatePicker form="task" defaultValue={MARCH_15} />);
+    await pickMarch20("March 15, 2026");
+    renderForm();
+    await userEvent.click(screen.getByRole("button", { name: "Reset" }));
+    expect(screen.getByRole("button", { name: "March 15, 2026" })).toBeInTheDocument();
+  });
+
+  it("restores its default date with a `form` that remounts with the same id", async () => {
+    const { unmount } = renderForm();
+    render(<DatePicker form="task" defaultValue={MARCH_15} />);
+    await pickMarch20("March 15, 2026");
+    unmount();
+    renderForm();
+    await userEvent.click(screen.getByRole("button", { name: "Reset" }));
+    expect(screen.getByRole("button", { name: "March 15, 2026" })).toBeInTheDocument();
+  });
+
   it("keeps the picked date when the reset is cancelled", async () => {
     render(
       <form aria-label="Task" onReset={(event) => event.preventDefault()}>
@@ -560,19 +586,35 @@ describe("DatePicker form reset", () => {
 describe("DatePicker form reset scope", () => {
   const MARCH_15 = new Date(2026, 2, 15);
 
-  it("restores its default in a form inside a shadow root", async () => {
+  it.each([
+    {
+      form: "a form inside a shadow root",
+      ui: (
+        <form aria-label="Task">
+          <DatePicker name="due" defaultValue={MARCH_15} />
+          <button type="reset">Reset</button>
+        </form>
+      ),
+    },
+    {
+      // `form` finds the form by id in the shadow root, not in the document
+      form: "the form in its shadow root that `form` names",
+      ui: (
+        <>
+          <form id="task" aria-label="Task">
+            <button type="reset">Reset</button>
+          </form>
+          <DatePicker form="task" defaultValue={MARCH_15} />
+        </>
+      ),
+    },
+  ])("restores its default in $form", async ({ ui }) => {
     const host = document.createElement("div");
     document.body.append(host);
     const shadow = host.attachShadow({ mode: "open" });
     const container = document.createElement("div");
     shadow.append(container);
-    const { unmount } = render(
-      <form aria-label="Task">
-        <DatePicker name="due" defaultValue={MARCH_15} />
-        <button type="reset">Reset</button>
-      </form>,
-      { container },
-    );
+    const { unmount } = render(ui, { container });
     // Testing Library's cleanup doesn't know the host, so remove it even when an assertion fails
     try {
       const q = (name: string) => within(container).getByRole("button", { name });

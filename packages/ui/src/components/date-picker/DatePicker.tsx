@@ -191,18 +191,20 @@ export function DatePicker({
   // the form input, which `form` can link to a form it is outside of, else the trigger.
   const fieldControlRef = useRef<HTMLInputElement | HTMLButtonElement>(null);
   useEffect(() => {
-    const formElement = getForm(fieldControlRef.current, form);
-    if (!formElement || value !== undefined) return;
-    // Listen on the form's root node (the document, or a shadow root, as `reset` is not composed),
-    // in the bubble phase: it runs after React's root listener, so a consumer's `onReset` has had
-    // the chance to cancel the reset, which leaves the controls as they are.
-    const doc = formElement.getRootNode();
+    const control = fieldControlRef.current;
+    if (!control || value !== undefined) return;
+    // Listen on the control's root node (the document, or a shadow root, as `reset` is not
+    // composed), in the bubble phase: it runs after React's root listener, so a consumer's
+    // `onReset` has had the chance to cancel the reset, which leaves the controls as they are.
+    // The form is found when it resets, so one that mounts later, or remounts, counts.
+    const root = control.getRootNode();
     const reset = (event: Event) => {
-      if (event.target !== formElement || event.defaultPrevented) return;
+      if (event.defaultPrevented) return;
+      if (event.target !== getForm(fieldControlRef.current, form)) return;
       setInternalDate(defaultValue ?? null);
     };
-    doc.addEventListener("reset", reset);
-    return () => doc.removeEventListener("reset", reset);
+    root.addEventListener("reset", reset);
+    return () => root.removeEventListener("reset", reset);
   });
 
   const displayValue = selectedDate ? names.selectedDate(selectedDate) : "";
