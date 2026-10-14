@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { userEvent } from "vitest/browser";
-import { waitForStable } from "../../VisualTest.utils";
+import { describeMotionPaths, waitForStable } from "../../VisualTest.utils";
 import { Menu } from "./index";
 
 /*
@@ -90,3 +90,18 @@ describe.each([{ arrow: false }, { arrow: true }])(
     });
   },
 );
+
+// The handlers reach the popup through `createPopupRenderer`'s `motion.div` when Motion springs it
+describeMotionPaths("Menu popup pointer flag", (reducedMotion) => {
+  it("is set by a real pointer move and hides the ring", async () => {
+    const popup = await openedFromTheKeyboardThenHovered(false);
+    const { height } = popup.getBoundingClientRect();
+    await userEvent.hover(popup, { position: { x: 3, y: height / 2 } });
+    expect(document.activeElement).toBe(popup);
+    expect(popup.matches(":focus-visible")).toBe(true);
+    expect(popup).toHaveAttribute("data-pointer");
+    expect(ringOf(popup)).toBe(false);
+    // Whether Motion drives the popup: it sets inline transform styles
+    expect(popup.style.transform !== "").toBe(reducedMotion === "no-preference");
+  });
+});

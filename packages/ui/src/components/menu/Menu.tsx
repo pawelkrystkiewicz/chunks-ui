@@ -1,7 +1,7 @@
 "use client";
 
 import { Menu as BaseMenu } from "@base-ui/react/menu";
-import { type ComponentProps, useState } from "react";
+import { type ComponentProps, type ReactElement, useEffect, useState } from "react";
 import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
@@ -86,7 +86,7 @@ function MenuContentPopup({
   // that focus matched :focus-visible and the popup drew its ring under the mouse (W151). From
   // the first pointer move over the popup until the next key press, the ring stays off.
   const [pointer, setPointer] = useState(false);
-  const render = useSpring
+  const popupRenderer = useSpring
     ? createPopupRenderer({
         m,
         spring: springs.popup,
@@ -94,6 +94,21 @@ function MenuContentPopup({
         to: { opacity: 1, scale: 1 },
       })
     : undefined;
+  // A reopen during the exit animation finds this popup still mounted, so the flag resets when the
+  // menu opens, which only the popup's render state reports
+  const render = (
+    renderProps: Parameters<NonNullable<typeof popupRenderer>>[0],
+    state: { open: boolean },
+  ): ReactElement => (
+    <>
+      <OnOpen open={state.open} run={() => setPointer(false)} />
+      {popupRenderer ? (
+        popupRenderer(renderProps, state)
+      ) : (
+        <div {...(renderProps as ComponentProps<"div">)} />
+      )}
+    </>
+  );
 
   return (
     <BaseMenu.Positioner
@@ -140,6 +155,15 @@ function MenuContentPopup({
       </BaseMenu.Popup>
     </BaseMenu.Positioner>
   );
+}
+
+/** Runs `run` each time `open` turns true */
+function OnOpen({ open, run }: { open: boolean; run: () => void }) {
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `run` only sets state; it runs on open
+  useEffect(() => {
+    if (open) run();
+  }, [open]);
+  return null;
 }
 
 function MenuItem({ className, ...props }: MenuItemProps) {

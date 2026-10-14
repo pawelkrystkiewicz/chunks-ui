@@ -132,6 +132,36 @@ describe("Menu", () => {
     expect(content).toHaveAttribute("data-pointer");
   });
 
+  // A reopen during the exit animation finds the popup still mounted, so its pointer flag must
+  // reset when the menu opens, not when the popup mounts
+  it("clears data-pointer when the menu reopens before the popup unmounts", () => {
+    const ui = (open: boolean) => (
+      <Menu.Root open={open}>
+        <Menu.Trigger>Open</Menu.Trigger>
+        <Menu.Content data-testid="content">
+          <Menu.Item>Item</Menu.Item>
+        </Menu.Content>
+      </Menu.Root>
+    );
+    // jsdom has no animations, so Base UI would unmount at once; an exit animation that never
+    // ends keeps the popup mounted
+    Element.prototype.getAnimations = () => [{ finished: new Promise(() => {}) } as Animation];
+    try {
+      const { rerender } = render(ui(true));
+      const content = screen.getByTestId("content");
+      fireEvent.pointerMove(content, { movementX: 2, movementY: 2 });
+      expect(content).toHaveAttribute("data-pointer");
+      rerender(ui(false));
+      rerender(ui(true));
+      // The same element: the popup never unmounted in between
+      expect(screen.getByTestId("content")).toBe(content);
+      expect(content).not.toHaveAttribute("data-pointer");
+    } finally {
+      // @ts-expect-error jsdom defines no getAnimations; restore that
+      delete Element.prototype.getAnimations;
+    }
+  });
+
   it("calls onClick when Item is clicked", async () => {
     const handleClick = vi.fn();
     const user = userEvent.setup();
