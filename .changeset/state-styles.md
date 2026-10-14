@@ -1,10 +1,10 @@
 ---
-"chunks-ui": patch
+"chunks-ui": minor
 ---
 
 Fixed state styles that never applied:
 
-- The chevron of an open `Accordion` item now points up. It keyed off `data-panel-open`, which only the trigger gets, through a group on the item. The `group/trigger` class moved from `Accordion.Item` to `Accordion.Trigger`.
+- The chevron of an open `Accordion` item now points up. It keyed off `data-panel-open`, which only the trigger gets, through a group on the item. The `group/trigger` class moved from `Accordion.Item` to `Accordion.Trigger`. A `group-*/trigger` variant on content of `Accordion.Item` outside the trigger no longer matches: pass `className="group/item"` to `Accordion.Item` and use `group-data-[open]/item:` (the item carries `data-open` while open).
 - A disabled `Accordion.Trigger` is now dimmed and ignores the pointer, whether the item or the trigger is disabled.
 - A disabled `Tabs.Tab` is now dimmed and ignores the pointer.
 - A disabled `Collapsible.Trigger` is now dimmed and ignores the pointer, whether the root or the trigger is disabled.

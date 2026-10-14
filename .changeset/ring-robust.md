@@ -1,5 +1,5 @@
 ---
-"chunks-ui": patch
+"chunks-ui": minor
 ---
 
 `Breadcrumb.Link` now draws the library focus ring (`--ring`) on keyboard focus, instead of the browser's default outline.

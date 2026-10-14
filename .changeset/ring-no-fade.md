@@ -1,5 +1,5 @@
 ---
-"chunks-ui": patch
+"chunks-ui": minor
 ---
 
 Fixed: with no reduced-motion preference, a keyboard focus ring faded in from the text colour (white in dark mode) to `--ring` over 300ms (150ms on `Textarea` and `Slider.Thumb`). It now shows in the ring colour, width and offset at once on `Tabs.Tab`, `ToggleGroup.Item`, `Checkbox.Root`, `Radio.Root`, `Switch.Root`, `ThemeToggle`, the `Calendar` days and month buttons, `Toast.Action`, `Toast.Close`, `Input`, `Textarea` and `Slider.Thumb`, and on your own elements that use the `micro-interactions` class. Hover, press and state colours still fade.

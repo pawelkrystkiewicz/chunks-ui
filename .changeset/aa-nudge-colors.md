@@ -12,3 +12,5 @@ The default text and fill colours now meet WCAG 2 AA contrast in light and dark 
 | `--muted-foreground` (light) | `oklch(0.556 0 0)` | `oklch(0.53 0 0)` | on `--muted` 4.35 to 4.82 |
 
 `Button` and `IconButton` (`outlined`, `text`), `Chip`, `Field.Error`, the current day in `Calendar` and the `ClearButton` hover colour now use the new text tokens. Coloured text on white goes from 2.06-3.98:1 to 5.05-6.12:1.
+
+To keep the old colours, set the "Before" values of the table in your theme (`--primary`, `--destructive`, `--success-foreground`, and `--muted-foreground` in light mode), and set `--colored-text-lightness: l` so the coloured text takes its fill's own lightness again, as it did before the text tokens.

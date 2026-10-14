@@ -1,5 +1,5 @@
 ---
-"chunks-ui": patch
+"chunks-ui": minor
 ---
 
 `Combobox.Trigger`, `Combobox.Clear` and `Combobox.ChipRemove` now have accessible names when they render their default icon: "Show options", "Clear selection" and "Remove" followed by the chip's text ("Remove Apple"). Pass `aria-label` to use a different name. With custom `children` or a `render` element, no default name or icon is applied and your content names the button. Inside `Field.Root`, the field label (`aria-labelledby`) still takes precedence on `Combobox.Trigger`.
