@@ -4,9 +4,8 @@ import { type Ref, type RefCallback, useLayoutEffect, useRef, useState } from "r
 import { flushSync } from "react-dom";
 import { renderNow } from "./render-now";
 import { useMergedRef } from "./use-merged-ref";
-import { useMotion, useReducedMotion } from "./use-motion";
+import { type MotionLike, useMotion, useReducedMotion } from "./use-motion";
 
-type MotionModule = NonNullable<ReturnType<typeof useMotion>>;
 type AnimatedValues = Record<string, string | number>;
 
 type MotionAnimateOptions = {
@@ -33,7 +32,7 @@ function clearProperties(element: HTMLElement | SVGElement, names?: string[]) {
 // in one flushSync, so many controls handing over at once cost one React commit
 const pendingSwitches = new Set<() => void>();
 
-function switchAfterMotionWrites(m: MotionModule, apply: () => void) {
+function switchAfterMotionWrites(m: MotionLike, apply: () => void) {
   if (pendingSwitches.size === 0) {
     m.frame.postRender(() => {
       const batch = [...pendingSwitches];
