@@ -22,6 +22,7 @@ it.each([
     // Tabs.Contents keeps every panel mounted. Its wrapper hides an inactive one with display:none
     // (CSS fallback) or inert (Motion), whichever path the spec is on when Motion's lazy load lands.
     const active = panel.parentElement;
+    expect(active).toBeTruthy();
     expect(active?.style.display).not.toBe("none");
     expect(active?.hasAttribute("inert")).toBe(false);
     const panels = screen.getAllByRole("tabpanel", { hidden: true });
