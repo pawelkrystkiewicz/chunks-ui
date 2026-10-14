@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { commands, page, userEvent } from "vitest/browser";
-import { renderPage, ringColor, withViewport } from "../../VisualTest.utils";
+import { renderPage, ringColor, systemColour, withViewport } from "../../VisualTest.utils";
 import { Button } from "../button";
 import { Dialog } from "./index";
 
@@ -114,16 +114,6 @@ describe("Dialog.Popup on a narrow page", () => {
   });
 });
 
-/** The colour `Highlight` resolves to under the current (forced) colours, read off a probe. */
-function highlight() {
-  const probe = document.createElement("div");
-  probe.style.color = "Highlight";
-  document.body.append(probe);
-  const colour = getComputedStyle(probe).color;
-  probe.remove();
-  return colour;
-}
-
 describe("Dialog.Popup in forced colours", () => {
   afterEach(() => commands.emulateMedia({ forcedColors: "none" }));
 
@@ -131,6 +121,6 @@ describe("Dialog.Popup in forced colours", () => {
   it("draws the ring in the system focus colour", async () => {
     await commands.emulateMedia({ forcedColors: "active" });
     await expect.poll(() => matchMedia("(forced-colors: active)").matches).toBe(true);
-    expect(getComputedStyle(await focusedPopup()).outlineColor).toBe(highlight());
+    expect(getComputedStyle(await focusedPopup()).outlineColor).toBe(systemColour("Highlight"));
   });
 });

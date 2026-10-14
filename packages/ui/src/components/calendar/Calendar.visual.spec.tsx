@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, it, vi } from "vitest";
 import { commands } from "vitest/browser";
-import { renderFixture } from "../../VisualTest.utils";
+import { renderFixture, systemColour } from "../../VisualTest.utils";
 import { Calendar } from "./index";
 
 // Freeze time for deterministic visual snapshots
@@ -37,16 +37,6 @@ describe("Calendar", () => {
     await expect(getByTestId("theme")).toMatchScreenshot();
   });
 });
-
-/** The colour a system colour keyword resolves to under the current (forced) colours. */
-function systemColour(keyword: string) {
-  const probe = document.createElement("div");
-  probe.style.color = keyword;
-  document.body.append(probe);
-  const colour = getComputedStyle(probe).color;
-  probe.remove();
-  return colour;
-}
 
 describe("Calendar in forced-colors mode", () => {
   // Forced colours replace author colours, so the muted text of outside days needs a system colour

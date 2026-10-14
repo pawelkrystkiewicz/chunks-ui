@@ -14,6 +14,7 @@ import {
   LAYOUT_ROUNDING_PX,
   resetTheme,
   ringColor,
+  systemColour,
   THEMES,
   waitForStable,
 } from "../VisualTest.utils";
@@ -499,16 +500,6 @@ describe.each(KINDS)("%s focused from the keyboard, without an arrow", (kind) =>
   });
 });
 
-/** The colour `Highlight` resolves to under the current (forced) colours, read off a probe. */
-function highlight() {
-  const probe = document.createElement("div");
-  probe.style.color = "Highlight";
-  document.body.append(probe);
-  const colour = getComputedStyle(probe).color;
-  probe.remove();
-  return colour;
-}
-
 describe.each(KINDS)("%s in forced colours", (kind) => {
   afterEach(() => commands.emulateMedia({ forcedColors: "none" }));
 
@@ -525,7 +516,7 @@ describe.each(KINDS)("%s in forced colours", (kind) => {
     await userEvent.keyboard("{Shift}");
     await expect.poll(() => popup.matches(":focus-visible")).toBe(true);
 
-    expect(getComputedStyle(popup, drawn).outlineColor).toBe(highlight());
+    expect(getComputedStyle(popup, drawn).outlineColor).toBe(systemColour("Highlight"));
   });
 });
 
