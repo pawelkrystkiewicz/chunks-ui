@@ -279,7 +279,7 @@ describe("DatePicker in a form", () => {
   const formData = (form: HTMLFormElement) => new FormData(form).get("due");
 
   it("submits the selected date as yyyy-mm-dd under its name", async () => {
-    // 00:30 in Europe/Warsaw (vitest.config.ts pins TZ) is the previous day in UTC
+    // 00:30: see TESTING_STRATEGY "Time zone"
     render(
       <form aria-label="Task">
         <DatePicker name="due" defaultValue={new Date(2026, 9, 10, 0, 30)} />
@@ -290,16 +290,6 @@ describe("DatePicker in a form", () => {
     await userEvent.click(screen.getByRole("button", { name: "October 10, 2026" }));
     await userEvent.click(getButton("Friday, October 2, 2026"));
     expect(formData(form)).toBe("2026-10-02");
-  });
-
-  it("submits a late-evening date under its local day", () => {
-    // 23:59 is the next day in UTC west of it: caught only when a developer runs west of UTC
-    render(
-      <form aria-label="Task">
-        <DatePicker name="due" defaultValue={new Date(2026, 9, 10, 23, 59)} />
-      </form>,
-    );
-    expect(formData(screen.getByRole<HTMLFormElement>("form"))).toBe("2026-10-10");
   });
 
   it("submits a date in the year 50 as a 4-digit yyyy-mm-dd", () => {

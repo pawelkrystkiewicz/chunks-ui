@@ -164,10 +164,8 @@ async function settled(read: () => number) {
 }
 
 /**
- * The hook has handed the element back to the CSS fallback, which ends the animation under
- * reduced motion: the fallback class is back, or, for an indicator without one, the inline
- * opacity Motion wrote is gone. The hand-off lands in Motion's post-render step after the media
- * query's change event, so on a loaded machine it takes more than a fixed two frames.
+ * The hook handed the element back to the CSS fallback: its class is back, or the inline opacity
+ * is gone. That lands after the media query's change event, so poll for it.
  */
 function handedBack({ element, fallbackClass }: Control) {
   const node = element();
