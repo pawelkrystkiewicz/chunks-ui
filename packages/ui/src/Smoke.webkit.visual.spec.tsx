@@ -175,29 +175,31 @@ describe("Tabs.Contents in WebKit", () => {
       <aside data-testid="sidebar" style={{ willChange: "transform", width: 240, height: 400 }}>
         Sidebar
       </aside>
-      <div data-testid="columns" style={{ flex: 1, columnCount: 2, columnGap: 20, ...columns }}>
-        <Card.Root className="mb-5 break-inside-avoid p-6">
-          <div style={{ height: 300 }}>First column</div>
-        </Card.Root>
-        <Card.Root data-testid="card" className="mb-5 break-inside-avoid p-6">
-          <Tabs.Root defaultValue="overview" className="flex flex-col gap-5">
-            <Tabs.List>
-              <Tabs.Tab value="overview">Overview</Tabs.Tab>
-              <Tabs.Tab value="activity">Activity</Tabs.Tab>
-              <Tabs.Tab value="notes">Notes</Tabs.Tab>
-              <Tabs.Indicator />
-            </Tabs.List>
-            <Tabs.Contents data-testid="contents">
-              <Tabs.Content value="overview">
-                <p style={{ height: 100 }}>Overview</p>
-              </Tabs.Content>
-              <Tabs.Content value="activity">Activity</Tabs.Content>
-              <Tabs.Content value="notes">
-                <Textarea aria-label="Note" placeholder="Write a note" className="min-h-24" />
-              </Tabs.Content>
-            </Tabs.Contents>
-          </Tabs.Root>
-        </Card.Root>
+      <div style={{ flex: 1, overflow: "hidden", borderRadius: 14 }}>
+        <div data-testid="columns" style={{ columnCount: 2, columnGap: 20, ...columns }}>
+          <Card.Root className="mb-5 break-inside-avoid p-6">
+            <div style={{ height: 300 }}>First column</div>
+          </Card.Root>
+          <Card.Root data-testid="card" className="mb-5 break-inside-avoid p-6">
+            <Tabs.Root defaultValue="overview" className="flex flex-col gap-5">
+              <Tabs.List>
+                <Tabs.Tab value="overview">Overview</Tabs.Tab>
+                <Tabs.Tab value="activity">Activity</Tabs.Tab>
+                <Tabs.Tab value="notes">Notes</Tabs.Tab>
+                <Tabs.Indicator />
+              </Tabs.List>
+              <Tabs.Contents data-testid="contents">
+                <Tabs.Content value="overview">
+                  <p style={{ height: 100 }}>Overview</p>
+                </Tabs.Content>
+                <Tabs.Content value="activity">Activity</Tabs.Content>
+                <Tabs.Content value="notes">
+                  <Textarea aria-label="Note" placeholder="Write a note" className="min-h-24" />
+                </Tabs.Content>
+              </Tabs.Contents>
+            </Tabs.Root>
+          </Card.Root>
+        </div>
       </div>
     </div>
   );
@@ -240,7 +242,7 @@ describe("Tabs.Contents in WebKit", () => {
     // With the columns container on its own composited layer WebKit paints the panel, so a page
     // with columns can work around the bug (#295)
     it("paints the panel when the columns container is composited", async () => {
-      const note = await openNotes({ willChange: "transform" });
+      const note = await openNotes({ willChange: "opacity" });
       expect(await paintedPixels(note)).toBeGreaterThan(0);
     });
   });
