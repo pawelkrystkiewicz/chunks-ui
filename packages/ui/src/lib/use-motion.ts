@@ -15,10 +15,13 @@ function setMotion(load: number, m: MotionReact | null) {
   for (const notify of motionListeners) notify();
 }
 
+// webpackIgnore: webpack (and Next.js in webpack mode) fails the build on a dynamic import it
+// can't resolve, and `motion` is optional. The comment makes it a plain runtime `import()`, which
+// rejects without Motion; the rejection handlers below take the CSS fallback.
 function loadMotion() {
   if (_cache !== undefined) return;
   const load = loads;
-  import("motion/react").then(
+  import(/* webpackIgnore: true */ "motion/react").then(
     (m) => setMotion(load, m),
     () => setMotion(load, null),
   );
@@ -36,7 +39,9 @@ if (typeof window !== "undefined") {
 export function reloadMotion(arrival?: Promise<unknown>): Promise<unknown> {
   _cache = undefined;
   const load = ++loads;
-  return Promise.all([import("motion/react"), arrival]).then(([m]) => setMotion(load, m));
+  return Promise.all([import(/* webpackIgnore: true */ "motion/react"), arrival]).then(([m]) =>
+    setMotion(load, m),
+  );
 }
 
 function subscribeToMotion(onLoad: () => void) {
