@@ -61,7 +61,7 @@ function physicalSide(side: Side, dir: Direction): PhysicalSide {
 const POSITION_ROUNDING_PX = 0.5;
 
 /** The documented default `sideOffset` of each popup. */
-const SIDE_OFFSET_PX: Record<Kind, number> = { Popover: 8, Menu: 4 };
+const SIDE_OFFSET_PX: Record<Kind, number> = { Popover: 8, Menu: 8 };
 
 /** At the default `--spacing` of 4px: the popup moves out 1.75 units for the arrow. */
 const REACH_PX = 1.75 * 4;

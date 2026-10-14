@@ -21,8 +21,10 @@ export type MenuArrowProps = ComponentProps<typeof BaseMenu.Arrow>;
 
 export type MenuContentProps = ComponentProps<typeof BaseMenu.Popup> & {
   /**
-   * Distance from the trigger element in pixels.
-   * @default 4
+   * Distance from the trigger element in pixels. The default, as on Popover, keeps the popup's
+   * keyboard focus ring (2px, 2px outside its edge) clear of the trigger; at 4 it ended on the
+   * trigger's edge.
+   * @default 8
    */
   sideOffset?: ComponentProps<typeof BaseMenu.Positioner>["sideOffset"];
   /**
@@ -66,7 +68,7 @@ function MenuContent(props: MenuContentProps) {
 function MenuContentPopup({
   className,
   children,
-  sideOffset = 4,
+  sideOffset = 8,
   side,
   align,
   alignOffset,
