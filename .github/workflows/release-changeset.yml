@@ -11,12 +11,12 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: write
       id-token: write
       pull-requests: write
     env:
-      GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
       NPM_CONFIG_PROVENANCE: true
     steps:
       - name: Checkout Repo
@@ -39,6 +39,18 @@ jobs:
       - name: Install Dependencies
         run: bun install --frozen-lockfile
 
+      # changeset publish runs npm publish with trusted publishing (OIDC, no NPM_TOKEN), which
+      # needs npm 11.5.1 or newer: an older npm has no token and fails after the build.
+      # Node 24 bundles 11.x; this fails early when a toolchain bump brings an older one.
+      - name: Check npm supports trusted publishing
+        run: |
+          need=11.5.1
+          have=$(npm --version)
+          if [ "$(printf '%s\n' "$need" "$have" | sort -V | head -n1)" != "$need" ]; then
+            echo "npm $have cannot publish with trusted publishing; $need or newer is needed"
+            exit 1
+          fi
+
       - name: Create Release Pull Request or Publish to npm
         id: changesets
         uses: changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1.9.0
@@ -59,16 +71,6 @@ jobs:
           payload: |
             channel: "${{ secrets.SLACK_CHANNEL_ID }}"
             text: "Published ${{ fromJSON(steps.changesets.outputs.publishedPackages)[0].name }}@${{ fromJSON(steps.changesets.outputs.publishedPackages)[0].version }} to npm\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>"
-
-      - name: Notify Slack on Release PR Created
-        if: steps.changesets.outputs.hasChangesets == 'true'
-        uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
-        with:
-          method: chat.postMessage
-          token: ${{ secrets.SLACK_BOT_TOKEN }}
-          payload: |
-            channel: "${{ secrets.SLACK_CHANNEL_ID }}"
-            text: "Release PR created with changelog updates\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>"
 
       - name: Notify Slack on Release Failure
         if: failure()
