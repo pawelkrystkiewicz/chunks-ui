@@ -71,7 +71,7 @@ const columns: ColumnDef<Payment>[] = [
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Email
-        <ArrowUpDown className="ml-1 size-4" />
+        <ArrowUpDown className="ms-1 size-4" />
       </Button>
     ),
     cell: ({ row }) => <span className="lowercase">{row.getValue("email")}</span>,
