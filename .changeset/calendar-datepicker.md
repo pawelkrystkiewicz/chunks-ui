@@ -8,4 +8,4 @@ Fixed: `Calendar` showed the days of 1900–1999 for the years 1–99, which the
 
 Fixed: an Invalid Date in `value` or `defaultValue` showed "Invalid Date" in the `DatePicker` trigger and left the calendar without days. It now counts as no date.
 
-Fixed: resetting the form left an uncontrolled `DatePicker` on the date the user picked. A form reset, also in a form inside a shadow root, now restores `defaultValue`, or no date. This holds for a picker that `form` links to a form too, with or without `name` or `required`, and when that form mounts after the picker or remounts. A reset that `onReset` cancels leaves the picker as it is. A controlled picker keeps `value`.
+Fixed: resetting the form left an uncontrolled `DatePicker` on the date the user picked. A form reset, also in a form inside a shadow root, now restores `defaultValue`, or no date. A reset that `onReset` cancels leaves the picker as it is. A controlled picker keeps `value`.
