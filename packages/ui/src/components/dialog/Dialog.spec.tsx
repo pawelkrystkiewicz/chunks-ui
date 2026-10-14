@@ -32,6 +32,21 @@ describe("Dialog", () => {
     expect(screen.getByTestId("popup")).toHaveClass("custom");
   });
 
+  it("draws the library focus ring on the Popup", () => {
+    render(
+      <Dialog.Root open>
+        <Dialog.Portal>
+          <Dialog.Popup data-testid="popup">Content</Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>,
+    );
+    expect(screen.getByTestId("popup")).toHaveClass(
+      "focus-visible:outline-2",
+      "focus-visible:outline-offset-2",
+      "focus-visible:outline-ring",
+    );
+  });
+
   it("renders Title with custom className", () => {
     render(
       <Dialog.Root open>

@@ -156,6 +156,16 @@ describe("DatePicker", () => {
     expect(tabStops).toEqual([getButton(MARCH_15_LABEL)]);
   });
 
+  it("draws the library focus ring on the popup", async () => {
+    render(<DatePicker />);
+    await userEvent.click(screen.getByRole("button", { name: "Pick a date" }));
+    expect(screen.getByRole("dialog")).toHaveClass(
+      "focus-visible:outline-2",
+      "focus-visible:outline-offset-2",
+      "focus-visible:outline-ring",
+    );
+  });
+
   it("disables trigger when disabled prop is set", () => {
     render(<DatePicker disabled />);
     expect(screen.getByRole("button", { name: "Pick a date" })).toBeDisabled();

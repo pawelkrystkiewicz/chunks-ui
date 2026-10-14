@@ -2,6 +2,7 @@
  * The arrow shared by Popover.Arrow and Menu.Arrow: a square in the popup's colours, standing on
  * the corner between its two bordered sides, which each side turns to point at the trigger.
  */
+import { FOCUS_RING } from "../components/shared";
 
 /**
  * For a popup that can hold an arrow. `relative` makes the popup the arrow's containing block at
@@ -31,7 +32,7 @@ export const arrowPopupClasses = [
   "has-[.PopupArrow]:data-[side=right]:ml-(--popup-arrow-reach)",
   "has-[.PopupArrow]:data-[side=inline-start]:me-(--popup-arrow-reach)",
   "has-[.PopupArrow]:data-[side=inline-end]:ms-(--popup-arrow-reach)",
-  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+  FOCUS_RING,
   "has-[.PopupArrow]:focus-visible:outline-none",
   "has-[.PopupArrow]:focus-visible:after:pointer-events-none has-[.PopupArrow]:focus-visible:after:absolute has-[.PopupArrow]:focus-visible:after:-inset-px has-[.PopupArrow]:focus-visible:after:z-10",
   "has-[.PopupArrow]:focus-visible:after:box-content has-[.PopupArrow]:focus-visible:after:size-full has-[.PopupArrow]:focus-visible:after:[place-self:unsafe_center]",

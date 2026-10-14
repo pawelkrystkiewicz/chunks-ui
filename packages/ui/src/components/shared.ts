@@ -30,3 +30,11 @@ export const RING_TRANSITION_MOTION =
 
 /** The same list, with the class's fade (300ms) for a part that animates its colours */
 export const RING_ANIMATION_CLASSES = ["micro-interactions", RING_TRANSITION, "duration-300"];
+
+/**
+ * The library's keyboard focus ring, as a Button draws it: 2px of `--ring`, 2px outside the edge,
+ * under `:focus-visible` only. One string for every part that takes the focus, so the ring cannot
+ * drift between them.
+ */
+export const FOCUS_RING =
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";

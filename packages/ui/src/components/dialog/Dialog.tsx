@@ -16,7 +16,7 @@ import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
 import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
 import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
-import { RING_TRANSITION, RING_TRANSITION_MOTION } from "../shared";
+import { FOCUS_RING, RING_TRANSITION, RING_TRANSITION_MOTION } from "../shared";
 
 export type DialogRootProps = ComponentProps<typeof BaseDialog.Root>;
 export type DialogTriggerProps = ComponentProps<typeof BaseDialog.Trigger>;
@@ -110,7 +110,7 @@ function DialogPopup({ className, children, ...props }: DialogPopupProps) {
         "fixed top-1/2 left-1/2 w-full max-w-[min(28rem,calc(100%-2rem))] -translate-x-1/2 -translate-y-1/2",
         "rounded-xl border border-border bg-background p-6 shadow-lg",
         // The popup takes focus when nothing inside is tabbable or `initialFocus` points at it
-        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+        FOCUS_RING,
         "max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain",
         // With a Body, the parts before and after it keep their height and only the Body scrolls
         "has-[>.DialogBody]:flex has-[>.DialogBody]:flex-col",
@@ -174,7 +174,7 @@ function DialogBody({ className, ...props }: DialogBodyProps) {
       className={cn(
         // The -m-1 p-1 gutter keeps the focus rings of full-width fields inside the scroll box, without moving them
         "DialogBody -m-1 min-h-0 flex-1 overflow-y-auto overscroll-contain p-1",
-        "focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
+        FOCUS_RING,
         RING_TRANSITION,
         className,
       )}
