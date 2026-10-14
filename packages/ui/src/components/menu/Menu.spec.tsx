@@ -104,62 +104,17 @@ describe("Menu", () => {
       </Menu.Root>,
     );
     const content = screen.getByTestId("content");
+    // A WebKit move with no movement (the layout shifted under a still pointer) does not count
+    fireEvent.pointerMove(content, { movementX: 0, movementY: 0 });
+    expect(content).not.toHaveAttribute("data-pointer");
     // user-event's moves carry no movementX/Y
     fireEvent.pointerMove(content, { movementX: 2, movementY: 2 });
-    expect(onPointerMove).toHaveBeenCalled();
+    expect(onPointerMove).toHaveBeenCalledTimes(2);
     expect(content).toHaveAttribute("data-pointer");
     content.focus();
     await userEvent.keyboard("{Shift}");
     expect(onKeyDown).toHaveBeenCalled();
     expect(content).not.toHaveAttribute("data-pointer");
-  });
-
-  // Base UI ignores a WebKit pointer move with no movement (it fires when the layout shifts under
-  // a still pointer), so the ring stays as it was
-  it("sets data-pointer on a real pointer move, not on a move with no movement", () => {
-    render(
-      <Menu.Root open>
-        <Menu.Trigger>Open</Menu.Trigger>
-        <Menu.Content data-testid="content">
-          <Menu.Item>Item</Menu.Item>
-        </Menu.Content>
-      </Menu.Root>,
-    );
-    const content = screen.getByTestId("content");
-    fireEvent.pointerMove(content, { movementX: 0, movementY: 0 });
-    expect(content).not.toHaveAttribute("data-pointer");
-    fireEvent.pointerMove(content, { movementX: 3, movementY: 0 });
-    expect(content).toHaveAttribute("data-pointer");
-  });
-
-  // A reopen during the exit animation finds the popup still mounted, so its pointer flag must
-  // reset when the menu opens, not when the popup mounts
-  it("clears data-pointer when the menu reopens before the popup unmounts", () => {
-    const ui = (open: boolean) => (
-      <Menu.Root open={open}>
-        <Menu.Trigger>Open</Menu.Trigger>
-        <Menu.Content data-testid="content">
-          <Menu.Item>Item</Menu.Item>
-        </Menu.Content>
-      </Menu.Root>
-    );
-    // jsdom has no animations, so Base UI would unmount at once; an exit animation that never
-    // ends keeps the popup mounted
-    Element.prototype.getAnimations = () => [{ finished: new Promise(() => {}) } as Animation];
-    try {
-      const { rerender } = render(ui(true));
-      const content = screen.getByTestId("content");
-      fireEvent.pointerMove(content, { movementX: 2, movementY: 2 });
-      expect(content).toHaveAttribute("data-pointer");
-      rerender(ui(false));
-      rerender(ui(true));
-      // The same element: the popup never unmounted in between
-      expect(screen.getByTestId("content")).toBe(content);
-      expect(content).not.toHaveAttribute("data-pointer");
-    } finally {
-      // @ts-expect-error jsdom defines no getAnimations; restore that
-      delete Element.prototype.getAnimations;
-    }
   });
 
   it("calls onClick when Item is clicked", async () => {

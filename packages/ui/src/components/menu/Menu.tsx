@@ -1,7 +1,7 @@
 "use client";
 
 import { Menu as BaseMenu } from "@base-ui/react/menu";
-import { type ComponentProps, type ReactElement, useEffect, useState } from "react";
+import { type ComponentProps, useState } from "react";
 import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
@@ -21,9 +21,7 @@ export type MenuArrowProps = ComponentProps<typeof BaseMenu.Arrow>;
 
 export type MenuContentProps = ComponentProps<typeof BaseMenu.Popup> & {
   /**
-   * Distance from the trigger element in pixels. The default, as on Popover, keeps the popup's
-   * keyboard focus ring (2px, 2px outside its edge) clear of the trigger; at 4 it ended on the
-   * trigger's edge.
+   * Distance from the trigger element in pixels; as on Popover, wide enough for the focus ring.
    * @default 8
    */
   sideOffset?: ComponentProps<typeof BaseMenu.Positioner>["sideOffset"];
@@ -81,10 +79,8 @@ function MenuContentPopup({
   const reduced = useReducedMotion();
   const useSpring = !!m && !reduced;
   const [positioner, arrowPaddingByDefault] = useArrowPadding();
-  // Base UI focuses the popup when the pointer leaves an item for its padding, a separator or
-  // the page, and Chromium keeps keyboard modality until a mouse press, so after a keyboard open
-  // that focus matched :focus-visible and the popup drew its ring under the mouse (W151). From
-  // the first pointer move over the popup until the next key press, the ring stays off.
+  // Pointer over the popup until the next key press keeps its ring off (W151); a reopen during the
+  // exit animation keeps a stale flag until the next key press (accepted).
   const [pointer, setPointer] = useState(false);
   const popupRenderer = useSpring
     ? createPopupRenderer({
@@ -94,21 +90,6 @@ function MenuContentPopup({
         to: { opacity: 1, scale: 1 },
       })
     : undefined;
-  // A reopen during the exit animation finds this popup still mounted, so the flag resets when the
-  // menu opens, which only the popup's render state reports
-  const render = (
-    renderProps: Parameters<NonNullable<typeof popupRenderer>>[0],
-    state: { open: boolean },
-  ): ReactElement => (
-    <>
-      <OnOpen open={state.open} run={() => setPointer(false)} />
-      {popupRenderer ? (
-        popupRenderer(renderProps, state)
-      ) : (
-        <div {...(renderProps as ComponentProps<"div">)} />
-      )}
-    </>
-  );
 
   return (
     <BaseMenu.Positioner
@@ -121,7 +102,7 @@ function MenuContentPopup({
       arrowPadding={arrowPadding ?? arrowPaddingByDefault}
     >
       <BaseMenu.Popup
-        render={render}
+        render={popupRenderer}
         data-pointer={pointer || undefined}
         onPointerMove={(event) => {
           onPointerMove?.(event);
@@ -155,15 +136,6 @@ function MenuContentPopup({
       </BaseMenu.Popup>
     </BaseMenu.Positioner>
   );
-}
-
-/** Runs `run` each time `open` turns true */
-function OnOpen({ open, run }: { open: boolean; run: () => void }) {
-  // biome-ignore lint/correctness/useExhaustiveDependencies: `run` only sets state; it runs on open
-  useEffect(() => {
-    if (open) run();
-  }, [open]);
-  return null;
 }
 
 function MenuItem({ className, ...props }: MenuItemProps) {
