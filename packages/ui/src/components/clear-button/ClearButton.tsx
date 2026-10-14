@@ -2,6 +2,7 @@ import type { ComponentProps } from "react";
 import { cn } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
 import { BUTTON_ANIMATION_CLASSES } from "../shared";
+import { XIcon } from "../XIcon";
 import { type ClearButtonLabels, DEFAULT_CLEAR_BUTTON_LABELS } from "./ClearButton.Labels";
 
 export type ClearButtonProps = ComponentProps<"button"> & {
@@ -44,22 +45,7 @@ export function ClearButton({ className, label, labels, ...props }: ClearButtonP
       )}
       {...props}
     >
-      <svg
-        aria-hidden="true"
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="size-4"
-      >
-        <path d="M18 6 6 18" />
-        <path d="m6 6 12 12" />
-      </svg>
+      <XIcon className="size-4" />
     </button>
   );
 }

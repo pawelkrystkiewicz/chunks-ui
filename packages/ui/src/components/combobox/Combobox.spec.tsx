@@ -351,6 +351,15 @@ describe("Combobox icon buttons", () => {
     expect(screen.getByRole("button", { name: "Remove Apple" })).toBeInTheDocument();
   });
 
+  it("draws the X icon in Clear and ChipRemove, hidden from assistive tech", () => {
+    render(<MultiSelect />);
+    for (const name of ["Clear selection", "Remove Apple"]) {
+      const icon = screen.getByRole("button", { name }).querySelector("svg");
+      expect(icon).toHaveAttribute("aria-hidden", "true");
+      expect(icon?.querySelectorAll("path")).toHaveLength(2);
+    }
+  });
+
   it("names them with DEFAULT_COMBOBOX_LABELS", () => {
     render(<MultiSelect />);
     const { trigger, clear, chipRemove } = DEFAULT_COMBOBOX_LABELS;

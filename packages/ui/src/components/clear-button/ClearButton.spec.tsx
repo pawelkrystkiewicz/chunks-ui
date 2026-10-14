@@ -36,6 +36,13 @@ describe("ClearButton", () => {
     expect(screen.getByRole("button")).toHaveAttribute("type", "button");
   });
 
+  it("draws the X icon inline, hidden from assistive tech", () => {
+    render(<ClearButton />);
+    const icon = screen.getByRole("button").querySelector("svg");
+    expect(icon).toHaveAttribute("aria-hidden", "true");
+    expect(icon?.querySelectorAll("path")).toHaveLength(2);
+  });
+
   it("has no a11y violations", async () => {
     const { container } = render(<ClearButton labels={{ clear: "Remove" }} onClick={() => {}} />);
     expect(await axe(container)).toHaveNoViolations();
