@@ -38,6 +38,8 @@ import { join } from "node:path";
 const UI = join(import.meta.dirname, "../packages/ui");
 const FIXTURES = join(import.meta.dirname, "no-motion");
 const ENTRY = 'import * as ui from "chunks-ui";\nconsole.log(Object.keys(ui).length);\n';
+/** A name only Motion's own code contains (verified: in the async chunk, not in main.js). */
+const MOTION_MARKER = "MotionGlobalConfig";
 const BARE_MOTION_IMPORT = /import\(\s*["']motion\/react["']\s*\)/;
 
 /** The specifiers webpack could not resolve, from its output, in order and without repeats. */
@@ -95,6 +97,13 @@ export interface OutputFile {
   code: string;
 }
 
+/** True when a `.js` output other than `main.js` contains Motion's own code. */
+export function hasMotionChunk(files: OutputFile[]): boolean {
+  return files.some(
+    ({ name, code }) => name.endsWith(".js") && name !== "main.js" && code.includes(MOTION_MARKER),
+  );
+}
+
 /** Why the build of the consumer with Motion is wrong, or undefined when it is as expected. */
 export function withMotionProblem(
   exitCode: number,
@@ -112,6 +121,9 @@ export function withMotionProblem(
   }
   if (files.filter(({ name }) => name.endsWith(".js")).length < 2) {
     return `webpack emitted no async chunk for Motion (files: ${files.map(({ name }) => name).join(", ")}).`;
+  }
+  if (!hasMotionChunk(files)) {
+    return `no async chunk holds Motion's code (looked for ${MOTION_MARKER} outside main.js; files: ${files.map(({ name }) => name).join(", ")}).`;
   }
 }
 

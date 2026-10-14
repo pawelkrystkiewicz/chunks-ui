@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import {
   added,
+  hasMotionChunk,
   lockedPackages,
   unresolved,
   warnings,
@@ -111,7 +112,7 @@ describe("withoutMotionProblem", () => {
 });
 
 describe("withMotionProblem", () => {
-  const chunked = [file("main.js", "import(x)"), file("743.js", "motion code")];
+  const chunked = [file("main.js", "import(x)"), file("743.js", "MotionGlobalConfig")];
 
   it("accepts a clean build with an extra chunk and no bare import", () => {
     expect(withMotionProblem(0, CLEAN, chunked)).toBeUndefined();
@@ -134,7 +135,26 @@ describe("withMotionProblem", () => {
     }
   });
 
+  it("rejects an extra chunk that holds no Motion code", () => {
+    const files = [file("main.js", "MotionGlobalConfig"), file("743.js", "other code")];
+    expect(withMotionProblem(0, CLEAN, files)).toMatch(/no async chunk holds Motion/);
+  });
+
   it("rejects a build with a single JS file", () => {
     expect(withMotionProblem(0, CLEAN, [file("main.js")])).toMatch(/no async chunk/);
+  });
+});
+
+describe("hasMotionChunk", () => {
+  it("finds the marker in a non-main JS file", () => {
+    expect(hasMotionChunk([file("main.js"), file("1.js", "x MotionGlobalConfig y")])).toBe(true);
+  });
+
+  it("ignores the marker in main.js and in non-JS files", () => {
+    const files = [
+      file("main.js", "MotionGlobalConfig"),
+      file("main.js.LICENSE.txt", "MotionGlobalConfig"),
+    ];
+    expect(hasMotionChunk(files)).toBe(false);
   });
 });
