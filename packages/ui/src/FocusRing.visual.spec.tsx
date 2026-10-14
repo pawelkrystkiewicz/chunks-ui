@@ -34,7 +34,8 @@ import { enterMotionPath, outlineTransitions, ringColor } from "./VisualTest.uti
  * With motion on, a keyboard focus ring shows in the ring colour, width and offset in the same
  * task the part takes focus. `.micro-interactions` used to transition `all`, and Tailwind's
  * `transition-colors` lists `outline-color`, so rings faded in from the text colour
- * (#362). Button, IconButton and the Drawer popup have the same check in their own specs.
+ * (#362). Button and IconButton have the same check in their own specs, and the Drawer popup too,
+ * for each of its paths.
  *
  * NumberField's increment and decrement and Combobox's clear and chip remove buttons are out of
  * the tab order (Base UI), so they never show a keyboard ring. Of the popups, Popover, Menu and
@@ -97,6 +98,17 @@ const tabs = ({ tab, panel }: { tab?: string; panel?: string }) => (
 
 // A fixed month, so the grid is the same whatever the date
 const calendar = () => <Calendar defaultValue={new Date(2026, 2, 15)} />;
+
+// Nothing tabbable inside, so Base UI focuses the popup
+const drawerPopup = (className?: string) => (
+  <Drawer.Root defaultOpen>
+    <Drawer.Portal>
+      <Drawer.Popup data-testid="target" className={className}>
+        <Drawer.Title>Title</Drawer.Title>
+      </Drawer.Popup>
+    </Drawer.Portal>
+  </Drawer.Root>
+);
 
 type RingCase = {
   part: string;
@@ -410,6 +422,12 @@ const RING_CASES: RingCase[] = [
     inPopup: true,
   },
   {
+    part: "Drawer.Popup",
+    ui: drawerPopup,
+    target: () => screen.findByRole("dialog"),
+    inPopup: true,
+  },
+  {
     part: "Breadcrumb.Link",
     ui: (className) => (
       <Breadcrumb.Root>
@@ -508,7 +526,7 @@ describe("focus ring with no reduced-motion preference", () => {
   });
 
   // Motion writes these on the popups, so a CSS transition on them would lag the spring
-  it.each(["Popover.Content", "Menu.Content", "Dialog.Popup"])(
+  it.each(["Popover.Content", "Menu.Content", "Dialog.Popup", "Drawer.Popup"])(
     "%s leaves the properties Motion writes out of its transitions",
     async (part) => {
       const c = RING_CASES.find((r) => r.part === part);
@@ -564,16 +582,6 @@ const comboboxPopup = () => (
       </Combobox.Positioner>
     </Combobox.Portal>
   </Combobox.Root>
-);
-
-const drawerPopup = (className?: string) => (
-  <Drawer.Root defaultOpen>
-    <Drawer.Portal>
-      <Drawer.Popup data-testid="target" className={className}>
-        <Drawer.Title>Title</Drawer.Title>
-      </Drawer.Popup>
-    </Drawer.Portal>
-  </Drawer.Root>
 );
 
 /*
