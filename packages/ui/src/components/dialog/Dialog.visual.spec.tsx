@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { commands, page, userEvent } from "vitest/browser";
-import { renderPage, ringColor } from "../../VisualTest.utils";
+import { renderPage, ringColor, withViewport } from "../../VisualTest.utils";
 import { Button } from "../button";
 import { Dialog } from "./index";
 
@@ -97,6 +97,20 @@ describe("Dialog.Popup focused from the keyboard", () => {
       outlineColor: ringColor(),
       outlineOffset: "2px",
     });
+  });
+});
+
+describe("Dialog.Popup on a narrow page", () => {
+  // Narrower than the popup's 28rem cap: the popup takes the page less a 1rem gutter on each side
+  withViewport(360);
+
+  it("keeps a gutter on each side, so the whole ring shows", async () => {
+    const popup = await focusedPopup();
+    const { left, right } = popup.getBoundingClientRect();
+    // The ring takes 4px outside the edge: 2px of offset, then 2px of outline
+    expect(left).toBeCloseTo(16, 0);
+    expect(innerWidth - right).toBeCloseTo(16, 0);
+    await expect(page.elementLocator(document.body)).toMatchScreenshot();
   });
 });
 
