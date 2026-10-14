@@ -1,6 +1,6 @@
 # Chunks UI
 
-Personal React component library built on [Base UI](https://base-ui.com) + [Tailwind CSS v4](https://tailwindcss.com) + [Motion](https://motion.dev).
+Personal React 19.2+ component library built on [Base UI](https://base-ui.com) + [Tailwind CSS v4](https://tailwindcss.com) + [Motion](https://motion.dev).
 
 Replaces `@creation-ui/react`. Published as a single npm package — not a copy/paste registry.
 
@@ -9,6 +9,10 @@ Replaces `@creation-ui/react`. Published as a single npm package — not a copy/
 ```bash
 bun add chunks-ui motion
 ```
+
+Peer dependencies: `react` and `react-dom` (`^19.2.0`), `@base-ui/react`, `class-variance-authority`, and optionally `tailwindcss` (v4) and `motion` (`^12.0.0`). See [Getting Started](https://ui-kit.chunk-creations.com/getting-started) for the ranges.
+
+Node 22 or newer. The install command does not add `tailwindcss`: the app is expected to have Tailwind v4 set up already.
 
 ## Usage
 
@@ -27,17 +31,19 @@ import { Button, Tabs, Input } from 'chunks-ui'
 
 `theme.css` registers its CSS variables with Tailwind CSS v4 through `@theme`, and its `@source` makes Tailwind generate the classes the components use — no plugin needed.
 
-`chunks-ui` is a client bundle (`"use client"`). To call `cn`, `cnState` or a `*Variants` function such as `buttonVariants` in a React Server Component, import it from `chunks-ui/utils`. It also exports the English label defaults (`DEFAULT_*_LABELS`) and their `<Component>Labels` types.
+`chunks-ui` is a client bundle (`"use client"`). To call `cn`, `cnState` or a `*Variants` function such as `buttonVariants` in a React Server Component, import it from `chunks-ui/utils`. It also exports the English label defaults (`DEFAULT_*_LABELS`) and their `<Component>Labels` types. See [Utilities › Server components](https://ui-kit.chunk-creations.com/utilities#server-components).
+
+Without Motion installed, enable `skipLibCheck` (the types reference `motion/react`). See [Getting Started](https://ui-kit.chunk-creations.com/getting-started).
+
+Components with English text of their own take a `labels` prop; pass only the keys you change. See [Labels](https://ui-kit.chunk-creations.com/labels).
+
+Popups render into `document.body`; wrap a subtree in `PortalContainerProvider` to render them inside an element instead. See [Utilities › PortalContainerProvider](https://ui-kit.chunk-creations.com/utilities#portalcontainerprovider).
+
+Add the `touch-target` class to give a small control a 44×44px hit area without changing its size ([Utilities › touch-target](https://ui-kit.chunk-creations.com/utilities#touch-target)).
 
 ## Components
 
-### Tier 1 — Core (v0.1.0)
-
-Button, Input, Textarea, Checkbox, Radio, Switch, Select, Combobox, Tabs, Dialog, Drawer, Popover, Tooltip, Card, Avatar, Chip, ClearButton, Loader, Separator, Field, ToggleGroup
-
-### Tier 2 — Extended
-
-Accordion, Toast, Menu, Progress, Calendar, DatePicker, Scroll Area, Number Field, Slider
+See the component pages in the [docs](https://ui-kit.chunk-creations.com).
 
 ## Stack
 
@@ -99,6 +105,12 @@ OKLCH-based semantic tokens following the shadcn/ui CSS variable convention. Lig
 
 Use with Tailwind: `bg-primary text-primary-foreground`, `bg-destructive text-destructive-foreground`, etc.
 
+`--ring` defaults to a softer shade of `--primary`; set it to use your own colour. See [Theme › Focus Ring](https://ui-kit.chunk-creations.com/theme#focus-ring).
+
+## Typography
+
+The theme sets the page font to Manrope; see [Theme › Typography](https://ui-kit.chunk-creations.com/theme#typography) to keep your own.
+
 ## Animation
 
 Motion is a first-class but optional peer dependency (`^12.0.0`). Components detect it at runtime — if absent, they fall back to CSS transitions.
@@ -115,7 +127,7 @@ All motion respects `prefers-reduced-motion` except the `Loader` spinner (also s
 
 ## Design Principles
 
-- **One component, one job.** Select, Combobox, and Autocomplete are separate components — no god-component with mode switching.
+- **One component, one job.** Select and Combobox are separate components — no god-component with mode switching.
 - **Lean set.** If Tailwind can do it inline, it doesn't need a component.
 - **LLM-friendly.** Conventional APIs, minimal indirection. Props over config objects.
 - **Motion built-in.** Animations designed into the API from day one, not retrofitted.
@@ -131,11 +143,7 @@ bun run lint
 
 ## Versioning
 
-Semantic versioning with Conventional Commits, managed via [Changesets](https://github.com/changesets/changesets).
-
-- `fix:` patch
-- `feat:` minor
-- `feat!:` / `BREAKING CHANGE:` major
+`chunks-ui` is at 0.x, managed with [Changesets](https://github.com/changesets/changesets) and Conventional Commits. While the major is 0, a minor release may contain new features and breaking changes, and a patch release contains fixes only.
 
 ## Docs
 
