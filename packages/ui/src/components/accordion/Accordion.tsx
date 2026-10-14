@@ -3,7 +3,7 @@
 import { Accordion as BaseAccordion } from "@base-ui/react/accordion";
 import type { ComponentProps } from "react";
 import { cnState } from "../../lib/cn";
-import { RING_TRANSITION } from "../shared";
+import { FOCUS_RING, RING_TRANSITION } from "../shared";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -41,7 +41,7 @@ function AccordionTrigger({ className, children, ...props }: AccordionTriggerPro
         // The trigger, not the item, gets data-panel-open, so the chevron rotates off it
         "group/trigger flex flex-1 cursor-pointer items-center justify-between py-4 text-left font-medium text-sm",
         "hover:text-foreground/80",
-        "focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
+        FOCUS_RING,
         RING_TRANSITION,
         // Base UI (1.9+) gives a disabled <button> trigger the disabled attribute, and a trigger
         // rendered as another element (nativeButton={false}) aria-disabled

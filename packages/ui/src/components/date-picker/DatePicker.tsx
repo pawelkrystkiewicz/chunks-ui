@@ -17,7 +17,7 @@ import { usePortalContainer } from "../../lib/portal-container";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { Calendar, type CalendarProps } from "../calendar/Calendar";
 import { toIsoDate, validDate } from "../calendar/date";
-import { RING_TRANSITION } from "../shared";
+import { FOCUS_RING, RING_TRANSITION } from "../shared";
 import { type DatePickerLabels, DEFAULT_DATE_PICKER_LABELS } from "./DatePicker.Labels";
 
 type DatePickerOwnProps = Pick<
@@ -235,7 +235,7 @@ export function DatePicker({
                   aria-labelledby={labelledBy ? `${labelledBy} ${valueId}` : undefined}
                   className={cn(
                     "flex h-ui-height w-full cursor-pointer items-center rounded-md border border-input bg-background px-3 text-left text-sm",
-                    "focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
+                    FOCUS_RING,
                     RING_TRANSITION,
                     "disabled:pointer-events-none disabled:opacity-50",
                     !displayValue && "text-muted-foreground",
@@ -282,7 +282,7 @@ export function DatePicker({
                 "rounded-md border border-border bg-popover shadow-md",
                 // The popup takes focus when `initialFocus` finds no day: the library ring, as
                 // on Popover.Content
-                "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+                FOCUS_RING,
                 "data-starting-style:scale-95 data-starting-style:opacity-0",
                 "data-ending-style:scale-95 data-ending-style:opacity-0",
                 // Only the fade and scale, not the ring

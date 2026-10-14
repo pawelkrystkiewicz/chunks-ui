@@ -1,12 +1,12 @@
 import { cva } from "class-variance-authority";
 import type { ElementColor, ElementVariant } from "../../types";
-import { BUTTON_ANIMATION_CLASSES } from "../shared";
+import { BUTTON_ANIMATION_CLASSES, FOCUS_RING } from "../shared";
 
 export const buttonVariants = cva(
   [
     "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md",
     "h-ui-height px-4 text-sm font-medium",
-    "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+    FOCUS_RING,
     "disabled:pointer-events-none disabled:opacity-50",
     "[&_svg]:pointer-events-none [&_svg]:shrink-0",
     ...BUTTON_ANIMATION_CLASSES,
