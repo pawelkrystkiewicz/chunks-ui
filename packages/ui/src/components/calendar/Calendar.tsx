@@ -198,7 +198,7 @@ export function Calendar({
   );
 
   const handleDayKeyDown = (event: KeyboardEvent, date: Date) => {
-    const target = getKeyTarget(event.key, event, date, weekStartsOn);
+    const target = getKeyTarget(event, date, weekStartsOn);
     if (!target) return;
     event.preventDefault();
     if (target < FIRST_DAY) return;

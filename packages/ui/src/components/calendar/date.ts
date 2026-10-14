@@ -72,13 +72,12 @@ export type KeyModifiers = {
 
 /** Day that a grid navigation key moves focus to (WAI-ARIA APG date grid), or null. */
 export function getKeyTarget(
-  key: string,
-  modifiers: KeyModifiers,
+  input: { key: string } & KeyModifiers,
   date: Date,
   weekStartsOn: number,
 ): Date | null {
-  if (modifiers.altKey || modifiers.ctrlKey || modifiers.metaKey) return null;
-  switch (key) {
+  if (input.altKey || input.ctrlKey || input.metaKey) return null;
+  switch (input.key) {
     case "ArrowLeft":
       return addDays(date, -1);
     case "ArrowRight":
@@ -92,9 +91,9 @@ export function getKeyTarget(
     case "End":
       return addDays(date, 6 - weekdayIndex(date, weekStartsOn));
     case "PageUp":
-      return addMonths(date, modifiers.shiftKey ? -12 : -1);
+      return addMonths(date, input.shiftKey ? -12 : -1);
     case "PageDown":
-      return addMonths(date, modifiers.shiftKey ? 12 : 1);
+      return addMonths(date, input.shiftKey ? 12 : 1);
     default:
       return null;
   }

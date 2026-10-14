@@ -161,7 +161,7 @@ describe("getKeyTarget", () => {
   // Wednesday
   const date = createDate(2026, 2, 18);
   const target = (key: string, modifiers: Partial<typeof NO_MODIFIERS> = {}, weekStartsOn = 0) =>
-    getKeyTarget(key, { ...NO_MODIFIERS, ...modifiers }, date, weekStartsOn);
+    getKeyTarget({ key, ...NO_MODIFIERS, ...modifiers }, date, weekStartsOn);
 
   it.each([
     ["ArrowLeft", createDate(2026, 2, 17)],
@@ -174,6 +174,11 @@ describe("getKeyTarget", () => {
     ["PageDown", createDate(2026, 3, 18)],
   ])("moves on %s", (key, expected) => {
     expect(target(key)).toEqual(expected);
+  });
+
+  it("keeps arrows and Home/End working with Shift", () => {
+    expect(target("ArrowLeft", { shiftKey: true })).toEqual(createDate(2026, 2, 17));
+    expect(target("Home", { shiftKey: true })).toEqual(createDate(2026, 2, 15));
   });
 
   it("moves a year on Shift+PageUp and Shift+PageDown", () => {
