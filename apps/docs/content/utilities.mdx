@@ -255,4 +255,4 @@ export function ScopedPopover() {
 }
 ```
 
-`usePortalContainer()` returns the current value, for a custom popup of your own. It returns `HTMLElement | null | undefined`: `undefined` means there is no provider (or you are inside `Popover`, `Combobox`, `Dialog` or `Drawer` content, where the context is reset); `null` means the container is not mounted yet.
+`usePortalContainer()` returns the current container as `HTMLElement | null | undefined`: `undefined` means no provider (including inside `Popover`, `Combobox`, `Dialog` or `Drawer` content, where the context is reset), `null` means not mounted yet.

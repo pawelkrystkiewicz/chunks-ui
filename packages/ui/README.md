@@ -39,21 +39,13 @@ import { Button, Tabs, Input } from 'chunks-ui'
 
 `chunks-ui` is a client bundle (`"use client"`). To call `cn`, `cnState` or a `*Variants` function such as `buttonVariants` in a React Server Component, import it from `chunks-ui/utils`. It also exports the English label defaults (`DEFAULT_*_LABELS`) and their `<Component>Labels` types. See [Utilities › Server components](https://ui-kit.chunk-creations.com/utilities#server-components).
 
-### Without Motion
+Without Motion installed, enable `skipLibCheck` (the types reference `motion/react`). See [Getting Started](https://ui-kit.chunk-creations.com/getting-started).
 
-The package types reference `motion/react`. With `skipLibCheck: false` in your `tsconfig.json`, TypeScript reports `TS2307: Cannot find module 'motion/react'` when Motion is not installed. Enable `skipLibCheck` (the usual setting) to avoid it. Installing `motion` in any dependency field turns the animations on.
+Components with English text of their own take a `labels` prop; pass only the keys you change. See [Labels](https://ui-kit.chunk-creations.com/labels).
 
-### Labels
+Popups render into `document.body`; wrap a subtree in `PortalContainerProvider` to render them inside an element instead. See [Utilities › PortalContainerProvider](https://ui-kit.chunk-creations.com/utilities#portalcontainerprovider).
 
-Components with English text of their own (icon-button names, screen-reader text, the Calendar month and weekday names) take a `labels` prop. Pass only the keys you change; the rest keep their defaults. See [Labels](https://ui-kit.chunk-creations.com/labels).
-
-### Portal container
-
-Every popup except Toast (Select, Combobox, Menu, Popover, DatePicker, Dialog, Drawer, Tooltip) renders into `document.body`. Wrap a subtree in `PortalContainerProvider` with an element as `value` to render them inside it instead, for example to keep popups inside an element that scopes theme variables. A `null` value holds popups back until the element exists, so keep the element in state with a callback ref. See [Utilities › PortalContainerProvider](https://ui-kit.chunk-creations.com/utilities#portalcontainerprovider).
-
-### Touch targets
-
-The `touch-target` class from `theme.css` makes the hit area of a small control at least 44×44px without changing its size or the layout. See [Utilities › touch-target](https://ui-kit.chunk-creations.com/utilities#touch-target).
+Add the `touch-target` class to give a small control a 44×44px hit area without changing its size ([Utilities › touch-target](https://ui-kit.chunk-creations.com/utilities#touch-target)).
 
 ## Components
 
@@ -85,22 +77,11 @@ OKLCH-based semantic tokens following the shadcn/ui CSS variable convention. Lig
 
 Use with Tailwind: `bg-primary text-primary-foreground`, `bg-destructive text-destructive-foreground`, etc.
 
-`--ring` defaults to `color-mix(in oklab, var(--primary) 60%, var(--background))`, a softer shade of the primary that follows your `--primary` and `--background`. Set `--ring` on `:root` and on `.dark` (and on any nested element that overrides `--primary`) to use a colour of your choice. See [Theme › Focus Ring](https://ui-kit.chunk-creations.com/theme#focus-ring).
+`--ring` defaults to a softer shade of `--primary`; set it to use your own colour. See [Theme › Focus Ring](https://ui-kit.chunk-creations.com/theme#focus-ring).
 
 ## Typography
 
-Importing `theme.css` sets the page's default font to Manrope through Tailwind's preflight (`--font-sans`), or to the browser's generic `sans-serif` when the app does not load Manrope (the theme does not ship the font files). To keep your app's font, set the token after the import:
-
-```css
-@import "tailwindcss";
-@import "chunks-ui/theme.css";
-
-@theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-}
-```
-
-See [Theme › Typography](https://ui-kit.chunk-creations.com/theme#typography).
+The theme sets the page font to Manrope; see [Theme › Typography](https://ui-kit.chunk-creations.com/theme#typography) to keep your own.
 
 ## Animation
 
