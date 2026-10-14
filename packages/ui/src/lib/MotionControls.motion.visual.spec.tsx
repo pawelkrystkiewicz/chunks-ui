@@ -9,7 +9,7 @@ import { Radio } from "../components/radio";
 import { Switch } from "../components/switch";
 import { Tabs } from "../components/tabs";
 import { ToggleGroup } from "../components/toggle-group";
-import { offBy } from "../VisualTest.utils";
+import { offBy, waitForStable } from "../VisualTest.utils";
 import { reloadMotion } from "./use-motion";
 
 // Runs with reduced motion off. These controls stay mounted, so Motion must animate their
@@ -161,6 +161,18 @@ async function settled(read: () => number) {
     previous = value;
   }
   throw new Error(`Still changing after 120 frames, at ${previous}`);
+}
+
+/**
+ * The hook has handed the element back to the CSS fallback, which ends the animation under
+ * reduced motion: the fallback class is back, or, for an indicator without one, the inline
+ * opacity Motion wrote is gone. The hand-off lands in Motion's post-render step after the media
+ * query's change event, so on a loaded machine it takes more than a fixed two frames.
+ */
+function handedBack({ element, fallbackClass }: Control) {
+  const node = element();
+  if (!node) return false;
+  return fallbackClass ? node.classList.contains(fallbackClass) : node.style.opacity === "";
 }
 
 /** The element covers the one it sits over, every edge within a pixel */
@@ -343,6 +355,7 @@ describe("controls once Motion has loaded", () => {
       await nextFrame();
       await nextFrame();
       await reducedMotion(true);
+      await expect.poll(() => handedBack(subject), { timeout: 5000 }).toBe(true);
       const finished = snapshot(subject);
       expect(finished.present).toBe(true);
       expectOver(subject);
@@ -351,8 +364,7 @@ describe("controls once Motion has loaded", () => {
       render(subject.ui());
       subject.change();
       subject.toChecked?.();
-      await wait(100);
-      expect(finished).toEqual(snapshot(subject));
+      expect(await waitForStable(() => snapshot(subject))).toEqual(finished);
     },
   );
 
