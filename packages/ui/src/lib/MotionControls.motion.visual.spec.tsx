@@ -9,7 +9,7 @@ import { Radio } from "../components/radio";
 import { Switch } from "../components/switch";
 import { Tabs } from "../components/tabs";
 import { ToggleGroup } from "../components/toggle-group";
-import { offBy, waitForStable } from "../VisualTest.utils";
+import { offBy, SETTLE_TIMEOUT_MS, waitForStable } from "../VisualTest.utils";
 import { reloadMotion } from "./use-motion";
 
 // Runs with reduced motion off. These controls stay mounted, so Motion must animate their
@@ -355,7 +355,7 @@ describe("controls once Motion has loaded", () => {
       await nextFrame();
       await nextFrame();
       await reducedMotion(true);
-      await expect.poll(() => handedBack(subject), { timeout: 5000 }).toBe(true);
+      await expect.poll(() => handedBack(subject), { timeout: SETTLE_TIMEOUT_MS }).toBe(true);
       const finished = snapshot(subject);
       expect(finished.present).toBe(true);
       expectOver(subject);

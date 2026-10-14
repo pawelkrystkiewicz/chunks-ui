@@ -297,6 +297,9 @@ export function describeMotionPaths(
   );
 }
 
+/** How long a poll or `waitForStable` waits for a value to settle, in ms. */
+export const SETTLE_TIMEOUT_MS = 5000;
+
 const nextFrame = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 
 /**
@@ -305,7 +308,7 @@ const nextFrame = () => new Promise<void>((resolve) => requestAnimationFrame(() 
  */
 export async function waitForStable<T>(
   measure: () => T,
-  { frames = 10, timeout = 5000 }: { frames?: number; timeout?: number } = {},
+  { frames = 10, timeout = SETTLE_TIMEOUT_MS }: { frames?: number; timeout?: number } = {},
 ): Promise<T> {
   const deadline = performance.now() + timeout;
   let value = measure();
