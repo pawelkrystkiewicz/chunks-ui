@@ -18,6 +18,8 @@ Peer dependencies:
 
 Node 22 or newer. The install command does not add `tailwindcss`: the app is expected to have Tailwind v4 set up already.
 
+The examples in these docs use icons from `lucide-react`, which is the app's own dependency (`bun add lucide-react`). chunks-ui does not install it, and any icon library works.
+
 The package types reference `motion/react`, so with `skipLibCheck: false` in your `tsconfig.json` TypeScript reports `TS2307` when Motion is not installed. Enable `skipLibCheck` (the usual setting) to avoid it. Installing `motion` in any dependency field turns the animations on.
 
 ## Setup
