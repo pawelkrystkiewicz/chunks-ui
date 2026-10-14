@@ -23,9 +23,16 @@ import { join } from "node:path";
 const UI = join(import.meta.dirname, "../packages/ui");
 const FIXTURES = join(import.meta.dirname, "no-motion");
 const ENTRY = 'import * as ui from "chunks-ui";\nconsole.log(Object.keys(ui).length);\n';
-// What a strict consumer compiles: a component and the hook whose type used to need Motion
-const TYPES_ENTRY =
-  'import { Button, useMotion } from "chunks-ui";\nexport const m = useMotion();\nexport { Button };\n';
+// What a strict consumer compiles: a component and the hook whose type used to need Motion, plus
+// the utils entry so dist/utils.d.ts is in the program too
+const TYPES_ENTRY = [
+  'import { Button, useMotion } from "chunks-ui";',
+  'import { cn } from "chunks-ui/utils";',
+  "export const m = useMotion();",
+  'export const c = cn("a");',
+  "export { Button };",
+  "",
+].join("\n");
 const TSCONFIG = {
   compilerOptions: {
     strict: true,
