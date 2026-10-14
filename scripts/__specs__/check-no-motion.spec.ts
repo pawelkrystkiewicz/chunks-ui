@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { withMotionProblem, withoutMotionProblem } from "../check-no-motion";
+import { typesProblem, withMotionProblem, withoutMotionProblem } from "../check-no-motion";
 
 // Shaped like webpack 5's output: the location, then the resolve problem, then the summary
 const MISSING = (
@@ -46,5 +46,28 @@ describe("withMotionProblem", () => {
   it("rejects a build with no chunk holding Motion's code", () => {
     const files = [file("main.js", "MotionGlobalConfig"), file("743.js", "other code")];
     expect(withMotionProblem(0, CLEAN, files)).toBeDefined();
+  });
+});
+
+describe("typesProblem", () => {
+  const missing =
+    "node_modules/chunks-ui/dist/index.d.ts(31,31): error TS2307: Cannot find module 'motion/react' or its corresponding type declarations.\n";
+
+  it("accepts a clean type-check", () => {
+    expect(typesProblem(0, "")).toBeUndefined();
+  });
+
+  it("names MotionLike when the types reference motion/react, and keeps the output", () => {
+    const problem = typesProblem(2, missing);
+    expect(problem).toContain("MotionLike");
+    expect(problem).toContain(missing);
+  });
+
+  it("rejects any other type error without the motion/react hint", () => {
+    const output =
+      "types.ts(1,10): error TS2305: Module 'chunks-ui' has no exported member 'Button'.\n";
+    const problem = typesProblem(2, output);
+    expect(problem).not.toContain("MotionLike");
+    expect(problem).toContain(output);
   });
 });

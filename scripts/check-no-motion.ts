@@ -4,6 +4,8 @@
  * Motion and one with it. webpack is the bundler because esbuild, bun and Vite build either way.
  * Both sides matter: a bare import fails the build without Motion, and `webpackIgnore` builds but
  * leaves `import("motion/react")` in the bundle, so every app with Motion loses the animations.
+ * The consumer without Motion also type-checks an import of chunks-ui with `skipLibCheck: false`,
+ * so the package types must not reference `motion/react` (see MotionLike in use-motion.ts).
  * Fixtures: scripts/no-motion. Needs the network. Run: bun run check:no-motion (builds first)
  */
 import {
@@ -21,6 +23,21 @@ import { join } from "node:path";
 const UI = join(import.meta.dirname, "../packages/ui");
 const FIXTURES = join(import.meta.dirname, "no-motion");
 const ENTRY = 'import * as ui from "chunks-ui";\nconsole.log(Object.keys(ui).length);\n';
+// What a strict consumer compiles: a component and the hook whose type used to need Motion
+const TYPES_ENTRY =
+  'import { Button, useMotion } from "chunks-ui";\nexport const m = useMotion();\nexport { Button };\n';
+const TSCONFIG = {
+  compilerOptions: {
+    strict: true,
+    skipLibCheck: false,
+    moduleResolution: "bundler",
+    module: "esnext",
+    target: "es2022",
+    jsx: "react-jsx",
+    noEmit: true,
+  },
+  files: ["types.ts"],
+};
 /** A name only Motion's own code contains (verified: in the async chunk, not in main.js). */
 const MOTION_MARKER = "MotionGlobalConfig";
 const BARE_MOTION_IMPORT = /import\(\s*["']motion\/react["']\s*\)/;
@@ -41,6 +58,15 @@ export function withoutMotionProblem(exitCode: number, output: string): string |
   if (count !== 1) {
     return `expected webpack to build with exactly one "Can't resolve 'motion/react'" warning, got ${count}:\n${output}`;
   }
+}
+
+/** Why the types of chunks-ui fail without Motion, or undefined when they compile. */
+export function typesProblem(exitCode: number, output: string): string | undefined {
+  if (exitCode === 0) return;
+  const hint = /TS2307: Cannot find module 'motion\/react'/.test(output)
+    ? 'dist/index.d.ts references motion/react: the types must describe Motion through MotionLike in packages/ui/src/lib/use-motion.ts, never through typeof import("motion/react").\n'
+    : "";
+  return `${hint}tsc failed on an import of chunks-ui without motion, with skipLibCheck: false (exit ${exitCode}):\n${output}`;
 }
 
 export interface OutputFile {
@@ -135,14 +161,23 @@ async function bundle(fixture: string, dir: string, tarball: string) {
   return { ...result, files };
 }
 
+/** Type-checks TYPES_ENTRY in `dir`, where bundle() installed the fixture and the tarball. */
+async function typecheck(dir: string) {
+  await Bun.write(join(dir, "types.ts"), TYPES_ENTRY);
+  await Bun.write(join(dir, "tsconfig.json"), JSON.stringify(TSCONFIG));
+  return run([join(dir, "node_modules/.bin/tsc"), "-p", "tsconfig.json"], dir);
+}
+
 if (import.meta.main) {
   const dir = mkdtempSync(join(tmpdir(), "chunks-ui-no-motion-"));
   try {
     const tarball = pack(dir);
     const without = await bundle(FIXTURES, join(dir, "without"), tarball);
+    const types = await typecheck(join(dir, "without"));
     const withMotion = await bundle(join(FIXTURES, "with-motion"), join(dir, "with"), tarball);
     const problems = [
       withoutMotionProblem(without.exitCode, without.output),
+      typesProblem(types.exitCode, types.output),
       withMotionProblem(withMotion.exitCode, withMotion.output, withMotion.files),
     ].filter((problem) => problem !== undefined);
     if (problems.length > 0) {
@@ -150,7 +185,7 @@ if (import.meta.main) {
       process.exitCode = 1;
     } else {
       console.log(
-        "webpack bundles chunks-ui without motion (one expected warning) and with motion (async chunk, no bare import).",
+        "webpack bundles chunks-ui without motion (one expected warning, types compile with skipLibCheck: false) and with motion (async chunk, no bare import).",
       );
     }
   } finally {
