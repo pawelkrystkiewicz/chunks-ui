@@ -4,7 +4,17 @@ import type { ComponentType, CSSProperties, HTMLAttributes, Ref } from "react";
 import { useState, useSyncExternalStore } from "react";
 
 type MotionValues = Record<string, number | string>;
-type MotionOptions = Record<string, unknown>;
+/** The animation options chunks-ui passes to Motion. Closed, so a misspelled key fails to compile. */
+export type MotionOptions = {
+  type?: "spring" | "tween" | "inertia";
+  stiffness?: number;
+  damping?: number;
+  bounce?: number;
+  mass?: number;
+  restDelta?: number;
+  restSpeed?: number;
+  duration?: number;
+};
 
 /** The props chunks-ui passes to `motion.div`: HTML attributes plus Motion's animation props. */
 export type MotionElementProps = Omit<
@@ -28,8 +38,8 @@ export interface MotionAnimationControls {
 /**
  * The part of `motion/react` that chunks-ui uses. The package types describe Motion through
  * this interface instead of `typeof import("motion/react")`, so they compile without Motion
- * installed (`skipLibCheck: false` included). With Motion installed, the loaded module is
- * assigned to it where it loads, which checks the interface against Motion's own types.
+ * installed (`skipLibCheck: false` included). For Motion's full types, cast the module in your
+ * own code: `useMotion() as typeof import("motion/react") | null`.
  */
 export interface MotionLike {
   motion: { div: ComponentType<MotionElementProps> };
@@ -65,7 +75,10 @@ function loadMotion() {
   (async () => {
     let m: MotionLike | null = null;
     try {
-      // Typed as Motion's module: the assignment checks MotionLike against Motion's types
+      // Typed as Motion's module: this assignment checks MotionLike against Motion's types. It
+      // catches missing members and wrong option types. It does not catch option contents behind
+      // `Record<string, unknown>`, extra props in `MotionElementProps`, or `MotionInternals`
+      // (render-now.ts; checked in RenderNow.spec.ts).
       m = await import(/* turbopackOptional: true */ "motion/react");
     } catch {}
     setMotion(load, m);
@@ -101,8 +114,7 @@ function subscribeToMotion(onLoad: () => void) {
  * after Motion has loaded gets it on its first render, so it never swaps in Motion elements
  * later; one mounted earlier re-renders with it once it loads.
  *
- * The module is typed as `MotionLike`, the part of Motion that chunks-ui uses. For Motion's
- * full types, cast it in your own code: `useMotion() as typeof import("motion/react") | null`.
+ * The module is typed as `MotionLike`, the part of Motion that chunks-ui uses.
  */
 export function useMotion(): MotionLike | null {
   return useSyncExternalStore(

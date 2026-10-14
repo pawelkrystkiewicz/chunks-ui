@@ -18,7 +18,7 @@ import { cn, cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { renderNow } from "../../lib/render-now";
 import { useMergedRef } from "../../lib/use-merged-ref";
-import { useMotion, useReducedMotion } from "../../lib/use-motion";
+import { type MotionOptions, useMotion, useReducedMotion } from "../../lib/use-motion";
 import { useMotionAnimate } from "../../lib/use-motion-animate";
 import { type PartRenderProp, useRenderPart } from "../../lib/use-render-part";
 import { RING_ANIMATION_CLASSES, RING_TRANSITION } from "../shared";
@@ -37,16 +37,7 @@ export type TabsPanelProps = ComponentProps<typeof BaseTabs.Panel>;
 
 export type TabsIndicatorProps = ComponentProps<typeof BaseTabs.Indicator>;
 
-type MotionTransition = {
-  type?: "spring" | "tween" | "inertia";
-  stiffness?: number;
-  damping?: number;
-  bounce?: number;
-  mass?: number;
-  restDelta?: number;
-  restSpeed?: number;
-  duration?: number;
-};
+type MotionTransition = MotionOptions;
 
 export type TabsContentsProps = Omit<ComponentProps<"div">, "children"> & {
   /** The `<Tabs.Content>` elements to animate between. */
