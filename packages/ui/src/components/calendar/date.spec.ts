@@ -73,8 +73,9 @@ describe("toIsoDate", () => {
   });
 
   it("uses the local date, whatever the time of day", () => {
-    // Guards off-UTC machines only; CI runs in UTC.
-    expect(toIsoDate(new Date(2026, 2, 15, 23, 59, 59))).toBe("2026-03-15");
+    // See TESTING_STRATEGY "Time zone": 00:30 and 23:59 each fail in a different zone
+    expect(toIsoDate(new Date(2026, 2, 15, 0, 30))).toBe("2026-03-15");
+    expect(toIsoDate(new Date(2026, 2, 15, 23, 59))).toBe("2026-03-15");
   });
 });
 

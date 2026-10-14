@@ -9,7 +9,7 @@ import { Radio } from "../components/radio";
 import { Switch } from "../components/switch";
 import { Tabs } from "../components/tabs";
 import { ToggleGroup } from "../components/toggle-group";
-import { offBy } from "../VisualTest.utils";
+import { offBy, SETTLE_TIMEOUT_MS, waitForStable } from "../VisualTest.utils";
 import { reloadMotion } from "./use-motion";
 
 // Runs with reduced motion off. These controls stay mounted, so Motion must animate their
@@ -161,6 +161,16 @@ async function settled(read: () => number) {
     previous = value;
   }
   throw new Error(`Still changing after 120 frames, at ${previous}`);
+}
+
+/**
+ * The hook handed the element back to the CSS fallback: its class is back, or the inline opacity
+ * is gone. That lands after the media query's change event, so poll for it.
+ */
+function handedBack({ element, fallbackClass }: Control) {
+  const node = element();
+  if (!node) return false;
+  return fallbackClass ? node.classList.contains(fallbackClass) : node.style.opacity === "";
 }
 
 /** The element covers the one it sits over, every edge within a pixel */
@@ -343,6 +353,7 @@ describe("controls once Motion has loaded", () => {
       await nextFrame();
       await nextFrame();
       await reducedMotion(true);
+      await expect.poll(() => handedBack(subject), { timeout: SETTLE_TIMEOUT_MS }).toBe(true);
       const finished = snapshot(subject);
       expect(finished.present).toBe(true);
       expectOver(subject);
@@ -351,8 +362,7 @@ describe("controls once Motion has loaded", () => {
       render(subject.ui());
       subject.change();
       subject.toChecked?.();
-      await wait(100);
-      expect(finished).toEqual(snapshot(subject));
+      expect(await waitForStable(() => snapshot(subject))).toEqual(finished);
     },
   );
 

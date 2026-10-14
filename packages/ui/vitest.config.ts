@@ -1,5 +1,9 @@
 import { defineConfig } from "vitest/config";
 
+// Off UTC (CI is UTC), so a local date read through UTC fails here too;
+// see TESTING_STRATEGY "Time zone".
+process.env.TZ = "Europe/Warsaw";
+
 export default defineConfig({
   test: {
     environment: "jsdom",

@@ -279,9 +279,10 @@ describe("DatePicker in a form", () => {
   const formData = (form: HTMLFormElement) => new FormData(form).get("due");
 
   it("submits the selected date as yyyy-mm-dd under its name", async () => {
+    // 00:30: see TESTING_STRATEGY "Time zone"
     render(
       <form aria-label="Task">
-        <DatePicker name="due" defaultValue={new Date(2026, 9, 10, 23, 59)} />
+        <DatePicker name="due" defaultValue={new Date(2026, 9, 10, 0, 30)} />
       </form>,
     );
     const form = screen.getByRole<HTMLFormElement>("form");

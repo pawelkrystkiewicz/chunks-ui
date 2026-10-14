@@ -42,6 +42,16 @@ bun run check:no-motion   # builds chunks-ui first, needs the network
 
 Runs in the `docs-build` job of `quality-gates.yml`, as its own step. Tests: `scripts/__specs__/check-no-motion.spec.ts`.
 
+## check-peer-floors.ts
+
+Derives the lowest version each `^range` in `packages/ui` `peerDependencies` allows, for the `floors` job in `unit.tests.yml`. `--specs` prints `name@floor` for `bun add --no-save`; `--check` (the default) fails unless every peer resolves from `packages/ui` to its floor. `class-variance-authority` and `tailwindcss` are exempt. It throws on a range that is not a `^range` and on an exempt name that is not a peer.
+
+```bash
+bun scripts/check-peer-floors.ts --specs
+```
+
+Tests: `scripts/__specs__/check-peer-floors.spec.ts`.
+
 ## calculate-next-version.ts
 
 Calculates the next semantic version based on changeset files. This script eliminates duplication in the GitHub Actions workflow by providing a single source of truth for version calculation logic.
