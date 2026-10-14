@@ -71,20 +71,20 @@ const columns: ColumnDef<Payment>[] = [
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Email
-        <ArrowUpDown className="ml-1 size-4" />
+        <ArrowUpDown className="ms-1 size-4" />
       </Button>
     ),
     cell: ({ row }) => <span className="lowercase">{row.getValue("email")}</span>,
   },
   {
     accessorKey: "amount",
-    header: () => <div className="text-right">Amount</div>,
+    header: () => <div className="text-end">Amount</div>,
     cell: ({ row }) => {
       const formatted = new Intl.NumberFormat("en-US", {
         style: "currency",
         currency: "USD",
       }).format(row.getValue("amount"));
-      return <div className="text-right font-medium">{formatted}</div>;
+      return <div className="text-end font-medium">{formatted}</div>;
     },
   },
 ];

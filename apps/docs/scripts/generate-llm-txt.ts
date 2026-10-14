@@ -90,7 +90,7 @@ async function readMdxFile(filePath: string): Promise<Page> {
 
 async function readComponentDocs(): Promise<Page[]> {
   const files = await readdir(COMPONENTS_DIR);
-  const mdxFiles = files.filter((f: string) => f.endsWith(".mdx")).sort();
+  const mdxFiles = files.filter((f: string) => f.endsWith(".mdx") && f !== "index.mdx").sort();
   return Promise.all(mdxFiles.map((f: string) => readMdxFile(join(COMPONENTS_DIR, f))));
 }
 
