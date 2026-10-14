@@ -43,7 +43,7 @@ Add the `touch-target` class to give a small control a 44×44px hit area without
 
 ## Components
 
-See the component pages in the [docs](https://ui-kit.chunk-creations.com).
+See the [component index](https://ui-kit.chunk-creations.com/components) in the docs.
 
 ## Stack
 
