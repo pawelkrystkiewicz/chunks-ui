@@ -127,6 +127,8 @@ type RingCase = {
    * menu) closes on a tab, so the keyboard modality comes from a key press that moves no focus
    */
   inPopup?: true;
+  /** Opens the popup the part is in from the keyboard, with the focus on the "Before" button */
+  open?: () => Promise<void>;
 };
 
 const byTestId = (id: string) => () => screen.getByTestId(id);
@@ -428,6 +430,17 @@ const RING_CASES: RingCase[] = [
     inPopup: true,
   },
   {
+    // Takes focus when `initialFocus` finds no day; the spec moves the focus to it from the day
+    part: "DatePicker popup",
+    ui: () => <DatePicker />,
+    target: () => screen.findByRole("dialog"),
+    internal: true,
+    open: async () => {
+      await userEvent.tab();
+      await userEvent.keyboard("{Enter}");
+    },
+  },
+  {
     part: "Breadcrumb.Link",
     ui: (className) => (
       <Breadcrumb.Root>
@@ -445,10 +458,13 @@ const RING_CASES: RingCase[] = [
 ];
 
 /**
- * Renders `ui` after a button, tabs to the button (in a popup, presses Shift instead), then moves
- * focus to the target
+ * Renders `ui` after a button, tabs to the button (in a popup, presses Shift instead), opens the
+ * popup if the case opens one, then moves focus to the target
  */
-async function focusRing({ ui, target, ring, internal, inPopup }: RingCase, utility?: string) {
+async function focusRing(
+  { ui, target, ring, internal, inPopup, open }: RingCase,
+  utility?: string,
+) {
   render(
     <>
       <button type="button">Before</button>
@@ -460,6 +476,7 @@ async function focusRing({ ui, target, ring, internal, inPopup }: RingCase, util
     await userEvent.tab();
     expect(document.activeElement).toBe(screen.getByRole("button", { name: "Before" }));
   }
+  await open?.();
   const focused = await target();
   const drawn = ring?.() ?? focused;
   if (utility) {
@@ -657,6 +674,18 @@ describe("own transition lists with no reduced-motion preference", () => {
       properties: ["opacity", "scale"],
     },
     {
+      part: "DatePicker popup",
+      ui: <DatePicker />,
+      // No `className` reaches the popup: opened with the mouse, as no ring is read here
+      target: async () => {
+        await userEvent.click(
+          screen.getByRole("button", { name: DEFAULT_DATE_PICKER_LABELS.placeholder }),
+        );
+        return screen.findByRole("dialog");
+      },
+      properties: ["opacity", "scale"],
+    },
+    {
       part: "Drawer.Popup",
       ui: drawerPopup(),
       properties: ["translate"],
@@ -666,9 +695,9 @@ describe("own transition lists with no reduced-motion preference", () => {
       ui: drawerPopup("[transition-property:translate,opacity]"),
       properties: ["translate", "opacity"],
     },
-  ])("fades every property $part lists for the same time", async ({ ui, properties }) => {
+  ])("fades every property $part lists for the same time", async ({ ui, target, properties }) => {
     render(ui);
-    const part = await screen.findByTestId("target");
+    const part = await (target?.() ?? screen.findByTestId("target"));
     expect(part).toHaveClass("micro-interactions");
     const durations = durationsOf(part);
     expect(Object.keys(durations)).toEqual(properties);

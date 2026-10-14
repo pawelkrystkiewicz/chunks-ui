@@ -286,9 +286,13 @@ export function DatePicker({
               }
               className={cn(
                 "rounded-md border border-border bg-popover shadow-md",
+                // The popup takes focus when `initialFocus` finds no day: the library ring, as
+                // on Popover.Content
+                "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
                 "data-starting-style:scale-95 data-starting-style:opacity-0",
                 "data-ending-style:scale-95 data-ending-style:opacity-0",
-                "micro-interactions",
+                // Only the fade and scale, not the ring
+                "micro-interactions [transition-property:opacity,scale] duration-300",
               )}
             >
               <Calendar
