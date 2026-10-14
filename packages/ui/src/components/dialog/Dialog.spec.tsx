@@ -2,6 +2,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { axe } from "jest-axe";
 import { createRef, type ReactNode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
+import { FOCUS_RING } from "../shared";
 import { Dialog } from "./Dialog";
 
 afterEach(cleanup);
@@ -40,11 +41,7 @@ describe("Dialog", () => {
         </Dialog.Portal>
       </Dialog.Root>,
     );
-    expect(screen.getByTestId("popup")).toHaveClass(
-      "focus-visible:outline-2",
-      "focus-visible:outline-offset-2",
-      "focus-visible:outline-ring",
-    );
+    expect(screen.getByTestId("popup")).toHaveClass(...FOCUS_RING.split(" "));
   });
 
   it("renders Title with custom className", () => {

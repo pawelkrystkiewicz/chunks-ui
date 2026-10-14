@@ -6,6 +6,7 @@ import { createRef } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createDate } from "../calendar/date";
 import { Field } from "../field";
+import { FOCUS_RING } from "../shared";
 import { DatePicker } from "./DatePicker";
 import { DEFAULT_DATE_PICKER_LABELS } from "./DatePicker.Labels";
 
@@ -159,11 +160,7 @@ describe("DatePicker", () => {
   it("draws the library focus ring on the popup", async () => {
     render(<DatePicker />);
     await userEvent.click(screen.getByRole("button", { name: "Pick a date" }));
-    expect(screen.getByRole("dialog")).toHaveClass(
-      "focus-visible:outline-2",
-      "focus-visible:outline-offset-2",
-      "focus-visible:outline-ring",
-    );
+    expect(screen.getByRole("dialog")).toHaveClass(...FOCUS_RING.split(" "));
   });
 
   it("disables trigger when disabled prop is set", () => {

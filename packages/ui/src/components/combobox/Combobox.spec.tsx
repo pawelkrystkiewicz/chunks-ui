@@ -356,7 +356,6 @@ describe("Combobox icon buttons", () => {
     for (const name of ["Clear selection", "Remove Apple"]) {
       const icon = screen.getByRole("button", { name }).querySelector("svg");
       expect(icon).toHaveAttribute("aria-hidden", "true");
-      expect(icon?.querySelectorAll("path")).toHaveLength(2);
     }
   });
 

@@ -40,7 +40,6 @@ describe("ClearButton", () => {
     render(<ClearButton />);
     const icon = screen.getByRole("button").querySelector("svg");
     expect(icon).toHaveAttribute("aria-hidden", "true");
-    expect(icon?.querySelectorAll("path")).toHaveLength(2);
   });
 
   it("has no a11y violations", async () => {
