@@ -7,7 +7,8 @@
  *
  * Tailwind does not scan CSS files, so a utility that theme.css defines with `@utility` and that no
  * component uses (`touch-target`) would not be compiled. Both versions also scan a file that lists
- * each of those utilities, and the installed one must generate them all.
+ * each of those utilities, and the installed one must generate them all. The run fails when that
+ * list is empty or lacks `touch-target`, so the check cannot pass without testing anything.
  *
  * The installed version compiles in this process, with the `@tailwindcss/node` and
  * `@tailwindcss/oxide` from bun.lock. The oldest compiles with the CLI installed from the
@@ -29,12 +30,26 @@ const THEME = join(UI, "dist/theme.css");
 const CLASS = /\.(-?(?:[\w-]|\\[0-9a-fA-F]{1,6} ?|\\.)+)/g;
 /** A class from Button's base variants, which stays in chunks-ui. */
 const KNOWN_CLASS = "disabled:pointer-events-none";
+/**
+ * A utility theme.css defines with `@utility` and no component uses; it keeps the check honest
+ * if the utilities ever move out of this file (assertThemeUtilities fails the run then).
+ */
+const KNOWN_UTILITY = "touch-target";
 const ESCAPE = /\\([0-9a-fA-F]{1,6}) ?|\\(.)/g;
 
 /** The names of the utilities that `css` defines with `@utility`, without functional ones (`tab-*`). */
 export function themeUtilities(css: string): string[] {
   const rules = css.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/@utility\s+([\w-]+)\s*\{/g);
   return [...rules].map(([, name = ""]) => name);
+}
+
+/** Throws when `utilities` (what themeUtilities read from THEME) lacks KNOWN_UTILITY. */
+export function assertThemeUtilities(utilities: readonly string[]) {
+  if (!utilities.includes(KNOWN_UTILITY)) {
+    throw new Error(
+      `${THEME} defines no @utility, or lacks ${KNOWN_UTILITY}: the scan broke or the utility moved`,
+    );
+  }
 }
 
 /** The class names in the selectors of compiled CSS, unescaped. */
@@ -115,6 +130,7 @@ async function compileOldest(css: string, dir: string): Promise<string> {
 /** The CSS of the installed version and of OLDEST, and the utilities theme.css defines. */
 async function compileBoth() {
   const utilities = themeUtilities(await Bun.file(THEME).text());
+  assertThemeUtilities(utilities);
   const dir = mkdtempSync(join(tmpdir(), `tailwind-${OLDEST}-`));
   try {
     const list = join(dir, "theme-utilities.html");

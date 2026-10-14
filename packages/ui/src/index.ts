@@ -298,6 +298,7 @@ export type {
 export { Tooltip } from "./components/tooltip";
 // Utilities
 export { type ClassInput, cn, cnState, type StateClassName } from "./lib/cn";
+export { mergeLabels } from "./lib/labels";
 export { springs } from "./lib/motion";
 export { PortalContainerProvider, usePortalContainer } from "./lib/portal-container";
 export { useMotion, useReducedMotion } from "./lib/use-motion";

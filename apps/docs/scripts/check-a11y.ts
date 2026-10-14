@@ -10,7 +10,9 @@
  * among them), every other page under app/, and the 404 page, which it gets by requesting a URL
  * no page answers on: that one must answer 404, every other page 200. On the pages POPUPS lists, it
  * then opens the first example's popup and audits it alone, open. axe's `incomplete` results
- * (checks it could not decide, often contrast over images or gradients) are not failed.
+ * (checks it could not decide, often contrast over images or gradients) are not failed. A page is
+ * audited once React has hydrated it (`html[data-hydrated]`, set by app/HydrationMarker.tsx) and
+ * its fonts have loaded.
  *
  * Reads the issue states from the GitHub API with GITHUB_TOKEN (CI passes it; locally run
  * `GITHUB_TOKEN=$(gh auth token) bun run check:a11y`). Outside CI, an issue whose state can't be
@@ -340,6 +342,15 @@ async function axe(
 }
 
 const POPUP_MS = 10_000;
+const HYDRATION_MS = 10_000;
+
+/**
+ * A Suspense boundary in the served HTML that is not the empty `<!--$--><!--/$-->`: React writes
+ * `<!--$?-->` for one still pending and `<!--$!-->` for one that failed, and a boundary with
+ * content hydrates in a later pass than the root. HydrationMarker's attribute is set after the
+ * root commit, so with such a boundary the audit could run before the page is hydrated.
+ */
+const NON_EMPTY_SUSPENSE = /<!--\$[!?]?-->(?!<!--\/\$-->)/;
 
 /** Opens `popup` on its loaded page, runs axe on it alone, and closes it with Escape */
 async function auditPopup(
@@ -420,6 +431,23 @@ async function audit(
     if (response?.status() !== expected) {
       throw new Error(`${route} answered ${response?.status()} instead of ${expected}`);
     }
+    // networkidle is not hydration: wait for the marker, then fonts
+    if (NON_EMPTY_SUSPENSE.test((await response?.text()) ?? "")) {
+      throw new Error(
+        `${route} has a Suspense boundary that is not empty in its HTML: it hydrates after the HydrationMarker attribute, so the audit could run too early`,
+      );
+    }
+    await page
+      .locator('html[data-hydrated="true"]')
+      .waitFor({ timeout: HYDRATION_MS })
+      .catch(() => {
+        throw new Error(
+          `no html[data-hydrated] within ${HYDRATION_MS / 1000} s: is HydrationMarker in app/layout.tsx, and does the page hydrate?`,
+        );
+      });
+    await page.waitForFunction(() => document.fonts.status === "loaded", undefined, {
+      timeout: HYDRATION_MS,
+    });
     // next-themes puts the theme's name on <html>; without it the page was audited in the other one
     const htmlClass = await page.evaluate(() => document.documentElement.className);
     if (!htmlClass.split(" ").includes(theme)) {
