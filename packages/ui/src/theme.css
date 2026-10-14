@@ -295,7 +295,7 @@
  */
 .toast-stack-viewport {
   /* Override the default flex-column layout so children can absolute-stack
-   * at the same anchor point: the viewport's bottom corner at the inline end. */
+   * at the same anchor point: the viewport's bottom edge. */
   display: block;
 }
 
