@@ -69,13 +69,6 @@ jobs:
     # registry), so it gets no write scope
     permissions:
       contents: read
-    env:
-      # The lower bound of each ^range in packages/ui peerDependencies; the check step fails when
-      # a range moved without this list
-      PEER_FLOORS: react@19.2.0 react-dom@19.2.0 @base-ui/react@1.9.0 motion@12.0.0
-      # Peers that are not floored here, with the reason; the check step fails on any other
-      # peer missing from PEER_FLOORS
-      EXEMPT: class-variance-authority tailwindcss
     steps:
       - name: Checkout Repo
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
@@ -101,45 +94,14 @@ jobs:
       # --no-save: package.json and bun.lock stay as they are. With the isolated linker the
       # floors land under packages/ui/node_modules too, except motion: it is a devDependency of
       # packages/ui, so that link stays on the locked version. Removing it lets packages/ui
-      # resolve the root floor. The next step proves what resolves.
+      # resolve the root floor. The check step proves what resolves.
       - name: Install the peer floors
         run: |
-          bun add --no-save $PEER_FLOORS
+          bun add --no-save $(bun scripts/check-peer-floors.ts --specs)
           rm packages/ui/node_modules/motion
 
       - name: Check what chunks-ui resolves
-        working-directory: packages/ui
-        run: |
-          bun -e '
-            const peers = require("./package.json").peerDependencies;
-            // class-variance-authority: bun.lock already holds its floor. tailwindcss: check:tailwind.
-            const exempt = process.env.EXEMPT.split(" ");
-            const floors = new Map(process.env.PEER_FLOORS.split(" ").map((spec) => {
-              const at = spec.lastIndexOf("@");
-              return [spec.slice(0, at), spec.slice(at + 1)];
-            }));
-            let bad = false;
-            for (const name of floors.keys()) {
-              if (!(name in peers)) { console.error(`${name}: in PEER_FLOORS, not a peer of chunks-ui`); bad = true; }
-            }
-            for (const name of exempt) {
-              if (!(name in peers)) { console.error(`${name}: in EXEMPT, not a peer of chunks-ui: drop it`); bad = true; }
-              if (floors.has(name)) { console.error(`${name}: in both EXEMPT and PEER_FLOORS: keep one`); bad = true; }
-            }
-            for (const [name, range] of Object.entries(peers)) {
-              const floor = floors.get(name);
-              if (floor === undefined) {
-                if (exempt.includes(name)) { console.log(`${name}: exempt`); }
-                else { console.error(`${name}: peer ${range} is in neither PEER_FLOORS nor EXEMPT`); bad = true; }
-                continue;
-              }
-              const got = require(`${name}/package.json`).version;
-              console.log(`${name}: resolves ${got}, peer range ${range}`);
-              if (got !== floor) { console.error(`${name}: wanted ${floor}`); bad = true; }
-              if (range !== `^${floor}`) { console.error(`${name}: PEER_FLOORS has ${floor}, the peer range is ${range}: move one with the other`); bad = true; }
-            }
-            process.exit(bad ? 1 : 0);
-          '
+        run: bun scripts/check-peer-floors.ts
 
       - name: Run the ui unit tests at the floors
         run: bun run --cwd packages/ui test
