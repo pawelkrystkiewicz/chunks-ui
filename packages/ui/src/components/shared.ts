@@ -33,7 +33,7 @@ export const RING_ANIMATION_CLASSES = ["micro-interactions", RING_TRANSITION, "d
 
 /**
  * The library's keyboard focus ring, as a Button draws it: 2px of `--ring`, 2px outside the edge,
- * under `:focus-visible` only. One string for every part that takes the focus, so the ring cannot
+ * under `:focus-visible` only. One string for every part that draws the offset ring, so the ring cannot
  * drift between them.
  */
 export const FOCUS_RING =
