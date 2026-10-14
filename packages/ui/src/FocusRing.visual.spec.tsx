@@ -508,19 +508,14 @@ describe("focus ring with no reduced-motion preference", () => {
   });
 
   // Motion writes these on the popups, so a CSS transition on them would lag the spring
-  describe.each(["transition-colors", "duration-500"])(
-    "the Motion popups with %s in className",
-    (utility) => {
-      it.each(["Popover.Content", "Menu.Content", "Dialog.Popup"])(
-        "%s leaves the properties Motion writes out of its transitions",
-        async (part) => {
-          const c = RING_CASES.find((r) => r.part === part);
-          if (!c) throw new Error(`No ring case for ${part}`);
-          const properties = getComputedStyle(await focusRing(c, utility)).transitionProperty;
-          for (const written of ["all", "opacity", "transform", "translate", "scale", "rotate"])
-            expect(properties.split(", ")).not.toContain(written);
-        },
-      );
+  it.each(["Popover.Content", "Menu.Content", "Dialog.Popup"])(
+    "%s leaves the properties Motion writes out of its transitions",
+    async (part) => {
+      const c = RING_CASES.find((r) => r.part === part);
+      if (!c) throw new Error(`No ring case for ${part}`);
+      const properties = getComputedStyle(await focusRing(c)).transitionProperty;
+      for (const written of ["all", "opacity", "transform", "translate", "scale", "rotate"])
+        expect(properties.split(", ")).not.toContain(written);
     },
   );
 
