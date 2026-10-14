@@ -9,6 +9,7 @@ import { arrowClasses, arrowPopupClasses } from "../../lib/popup-arrow";
 import { usePortalContainer } from "../../lib/portal-container";
 import { useArrowPadding } from "../../lib/use-arrow-padding";
 import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
+import { RING_TRANSITION } from "../shared";
 
 export type MenuRootProps = ComponentProps<typeof BaseMenu.Root>;
 export type MenuTriggerProps = ComponentProps<typeof BaseMenu.Trigger>;
@@ -105,6 +106,8 @@ function MenuContentPopup({
           !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
           // Only the fade and scale: `all` would also animate the max-height that --available-height drives
           !useSpring && "micro-interactions [transition-property:opacity,scale] duration-300",
+          // Motion animates the popup: a list with no outline keeps a timing utility off the ring
+          useSpring && RING_TRANSITION,
           className,
         )}
         {...props}

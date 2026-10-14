@@ -9,6 +9,7 @@ import { arrowClasses, arrowPopupClasses } from "../../lib/popup-arrow";
 import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
 import { useArrowPadding } from "../../lib/use-arrow-padding";
 import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
+import { RING_TRANSITION } from "../shared";
 
 export type PopoverRootProps = ComponentProps<typeof BasePopover.Root>;
 export type PopoverTriggerProps = ComponentProps<typeof BasePopover.Trigger>;
@@ -99,6 +100,8 @@ function PopoverContentPopup({
           !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
           // Only the fade and scale: `all` would also slide an arrow's margin when the side flips
           !useSpring && "micro-interactions [transition-property:opacity,scale] duration-300",
+          // Motion animates the popup: a list with no outline keeps a timing utility off the ring
+          useSpring && RING_TRANSITION,
           className,
         )}
         {...props}

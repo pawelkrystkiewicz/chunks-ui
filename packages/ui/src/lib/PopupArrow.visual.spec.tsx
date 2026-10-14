@@ -13,6 +13,7 @@ import {
   eachPaintedFrame,
   LAYOUT_ROUNDING_PX,
   resetTheme,
+  ringColor,
   THEMES,
   waitForStable,
 } from "../VisualTest.utils";
@@ -334,33 +335,26 @@ const ringOf = ({ outlineStyle, outlineWidth, outlineColor, outlineOffset }: Rin
   outlineOffset,
 });
 
-/**
- * The ring the browser draws around an element focused from the keyboard. The key press stays the
- * last interaction, so an element focused next by script matches `:focus-visible` too.
- */
-async function browserRing() {
-  const { unmount } = render(<div tabIndex={-1} data-testid="reference" />);
-  const reference = screen.getByTestId("reference");
-  reference.focus();
-  await userEvent.keyboard("{Shift}");
-  expect(reference.matches(":focus-visible")).toBe(true);
-  const ring = ringOf(getComputedStyle(reference));
-  unmount();
-  return ring;
-}
+/** The library's focus ring, as on a Button: 2px of `--ring`, 2px outside the edge */
+const libraryRing = (): Ring => ({
+  outlineStyle: "solid",
+  outlineWidth: "2px",
+  outlineColor: ringColor(),
+  outlineOffset: "2px",
+});
 
 describe.each(KINDS)("%s focused from the keyboard", (kind) => {
   // The arrow, a positioned child, would paint over the popup's own ring where they meet. The
   // screenshots in Popover.visual.spec.tsx and Menu.visual.spec.tsx show the overlay's ring above it.
-  it("draws the browser's ring on its overlay, and none on the popup itself", async () => {
-    const ring = await browserRing();
+  it("draws the library ring on its overlay, and none on the popup itself", async () => {
     // Opens after the key press and takes focus, as when a shortcut opens it
+    await userEvent.keyboard("{Shift}");
     render(arrowed(kind, "bottom", "ltr", true));
     const popup = await screen.findByTestId("popup");
     await expect.poll(() => popup.matches(":focus-visible")).toBe(true);
 
     expect(getComputedStyle(popup).outlineStyle).toBe("none");
-    expect(ringOf(getComputedStyle(popup, "::after"))).toEqual(ring);
+    expect(ringOf(getComputedStyle(popup, "::after"))).toEqual(libraryRing());
   });
 });
 
@@ -386,14 +380,22 @@ function popupWith(kind: Kind, className: string, arrow = true): ReactNode {
 }
 
 describe.each(KINDS)("%s with an arrow, restyling the ring", (kind) => {
-  it("takes a colour from the same `has-[.PopupArrow]:focus-visible:after:` prefix", async () => {
-    render(popupWith(kind, "has-[.PopupArrow]:focus-visible:after:[outline-color:rgb(255,0,0)]"));
-    const popup = await screen.findByTestId("popup");
-    await userEvent.keyboard("{Shift}");
-    await expect.poll(() => popup.matches(":focus-visible")).toBe(true);
+  // A colour utility, and an arbitrary property, which tailwind-merge does not match to it.
+  // Whole class names: Tailwind generates only the classes it finds in the source.
+  it.each([
+    "has-[.PopupArrow]:focus-visible:after:outline-[rgb(255,0,0)]",
+    "has-[.PopupArrow]:focus-visible:after:[outline-color:rgb(255,0,0)]",
+  ])(
+    "takes a colour from the same `has-[.PopupArrow]:focus-visible:after:` prefix: `%s`",
+    async (colour) => {
+      render(popupWith(kind, colour));
+      const popup = await screen.findByTestId("popup");
+      await userEvent.keyboard("{Shift}");
+      await expect.poll(() => popup.matches(":focus-visible")).toBe(true);
 
-    expect(getComputedStyle(popup, "::after").outlineColor).toBe("rgb(255, 0, 0)");
-  });
+      expect(getComputedStyle(popup, "::after").outlineColor).toBe("rgb(255, 0, 0)");
+    },
+  );
 
   it("removes the overlay, and so the ring, with `focus-visible:after:hidden`", async () => {
     render(popupWith(kind, "focus-visible:after:hidden"));
@@ -405,8 +407,11 @@ describe.each(KINDS)("%s with an arrow, restyling the ring", (kind) => {
   });
 });
 
-/** Offsets from a popup's edge, outward (negative) to inward, that cover the ring and the border */
-const ACROSS_EDGE = [-3, -2, -1, 0, 1, 2, 3];
+/**
+ * Offsets from a popup's edge, outward (negative) to inward, that cover the ring (2px, 2px out),
+ * the page past it and the border
+ */
+const ACROSS_EDGE = [-5, -4, -3, -2, -1, 0, 1, 2, 3];
 
 /**
  * The colours the page paints across each edge of `popup`, at `ACROSS_EDGE` from it: through the
@@ -457,7 +462,7 @@ async function focusedEdges(kind: Kind, className: string, arrow: boolean) {
 
 describe.each(KINDS)("%s with an arrow and a consumer's border width", (kind) => {
   it.each(["border-0", "border-2"])(
-    "with `%s`, draws its overlay's ring where the browser draws the popup's own",
+    "with `%s`, draws its overlay's ring where a popup without an arrow draws its own",
     async (border) => {
       const own = await focusedEdges(kind, border, false);
       const overlay = await focusedEdges(kind, border, true);
@@ -467,9 +472,9 @@ describe.each(KINDS)("%s with an arrow and a consumer's border width", (kind) =>
 });
 
 describe.each(KINDS)("%s focused from the keyboard, without an arrow", (kind) => {
-  // An overlay would be clipped by a consumer's `overflow`, so such a popup keeps the browser's ring
-  it("keeps the browser's ring on the popup itself, and has no overlay", async () => {
-    const ring = await browserRing();
+  // An overlay would be clipped by a consumer's `overflow`, so such a popup draws the ring itself
+  it("draws the library ring on the popup itself, and has no overlay", async () => {
+    await userEvent.keyboard("{Shift}");
     const content = { "data-testid": "popup", className: "overflow-auto" };
     render(
       kind === "Popover" ? (
@@ -489,7 +494,7 @@ describe.each(KINDS)("%s focused from the keyboard, without an arrow", (kind) =>
     const popup = await screen.findByTestId("popup");
     await expect.poll(() => popup.matches(":focus-visible")).toBe(true);
 
-    expect(ringOf(getComputedStyle(popup))).toEqual(ring);
+    expect(ringOf(getComputedStyle(popup))).toEqual(libraryRing());
     expect(getComputedStyle(popup, "::after").content).toBe("none");
   });
 });
@@ -504,18 +509,23 @@ function highlight() {
   return colour;
 }
 
-describe.each(KINDS)("%s with an arrow, in forced colours", (kind) => {
+describe.each(KINDS)("%s in forced colours", (kind) => {
   afterEach(() => commands.emulateMedia({ forcedColors: "none" }));
 
-  it("draws its overlay's ring in the system focus colour", async () => {
+  // Forced colours revert the `--ring` colour: on the focused popup to the browser's focus
+  // colour, on the overlay, which has no focus, to CanvasText, so the overlay names `Highlight`
+  it.each([
+    { arrow: true, drawn: "::after" },
+    { arrow: false, drawn: null },
+  ])("with arrow $arrow, draws the ring in the system focus colour", async ({ arrow, drawn }) => {
     await commands.emulateMedia({ forcedColors: "active" });
     await expect.poll(() => matchMedia("(forced-colors: active)").matches).toBe(true);
-    render(arrowed(kind, "bottom", "ltr", true));
+    render(popupWith(kind, "", arrow));
     const popup = await screen.findByTestId("popup");
     await userEvent.keyboard("{Shift}");
     await expect.poll(() => popup.matches(":focus-visible")).toBe(true);
 
-    expect(getComputedStyle(popup, "::after").outlineColor).toBe(highlight());
+    expect(getComputedStyle(popup, drawn).outlineColor).toBe(highlight());
   });
 });
 

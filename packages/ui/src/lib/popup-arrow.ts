@@ -48,15 +48,16 @@ export function arrowPaddingIn(positioner: Element): number | undefined {
  * the gap between the trigger and the tip. Base UI measures `--available-height` from the
  * positioner, before that move, so a popup that caps its height takes the reach off it too.
  *
- * The arrow is a positioned child, so it paints over the popup's own focus ring where they meet.
- * In a popup that holds an arrow (`has-[.PopupArrow]:`), the ring moves to an `::after` overlay,
- * positioned and raised so it paints above the arrow. Chromium draws the ring of a bordered box up
- * to 1px over the border, so the overlay takes the popup's border box: the popup's padding box (its
+ * A popup focused from the keyboard draws the library's ring, as a Button does: 2px of `--ring`,
+ * 2px outside its edge. The arrow is a positioned child, so it paints over the popup's own ring
+ * where they meet. In a popup that holds an arrow (`has-[.PopupArrow]:`), the ring moves to an
+ * `::after` overlay, positioned and raised so it paints above the arrow. The overlay takes the
+ * popup's border box, so its ring sits where the popup's own would: the popup's padding box (its
  * containing block) with the popup's border widths, transparent, around it, centred on it. In a
  * browser without `place-self` on absolutely positioned boxes, `-inset-px` still fits a 1px border
  * (with `border-0` that browser draws the overlay 1px up and to the left).
- * It takes the popup's radius too. Forced colours name `Highlight`, the system focus colour. A popup
- * without an arrow keeps the browser's ring on itself: an overlay would be clipped by its `overflow`.
+ * It takes the popup's radius too. A popup without an arrow keeps the ring on itself: an overlay
+ * would be clipped by a consumer's `overflow`, which does not clip the popup's own outline.
  */
 export const arrowPopupClasses = [
   "relative",
@@ -67,12 +68,17 @@ export const arrowPopupClasses = [
   "has-[.PopupArrow]:data-[side=right]:ml-(--popup-arrow-reach)",
   "has-[.PopupArrow]:data-[side=inline-start]:me-(--popup-arrow-reach)",
   "has-[.PopupArrow]:data-[side=inline-end]:ms-(--popup-arrow-reach)",
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
   "has-[.PopupArrow]:focus-visible:outline-none",
   "has-[.PopupArrow]:focus-visible:after:pointer-events-none has-[.PopupArrow]:focus-visible:after:absolute has-[.PopupArrow]:focus-visible:after:-inset-px has-[.PopupArrow]:focus-visible:after:z-10",
   "has-[.PopupArrow]:focus-visible:after:box-content has-[.PopupArrow]:focus-visible:after:size-full has-[.PopupArrow]:focus-visible:after:[place-self:unsafe_center]",
   "has-[.PopupArrow]:focus-visible:after:rounded-[inherit] has-[.PopupArrow]:focus-visible:after:border-solid has-[.PopupArrow]:focus-visible:after:[border-width:inherit] has-[.PopupArrow]:focus-visible:after:border-transparent",
-  "has-[.PopupArrow]:focus-visible:after:[outline-style:auto] has-[.PopupArrow]:focus-visible:after:[outline-width:1px] has-[.PopupArrow]:focus-visible:after:[outline-color:-webkit-focus-ring-color]",
-  // Forced colours revert an author `outline-color` on the overlay to CanvasText, so name the system focus colour
+  "has-[.PopupArrow]:focus-visible:after:outline-2 has-[.PopupArrow]:focus-visible:after:outline-offset-2",
+  // An arbitrary property: tailwind-merge replaces it with a consumer's `[outline-color:…]`, and
+  // Tailwind sorts a colour utility after it
+  "has-[.PopupArrow]:focus-visible:after:[outline-color:var(--ring)]",
+  // Forced colours revert the ring colour: the focused popup gets the browser's focus colour, but
+  // the overlay, which has no focus, gets CanvasText, so it names the system focus colour
   "has-[.PopupArrow]:forced-colors:focus-visible:after:[outline-color:Highlight]",
 ];
 

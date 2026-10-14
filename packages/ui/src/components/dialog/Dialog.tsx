@@ -107,12 +107,17 @@ function DialogPopup({ className, children, ...props }: DialogPopupProps) {
       className={cnState(
         "fixed top-1/2 left-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2",
         "rounded-xl border border-border bg-background p-6 shadow-lg",
+        // The popup takes focus when nothing inside is tabbable or `initialFocus` points at it
+        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
         "max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain",
         // With a Body, the parts before and after it keep their height and only the Body scrolls
         "has-[>.DialogBody]:flex has-[>.DialogBody]:flex-col",
         !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
         !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
-        !useSpring && "micro-interactions",
+        // Only the fade and scale, not the ring
+        !useSpring && "micro-interactions [transition-property:opacity,scale] duration-300",
+        // Motion animates the popup: a list with no outline keeps a timing utility off the ring
+        useSpring && RING_TRANSITION,
         className,
       )}
       {...props}
