@@ -85,6 +85,25 @@ async function paintedPixels(el: HTMLElement) {
   }
 }
 
+/**
+ * How many pixels of `box` the `::after` overlay of `el` paints: those that change when only the
+ * overlay is hidden, by a temporary rule
+ */
+async function overlayPaintedPixels(el: HTMLElement, box: PixelBox) {
+  const shown = await capture(box);
+  const attribute = "data-overlay-probe";
+  const probe = document.createElement("style");
+  probe.textContent = `[${attribute}]::after { display: none !important; }`;
+  document.head.append(probe);
+  el.setAttribute(attribute, "");
+  try {
+    return changedPixels(shown, await capture(box));
+  } finally {
+    el.removeAttribute(attribute);
+    probe.remove();
+  }
+}
+
 /** Waits until `el` stops moving, resizing and fading */
 const settle = (el: Element) =>
   waitForStable(() => {
@@ -370,6 +389,92 @@ describe("Form controls in WebKit", () => {
 });
 
 describe("Focus rings in WebKit", () => {
+  /*
+   * W122 (#383): with an arrow, the ring moves to an `::after` overlay that takes the popup's
+   * border box, centred on it with `place-self: unsafe center` (popup-arrow.ts). Chromium's
+   * PopupArrow spec checks it; this checks WebKit's layout and paint of it.
+   */
+  it("centres a Popover's ring overlay on its border box, with an arrow, and paints it", async () => {
+    // Opens after the key press and takes focus, as when a shortcut opens it
+    await userEvent.keyboard("{Shift}");
+    render(
+      <div style={{ padding: 120, display: "flex", justifyContent: "center" }}>
+        <Popover.Root defaultOpen>
+          <Popover.Trigger render={<Button variant="outlined" />}>Trigger</Popover.Trigger>
+          <Popover.Content>
+            <Popover.Arrow />
+            <Popover.Title>Title</Popover.Title>
+            <Popover.Description>Popover description</Popover.Description>
+          </Popover.Content>
+        </Popover.Root>
+      </div>,
+    );
+    const popup = await screen.findByRole("dialog");
+    await expect.poll(() => popup.matches(":focus-visible")).toBe(true);
+    await settle(popup);
+
+    // The overlay's border box: its content box is the popup's padding box (`size-full`,
+    // `box-content`), and it takes the popup's border widths
+    const own = getComputedStyle(popup);
+    const overlay = getComputedStyle(popup, "::after");
+    expect(own.outlineStyle).toBe("none");
+    expect(overlay.outlineStyle).toBe("solid");
+    expect(overlay.outlineColor).toBe(ringColor());
+    const border = Number.parseFloat(own.borderLeftWidth);
+    expect(border).toBeGreaterThan(0);
+    const box = popup.getBoundingClientRect();
+    const width =
+      Number.parseFloat(overlay.width) +
+      Number.parseFloat(overlay.borderLeftWidth) +
+      Number.parseFloat(overlay.borderRightWidth);
+    const height =
+      Number.parseFloat(overlay.height) +
+      Number.parseFloat(overlay.borderTopWidth) +
+      Number.parseFloat(overlay.borderBottomWidth);
+    expect(Math.abs(width - box.width)).toBeLessThanOrEqual(1);
+    expect(Math.abs(height - box.height)).toBeLessThanOrEqual(1);
+    // Inset by the border width from the padding box: at the border box's edges
+    expect(Math.abs(Number.parseFloat(overlay.top) + border)).toBeLessThanOrEqual(1);
+    expect(Math.abs(Number.parseFloat(overlay.left) + border)).toBeLessThanOrEqual(1);
+
+    // The ring paints 2px outside the border box, 2px wide: every pixel of that band changes
+    // when the overlay is hidden, on each side. A band off by a pixel keeps a column or row.
+    // Bands stop clear of the rounded corners, and the top and bottom ones of the arrow.
+    const ring = { offset: 2, width: 2 };
+    const inset = 16;
+    const bands: Record<string, PixelBox> = {
+      left: {
+        x: Math.round(box.left) - ring.offset - ring.width,
+        y: Math.round(box.top) + inset,
+        width: ring.width,
+        height: Math.round(box.height) - 2 * inset,
+      },
+      right: {
+        x: Math.round(box.right) + ring.offset,
+        y: Math.round(box.top) + inset,
+        width: ring.width,
+        height: Math.round(box.height) - 2 * inset,
+      },
+      top: {
+        x: Math.round(box.left) + inset,
+        y: Math.round(box.top) - ring.offset - ring.width,
+        width: Math.round(box.width) / 4 - inset,
+        height: ring.width,
+      },
+      bottom: {
+        x: Math.round(box.left) + inset,
+        y: Math.round(box.bottom) + ring.offset,
+        width: Math.round(box.width) / 4 - inset,
+        height: ring.width,
+      },
+    };
+    for (const [side, band] of Object.entries(bands)) {
+      const area = Math.floor(band.width) * band.height;
+      expect(area, side).toBeGreaterThan(0);
+      expect(await overlayPaintedPixels(popup, band), side).toBe(area);
+    }
+  });
+
   // The ring parts' `[transition-property:…]` list has no outline and sorts after `transition-*`
   // utilities: WebKit must agree with Chromium
   it.each(["", "duration-500", "transition-all"])(
