@@ -64,7 +64,7 @@ describe("runtimeSpecifiers", () => {
 });
 
 describe("chunks-ui/utils", () => {
-  it("exports cn, cnState, the public *Variants, springs, the element constants and the label defaults", () => {
+  it("exports cn, cnState, mergeLabels, the public *Variants, springs, the element constants and the label defaults", () => {
     expect(Object.keys(utils).sort()).toEqual([
       "DEFAULT_BREADCRUMB_LABELS",
       "DEFAULT_CALENDAR_LABELS",
@@ -93,6 +93,7 @@ describe("chunks-ui/utils", () => {
       "cnState",
       "iconButtonVariants",
       "inputVariants",
+      "mergeLabels",
       "springs",
     ]);
   });
