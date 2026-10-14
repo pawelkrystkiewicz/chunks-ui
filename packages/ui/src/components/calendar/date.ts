@@ -62,17 +62,9 @@ export function weekdayIndex(date: Date, weekStartsOn: number): number {
   return (date.getDay() - weekStartsOn + 7) % 7;
 }
 
-/** The modifier keys `getKeyTarget` reads, as a keyboard event carries them. */
-export type KeyModifiers = {
-  altKey: boolean;
-  ctrlKey: boolean;
-  metaKey: boolean;
-  shiftKey: boolean;
-};
-
 /** Day that a grid navigation key moves focus to (WAI-ARIA APG date grid), or null. */
 export function getKeyTarget(
-  input: { key: string } & KeyModifiers,
+  input: { key: string; altKey: boolean; ctrlKey: boolean; metaKey: boolean; shiftKey: boolean },
   date: Date,
   weekStartsOn: number,
 ): Date | null {
