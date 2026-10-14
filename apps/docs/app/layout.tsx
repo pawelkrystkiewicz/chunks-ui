@@ -4,6 +4,7 @@ import { Footer, Layout, Navbar } from "nextra-theme-docs";
 import "nextra-theme-docs/style.css";
 import "../globals.css";
 import Image from "next/image";
+import { HydrationMarker } from "./HydrationMarker";
 import { LAYOUT_FONTS_HREF } from "./layout-fonts";
 
 export const metadata = {
@@ -58,6 +59,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         >
           {children}
         </Layout>
+        <HydrationMarker />
       </body>
     </html>
   );

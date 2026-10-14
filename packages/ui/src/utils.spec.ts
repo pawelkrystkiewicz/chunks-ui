@@ -9,7 +9,7 @@ const sources = import.meta.glob<string>(["./**/*.{ts,tsx}", "!./**/*.spec.{ts,t
   eager: true,
 });
 
-// React, Base UI, Motion and lucide-react are client-only, so a server component can't call into them
+// React, Base UI and Motion are client-only, so a server component can't call into them
 const SERVER_SAFE_PACKAGES = ["class-variance-authority", "clsx", "tailwind-merge"];
 
 /** Runtime imports only: `import type` and `export type` are erased from the build. */
@@ -18,7 +18,7 @@ function runtimeSpecifiers(source: string) {
   const statements = source.matchAll(
     /^(?:import|export)\s+(type\s+)?(?:[^'";]*?\sfrom\s+)?["']([^"']+)["']/gm,
   );
-  const dynamic = source.matchAll(/\bimport\(\s*["']([^"']+)["']\s*\)/g);
+  const dynamic = source.matchAll(/\bimport\(\s*(?:\/\*[\s\S]*?\*\/\s*)*["']([^"']+)["']\s*\)/g);
   return [
     ...[...statements].filter(([, typeOnly]) => !typeOnly).map(([, , specifier]) => specifier),
     ...[...dynamic].map(([, specifier]) => specifier),
@@ -64,7 +64,7 @@ describe("runtimeSpecifiers", () => {
 });
 
 describe("chunks-ui/utils", () => {
-  it("exports cn, cnState, the public *Variants, springs, the element constants and the label defaults", () => {
+  it("exports cn, cnState, mergeLabels, the public *Variants, springs, the element constants and the label defaults", () => {
     expect(Object.keys(utils).sort()).toEqual([
       "DEFAULT_BREADCRUMB_LABELS",
       "DEFAULT_CALENDAR_LABELS",
@@ -93,6 +93,7 @@ describe("chunks-ui/utils", () => {
       "cnState",
       "iconButtonVariants",
       "inputVariants",
+      "mergeLabels",
       "springs",
     ]);
   });

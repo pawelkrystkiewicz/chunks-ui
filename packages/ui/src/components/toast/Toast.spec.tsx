@@ -372,6 +372,24 @@ describe("Toast labels", () => {
     ).toBeInTheDocument();
   });
 
+  it("draws the default close icon inline, hidden from assistive tech", async () => {
+    const user = userEvent.setup();
+    render(
+      <Toast.Provider>
+        <DismissibleHarness />
+        <Toast.Viewport />
+      </Toast.Provider>,
+    );
+    await user.click(screen.getByRole("button", { name: "Show toast" }));
+    const close = await screen.findByLabelText(DEFAULT_TOAST_LABELS.close, { selector: "button" });
+    const icon = close.querySelector("svg");
+    expect(icon).toHaveAttribute("aria-hidden", "true");
+    const shapes = [...(icon?.querySelectorAll("path") ?? [])].map((path) =>
+      path.getAttribute("d"),
+    );
+    expect(shapes).toEqual(["M18 6 6 18", "m6 6 12 12"]);
+  });
+
   it("takes every string from labels on Viewport", async () => {
     const user = userEvent.setup();
     render(

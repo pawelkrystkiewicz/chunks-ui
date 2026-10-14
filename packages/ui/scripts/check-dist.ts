@@ -6,6 +6,7 @@
  *   is the same function, with one tailwind-merge cache.
  * - Only the main entry starts with "use client"; utils has none, for React Server Components.
  * - Each built entry, ESM and CJS, exports the same names as its source file.
+ * - The `motion/react` import keeps the shape described in src/lib/use-motion.ts.
  *
  * Run: bun run check:dist
  */
@@ -21,6 +22,8 @@ const load = {
   cjs: async (file: string): Promise<Record<string, unknown>> => require(join(DIST, file)),
 };
 const names = (module: object) => Object.keys(module).sort().join(", ");
+const TRIED_MOTION_IMPORT =
+  /\btry\s*\{\s*[\w$.]+\s*=\s*await\s+import\(\s*\/\*\s*turbopackOptional:\s*true\s*\*\/\s*"motion\/react"\s*\)/;
 
 const failures: string[] = [];
 const check = (ok: boolean, message: string) => {
@@ -48,6 +51,12 @@ for (const format of ["js", "cjs"] as const) {
   // Next.js rejects `export *` in a "use client" module
   check(!/^export \*/m.test(indexCode), `${indexFile} has no "export *"`);
 
+  check(
+    TRIED_MOTION_IMPORT.test(indexCode),
+    `${indexFile} awaits import(/* turbopackOptional: true */ "motion/react") inside a try block`,
+  );
+  check(!indexCode.includes("webpackIgnore"), `${indexFile} has no webpackIgnore`);
+
   for (const name of Object.keys(sourceUtils)) {
     check(index[name] === utils[name], `${name} from ${indexFile} is the one in ${utilsFile}`);
   }
@@ -57,4 +66,6 @@ if (failures.length > 0) {
   console.error(`dist/ check failed:\n${failures.map((failure) => `  - ${failure}`).join("\n")}`);
   process.exit(1);
 }
-console.log("dist/: index.{js,cjs} use the helpers in utils.{js,cjs}; banners and exports match");
+console.log(
+  "dist/: index.{js,cjs} use the helpers in utils.{js,cjs}; banners, exports and the motion import match",
+);

@@ -32,6 +32,16 @@ bun run check:tailwind   # builds chunks-ui first, needs the network
 
 Runs in the `typecheck` job of `quality-gates.yml`. Tests: `scripts/__specs__/check-tailwind-compat.spec.ts`.
 
+## check-no-motion.ts
+
+Bundles chunks-ui with webpack in two throwaway consumers, one without Motion and one with it, to prove `motion` is optional. Without Motion, the build must succeed with exactly one `Can't resolve 'motion/react'` warning. With Motion, the build must emit an async chunk holding Motion and leave no bare `import("motion/react")` in any output.
+
+```bash
+bun run check:no-motion   # builds chunks-ui first, needs the network
+```
+
+Runs in the `docs-build` job of `quality-gates.yml`, as its own step. Tests: `scripts/__specs__/check-no-motion.spec.ts`.
+
 ## calculate-next-version.ts
 
 Calculates the next semantic version based on changeset files. This script eliminates duplication in the GitHub Actions workflow by providing a single source of truth for version calculation logic.

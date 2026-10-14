@@ -75,12 +75,16 @@ export function PreviewPanel({ theme }: { theme: Theme }) {
         theme={theme}
         className="min-h-[calc(100vh-200px)] bg-(--canvas) p-[28px] leading-[1.45] transition-[background] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] motion-reduce:transition-none"
       >
+        {/* will-change: opacity composites the columns to work around WebKit W80 (#341); not
+            transform, which would make the columns the containing block of Base UI's fixed
+            hidden inputs. Remove once the Safari versions we support ship the fix (the W80 bug
+            spec in Smoke.webkit.visual.spec.tsx fails first). */}
         <div
           style={{
             maxWidth: VIEWPORTS.find((vp) => vp.id === viewport)?.width,
             columnWidth: previewColumnWidth(theme),
           }}
-          className="mx-auto gap-5 transition-[max-width] duration-400 ease-fluid motion-reduce:transition-none"
+          className="mx-auto gap-5 transition-[max-width] duration-400 ease-fluid will-change-[opacity] motion-reduce:transition-none"
         >
           <PreviewCards fontHeading={theme.fontHeading} fontBody={theme.fontBody} />
         </div>

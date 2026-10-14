@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { arrowPaddingIn } from "./popup-arrow";
+import { arrowPaddingIn } from "./arrow-padding";
 
 // jsdom has no layout, but its getComputedStyle reflects inline styles: enough to feed the probe.
 // It doesn't expand `border-radius` into its longhands, so a radius is set on each corner.

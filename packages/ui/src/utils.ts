@@ -54,5 +54,6 @@ export {
 } from "./components/theme-toggle/ThemeToggle.Labels";
 export { DEFAULT_TOAST_LABELS, type ToastLabels } from "./components/toast/Toast.Labels";
 export { type ClassInput, cn, cnState, type StateClassName } from "./lib/cn";
+export { mergeLabels } from "./lib/labels";
 export { springs } from "./lib/motion";
 export * from "./types";

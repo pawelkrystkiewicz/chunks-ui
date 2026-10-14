@@ -3,8 +3,9 @@ import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { startTransition, useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { Calendar, createDate } from "./Calendar";
+import { Calendar } from "./Calendar";
 import { DEFAULT_CALENDAR_LABELS } from "./Calendar.Labels";
+import { createDate } from "./date";
 
 afterEach(cleanup);
 

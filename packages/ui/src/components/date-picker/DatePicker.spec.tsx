@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { createRef } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createDate } from "../calendar/Calendar";
+import { createDate } from "../calendar/date";
 import { Field } from "../field";
 import { DatePicker } from "./DatePicker";
 import { DEFAULT_DATE_PICKER_LABELS } from "./DatePicker.Labels";
