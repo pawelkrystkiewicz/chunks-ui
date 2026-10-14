@@ -15,10 +15,10 @@ Peer dependencies:
 | `react`, `react-dom`        | `^19.2.0` | required; React 19.0 and 19.1 are untested        |
 | `@base-ui/react`            | `^1.9.0`  | required                                         |
 | `class-variance-authority`  | `^0.7.1`  | required                                         |
-| `tailwindcss`               | `^4.0.0`  | required to compile `theme.css`; optional peer   |
+| `tailwindcss`               | `^4.0.0`  | optional peer; you need Tailwind v4 in the app to use `theme.css` |
 | `motion`                    | `^12.0.0` | optional; without it components use CSS transitions |
 
-Node 22 or newer.
+Node 22 or newer. The install command does not add `tailwindcss`: the app is expected to have Tailwind v4 set up already.
 
 ## Usage
 
@@ -49,7 +49,7 @@ Components with English text of their own (icon-button names, screen-reader text
 
 ### Portal container
 
-Every popup (Select, Combobox, Menu, Popover, DatePicker, Dialog, Drawer, Tooltip) renders into `document.body`. Wrap a subtree in `PortalContainerProvider` with an element as `value` to render them inside it instead, for example to keep popups inside an element that scopes theme variables. A `null` value holds popups back until the element exists, so keep the element in state with a callback ref. See [Utilities › PortalContainerProvider](https://ui-kit.chunk-creations.com/utilities#portalcontainerprovider).
+Every popup except Toast (Select, Combobox, Menu, Popover, DatePicker, Dialog, Drawer, Tooltip) renders into `document.body`. Wrap a subtree in `PortalContainerProvider` with an element as `value` to render them inside it instead, for example to keep popups inside an element that scopes theme variables. A `null` value holds popups back until the element exists, so keep the element in state with a callback ref. See [Utilities › PortalContainerProvider](https://ui-kit.chunk-creations.com/utilities#portalcontainerprovider).
 
 ### Touch targets
 
@@ -85,7 +85,7 @@ OKLCH-based semantic tokens following the shadcn/ui CSS variable convention. Lig
 
 Use with Tailwind: `bg-primary text-primary-foreground`, `bg-destructive text-destructive-foreground`, etc.
 
-`--ring` defaults to `color-mix(in oklab, var(--primary) 60%, var(--background))`, a softer shade of the primary that follows your `--primary` and `--background`. Set `--ring` on `:root` (and on any nested element that overrides `--primary`) to use a colour of your choice. See [Theme › Focus Ring](https://ui-kit.chunk-creations.com/theme#focus-ring).
+`--ring` defaults to `color-mix(in oklab, var(--primary) 60%, var(--background))`, a softer shade of the primary that follows your `--primary` and `--background`. Set `--ring` on `:root` and on `.dark` (and on any nested element that overrides `--primary`) to use a colour of your choice. See [Theme › Focus Ring](https://ui-kit.chunk-creations.com/theme#focus-ring).
 
 ## Typography
 

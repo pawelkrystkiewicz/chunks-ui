@@ -231,7 +231,7 @@ The area is the control's `::after` pseudo-element, which has `position: absolut
 
 ## PortalContainerProvider
 
-Popups (`Select`, `Combobox`, `Menu`, `Popover`, `DatePicker`, `Dialog`, `Drawer`, `Tooltip`) render into `document.body`. `PortalContainerProvider` renders them into the element you pass as `value` instead, for example an element that scopes theme variables, so the popups get the same tokens. Popups nested in other popups inherit it.
+Popups (`Select`, `Combobox`, `Menu`, `Popover`, `DatePicker`, `Dialog`, `Drawer`, `Tooltip`) render into `document.body`. `PortalContainerProvider` renders them into the element you pass as `value` instead, for example an element that scopes theme variables, so the popups get the same tokens. Popups opened inside another popup render inside that popup, so they end up in the same element.
 
 Hold the element in state with a callback ref. A `useRef().current` is `null` on the first render, and setting it does not re-render. While `value` is `null`, popups are held back; once the element exists they render inside it.
 
@@ -255,4 +255,4 @@ export function ScopedPopover() {
 }
 ```
 
-`usePortalContainer()` returns the current value, for a custom popup of your own.
+`usePortalContainer()` returns the current value, for a custom popup of your own. It returns `HTMLElement | null | undefined`: `undefined` means there is no provider (or you are inside `Popover`, `Combobox`, `Dialog` or `Drawer` content, where the context is reset); `null` means the container is not mounted yet.
