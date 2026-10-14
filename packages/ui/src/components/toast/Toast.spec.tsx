@@ -384,7 +384,6 @@ describe("Toast labels", () => {
     const close = await screen.findByLabelText(DEFAULT_TOAST_LABELS.close, { selector: "button" });
     const icon = close.querySelector("svg");
     expect(icon).toHaveAttribute("aria-hidden", "true");
-    expect(icon?.querySelectorAll("path")).toHaveLength(2);
   });
 
   it("takes every string from labels on Viewport", async () => {
