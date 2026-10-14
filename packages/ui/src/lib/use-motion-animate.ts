@@ -4,13 +4,13 @@ import { type Ref, type RefCallback, useLayoutEffect, useRef, useState } from "r
 import { flushSync } from "react-dom";
 import { renderNow } from "./render-now";
 import { useMergedRef } from "./use-merged-ref";
-import { type MotionLike, useMotion, useReducedMotion } from "./use-motion";
+import { type MotionLike, type MotionOptions, useMotion, useReducedMotion } from "./use-motion";
 
 type AnimatedValues = Record<string, string | number>;
 
 type MotionAnimateOptions = {
   /** Transition for changes while Motion drives the element. */
-  transition: Record<string, unknown>;
+  transition: MotionOptions;
   /** Inline properties Motion sets that the CSS fallback does not; removed when Motion stops. */
   clear?: string[];
 };

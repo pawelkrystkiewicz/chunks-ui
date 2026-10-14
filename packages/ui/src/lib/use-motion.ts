@@ -76,9 +76,8 @@ function loadMotion() {
     let m: MotionLike | null = null;
     try {
       // Typed as Motion's module: this assignment checks MotionLike against Motion's types. It
-      // catches missing members and wrong option types. It does not catch option contents behind
-      // `Record<string, unknown>`, extra props in `MotionElementProps`, or `MotionInternals`
-      // (render-now.ts; checked in RenderNow.spec.ts).
+      // catches missing members and wrong option types. It does not catch extra props in
+      // `MotionElementProps`, or `MotionInternals` (render-now.ts; checked in RenderNow.spec.ts).
       m = await import(/* turbopackOptional: true */ "motion/react");
     } catch {}
     setMotion(load, m);
