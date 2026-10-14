@@ -34,8 +34,7 @@ export function TabsCard() {
           </Tabs.Tab>
           <Tabs.Indicator />
         </Tabs.List>
-        {/* Tabs.Contents slides its track with a transform. In Safari that hits WebKit bug W80
-            (#341): the columns container in PreviewPanel is composited to work around it. */}
+        {/* W80 (#341) workaround lives on the columns container in PreviewPanel */}
         <Tabs.Contents>
           <Tabs.Content value="overview" className="flex flex-col gap-4">
             <div className="grid grid-cols-3 gap-2">

@@ -75,13 +75,10 @@ export function PreviewPanel({ theme }: { theme: Theme }) {
         theme={theme}
         className="min-h-[calc(100vh-200px)] bg-(--canvas) p-[28px] leading-[1.45] transition-[background] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] motion-reduce:transition-none"
       >
-        {/* will-change-[opacity]: WebKit bug W80 (#341) paints nothing of a Tabs.Contents panel in
-            a CSS column after the first once its slid track reaches over the sticky sidebar's
-            composited layer; compositing the columns container avoids it. Opacity, not
-            transform: a transform would make the container the containing block of the
-            position: fixed hidden inputs. Remove once the Safari versions we support ship the
-            fix; the W80 bug spec (Smoke.webkit.visual.spec.tsx) fails first, when Playwright's
-            WebKit gets it. */}
+        {/* will-change: opacity composites the columns to work around WebKit W80 (#341); not
+            transform, which would make the columns the containing block of Base UI's fixed
+            hidden inputs. Remove once the Safari versions we support ship the fix (the W80 bug
+            spec in Smoke.webkit.visual.spec.tsx fails first). */}
         <div
           style={{
             maxWidth: VIEWPORTS.find((vp) => vp.id === viewport)?.width,
