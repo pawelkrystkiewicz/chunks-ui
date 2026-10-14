@@ -1,14 +1,24 @@
 # chunks-ui
 
-React 19+ component library built on [Base UI](https://base-ui.com) + [Tailwind CSS v4](https://tailwindcss.com) + [Motion](https://motion.dev).
+React 19.2+ component library built on [Base UI](https://base-ui.com) + [Tailwind CSS v4](https://tailwindcss.com) + [Motion](https://motion.dev).
 
 ## Install
 
 ```bash
-bun add chunks-ui
-# motion (12 or newer) is optional but recommended
-bun add motion
+bun add chunks-ui motion
 ```
+
+Peer dependencies:
+
+| Package                     | Range     | Notes                                            |
+| --------------------------- | --------- | ------------------------------------------------ |
+| `react`, `react-dom`        | `^19.2.0` | required; React 19.0 and 19.1 are untested        |
+| `@base-ui/react`            | `^1.9.0`  | required                                         |
+| `class-variance-authority`  | `^0.7.1`  | required                                         |
+| `tailwindcss`               | `^4.0.0`  | optional peer; you need Tailwind v4 in the app to use `theme.css` |
+| `motion`                    | `^12.0.0` | optional; without it components use CSS transitions |
+
+Node 22 or newer. The install command does not add `tailwindcss`: the app is expected to have Tailwind v4 set up already.
 
 ## Usage
 
@@ -27,20 +37,28 @@ import { Button, Tabs, Input } from 'chunks-ui'
 
 `theme.css` registers its CSS variables with Tailwind CSS v4 through `@theme`, and its `@source` makes Tailwind generate the classes the components use — no plugin needed.
 
-`chunks-ui` is a client bundle (`"use client"`). To call `cn`, `cnState` or a `*Variants` function such as `buttonVariants` in a React Server Component, import it from `chunks-ui/utils`. It also exports the English label defaults (`DEFAULT_*_LABELS`) and their `<Component>Labels` types.
+`chunks-ui` is a client bundle (`"use client"`). To call `cn`, `cnState` or a `*Variants` function such as `buttonVariants` in a React Server Component, import it from `chunks-ui/utils`. It also exports the English label defaults (`DEFAULT_*_LABELS`) and their `<Component>Labels` types. See [Utilities › Server components](https://ui-kit.chunk-creations.com/utilities#server-components).
+
+Without Motion installed, enable `skipLibCheck` (the types reference `motion/react`). See [Getting Started](https://ui-kit.chunk-creations.com/getting-started).
+
+Components with English text of their own take a `labels` prop; pass only the keys you change. See [Labels](https://ui-kit.chunk-creations.com/labels).
+
+Popups render into `document.body`; wrap a subtree in `PortalContainerProvider` to render them inside an element instead. See [Utilities › PortalContainerProvider](https://ui-kit.chunk-creations.com/utilities#portalcontainerprovider).
+
+Add the `touch-target` class to give a small control a 44×44px hit area without changing its size ([Utilities › touch-target](https://ui-kit.chunk-creations.com/utilities#touch-target)).
 
 ## Components
 
-Button, Input, Textarea, Checkbox, Radio, Switch, Select, Combobox, Tabs, Dialog, Drawer, Popover, Tooltip, Card, Avatar, Chip, ClearButton, Loader, Separator, Field, ToggleGroup
+Accordion, Avatar, Breadcrumb, Button, Calendar, Card, Checkbox, Chip, ClearButton, Collapsible, Combobox, CopyButton, DatePicker, Dialog, Drawer, Empty, Field, IconButton, Input, InputCopy, Label, Loader, Menu, NumberField, Pagination, Popover, Progress, Radio, ScrollArea, Select, Separator, Skeleton, Slider, Switch, Table, Tabs, Textarea, ThemeToggle, Toast, ToggleGroup, Tooltip
 
 ## Stack
 
-| Layer    | Technology                                    |
-| -------- | --------------------------------------------- |
-| Headless | `@base-ui/react` v1.9+ (includes Floating UI) |
-| Styling  | Tailwind CSS v4 + CVA                         |
-| Animation | Motion v12+ (optional peer dep)              |
-| Build    | tsup (ESM + CJS + `.d.ts`)                    |
+| Layer     | Technology                                    |
+| --------- | --------------------------------------------- |
+| Headless  | `@base-ui/react` v1.9+ (includes Floating UI) |
+| Styling   | Tailwind CSS v4 + CVA                         |
+| Animation | Motion v12+ (optional peer dep)               |
+| Build     | tsup (ESM + CJS + `.d.ts`)                    |
 
 ## Color System
 
@@ -59,9 +77,19 @@ OKLCH-based semantic tokens following the shadcn/ui CSS variable convention. Lig
 
 Use with Tailwind: `bg-primary text-primary-foreground`, `bg-destructive text-destructive-foreground`, etc.
 
+`--ring` defaults to a softer shade of `--primary`; set it to use your own colour. See [Theme › Focus Ring](https://ui-kit.chunk-creations.com/theme#focus-ring).
+
+## Typography
+
+The theme sets the page font to Manrope; see [Theme › Typography](https://ui-kit.chunk-creations.com/theme#typography) to keep your own.
+
 ## Animation
 
 Motion is optional — components detect it at runtime and fall back to CSS transitions if absent. All motion respects `prefers-reduced-motion` except the `Loader` spinner (also shown by `Button loading`) and the indeterminate `Progress` pulse. They are essential status indicators, so they keep running.
+
+## Versioning
+
+`chunks-ui` is at 0.x, managed with [Changesets](https://github.com/changesets/changesets). While the major is 0, a minor release may contain new features and breaking changes, and a patch release contains fixes only. `CHANGELOG.md` ships in the package.
 
 ## Docs
 

@@ -43,6 +43,7 @@ This page is a server component, and it renders the link below with that code:
 - `cn` and `cnState`, with their `ClassInput` and `StateClassName` types;
 - `buttonVariants`, `chipVariants`, `iconButtonVariants` and `inputVariants`;
 - `springs`, the Motion spring presets;
+- [`mergeLabels`](#mergelabels), which merges a `labels` prop over a component's defaults;
 - the English label defaults, `DEFAULT_*_LABELS`, and their `<Component>Labels` types (see [Labels](/labels));
 - the `ELEMENT_*` constants and the `Element*` types, such as `ElementColor`.
 
@@ -166,6 +167,16 @@ import { Search } from "lucide-react";
 />;
 ```
 
+## mergeLabels
+
+`mergeLabels` merges a `labels` prop over a component's English defaults (see [Labels](/labels)), as the components do. A key set to `undefined` keeps the default, unlike a spread, which would overwrite it:
+
+```tsx
+import { DEFAULT_CHIP_LABELS, mergeLabels } from "chunks-ui/utils";
+
+const labels = mergeLabels(DEFAULT_CHIP_LABELS, { remove: undefined }); // { remove: "Remove" }
+```
+
 ## Types
 
 | Type | Description |
@@ -228,3 +239,31 @@ The area is the control's `::after` pseudo-element, which has `position: absolut
 - **The area covers the elements around the control**, except elements that paint above it (later positioned or transformed elements, or a higher z-index). Where it covers a neighbour, a press goes to the control, also on the neighbour's own box. Keep the centres of neighbouring controls at least the area size (44px by default) apart. If two areas overlap, the press goes to the control that comes later in the DOM.
 - **A disabled control does not get presses.** The area inherits `pointer-events` from the control, so a control with `pointer-events: none`, such as a disabled `IconButton`, `ClearButton` or `Checkbox.Root`, gets no presses anywhere in the area. A pointer in the area hovers the control, so its hover styles apply.
 - **A control with interactive descendants loses them.** The area paints and hit-tests above the control's own non-positioned children, so a press on, for example, the remove button of a `Chip` with `onRemove` goes to the `Chip`. Use `touch-target` only on a control with no interactive descendants.
+
+## PortalContainerProvider
+
+Popups (`Select`, `Combobox`, `Menu`, `Popover`, `DatePicker`, `Dialog`, `Drawer`, `Tooltip`) render into `document.body`. `PortalContainerProvider` renders them into the element you pass as `value` instead, for example an element that scopes theme variables, so the popups get the same tokens. Popups opened inside another popup render inside that popup, so they end up in the same element.
+
+Hold the element in state with a callback ref. A `useRef().current` is `null` on the first render, and setting it does not re-render. While `value` is `null`, popups are held back; once the element exists they render inside it.
+
+```tsx
+import { Button, Popover, PortalContainerProvider } from "chunks-ui";
+import { useState } from "react";
+
+export function ScopedPopover() {
+  const [el, setEl] = useState<HTMLElement | null>(null);
+
+  return (
+    <div ref={setEl} className="dark">
+      <PortalContainerProvider value={el}>
+        <Popover.Root>
+          <Popover.Trigger render={<Button />}>Open</Popover.Trigger>
+          <Popover.Content>Rendered inside the scoped element.</Popover.Content>
+        </Popover.Root>
+      </PortalContainerProvider>
+    </div>
+  );
+}
+```
+
+`usePortalContainer()` returns the current container as `HTMLElement | null | undefined`: `undefined` means no provider (including inside `Popover`, `Combobox`, `Dialog` or `Drawer` content, where the context is reset), `null` means not mounted yet.

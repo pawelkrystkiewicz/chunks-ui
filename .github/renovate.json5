@@ -25,6 +25,12 @@
   ignoreDeps: [],
   packageRules: [
     {
+      // Peer floors are a compatibility decision, not a freshness one: Renovate narrowed them
+      // twice (motion ^12.0.0 -> ^12.43.0, react ^19.2 -> ^19.3). Bump them by hand with a changeset.
+      matchDepTypes: ["peerDependencies"],
+      enabled: false,
+    },
+    {
       matchUpdateTypes: ["patch"],
       automerge: true,
       platformAutomerge: true,
