@@ -25,6 +25,7 @@ const ENTRY = 'import * as ui from "chunks-ui";\nconsole.log(Object.keys(ui).len
 const MOTION_MARKER = "MotionGlobalConfig";
 const BARE_MOTION_IMPORT = /import\(\s*["']motion\/react["']\s*\)/;
 
+const ANSI = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, "g");
 const MOTION_WARNING = /WARNING in [\s\S]*?Can't resolve 'motion\/react'/g;
 const motionWarnings = (output: string) => (output.match(MOTION_WARNING) ?? []).length;
 
@@ -73,7 +74,8 @@ export function withMotionProblem(
 
 function run(cmd: string[], cwd: string) {
   const { exitCode, stdout, stderr } = Bun.spawnSync(cmd, { cwd, stdout: "pipe", stderr: "pipe" });
-  return { exitCode, output: `${stdout}${stderr}` };
+  // webpack-cli colours its output on CI runners too, which splits "WARNING in" with escape codes
+  return { exitCode, output: `${stdout}${stderr}`.replace(ANSI, "") };
 }
 
 function runOrThrow(cmd: string[], cwd: string) {
@@ -112,7 +114,16 @@ async function bundle(fixture: string, dir: string, tarball: string) {
   const result = run(
     [
       join(dir, "node_modules/.bin/webpack"),
-      ...["--mode", "production", "--entry", "./entry.js", "-o", "./out", "--no-performance-hints"],
+      ...[
+        "--mode",
+        "production",
+        "--entry",
+        "./entry.js",
+        "-o",
+        "./out",
+        "--no-performance-hints",
+        "--no-color",
+      ],
     ],
     dir,
   );
