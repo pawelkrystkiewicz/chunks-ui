@@ -8,8 +8,6 @@ export type MotionInternals = {
 /**
  * Motion only writes values that change. Renders every value Motion holds for `element`, so
  * values the CSS fallback removed while Motion still held them come back.
- *
- * Optional chaining throughout, for Motion versions without the internals.
  */
 export function renderNow(m: MotionLike & MotionInternals, element: Element) {
   m.visualElementStore?.get(element)?.scheduleRender?.();

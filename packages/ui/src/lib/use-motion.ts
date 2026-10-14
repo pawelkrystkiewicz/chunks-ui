@@ -75,9 +75,7 @@ function loadMotion() {
   (async () => {
     let m: MotionLike | null = null;
     try {
-      // Typed as Motion's module: this assignment checks MotionLike against Motion's types. It
-      // catches missing members and wrong option types. It does not catch extra props in
-      // `MotionElementProps`, or `MotionInternals` (render-now.ts; checked in RenderNow.spec.ts).
+      // Typed as Motion's module, so this assignment checks MotionLike against it.
       m = await import(/* turbopackOptional: true */ "motion/react");
     } catch {}
     setMotion(load, m);
@@ -112,8 +110,6 @@ function subscribeToMotion(onLoad: () => void) {
  * Null on the server and while hydrating, so server markup matches. A component that mounts
  * after Motion has loaded gets it on its first render, so it never swaps in Motion elements
  * later; one mounted earlier re-renders with it once it loads.
- *
- * The module is typed as `MotionLike`, the part of Motion that chunks-ui uses.
  */
 export function useMotion(): MotionLike | null {
   return useSyncExternalStore(
