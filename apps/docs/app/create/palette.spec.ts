@@ -1,7 +1,16 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { BASES, chartList, contrast, type Mode, type Oklch, palette, type Theme } from "./palette";
-import { DEFAULT_THEME, PRIMARIES } from "./theme-model";
+import {
+  BASES,
+  chartList,
+  contrast,
+  DEFAULT_THEME,
+  type Mode,
+  type Oklch,
+  PRIMARIES,
+  palette,
+  type Theme,
+} from "./palette";
 
 /** Reads an `oklch(l c h)` string as written by `palette()` or theme.css, whose lightness may be a percentage. */
 function parseOklch(value: string): Oklch {

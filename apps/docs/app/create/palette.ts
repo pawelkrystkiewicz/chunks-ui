@@ -21,6 +21,36 @@ export type Theme = {
   chart: ChartId;
 };
 
+export const BLUE: Oklch = { l: 0.56, c: 0.2165, h: 257.21 };
+
+/** Each one keeps 4.5:1 with its `primary-foreground`. Red sits at 0.605 so dark text reaches it. */
+export const PRIMARIES: (Oklch & { name: string })[] = [
+  { name: "Blue", ...BLUE },
+  { name: "Violet", l: 0.58, c: 0.22, h: 293 },
+  { name: "Pink", l: 0.63, c: 0.22, h: 354 },
+  { name: "Red", l: 0.605, c: 0.22, h: 25 },
+  { name: "Orange", l: 0.68, c: 0.19, h: 45 },
+  { name: "Amber", l: 0.77, c: 0.165, h: 72 },
+  { name: "Green", l: 0.63, c: 0.17, h: 150 },
+  { name: "Teal", l: 0.62, c: 0.12, h: 185 },
+  { name: "Sky", l: 0.66, c: 0.14, h: 230 },
+  { name: "Ink", l: 0.205, c: 0, h: 0 },
+];
+
+export const DEFAULT_THEME: Theme = {
+  primary: { ...BLUE },
+  base: "neutral",
+  mode: "light",
+  fontHeading: "Outfit",
+  fontBody: "Manrope",
+  fontSize: 14,
+  radius: 10,
+  height: 35,
+  spacing: 1,
+  shadow: "none",
+  chart: "default",
+};
+
 export const BASES: { id: BaseId; name: string; h: number; c: number }[] = [
   { id: "neutral", name: "Neutral", h: 0, c: 0 },
   { id: "stone", name: "Stone", h: 60, c: 0.006 },
