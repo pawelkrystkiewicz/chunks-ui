@@ -20,7 +20,7 @@ Node 22 or newer. The install command does not add `tailwindcss`: the app is exp
 
 The examples use icons from `lucide-react`, which you install yourself (`bun add lucide-react`); any icon library works.
 
-The package types reference `motion/react`, so with `skipLibCheck: false` in your `tsconfig.json` TypeScript reports `TS2307` when Motion is not installed. Enable `skipLibCheck` (the usual setting) to avoid it. Installing `motion` in any dependency field turns the animations on.
+Installing `motion` in any dependency field turns the animations on. The package types do not need it: `useMotion()` returns `MotionLike | null`, the part of Motion the components use, so a project with `skipLibCheck: false` compiles without Motion. For Motion's full types, cast in your own code: `useMotion() as typeof import("motion/react") | null`.
 
 ## Setup
 

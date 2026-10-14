@@ -33,7 +33,7 @@ import { Button, Tabs, Input } from 'chunks-ui'
 
 `chunks-ui` is a client bundle (`"use client"`). To call `cn`, `cnState` or a `*Variants` function such as `buttonVariants` in a React Server Component, import it from `chunks-ui/utils`. It also exports the English label defaults (`DEFAULT_*_LABELS`) and their `<Component>Labels` types. See [Utilities › Server components](https://ui-kit.chunk-creations.com/utilities#server-components).
 
-Without Motion installed, enable `skipLibCheck` (the types reference `motion/react`). See [Getting Started](https://ui-kit.chunk-creations.com/getting-started).
+Motion is optional: without it the components use CSS transitions, and installing `motion` turns the animations on. See [Getting Started](https://ui-kit.chunk-creations.com/getting-started).
 
 Components with English text of their own take a `labels` prop; pass only the keys you change. See [Labels](https://ui-kit.chunk-creations.com/labels).
 
