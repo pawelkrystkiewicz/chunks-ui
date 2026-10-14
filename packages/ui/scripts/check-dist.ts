@@ -6,8 +6,10 @@
  *   is the same function, with one tailwind-merge cache.
  * - Only the main entry starts with "use client"; utils has none, for React Server Components.
  * - Each built entry, ESM and CJS, exports the same names as its source file.
- * - The optional `motion/react` is imported with `webpackIgnore`, so webpack leaves the import to
- *   the runtime instead of failing the build of an app without Motion.
+ * - The optional `motion/react` is imported inside a `try` block with `turbopackOptional`, so
+ *   webpack and Turbopack build an app without Motion (webpack warns), and an app with Motion
+ *   still gets the chunk. `webpackIgnore` must not appear: it leaves a bare specifier in the
+ *   bundle that a browser cannot resolve.
  *
  * Run: bun run check:dist
  */
@@ -23,9 +25,8 @@ const load = {
   cjs: async (file: string): Promise<Record<string, unknown>> => require(join(DIST, file)),
 };
 const names = (module: object) => Object.keys(module).sort().join(", ");
-const IGNORED_MOTION_IMPORT =
-  /import\(\s*\/\*\s*webpackIgnore:\s*true\s*\*\/\s*"motion\/react"\s*\)/;
-const BARE_MOTION_IMPORT = /import\(\s*"motion\/react"\s*\)/;
+const TRIED_MOTION_IMPORT =
+  /\btry\s*\{\s*[\w$.]+\s*=\s*await\s+import\(\s*\/\*\s*turbopackOptional:\s*true\s*\*\/\s*"motion\/react"\s*\)/;
 
 const failures: string[] = [];
 const check = (ok: boolean, message: string) => {
@@ -54,10 +55,10 @@ for (const format of ["js", "cjs"] as const) {
   check(!/^export \*/m.test(indexCode), `${indexFile} has no "export *"`);
 
   check(
-    IGNORED_MOTION_IMPORT.test(indexCode),
-    `${indexFile} imports motion/react with /* webpackIgnore: true */`,
+    TRIED_MOTION_IMPORT.test(indexCode),
+    `${indexFile} awaits import(/* turbopackOptional: true */ "motion/react") inside a try block`,
   );
-  check(!BARE_MOTION_IMPORT.test(indexCode), `${indexFile} has no bare import("motion/react")`);
+  check(!indexCode.includes("webpackIgnore"), `${indexFile} has no webpackIgnore`);
 
   for (const name of Object.keys(sourceUtils)) {
     check(index[name] === utils[name], `${name} from ${indexFile} is the one in ${utilsFile}`);

@@ -15,16 +15,23 @@ function setMotion(load: number, m: MotionReact | null) {
   for (const notify of motionListeners) notify();
 }
 
-// webpackIgnore: webpack (and Next.js in webpack mode) fails the build on a dynamic import it
-// can't resolve, and `motion` is optional. The comment makes it a plain runtime `import()`, which
-// rejects without Motion; the rejection handlers below take the CSS fallback.
+// `motion` is optional. webpack (and Next.js in webpack mode) treats an `import()` inside a `try`
+// block as optional: with Motion missing it prints a "Module not found" warning instead of failing
+// the build, and with Motion present it emits a normal async chunk. `turbopackOptional` is
+// Turbopack's equivalent. Never mark this import as ignored by the bundler (webpack's "ignore"
+// magic comment): it leaves a bare "motion/react" specifier in the bundle that a browser cannot
+// resolve, so apps WITH Motion would lose the animations.
+// check:dist asserts this shape survives the build; check:no-motion bundles both consumers.
 function loadMotion() {
   if (_cache !== undefined) return;
   const load = loads;
-  import(/* webpackIgnore: true */ "motion/react").then(
-    (m) => setMotion(load, m),
-    () => setMotion(load, null),
-  );
+  (async () => {
+    let m: MotionReact | null = null;
+    try {
+      m = await import(/* turbopackOptional: true */ "motion/react");
+    } catch {}
+    setMotion(load, m);
+  })();
 }
 
 if (typeof window !== "undefined") {
@@ -34,14 +41,13 @@ if (typeof window !== "undefined") {
 /**
  * Tests only: forget the loaded module and load it again. A popup that opens before the
  * returned promise settles mounts while Motion is still loading, as on a fresh page.
+ * Not in the dist (tree-shaken), so the plain import needs no `try`.
  * `arrival` holds the module back until it settles, so a test can choose when Motion arrives.
  */
 export function reloadMotion(arrival?: Promise<unknown>): Promise<unknown> {
   _cache = undefined;
   const load = ++loads;
-  return Promise.all([import(/* webpackIgnore: true */ "motion/react"), arrival]).then(([m]) =>
-    setMotion(load, m),
-  );
+  return Promise.all([import("motion/react"), arrival]).then(([m]) => setMotion(load, m));
 }
 
 function subscribeToMotion(onLoad: () => void) {
