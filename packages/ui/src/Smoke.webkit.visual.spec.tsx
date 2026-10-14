@@ -65,35 +65,18 @@ function changedPixels(a: Uint8ClampedArray, b: Uint8ClampedArray) {
 }
 
 /**
- * How many pixels of its box `el` paints: those that change when it and everything inside it is
- * hidden. Hiding `el` alone leaves a descendant that sets its own `visibility: visible` painting.
+ * How many pixels of its box (or of `box`) `el` paints: those that change when it and everything
+ * inside it is hidden. Hiding `el` alone leaves a descendant that sets its own `visibility:
+ * visible` painting. With `pseudo`, e.g. "::after", only that pseudo-element is hidden.
  */
-async function paintedPixels(el: HTMLElement) {
-  const box = pixelBox(el);
+async function paintedPixels(el: HTMLElement, pseudo = "", box = pixelBox(el)) {
   const shown = await capture(box);
   // micro-interactions transitions every property, visibility included: hide at once
   const attribute = "data-paint-probe";
   const probe = document.createElement("style");
-  probe.textContent = `[${attribute}], [${attribute}] * { transition: none !important; visibility: hidden !important; }`;
-  document.head.append(probe);
-  el.setAttribute(attribute, "");
-  try {
-    return changedPixels(shown, await capture(box));
-  } finally {
-    el.removeAttribute(attribute);
-    probe.remove();
-  }
-}
-
-/**
- * How many pixels of `box` the `::after` overlay of `el` paints: those that change when only the
- * overlay is hidden, by a temporary rule
- */
-async function overlayPaintedPixels(el: HTMLElement, box: PixelBox) {
-  const shown = await capture(box);
-  const attribute = "data-overlay-probe";
-  const probe = document.createElement("style");
-  probe.textContent = `[${attribute}]::after { display: none !important; }`;
+  probe.textContent = pseudo
+    ? `[${attribute}]${pseudo} { display: none !important; }`
+    : `[${attribute}], [${attribute}] * { transition: none !important; visibility: hidden !important; }`;
   document.head.append(probe);
   el.setAttribute(attribute, "");
   try {
@@ -392,92 +375,77 @@ describe("Focus rings in WebKit", () => {
   /*
    * W122 (#383): with an arrow, the ring moves to an `::after` overlay that takes the popup's
    * border box, centred on it with `place-self: unsafe center` (popup-arrow.ts). Chromium's
-   * PopupArrow spec checks it; this checks WebKit's layout and paint of it. With the default 1px
-   * border the overlay's `-inset-px` alone lands on the border box, so only a wider border
-   * exercises the centring.
+   * PopupArrow spec checks it; this checks WebKit's layout and paint of it. The `border-2` class
+   * is the case: with the default 1px border the overlay's `-inset-px` alone lands on the border
+   * box, so the 1px case cannot exercise `place-self`.
    */
-  it.each(["", "border-2"])(
-    "centres a Popover's ring overlay on its border box, with an arrow and '%s' in className, and paints it",
-    async (borderClass) => {
-      // Opens after the key press and takes focus, as when a shortcut opens it
-      await userEvent.keyboard("{Shift}");
-      render(
-        <div style={{ padding: 120, display: "flex", justifyContent: "center" }}>
-          <Popover.Root defaultOpen>
-            <Popover.Trigger render={<Button variant="outlined" />}>Trigger</Popover.Trigger>
-            <Popover.Content className={borderClass}>
-              <Popover.Arrow />
-              <Popover.Title>Title</Popover.Title>
-              <Popover.Description>Popover description</Popover.Description>
-            </Popover.Content>
-          </Popover.Root>
-        </div>,
-      );
-      const popup = await screen.findByRole("dialog");
-      await expect.poll(() => popup.matches(":focus-visible")).toBe(true);
-      await settle(popup);
+  it("centres a Popover's ring overlay on its border box, with an arrow and a 2px border, and paints it", async () => {
+    // Opens after the key press and takes focus, as when a shortcut opens it
+    await userEvent.keyboard("{Shift}");
+    render(
+      <div style={{ padding: 120, display: "flex", justifyContent: "center" }}>
+        <Popover.Root defaultOpen>
+          <Popover.Trigger render={<Button variant="outlined" />}>Trigger</Popover.Trigger>
+          <Popover.Content className="border-2">
+            <Popover.Arrow />
+            <Popover.Title>Title</Popover.Title>
+            <Popover.Description>Popover description</Popover.Description>
+          </Popover.Content>
+        </Popover.Root>
+      </div>,
+    );
+    const popup = await screen.findByRole("dialog");
+    await expect.poll(() => popup.matches(":focus-visible")).toBe(true);
+    await settle(popup);
 
-      // The overlay's border box: its content box is the popup's padding box (`size-full`,
-      // `box-content`), and it takes the popup's border widths
-      const own = getComputedStyle(popup);
-      const overlay = getComputedStyle(popup, "::after");
-      expect(own.outlineStyle).toBe("none");
-      expect(overlay.outlineStyle).toBe("solid");
-      expect(overlay.outlineColor).toBe(ringColor());
-      const border = Number.parseFloat(own.borderLeftWidth);
-      expect(border).toBe(borderClass ? 2 : 1);
-      const box = popup.getBoundingClientRect();
-      const width =
-        Number.parseFloat(overlay.width) +
-        Number.parseFloat(overlay.borderLeftWidth) +
-        Number.parseFloat(overlay.borderRightWidth);
-      const height =
-        Number.parseFloat(overlay.height) +
-        Number.parseFloat(overlay.borderTopWidth) +
-        Number.parseFloat(overlay.borderBottomWidth);
-      expect(Math.abs(width - box.width)).toBeLessThanOrEqual(1);
-      expect(Math.abs(height - box.height)).toBeLessThanOrEqual(1);
-      // `top` and `left` are not asserted: the box is over-constrained, so WebKit reports the
-      // class's computed -1px whatever the layout. The painted bands below check the place.
+    // The overlay's border box: its content box is the popup's padding box (`size-full`,
+    // `box-content`), and it takes the popup's border widths
+    const own = getComputedStyle(popup);
+    const overlay = getComputedStyle(popup, "::after");
+    expect(own.outlineStyle).toBe("none");
+    expect(overlay.outlineStyle).toBe("solid");
+    expect(overlay.outlineColor).toBe(ringColor());
+    expect(Number.parseFloat(own.borderLeftWidth)).toBe(2);
+    const box = popup.getBoundingClientRect();
+    const width =
+      Number.parseFloat(overlay.width) +
+      Number.parseFloat(overlay.borderLeftWidth) +
+      Number.parseFloat(overlay.borderRightWidth);
+    const height =
+      Number.parseFloat(overlay.height) +
+      Number.parseFloat(overlay.borderTopWidth) +
+      Number.parseFloat(overlay.borderBottomWidth);
+    expect(Math.abs(width - box.width)).toBeLessThanOrEqual(1);
+    expect(Math.abs(height - box.height)).toBeLessThanOrEqual(1);
+    // No top or left check: WebKit reports the computed -1px whatever the layout; the bands do
 
-      // The ring paints 2px outside the border box, 2px wide: every pixel of that band changes
-      // when the overlay is hidden, on each side. A band off by a pixel keeps a column or row.
-      // Bands stop clear of the rounded corners, and the top and bottom ones of the arrow.
-      const ring = { offset: 2, width: 2 };
-      const inset = 16;
-      const bands: Record<string, PixelBox> = {
-        left: {
-          x: Math.round(box.left) - ring.offset - ring.width,
-          y: Math.round(box.top) + inset,
-          width: ring.width,
-          height: Math.round(box.height) - 2 * inset,
-        },
-        right: {
-          x: Math.round(box.right) + ring.offset,
-          y: Math.round(box.top) + inset,
-          width: ring.width,
-          height: Math.round(box.height) - 2 * inset,
-        },
-        top: {
-          x: Math.round(box.left) + inset,
-          y: Math.round(box.top) - ring.offset - ring.width,
-          width: Math.round(box.width) / 4 - inset,
-          height: ring.width,
-        },
-        bottom: {
-          x: Math.round(box.left) + inset,
-          y: Math.round(box.bottom) + ring.offset,
-          width: Math.round(box.width) / 4 - inset,
-          height: ring.width,
-        },
-      };
-      for (const [side, band] of Object.entries(bands)) {
-        const area = Math.floor(band.width) * band.height;
-        expect(area, side).toBeGreaterThan(0);
-        expect(await overlayPaintedPixels(popup, band), side).toBe(area);
-      }
-    },
-  );
+    // The ring paints 2px outside the border box, 2px wide: every pixel of that band changes
+    // when the overlay is hidden, on each side. A band off by a pixel keeps a column or row.
+    // Bands stop clear of the rounded corners, and the top and bottom ones of the arrow.
+    const [left, top, right, bottom, w, h] = [
+      box.left,
+      box.top,
+      box.right,
+      box.bottom,
+      box.width,
+      box.height,
+    ].map(Math.round) as [number, number, number, number, number, number];
+    const gap = 2;
+    const thick = 2;
+    const inset = 16;
+    const sideHeight = h - 2 * inset;
+    const bands: Record<string, PixelBox> = {
+      left: { x: left - gap - thick, y: top + inset, width: thick, height: sideHeight },
+      right: { x: right + gap, y: top + inset, width: thick, height: sideHeight },
+      top: { x: left + inset, y: top - gap - thick, width: w / 4 - inset, height: thick },
+      bottom: { x: left + inset, y: bottom + gap, width: w / 4 - inset, height: thick },
+    };
+    for (const [side, band] of Object.entries(bands)) {
+      const area = Math.floor(band.width) * band.height;
+      expect(area, side).toBeGreaterThan(0);
+      expect(await paintedPixels(popup, "::after", band), side).toBe(area);
+    }
+  });
 
   // The ring parts' `[transition-property:…]` list has no outline and sorts after `transition-*`
   // utilities: WebKit must agree with Chromium

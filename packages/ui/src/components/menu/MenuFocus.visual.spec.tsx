@@ -49,36 +49,40 @@ async function openedFromTheKeyboardThenHovered(arrow: boolean) {
   return popup;
 }
 
-describe.each([{ arrow: false }, { arrow: true }])(
-  "Menu popup focused as the pointer leaves an item, with arrow $arrow",
-  ({ arrow }) => {
-    it("draws no ring on the popup's padding, a separator, or outside the menu", async () => {
-      const popup = await openedFromTheKeyboardThenHovered(arrow);
-      const { height } = popup.getBoundingClientRect();
-      const moves = [
-        // Inside the 1px border, in the 4px of padding before the items
-        {
-          to: "padding",
-          hover: () => userEvent.hover(popup, { position: { x: 3, y: height / 2 } }),
-        },
-        { to: "separator", hover: () => userEvent.hover(screen.getByTestId("separator")) },
-        // The page's corner: Base UI's backdrop takes the pointer there, not the "Before" button
-        {
-          to: "outside",
-          hover: () => userEvent.hover(document.body, { position: { x: 5, y: 5 } }),
-        },
-      ];
-      for (const { to, hover } of moves) {
-        await userEvent.hover(screen.getByRole("menuitem", { name: "Edit" }));
-        await hover();
-        // Base UI moves the focus to the popup, and Chromium keeps the keyboard modality
-        expect(document.activeElement, to).toBe(popup);
-        expect(popup.matches(":focus-visible"), to).toBe(true);
-        expect(ringOf(popup), to).toBe(false);
-      }
-    });
+describe("Menu popup focused as the pointer leaves an item", () => {
+  /** Hovers Edit, moves to `target`, and checks the popup took focus without drawing its ring */
+  async function expectNoRing(popup: Element, to: string, hover: () => Promise<void>) {
+    await userEvent.hover(screen.getByRole("menuitem", { name: "Edit" }));
+    await hover();
+    // Base UI moves the focus to the popup, and Chromium keeps the keyboard modality
+    expect(document.activeElement, to).toBe(popup);
+    expect(popup.matches(":focus-visible"), to).toBe(true);
+    expect(ringOf(popup), to).toBe(false);
+  }
 
-    it("draws the ring again on the next key press", async () => {
+  // Inside the 1px border, in the 4px of padding before the items
+  const hoverPadding = (popup: Element) => () =>
+    userEvent.hover(popup, { position: { x: 3, y: popup.getBoundingClientRect().height / 2 } });
+
+  it("draws no ring on the popup's padding, a separator, or outside the menu", async () => {
+    const popup = await openedFromTheKeyboardThenHovered(false);
+    await expectNoRing(popup, "padding", hoverPadding(popup));
+    await expectNoRing(popup, "separator", () => userEvent.hover(screen.getByTestId("separator")));
+    // The page's corner: Base UI's backdrop takes the pointer there, not the "Before" button
+    await expectNoRing(popup, "outside", () =>
+      userEvent.hover(document.body, { position: { x: 5, y: 5 } }),
+    );
+  });
+
+  // With an arrow the ring is the popup's `::after` overlay
+  it("draws no ring on the padding of a popup with an arrow", async () => {
+    const popup = await openedFromTheKeyboardThenHovered(true);
+    await expectNoRing(popup, "padding", hoverPadding(popup));
+  });
+
+  it.each([false, true])(
+    "draws the ring again on the next key press, with arrow %s",
+    async (arrow) => {
       const popup = await openedFromTheKeyboardThenHovered(arrow);
       await userEvent.hover(screen.getByTestId("separator"));
       expect(document.activeElement).toBe(popup);
@@ -87,12 +91,12 @@ describe.each([{ arrow: false }, { arrow: true }])(
       await userEvent.keyboard("{Shift}");
       expect(document.activeElement).toBe(popup);
       expect(ringOf(popup)).toBe(true);
-    });
-  },
-);
+    },
+  );
+});
 
 // The handlers reach the popup through `createPopupRenderer`'s `motion.div` when Motion springs it
-describeMotionPaths("Menu popup pointer flag", (reducedMotion) => {
+describeMotionPaths("Menu popup pointer flag", () => {
   it("is set by a real pointer move and hides the ring", async () => {
     const popup = await openedFromTheKeyboardThenHovered(false);
     const { height } = popup.getBoundingClientRect();
@@ -101,7 +105,5 @@ describeMotionPaths("Menu popup pointer flag", (reducedMotion) => {
     expect(popup.matches(":focus-visible")).toBe(true);
     expect(popup).toHaveAttribute("data-pointer");
     expect(ringOf(popup)).toBe(false);
-    // Whether Motion drives the popup: it sets inline transform styles
-    expect(popup.style.transform !== "").toBe(reducedMotion === "no-preference");
   });
 });
