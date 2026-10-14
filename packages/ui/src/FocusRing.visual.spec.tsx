@@ -38,8 +38,9 @@ import { enterMotionPath, outlineTransitions, ringColor } from "./VisualTest.uti
  * for each of its paths.
  *
  * NumberField's increment and decrement and Combobox's clear and chip remove buttons are out of
- * the tab order (Base UI), so they never show a keyboard ring. Of the popups, Popover, Menu and
- * Dialog take focus themselves; Tooltip, Select and Combobox popups do not (Base UI).
+ * the tab order (Base UI), so they never show a keyboard ring. Of the popups, Popover, Menu,
+ * Dialog, Drawer and DatePicker take focus themselves; Tooltip, Select and Combobox popups do not
+ * (Base UI).
  */
 
 beforeEach(async () => {
