@@ -2,7 +2,7 @@
 "chunks-ui": minor
 ---
 
-The default colours now meet WCAG 2 AA contrast in light and dark mode, and coloured text has new tokens: `primary-text`, `success-text`, `warning-text` and `destructive-text` (for example `text-primary-text`). See "Coloured Text" in the theme docs for how they work and which browsers support them (Safari 18+, Chrome 119+, Firefox 128+).
+The default text and fill colours now meet WCAG 2 AA contrast in light and dark mode (the focus ring, `--ring`, is not among them: it measures about 2.4:1 in light mode and 2:1 in dark mode), and coloured text has new tokens: `primary-text`, `success-text`, `warning-text` and `destructive-text` (for example `text-primary-text`). See "Coloured Text" in the theme docs for how they work and which browsers support them (Safari 18+, Chrome 119+, Firefox 128+).
 
 | Token | Before | After | Contrast |
 |---|---|---|---|
