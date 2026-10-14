@@ -469,15 +469,9 @@ function expectInstantRing(drawn: Element, pseudo?: string) {
     outlineStyle: "solid",
     outlineColor: ringColor(),
   });
-  // Nor do its width or offset grow in
-  const transitions = pseudo
-    ? drawn
-        .getAnimations({ subtree: true })
-        .filter((a) => (a.effect as KeyframeEffect | null)?.pseudoElement === pseudo)
-        .map((a) => (a as CSSTransition).transitionProperty)
-        .filter((property) => property.startsWith("outline"))
-    : outlineTransitions(drawn);
-  expect(transitions).toEqual([]);
+  // Nor do its width or offset grow in. The `::after` overlay cannot transition: it exists only
+  // while the ring shows (`has-[.PopupArrow]:focus-visible`), so it has no earlier style.
+  if (!pseudo) expect(outlineTransitions(drawn)).toEqual([]);
 }
 
 // Timing a consumer may put in `className`: none of it fades or delays the ring
