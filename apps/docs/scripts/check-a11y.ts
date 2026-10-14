@@ -10,7 +10,9 @@
  * among them), every other page under app/, and the 404 page, which it gets by requesting a URL
  * no page answers on: that one must answer 404, every other page 200. On the pages POPUPS lists, it
  * then opens the first example's popup and audits it alone, open. axe's `incomplete` results
- * (checks it could not decide, often contrast over images or gradients) are not failed.
+ * (checks it could not decide, often contrast over images or gradients) are not failed. A page is
+ * audited once React has hydrated it (`html[data-hydrated]`, set by app/HydrationMarker.tsx) and
+ * its fonts have loaded.
  *
  * Reads the issue states from the GitHub API with GITHUB_TOKEN (CI passes it; locally run
  * `GITHUB_TOKEN=$(gh auth token) bun run check:a11y`). Outside CI, an issue whose state can't be
@@ -340,6 +342,7 @@ async function axe(
 }
 
 const POPUP_MS = 10_000;
+const HYDRATION_MS = 30_000;
 
 /** Opens `popup` on its loaded page, runs axe on it alone, and closes it with Escape */
 async function auditPopup(
@@ -420,6 +423,16 @@ async function audit(
     if (response?.status() !== expected) {
       throw new Error(`${route} answered ${response?.status()} instead of ${expected}`);
     }
+    // networkidle is not hydration: the HTML is there, but React attaches the handlers and the
+    // ARIA it computes on the client (a Field's ids, the label a control gets through them) when
+    // it hydrates. On master, one run flagged /create's role=switch, radio and checkbox spans for
+    // aria-toggle-field-name and the next run of the same tree passed. HydrationMarker sets the
+    // attribute from a useEffect in the root layout, which React runs after the hydration commit.
+    // A Suspense boundary hydrates in a later pass, but the docs' two (in the built HTML) are
+    // empty, so that commit covers the whole page. Then the fonts: axe measures text in the font
+    // in use, and Manrope loads after the page
+    await page.locator('html[data-hydrated="true"]').waitFor({ timeout: HYDRATION_MS });
+    await page.evaluate(() => document.fonts.ready.then(() => undefined));
     // next-themes puts the theme's name on <html>; without it the page was audited in the other one
     const htmlClass = await page.evaluate(() => document.documentElement.className);
     if (!htmlClass.split(" ").includes(theme)) {
