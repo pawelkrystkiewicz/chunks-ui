@@ -43,16 +43,11 @@ export function themeUtilities(css: string): string[] {
   return [...rules].map(([, name = ""]) => name);
 }
 
-/** Throws when `utilities` (what themeUtilities read from THEME) is empty or lacks KNOWN_UTILITY. */
+/** Throws when `utilities` (what themeUtilities read from THEME) lacks KNOWN_UTILITY. */
 export function assertThemeUtilities(utilities: readonly string[]) {
-  if (utilities.length === 0) {
-    throw new Error(
-      `${THEME} defines no @utility: the read of the theme is broken. Does it @import its utilities from another file now? Then follow the import.`,
-    );
-  }
   if (!utilities.includes(KNOWN_UTILITY)) {
     throw new Error(
-      `${THEME} does not define @utility ${KNOWN_UTILITY}: the read of the theme is broken, or the utility moved. Then follow it, or name another in KNOWN_UTILITY.`,
+      `${THEME} defines no @utility, or lacks ${KNOWN_UTILITY}: the scan broke or the utility moved`,
     );
   }
 }

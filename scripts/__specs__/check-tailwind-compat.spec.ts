@@ -90,11 +90,6 @@ describe("assertThemeUtilities", () => {
     expect(() => assertThemeUtilities(["font-heading", "touch-target"])).not.toThrow();
   });
 
-  // An empty list would make the @utility check pass without testing anything
-  it("throws when the theme defines no @utility", () => {
-    expect(() => assertThemeUtilities([])).toThrow(/no @utility/);
-  });
-
   it("throws when the theme lacks the known utility", () => {
     expect(() => assertThemeUtilities(["font-heading"])).toThrow(/touch-target/);
   });

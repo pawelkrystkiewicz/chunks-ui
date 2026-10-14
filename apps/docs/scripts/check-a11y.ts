@@ -342,7 +342,6 @@ async function axe(
 }
 
 const POPUP_MS = 10_000;
-// A page that hydrates does so in well under a second; the wait for the marker and the fonts
 const HYDRATION_MS = 10_000;
 
 /**
@@ -352,24 +351,6 @@ const HYDRATION_MS = 10_000;
  * root commit, so with such a boundary the audit could run before the page is hydrated.
  */
 const NON_EMPTY_SUSPENSE = /<!--\$[!?]?-->(?!<!--\/\$-->)/;
-
-/** Fails fast when the layout lacks HydrationMarker, instead of 10s per page and theme */
-async function assertHydrationMarker(browser: Browser) {
-  const page = await browser.newPage();
-  try {
-    await page.goto(BASE_URL, { waitUntil: "networkidle" });
-    await page
-      .locator('html[data-hydrated="true"]')
-      .waitFor({ timeout: HYDRATION_MS })
-      .catch(() => {
-        throw new Error(
-          `no html[data-hydrated] within ${HYDRATION_MS / 1000} s: is HydrationMarker in app/layout.tsx, and does the page hydrate?`,
-        );
-      });
-  } finally {
-    await page.close();
-  }
-}
 
 /** Opens `popup` on its loaded page, runs axe on it alone, and closes it with Escape */
 async function auditPopup(
@@ -450,20 +431,20 @@ async function audit(
     if (response?.status() !== expected) {
       throw new Error(`${route} answered ${response?.status()} instead of ${expected}`);
     }
-    // networkidle is not hydration: the HTML is there, but React attaches the handlers and the
-    // ARIA it computes on the client (a Field's ids, the label a control gets through them) when
-    // it hydrates. On master, one run flagged /create's role=switch, radio and checkbox spans for
-    // aria-toggle-field-name and the next run of the same tree passed. HydrationMarker sets the
-    // attribute from a useEffect in the root layout, which React runs after the hydration commit.
-    // A Suspense boundary hydrates in a later pass; the check below fails a page whose HTML has a
-    // non-empty or pending one, so that commit covers the whole page. Then the fonts: axe
-    // measures text in the font in use, and Manrope loads after the page
+    // networkidle is not hydration: wait for the marker, then fonts
     if (NON_EMPTY_SUSPENSE.test((await response?.text()) ?? "")) {
       throw new Error(
         `${route} has a Suspense boundary that is not empty in its HTML: it hydrates after the HydrationMarker attribute, so the audit could run too early`,
       );
     }
-    await page.locator('html[data-hydrated="true"]').waitFor({ timeout: HYDRATION_MS });
+    await page
+      .locator('html[data-hydrated="true"]')
+      .waitFor({ timeout: HYDRATION_MS })
+      .catch(() => {
+        throw new Error(
+          `no html[data-hydrated] within ${HYDRATION_MS / 1000} s: is HydrationMarker in app/layout.tsx, and does the page hydrate?`,
+        );
+      });
     await page.waitForFunction(() => document.fonts.status === "loaded", undefined, {
       timeout: HYDRATION_MS,
     });
@@ -519,7 +500,6 @@ if (import.meta.main) {
   try {
     browser = await chromium.launch();
     const launched = browser;
-    await assertHydrationMarker(launched);
     const queue = routes.flatMap((route) => THEMES.map((theme) => ({ route, theme })));
     const workers = Array.from({ length: PARALLEL }, async () => {
       for (let job = queue.shift(); job; job = queue.shift()) {

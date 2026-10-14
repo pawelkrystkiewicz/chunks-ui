@@ -32,8 +32,7 @@ jobs:
         with:
           bun-version-file: package.json
 
-      # bun install reads package tarballs from here; a hit saves the registry downloads.
-      # ~ is the container's HOME, which bun uses too
+      # bun install cache (container HOME)
       - name: Cache the bun install cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
