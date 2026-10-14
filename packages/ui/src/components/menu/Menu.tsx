@@ -1,7 +1,7 @@
 "use client";
 
 import { Menu as BaseMenu } from "@base-ui/react/menu";
-import type { ComponentProps } from "react";
+import { type ComponentProps, useState } from "react";
 import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
@@ -79,6 +79,11 @@ function MenuContentPopup({
   const reduced = useReducedMotion();
   const useSpring = !!m && !reduced;
   const [positioner, arrowPaddingByDefault] = useArrowPadding();
+  // Base UI focuses the popup when the pointer leaves an item for its padding, a separator or
+  // the page, and Chromium keeps keyboard modality until a mouse press, so after a keyboard open
+  // that focus matched :focus-visible and the popup drew its ring under the mouse (W151). From
+  // the first pointer move over the popup until the next key press, the ring stays off.
+  const [pointer, setPointer] = useState(false);
   const render = useSpring
     ? createPopupRenderer({
         m,
@@ -100,9 +105,13 @@ function MenuContentPopup({
     >
       <BaseMenu.Popup
         render={render}
+        data-pointer={pointer || undefined}
+        onPointerMove={() => setPointer(true)}
+        onKeyDown={() => setPointer(false)}
         className={cnState(
           "flex min-w-[8rem] flex-col rounded-md border border-border bg-popover text-popover-foreground shadow-md",
           arrowPopupClasses,
+          "data-pointer:focus-visible:outline-none data-pointer:focus-visible:after:hidden",
           "max-h-[calc(var(--available-height)-var(--popup-arrow-reach))]",
           !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
           !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
