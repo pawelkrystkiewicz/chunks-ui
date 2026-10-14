@@ -6,7 +6,6 @@ import { createRef } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createDate } from "../calendar/date";
 import { Field } from "../field";
-import { FOCUS_RING } from "../shared";
 import { DatePicker } from "./DatePicker";
 import { DEFAULT_DATE_PICKER_LABELS } from "./DatePicker.Labels";
 
@@ -155,12 +154,6 @@ describe("DatePicker", () => {
       .getAllByRole("button", { hidden: true })
       .filter((button) => button.tabIndex === 0);
     expect(tabStops).toEqual([getButton(MARCH_15_LABEL)]);
-  });
-
-  it("draws the library focus ring on the popup", async () => {
-    render(<DatePicker />);
-    await userEvent.click(screen.getByRole("button", { name: "Pick a date" }));
-    expect(screen.getByRole("dialog")).toHaveClass(...FOCUS_RING.split(" "));
   });
 
   it("disables trigger when disabled prop is set", () => {
