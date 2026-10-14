@@ -31,10 +31,8 @@ const CLASS = /\.(-?(?:[\w-]|\\[0-9a-fA-F]{1,6} ?|\\.)+)/g;
 /** A class from Button's base variants, which stays in chunks-ui. */
 const KNOWN_CLASS = "disabled:pointer-events-none";
 /**
- * A utility theme.css defines with `@utility` and no component uses. When the theme moves to
- * chunks-ui-core and chunks-ui's theme.css only `@import`s it, themeUtilities must follow the
- * import (read core's file, or compile the theme) instead of reading the ui file alone: it would
- * return [] and the `@utility` check would test nothing. assertThemeUtilities fails the run then.
+ * A utility theme.css defines with `@utility` and no component uses; it keeps the check honest
+ * if the utilities ever move out of this file (assertThemeUtilities fails the run then).
  */
 const KNOWN_UTILITY = "touch-target";
 const ESCAPE = /\\([0-9a-fA-F]{1,6}) ?|\\(.)/g;

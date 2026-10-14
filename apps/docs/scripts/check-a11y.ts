@@ -362,7 +362,9 @@ async function assertHydrationMarker(browser: Browser) {
       .locator('html[data-hydrated="true"]')
       .waitFor({ timeout: HYDRATION_MS })
       .catch(() => {
-        throw new Error("HydrationMarker missing from app/layout.tsx?");
+        throw new Error(
+          `no html[data-hydrated] within ${HYDRATION_MS / 1000} s: is HydrationMarker in app/layout.tsx, and does the page hydrate?`,
+        );
       });
   } finally {
     await page.close();
