@@ -35,7 +35,7 @@ export function TabsCard() {
           <Tabs.Indicator />
         </Tabs.List>
         {/* Tabs.Contents slides its track with a transform. In Safari that hits WebKit bug W80
-            (#295): the columns container in PreviewPanel is composited to work around it. */}
+            (#341): the columns container in PreviewPanel is composited to work around it. */}
         <Tabs.Contents>
           <Tabs.Content value="overview" className="flex flex-col gap-4">
             <div className="grid grid-cols-3 gap-2">
@@ -75,7 +75,7 @@ export function TabsCard() {
             <Textarea
               aria-label="Note"
               placeholder="Write a note for the team…"
-              className="min-h-24 resize-none leading-normal"
+              className="min-h-24 resize-none leading-normal focus-visible:-outline-offset-2"
             />
           </Tabs.Content>
         </Tabs.Contents>

@@ -21,6 +21,9 @@ it.each([
     expect(panel.contains(content())).toBe(true);
     // Tabs.Contents keeps every panel mounted. Its wrapper hides an inactive one with display:none
     // (CSS fallback) or inert (Motion), whichever path the spec is on when Motion's lazy load lands.
+    const active = panel.parentElement;
+    expect(active?.style.display).not.toBe("none");
+    expect(active?.hasAttribute("inert")).toBe(false);
     const panels = screen.getAllByRole("tabpanel", { hidden: true });
     expect(panels).toHaveLength(3);
     for (const other of panels.filter((p) => p !== panel)) {
@@ -29,3 +32,10 @@ it.each([
     }
   },
 );
+
+it("draws the Note field's focus ring inside the field, so the slide track cannot clip it", () => {
+  render(<TabsCard />);
+  expect(screen.getByRole("textbox", { name: "Note" }).className).toContain(
+    "focus-visible:-outline-offset-2",
+  );
+});
