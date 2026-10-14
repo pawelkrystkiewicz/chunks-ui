@@ -1,7 +1,7 @@
 {
   "name": "chunks-ui",
   "version": "0.1.4",
-  "description": "React 19 component library built on Base UI, Tailwind CSS v4 and optional Motion animations.",
+  "description": "React 19.2+ component library built on Base UI, Tailwind CSS v4 and optional Motion animations.",
   "sideEffects": [
     "*.css"
   ],

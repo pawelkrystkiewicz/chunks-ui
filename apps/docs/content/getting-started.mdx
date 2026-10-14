@@ -10,7 +10,7 @@ Peer dependencies:
 
 | Package                     | Range     | Notes                                            |
 | --------------------------- | --------- | ------------------------------------------------ |
-| `react`, `react-dom`        | `^19.2.0` | required; `Tabs` renders panels with `<Activity>` |
+| `react`, `react-dom`        | `^19.2.0` | required; React 19.0 and 19.1 are untested        |
 | `@base-ui/react`            | `^1.9.0`  | required                                         |
 | `class-variance-authority`  | `^0.7.1`  | required                                         |
 | `tailwindcss`               | `^4.0.0`  | required to compile `theme.css`; optional peer   |
@@ -18,7 +18,7 @@ Peer dependencies:
 
 Node 22 or newer.
 
-`motion` is an optional peer dependency (`^12.0.0`). Components work without it, but animations require it. The package types reference `motion/react`, so with `skipLibCheck: false` in your `tsconfig.json` TypeScript reports `TS2307` when Motion is not installed: add `motion` as a devDependency or set `skipLibCheck: true`.
+The package types reference `motion/react`, so with `skipLibCheck: false` in your `tsconfig.json` TypeScript reports `TS2307` when Motion is not installed. Enable `skipLibCheck` (the usual setting) to avoid it. Installing `motion` in any dependency field turns the animations on.
 
 ## Setup
 
@@ -37,7 +37,7 @@ import { Button, Input, Tabs } from "chunks-ui";
 
 The theme CSS exposes OKLCH color tokens as CSS variables and registers them with Tailwind CSS v4 through `@theme`. Its `@source` tells Tailwind to scan the package for the classes the components use -- no plugin needed.
 
-The theme also sets `--font-sans` to `"Manrope", sans-serif` (the font files are not included). To keep your app's font, set the token after the import:
+Importing the theme sets the page's default font to Manrope through Tailwind's preflight (`--font-sans`), or to the browser's generic `sans-serif` when your app does not load Manrope (the font files are not included). To keep your app's font, set the token after the import:
 
 ```css
 @import "tailwindcss";

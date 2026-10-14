@@ -14,7 +14,7 @@ Peer dependencies:
 
 | Package                     | Range     | Notes                                            |
 | --------------------------- | --------- | ------------------------------------------------ |
-| `react`, `react-dom`        | `^19.2.0` | required; `Tabs` renders panels with `<Activity>` |
+| `react`, `react-dom`        | `^19.2.0` | required; React 19.0 and 19.1 are untested        |
 | `@base-ui/react`            | `^1.9.0`  | required                                         |
 | `class-variance-authority`  | `^0.7.1`  | required                                         |
 | `tailwindcss`               | `^4.0.0`  | required to compile `theme.css`; optional peer   |
@@ -43,7 +43,7 @@ import { Button, Tabs, Input } from 'chunks-ui'
 
 ### Without Motion
 
-The package types reference `motion/react`. With `skipLibCheck: false` in your `tsconfig.json`, TypeScript reports `TS2307: Cannot find module 'motion/react'` when Motion is not installed. Either add `motion` as a devDependency or set `skipLibCheck: true`.
+The package types reference `motion/react`. With `skipLibCheck: false` in your `tsconfig.json`, TypeScript reports `TS2307: Cannot find module 'motion/react'` when Motion is not installed. Enable `skipLibCheck` (the usual setting) to avoid it. Installing `motion` in any dependency field turns the animations on.
 
 ### Labels
 
@@ -51,7 +51,7 @@ Components with English text of their own (icon-button names, screen-reader text
 
 ### Portal container
 
-Every popup (Select, Combobox, Menu, Popover, DatePicker, Dialog, Drawer, Tooltip) renders into `document.body`. Wrap a subtree in `PortalContainerProvider` with an element as `value` to render them inside it instead, for example to keep popups inside an element that scopes theme variables. A `null` value holds popups back until the element exists, so keep the element in state with a callback ref.
+Every popup (Select, Combobox, Menu, Popover, DatePicker, Dialog, Drawer, Tooltip) renders into `document.body`. Wrap a subtree in `PortalContainerProvider` with an element as `value` to render them inside it instead, for example to keep popups inside an element that scopes theme variables. A `null` value holds popups back until the element exists, so keep the element in state with a callback ref. See [Utilities › PortalContainerProvider](https://ui-kit.chunk-creations.com/utilities#portalcontainerprovider).
 
 ### Touch targets
 
@@ -125,7 +125,7 @@ Use with Tailwind: `bg-primary text-primary-foreground`, `bg-destructive text-de
 
 ## Typography
 
-`theme.css` sets `--font-sans` to `"Manrope", sans-serif`, so `font-sans` and the components use Manrope when the app loads that font (the theme does not ship the font files). To keep your app's font, set the token after the import:
+Importing `theme.css` sets the page's default font to Manrope through Tailwind's preflight (`--font-sans`), or to the browser's generic `sans-serif` when the app does not load Manrope (the theme does not ship the font files). To keep your app's font, set the token after the import:
 
 ```css
 @import "tailwindcss";
