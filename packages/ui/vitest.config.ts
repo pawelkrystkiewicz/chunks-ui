@@ -1,9 +1,10 @@
 import { defineConfig } from "vitest/config";
 
-// Off UTC, with DST and a negative offset, so a spec that reads a local date through UTC
-// (toISOString) fails here as it would for a user; the GitHub runner is UTC. Node reads TZ
-// before the workers create a Date.
-process.env.TZ = "America/New_York";
+// Off UTC, with DST and a positive offset, so a spec that reads a local date through UTC
+// (toISOString) fails here as it would for a user; the GitHub runner is UTC. A positive offset
+// puts local midnight, which nearly every date chunks-ui handles is, on the previous UTC day.
+// Node reads TZ before the workers create a Date.
+process.env.TZ = "Europe/Warsaw";
 
 export default defineConfig({
   test: {

@@ -73,8 +73,8 @@ describe("toIsoDate", () => {
   });
 
   it("uses the local date, whatever the time of day", () => {
-    // 23:59 in America/New_York (vitest.config.ts pins TZ) is the next day in UTC
-    expect(toIsoDate(new Date(2026, 2, 15, 23, 59, 59))).toBe("2026-03-15");
+    // 00:30 in Europe/Warsaw (vitest.config.ts pins TZ) is the previous day in UTC
+    expect(toIsoDate(new Date(2026, 2, 15, 0, 30))).toBe("2026-03-15");
   });
 });
 
