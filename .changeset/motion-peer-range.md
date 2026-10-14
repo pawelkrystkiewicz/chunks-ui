@@ -10,4 +10,4 @@ If your app has a `motion` outside 12.x installed, npm 7 or newer stops the inst
 bun add motion@^12
 ```
 
-Apps without Motion installed are not affected: the components still fall back to CSS transitions.
+Apps without Motion installed are not affected by the range: the components still fall back to CSS transitions.
