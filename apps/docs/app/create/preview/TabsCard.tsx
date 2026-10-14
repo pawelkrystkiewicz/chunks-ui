@@ -32,13 +32,12 @@ export function TabsCard() {
           <Tabs.Tab value="notes" className={tabClass}>
             Notes
           </Tabs.Tab>
-          {/* renderBeforeHydration: /create is server-rendered, so the pill is in the first paint */}
-          <Tabs.Indicator renderBeforeHydration />
+          <Tabs.Indicator />
         </Tabs.List>
-        {/* Tabs.Animate rather than Tabs.Contents: Contents clips the Note field's focus outline,
-            and its Tabs.Content panels aren't labelled by their tabs as Tabs.Panel is */}
-        <Tabs.Animate>
-          <Tabs.Panel value="overview" className="mt-0 flex flex-col gap-4">
+        {/* Tabs.Contents slides its track with a transform. In Safari that hits WebKit bug W80
+            (#295): the columns container in PreviewPanel is composited to work around it. */}
+        <Tabs.Contents>
+          <Tabs.Content value="overview" className="flex flex-col gap-4">
             <div className="grid grid-cols-3 gap-2">
               {STATS.map((s) => (
                 <div key={s.label} className="flex flex-col gap-0.5 rounded-lg bg-muted p-3">
@@ -56,8 +55,8 @@ export function TabsCard() {
                 <Progress.Indicator />
               </Progress.Track>
             </Progress.Root>
-          </Tabs.Panel>
-          <Tabs.Panel value="activity" className="mt-0 flex flex-col gap-4">
+          </Tabs.Content>
+          <Tabs.Content value="activity" className="flex flex-col gap-4">
             {ACTIVITY.map((a) => (
               <div key={a.who} className="flex gap-3">
                 <span
@@ -71,15 +70,15 @@ export function TabsCard() {
                 </span>
               </div>
             ))}
-          </Tabs.Panel>
-          <Tabs.Panel value="notes" className="mt-0">
+          </Tabs.Content>
+          <Tabs.Content value="notes">
             <Textarea
               aria-label="Note"
               placeholder="Write a note for the team…"
               className="min-h-24 resize-none leading-normal"
             />
-          </Tabs.Panel>
-        </Tabs.Animate>
+          </Tabs.Content>
+        </Tabs.Contents>
       </Tabs.Root>
     </PreviewCard>
   );

@@ -75,12 +75,16 @@ export function PreviewPanel({ theme }: { theme: Theme }) {
         theme={theme}
         className="min-h-[calc(100vh-200px)] bg-(--canvas) p-[28px] leading-[1.45] transition-[background] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] motion-reduce:transition-none"
       >
+        {/* will-change-transform: WebKit bug W80 (#295) paints nothing of a Tabs.Contents panel in
+            a CSS column after the first once its slid track reaches over the sticky sidebar's
+            composited layer; compositing the columns container avoids it. Remove when WebKit
+            fixes it; the smoke spec (Smoke.webkit.visual.spec.tsx) will start failing then. */}
         <div
           style={{
             maxWidth: VIEWPORTS.find((vp) => vp.id === viewport)?.width,
             columnWidth: previewColumnWidth(theme),
           }}
-          className="mx-auto gap-5 transition-[max-width] duration-400 ease-fluid motion-reduce:transition-none"
+          className="mx-auto gap-5 transition-[max-width] duration-400 ease-fluid will-change-transform motion-reduce:transition-none"
         >
           <PreviewCards fontHeading={theme.fontHeading} fontBody={theme.fontBody} />
         </div>
