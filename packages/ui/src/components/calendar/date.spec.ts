@@ -73,7 +73,7 @@ describe("toIsoDate", () => {
   });
 
   it("uses the local date, whatever the time of day", () => {
-    // Guards off-UTC machines only; CI runs in UTC.
+    // 23:59 in America/New_York (vitest.config.ts pins TZ) is the next day in UTC
     expect(toIsoDate(new Date(2026, 2, 15, 23, 59, 59))).toBe("2026-03-15");
   });
 });

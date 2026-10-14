@@ -279,6 +279,7 @@ describe("DatePicker in a form", () => {
   const formData = (form: HTMLFormElement) => new FormData(form).get("due");
 
   it("submits the selected date as yyyy-mm-dd under its name", async () => {
+    // 23:59 in America/New_York (vitest.config.ts pins TZ) is the next day in UTC
     render(
       <form aria-label="Task">
         <DatePicker name="due" defaultValue={new Date(2026, 9, 10, 23, 59)} />
