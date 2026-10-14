@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState } from "react";
-import { arrowPaddingIn } from "./popup-arrow";
+import { arrowPaddingIn } from "./arrow-padding";
 
 /**
  * The ref for a popup's `Positioner` and the default `arrowPadding` read from it: `undefined` on

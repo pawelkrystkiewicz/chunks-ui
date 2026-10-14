@@ -1,5 +1,11 @@
 import { describe, expect, it } from "bun:test";
-import { classNames, missingClasses, scanProblem, themeUtilities } from "../check-tailwind-compat";
+import {
+  assertThemeUtilities,
+  classNames,
+  missingClasses,
+  scanProblem,
+  themeUtilities,
+} from "../check-tailwind-compat";
 
 // Shaped like Tailwind CLI output: a banner comment with a URL, nested variants, media queries
 const OLDEST = `/*! tailwindcss v4.0.0 | MIT License | https://tailwindcss.com */
@@ -76,6 +82,16 @@ describe("scanProblem", () => {
     const problem = scanProblem(names, "4.3.3", ["font-heading", "touch-target"]);
     expect(problem).toMatch(/4\.3\.3 .*touch-target/);
     expect(problem).not.toMatch(/font-heading/);
+  });
+});
+
+describe("assertThemeUtilities", () => {
+  it("accepts a list with the utility the theme is known to define", () => {
+    expect(() => assertThemeUtilities(["font-heading", "touch-target"])).not.toThrow();
+  });
+
+  it("throws when the theme lacks the known utility", () => {
+    expect(() => assertThemeUtilities(["font-heading"])).toThrow(/touch-target/);
   });
 });
 

@@ -1,5 +1,5 @@
 ---
-"chunks-ui": patch
+"chunks-ui": minor
 ---
 
 Fixed: a `Drawer` opened from inside an open `Dialog` rendered behind the dialog (the drawer layer is below the modal layer) and could not be used. A dialog or drawer opened from another one now stacks above it.

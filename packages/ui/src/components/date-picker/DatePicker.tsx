@@ -15,7 +15,8 @@ import { cn } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
 import { usePortalContainer } from "../../lib/portal-container";
 import { useMergedRef } from "../../lib/use-merged-ref";
-import { Calendar, type CalendarProps, validDate } from "../calendar/Calendar";
+import { Calendar, type CalendarProps } from "../calendar/Calendar";
+import { toIsoDate, validDate } from "../calendar/date";
 import { RING_TRANSITION } from "../shared";
 import { type DatePickerLabels, DEFAULT_DATE_PICKER_LABELS } from "./DatePicker.Labels";
 
@@ -98,13 +99,6 @@ type DatePickerOwnProps = Pick<
  */
 export type DatePickerProps = DatePickerOwnProps &
   Omit<ComponentProps<"button">, keyof DatePickerOwnProps | "children" | "type" | "onChange">;
-
-// Local calendar date, not toISOString(), which shifts to UTC and can change the day. The year
-// has 4 digits, as ISO 8601 and <input type="date"> need: 0999, not 999.
-function toIsoDate(date: Date): string {
-  const pad = (n: number, length = 2) => String(n).padStart(length, "0");
-  return `${pad(date.getFullYear(), 4)}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-}
 
 /**
  * The form `control` belongs to. With `formId`, that is the form with that id in the control's

@@ -22,7 +22,7 @@
     "check-types:scripts": "tsc -p scripts",
     "changeset": "changeset",
     "version-packages": "changeset version",
-    "release": "turbo run build --filter=chunks-ui && changeset publish",
+    "release": "turbo run build --filter=chunks-ui && bun run --cwd packages/ui check:exports && bun run --cwd packages/ui check:dist && changeset publish",
     "version:next": "bun run ./scripts/calculate-next-version.ts",
     "update:screenshots": "sh scripts/update-screenshots.sh",
     "check:playwright": "bun scripts/check-playwright-version.ts",

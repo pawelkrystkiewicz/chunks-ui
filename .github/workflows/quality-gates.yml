@@ -27,6 +27,14 @@ jobs:
         with:
           bun-version-file: package.json
 
+      # bun install reads package tarballs from here; a hit saves the registry downloads
+      - name: Cache the bun install cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-host-${{ hashFiles('bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-host-
+
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
@@ -57,6 +65,23 @@ jobs:
         with:
           bun-version-file: package.json
 
+      # bun install cache
+      - name: Cache the bun install cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-host-${{ hashFiles('bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-host-
+
+      # Turbo's cache: a hit replays the chunks-ui build. Turbo never evicts, so the last step
+      # drops entries older than a week
+      - name: Cache the Turbo cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-typecheck-${{ hashFiles('bun.lock', 'turbo.json', 'packages/ui/src/**', 'packages/ui/tsup.config.ts', 'packages/ui/package.json') }}
+          restore-keys: ${{ runner.os }}-turbo-typecheck-
+
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
@@ -72,6 +97,10 @@ jobs:
       # install is pinned by scripts/tailwind-4.0 (frozen lockfile); bun.lock stays as it is
       - name: Check Tailwind 4.0 generates every class
         run: bun run check:tailwind
+
+      - name: Prune old Turbo cache entries
+        if: always()
+        run: find .turbo/cache -type f -mtime +7 -delete || true
 
   docs-build:
     timeout-minutes: 20
@@ -98,6 +127,23 @@ jobs:
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version-file: package.json
+
+      # bun install cache (container HOME)
+      - name: Cache the bun install cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-container-${{ hashFiles('bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-container-
+
+      # Next's compiler cache. Before bun install, so the source globs see no node_modules. A source
+      # change restores the newest cache for the same bun.lock, and the build reuses what it can
+      - name: Cache the Next.js cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: apps/docs/.next/cache
+          key: ${{ runner.os }}-next-${{ hashFiles('bun.lock') }}-${{ hashFiles('apps/docs/**/*.ts', 'apps/docs/**/*.tsx', 'apps/docs/**/*.mdx', 'apps/docs/**/*.css') }}
+          restore-keys: ${{ runner.os }}-next-${{ hashFiles('bun.lock') }}-
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
