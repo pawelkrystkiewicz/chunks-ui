@@ -91,6 +91,28 @@ describe("Menu", () => {
     expect(screen.getByTestId("arrow")).toHaveClass("custom-arrow");
   });
 
+  // The popup tracks pointer moves and key presses for its focus ring; a consumer's handlers run too
+  it("calls onPointerMove and onKeyDown passed to Content", async () => {
+    const onPointerMove = vi.fn();
+    const onKeyDown = vi.fn();
+    render(
+      <Menu.Root open>
+        <Menu.Trigger>Open</Menu.Trigger>
+        <Menu.Content data-testid="content" onPointerMove={onPointerMove} onKeyDown={onKeyDown}>
+          <Menu.Item>Item</Menu.Item>
+        </Menu.Content>
+      </Menu.Root>,
+    );
+    const content = screen.getByTestId("content");
+    await userEvent.pointer({ target: content, coords: { x: 2, y: 2 } });
+    expect(onPointerMove).toHaveBeenCalled();
+    expect(content).toHaveAttribute("data-pointer");
+    content.focus();
+    await userEvent.keyboard("{Shift}");
+    expect(onKeyDown).toHaveBeenCalled();
+    expect(content).not.toHaveAttribute("data-pointer");
+  });
+
   it("calls onClick when Item is clicked", async () => {
     const handleClick = vi.fn();
     const user = userEvent.setup();

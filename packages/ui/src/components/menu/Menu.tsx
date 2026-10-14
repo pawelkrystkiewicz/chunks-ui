@@ -73,6 +73,8 @@ function MenuContentPopup({
   align,
   alignOffset,
   arrowPadding,
+  onPointerMove,
+  onKeyDown,
   ...props
 }: MenuContentProps) {
   const m = useLoadedMotion();
@@ -106,8 +108,14 @@ function MenuContentPopup({
       <BaseMenu.Popup
         render={render}
         data-pointer={pointer || undefined}
-        onPointerMove={() => setPointer(true)}
-        onKeyDown={() => setPointer(false)}
+        onPointerMove={(event) => {
+          onPointerMove?.(event);
+          setPointer(true);
+        }}
+        onKeyDown={(event) => {
+          onKeyDown?.(event);
+          setPointer(false);
+        }}
         className={cnState(
           "flex min-w-[8rem] flex-col rounded-md border border-border bg-popover text-popover-foreground shadow-md",
           arrowPopupClasses,
