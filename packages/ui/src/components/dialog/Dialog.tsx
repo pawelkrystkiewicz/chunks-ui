@@ -16,7 +16,7 @@ import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
 import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
 import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
-import { RING_TRANSITION } from "../shared";
+import { RING_TRANSITION, RING_TRANSITION_MOTION } from "../shared";
 
 export type DialogRootProps = ComponentProps<typeof BaseDialog.Root>;
 export type DialogTriggerProps = ComponentProps<typeof BaseDialog.Trigger>;
@@ -117,7 +117,7 @@ function DialogPopup({ className, children, ...props }: DialogPopupProps) {
         // Only the fade and scale, not the ring
         !useSpring && "micro-interactions [transition-property:opacity,scale] duration-300",
         // Motion animates the popup: a list with no outline keeps a timing utility off the ring
-        useSpring && RING_TRANSITION,
+        useSpring && RING_TRANSITION_MOTION,
         className,
       )}
       {...props}

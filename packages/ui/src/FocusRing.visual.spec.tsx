@@ -513,6 +513,23 @@ describe("focus ring with no reduced-motion preference", () => {
     expect(getComputedStyle(drawn).transitionProperty).toContain(property);
   });
 
+  // Motion writes these on the popups, so a CSS transition on them would lag the spring
+  describe.each(["transition-colors", "duration-500"])(
+    "the Motion popups with %s in className",
+    (utility) => {
+      it.each(["Popover.Content", "Menu.Content", "Dialog.Popup"])(
+        "%s leaves the properties Motion writes out of its transitions",
+        async (part) => {
+          const c = RING_CASES.find((r) => r.part === part);
+          if (!c) throw new Error(`No ring case for ${part}`);
+          const properties = getComputedStyle(await focusRing(c, utility)).transitionProperty;
+          for (const written of ["opacity", "transform", "translate", "scale", "rotate"])
+            expect(properties.split(", ")).not.toContain(written);
+        },
+      );
+    },
+  );
+
   // The ring is left out, not the rest: a colour change, as on hover or press, still fades
   it("fades the colours of a Textarea", () => {
     render(<Textarea aria-label="Target" />);
