@@ -143,8 +143,10 @@ export function isDateOutOfRange(date: Date, min?: Date, max?: Date): boolean {
   return false;
 }
 
-// Local calendar date, not toISOString(), which shifts to UTC and can change the day. The year
-// has 4 digits, as ISO 8601 and <input type="date"> need: 0999, not 999.
+/**
+ * Local calendar date, not toISOString(), which shifts to UTC and can change the day. The year
+ * has 4 digits, as ISO 8601 and <input type="date"> need: 0999, not 999.
+ */
 export function toIsoDate(date: Date): string {
   const pad = (n: number, length = 2) => String(n).padStart(length, "0");
   return `${pad(date.getFullYear(), 4)}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
