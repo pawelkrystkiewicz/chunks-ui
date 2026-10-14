@@ -292,6 +292,16 @@ describe("DatePicker in a form", () => {
     expect(formData(form)).toBe("2026-10-02");
   });
 
+  it("submits a late-evening date under its local day", () => {
+    // 23:59 is the next day in UTC west of it: caught only when a developer runs west of UTC
+    render(
+      <form aria-label="Task">
+        <DatePicker name="due" defaultValue={new Date(2026, 9, 10, 23, 59)} />
+      </form>,
+    );
+    expect(formData(screen.getByRole<HTMLFormElement>("form"))).toBe("2026-10-10");
+  });
+
   it("submits a date in the year 50 as a 4-digit yyyy-mm-dd", () => {
     const date = createDate(50, 0, 5);
     render(

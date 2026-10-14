@@ -75,6 +75,8 @@ describe("toIsoDate", () => {
   it("uses the local date, whatever the time of day", () => {
     // 00:30 in Europe/Warsaw (vitest.config.ts pins TZ) is the previous day in UTC
     expect(toIsoDate(new Date(2026, 2, 15, 0, 30))).toBe("2026-03-15");
+    // 23:59 is the next day in UTC west of it: caught only when a developer runs west of UTC
+    expect(toIsoDate(new Date(2026, 2, 15, 23, 59))).toBe("2026-03-15");
   });
 });
 

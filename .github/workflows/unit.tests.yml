@@ -122,6 +122,10 @@ jobs:
             for (const name of floors.keys()) {
               if (!(name in peers)) { console.error(`${name}: in PEER_FLOORS, not a peer of chunks-ui`); bad = true; }
             }
+            for (const name of exempt) {
+              if (!(name in peers)) { console.error(`${name}: in EXEMPT, not a peer of chunks-ui: drop it`); bad = true; }
+              if (floors.has(name)) { console.error(`${name}: in both EXEMPT and PEER_FLOORS: keep one`); bad = true; }
+            }
             for (const [name, range] of Object.entries(peers)) {
               const floor = floors.get(name);
               if (floor === undefined) {
