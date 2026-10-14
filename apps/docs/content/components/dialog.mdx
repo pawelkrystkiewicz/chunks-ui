@@ -162,7 +162,7 @@ The popup enters with a scale-up and fade (from `scale-95` and `opacity-0`). Wit
 | `Dialog.Trigger` | Button that opens the dialog. |
 | `Dialog.Portal` | Renders children in a portal outside the DOM tree. Puts the dialog on the `z-modals` (700) layer; popups, dialogs and drawers opened from it stack above it. |
 | `Dialog.Backdrop` | Semi-transparent overlay behind the dialog. Also renders for a nested dialog, so it dims the parent. |
-| `Dialog.Popup` | Centered content panel. Max width `max-w-md`; max height the viewport less 2rem, then its content scrolls. |
+| `Dialog.Popup` | Centered content panel. Max width 28rem (`max-w-md`), and never wider than the viewport less a 1rem gutter on each side, so its focus ring stays on the page; a `max-w-*` class in `className` replaces that cap. Max height the viewport less 2rem, then its content scrolls. |
 | `Dialog.Title` | Dialog heading. Rendered as a semibold `text-lg`. |
 | `Dialog.Description` | Supporting text below the title. Rendered in `text-muted-foreground`. |
 | `Dialog.Body` | Optional scrolling area for long content, between the Title and the actions. Only the Body scrolls; the other parts stay in place. |

@@ -1,7 +1,7 @@
 "use client";
 
 import { Menu as BaseMenu } from "@base-ui/react/menu";
-import type { ComponentProps } from "react";
+import { type ComponentProps, useState } from "react";
 import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
@@ -21,8 +21,8 @@ export type MenuArrowProps = ComponentProps<typeof BaseMenu.Arrow>;
 
 export type MenuContentProps = ComponentProps<typeof BaseMenu.Popup> & {
   /**
-   * Distance from the trigger element in pixels.
-   * @default 4
+   * Distance from the trigger element in pixels; as on Popover, wide enough for the focus ring.
+   * @default 8
    */
   sideOffset?: ComponentProps<typeof BaseMenu.Positioner>["sideOffset"];
   /**
@@ -66,18 +66,23 @@ function MenuContent(props: MenuContentProps) {
 function MenuContentPopup({
   className,
   children,
-  sideOffset = 4,
+  sideOffset = 8,
   side,
   align,
   alignOffset,
   arrowPadding,
+  onPointerMove,
+  onKeyDown,
   ...props
 }: MenuContentProps) {
   const m = useLoadedMotion();
   const reduced = useReducedMotion();
   const useSpring = !!m && !reduced;
   const [positioner, arrowPaddingByDefault] = useArrowPadding();
-  const render = useSpring
+  // Pointer over the popup until the next key press keeps its ring off (W151); a reopen during the
+  // exit animation keeps a stale flag until the next key press (accepted).
+  const [pointer, setPointer] = useState(false);
+  const popupRenderer = useSpring
     ? createPopupRenderer({
         m,
         spring: springs.popup,
@@ -97,10 +102,22 @@ function MenuContentPopup({
       arrowPadding={arrowPadding ?? arrowPaddingByDefault}
     >
       <BaseMenu.Popup
-        render={render}
+        render={popupRenderer}
+        data-pointer={pointer || undefined}
+        onPointerMove={(event) => {
+          onPointerMove?.(event);
+          // WebKit fires a move with no movement when the layout shifts under a still pointer;
+          // Base UI ignores those too (isStationaryWebKitPointer)
+          if (event.movementX !== 0 || event.movementY !== 0) setPointer(true);
+        }}
+        onKeyDown={(event) => {
+          onKeyDown?.(event);
+          setPointer(false);
+        }}
         className={cnState(
           "flex min-w-[8rem] flex-col rounded-md border border-border bg-popover text-popover-foreground shadow-md",
           arrowPopupClasses,
+          "data-pointer:focus-visible:outline-none data-pointer:focus-visible:after:hidden",
           "max-h-[calc(var(--available-height)-var(--popup-arrow-reach))]",
           !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
           !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",

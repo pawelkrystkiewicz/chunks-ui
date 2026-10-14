@@ -89,7 +89,7 @@ Use `Menu.Group` with `Menu.GroupLabel` to organize items into labelled sections
 `Menu.Content` accepts positioning props forwarded to Base UI's positioner:
 
 ```tsx
-<Menu.Content side="right" align="start" sideOffset={8}>
+<Menu.Content side="right" align="start" sideOffset={12}>
   ...
 </Menu.Content>
 ```
@@ -100,7 +100,7 @@ Use `Menu.Group` with `Menu.GroupLabel` to organize items into labelled sections
 |---|---|
 | `Menu.Root` | State container. Manages open/close. |
 | `Menu.Trigger` | Element that opens the menu. |
-| `Menu.Content` | Portal + positioner + popup panel. Default `sideOffset={4}`. Scrolls when the items need more than the space between the trigger and the viewport edge. The items scroll in an inner element, so layout classes on `Menu.Content` (such as `grid` or `gap-*`) do not reach them: wrap the items in your own element instead. When the menu itself takes focus, as when a shortcut opens it, it shows the library focus ring after keyboard use: 2px of `--ring`, 2px outside its edge. |
+| `Menu.Content` | Portal + positioner + popup panel. Default `sideOffset={8}`, as on `Popover.Content`: the popup's focus ring, 4px outside its edge, stays clear of the trigger. Scrolls when the items need more than the space between the trigger and the viewport edge. The items scroll in an inner element, so layout classes on `Menu.Content` (such as `grid` or `gap-*`) do not reach them: wrap the items in your own element instead. When the menu itself takes focus, as when a shortcut opens it, it shows the library focus ring after keyboard use: 2px of `--ring`, 2px outside its edge. From the first pointer move over the popup (one with real movement) until the next key press the ring stays off: the popup sets `data-pointer` meanwhile, so the focus Base UI gives the popup when the pointer leaves an item draws no ring. |
 | `Menu.Item` | A single actionable menu entry. |
 | `Menu.Separator` | Horizontal divider between groups of items. |
 | `Menu.Group` | Semantic grouping wrapper for related items. |

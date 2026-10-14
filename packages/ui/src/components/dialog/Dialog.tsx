@@ -105,7 +105,9 @@ function DialogPopup({ className, children, ...props }: DialogPopupProps) {
     <BaseDialog.Popup
       render={render}
       className={cnState(
-        "fixed top-1/2 left-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2",
+        // A 1rem gutter on each side at any width, so the ring (4px outside the edge) stays on
+        // the page; `max-w-*` in className replaces the cap (tailwind-merge)
+        "fixed top-1/2 left-1/2 w-full max-w-[min(28rem,calc(100%-2rem))] -translate-x-1/2 -translate-y-1/2",
         "rounded-xl border border-border bg-background p-6 shadow-lg",
         // The popup takes focus when nothing inside is tabbable or `initialFocus` points at it
         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",

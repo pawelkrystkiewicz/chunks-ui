@@ -174,6 +174,16 @@ export function ringColor() {
   return color;
 }
 
+/** The colour a system colour keyword resolves to under the current (forced) colours. */
+export function systemColour(keyword: string) {
+  const probe = document.createElement("div");
+  probe.style.color = keyword;
+  document.body.append(probe);
+  const colour = getComputedStyle(probe).color;
+  probe.remove();
+  return colour;
+}
+
 /** The outline properties `el` is transitioning */
 export function outlineTransitions(el: Element) {
   return el

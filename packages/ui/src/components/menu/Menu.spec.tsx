@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -89,6 +89,32 @@ describe("Menu", () => {
       </Menu.Root>,
     );
     expect(screen.getByTestId("arrow")).toHaveClass("custom-arrow");
+  });
+
+  // The popup tracks pointer moves and key presses for its focus ring; a consumer's handlers run too
+  it("calls onPointerMove and onKeyDown passed to Content", async () => {
+    const onPointerMove = vi.fn();
+    const onKeyDown = vi.fn();
+    render(
+      <Menu.Root open>
+        <Menu.Trigger>Open</Menu.Trigger>
+        <Menu.Content data-testid="content" onPointerMove={onPointerMove} onKeyDown={onKeyDown}>
+          <Menu.Item>Item</Menu.Item>
+        </Menu.Content>
+      </Menu.Root>,
+    );
+    const content = screen.getByTestId("content");
+    // A WebKit move with no movement (the layout shifted under a still pointer) does not count
+    fireEvent.pointerMove(content, { movementX: 0, movementY: 0 });
+    expect(content).not.toHaveAttribute("data-pointer");
+    // user-event's moves carry no movementX/Y
+    fireEvent.pointerMove(content, { movementX: 2, movementY: 2 });
+    expect(onPointerMove).toHaveBeenCalledTimes(2);
+    expect(content).toHaveAttribute("data-pointer");
+    content.focus();
+    await userEvent.keyboard("{Shift}");
+    expect(onKeyDown).toHaveBeenCalled();
+    expect(content).not.toHaveAttribute("data-pointer");
   });
 
   it("calls onClick when Item is clicked", async () => {

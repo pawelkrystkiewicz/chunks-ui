@@ -8,6 +8,7 @@ import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
 import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
 import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
+import { RING_TRANSITION_MOTION } from "../shared";
 import { drawerBase, drawerPopupVariants } from "./Drawer.Variants";
 
 export type DrawerProps = ComponentProps<typeof BaseDialog.Root>;
@@ -115,6 +116,8 @@ function DrawerPopup({ side = "right", className, ...props }: DrawerPopupProps) 
       className={cnState(
         useSpring && drawerBase,
         useSpring && motionPositionClasses[resolvedSide],
+        // Motion slides the popup: a list with no outline keeps a timing utility off the ring
+        useSpring && RING_TRANSITION_MOTION,
         !useSpring && drawerPopupVariants({ side }),
         className,
       )}

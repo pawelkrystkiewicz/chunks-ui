@@ -21,7 +21,7 @@ export function TableBasicExample() {
             <Table.Head className="w-[100px]">Invoice</Table.Head>
             <Table.Head>Status</Table.Head>
             <Table.Head>Method</Table.Head>
-            <Table.Head className="text-right">Amount</Table.Head>
+            <Table.Head className="text-end">Amount</Table.Head>
           </Table.Row>
         </Table.Header>
         <Table.Body>
@@ -30,14 +30,14 @@ export function TableBasicExample() {
               <Table.Cell className="font-medium">{inv.id}</Table.Cell>
               <Table.Cell>{inv.status}</Table.Cell>
               <Table.Cell>{inv.method}</Table.Cell>
-              <Table.Cell className="text-right">{inv.amount}</Table.Cell>
+              <Table.Cell className="text-end">{inv.amount}</Table.Cell>
             </Table.Row>
           ))}
         </Table.Body>
         <Table.Footer>
           <Table.Row>
             <Table.Cell colSpan={3}>Total</Table.Cell>
-            <Table.Cell className="text-right">$1,750.00</Table.Cell>
+            <Table.Cell className="text-end">$1,750.00</Table.Cell>
           </Table.Row>
         </Table.Footer>
       </Table.Root>

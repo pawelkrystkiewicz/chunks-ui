@@ -295,7 +295,7 @@
  */
 .toast-stack-viewport {
   /* Override the default flex-column layout so children can absolute-stack
-   * at the same bottom-right anchor point. */
+   * at the same anchor point: the viewport's bottom edge. */
   display: block;
 }
 
@@ -344,6 +344,10 @@
 .toast-stack[data-ending-style] {
   transform: translateY(150%);
   opacity: 0;
+  /* Toast.Root slides in and out along `translate`; the stack slides along `transform`, and
+   * the transition list above has no `translate`, so without this a closing toast jumped to
+   * the inline end at once and its slide was lost. Unlayered, so it beats the utility. */
+  translate: none;
 }
 
 .toast-stack[data-ending-style][data-swipe-direction="up"] {
