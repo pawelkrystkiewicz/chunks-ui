@@ -2,6 +2,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { axe } from "jest-axe";
 import { createRef, type ReactNode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
+import { FOCUS_RING } from "../shared";
 import { Dialog } from "./Dialog";
 
 afterEach(cleanup);
@@ -30,6 +31,17 @@ describe("Dialog", () => {
       </Dialog.Root>,
     );
     expect(screen.getByTestId("popup")).toHaveClass("custom");
+  });
+
+  it("draws the library focus ring on the Popup", () => {
+    render(
+      <Dialog.Root open>
+        <Dialog.Portal>
+          <Dialog.Popup data-testid="popup">Content</Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>,
+    );
+    expect(screen.getByTestId("popup")).toHaveClass(...FOCUS_RING.split(" "));
   });
 
   it("renders Title with custom className", () => {

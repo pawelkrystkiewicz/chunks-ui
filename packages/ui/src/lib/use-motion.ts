@@ -1,15 +1,66 @@
 "use client";
 
+import type { ComponentType, CSSProperties, HTMLAttributes, Ref } from "react";
 import { useState, useSyncExternalStore } from "react";
 
-type MotionReact = typeof import("motion/react");
+type MotionValues = Record<string, number | string>;
+/** The animation options chunks-ui passes to Motion. Closed, so a misspelled key fails to compile. */
+export type MotionOptions = {
+  type?: "spring" | "tween" | "inertia";
+  stiffness?: number;
+  damping?: number;
+  bounce?: number;
+  mass?: number;
+  restDelta?: number;
+  restSpeed?: number;
+  duration?: number;
+};
 
-let _cache: MotionReact | null | undefined;
+/** The props chunks-ui passes to `motion.div`: HTML attributes plus Motion's animation props. */
+export type MotionElementProps = Omit<
+  HTMLAttributes<HTMLDivElement>,
+  // Motion gives these its own signatures
+  "style" | "onAnimationStart" | "onDrag" | "onDragStart" | "onDragEnd"
+> & {
+  ref?: Ref<HTMLDivElement>;
+  style?: CSSProperties;
+  initial?: MotionValues;
+  animate?: MotionValues;
+  transition?: MotionOptions;
+};
+
+/** The controls of a running `animate()` that chunks-ui uses. */
+export interface MotionAnimationControls {
+  stop: () => void;
+  complete: () => void;
+}
+
+/**
+ * The part of `motion/react` that chunks-ui uses. The package types describe Motion through
+ * this interface instead of `typeof import("motion/react")`, so they compile without Motion
+ * installed (`skipLibCheck: false` included). For Motion's full types, cast the module in your
+ * own code: `useMotion() as typeof import("motion/react") | null`.
+ */
+export interface MotionLike {
+  motion: { div: ComponentType<MotionElementProps> };
+  animate: (
+    element: Element,
+    keyframes: Record<string, number | string | (number | string)[]>,
+    options?: MotionOptions,
+  ) => MotionAnimationControls;
+  frame: {
+    render: (callback: () => void) => unknown;
+    postRender: (callback: () => void) => unknown;
+  };
+  cancelFrame: (callback: () => void) => void;
+}
+
+let _cache: MotionLike | null | undefined;
 const motionListeners = new Set<() => void>();
 // Bumped by reloadMotion(), so a load it superseded can't deliver Motion afterwards
 let loads = 0;
 
-function setMotion(load: number, m: MotionReact | null) {
+function setMotion(load: number, m: MotionLike | null) {
   if (load !== loads) return;
   _cache = m;
   for (const notify of motionListeners) notify();
@@ -22,8 +73,9 @@ function loadMotion() {
   if (_cache !== undefined) return;
   const load = loads;
   (async () => {
-    let m: MotionReact | null = null;
+    let m: MotionLike | null = null;
     try {
+      // Typed as Motion's module, so this assignment checks MotionLike against it.
       m = await import(/* turbopackOptional: true */ "motion/react");
     } catch {}
     setMotion(load, m);
@@ -59,7 +111,7 @@ function subscribeToMotion(onLoad: () => void) {
  * after Motion has loaded gets it on its first render, so it never swaps in Motion elements
  * later; one mounted earlier re-renders with it once it loads.
  */
-export function useMotion(): MotionReact | null {
+export function useMotion(): MotionLike | null {
   return useSyncExternalStore(
     subscribeToMotion,
     () => _cache ?? null,
@@ -73,7 +125,7 @@ export function useMotion(): MotionReact | null {
  * focus and typed input, so one that opens before Motion loads keeps CSS until it closes.
  * Popups render in client-only portals, so reading the cache on the first render is safe.
  */
-export function useLoadedMotion(): MotionReact | null {
+export function useLoadedMotion(): MotionLike | null {
   const [mod] = useState(() => _cache ?? null);
   return mod;
 }

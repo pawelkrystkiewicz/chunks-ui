@@ -5,6 +5,7 @@ import type { ComponentProps, ComponentType } from "react";
 import { cn, cnState } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
 import { useReducedMotion } from "../../lib/use-motion";
+import { CloseIcon } from "../CloseIcon";
 import { RING_ANIMATION_CLASSES } from "../shared";
 import { DEFAULT_TOAST_LABELS, type ToastLabels } from "./Toast.Labels";
 
@@ -193,24 +194,7 @@ function ToastClose({ className, children, ...props }: ToastCloseProps) {
       )}
       {...props}
     >
-      {children ?? (
-        <svg
-          aria-hidden="true"
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="size-3.5"
-        >
-          <path d="M18 6 6 18" />
-          <path d="m6 6 12 12" />
-        </svg>
-      )}
+      {children ?? <CloseIcon className="size-3.5" />}
     </BaseToast.Close>
   );
 }

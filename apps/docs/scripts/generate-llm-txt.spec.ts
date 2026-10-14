@@ -22,6 +22,7 @@ it("writes the index to llms.txt and the full docs to llms-full.txt", async () =
   const index = await read("llms.txt");
   expect(index).toMatch(/^# chunks-ui\n/);
   expect(index).toMatch(/\/components\/button\)/);
+  expect(index).not.toMatch(/\/components\/index\)/);
   expect(index).toMatch(/\[Full documentation\]\(https:\/\/[^)]+\/llms-full\.txt\)/);
   const full = await read("llms-full.txt");
   expect(full).toMatch(/^# chunks-ui — Full Documentation\n/);

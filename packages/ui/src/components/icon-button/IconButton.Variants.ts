@@ -1,11 +1,11 @@
 import { cva } from "class-variance-authority";
 import type { ElementColor, ElementVariant } from "../../types";
-import { BUTTON_ANIMATION_CLASSES } from "../shared";
+import { BUTTON_ANIMATION_CLASSES, FOCUS_RING } from "../shared";
 
 export const iconButtonVariants = cva(
   [
     "inline-flex size-8 items-center justify-center rounded-md",
-    "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+    FOCUS_RING,
     "disabled:pointer-events-none disabled:opacity-50",
     "[&_svg]:shrink-0",
     "cursor-pointer",
