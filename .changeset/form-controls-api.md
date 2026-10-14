@@ -10,6 +10,4 @@ The clear button (`clearable` or `onClear`) now works for uncontrolled inputs to
 
 A disabled `Radio.Root` outside `Radio.Item` and outside a disabled `Radio.Group` now dims and shows a not-allowed cursor. Before, it looked enabled, and its `pointer-events: none` hid the cursor. Inside a disabled group or a disabled `Radio.Item`, it is still dimmed once.
 
-`Label` now dims right before a disabled `Input` with adornments, which renders a wrapper around its input.
-
 New type exports: `ComboboxControlProps`, `DialogPortalProps`, `DrawerPortalProps` and `TooltipPortalProps`.

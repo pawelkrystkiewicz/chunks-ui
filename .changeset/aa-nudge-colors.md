@@ -13,4 +13,4 @@ The default text and fill colours now meet WCAG 2 AA contrast in light and dark 
 
 `Button` and `IconButton` (`outlined`, `text`), `Chip`, `Field.Error`, the current day in `Calendar` and the `ClearButton` hover colour now use the new text tokens. Coloured text on white goes from 2.06-3.98:1 to 5.05-6.12:1.
 
-To keep the old colours, set the "Before" values of the table in `:root` and `.dark` of your theme (`--primary`, `--destructive`, `--success-foreground`, and `--muted-foreground` in light mode only), and set `--colored-text-lightness: l` so the coloured text takes its fill's own lightness again, as it did before the text tokens.
+To keep the old colours, set the "Before" values of the table in `:root` and `.dark` of your theme (`--primary`, `--destructive`, `--success-foreground`, and `--muted-foreground` in light mode only), and set `--colored-text-lightness: l` in both `:root` and `.dark` (`.dark` sets its own `max(l, 0.63)`), so the coloured text takes its fill's own lightness again, as it did before the text tokens.
