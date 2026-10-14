@@ -37,7 +37,8 @@ import { enterMotionPath, outlineTransitions, ringColor } from "./VisualTest.uti
  * (#362). Button, IconButton and the Drawer popup have the same check in their own specs.
  *
  * NumberField's increment and decrement and Combobox's clear and chip remove buttons are out of
- * the tab order (Base UI), so they never show a keyboard ring.
+ * the tab order (Base UI), so they never show a keyboard ring. Of the popups, Popover, Menu and
+ * Dialog take focus themselves; Tooltip, Select and Combobox popups do not (Base UI).
  */
 
 beforeEach(async () => {
@@ -105,10 +106,15 @@ type RingCase = {
   target: () => Promise<HTMLElement>;
   /** The element that draws the ring, when that is not the target */
   ring?: () => Element;
+  /** The pseudo-element of the ring element that draws the ring */
+  pseudo?: "::after";
   /** The part takes no `className` of its own: a utility goes on its element */
   internal?: true;
-  /** A modal popup makes the button before it inert, so the keyboard modality comes from the tab alone */
-  modal?: true;
+  /**
+   * The part is in a popup open from the start, which makes the button before it inert or (a
+   * menu) closes on a tab, so the keyboard modality comes from a key press that moves no focus
+   */
+  inPopup?: true;
 };
 
 const byTestId = (id: string) => () => screen.getByTestId(id);
@@ -198,7 +204,7 @@ const RING_CASES: RingCase[] = [
       </Dialog.Root>
     ),
     target: () => screen.findByRole("region", { name: "Terms" }),
-    modal: true,
+    inPopup: true,
   },
   {
     part: "Combobox.Control",
@@ -350,6 +356,60 @@ const RING_CASES: RingCase[] = [
     target: () => screen.findByRole("button", { name: "Target" }),
   },
   {
+    part: "Popover.Content",
+    ui: (className) => (
+      <Popover.Root defaultOpen>
+        <Popover.Trigger>Trigger</Popover.Trigger>
+        <Popover.Content className={className}>Content</Popover.Content>
+      </Popover.Root>
+    ),
+    target: () => screen.findByRole("dialog"),
+    inPopup: true,
+  },
+  {
+    // The overlay that draws the ring above the arrow
+    part: "Popover.Content with an arrow",
+    ui: (className) => (
+      <Popover.Root defaultOpen>
+        <Popover.Trigger>Trigger</Popover.Trigger>
+        <Popover.Content className={className}>
+          <Popover.Arrow />
+          Content
+        </Popover.Content>
+      </Popover.Root>
+    ),
+    target: () => screen.findByRole("dialog"),
+    pseudo: "::after",
+    inPopup: true,
+  },
+  {
+    part: "Menu.Content",
+    ui: (className) => (
+      <Menu.Root defaultOpen>
+        <Menu.Trigger>Trigger</Menu.Trigger>
+        <Menu.Content className={className}>
+          <Menu.Item>Item</Menu.Item>
+        </Menu.Content>
+      </Menu.Root>
+    ),
+    target: () => screen.findByRole("menu"),
+    inPopup: true,
+  },
+  {
+    part: "Dialog.Popup",
+    ui: (className) => (
+      <Dialog.Root defaultOpen>
+        <Dialog.Portal>
+          <Dialog.Popup className={className}>
+            <Dialog.Title>Title</Dialog.Title>
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>
+    ),
+    target: () => screen.findByRole("dialog"),
+    inPopup: true,
+  },
+  {
     part: "Breadcrumb.Link",
     ui: (className) => (
       <Breadcrumb.Root>
@@ -366,22 +426,34 @@ const RING_CASES: RingCase[] = [
   },
 ];
 
-/** Renders `ui` after a button, tabs to the button, then moves focus to the target */
-async function focusRing({ ui, target, ring, internal, modal }: RingCase, utility?: string) {
+/**
+ * Renders `ui` after a button, tabs to the button (in a popup, presses Shift instead), then moves
+ * focus to the target
+ */
+async function focusRing({ ui, target, ring, internal, inPopup }: RingCase, utility?: string) {
   render(
     <>
       <button type="button">Before</button>
       {ui(utility)}
     </>,
   );
-  await userEvent.tab();
-  if (!modal) expect(document.activeElement).toBe(screen.getByRole("button", { name: "Before" }));
+  if (inPopup) await userEvent.keyboard("{Shift}");
+  else {
+    await userEvent.tab();
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Before" }));
+  }
   const focused = await target();
   const drawn = ring?.() ?? focused;
   if (utility) {
     // Added after render, so this checks the CSS order of the utility, not the `cn` merge
     if (internal) drawn.classList.add(utility);
     expect(drawn).toHaveClass(utility);
+  }
+  // A popup focuses the target as it opens: the page computes its style without the focus
+  // first, so the focus below starts any transition on the ring
+  if (document.activeElement === focused) {
+    focused.blur();
+    getComputedStyle(focused).outlineStyle;
   }
   // Focus moves on from a keyboard-focused element, so the target matches :focus-visible.
   // Moved in the page, so the style below is read in the same task: a transition would
@@ -391,29 +463,33 @@ async function focusRing({ ui, target, ring, internal, modal }: RingCase, utilit
   return drawn;
 }
 
-function expectInstantRing(drawn: Element) {
-  const { outlineStyle, outlineColor } = getComputedStyle(drawn);
+function expectInstantRing(drawn: Element, pseudo?: string) {
+  const { outlineStyle, outlineColor } = getComputedStyle(drawn, pseudo);
   expect({ outlineStyle, outlineColor }).toEqual({
     outlineStyle: "solid",
     outlineColor: ringColor(),
   });
-  // Nor do its width or offset grow in
-  expect(outlineTransitions(drawn)).toEqual([]);
+  // Nor do its width or offset grow in. The `::after` overlay cannot transition: it exists only
+  // while the ring shows (`has-[.PopupArrow]:focus-visible`), so it has no earlier style.
+  if (!pseudo) expect(outlineTransitions(drawn)).toEqual([]);
 }
 
 // Timing a consumer may put in `className`: none of it fades or delays the ring
 const UTILITIES = ["duration-500", "delay-200", "transition-all"];
 
 describe("focus ring with no reduced-motion preference", () => {
+  // Popups open with Motion; the lists of their CSS fallback are checked below
+  beforeAll(() => enterMotionPath(true));
+
   it.each(RING_CASES)("$part shows the ring from the moment it takes keyboard focus", async (c) => {
-    expectInstantRing(await focusRing(c));
+    expectInstantRing(await focusRing(c), c.pseudo);
   });
 
   describe.each(UTILITIES)("with %s in className", (utility) => {
     it.each(RING_CASES)(
       "$part shows the ring from the moment it takes keyboard focus",
       async (c) => {
-        expectInstantRing(await focusRing(c, utility));
+        expectInstantRing(await focusRing(c, utility), c.pseudo);
       },
     );
   });
@@ -430,6 +506,18 @@ describe("focus ring with no reduced-motion preference", () => {
     const drawn = await focusRing(c);
     expect(getComputedStyle(drawn).transitionProperty).toContain(property);
   });
+
+  // Motion writes these on the popups, so a CSS transition on them would lag the spring
+  it.each(["Popover.Content", "Menu.Content", "Dialog.Popup"])(
+    "%s leaves the properties Motion writes out of its transitions",
+    async (part) => {
+      const c = RING_CASES.find((r) => r.part === part);
+      if (!c) throw new Error(`No ring case for ${part}`);
+      const properties = getComputedStyle(await focusRing(c)).transitionProperty;
+      for (const written of ["all", "opacity", "transform", "translate", "scale", "rotate"])
+        expect(properties.split(", ")).not.toContain(written);
+    },
+  );
 
   // The ring is left out, not the rest: a colour change, as on hover or press, still fades
   it("fades the colours of a Textarea", () => {
@@ -546,6 +634,19 @@ describe("own transition lists with no reduced-motion preference", () => {
       part: "Combobox.Popup",
       ui: comboboxPopup(),
       properties: ["opacity"],
+    },
+    {
+      part: "Dialog.Popup",
+      ui: (
+        <Dialog.Root defaultOpen>
+          <Dialog.Portal>
+            <Dialog.Popup data-testid="target">
+              <Dialog.Title>Title</Dialog.Title>
+            </Dialog.Popup>
+          </Dialog.Portal>
+        </Dialog.Root>
+      ),
+      properties: ["opacity", "scale"],
     },
     {
       part: "Drawer.Popup",

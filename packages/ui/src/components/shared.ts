@@ -20,5 +20,13 @@ export const BUTTON_ANIMATION_CLASSES = [
 export const RING_TRANSITION =
   "[transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,translate,scale,rotate,filter,backdrop-filter,width,height,border-radius]";
 
+/**
+ * `RING_TRANSITION` without `opacity`, `transform`, `translate`, `scale` and `rotate`, for a popup
+ * whose Motion spring writes those: a `transition-*` or `duration-*` utility in `className` then
+ * does not transition them on top of the spring.
+ */
+export const RING_TRANSITION_MOTION =
+  "[transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,box-shadow,filter,backdrop-filter,width,height,border-radius]";
+
 /** The same list, with the class's fade (300ms) for a part that animates its colours */
 export const RING_ANIMATION_CLASSES = ["micro-interactions", RING_TRANSITION, "duration-300"];
