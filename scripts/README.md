@@ -34,7 +34,7 @@ Runs in the `typecheck` job of `quality-gates.yml`. Tests: `scripts/__specs__/ch
 
 ## check-no-motion.ts
 
-Bundles chunks-ui with webpack in two throwaway consumers, one without Motion and one with it, to prove `motion` is optional. Without Motion, the build must succeed with exactly one `Can't resolve 'motion/react'` warning. With Motion, the build must emit an async chunk holding Motion and leave no bare `import("motion/react")` in any output.
+Bundles chunks-ui with webpack in two throwaway consumers, one without Motion and one with it, to prove `motion` is optional. Without Motion, the build must succeed with exactly one `Can't resolve 'motion/react'` warning, and `tsc --noEmit` with `strict` and `skipLibCheck: false` must compile a file that imports `Button` and `useMotion` from `chunks-ui`, so the package types reference no `motion/react` (TS2307). With Motion, the build must emit an async chunk holding Motion and leave no bare `import("motion/react")` in any output. The fixtures in `no-motion/` pin every dependency, including `typescript` and `@types/react` for the type-check; to move a pin, see the recipe in `TESTING_STRATEGY.md`.
 
 ```bash
 bun run check:no-motion   # builds chunks-ui first, needs the network

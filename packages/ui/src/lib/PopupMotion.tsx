@@ -1,14 +1,13 @@
 "use client";
 
 import type { CSSProperties, HTMLAttributes, JSX, Ref } from "react";
-
-type MotionModule = typeof import("motion/react");
+import type { MotionLike, MotionOptions } from "./use-motion";
 
 type RenderProps = HTMLAttributes<HTMLElement> & { ref?: Ref<HTMLElement> };
 
 type PopupMotionConfig = {
-  m: MotionModule;
-  spring: Record<string, unknown>;
+  m: MotionLike;
+  spring: MotionOptions;
   from: Record<string, number | string>;
   to: Record<string, number | string>;
 };
