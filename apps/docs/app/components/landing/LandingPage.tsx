@@ -29,7 +29,7 @@ import {
 const INSTALL = "bun add chunks-ui motion";
 const GITHUB = "https://github.com/pawelkrystkiewicz/chunks-ui";
 const DOCS = "/getting-started";
-const COMPONENTS = "/components/button";
+const COMPONENTS = "/components";
 
 const NAV = [
   { label: "Docs", href: DOCS },

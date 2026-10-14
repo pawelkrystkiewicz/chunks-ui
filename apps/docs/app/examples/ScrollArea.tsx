@@ -51,7 +51,7 @@ export function ScrollAreaHorizontalExample() {
                   {columns.map((col) => (
                     <th
                       key={col}
-                      className="whitespace-nowrap px-4 py-2 text-left font-medium text-muted-foreground"
+                      className="whitespace-nowrap px-4 py-2 text-start font-medium text-muted-foreground"
                     >
                       {col}
                     </th>
@@ -92,7 +92,7 @@ export function ScrollAreaBothExample() {
                   {columns.map((col) => (
                     <th
                       key={col}
-                      className="whitespace-nowrap px-4 py-2 text-left font-medium text-muted-foreground"
+                      className="whitespace-nowrap px-4 py-2 text-start font-medium text-muted-foreground"
                     >
                       {col}
                     </th>

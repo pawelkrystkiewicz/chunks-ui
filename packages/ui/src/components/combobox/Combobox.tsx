@@ -9,6 +9,7 @@ import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
 import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
 import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
+import { CloseIcon } from "../CloseIcon";
 import { removeButtonName } from "../chip/Chip";
 import { RING_TRANSITION } from "../shared";
 import { type ComboboxLabels, DEFAULT_COMBOBOX_LABELS } from "./Combobox.Labels";
@@ -252,18 +253,7 @@ function ComboboxClear({ className, children, ...props }: ComboboxClearProps) {
         children,
         props.render,
         { "aria-label": labels.clear },
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          className="size-3.5"
-          aria-hidden="true"
-        >
-          <path d="M18 6 6 18" />
-          <path d="m6 6 12 12" />
-        </svg>,
+        <CloseIcon className="size-3.5" />,
       )}
       className={cnState(
         "absolute inset-y-0 end-7 flex items-center text-muted-foreground hover:text-foreground",
@@ -318,18 +308,7 @@ function ComboboxChipRemove({ className, children, ...props }: ComboboxChipRemov
         namedByChip ? { "aria-labelledby": name.labelledBy } : { "aria-label": name.withoutChip },
         <>
           {namedByChip && name.hiddenText}
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            className="size-3"
-            aria-hidden="true"
-          >
-            <path d="M18 6 6 18" />
-            <path d="m6 6 12 12" />
-          </svg>
+          <CloseIcon className="size-3" />
         </>,
       )}
       className={cnState(
