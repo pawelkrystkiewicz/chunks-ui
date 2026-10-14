@@ -6,10 +6,7 @@
  *   is the same function, with one tailwind-merge cache.
  * - Only the main entry starts with "use client"; utils has none, for React Server Components.
  * - Each built entry, ESM and CJS, exports the same names as its source file.
- * - The optional `motion/react` is imported inside a `try` block with `turbopackOptional`, so
- *   webpack and Turbopack build an app without Motion (webpack warns), and an app with Motion
- *   still gets the chunk. `webpackIgnore` must not appear: it leaves a bare specifier in the
- *   bundle that a browser cannot resolve.
+ * - The `motion/react` import keeps the shape described in src/lib/use-motion.ts.
  *
  * Run: bun run check:dist
  */

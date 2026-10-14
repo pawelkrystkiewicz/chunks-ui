@@ -194,7 +194,6 @@ function ToastClose({ className, children, ...props }: ToastCloseProps) {
       {...props}
     >
       {children ?? (
-        // Lucide's `x`, inline so lucide-react is not a dependency for one icon
         <svg
           aria-hidden="true"
           xmlns="http://www.w3.org/2000/svg"

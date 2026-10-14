@@ -15,13 +15,9 @@ function setMotion(load: number, m: MotionReact | null) {
   for (const notify of motionListeners) notify();
 }
 
-// `motion` is optional. webpack (and Next.js in webpack mode) treats an `import()` inside a `try`
-// block as optional: with Motion missing it prints a "Module not found" warning instead of failing
-// the build, and with Motion present it emits a normal async chunk. `turbopackOptional` is
-// Turbopack's equivalent. Never mark this import as ignored by the bundler (webpack's "ignore"
-// magic comment): it leaves a bare "motion/react" specifier in the bundle that a browser cannot
-// resolve, so apps WITH Motion would lose the animations.
-// check:dist asserts this shape survives the build; check:no-motion bundles both consumers.
+// `motion` is optional: webpack and Turbopack build without it only when the import() sits in a
+// `try` (with `turbopackOptional` for Turbopack). Never use `webpackIgnore`: it leaves a bare
+// "motion/react" specifier that a browser cannot resolve. check:dist and check:no-motion guard this.
 function loadMotion() {
   if (_cache !== undefined) return;
   const load = loads;

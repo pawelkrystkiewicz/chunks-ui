@@ -34,7 +34,7 @@ Runs in the `typecheck` job of `quality-gates.yml`. Tests: `scripts/__specs__/ch
 
 ## check-no-motion.ts
 
-Bundles chunks-ui with webpack in two throwaway consumers, one without Motion and one with an exact `motion`, to prove that `motion` is optional in both directions. `use-motion.ts` loads it with an `import()` inside a `try` block (plus `/* turbopackOptional: true */`). Without Motion, webpack must build with exactly one expected `Can't resolve 'motion/react'` warning. With Motion, webpack must build without it, emit an extra async chunk and leave no bare `import("motion/react")` in the output; a `webpackIgnore` comment would leave one, which a browser cannot resolve. Each consumer installs its fixture in `no-motion/` (`./` and `with-motion/`, pinned with `bun install --frozen-lockfile` in a temporary directory), then the packed chunks-ui, and the check fails when that brings in anything else. The fixture files are named `package.fixture.json` and `bun.fixture.lock` so that Renovate leaves them alone. The temporary directory is removed on every exit path.
+Bundles chunks-ui with webpack in two throwaway consumers, one without Motion and one with it, to prove `motion` is optional. Without Motion, the build must succeed with exactly one `Can't resolve 'motion/react'` warning. With Motion, the build must emit an async chunk holding Motion and leave no bare `import("motion/react")` in any output.
 
 ```bash
 bun run check:no-motion   # builds chunks-ui first, needs the network
