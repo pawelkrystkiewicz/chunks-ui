@@ -29,11 +29,11 @@ jobs:
 
       # bun install reads package tarballs from here; a hit saves the registry downloads
       - name: Cache the bun install cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
-          restore-keys: ${{ runner.os }}-bun-
+          key: ${{ runner.os }}-bun-host-${{ hashFiles('bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-host-
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
@@ -67,16 +67,17 @@ jobs:
 
       # bun install reads package tarballs from here; a hit saves the registry downloads
       - name: Cache the bun install cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
-          restore-keys: ${{ runner.os }}-bun-
+          key: ${{ runner.os }}-bun-host-${{ hashFiles('bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-host-
 
       # Turbo's local cache: check-types builds chunks-ui, a hit replays it. The key never matches
-      # (the commit), so every run saves; restore-keys restores the newest earlier run's
+      # (the commit), so every run saves; restore-keys restores the newest earlier run's. Turbo
+      # never evicts, so the last step of the job drops entries older than a week
       - name: Cache the Turbo cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .turbo
           key: ${{ runner.os }}-turbo-typecheck-${{ github.sha }}
@@ -97,6 +98,11 @@ jobs:
       # install is pinned by scripts/tailwind-4.0 (frozen lockfile); bun.lock stays as it is
       - name: Check Tailwind 4.0 generates every class
         run: bun run check:tailwind
+
+      # Runs before the cache's post-save, so the saved archive stays bounded
+      - name: Prune old Turbo cache entries
+        if: always()
+        run: find .turbo/cache -type f -mtime +7 -delete || true
 
   docs-build:
     timeout-minutes: 20
@@ -127,25 +133,16 @@ jobs:
       # bun install reads package tarballs from here; a hit saves the registry downloads.
       # ~ is the container's HOME, which bun uses too
       - name: Cache the bun install cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
-          restore-keys: ${{ runner.os }}-bun-
-
-      # Turbo's local cache: a hit replays the chunks-ui and docs builds. The key never matches
-      # (the commit), so every run saves; restore-keys restores the newest earlier run's
-      - name: Cache the Turbo cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
-        with:
-          path: .turbo
-          key: ${{ runner.os }}-turbo-docs-build-${{ github.sha }}
-          restore-keys: ${{ runner.os }}-turbo-docs-build-
+          key: ${{ runner.os }}-bun-container-${{ hashFiles('bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-container-
 
       # Next's compiler cache. Before bun install, so the source globs see no node_modules. A source
       # change restores the newest cache for the same bun.lock, and the build reuses what it can
       - name: Cache the Next.js cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: apps/docs/.next/cache
           key: ${{ runner.os }}-next-${{ hashFiles('bun.lock') }}-${{ hashFiles('apps/docs/**/*.ts', 'apps/docs/**/*.tsx', 'apps/docs/**/*.mdx', 'apps/docs/**/*.css') }}
