@@ -27,6 +27,14 @@ jobs:
         with:
           bun-version-file: package.json
 
+      # bun install reads package tarballs from here; a hit saves the registry downloads
+      - name: Cache the bun install cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
+
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
@@ -56,6 +64,23 @@ jobs:
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version-file: package.json
+
+      # bun install reads package tarballs from here; a hit saves the registry downloads
+      - name: Cache the bun install cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
+
+      # Turbo's local cache: check-types builds chunks-ui, a hit replays it. The key never matches
+      # (the commit), so every run saves; restore-keys restores the newest earlier run's
+      - name: Cache the Turbo cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-typecheck-${{ github.sha }}
+          restore-keys: ${{ runner.os }}-turbo-typecheck-
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
@@ -98,6 +123,33 @@ jobs:
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version-file: package.json
+
+      # bun install reads package tarballs from here; a hit saves the registry downloads.
+      # ~ is the container's HOME, which bun uses too
+      - name: Cache the bun install cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
+
+      # Turbo's local cache: a hit replays the chunks-ui and docs builds. The key never matches
+      # (the commit), so every run saves; restore-keys restores the newest earlier run's
+      - name: Cache the Turbo cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-docs-build-${{ github.sha }}
+          restore-keys: ${{ runner.os }}-turbo-docs-build-
+
+      # Next's compiler cache. Before bun install, so the source globs see no node_modules. A source
+      # change restores the newest cache for the same bun.lock, and the build reuses what it can
+      - name: Cache the Next.js cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: apps/docs/.next/cache
+          key: ${{ runner.os }}-next-${{ hashFiles('bun.lock') }}-${{ hashFiles('apps/docs/**/*.ts', 'apps/docs/**/*.tsx', 'apps/docs/**/*.mdx', 'apps/docs/**/*.css') }}
+          restore-keys: ${{ runner.os }}-next-${{ hashFiles('bun.lock') }}-
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
