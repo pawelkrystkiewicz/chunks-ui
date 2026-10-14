@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -104,13 +104,32 @@ describe("Menu", () => {
       </Menu.Root>,
     );
     const content = screen.getByTestId("content");
-    await userEvent.pointer({ target: content, coords: { x: 2, y: 2 } });
+    // user-event's moves carry no movementX/Y
+    fireEvent.pointerMove(content, { movementX: 2, movementY: 2 });
     expect(onPointerMove).toHaveBeenCalled();
     expect(content).toHaveAttribute("data-pointer");
     content.focus();
     await userEvent.keyboard("{Shift}");
     expect(onKeyDown).toHaveBeenCalled();
     expect(content).not.toHaveAttribute("data-pointer");
+  });
+
+  // Base UI ignores a WebKit pointer move with no movement (it fires when the layout shifts under
+  // a still pointer), so the ring stays as it was
+  it("sets data-pointer on a real pointer move, not on a move with no movement", () => {
+    render(
+      <Menu.Root open>
+        <Menu.Trigger>Open</Menu.Trigger>
+        <Menu.Content data-testid="content">
+          <Menu.Item>Item</Menu.Item>
+        </Menu.Content>
+      </Menu.Root>,
+    );
+    const content = screen.getByTestId("content");
+    fireEvent.pointerMove(content, { movementX: 0, movementY: 0 });
+    expect(content).not.toHaveAttribute("data-pointer");
+    fireEvent.pointerMove(content, { movementX: 3, movementY: 0 });
+    expect(content).toHaveAttribute("data-pointer");
   });
 
   it("calls onClick when Item is clicked", async () => {

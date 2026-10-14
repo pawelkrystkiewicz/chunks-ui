@@ -110,7 +110,9 @@ function MenuContentPopup({
         data-pointer={pointer || undefined}
         onPointerMove={(event) => {
           onPointerMove?.(event);
-          setPointer(true);
+          // WebKit fires a move with no movement when the layout shifts under a still pointer;
+          // Base UI ignores those too (isStationaryWebKitPointer)
+          if (event.movementX !== 0 || event.movementY !== 0) setPointer(true);
         }}
         onKeyDown={(event) => {
           onKeyDown?.(event);
