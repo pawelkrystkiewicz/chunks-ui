@@ -156,6 +156,11 @@ jobs:
         working-directory: packages/ui
         run: bun run check:exports && bun run check:dist
 
+      # Bundles consumers with and without Motion using webpack; the turbo build is a cache hit and
+      # the installs are pinned by scripts/no-motion, so it needs the network only
+      - name: Check optional Motion with webpack
+        run: bun run check:no-motion
+
       # Run from apps/docs, not through Turbo: its strict env mode drops PLAYWRIGHT_BROWSERS_PATH
       - name: Check docs pages with axe
         working-directory: apps/docs

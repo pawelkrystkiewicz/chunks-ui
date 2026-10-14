@@ -15,13 +15,19 @@ function setMotion(load: number, m: MotionReact | null) {
   for (const notify of motionListeners) notify();
 }
 
+// `motion` is optional: webpack and Turbopack build without it only when the import() sits in a
+// `try` (with `turbopackOptional` for Turbopack). Never use `webpackIgnore`: it leaves a bare
+// "motion/react" specifier that a browser cannot resolve. check:dist and check:no-motion guard this.
 function loadMotion() {
   if (_cache !== undefined) return;
   const load = loads;
-  import("motion/react").then(
-    (m) => setMotion(load, m),
-    () => setMotion(load, null),
-  );
+  (async () => {
+    let m: MotionReact | null = null;
+    try {
+      m = await import(/* turbopackOptional: true */ "motion/react");
+    } catch {}
+    setMotion(load, m);
+  })();
 }
 
 if (typeof window !== "undefined") {
@@ -31,6 +37,7 @@ if (typeof window !== "undefined") {
 /**
  * Tests only: forget the loaded module and load it again. A popup that opens before the
  * returned promise settles mounts while Motion is still loading, as on a fresh page.
+ * Not in the dist (tree-shaken), so the plain import needs no `try`.
  * `arrival` holds the module back until it settles, so a test can choose when Motion arrives.
  */
 export function reloadMotion(arrival?: Promise<unknown>): Promise<unknown> {
