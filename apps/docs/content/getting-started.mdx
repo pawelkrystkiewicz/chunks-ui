@@ -6,7 +6,19 @@
 bun add chunks-ui motion
 ```
 
-`motion` is an optional peer dependency (`^12.0.0`). Components work without it, but animations require it.
+Peer dependencies:
+
+| Package                     | Range     | Notes                                            |
+| --------------------------- | --------- | ------------------------------------------------ |
+| `react`, `react-dom`        | `^19.2.0` | required; `Tabs` renders panels with `<Activity>` |
+| `@base-ui/react`            | `^1.9.0`  | required                                         |
+| `class-variance-authority`  | `^0.7.1`  | required                                         |
+| `tailwindcss`               | `^4.0.0`  | required to compile `theme.css`; optional peer   |
+| `motion`                    | `^12.0.0` | optional; without it components use CSS transitions |
+
+Node 22 or newer.
+
+`motion` is an optional peer dependency (`^12.0.0`). Components work without it, but animations require it. The package types reference `motion/react`, so with `skipLibCheck: false` in your `tsconfig.json` TypeScript reports `TS2307` when Motion is not installed: add `motion` as a devDependency or set `skipLibCheck: true`.
 
 ## Setup
 
@@ -24,6 +36,17 @@ import { Button, Input, Tabs } from "chunks-ui";
 ```
 
 The theme CSS exposes OKLCH color tokens as CSS variables and registers them with Tailwind CSS v4 through `@theme`. Its `@source` tells Tailwind to scan the package for the classes the components use -- no plugin needed.
+
+The theme also sets `--font-sans` to `"Manrope", sans-serif` (the font files are not included). To keep your app's font, set the token after the import:
+
+```css
+@import "tailwindcss";
+@import "chunks-ui/theme.css";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+```
 
 ## Architecture
 
