@@ -517,7 +517,7 @@ describe("focus ring with no reduced-motion preference", () => {
           const c = RING_CASES.find((r) => r.part === part);
           if (!c) throw new Error(`No ring case for ${part}`);
           const properties = getComputedStyle(await focusRing(c, utility)).transitionProperty;
-          for (const written of ["opacity", "transform", "translate", "scale", "rotate"])
+          for (const written of ["all", "opacity", "transform", "translate", "scale", "rotate"])
             expect(properties.split(", ")).not.toContain(written);
         },
       );
