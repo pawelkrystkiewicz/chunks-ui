@@ -32,9 +32,8 @@ export const RING_TRANSITION_MOTION =
 export const RING_ANIMATION_CLASSES = ["micro-interactions", RING_TRANSITION, "duration-300"];
 
 /**
- * The library's keyboard focus ring, as a Button draws it: 2px of `--ring`, 2px outside the edge,
- * under `:focus-visible` only. One string for every part that draws the plain `focus-visible` offset ring (the arrow overlay in popup-arrow.ts and Slider's `has-[:focus-visible]` ring stay hand-written), so the ring cannot
- * drift between them.
+ * The library's keyboard focus ring: 2px `--ring`, 2px offset, `:focus-visible` only. Not used by
+ * popup-arrow's overlay or Slider's `has-[:focus-visible]` ring.
  */
 export const FOCUS_RING =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";

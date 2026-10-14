@@ -1,8 +1,8 @@
 import type { ComponentProps } from "react";
 import { cn } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
+import { CloseIcon } from "../CloseIcon";
 import { BUTTON_ANIMATION_CLASSES } from "../shared";
-import { XIcon } from "../XIcon";
 import { type ClearButtonLabels, DEFAULT_CLEAR_BUTTON_LABELS } from "./ClearButton.Labels";
 
 export type ClearButtonProps = ComponentProps<"button"> & {
@@ -45,7 +45,7 @@ export function ClearButton({ className, label, labels, ...props }: ClearButtonP
       )}
       {...props}
     >
-      <XIcon className="size-4" />
+      <CloseIcon className="size-4" />
     </button>
   );
 }

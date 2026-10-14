@@ -5,8 +5,8 @@ import type { ComponentProps, ComponentType } from "react";
 import { cn, cnState } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
 import { useReducedMotion } from "../../lib/use-motion";
+import { CloseIcon } from "../CloseIcon";
 import { RING_ANIMATION_CLASSES } from "../shared";
-import { XIcon } from "../XIcon";
 import { DEFAULT_TOAST_LABELS, type ToastLabels } from "./Toast.Labels";
 
 /**
@@ -194,7 +194,7 @@ function ToastClose({ className, children, ...props }: ToastCloseProps) {
       )}
       {...props}
     >
-      {children ?? <XIcon className="size-3.5" />}
+      {children ?? <CloseIcon className="size-3.5" />}
     </BaseToast.Close>
   );
 }

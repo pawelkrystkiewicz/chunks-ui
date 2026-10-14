@@ -9,9 +9,9 @@ import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
 import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
 import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
+import { CloseIcon } from "../CloseIcon";
 import { removeButtonName } from "../chip/Chip";
 import { RING_TRANSITION } from "../shared";
-import { XIcon } from "../XIcon";
 import { type ComboboxLabels, DEFAULT_COMBOBOX_LABELS } from "./Combobox.Labels";
 
 const ComboboxLabelsContext = createContext(DEFAULT_COMBOBOX_LABELS);
@@ -253,7 +253,7 @@ function ComboboxClear({ className, children, ...props }: ComboboxClearProps) {
         children,
         props.render,
         { "aria-label": labels.clear },
-        <XIcon className="size-3.5" />,
+        <CloseIcon className="size-3.5" />,
       )}
       className={cnState(
         "absolute inset-y-0 end-7 flex items-center text-muted-foreground hover:text-foreground",
@@ -308,7 +308,7 @@ function ComboboxChipRemove({ className, children, ...props }: ComboboxChipRemov
         namedByChip ? { "aria-labelledby": name.labelledBy } : { "aria-label": name.withoutChip },
         <>
           {namedByChip && name.hiddenText}
-          <XIcon className="size-3" />
+          <CloseIcon className="size-3" />
         </>,
       )}
       className={cnState(
