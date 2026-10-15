@@ -24,7 +24,7 @@ Upgrading from 0.1.4. Details are in the other entries, quoted by their first wo
   - A disabled `Checkbox`, `Switch` and `Textarea` keep their pointer events and show a not-allowed cursor, and a disabled `Textarea` has no resize grip; `pointer-events-none` in `className` restores the old behaviour, `disabled:resize-y` the grip ("Disabled form controls show a not-allowed cursor").
   - A disabled `Input`, `Select.Trigger`, `Combobox` (control, input, trigger, clear button and chip remove button), `NumberField` (group, input and buttons), `Slider.Thumb`, `DatePicker` trigger, `ToggleGroup.Item`, `ClearButton` and `Calendar` day also keep their pointer events and show the not-allowed cursor. `pointer-events-none` in `className` restores the old behaviour, with a different class for each part ("Disabled form controls show the not-allowed cursor").
   - The disabled look of `Radio`, `Checkbox`, the `Menu` items, `Slider`, `Combobox.Item` and the `NumberField` buttons is spelled `data-disabled:`, not `data-[disabled]:`: spell an override `data-disabled:opacity-75` ("Disabled form controls show the not-allowed cursor").
-  - `Input`'s clear button no longer shows on a `disabled` or `readOnly` input or in a disabled `Field.Root`, shows on an uncontrolled input that has text and an `onClear`, and clearing moves focus to the input ("`Input` has a `clearable` prop", "Fixed: inside a disabled `Field.Root`, `Input`").
+  - `Input`'s clear button no longer shows on a `disabled` or `readOnly` input or in a disabled `Field.Root`, shows on an uncontrolled input that has text and an `onClear`, and clearing moves focus to the input ("`Input` has a `clearable` prop").
   - Under `prefers-reduced-motion: reduce`, the `micro-interactions` class now sets `transition: none !important`, so no `transition-*` utility turns it back on, and `Slider.Thumb`, `Textarea` and `Table.Row` no longer fade their colours ("Fixed: timing utilities").
   - `useMotion()` returns the Motion module on the first render of a component that mounts after Motion has loaded, where 0.1.4 returned `null`; `useReducedMotion()` returns `false` while hydrating ("`useMotion()` now returns", "Fixed: for users with `prefers-reduced-motion: reduce`").
 - DOM changes
@@ -38,6 +38,7 @@ Upgrading from 0.1.4. Details are in the other entries, quoted by their first wo
   - With Motion installed, closed popups are no longer in the DOM.
   - `Popover.Arrow` and `Menu.Arrow` draw an arrow where they rendered nothing.
   - `Popover.Content` and `Menu.Content` are `position: relative`, so content you position absolutely in them is placed against the padding box, not the border box.
+  - `Input` with `endAdornment` and a clear button keeps the adornment in the DOM, hidden by CSS, while the button shows (it was unmounted before), so a jsdom query by its text now finds it.
   - `Switch.Root` has `p-0.5` instead of `border-2 border-transparent`, so a `border-*` colour class on it no longer shows.
   - `group/trigger` moved from `Accordion.Item` to `Accordion.Trigger`; a `group-*/trigger` variant on other content of the item no longer matches.
 - Types

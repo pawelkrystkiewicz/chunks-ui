@@ -161,7 +161,9 @@ export function Input({
 
   const handleClear = () => {
     const input = inputRef.current as HTMLInputElement | null;
-    // The user can't edit it, e.g. inside a disabled Field.Root, which sets the attribute
+    // CSS hides the button inside a disabled Field.Root, which disables the input without the
+    // `disabled` prop; this guard is defence in depth for a click that gets through anyway
+    // (programmatic, or jsdom, which doesn't load the CSS)
     if (input?.disabled || input?.readOnly) return;
     // Focus the input before the clear button unmounts, or focus falls to <body>
     input?.focus();
@@ -190,11 +192,11 @@ export function Input({
         typeof className === "string" && className,
       )}
     >
-      {startAdornment && (
+      {startAdornment ? (
         <span className="pointer-events-none absolute start-3 flex items-center text-muted-foreground">
           {startAdornment}
         </span>
-      )}
+      ) : null}
       <BaseInput
         className={cnState(
           inputVariants(),
@@ -223,7 +225,7 @@ export function Input({
           />
         </span>
       )}
-      {endAdornment && (
+      {endAdornment ? (
         <span
           className={cn(
             "absolute end-3 flex items-center",
@@ -232,7 +234,7 @@ export function Input({
         >
           {endAdornment}
         </span>
-      )}
+      ) : null}
     </div>
   );
 }

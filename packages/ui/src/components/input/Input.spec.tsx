@@ -385,6 +385,7 @@ describe("Input", () => {
   it("shows the clear button with an end adornment when value is non-empty", () => {
     render(<Input onClear={vi.fn()} value="text" endAdornment={<span data-testid="end" />} />);
     expect(screen.getByRole("button", { name: "Clear" })).toBeInTheDocument();
+    expect(screen.getByTestId("end")).toBeInTheDocument();
   });
 
   it("has no a11y violations", async () => {
