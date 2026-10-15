@@ -10,7 +10,7 @@ Each was `data-[x]:`. tailwind-merge treats `data-x:` as another class, so an ov
 - `data-checked:` on `Checkbox.Root` and `Radio.Root`, as on `Switch`
 - `data-indeterminate:` on `Checkbox.Root` and `Progress.Indicator`
 - `data-starting-style:` and `data-ending-style:` on `Drawer.Popup` (the CSS slide, which runs without Motion, with reduced motion or with a `render` prop), as on the other popups
-- `data-invalid:` on `Input` (and `inputVariants()`) and `Textarea`; on an `Input` with adornments, pass `className` as a function
+- `data-invalid:` on `Input` (and `inputVariants()`); on an `Input` with adornments, pass `className` as a function
 - `data-dragging:` on `Slider.Thumb`
 - `data-hovering:` and `data-scrolling:` on `ScrollArea.Scrollbar`
-- `group-data-panel-open/trigger:` on the chevron inside `Accordion.Trigger`, and `data-loading:` and `data-error:` on the image inside `Avatar`; neither takes a `className`, so this is one spelling in the library, not a change for an override
+- `group-data-panel-open/trigger:` on the chevron inside `Accordion.Trigger`, which takes no `className`, so this is one spelling in the library, not a change for an override
