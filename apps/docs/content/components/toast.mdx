@@ -156,7 +156,7 @@ add({
 
 That toast gets a `×` button in its top-end corner (top-right in left-to-right layouts, top-left in right-to-left ones) that dismisses it via Base UI's `Toast.Close`. Other toasts in the same viewport are unaffected — dismissibility is a per-toast concern, not a viewport-wide setting.
 
-`closeProps` takes the props of that button, as `actionProps` does for the action: `className` merges after the library classes, `aria-label` replaces `labels.close` for that toast, and `onClick` runs before `onClose`. To keep the focus ring flush with the button instead of 2px outside it:
+`closeProps` takes the props of that button, as `actionProps` does for the action: `className` merges after the library classes, and `aria-label` replaces `labels.close` for that toast. To keep the focus ring flush with the button instead of 2px outside it:
 
 ```tsx
 add({
@@ -170,7 +170,7 @@ add({
 
 ### Reacting to Close
 
-If you need to run a side effect when the user dismisses a toast — tracking analytics, offering an undo stack, syncing with a backend — pass `onClose`. It receives the close button's click event. Passing `onClose` also implicitly enables the close button, so you don't need to also set `dismissible`. The event doesn't say which toast closed; to know that, keep the id that `add()` returns:
+If you need to run a side effect when the user dismisses a toast — tracking analytics, offering an undo stack, syncing with a backend — pass `onClose`. It takes no arguments and fires once per close, whichever way the toast closes: the close button, the timeout, a swipe or `manager.close`. Passing `onClose` also implicitly enables the close button, so you don't need to also set `dismissible`. It doesn't say which toast closed; to know that, keep the id that `add()` returns:
 
 ```tsx
 const id = add({
@@ -181,7 +181,11 @@ const id = add({
 })
 ```
 
-`onClose` runs *in addition to* Base UI's built-in dismissal — it's for side effects, not for preventing the toast from closing.
+`onClose` runs *in addition to* Base UI's built-in dismissal — it's for side effects, not for preventing the toast from closing. To keep a toast open on a click of the close button, call `event.preventBaseUIHandler()` in `closeProps.onClick`: the toast stays and `onClose` does not fire.
+
+```tsx
+add({ title: "Unsaved changes", dismissible: true, closeProps: { onClick: (event) => event.preventBaseUIHandler() } })
+```
 
 ## Promise Toasts
 

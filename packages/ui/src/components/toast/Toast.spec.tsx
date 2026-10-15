@@ -487,29 +487,48 @@ describe("Toast closeProps", () => {
     expect(screen.queryByLabelText("Zamknij", { selector: "button" })).toBeNull();
   });
 
-  it("runs closeProps.onClick, then onClose with the click, and closes the toast", async () => {
+  it("runs closeProps.onClick and onClose once each, with no argument, and closes the toast", async () => {
     const user = userEvent.setup();
     const onClick = vi.fn();
     const onClose = vi.fn();
     const close = await showToast({ onClick }, onClose);
     await user.click(close);
     expect(onClick).toHaveBeenCalledTimes(1);
-    const click = onClick.mock.calls[0]?.[0];
-    expect(click).toBeDefined();
-    expect(onClose).toHaveBeenCalledWith(click);
-    expect(onClick.mock.invocationCallOrder[0]).toBeLessThan(
-      onClose.mock.invocationCallOrder[0] ?? 0,
-    );
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onClose).toHaveBeenCalledWith();
     expect(screen.queryByText("Saved")).toBeNull();
   });
 
-  it("skips the click call of onClose when closeProps.onClick prevents default", async () => {
+  it("keeps the toast open when closeProps.onClick calls preventBaseUIHandler", async () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
-    const close = await showToast({ onClick: (event) => event.preventDefault() }, onClose);
+    const close = await showToast({ onClick: (event) => event.preventBaseUIHandler() }, onClose);
     await user.click(close);
-    // Base UI's manager still calls `onClose` with no arguments once the toast closes
-    expect(onClose).not.toHaveBeenCalledWith(expect.anything());
-    expect(screen.queryByText("Saved")).toBeNull();
+    expect(screen.getByText("Saved")).toBeInTheDocument();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("calls onClose once when the toast closes by timeout", async () => {
+    vi.useFakeTimers();
+    try {
+      const manager = createToastManager();
+      const onClose = vi.fn();
+      render(
+        <Toast.Provider toastManager={manager}>
+          <Toast.Viewport />
+        </Toast.Provider>,
+      );
+      act(() => {
+        manager.add({ title: "Saved", timeout: 1, onClose });
+      });
+      expect(onClose).not.toHaveBeenCalled();
+      act(() => {
+        vi.advanceTimersByTime(10);
+      });
+      expect(onClose).toHaveBeenCalledTimes(1);
+      expect(onClose).toHaveBeenCalledWith();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
