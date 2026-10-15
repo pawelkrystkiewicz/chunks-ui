@@ -17,7 +17,8 @@ type PopupMotionConfig = {
  * element for a `motion.div`, enabling spring enter/exit animations.
  *
  * Designed for popup-style components (Popover, Tooltip, Dialog, etc.)
- * that use Base UI's `open` state.
+ * that use Base UI's `open` state. `usePopupRender` is the caller: a popup part
+ * does not call this directly.
  */
 export function createPopupRenderer({ m, spring, from, to }: PopupMotionConfig) {
   return (renderProps: RenderProps, state: { open: boolean }): JSX.Element => {

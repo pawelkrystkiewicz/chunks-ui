@@ -79,6 +79,7 @@ chunks-ui/
           motion.ts         # shared spring presets
           use-motion.ts     # useMotion() + useReducedMotion() hooks
           PopupMotion.tsx   # createPopupRenderer() for Base UI popups
+          use-popup-render.ts  # usePopupRender(): Motion spring or CSS path
         theme.css           # CSS variables
         index.ts            # barrel export
       tsup.config.ts
