@@ -382,7 +382,6 @@ describe("controls once Motion has loaded", () => {
       rerender(ui("hidden"));
       await reducedMotion(true);
       rerender(ui("visible"));
-      // Shown again, the element goes back to the CSS fallback; read it once nothing changes
       await expect.poll(() => handedBack(subject), { timeout: SETTLE_TIMEOUT_MS }).toBe(true);
       const shown = await waitForStable(() => snapshot(subject));
       expectOver(subject);
@@ -407,11 +406,8 @@ describe("controls once Motion has loaded", () => {
       await expect.poll(element, { timeout: SETTLE_TIMEOUT_MS }).toBeNull();
 
       await reducedMotion(false);
-      // Motion drives it again: mounted, and at rest at opacity 0. A remounted indicator has no inline
-      // opacity until Motion's first rAF batch writes it, so wait one frame before sampling.
       await expect.poll(element, { timeout: SETTLE_TIMEOUT_MS }).not.toBeNull();
-      await nextFrame();
-      expect(new Set(await sample(() => opacity(element()), 10))).toEqual(new Set([0]));
+      expect(await waitForStable(() => opacity(element()))).toBe(0);
     },
   );
 
