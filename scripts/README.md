@@ -44,10 +44,16 @@ Runs in the `docs-build` job of `quality-gates.yml`, as its own step. Tests: `sc
 
 ## check-peer-floors.ts
 
-Derives the lowest version each `^range` in `packages/ui` `peerDependencies` allows, for the `floors` job in `unit.tests.yml`. `--specs` prints `name@floor` for `bun add --no-save`; `--check` (the default) fails unless every peer resolves from `packages/ui` to its floor. `class-variance-authority` and `tailwindcss` are exempt. It throws on a range that is not a `^range` and on an exempt name that is not a peer.
+Derives the lowest version each `^range` in `packages/ui` `peerDependencies` allows, for the `floors` job in `unit.tests.yml`. `class-variance-authority` and `tailwindcss` are exempt. It throws on a range that is not a `^range` and on an exempt name that is not a peer.
+
+`@types/react` and `@types/react-dom` are floored too, at the `<major>.<minor>` of the `react` and `react-dom` floors (`19.2.0` gives `19.2`), so a moved React floor moves them. There is no list of type versions to keep in step by hand.
+
+- `--overrides` merges every floor into `overrides` of the root `package.json`, in place: the peers at their exact floor, the types at `<major>.<minor>.x`. Entries already there (`zod`) stay. A plain `bun install` then resolves every dependent of those packages at the floors, the `packages/ui` devDependencies included. It edits a tracked file and the install rewrites `bun.lock`: run it only in a throwaway checkout (the job's own, or a copy of the repo).
+- `--check` (the default) fails unless `packages/ui` resolves each peer to its floor and each types package to a patch of its `<major>.<minor>`. It fails on a normal install, where React is above the floors.
+- `--specs` prints `name@floor` (the types as `@types/react@19.2`) for a manual `bun add --no-save`. The job does not use it.
 
 ```bash
-bun scripts/check-peer-floors.ts --specs
+bun scripts/check-peer-floors.ts --overrides && bun install && bun scripts/check-peer-floors.ts --check   # in a copy of the repo
 ```
 
 Tests: `scripts/__specs__/check-peer-floors.spec.ts`.
