@@ -2,6 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { FOCUS_RING } from "../shared";
 import { ClearButton } from "./ClearButton";
 import { DEFAULT_CLEAR_BUTTON_LABELS } from "./ClearButton.Labels";
 
@@ -34,6 +35,23 @@ describe("ClearButton", () => {
   it("has type=button", () => {
     render(<ClearButton />);
     expect(screen.getByRole("button")).toHaveAttribute("type", "button");
+  });
+
+  it("draws the library focus ring", () => {
+    render(<ClearButton />);
+    expect(screen.getByRole("button")).toHaveClass(...FOCUS_RING.split(" "));
+  });
+
+  // Both offsets are in one tailwind-merge group under the same variant: the consumer's wins
+  it("keeps a flush ring with focus-visible:outline-offset-0 in className", () => {
+    render(<ClearButton className="focus-visible:outline-offset-0" />);
+    const button = screen.getByRole("button");
+    expect(button).toHaveClass(
+      "focus-visible:outline-offset-0",
+      "focus-visible:outline-2",
+      "focus-visible:outline-ring",
+    );
+    expect(button).not.toHaveClass("focus-visible:outline-offset-2");
   });
 
   it("has no a11y violations", async () => {

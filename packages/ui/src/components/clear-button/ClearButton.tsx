@@ -2,7 +2,7 @@ import type { ComponentProps } from "react";
 import { cn } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
 import { CloseIcon } from "../CloseIcon";
-import { BUTTON_ANIMATION_CLASSES } from "../shared";
+import { BUTTON_ANIMATION_CLASSES, FOCUS_RING } from "../shared";
 import { type ClearButtonLabels, DEFAULT_CLEAR_BUTTON_LABELS } from "./ClearButton.Labels";
 
 export type ClearButtonProps = ComponentProps<"button"> & {
@@ -35,7 +35,7 @@ export function ClearButton({ className, label, labels, ...props }: ClearButtonP
       className={cn(
         "inline-flex size-6 items-center justify-center rounded-full",
         "text-muted-foreground hover:bg-destructive/5 hover:text-foreground",
-        "focus-visible:outline-2 focus-visible:outline-ring",
+        FOCUS_RING,
         "disabled:pointer-events-none disabled:opacity-50",
         "hover:text-destructive-text",
         "cursor-pointer",

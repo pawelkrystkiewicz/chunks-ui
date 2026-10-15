@@ -2,6 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { afterEach, describe, expect, it } from "vitest";
+import { FOCUS_RING } from "../shared";
 import { createToastManager, Toast } from "./Toast";
 import { DEFAULT_TOAST_LABELS } from "./Toast.Labels";
 
@@ -410,5 +411,62 @@ describe("Toast labels", () => {
       </Toast.Provider>,
     );
     expect(screen.getByRole("region", { name: "Alerts" })).toBeInTheDocument();
+  });
+});
+
+describe("Toast focus ring", () => {
+  function RingHarness({ action }: { action?: string }) {
+    const toast = Toast.useToast();
+    return (
+      <button
+        type="button"
+        onClick={() =>
+          toast.add({
+            title: "Saved",
+            dismissible: true,
+            actionProps: { children: "Undo", className: action },
+          })
+        }
+      >
+        Show toast
+      </button>
+    );
+  }
+
+  /** Shows a dismissible toast with an "Undo" action, `action` in the action's className */
+  async function showToast(action?: string) {
+    const user = userEvent.setup();
+    render(
+      <Toast.Provider>
+        <RingHarness action={action} />
+        <Toast.Viewport />
+      </Toast.Provider>,
+    );
+    await user.click(screen.getByRole("button", { name: "Show toast" }));
+    await screen.findByText("Saved");
+  }
+
+  it("draws the library focus ring on Close", async () => {
+    await showToast();
+    // Base UI aria-hides the close button until the toast is focused or hovered, so by its label
+    const close = screen.getByLabelText(DEFAULT_TOAST_LABELS.close, { selector: "button" });
+    expect(close).toHaveClass(...FOCUS_RING.split(" "));
+  });
+
+  it("draws the library focus ring on Action", async () => {
+    await showToast();
+    expect(screen.getByRole("button", { name: "Undo" })).toHaveClass(...FOCUS_RING.split(" "));
+  });
+
+  // Both offsets are in one tailwind-merge group under the same variant: the consumer's wins
+  it("keeps a flush ring on Action with focus-visible:outline-offset-0 in className", async () => {
+    await showToast("focus-visible:outline-offset-0");
+    const action = screen.getByRole("button", { name: "Undo" });
+    expect(action).toHaveClass(
+      "focus-visible:outline-offset-0",
+      "focus-visible:outline-2",
+      "focus-visible:outline-ring",
+    );
+    expect(action).not.toHaveClass("focus-visible:outline-offset-2");
   });
 });
