@@ -52,7 +52,11 @@ Disable individual radio buttons or the entire group:
 
 <RadioDisabledExample />
 
-A disabled `Radio.Root` dims and shows a not-allowed cursor on its own too, outside `Radio.Item` and in a group that isn't disabled. Inside a disabled `Radio.Group` or a disabled `Radio.Item`, the radio is dimmed once with them, not twice. `Radio.Item` dims its radio and its text together whichever disables the radio: its own `disabled`, its `Radio.Group` or a `Field.Root` around them.
+A disabled `Radio.Root` dims and shows a not-allowed cursor on its own too, outside `Radio.Item` and in a group that isn't disabled. Inside a disabled `Radio.Group` or a disabled `Radio.Item`, the radio is dimmed once with them, not twice. `Radio.Item` dims its radio and its text together whichever disables the radio: its own `disabled`, its `Radio.Group` or a `Field.Root` around them. That dim is keyed on the radio's `data-disabled`, so an override in `className` on `Radio.Item` is spelled with the same variant; a plain `opacity-75` loses to it:
+
+```tsx
+<Radio.Item value="pro" disabled className="has-[>[data-disabled]]:opacity-75">Pro</Radio.Item>
+```
 
 ```tsx
 <Radio.Group defaultValue="free" aria-label="Plan">
