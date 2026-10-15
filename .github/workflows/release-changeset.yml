@@ -80,8 +80,14 @@ jobs:
         id: unpublished
         if: steps.changesets.outputs.published != 'true'
         run: |
+          # pipefail: a failed git show must not leave version empty and the check asking npm for "chunks-ui@"
+          set -o pipefail
           # Not the workspace: changesets/action leaves it on its release branch, versions bumped
-          version=$(git show "$GITHUB_SHA:packages/ui/package.json" | jq -r .version)
+          version=$(git show "$GITHUB_SHA:packages/ui/package.json" | jq -r .version) || version=
+          if [ -z "$version" ] || [ "$version" = null ]; then
+            echo "::error::cannot read .version of packages/ui/package.json at $GITHUB_SHA"
+            exit 1
+          fi
           if out=$(npm view "chunks-ui@$version" version 2>&1); then
             echo "chunks-ui@$version is on npm"
           elif grep -q E404 <<<"$out"; then
