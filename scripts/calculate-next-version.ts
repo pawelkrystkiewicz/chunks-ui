@@ -42,9 +42,10 @@ function calculateNextVersion(
 }
 
 /**
- * Extracts and parses YAML front matter from a changeset file
+ * Returns the YAML between the front matter delimiters of a changeset file, or null when the
+ * file has no front matter
  */
-function parseChangesetFrontMatter(content: string): "major" | "minor" | "patch" | null {
+function readFrontMatter(content: string): string | null {
   // Find the front matter delimiters
   const frontMatterStart = content.indexOf("---");
   if (frontMatterStart !== 0) {
@@ -58,8 +59,17 @@ function parseChangesetFrontMatter(content: string): "major" | "minor" | "patch"
     return null;
   }
 
-  // Extract the YAML content between the delimiters
-  const yamlContent = content.slice(3, frontMatterEnd).trim();
+  return content.slice(3, frontMatterEnd).trim();
+}
+
+/**
+ * Extracts and parses YAML front matter from a changeset file
+ */
+function parseChangesetFrontMatter(content: string): "major" | "minor" | "patch" | null {
+  const yamlContent = readFrontMatter(content);
+  if (yamlContent === null) {
+    return null;
+  }
 
   try {
     // Parse the YAML
@@ -77,6 +87,29 @@ function parseChangesetFrontMatter(content: string): "major" | "minor" | "patch"
   } catch {
     // Invalid YAML, treat as patch
     return null;
+  }
+}
+
+/**
+ * An empty changeset (`bunx changeset --empty`) has front matter that names no package: it
+ * releases nothing and adds no changelog entry, so it must not count as a pending release
+ */
+function isEmptyChangeset(content: string): boolean {
+  const yamlContent = readFrontMatter(content);
+  if (yamlContent === null) {
+    return false;
+  }
+
+  try {
+    const parsed = YAML.load(yamlContent);
+    return (
+      parsed === undefined ||
+      parsed === null ||
+      (typeof parsed === "object" && Object.keys(parsed).length === 0)
+    );
+  } catch {
+    // Invalid YAML is not an empty changeset
+    return false;
   }
 }
 
@@ -107,12 +140,18 @@ function determineBumpType(changesetDir: string): "major" | "minor" | "patch" {
 }
 
 /**
- * Checks if there are any changeset files (excluding README.md)
+ * Checks if there are any changeset files that release something (excluding README.md and empty
+ * changesets)
  */
 function hasChangesets(changesetDir: string): boolean {
   try {
     const files = readdirSync(changesetDir);
-    return files.some((file) => file !== "README.md" && file.endsWith(".md"));
+    return files.some(
+      (file) =>
+        file !== "README.md" &&
+        file.endsWith(".md") &&
+        !isEmptyChangeset(readFileSync(join(changesetDir, file), "utf-8")),
+    );
   } catch {
     return false;
   }
@@ -192,6 +231,7 @@ export {
   determineBumpType,
   getCurrentVersion,
   hasChangesets,
+  isEmptyChangeset,
   parseChangesetFrontMatter,
   parseVersion,
 };
