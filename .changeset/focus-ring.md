@@ -19,7 +19,7 @@ Popups:
 
 - `Popover.Content`, `Menu.Content`, `Dialog.Popup`, `Drawer.Popup` and the `DatePicker` popup now draw the library ring when they take keyboard focus themselves (nothing tabbable inside, or `initialFocus` on the popup): 2px of `--ring`, 2px outside the edge, like `Button`. Before, they showed the browser's default outline.
 - On `Drawer.Popup` the ring sits just inside the 1px border (3px in from the edge), so the border on the open side stays visible. In a `Popover` or `Menu` popup with an arrow, the ring is an overlay above the arrow that follows the popup's border width (`border-2`), `Highlight` under forced colours.
-- Without Motion, these popups now transition only their own animation instead of `all`: opacity and scale on Popover, Menu, Dialog and DatePicker, the slide on Drawer, and opacity on the `Combobox` popup, which only fades.
+- Without Motion, these popups now transition only their own animation instead of `all`: opacity and scale on Popover, Menu, Dialog and DatePicker, the slide on Drawer, and opacity and scale on the `Combobox` popup.
 - With Motion, the Popover, Menu, Dialog and Drawer popups list the colours, shadow, filter and size, so a `duration-*` or `transition-*` utility in `className` fades or delays neither the ring nor the spring's properties.
 - `Menu.Content` now opens 8px from its trigger by default (`sideOffset`), as `Popover.Content` does; it was 4px.
 - The Menu popup carries `data-pointer` while the pointer is in use, and draws its ring only on keyboard focus.

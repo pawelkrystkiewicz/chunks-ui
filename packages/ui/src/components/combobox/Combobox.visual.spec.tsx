@@ -1,8 +1,17 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { page, userEvent } from "vitest/browser";
-import { expectNotAllowed, focusVisible, renderFixture, renderPage } from "../../VisualTest.utils";
-import { Combobox } from "./index";
+import {
+  boxOf,
+  describePopupCssPath,
+  expectNotAllowed,
+  focusVisible,
+  renderFixture,
+  renderPage,
+  ringColor,
+  waitForStable,
+} from "../../VisualTest.utils";
+import { Combobox, type ComboboxPositionerProps } from "./index";
 
 const options = [
   { value: "react", label: "React" },
@@ -13,12 +22,20 @@ const options = [
 
 // Combobox.Empty reads the filtered `items` on Root: without them it counts no matches and
 // shows its message under the items
-const combobox = ({ defaultOpen = false } = {}) => (
-  <Combobox.Root items={options} defaultOpen={defaultOpen}>
+const combobox = ({
+  defaultOpen = false,
+  open,
+  positionerProps,
+}: {
+  defaultOpen?: boolean;
+  open?: boolean;
+  positionerProps?: ComboboxPositionerProps;
+} = {}) => (
+  <Combobox.Root items={options} defaultOpen={defaultOpen} open={open}>
     <Combobox.Input placeholder="Search framework..." />
     <Combobox.Portal>
-      <Combobox.Positioner>
-        <Combobox.Popup>
+      <Combobox.Positioner {...positionerProps}>
+        <Combobox.Popup data-testid="popup">
           <Combobox.List>
             {(item: (typeof options)[number]) => (
               <Combobox.Item key={item.value} value={item}>
@@ -35,7 +52,7 @@ const combobox = ({ defaultOpen = false } = {}) => (
 );
 
 // The docs' multi-select: the Control draws the ring (`has-[:focus-visible]`) while the input
-// inside it has focus, and the input's own ring is off
+// inside it has focus, and turns the input's own ring off
 const chipsCombobox = () => (
   <Combobox.Root multiple items={options} defaultValue={options.slice(0, 2)}>
     <Combobox.Control>
@@ -48,12 +65,33 @@ const chipsCombobox = () => (
         ))}
       </Combobox.Chips>
       <Combobox.Input
-        className="h-7 min-w-20 flex-1 border-0 bg-transparent px-0 focus-visible:outline-none"
+        className="h-7 min-w-20 flex-1 border-0 bg-transparent px-0"
         placeholder="Select framework..."
         aria-label="Frameworks"
       />
       <Combobox.Clear />
       <Combobox.Trigger />
+    </Combobox.Control>
+  </Combobox.Root>
+);
+
+// Base UI hands the focus from the input to the chips (ArrowLeft at the start of the input) only
+// when the input is inside Combobox.Chips
+const chipsAroundInput = () => (
+  <Combobox.Root multiple items={options} defaultValue={options.slice(0, 2)}>
+    <Combobox.Control>
+      <Combobox.Chips>
+        {options.slice(0, 2).map((item) => (
+          <Combobox.Chip key={item.value}>
+            {item.label}
+            <Combobox.ChipRemove />
+          </Combobox.Chip>
+        ))}
+        <Combobox.Input
+          className="h-7 min-w-20 flex-1 border-0 bg-transparent px-0"
+          aria-label="Frameworks"
+        />
+      </Combobox.Chips>
     </Combobox.Control>
   </Combobox.Root>
 );
@@ -93,7 +131,8 @@ describe("Combobox", () => {
     await expect(fixture).toMatchScreenshot();
   });
 
-  // The same ring on the Control, 2px outside the wrapper around the chips and the input
+  // The same ring on the Control, 2px outside the wrapper around the chips and the input, and
+  // none on the input: two rings showed before
   it("control focus-visible", async () => {
     const { fixture, getByRole } = await renderFixture(
       <div style={{ width: 300 }}>{chipsCombobox()}</div>,
@@ -104,11 +143,47 @@ describe("Combobox", () => {
     await expect(fixture).toMatchScreenshot();
   });
 
+  // The arrow keys focus a chip, which draws the library ring; the screenshot shows the whole
+  // ring beside the next chip
+  it("chip focus-visible, above the next chip", async () => {
+    const { fixture, getByRole, getByText } = await renderFixture(
+      <div style={{ width: 300 }}>{chipsAroundInput()}</div>,
+    );
+    focusVisible(getByRole("combobox"));
+    // The first ArrowLeft focuses the last chip, the second the first of the two
+    await userEvent.keyboard("{ArrowLeft}{ArrowLeft}");
+    const chip = getByText("React");
+    expect(document.activeElement).toBe(chip);
+    expect(chip.matches(":focus-visible")).toBe(true);
+    const { outlineStyle, outlineWidth, outlineOffset, outlineColor } = getComputedStyle(chip);
+    expect({ outlineStyle, outlineWidth, outlineOffset, outlineColor }).toEqual({
+      outlineStyle: "solid",
+      outlineWidth: "2px",
+      outlineOffset: "2px",
+      outlineColor: ringColor(),
+    });
+    await expect(fixture).toMatchScreenshot();
+  });
+
   it("open", async () => {
     const body = await renderPage(
       <div style={{ padding: 40 }}>{combobox({ defaultOpen: true })}</div>,
     );
     await expect(body).toMatchScreenshot();
+  });
+
+  // 8px keeps the popup clear of the input's ring; a consumer's sideOffset replaces it
+  it.each([
+    { offset: "by default", positionerProps: undefined, gap: 8 },
+    { offset: "with sideOffset={0}", positionerProps: { sideOffset: 0 }, gap: 0 },
+  ])("opens the popup $gap px below the input $offset", async ({ positionerProps, gap }) => {
+    const { getByRole, getByTestId } = render(
+      <div style={{ padding: 40 }}>{combobox({ defaultOpen: true, positionerProps })}</div>,
+    );
+    const popup = getByTestId("popup");
+    // Floating UI positions the popup a moment after it mounts
+    const box = await waitForStable(() => boxOf(popup));
+    expect(box.top - getByRole("combobox").getBoundingClientRect().bottom).toBe(gap);
   });
 
   // Combobox.Empty stays mounted as a live region, so while items match it must take no space
@@ -148,3 +223,5 @@ describe("Combobox", () => {
     }
   });
 });
+
+describePopupCssPath("Combobox.Popup", (open) => combobox({ open }));
