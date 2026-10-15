@@ -8,16 +8,8 @@
  *   the bundle, so every app with Motion loses the animations. The consumer without Motion also
  *   type-checks an import of chunks-ui with `skipLibCheck: false`, so the package types must not
  *   reference `motion/react` (see MotionLike in use-motion.ts).
- * - `next build` with Turbopack (Next 16's default) builds the minimal app in no-motion/next, a
- *   static export. Without Motion that proves three things: Turbopack compiles the client and
- *   server graphs of chunks-ui, the server module (with Turbopack's stub for `motion/react`)
- *   evaluates without throwing, and out/index.html holds the Dialog and Tooltip triggers, so they
- *   prerender. It runs no Motion code: loadMotion() runs only in the browser, and the popups sit
- *   in closed client-only portals, so the server render reaches Root and Trigger only. The browser
- *   path (the import() rejecting into the catch, the CSS fallback) is not exercised here. With
- *   Motion a client chunk must hold Motion's code, out/index.html must not name that chunk (it
- *   would be part of the initial load instead of an async chunk), and none may keep a bare
- *   `import("motion/react")`.
+ * - `next build` with Turbopack (Next 16's default) builds the minimal static-export app in
+ *   no-motion/next in both consumers; what each build must show is in scripts/README.md.
  * Fixtures: scripts/no-motion (recipe in scripts/README.md). Needs the network.
  * Run: bun run check:no-motion (builds first)
  */
@@ -31,7 +23,7 @@ import {
   rmSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, relative, sep } from "node:path";
+import { join } from "node:path";
 
 const UI = join(import.meta.dirname, "../packages/ui");
 const FIXTURES = join(import.meta.dirname, "no-motion");
@@ -69,11 +61,6 @@ const MARKER_HINT = `if the motion pin moved, confirm ${MOTION_MARKER} is still 
 const CHUNK_REF = /static\/chunks\/([^\s"'\\<>?#]+\.js)/g;
 /** The trigger texts in no-motion/next/app/page.jsx; the first one marks the page's own chunk. */
 export const NEXT_TRIGGERS = ["Open the dialog", "Hover for a tip"] as const;
-/** What nextBuild() copies from the fixture's next directory (a local `next build` there leaves .next, out and more). */
-const NEXT_APP_FILES = ["app", "next.config.mjs"];
-/** True for a path, relative to scripts/no-motion/next, that belongs to the fixture app. */
-export const isNextAppFile = (path: string) =>
-  path === "" || NEXT_APP_FILES.includes(path.split(sep)[0] ?? "");
 
 const ANSI = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, "g");
 const MOTION_WARNING = /WARNING in [\s\S]*?Can't resolve 'motion\/react'/g;
@@ -107,6 +94,14 @@ export interface OutputFile {
   code: string;
 }
 
+/** Why a build with Motion keeps `import("motion/react")` bare in `files`, or undefined when none does. */
+function bareImportProblem(files: OutputFile[], hint?: string): string | undefined {
+  const bare = files.filter(({ code }) => BARE_MOTION_IMPORT.test(code));
+  if (bare.length > 0) {
+    return `import("motion/react") is left bare in ${bare.map(({ name }) => name).join(", ")}: a browser cannot resolve it, so apps with Motion lose the animations${hint ? ` (${hint})` : ""}.`;
+  }
+}
+
 /** Why the build of the consumer with Motion is wrong, or undefined when it is as expected. */
 export function withMotionProblem(
   exitCode: number,
@@ -119,10 +114,8 @@ export function withMotionProblem(
   if (motionWarnings(output) > 0) {
     return `webpack could not resolve motion/react although Motion is installed:\n${output}`;
   }
-  const bare = files.filter(({ code }) => BARE_MOTION_IMPORT.test(code));
-  if (bare.length > 0) {
-    return `import("motion/react") is left bare in ${bare.map(({ name }) => name).join(", ")}: a browser cannot resolve it, so apps with Motion lose the animations (a webpackIgnore comment does this).`;
-  }
+  const bare = bareImportProblem(files, "a webpackIgnore comment does this");
+  if (bare) return bare;
   const chunk = files.some(
     ({ name, code }) => name.endsWith(".js") && name !== "main.js" && code.includes(MOTION_MARKER),
   );
@@ -174,10 +167,8 @@ export function nextWithMotionProblem(
     return `${unresolved}next build (Turbopack) failed in a consumer with motion (exit ${exitCode}):\n${output}`;
   }
   if (unresolved) return `${unresolved}${output}`;
-  const bare = files.filter(({ code }) => BARE_MOTION_IMPORT.test(code));
-  if (bare.length > 0) {
-    return `import("motion/react") is left bare in ${bare.map(({ name }) => name).join(", ")}: a browser cannot resolve it, so apps with Motion lose the animations.`;
-  }
+  const bare = bareImportProblem(files);
+  if (bare) return bare;
   if (!files.some(({ code }) => code.includes(MOTION_MARKER))) {
     return `no client chunk holds Motion's code (looked for ${MOTION_MARKER} in ${files.map(({ name }) => name).join(", ")}); ${MARKER_HINT}`;
   }
@@ -193,17 +184,8 @@ export function nextWithMotionProblem(
   }
 }
 
-/**
- * Runs `cmd` in `cwd`. `env` replaces the child's environment: Bun gives a child the environment of
- * its own startup, so assigning to process.env at runtime reaches no child.
- */
-function run(cmd: string[], cwd: string, env?: Record<string, string | undefined>) {
-  const { exitCode, stdout, stderr } = Bun.spawnSync(cmd, {
-    cwd,
-    env,
-    stdout: "pipe",
-    stderr: "pipe",
-  });
+function run(cmd: string[], cwd: string) {
+  const { exitCode, stdout, stderr } = Bun.spawnSync(cmd, { cwd, stdout: "pipe", stderr: "pipe" });
   // webpack-cli and Next colour their output on CI runners too, which splits "WARNING in" with escape codes
   return { exitCode, output: `${stdout}${stderr}`.replace(ANSI, "") };
 }
@@ -276,21 +258,18 @@ async function typecheck(dir: string) {
  * Builds the Next app of the fixture with Turbopack in `dir`/next, where bundle() installed the
  * fixture and the tarball (the app resolves them from `dir`/node_modules). A subdirectory, so
  * Next's tsconfig.json and out/ stay apart from those of typecheck() and webpack. Returns the
- * exported page, the client chunks and the wall time in seconds.
+ * exported page and the client chunks.
  */
 function nextBuild(dir: string) {
   const app = join(dir, "next");
   const source = join(FIXTURES, "next");
-  cpSync(source, app, {
-    recursive: true,
-    filter: (path) => isNextAppFile(relative(source, path)),
-  });
-  const started = performance.now();
-  const result = run([join(dir, "node_modules/.bin/next"), "build"], app, {
-    ...process.env,
-    NEXT_TELEMETRY_DISABLED: "1",
-  });
-  const seconds = (performance.now() - started) / 1000;
+  cpSync(join(source, "app"), join(app, "app"), { recursive: true });
+  cpSync(join(source, "next.config.mjs"), join(app, "next.config.mjs"));
+  // `env` sets the variable for the child: assigning to process.env at runtime reaches no Bun child
+  const result = run(
+    ["env", "NEXT_TELEMETRY_DISABLED=1", join(dir, "node_modules/.bin/next"), "build"],
+    app,
+  );
   const page = join(app, "out/index.html");
   const html = existsSync(page) ? readFileSync(page, "utf8") : undefined;
   const chunks = join(app, "out/_next/static/chunks");
@@ -298,7 +277,7 @@ function nextBuild(dir: string) {
     .map(String)
     .filter((name) => name.endsWith(".js"))
     .map((name) => ({ name, code: readFileSync(join(chunks, name), "utf8") }));
-  return { ...result, html, files, seconds };
+  return { ...result, html, files };
 }
 
 if (import.meta.main) {
@@ -322,10 +301,7 @@ if (import.meta.main) {
       process.exitCode = 1;
     } else {
       console.log(
-        [
-          "webpack bundles chunks-ui without motion (one expected warning, types compile with skipLibCheck: false) and with motion (async chunk, no bare import).",
-          `next build (Turbopack) exports the page without motion in ${nextWithout.seconds.toFixed(1)} s and with motion in ${nextWith.seconds.toFixed(1)} s (Motion in a chunk out/index.html does not name, so it stays an async chunk).`,
-        ].join("\n"),
+        "webpack and next build (Turbopack) build chunks-ui without motion (types compile with skipLibCheck: false) and with motion (an async chunk, no bare import).",
       );
     }
   } finally {

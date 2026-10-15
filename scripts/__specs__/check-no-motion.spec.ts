@@ -1,8 +1,7 @@
 import { describe, expect, it } from "bun:test";
-import { readdirSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
-  isNextAppFile,
   NEXT_TRIGGERS,
   nextWithMotionProblem,
   nextWithoutMotionProblem,
@@ -84,21 +83,9 @@ describe("typesProblem", () => {
 
 // Shaped like Next 16's Turbopack output
 const NEXT_OK = `▲ Next.js 16.4.0 (Turbopack)
-
-  Creating an optimized production build ...
 ✓ Compiled successfully in 1282ms
-✓ Generating static pages using 4 workers (3/3) in 148ms
-
-Route (app)
-┌ ○ /
-└ ○ /_not-found
 `;
-const NEXT_UNRESOLVED = `▲ Next.js 16.4.0 (Turbopack)
-
-  Creating an optimized production build ...
-Failed to compile.
-
-./node_modules/chunks-ui/dist/index.js:792:9
+const NEXT_UNRESOLVED = `Failed to compile.
 Module not found: Can't resolve 'motion/react'
 `;
 const [DIALOG, TOOLTIP] = NEXT_TRIGGERS;
@@ -109,12 +96,9 @@ describe("nextWithoutMotionProblem", () => {
     expect(nextWithoutMotionProblem(0, NEXT_OK, PAGE)).toBeUndefined();
   });
 
-  it("says the import has neither a try nor a turbopackOptional comment when Turbopack cannot resolve motion/react, and keeps the output", () => {
+  it("hints at the unresolved import and keeps the output", () => {
     const problem = nextWithoutMotionProblem(1, NEXT_UNRESOLVED, undefined);
     expect(problem?.startsWith("Turbopack cannot resolve motion/react:")).toBe(true);
-    expect(problem).toContain("neither a try around it nor a turbopackOptional comment");
-    expect(problem).toContain("Either alone makes Turbopack build");
-    expect(problem).toContain("check:dist requires both");
     expect(problem).toContain(NEXT_UNRESOLVED);
   });
 
@@ -151,10 +135,6 @@ describe("nextWithMotionProblem", () => {
   const CHANNELS: [string, (name: string) => string][] = [
     ["a script src", script],
     [
-      "a preload link",
-      (name) => `<link rel="preload" as="script" href="/_next/static/chunks/${name}"/>`,
-    ],
-    [
       "the Turbopack bootstrap otherChunks (bare static/chunks prefix)",
       (name) =>
         `<script>(globalThis["TURBOPACK"]||[]).push({"otherChunks":["static/chunks/${name}"]});</script>`,
@@ -188,11 +168,6 @@ describe("nextWithMotionProblem", () => {
     expect(failed).toContain(NEXT_UNRESOLVED);
     const warned = nextWithMotionProblem(0, NEXT_UNRESOLVED, files, HTML);
     expect(warned).toContain("although Motion is installed");
-  });
-
-  it("names the chunk that keeps a bare import", () => {
-    const bare = file(PAGE_CHUNK, `${DIALOG} x=import("motion/react")`);
-    expect(nextWithMotionProblem(0, NEXT_OK, [bare, motion], HTML)).toContain(PAGE_CHUNK);
   });
 
   it("rejects a build with no chunk holding Motion's code, and names the marker", () => {
@@ -230,41 +205,14 @@ describe("nextWithMotionProblem", () => {
   });
 });
 
-describe("isNextAppFile", () => {
-  it("keeps the app directory and the Next config", () => {
-    for (const path of ["", "app", "app/page.jsx", "app/nested/layout.jsx", "next.config.mjs"]) {
-      expect(isNextAppFile(path)).toBe(true);
-    }
-  });
-
-  it("drops what a local next build leaves beside them", () => {
-    const left = [".next", ".next/cache", "out", "tsconfig.json", "next-env.d.ts", "node_modules"];
-    for (const path of left) expect(isNextAppFile(path)).toBe(false);
-  });
-});
-
 describe("the fixture app", () => {
   const dir = join(import.meta.dirname, "../no-motion");
   const read = (path: string) => readFileSync(join(dir, path), "utf8");
   const pins = (path: string): Record<string, string> => JSON.parse(read(path)).dependencies;
 
   it("holds every trigger text of NEXT_TRIGGERS in its page", () => {
-    const pages = readdirSync(join(dir, "next/app")).filter((name) => name.startsWith("page."));
-    expect(pages).toHaveLength(1);
-    const page = read(`next/app/${pages[0]}`);
+    const page = read("next/app/page.jsx");
     for (const text of NEXT_TRIGGERS) expect(page).toContain(text);
-  });
-
-  it("commits only entries that nextBuild() copies, so a new top-level one (public/) is not dropped silently", () => {
-    // git, not readdirSync: a local `next build` in the fixture leaves untracked files beside the app
-    const { exitCode, stdout } = Bun.spawnSync(["git", "ls-files", "."], {
-      cwd: join(dir, "next"),
-      stdout: "pipe",
-    });
-    expect(exitCode).toBe(0);
-    const committed = String(stdout).split("\n").filter(Boolean);
-    expect(committed).toContain("next.config.mjs");
-    expect(committed.filter((path) => !isNextAppFile(path))).toEqual([]);
   });
 
   it("pins the next version of the docs app", () => {

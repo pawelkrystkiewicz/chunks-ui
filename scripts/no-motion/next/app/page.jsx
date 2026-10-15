@@ -1,9 +1,7 @@
 "use client";
 
 // A client component: a server component cannot reach into `Dialog.Root` of a "use client"
-// module. Dialog and Tooltip import Motion lazily, but only in the browser, and their popups sit
-// in closed client-only portals: the prerender renders Root and Trigger, so no Motion code runs
-// here. Their trigger texts are what check-no-motion.ts looks for in the exported HTML
+// module. check-no-motion.ts looks for the trigger texts below in the exported HTML
 // (NEXT_TRIGGERS there).
 import { Dialog, Tooltip } from "chunks-ui";
 
