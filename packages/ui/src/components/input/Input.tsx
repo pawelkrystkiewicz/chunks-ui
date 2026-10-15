@@ -34,14 +34,14 @@ export type InputProps = ComponentProps<typeof BaseInput> &
      */
     endAdornment?: ReactNode;
     /**
-     * Shows a built-in clear button while the input has text and is not `disabled` or
-     * `readOnly`. While it shows, it takes the place of `endAdornment`.
+     * Shows a built-in clear button while the input has text and can be edited: it hides while
+     * the input is disabled or read-only, whichever disables it (`disabled`, `readOnly`, or a
+     * disabled `Field.Root`). While it shows, it takes the place of `endAdornment`.
      *
      * Clearing empties the input the way typing does: `onChange` and `onValueChange` fire with
      * `""`, so the handler that sets a controlled `value` clears it, and `onClear`, if given, is
      * called afterwards. Focus stays in the input with a mouse click; with the keyboard (Tab to
      * the button, Enter or Space) the input blurs and focus then returns to it.
-     * Inside a disabled `Field.Root`, the button still shows, but a click changes nothing.
      * @default false
      */
     clearable?: boolean;
@@ -51,7 +51,8 @@ export type InputProps = ComponentProps<typeof BaseInput> &
      *
      * With `onClear` alone, a controlled input fires no `onChange` or `onValueChange` and keeps
      * its `value` until `onClear` sets it. With `clearable` too, the value handlers fire first
-     * and `onClear` only notifies. Inside a disabled `Field.Root`, it is not called.
+     * and `onClear` only notifies. The button hides while the input is disabled or read-only,
+     * also inside a disabled `Field.Root`, so it is not called then.
      */
     onClear?: () => void;
     /**
@@ -197,6 +198,8 @@ export function Input({
       <BaseInput
         className={cnState(
           inputVariants(),
+          // Named peer for the clear button's span, which follows the input in the DOM
+          "peer/input",
           startAdornment && "ps-9",
           (endAdornment || hasClearButton) && "pe-9",
           typeof className === "function" ? className : undefined,
@@ -207,7 +210,15 @@ export function Input({
       />
       {/* The clear button and endAdornment share one slot: while the button shows, it wins */}
       {(endAdornment || showsClearButton) && (
-        <span className="absolute end-3 flex items-center">
+        <span
+          className={cn(
+            "absolute end-3 flex items-center",
+            // A disabled Field.Root disables the input through Base UI, not through the
+            // `disabled` prop that showsClearButton reads, so the button hides by CSS off the
+            // input's attribute. An endAdornment stays: it is not an action
+            showsClearButton && "peer-disabled/input:hidden",
+          )}
+        >
           {showsClearButton ? (
             <ClearButton
               labels={{ clear: clearLabel }}

@@ -77,4 +77,25 @@ describe("Input", () => {
     );
     expectNotAllowed(getByRole("textbox", { name: "Name" }));
   });
+
+  // A disabled Field.Root disables the input through Base UI, not through the `disabled` prop,
+  // so the button hides by CSS, off the input's disabled attribute
+  it("hides the clear button inside a disabled Field.Root", () => {
+    const { queryByRole } = render(
+      <Field.Root disabled>
+        <Input aria-label="Name" clearable defaultValue="x" />
+      </Field.Root>,
+    );
+    // `hidden: true` finds the button also when display: none takes it out of the a11y tree
+    expect(queryByRole("button", { name: /clear/i, hidden: true })).not.toBeVisible();
+  });
+
+  it("shows the clear button inside an enabled Field.Root", () => {
+    const { getByRole } = render(
+      <Field.Root>
+        <Input aria-label="Name" clearable defaultValue="x" />
+      </Field.Root>,
+    );
+    expect(getByRole("button", { name: /clear/i })).toBeVisible();
+  });
 });
