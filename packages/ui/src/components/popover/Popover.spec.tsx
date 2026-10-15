@@ -118,7 +118,6 @@ describe("Popover.Content with Motion loaded", () => {
     expect(el.style.opacity).not.toBe("");
   });
 
-  // A consumer's `render` replaces the animated element, so the spring cannot attach to it
   it("keeps the CSS transition on the element a render prop gives it", async () => {
     await reloadMotion();
     const el = renderContent(<section />);

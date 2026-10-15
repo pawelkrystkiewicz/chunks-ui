@@ -115,7 +115,7 @@ function ControlledSelect() {
 
 ## Animation
 
-The popup enters with a fade: the `popup` spring (`springs.popup`, with a scale-up from `scale-95`) with Motion installed, a CSS fade (`micro-interactions`: 300ms, `cubic-bezier(0.4, 0, 0.2, 1)`) without it; reduced motion turns off both.
+The popup enters with a fade: the `popup` spring (`springs.popup`, with a scale-up from `scale-95`) with Motion installed, a CSS fade without it; reduced motion turns off both.
 
 `render` on `Select.Popup` replaces the element the spring animates, so a popup with `render` uses the CSS transition even with Motion installed. To restyle the popup, pass `className`.
 
