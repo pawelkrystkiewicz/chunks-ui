@@ -5,9 +5,8 @@ import type { VariantProps } from "class-variance-authority";
 import type { ComponentProps } from "react";
 import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
-import { createPopupRenderer } from "../../lib/PopupMotion";
 import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
-import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
+import { usePopupRender } from "../../lib/use-popup-render";
 import {
   OverlayBody,
   type OverlayBodyProps,
@@ -71,18 +70,11 @@ function DrawerBackdrop({
   render: renderProp,
   ...props
 }: DrawerBackdropProps) {
-  const m = useLoadedMotion();
-  const reduced = useReducedMotion();
-  // A consumer's `render` replaces the animated element, so that backdrop keeps the CSS transition
-  const useSpring = !!m && !reduced && !renderProp;
-  const render = useSpring
-    ? createPopupRenderer({
-        m,
-        spring: springs.overlay,
-        from: { opacity: 0 },
-        to: { opacity: 1 },
-      })
-    : renderProp;
+  const { useSpring, render } = usePopupRender(renderProp, {
+    spring: springs.overlay,
+    from: { opacity: 0 },
+    to: { opacity: 1 },
+  });
 
   return (
     <BaseDialog.Backdrop
@@ -107,20 +99,13 @@ function DrawerPopup({
   render: renderProp,
   ...props
 }: DrawerPopupProps) {
-  const m = useLoadedMotion();
-  const reduced = useReducedMotion();
-  // A consumer's `render` replaces the animated element, so that popup keeps the CSS transition
-  const useSpring = !!m && !reduced && !renderProp;
   const resolvedSide = side ?? "right";
   const dir = drawerSlide[resolvedSide];
-  const render = useSpring
-    ? createPopupRenderer({
-        m,
-        spring: springs.overlay,
-        from: dir.from,
-        to: dir.to,
-      })
-    : renderProp;
+  const { useSpring, render } = usePopupRender(renderProp, {
+    spring: springs.overlay,
+    from: dir.from,
+    to: dir.to,
+  });
 
   return (
     <BaseDialog.Popup

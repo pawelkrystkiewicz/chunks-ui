@@ -4,9 +4,8 @@ import { Select as BaseSelect } from "@base-ui/react/select";
 import type { ComponentProps } from "react";
 import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
-import { createPopupRenderer } from "../../lib/PopupMotion";
 import { usePortalContainer } from "../../lib/portal-container";
-import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
+import { usePopupRender } from "../../lib/use-popup-render";
 import { FOCUS_RING, RING_TRANSITION } from "../shared";
 
 export type SelectRootProps = ComponentProps<typeof BaseSelect.Root>;
@@ -57,18 +56,11 @@ function SelectIcon({ className, ...props }: SelectIconProps) {
 }
 
 function SelectPopup({ className, render: renderProp, ...props }: SelectPopupProps) {
-  const m = useLoadedMotion();
-  const reduced = useReducedMotion();
-  // A consumer's `render` replaces the animated element, so that popup keeps the CSS transition
-  const useSpring = !!m && !reduced && !renderProp;
-  const render = useSpring
-    ? createPopupRenderer({
-        m,
-        spring: springs.popup,
-        from: { opacity: 0, scale: 0.95 },
-        to: { opacity: 1, scale: 1 },
-      })
-    : renderProp;
+  const { useSpring, render } = usePopupRender(renderProp, {
+    spring: springs.popup,
+    from: { opacity: 0, scale: 0.95 },
+    to: { opacity: 1, scale: 1 },
+  });
 
   return (
     <BaseSelect.Popup

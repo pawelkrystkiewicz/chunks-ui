@@ -4,11 +4,10 @@ import { Tooltip as BaseTooltip } from "@base-ui/react/tooltip";
 import { type ComponentProps, createContext, useContext } from "react";
 import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
-import { createPopupRenderer } from "../../lib/PopupMotion";
 import { usePortalContainer } from "../../lib/portal-container";
 import { useArrowPadding } from "../../lib/use-arrow-padding";
 import { useMergedRef } from "../../lib/use-merged-ref";
-import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
+import { usePopupRender } from "../../lib/use-popup-render";
 import { POPUP_ARROW_CLASS } from "../shared";
 
 export type TooltipRootProps = ComponentProps<typeof BaseTooltip.Root>;
@@ -31,18 +30,11 @@ function TooltipPortal(props: TooltipPortalProps) {
 }
 
 function TooltipPopup({ className, render: renderProp, ...props }: TooltipPopupProps) {
-  const m = useLoadedMotion();
-  const reduced = useReducedMotion();
-  // A consumer's `render` replaces the animated element, so that popup keeps the CSS transition
-  const useSpring = !!m && !reduced && !renderProp;
-  const render = useSpring
-    ? createPopupRenderer({
-        m,
-        spring: springs.popup,
-        from: { opacity: 0, scale: 0.95 },
-        to: { opacity: 1, scale: 1 },
-      })
-    : renderProp;
+  const { useSpring, render } = usePopupRender(renderProp, {
+    spring: springs.popup,
+    from: { opacity: 0, scale: 0.95 },
+    to: { opacity: 1, scale: 1 },
+  });
 
   return (
     <BaseTooltip.Popup
