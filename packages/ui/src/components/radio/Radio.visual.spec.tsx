@@ -2,6 +2,7 @@ import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { page } from "vitest/browser";
 import { renderFixture } from "../../VisualTest.utils";
+import { Field } from "../field";
 import { Radio } from "./index";
 
 /** The opacity the element is drawn with: its own times every ancestor's */
@@ -44,6 +45,23 @@ describe("Radio", () => {
     );
     expect(drawnOpacity(getByRole("radio", { name: "Option" }))).toBe(0.5);
     expect(drawnOpacity(getByText("Option"))).toBe(0.5);
+  });
+
+  // A Field.Root disables the radio through Base UI (`data-disabled`), not through the item's prop
+  it.each<[string, boolean]>([
+    ["an item of a disabled Field.Root", false],
+    ["an item in a group of a disabled Field.Root", true],
+  ])("dims %s once and shows a not-allowed cursor", (_, grouped) => {
+    const item = <Radio.Item value="a">Option</Radio.Item>;
+    const { getByRole, getByText } = render(
+      <Field.Root disabled>
+        {grouped ? <Radio.Group aria-label="Plan">{item}</Radio.Group> : item}
+      </Field.Root>,
+    );
+    expect(drawnOpacity(getByRole("radio", { name: "Option" }))).toBe(0.5);
+    expect(drawnOpacity(getByText("Option"))).toBe(0.5);
+    const label = getByText("Option").closest("label");
+    expect(label && getComputedStyle(label).cursor).toBe("not-allowed");
   });
 
   // pointer-events: none would hide the not-allowed cursor; Base UI ignores the click anyway

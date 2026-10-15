@@ -1,6 +1,8 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { Field } from "../field";
 import { Radio } from "./Radio";
 
 afterEach(cleanup);
@@ -53,15 +55,50 @@ describe("Radio", () => {
     expect(screen.getByRole("radio")).toBeInTheDocument();
   });
 
-  it("renders disabled Item with cursor-not-allowed class", () => {
-    const { container } = render(
-      <Radio.Group aria-label="Options">
-        <Radio.Item value="a" disabled>
-          Option A
-        </Radio.Item>
-      </Radio.Group>,
+  // The item's label dims and shows a not-allowed cursor when the radio inside it carries Base
+  // UI's `data-disabled`, whichever disables it. The opacity itself is measured in Radio.visual.spec.
+  const ITEM_DISABLED_CLASSES = [
+    "has-[>[data-disabled]]:cursor-not-allowed",
+    "has-[>[data-disabled]]:opacity-50",
+  ];
+
+  it("marks an Item disabled by its prop, its group or a Field.Root, and ignores clicks on it", async () => {
+    const user = userEvent.setup();
+    const onValueChange = vi.fn();
+    render(
+      <>
+        <Radio.Group aria-label="Plan" onValueChange={onValueChange}>
+          <Radio.Item value="a" disabled>
+            By prop
+          </Radio.Item>
+          <Radio.Item value="b">Enabled</Radio.Item>
+        </Radio.Group>
+        <Radio.Group aria-label="Tier" disabled onValueChange={onValueChange}>
+          <Radio.Item value="c">By group</Radio.Item>
+        </Radio.Group>
+        <Field.Root disabled>
+          <Radio.Group aria-label="Billing" onValueChange={onValueChange}>
+            <Radio.Item value="d">By field, in a group</Radio.Item>
+          </Radio.Group>
+          <Radio.Item value="e">By field, no group</Radio.Item>
+        </Field.Root>
+      </>,
     );
-    expect(container.querySelector("label")).toHaveClass("cursor-not-allowed");
+    const item = (text: string) => {
+      const label = screen.getByText(text).closest("label");
+      if (!label) throw new Error(`no label for ${text}`);
+      return { label, radio: within(label).getByRole("radio") };
+    };
+    for (const text of ["By prop", "By group", "By field, in a group", "By field, no group"]) {
+      const { label, radio } = item(text);
+      expect(radio).toHaveAttribute("data-disabled");
+      expect(label).toHaveClass(...ITEM_DISABLED_CLASSES);
+      await user.click(label);
+    }
+    expect(onValueChange).not.toHaveBeenCalled();
+    expect(item("Enabled").radio).not.toHaveAttribute("data-disabled");
+    await user.click(item("Enabled").label);
+    expect(onValueChange).toHaveBeenCalledWith("b", expect.anything());
   });
 
   it("has no a11y violations", async () => {
