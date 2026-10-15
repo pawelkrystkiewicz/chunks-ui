@@ -198,6 +198,14 @@ export function focusVisible(el: HTMLElement) {
   expect(el.matches(":focus-visible")).toBe(true);
 }
 
+/** Asserts each element shows the not-allowed cursor and still takes the pointer. */
+export function expectNotAllowed(...elements: HTMLElement[]) {
+  for (const el of elements) {
+    const { cursor, pointerEvents } = getComputedStyle(el);
+    expect({ cursor, pointerEvents }).toEqual({ cursor: "not-allowed", pointerEvents: "auto" });
+  }
+}
+
 /** Pauses all CSS animations — use for components with loaders/spinners. */
 export function pauseAnimations() {
   for (const el of document.querySelectorAll("*")) {

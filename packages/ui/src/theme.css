@@ -236,7 +236,7 @@
  * `:where()` the `relative` would beat an `absolute`, `fixed` or `sticky` class on the element.
  * Position utilities, inline styles and unlayered CSS win over it; layered component CSS
  * (`@layer base` or `components`) does not. The box inherits `pointer-events`, so a control with
- * `pointer-events: none` (disabled) stays inert in the whole area.
+ * `pointer-events: none` (a disabled `IconButton`, say) stays inert in the whole area.
  */
 @utility touch-target {
   :where(&) {

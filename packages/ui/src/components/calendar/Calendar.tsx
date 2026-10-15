@@ -355,7 +355,10 @@ export function Calendar({
                           "inline-flex size-8 items-center justify-center rounded-md text-sm",
                           ...RING_ANIMATION_CLASSES,
                           FOCUS_RING,
-                          !isSelected && !isToday && "hover:bg-accent hover:text-accent-foreground",
+                          !isSelected &&
+                            !isToday &&
+                            !disabled &&
+                            "hover:bg-accent hover:text-accent-foreground",
                           // Forced colours drop author backgrounds: the system highlight stands in
                           isSelected &&
                             "bg-primary text-primary-foreground forced-colors:bg-[Highlight] forced-colors:text-[HighlightText]",
@@ -369,7 +372,7 @@ export function Calendar({
                           // Forced colours keep the opacity, so a disabled day would look like an
                           // outside day: there, GrayText at full opacity, struck through
                           disabled &&
-                            "pointer-events-none opacity-40 forced-colors:line-through forced-colors:opacity-100",
+                            "cursor-not-allowed opacity-40 forced-colors:line-through forced-colors:opacity-100",
                           disabled && !isSelected && "forced-colors:text-[GrayText]",
                         )}
                       >

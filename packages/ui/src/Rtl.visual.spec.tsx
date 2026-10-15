@@ -3,6 +3,7 @@ import { render, screen, within } from "@testing-library/react";
 import { type ReactNode, useEffect, useRef } from "react";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { commands, userEvent } from "vitest/browser";
+import { Accordion } from "./components/accordion";
 import { Combobox } from "./components/combobox";
 import { Input } from "./components/input";
 import { Menu } from "./components/menu";
@@ -373,6 +374,33 @@ describe.each(DIRS)("in %s", (dir) => {
     expect(content.end).toBeLessThanOrEqual(close.start);
     expect(close.end).toBeLessThan(inlineSpan(toast, dir).end);
     expect(close.start).toBeGreaterThanOrEqual(contentSpan(toast, dir).end);
+  });
+
+  it("starts the wrapped text of Accordion's trigger at the inline start", () => {
+    renderIn(
+      dir,
+      // Narrow enough that the two words go on two lines, the first much shorter than the trigger
+      <div style={{ width: 120 }}>
+        <Accordion.Root>
+          <Accordion.Item value="a11y">
+            <Accordion.Header>
+              <Accordion.Trigger>Yes accessibility</Accordion.Trigger>
+            </Accordion.Header>
+            <Accordion.Panel>Content</Accordion.Panel>
+          </Accordion.Item>
+        </Accordion.Root>
+      </div>,
+    );
+    const trigger = screen.getByRole("button", { name: "Yes accessibility" });
+    const text = document.createRange();
+    text.selectNodeContents(trigger.firstChild as Node);
+    const [firstLine, ...otherLines] = Array.from(text.getClientRects());
+    expect(otherLines.length).toBeGreaterThan(0);
+    // `text-left` would leave the first line against the left edge in RTL, a few words short of
+    // the trigger's start edge
+    expect(inlineSpan({ getBoundingClientRect: () => firstLine as DOMRect }, dir).start).toEqual(
+      near(contentSpan(trigger, dir).start),
+    );
   });
 });
 

@@ -1,10 +1,30 @@
-import { describe, it } from "vitest";
-import { renderFixture } from "../../VisualTest.utils";
+import { render } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+import { userEvent } from "vitest/browser";
+import { expectNotAllowed, renderFixture } from "../../VisualTest.utils";
 import { ClearButton } from "./index";
 
 describe("ClearButton", () => {
   it("default", async () => {
     const { fixture } = await renderFixture(<ClearButton onClick={() => {}} />);
     await expect(fixture).toMatchScreenshot();
+  });
+
+  it("shows a not-allowed cursor on a disabled button", () => {
+    const { getByRole } = render(<ClearButton disabled />);
+    expectNotAllowed(getByRole("button", { name: "Clear" }));
+  });
+
+  it("keeps its rest colours and size under the pointer, when disabled", async () => {
+    const { getByRole } = render(<ClearButton disabled />);
+    const button = getByRole("button", { name: "Clear" });
+    const looks = () => {
+      const { color, backgroundColor, scale } = getComputedStyle(button);
+      // `none` and `1` are the same size
+      return { color, backgroundColor, scale: scale === "none" ? 1 : Number(scale) };
+    };
+    const rest = looks();
+    await userEvent.hover(button);
+    expect(looks()).toEqual(rest);
   });
 });

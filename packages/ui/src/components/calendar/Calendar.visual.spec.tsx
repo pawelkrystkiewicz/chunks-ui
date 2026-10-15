@@ -1,7 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, it, vi } from "vitest";
-import { commands } from "vitest/browser";
-import { focusVisible, renderFixture, systemColour } from "../../VisualTest.utils";
+import { commands, userEvent } from "vitest/browser";
+import {
+  expectNotAllowed,
+  focusVisible,
+  renderFixture,
+  systemColour,
+} from "../../VisualTest.utils";
 import { Calendar } from "./index";
 
 // Freeze time for deterministic visual snapshots
@@ -15,6 +20,17 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers();
 });
+
+// Renders a Calendar whose March 20 is disabled, and returns that day's button
+function renderDisabledDay() {
+  render(
+    <Calendar
+      value={new Date(2026, 2, 18)}
+      isDateDisabled={(date) => date.getMonth() === 2 && date.getDate() === 20}
+    />,
+  );
+  return screen.getByLabelText("Friday, March 20, 2026", { selector: "button" });
+}
 
 describe("Calendar", () => {
   // Canary for the `timezoneId` pin in vitest.visual.config.ts: January in Europe/Warsaw is UTC+1
@@ -49,6 +65,22 @@ describe("Calendar", () => {
     const day = screen.getByLabelText("Sunday, March 15, 2026", { selector: "button" });
     focusVisible(day);
     await expect(fixture).toMatchScreenshot();
+  });
+
+  it("shows a not-allowed cursor on a disabled day", () => {
+    expectNotAllowed(renderDisabledDay());
+  });
+
+  // The day receives the pointer now, so the hover fill of an enabled day must stay off it
+  it("keeps a disabled day at its rest colours under the pointer", async () => {
+    const day = renderDisabledDay();
+    const looks = () => {
+      const { backgroundColor, color } = getComputedStyle(day);
+      return { backgroundColor, color };
+    };
+    const rest = looks();
+    await userEvent.hover(day);
+    expect(looks()).toEqual(rest);
   });
 });
 

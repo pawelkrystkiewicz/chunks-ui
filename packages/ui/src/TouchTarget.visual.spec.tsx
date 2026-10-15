@@ -198,14 +198,16 @@ describe("touch-target on ClearButton (24px)", () => {
     expect(onClick).toHaveBeenCalledOnce();
   });
 
-  // The area inherits the button's `pointer-events: none`, so a disabled button stays inert
-  it("lets a press beside a disabled button through", async () => {
+  // The disabled button keeps its pointer events (it shows a not-allowed cursor), so its area
+  // takes the press, and a disabled native button swallows the click
+  it("takes a press beside a disabled button and ignores it", async () => {
     const onClick = vi.fn();
     const { stage, getByRole } = renderStage(
       <ClearButton className="touch-target" disabled onClick={onClick} />,
     );
-    const { x, y } = centreOf(getByRole("button"));
-    expect(await pressAt(stage, x + outside, y)).toBe(stage);
+    const button = getByRole("button");
+    const { x, y } = centreOf(button);
+    expect(await pressAt(stage, x + outside, y)).toBe(button);
     expect(onClick).not.toHaveBeenCalled();
   });
 });

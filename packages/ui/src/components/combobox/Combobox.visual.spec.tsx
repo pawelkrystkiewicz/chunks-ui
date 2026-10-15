@@ -1,6 +1,7 @@
+import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { page } from "vitest/browser";
-import { focusVisible, renderFixture, renderPage } from "../../VisualTest.utils";
+import { page, userEvent } from "vitest/browser";
+import { expectNotAllowed, focusVisible, renderFixture, renderPage } from "../../VisualTest.utils";
 import { Combobox } from "./index";
 
 const options = [
@@ -57,6 +58,25 @@ const chipsCombobox = () => (
   </Combobox.Root>
 );
 
+// One disabled multi-select with a chip, so that every part that shows a cursor is in it
+const disabledChipsCombobox = () => (
+  <Combobox.Root multiple items={options} defaultValue={options.slice(0, 1)} disabled>
+    <Combobox.Control data-testid="control">
+      <Combobox.Chips>
+        {options.slice(0, 1).map((item) => (
+          <Combobox.Chip key={item.value}>
+            {item.label}
+            <Combobox.ChipRemove />
+          </Combobox.Chip>
+        ))}
+      </Combobox.Chips>
+      <Combobox.Input aria-label="Frameworks" />
+      <Combobox.Clear />
+      <Combobox.Trigger />
+    </Combobox.Control>
+  </Combobox.Root>
+);
+
 describe("Combobox", () => {
   it("closed", async () => {
     const { fixture } = await renderFixture(<div style={{ width: 250 }}>{combobox()}</div>);
@@ -102,5 +122,29 @@ describe("Combobox", () => {
     await page.getByRole("combobox").fill("zzz");
     await expect.element(page.getByText("No results found")).toBeVisible();
     expect(empty.getBoundingClientRect().height).toBeGreaterThan(0);
+  });
+
+  it("shows a not-allowed cursor on every part of a disabled Combobox", () => {
+    const { getByRole, getByTestId } = render(disabledChipsCombobox());
+    // A `<button>` has `cursor: default` from the user-agent stylesheet, so each needs its own
+    expectNotAllowed(
+      getByTestId("control"),
+      getByRole("combobox"),
+      getByRole("button", { name: "Show options" }),
+      getByRole("button", { name: "Clear selection" }),
+      getByRole("button", { name: "Remove React" }),
+    );
+  });
+
+  // The Control no longer turns its pointer events off when disabled, so the pointer reaches
+  // the buttons inside it: their hover colour must stay off
+  it("keeps the clear and chip-remove buttons at their rest colour under the pointer when disabled", async () => {
+    const { getByRole } = render(disabledChipsCombobox());
+    for (const name of ["Clear selection", "Remove React"]) {
+      const button = getByRole("button", { name });
+      const rest = getComputedStyle(button).color;
+      await userEvent.hover(button);
+      expect(getComputedStyle(button).color, name).toBe(rest);
+    }
   });
 });

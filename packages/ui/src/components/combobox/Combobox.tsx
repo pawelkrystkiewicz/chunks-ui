@@ -65,7 +65,7 @@ function ComboboxControl({ className, ...props }: ComboboxControlProps) {
         "relative flex flex-wrap items-center gap-1 rounded-md border border-input bg-background px-3 py-1.5",
         FOCUS_RING_WITHIN,
         RING_TRANSITION,
-        "has-[:disabled]:pointer-events-none has-[:disabled]:opacity-50",
+        "has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50",
         className,
       )}
       {...props}
@@ -81,7 +81,7 @@ function ComboboxInput({ className, ...props }: ComboboxInputProps) {
         "placeholder:text-muted-foreground",
         FOCUS_RING,
         RING_TRANSITION,
-        "disabled:pointer-events-none disabled:opacity-50",
+        "disabled:cursor-not-allowed disabled:opacity-50",
         className,
       )}
       {...props}
@@ -126,7 +126,7 @@ function ComboboxTrigger({ className, children, ...props }: ComboboxTriggerProps
       )}
       className={cnState(
         "absolute inset-y-0 end-0 flex items-center pe-2",
-        "disabled:pointer-events-none disabled:opacity-50",
+        "disabled:cursor-not-allowed disabled:opacity-50",
         className,
       )}
       {...props}
@@ -200,7 +200,7 @@ function ComboboxItem({ className, ...props }: ComboboxItemProps) {
       className={cnState(
         "relative flex w-full cursor-default items-center rounded-sm py-1.5 ps-2 pe-8 text-sm outline-none",
         "data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground",
-        "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+        "data-disabled:pointer-events-none data-disabled:opacity-50",
         className,
       )}
       {...props}
@@ -257,7 +257,7 @@ function ComboboxClear({ className, children, ...props }: ComboboxClearProps) {
         <CloseIcon className="size-3.5" />,
       )}
       className={cnState(
-        "absolute inset-y-0 end-7 flex items-center text-muted-foreground hover:text-foreground",
+        "absolute inset-y-0 end-7 flex items-center text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:hover:text-muted-foreground",
         "micro-interactions",
         className,
       )}
@@ -313,7 +313,7 @@ function ComboboxChipRemove({ className, children, ...props }: ComboboxChipRemov
         </>,
       )}
       className={cnState(
-        "micro-interactions inline-flex items-center text-muted-foreground hover:text-foreground",
+        "micro-interactions inline-flex items-center text-muted-foreground hover:text-foreground data-disabled:cursor-not-allowed data-disabled:hover:text-muted-foreground",
         className,
       )}
       {...props}

@@ -1,5 +1,7 @@
-import { describe, it } from "vitest";
-import { focusVisible, renderFixture } from "../../VisualTest.utils";
+import { render } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+import { expectNotAllowed, focusVisible, renderFixture } from "../../VisualTest.utils";
+import { Field } from "../field";
 import { Input } from "./index";
 
 const searchIcon = (
@@ -65,5 +67,14 @@ describe("Input", () => {
     const input = getByRole("textbox");
     focusVisible(input);
     await expect(fixture).toMatchScreenshot();
+  });
+
+  it("shows a not-allowed cursor on an Input in a disabled Field.Root", () => {
+    const { getByRole } = render(
+      <Field.Root disabled>
+        <Input aria-label="Name" />
+      </Field.Root>,
+    );
+    expectNotAllowed(getByRole("textbox", { name: "Name" }));
   });
 });

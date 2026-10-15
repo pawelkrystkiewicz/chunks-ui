@@ -1,5 +1,7 @@
+import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { focusVisible, renderFixture } from "../../VisualTest.utils";
+import { userEvent } from "vitest/browser";
+import { expectNotAllowed, focusVisible, renderFixture } from "../../VisualTest.utils";
 import { ToggleGroup } from "./index";
 
 describe("ToggleGroup", () => {
@@ -54,5 +56,37 @@ describe("ToggleGroup", () => {
     );
     focusVisible(getByRole("button", { name: "Bold", pressed: false }));
     await expect(fixture).toMatchScreenshot();
+  });
+
+  it("shows a not-allowed cursor on a disabled item", () => {
+    const { getByRole } = render(
+      <ToggleGroup.Root defaultValue={["a"]}>
+        <ToggleGroup.Item value="a">A</ToggleGroup.Item>
+        <ToggleGroup.Item value="b" disabled>
+          B
+        </ToggleGroup.Item>
+      </ToggleGroup.Root>,
+    );
+    expectNotAllowed(getByRole("button", { name: "B" }));
+  });
+
+  // `data-pressed:text-foreground` is a lower specificity than `disabled:hover:`, so the reset must
+  // skip a pressed item, or the pointer would turn its colour to the muted one
+  it("keeps a disabled item's colour under the pointer, pressed or not", async () => {
+    const { getByRole } = render(
+      <ToggleGroup.Root disabled defaultValue={["b"]}>
+        <ToggleGroup.Item value="a">A</ToggleGroup.Item>
+        <ToggleGroup.Item value="b">B</ToggleGroup.Item>
+      </ToggleGroup.Root>,
+    );
+    for (const [name, pressed] of [
+      ["A", false],
+      ["B", true],
+    ] as const) {
+      const item = getByRole("button", { name, pressed });
+      const rest = getComputedStyle(item).color;
+      await userEvent.hover(item);
+      expect(getComputedStyle(item).color, name).toBe(rest);
+    }
   });
 });

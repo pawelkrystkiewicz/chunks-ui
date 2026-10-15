@@ -1,6 +1,7 @@
+import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { userEvent } from "vitest/browser";
-import { renderFixture } from "../../VisualTest.utils";
+import { expectNotAllowed, renderFixture } from "../../VisualTest.utils";
 import { Slider } from "./index";
 
 describe("Slider", () => {
@@ -102,5 +103,22 @@ describe("Slider", () => {
     await userEvent.click(thumb);
     expect(document.activeElement).toBe(input);
     expect(getComputedStyle(thumb).outlineStyle).toBe("none");
+  });
+
+  it("shows a not-allowed cursor on a disabled thumb", () => {
+    const { getByRole } = render(
+      <div style={{ width: 200 }}>
+        <Slider.Root defaultValue={[40]} min={0} max={100} disabled>
+          <Slider.Control>
+            <Slider.Track>
+              <Slider.Indicator />
+              <Slider.Thumb index={0} aria-label="Volume" />
+            </Slider.Track>
+          </Slider.Control>
+        </Slider.Root>
+      </div>,
+    );
+    const thumb = getByRole("slider", { name: "Volume" }).parentElement as HTMLElement;
+    expectNotAllowed(thumb);
   });
 });

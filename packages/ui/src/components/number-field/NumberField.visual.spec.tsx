@@ -1,5 +1,7 @@
+import { render } from "@testing-library/react";
 import { describe, expect, it, onTestFinished } from "vitest";
-import { focusVisible, renderFixture } from "../../VisualTest.utils";
+import { userEvent } from "vitest/browser";
+import { expectNotAllowed, focusVisible, renderFixture } from "../../VisualTest.utils";
 import { Dialog } from "../dialog";
 import { NumberField } from "./index";
 
@@ -16,6 +18,16 @@ function ScrubField() {
     </NumberField.Root>
   );
 }
+
+const disabledField = () => (
+  <NumberField.Root defaultValue={42} disabled>
+    <NumberField.Group>
+      <NumberField.Decrement />
+      <NumberField.Input aria-label="Amount" />
+      <NumberField.Increment />
+    </NumberField.Group>
+  </NumberField.Root>
+);
 
 // Specs run in an iframe, where Chromium refuses pointer lock ("WrongDocumentError") and Base UI
 // then removes the cursor. Grant the lock so the cursor stays.
@@ -112,5 +124,23 @@ describe("NumberField", () => {
     const input = getByRole("textbox");
     focusVisible(input);
     await expect(fixture).toMatchScreenshot();
+  });
+
+  it("shows a not-allowed cursor on every part of a disabled field", () => {
+    const { getByRole } = render(disabledField());
+    expectNotAllowed(
+      getByRole("group"),
+      getByRole("textbox", { name: "Amount" }),
+      getByRole("button", { name: "Increase" }),
+      getByRole("button", { name: "Decrease" }),
+    );
+  });
+
+  it("keeps a disabled increment button at its rest colour under the pointer", async () => {
+    const { getByRole } = render(disabledField());
+    const increment = getByRole("button", { name: "Increase" });
+    const rest = getComputedStyle(increment).color;
+    await userEvent.hover(increment);
+    expect(getComputedStyle(increment).color).toBe(rest);
   });
 });

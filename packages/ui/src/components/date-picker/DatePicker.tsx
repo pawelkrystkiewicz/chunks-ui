@@ -255,10 +255,10 @@ export function DatePicker({
                   render={hasFormInput ? undefined : <button type="button" ref={fieldRef} />}
                   aria-labelledby={labelledBy ? `${labelledBy} ${valueId}` : undefined}
                   className={cn(
-                    "flex h-ui-height w-full cursor-pointer items-center rounded-md border border-input bg-background px-3 text-left text-sm",
+                    "flex h-ui-height w-full cursor-pointer items-center rounded-md border border-input bg-background px-3 text-start text-sm",
                     FOCUS_RING,
                     RING_TRANSITION,
-                    "disabled:pointer-events-none disabled:opacity-50",
+                    "disabled:cursor-not-allowed disabled:opacity-50",
                     !displayValue && "text-muted-foreground",
                   )}
                 >
