@@ -59,6 +59,12 @@ describe("Progress.Indicator indeterminate animation", () => {
       className: "data-indeterminate:animate-none",
       animation: "none",
     },
+    // The old bracketed spelling stays beside the library's class and wins by stylesheet order
+    {
+      reducedMotion: "no-preference",
+      className: "data-[indeterminate]:animate-none",
+      animation: "none",
+    },
     { reducedMotion: "reduce", className: undefined, animation: "pulse" },
     {
       reducedMotion: "reduce",
