@@ -54,7 +54,7 @@ Tests: `scripts/__specs__/check-peer-floors.spec.ts`.
 
 ## calculate-next-version.ts
 
-Calculates the next semantic version based on changeset files. This script eliminates duplication in the GitHub Actions workflow by providing a single source of truth for version calculation logic.
+Calculates the next semantic version based on changeset files, so you can preview a release locally.
 
 ### Usage
 
@@ -96,7 +96,7 @@ has_changesets=true
 ### How it works
 
 1. Reads the current version from `packages/ui/package.json`
-2. Scans `.changeset/*.md` files (excluding README.md)
+2. Scans `.changeset/*.md` files (excluding README.md and empty changesets, the ones `bunx changeset --empty` writes: no package in the front matter, so no release)
 3. Determines the highest bump type:
    - `major` takes precedence over everything
    - `minor` takes precedence over `patch`
@@ -163,15 +163,4 @@ To test the script with different scenarios:
 
 ### Integration with GitHub Actions
 
-The script is used in [.github/workflows/release-changeset.yml](../.github/workflows/release-changeset.yml) to:
-
-1. Calculate version information once
-2. Use the calculated version for PR titles
-3. Use the calculated version when generating automatic changesets
-
-This approach:
-
-- Eliminates code duplication
-- Makes testing easier (can be tested locally)
-- Provides consistent version calculation across the workflow
-- Improves maintainability
+No workflow calls this script. [.github/workflows/release-changeset.yml](../.github/workflows/release-changeset.yml) runs `changesets/action`, which works out the version itself. Only the `version:next` script in the root `package.json` runs it, so you can preview the next version locally.
