@@ -34,13 +34,25 @@ Runs in the `typecheck` job of `quality-gates.yml`. Tests: `scripts/__specs__/ch
 
 ## check-no-motion.ts
 
-Bundles chunks-ui with webpack in two throwaway consumers, one without Motion and one with it, to prove `motion` is optional. Without Motion, the build must succeed with exactly one `Can't resolve 'motion/react'` warning, and `tsc --noEmit` with `strict` and `skipLibCheck: false` must compile a file that imports `Button` and `useMotion` from `chunks-ui`, so the package types reference no `motion/react` (TS2307). With Motion, the build must emit an async chunk holding Motion and leave no bare `import("motion/react")` in any output. The fixtures in `no-motion/` pin every dependency, including `typescript` and `@types/react` for the type-check; to move a pin, see the recipe in `TESTING_STRATEGY.md`.
+Proves `motion` is an optional peer of chunks-ui. It packs the built package, installs it into two throwaway consumers, one without Motion and one with it, and builds each with two bundlers:
+
+- **webpack** (Next.js in webpack mode) bundles an entry that imports chunks-ui. Without Motion, the build must succeed with exactly one `Can't resolve 'motion/react'` warning, and `tsc --noEmit` with `strict` and `skipLibCheck: false` must compile a file that imports `Button` and `useMotion` from `chunks-ui`, so the package types reference no `motion/react` (TS2307). With Motion, the build must emit an async chunk holding Motion and leave no bare `import("motion/react")` in any output.
+- **Turbopack** (`next build`, Next 16's default) builds the minimal app in `no-motion/next/` (`app/layout.tsx`, `app/page.tsx` with a `Dialog` and a `Tooltip`, the components that lazy-load Motion, and `next.config.ts` with `output: "export"`) in a subdirectory of each consumer. Without Motion, the build must pass and `out/index.html` must contain both trigger texts (`NEXT_TRIGGERS` in the script), which proves the prerender ran without a server error; no server is started. With Motion, a chunk under `out/_next/static/chunks` must contain `MotionGlobalConfig` (an export of `motion/react`, so it survives minification), that chunk must not be the page's own, and no chunk may keep a bare `import("motion/react")`. The success line prints the wall time of both builds; each takes a few seconds locally.
+
+The fixtures pin every dependency: `no-motion/package.fixture.json` and `no-motion/with-motion/package.fixture.json`, with their `bun.fixture.lock`, installed with `bun install --frozen-lockfile` in a temporary directory, so the root `bun.lock` does not change. They are named `*.fixture.*` so that Renovate leaves them alone; keep `next` at the version `apps/docs/package.json` uses, and `typescript`, `@types/react` and `@types/node` are there for Next's type-check (and for the strict `tsc` run). To move a pin, change both `package.fixture.json` files and refresh each lockfile (needs the network):
+
+```bash
+for fixture in scripts/no-motion scripts/no-motion/with-motion; do
+  dir=$(mktemp -d) && cp $fixture/package.fixture.json $dir/package.json &&
+    (cd $dir && bun install) && cp $dir/bun.lock $fixture/bun.fixture.lock
+done
+```
 
 ```bash
 bun run check:no-motion   # builds chunks-ui first, needs the network
 ```
 
-Runs in the `docs-build` job of `quality-gates.yml`, as its own step. Tests: `scripts/__specs__/check-no-motion.spec.ts`.
+Runs in the `docs-build` job of `quality-gates.yml`, as its own step. Tests: `scripts/__specs__/check-no-motion.spec.ts` (the assertion helpers only; no build runs in the unit tests).
 
 ## check-peer-floors.ts
 
