@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - master
+  # A run by hand, to finish a release whose run failed; see TESTING_STRATEGY.md, CI, Release
+  workflow_dispatch:
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
