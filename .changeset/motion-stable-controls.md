@@ -6,5 +6,3 @@ Fixed: with Motion installed, the `Switch` thumb, the `ToggleGroup` and `Tabs` i
 
 - A function `className`, called with the part's state, is now applied. It used to be dropped.
 - A consumer's `render` prop now keeps the part's classes, children and animation. Before, `Checkbox.Indicator` lost its check mark, and with Motion all four lost their classes.
-
-Fixed: `Switch`, `Tabs`, `ToggleGroup`, `Radio` and `Checkbox` rendered a plain element on their first render and swapped in a Motion element right after, also on a page where Motion had long loaded. `useMotion()` now returns the module from the first render of a component that mounts after Motion has loaded, and still returns `null` on the server and while hydrating.
