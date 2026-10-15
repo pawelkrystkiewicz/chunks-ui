@@ -3,6 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { axe } from "jest-axe";
 import type { ComponentProps } from "react";
 import { afterEach, describe, expect, expectTypeOf, it } from "vitest";
+import { FOCUS_RING, FOCUS_RING_WITHIN } from "../shared";
 import {
   Combobox,
   type ComboboxChipRemoveProps,
@@ -479,5 +480,55 @@ describe("Combobox icon buttons", () => {
     for (const name of names) {
       expect(screen.getByRole("button", { name })).toBeInTheDocument();
     }
+  });
+});
+
+describe("Combobox focus ring", () => {
+  it("draws the library focus ring on Input", () => {
+    render(
+      <Combobox.Root>
+        <Combobox.Input aria-label="Search" data-testid="input" />
+      </Combobox.Root>,
+    );
+    expect(screen.getByTestId("input")).toHaveClass(...FOCUS_RING.split(" "));
+  });
+
+  // Both offsets are in one tailwind-merge group under the same variant: the consumer's wins
+  it("keeps a flush ring on Input with focus-visible:outline-offset-0 in className", () => {
+    render(
+      <Combobox.Root>
+        <Combobox.Input
+          aria-label="Search"
+          data-testid="input"
+          className="focus-visible:outline-offset-0"
+        />
+      </Combobox.Root>,
+    );
+    const input = screen.getByTestId("input");
+    expect(input).toHaveClass(
+      "focus-visible:outline-offset-0",
+      "focus-visible:outline-2",
+      "focus-visible:outline-ring",
+    );
+    expect(input).not.toHaveClass("focus-visible:outline-offset-2");
+  });
+
+  // The wrapper draws the ring while the input inside it has the focus
+  it("draws the library focus ring on Control while a control inside has focus", () => {
+    render(<Combobox.Control data-testid="control" />);
+    expect(screen.getByTestId("control")).toHaveClass(...FOCUS_RING_WITHIN.split(" "));
+  });
+
+  it("keeps a flush ring on Control with has-[:focus-visible]:outline-offset-0 in className", () => {
+    render(
+      <Combobox.Control data-testid="control" className="has-[:focus-visible]:outline-offset-0" />,
+    );
+    const control = screen.getByTestId("control");
+    expect(control).toHaveClass(
+      "has-[:focus-visible]:outline-offset-0",
+      "has-[:focus-visible]:outline-2",
+      "has-[:focus-visible]:outline-ring",
+    );
+    expect(control).not.toHaveClass("has-[:focus-visible]:outline-offset-2");
   });
 });

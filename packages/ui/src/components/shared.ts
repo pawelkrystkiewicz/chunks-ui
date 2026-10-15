@@ -38,6 +38,13 @@ export const RING_ANIMATION_CLASSES = ["micro-interactions", RING_TRANSITION, "d
 export const FOCUS_RING =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
 
+/**
+ * `FOCUS_RING` for a wrapper that draws the ring while a control inside it has keyboard focus
+ * (`Combobox.Control` around its input and chips)
+ */
+export const FOCUS_RING_WITHIN =
+  "has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ring";
+
 /** The class `theme.css` styles the toast content box by; see `.ToastContent` there. */
 export const TOAST_CONTENT_CLASS = "ToastContent";
 

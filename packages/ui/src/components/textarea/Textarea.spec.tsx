@@ -4,6 +4,7 @@ import { axe } from "jest-axe";
 import { createRef } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Field } from "../field";
+import { FOCUS_RING } from "../shared";
 import { Textarea } from "./Textarea";
 
 afterEach(cleanup);
@@ -111,5 +112,24 @@ describe("Textarea inside Field", () => {
       </Field.Root>,
     );
     expect(screen.getByRole("textbox", { name: "Bio" })).toHaveClass("is-disabled");
+  });
+});
+
+describe("Textarea focus ring", () => {
+  it("draws the library focus ring", () => {
+    render(<Textarea data-testid="ta" />);
+    expect(screen.getByTestId("ta")).toHaveClass(...FOCUS_RING.split(" "));
+  });
+
+  // Both offsets are in one tailwind-merge group under the same variant: the consumer's wins
+  it("keeps a flush ring with focus-visible:outline-offset-0 in className", () => {
+    render(<Textarea data-testid="ta" className="focus-visible:outline-offset-0" />);
+    const textarea = screen.getByTestId("ta");
+    expect(textarea).toHaveClass(
+      "focus-visible:outline-offset-0",
+      "focus-visible:outline-2",
+      "focus-visible:outline-ring",
+    );
+    expect(textarea).not.toHaveClass("focus-visible:outline-offset-2");
   });
 });

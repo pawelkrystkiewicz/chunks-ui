@@ -1,6 +1,7 @@
 import { Field as BaseField } from "@base-ui/react/field";
 import type { ComponentProps } from "react";
 import { cnState } from "../../lib/cn";
+import { FOCUS_RING } from "../shared";
 
 export type TextareaProps = Omit<ComponentProps<"textarea">, "className"> & {
   /** Classes for the textarea, or a function of its field state (`disabled`, `valid`, …). */
@@ -30,7 +31,7 @@ export function Textarea({ autoResize, className, ...props }: TextareaProps) {
         "text-foreground placeholder:text-muted-foreground",
         // Only the colours (`transition-colors` also lists `outline-color`: the ring would fade in; the utility sorts before this list)
         "micro-interactions [transition-property:color,background-color,border-color] duration-150",
-        "focus-visible:outline-2 focus-visible:outline-ring",
+        FOCUS_RING,
         "disabled:pointer-events-none disabled:opacity-50",
         "data-[invalid]:border-destructive",
         autoResize && "field-sizing-content",

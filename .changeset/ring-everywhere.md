@@ -1,0 +1,5 @@
+---
+"chunks-ui": minor
+---
+
+`Checkbox.Root`, `Radio.Root`, `Switch.Root`, `Tabs.Tab`, `Tabs.Panel`, `ToggleGroup.Item`, the `Calendar` day and month buttons, `Input`, `Textarea`, `Select.Trigger`, `Combobox.Input` and `Combobox.Control` now draw the same offset focus ring as Button: 2px of `--ring`, 2px outside the edge, on keyboard focus. Before, their ring sat flush with the edge, with no offset. Each part keeps its transition list, so the ring still shows at once. To keep the flush ring, pass `focus-visible:outline-offset-0` in the part's `className`; it replaces the offset. `Combobox.Control` draws its ring while the input inside it has focus, so there it is `has-[:focus-visible]:outline-offset-0`. On an `Input` with adornments a string `className` goes on the wrapper, so pass a function, `className={() => "focus-visible:outline-offset-0"}`, which reaches the input. The `Calendar` buttons take no `className` of their own, so they keep the offset ring. `Tabs.Content`, which `Tabs.Contents` clips, keeps its inset ring.
