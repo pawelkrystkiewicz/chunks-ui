@@ -118,7 +118,7 @@ Built-in text is the one exception to props over config objects. A component wit
 
 - Import spring presets from `src/lib/motion.ts` — no magic numbers in components
 - Use `useMotion()` hook from `src/lib/use-motion.ts` for lazy Motion detection
-- Use `createPopupRenderer()` from `src/lib/PopupMotion.tsx` for popup animations
+- A popup part gets its `render` from `usePopupRender()` in `src/lib/use-popup-render.ts`, which picks the Motion spring or the CSS path (and keeps the CSS path for a consumer `render`). The part gates its CSS fallback classes on the returned `useSpring` (`!useSpring && "data-starting-style:…"`) and adds a row to the table in `src/lib/UsePopupRender.spec.tsx`
 - Components must work without Motion installed (CSS transition fallback)
 - Respect `prefers-reduced-motion` via `useReducedMotion()` hook
 
