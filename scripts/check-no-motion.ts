@@ -192,8 +192,17 @@ export function nextWithMotionProblem(
   }
 }
 
-function run(cmd: string[], cwd: string) {
-  const { exitCode, stdout, stderr } = Bun.spawnSync(cmd, { cwd, stdout: "pipe", stderr: "pipe" });
+/**
+ * Runs `cmd` in `cwd`. `env` replaces the child's environment: Bun gives a child the environment of
+ * its own startup, so assigning to process.env at runtime reaches no child.
+ */
+function run(cmd: string[], cwd: string, env?: Record<string, string | undefined>) {
+  const { exitCode, stdout, stderr } = Bun.spawnSync(cmd, {
+    cwd,
+    env,
+    stdout: "pipe",
+    stderr: "pipe",
+  });
   // webpack-cli and Next colour their output on CI runners too, which splits "WARNING in" with escape codes
   return { exitCode, output: `${stdout}${stderr}`.replace(ANSI, "") };
 }
@@ -276,7 +285,10 @@ function nextBuild(dir: string) {
     filter: (path) => isNextAppFile(relative(source, path)),
   });
   const started = performance.now();
-  const result = run([join(dir, "node_modules/.bin/next"), "build"], app);
+  const result = run([join(dir, "node_modules/.bin/next"), "build"], app, {
+    ...process.env,
+    NEXT_TELEMETRY_DISABLED: "1",
+  });
   const seconds = (performance.now() - started) / 1000;
   const page = join(app, "out/index.html");
   const html = existsSync(page) ? readFileSync(page, "utf8") : undefined;
@@ -289,7 +301,6 @@ function nextBuild(dir: string) {
 }
 
 if (import.meta.main) {
-  process.env.NEXT_TELEMETRY_DISABLED = "1";
   const dir = mkdtempSync(join(tmpdir(), "chunks-ui-no-motion-"));
   try {
     const tarball = pack(dir);
