@@ -1,6 +1,6 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { axe } from "jest-axe";
-import { createRef, type FormEvent, type ReactNode, useState } from "react";
+import { createRef, type FormEvent, type ReactElement, type ReactNode, useState } from "react";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { Drawer } from "../drawer";
 import { FOCUS_RING } from "../shared";
@@ -420,7 +420,10 @@ describe("Body", () => {
         <Dialog.Title>Terms</Dialog.Title>,
         <Dialog.Body render={(props) => <div {...props} />}>Text</Dialog.Body>,
       );
-      expect(screen.getByRole("region", { name: "Terms" }).tagName).toBe("DIV");
+      const body = screen.getByRole("region", { name: "Terms" });
+      expect(body.tagName).toBe("DIV");
+      // jsdom has no layout, so the Body reads as fitting only if its ref survived the wrapper
+      expect(body).toHaveAttribute("tabindex", "-1");
     });
 
     it("leaves a form, which has a role of its own, without one", () => {
@@ -431,6 +434,75 @@ describe("Body", () => {
       expect(screen.getByRole("form", { name: "New task" })).not.toHaveAttribute("role");
     });
 
+    it("leaves a form returned by a function render without a role, though its props could carry one", () => {
+      renderBody(
+        <Dialog.Title>New task</Dialog.Title>,
+        <Dialog.Body render={(props) => <form {...props} />}>Text</Dialog.Body>,
+      );
+      expect(screen.getByRole("form", { name: "New task" })).not.toHaveAttribute("role");
+    });
+
+    it("gives a lazy render element, as a Server Component sends it, the role", () => {
+      // The Flight client hands over `{ $$typeof: react.lazy, _payload, _init }` in place of the
+      // element; React's own children logic reads it through `_init`
+      const lazy = {
+        $$typeof: Symbol.for("react.lazy"),
+        _payload: <div />,
+        _init: (payload: ReactElement) => payload,
+      } as unknown as ReactElement;
+      renderBody(<Dialog.Title>Terms</Dialog.Title>, <Dialog.Body render={lazy}>Text</Dialog.Body>);
+      const body = screen.getByRole("region", { name: "Terms" });
+      expect(body.tagName).toBe("DIV");
+      expect(body).toHaveAttribute("role", "region");
+    });
+
+    it("gives a div named by an aria-label on the Body the role, with no Title", () => {
+      renderBody(
+        null,
+        <Dialog.Body aria-label="Notes" render={<div />}>
+          Text
+        </Dialog.Body>,
+      );
+      expect(screen.getByRole("region", { name: "Notes" })).toHaveAttribute("role", "region");
+    });
+
+    // A region must have a name: with none it is a generic element, and a role would only add noise
+    it("gives an unnamed div no role", () => {
+      renderBody(null, <Dialog.Body render={<div data-testid="body" />}>Text</Dialog.Body>);
+      expect(screen.getByTestId("body")).not.toHaveAttribute("role");
+    });
+
+    it("gives an unnamed div returned by a function render no role", () => {
+      renderBody(
+        null,
+        <Dialog.Body render={(props) => <div data-testid="body" {...props} />}>Text</Dialog.Body>,
+      );
+      expect(screen.getByTestId("body")).not.toHaveAttribute("role");
+    });
+
+    it("still warns about a component passed as a function render", () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      // Named like a component, as Base UI checks: `render={MyBodyRender}` calls it as a function
+      function MyBodyRender(props: object) {
+        return <div {...props} />;
+      }
+      try {
+        // Named by its label, so the wrapper is in place from the first render: the Title's id
+        // arrives only after it, and Base UI warns once per message
+        renderBody(
+          null,
+          <Dialog.Body aria-label="Terms" render={MyBodyRender}>
+            Text
+          </Dialog.Body>,
+        );
+        expect(warn).toHaveBeenCalledWith(expect.stringContaining("`MyBodyRender`"));
+      } finally {
+        warn.mockRestore();
+      }
+    });
+
+    // The specs use role="note" for another role on a <div>: Biome's `useSemanticElements` flags
+    // role="region" on one
     it("keeps a role set on the render element", () => {
       renderBody(
         <Dialog.Title>Terms</Dialog.Title>,
