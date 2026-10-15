@@ -12,7 +12,7 @@ import { RING_ANIMATION_CLASSES } from "../shared";
 
 /**
  * `Value` is the type of `value`, `defaultValue` and the value `onValueChange` receives. It is
- * inferred from `value` or `defaultValue`, so a typed `useState` setter is an `onValueChange`.
+ * inferred from `value`, `defaultValue` or an annotated `onValueChange`, so a typed `useState` setter is an `onValueChange`.
  * Without either it is `unknown`.
  */
 export type RadioGroupProps<Value = unknown> = BaseRadioGroup.Props<Value>;

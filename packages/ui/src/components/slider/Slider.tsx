@@ -17,7 +17,7 @@ const SliderLabelsContext = createContext({ labels: DEFAULT_SLIDER_LABELS, range
 // SliderValue component in consumers' error messages.
 /**
  * `Value` is the type of `value`, `defaultValue` and the value `onValueChange` receives: a
- * `number`, or an array of them for a range slider. It is inferred from `value` or `defaultValue`,
+ * `number`, or an array of them for a range slider. It is inferred from `value`, `defaultValue` or an annotated `onValueChange`,
  * so a typed `useState` setter is an `onValueChange`. Without either it is
  * `number | readonly number[]`.
  */

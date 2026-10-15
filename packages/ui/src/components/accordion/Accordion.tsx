@@ -11,7 +11,7 @@ import { FOCUS_RING, RING_TRANSITION } from "../shared";
 
 /**
  * `Value` is the type of one `Accordion.Item`'s `value`; `value`, `defaultValue` and the value
- * `onValueChange` receives are `Value[]`. It is inferred from `value` or `defaultValue`, so a
+ * `onValueChange` receives are `Value[]`. It is inferred from `value`, `defaultValue` or an annotated `onValueChange`, so a
  * typed `useState` setter is an `onValueChange`. Without either it is `unknown`.
  */
 export type AccordionRootProps<Value = unknown> = BaseAccordion.Root.Props<Value>;

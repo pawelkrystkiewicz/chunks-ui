@@ -86,7 +86,7 @@ Set `orientation="vertical"` on the root. The track and indicator switch to a ve
 
 ## Controlled
 
-`Slider.Root` infers whether its value is a number or an array from `value` or `defaultValue`, so a typed `useState` setter is an `onValueChange`, for a single value and for a range:
+`Slider.Root` infers whether its value is a number or an array from `value` or `defaultValue`, so a typed `useState` setter is an `onValueChange`. A range (`useState([20, 80])`) works the same way:
 
 ```tsx
 function ControlledSlider() {
