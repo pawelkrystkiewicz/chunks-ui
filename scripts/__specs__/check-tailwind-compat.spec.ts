@@ -136,8 +136,9 @@ describe("themeUtilitiesIn", () => {
       "core.css",
       "@utility font-heading {\n  font-family: var(--font-heading);\n}\n@utility touch-target {\n  position: relative;\n}\n",
     );
-    // Shaped like the wrapper chunks-ui/theme.css becomes: Tailwind, an import, a source, no utilities
-    write("wrapper.css", '@import "tailwindcss";\n@import "./core.css";\n@source "./";\n');
+    // Shaped like the wrapper chunks-ui/theme.css becomes: an import of core, a source, no
+    // utilities of its own
+    write("wrapper.css", '@import "./core.css";\n@source "./";\n');
     write(
       "node_modules/fake-core/package.json",
       JSON.stringify({ name: "fake-core", exports: { "./theme.css": "./theme.css" } }),
@@ -147,15 +148,33 @@ describe("themeUtilitiesIn", () => {
     write("a.css", '@import "./b.css";\n@utility from-a {}\n');
     write("b.css", '@import "./a.css";\n@utility from-b {}\n');
     write("extensionless.css", '@import "./core";\n');
+    // Tailwind finds ./dir/index.css; Bun does not. ./theme.js wins over ./theme.css in Bun
+    write("dir/index.css", "@utility from-dir {}\n");
+    write("directory.css", '@import "./dir";\n');
+    write("theme.js", "// @utility from-theme-js {}\n");
+    write("theme.css", "@utility from-theme-css {}\n");
+    write("js-first.css", '@import "./theme";\n@utility from-js-first {}\n');
     write("url.css", '@import url("./core.css");\n@import url( "./a.css" ) layer(base);\n');
+    write("commented.css", '/* @import "./nope.css"; */\n@utility from-commented {}\n');
     write("remote.css", '@import "https://example.com/x.css";\n@import url("//cdn/y.css");\n');
     write("missing.css", '@import "missing-pkg/theme.css";\n');
     write("nested-missing.css", '@import "./missing.css";\n');
-    // Tailwind's own package: "." is JavaScript, which is skipped, not followed
+    // Tailwind's own package: Tailwind reads `style`, Bun takes the JavaScript, which is skipped
     write(
       "node_modules/tailwindcss/package.json",
-      JSON.stringify({ name: "tailwindcss", exports: { ".": "./dist/lib.mjs" } }),
+      JSON.stringify({
+        name: "tailwindcss",
+        exports: {
+          ".": {
+            types: "./dist/lib.d.mts",
+            style: "./index.css",
+            require: "./dist/lib.js",
+            import: "./dist/lib.mjs",
+          },
+        },
+      }),
     );
+    write("node_modules/tailwindcss/index.css", "@utility from-tailwind-css {}\n");
     write("node_modules/tailwindcss/dist/lib.mjs", "// @utility from-js {}\n");
     write("tailwind.css", '@import "tailwindcss" source(none);\n@utility from-tailwind-user {}\n');
     // Only a `style` condition exports the stylesheet: Bun's resolver cannot see it
@@ -194,12 +213,21 @@ describe("themeUtilitiesIn", () => {
     ]);
   });
 
+  it("ignores an @import inside a comment", () => {
+    expect(themeUtilitiesIn(file("commented.css"))).toEqual(["from-commented"]);
+  });
+
   it("skips imports by URL", () => {
     expect(themeUtilitiesIn(file("remote.css"))).toEqual([]);
   });
 
-  it("skips a package whose entry is not a .css file", () => {
+  // Tailwind would read the `style` stylesheet; Bun takes the JavaScript condition
+  it("skips a package whose entry resolves to JavaScript, even with a style stylesheet", () => {
     expect(themeUtilitiesIn(file("tailwind.css"))).toEqual(["from-tailwind-user"]);
+  });
+
+  it("skips an extensionless import that resolves to a .js beside the .css", () => {
+    expect(themeUtilitiesIn(file("js-first.css"))).toEqual(["from-js-first"]);
   });
 
   it("reads each file of an import cycle once", () => {
@@ -212,8 +240,16 @@ describe("themeUtilitiesIn", () => {
     );
   });
 
-  it("throws on an unresolvable import in a nested stylesheet", () => {
-    expect(() => themeUtilitiesIn(file("nested-missing.css"))).toThrow(/"missing-pkg\/theme\.css"/);
+  it("throws on an unresolvable import in a nested stylesheet, naming the nested file", () => {
+    expect(() => themeUtilitiesIn(file("nested-missing.css"))).toThrow(
+      /\/missing\.css: cannot resolve @import "missing-pkg\/theme\.css"/,
+    );
+  });
+
+  it("throws on a directory import, which Tailwind resolves to index.css", () => {
+    expect(() => themeUtilitiesIn(file("directory.css"))).toThrow(
+      /directory\.css: cannot resolve @import ".\/dir"/,
+    );
   });
 
   it("throws on a package that exports its stylesheet only under the style condition", () => {
