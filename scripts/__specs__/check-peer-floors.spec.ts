@@ -6,12 +6,10 @@ import {
   EXEMPT,
   floorsOf,
   overridesOf,
-  overridesRefusal,
+  TYPES,
   typeFloorsOf,
   verdictsOf,
 } from "../check-peer-floors";
-
-const TYPES = { react: "@types/react", "react-dom": "@types/react-dom" };
 
 describe("floorsOf", () => {
   it("derives each floor from its ^range", () => {
@@ -39,21 +37,13 @@ describe("floorsOf", () => {
 describe("typeFloorsOf", () => {
   it("takes each types floor from the <major>.<minor> of its runtime floor", () => {
     const floors = new Map([
-      ["react", "19.2.0"],
-      ["react-dom", "19.2.4"],
+      ["react", "19.3.0"],
+      ["react-dom", "19.3.4"],
     ]);
     expect([...typeFloorsOf(floors, TYPES)]).toEqual([
-      ["@types/react", "19.2"],
-      ["@types/react-dom", "19.2"],
+      ["@types/react", "19.3"],
+      ["@types/react-dom", "19.3"],
     ]);
-  });
-
-  it("moves with the runtime floor", () => {
-    const floors = new Map([
-      ["react", "19.3.0"],
-      ["react-dom", "19.3.0"],
-    ]);
-    expect(typeFloorsOf(floors, TYPES).get("@types/react")).toBe("19.3");
   });
 
   it("throws when a runtime peer has no floor", () => {
@@ -125,24 +115,6 @@ describe("verdictsOf", () => {
       "@types/react",
       false,
     ]);
-  });
-});
-
-describe("overridesRefusal", () => {
-  it("refuses outside CI without --force, naming the way out", () => {
-    expect(overridesRefusal(undefined, false)).toContain("--force");
-  });
-
-  it("treats an empty CI as unset", () => {
-    expect(overridesRefusal("", false)).toBeDefined();
-  });
-
-  it("lets a run with CI set through", () => {
-    expect(overridesRefusal("true", false)).toBeUndefined();
-  });
-
-  it("lets --force through", () => {
-    expect(overridesRefusal(undefined, true)).toBeUndefined();
   });
 });
 

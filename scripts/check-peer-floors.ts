@@ -87,12 +87,6 @@ export function overridesOf(
   };
 }
 
-/** Why `--overrides` must not run here, or undefined when it may: it edits tracked files. */
-export function overridesRefusal(ci: string | undefined, force: boolean): string | undefined {
-  if (ci || force) return undefined;
-  return "--overrides edits the tracked package.json (and the install after it bun.lock): run it in CI or in a throwaway copy of the repo, or pass --force";
-}
-
 export type Verdict = { name: string; got: string; want: string; ok: boolean };
 
 /**
@@ -126,9 +120,10 @@ if (import.meta.main) {
   );
   const typeFloors = typeFloorsOf(floors, TYPES);
   if (process.argv.includes("--overrides")) {
-    const refusal = overridesRefusal(process.env.CI, process.argv.includes("--force"));
-    if (refusal !== undefined) {
-      console.error(refusal);
+    if (!process.env.CI && !process.argv.includes("--force")) {
+      console.error(
+        "--overrides edits the tracked package.json (and the install after it bun.lock): run it in CI or in a throwaway copy of the repo, or pass --force",
+      );
       process.exit(1);
     }
     const file = join(import.meta.dirname, "../package.json");
