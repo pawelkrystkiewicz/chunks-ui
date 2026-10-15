@@ -1,5 +1,7 @@
-import { Checkbox, Label } from 'chunks-ui'
+import { Label } from 'chunks-ui'
+import { LabelDisabledControlExample } from '@/examples/Label'
 import { Container } from '@/components'
+import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
 # Label
 
@@ -50,14 +52,7 @@ import { Label } from "chunks-ui";
 </div>
 ```
 
-<Container>
-  <div className="flex items-center gap-2">
-    <Label htmlFor="terms" disabled>Accept terms</Label>
-    <Checkbox.Root id="terms" disabled>
-      <Checkbox.Indicator />
-    </Checkbox.Root>
-  </div>
-</Container>
+<LabelDisabledControlExample />
 
 A disabled label carries `data-disabled`, the attribute Base UI sets on `Field.Label` inside a disabled `Field.Root`, and its disabled look is keyed on that attribute alone. One `data-disabled:` class in `className` restyles it (spell the variant `data-disabled:`, as the component does, so `cn` drops the default):
 
@@ -71,11 +66,17 @@ Inside a `Field.Root`, use `Field.Label`, which dims when the field is disabled.
 
 ## Props
 
-This component accepts all props from the native `<label>` element, plus:
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { LabelProps } from 'chunks-ui'
+type Props = Pick<LabelProps, 'disabled'>
+export default Props
+`
+  })}
+/>
 
-| Prop       | Type      | Default | Description                                                                     |
-| ---------- | --------- | ------- | ------------------------------------------------------------------------------- |
-| `disabled` | `boolean` | `false` | Dims the label, shows a not-allowed cursor and sets `data-disabled` on it.      |
+All other props are forwarded to the underlying native `<label>` element.
 
 ## Styling
 
