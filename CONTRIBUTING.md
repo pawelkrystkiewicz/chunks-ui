@@ -172,7 +172,7 @@ Pre-commit hook (Lefthook) auto-runs Biome on staged files.
 
 ## Changesets
 
-Every PR that changes `packages/ui` needs a changeset: the `lint` job of `quality-gates.yml` runs `changeset status --since=origin/master` and fails without one. For a user-facing change:
+Every PR that changes a publishable package needs a changeset. That is `chunks-ui` only: `@chunks-ui/docs` is in `ignore` and `@chunks-ui/typescript-config` is private, and `privatePackages.version` is `false` in `.changeset/config.json`, so neither is gated. The `lint` job of `quality-gates.yml` runs `changeset status --since=origin/master` on pull requests and fails without a changeset. For a user-facing change:
 
 ```bash
 bunx changeset
@@ -182,8 +182,22 @@ Describe the change, select semver bump level, and commit the generated `.change
 
 The changelog entry links the PR that added the changeset (`@changesets/changelog-github`), so add the changeset in the PR with the change. `changeset version` needs a GitHub token to resolve those links: the release workflow passes `PAT_TOKEN`; locally, run `GITHUB_TOKEN=$(gh auth token) bunx changeset version`.
 
-A `packages/ui` change with no user-facing effect (a spec, a test config, a comment) gets an empty changeset, which bumps nothing and adds no changelog entry:
+### Files that need no changeset
+
+`changedFilePatterns` in `.changeset/config.json` lists the files that do not count as a change. The patterns match the path inside `packages/ui`:
+
+- `**/*.spec.ts` and `**/*.spec.tsx` (unit, visual and WebKit specs)
+- `**/__screenshots__/**` (visual baselines)
+- `vitest*.config.ts` and `vitest*.setup.ts` in the package root
+
+A PR that changes only these files passes the gate with no changeset. Any other file in `packages/ui` counts: source, `package.json`, build config and test helpers such as `VisualTest.utils.tsx`.
+
+A change to such a file with no user-facing effect (a comment, a refactor) gets an empty changeset, which bumps nothing and adds no changelog entry:
 
 ```bash
 bunx changeset --empty
 ```
+
+### Renovate and release PRs
+
+The gate does not run on Renovate branches (`renovate/*`) or on the Version Packages PR (`changeset-release/master`). Renovate merges patch and minor bumps by itself and cannot write a changeset. A bump of a runtime `dependencies` entry of `packages/ui` (`clsx`, `tailwind-merge`) reaches users, so add a changeset for it by hand in a PR of its own. That PR changes no package file, so the gate passes it. Bumps of dev dependencies need none.
