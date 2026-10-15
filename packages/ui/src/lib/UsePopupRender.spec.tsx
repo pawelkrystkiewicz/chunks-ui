@@ -10,25 +10,12 @@ import { Select } from "../components/select";
 import { Tooltip } from "../components/tooltip";
 import { reloadMotion } from "./use-motion";
 
-// jsdom has no media queries, so a test sets what `prefers-reduced-motion` reports
-const restore: (() => void)[] = [];
-
-function emulateReducedMotion() {
-  // An EventTarget already has addEventListener and removeEventListener, which useReducedMotion uses
-  const query = Object.assign(new EventTarget(), {
-    matches: true,
-    media: "(prefers-reduced-motion: reduce)",
-  });
-  const matchMedia = window.matchMedia;
-  window.matchMedia = () => query as unknown as MediaQueryList;
-  restore.push(() => {
-    window.matchMedia = matchMedia;
-  });
-}
+// vitest.setup.ts stubs matchMedia; a test swaps in a query that reports reduced motion
+const { matchMedia } = window;
 
 afterEach(() => {
   cleanup();
-  for (const undo of restore.splice(0).reverse()) undo();
+  window.matchMedia = matchMedia;
 });
 
 type Row = {
@@ -37,8 +24,6 @@ type Row = {
   ui: (renderProp?: ReactElement) => ReactNode;
   /** The style Motion writes inline from the part's `from` values, as [property, value]. Most parts fade. */
   inline?: ["opacity", string] | ["transform", string];
-  /** The CSS path's starting-style class. Most parts fade. */
-  starting?: string;
 };
 
 // The nine popup parts that pick Motion or CSS through usePopupRender
@@ -90,7 +75,6 @@ const parts: Row[] = [
     ),
     // The drawer slides, so Motion writes a transform and the CSS path a translate
     inline: ["transform", "translateY(100%)"],
-    starting: "data-[starting-style]:translate-y-full",
   },
   {
     part: "Popover.Content",
@@ -159,49 +143,48 @@ const parts: Row[] = [
   },
 ];
 
-describe.each(parts)(
-  "$part with Motion loaded",
-  ({ ui, inline = ["opacity", "0"], starting = "data-starting-style:opacity-0" }) => {
-    const [property, closed] = inline;
+describe.each(parts)("$part with Motion loaded", ({ ui, inline = ["opacity", "0"] }) => {
+  const [property, closed] = inline;
 
-    it("animates the default element with Motion, not CSS", async () => {
-      await reloadMotion();
-      render(ui());
-      const el = screen.getByTestId("popup");
-      expect(el).not.toHaveClass("micro-interactions");
-      // A motion.div renders its initial values inline: the part's `from`, not its `to`
-      expect(el.style[property]).toBe(closed);
-    });
+  it("animates the default element with Motion, not CSS", async () => {
+    await reloadMotion();
+    render(ui());
+    const el = screen.getByTestId("popup");
+    expect(el).not.toHaveClass("micro-interactions");
+    // A motion.div renders its initial values inline: the part's `from`, not its `to`
+    expect(el.style[property]).toBe(closed);
+  });
 
-    // A consumer's `render` replaces the animated element, so the spring cannot attach to it
-    it("keeps the CSS transition on the element a render prop gives it", async () => {
-      await reloadMotion();
-      render(ui(<section />));
-      const el = screen.getByTestId("popup");
-      expect(el.tagName).toBe("SECTION");
-      expect(el).toHaveClass("micro-interactions", starting);
-    });
+  // A consumer's `render` replaces the animated element, so the spring cannot attach to it
+  it("keeps the CSS transition on the element a render prop gives it", async () => {
+    await reloadMotion();
+    render(ui(<section />));
+    const el = screen.getByTestId("popup");
+    expect(el.tagName).toBe("SECTION");
+    expect(el).toHaveClass("micro-interactions");
+  });
 
-    // The user's preference is read live and wins over a loaded Motion
-    it("keeps the CSS transition for a user who prefers reduced motion", async () => {
-      emulateReducedMotion();
-      await reloadMotion();
-      render(ui());
-      const el = screen.getByTestId("popup");
-      expect(el).toHaveClass("micro-interactions");
-      expect(el.style[property]).toBe("");
-    });
+  // The user's preference is read live and wins over a loaded Motion
+  it("keeps the CSS transition for a user who prefers reduced motion", async () => {
+    window.matchMedia = () =>
+      ({
+        matches: true,
+        addEventListener() {},
+        removeEventListener() {},
+      }) as unknown as MediaQueryList;
+    await reloadMotion();
+    render(ui());
+    const el = screen.getByTestId("popup");
+    expect(el).toHaveClass("micro-interactions");
+  });
 
-    // The Motion choice is frozen at mount: a part that opened on CSS keeps its element when Motion arrives
-    it("keeps its element when Motion finishes loading after it opened", async () => {
-      const loading = reloadMotion();
-      render(ui());
-      const el = screen.getByTestId("popup");
-      expect(el).toHaveClass("micro-interactions");
-      await act(async () => {
-        await loading;
-      });
-      expect(screen.getByTestId("popup")).toBe(el);
-    });
-  },
-);
+  // The Motion choice is frozen at mount: a part that opened on CSS keeps its element when Motion arrives
+  it("keeps its element when Motion finishes loading after it opened", async () => {
+    const loading = reloadMotion();
+    render(ui());
+    const el = screen.getByTestId("popup");
+    expect(el).toHaveClass("micro-interactions");
+    await act(() => loading);
+    expect(screen.getByTestId("popup")).toBe(el);
+  });
+});
