@@ -34,4 +34,17 @@ describe("Checkbox", () => {
     );
     await expect(fixture).toMatchScreenshot();
   });
+
+  // Keyboard focus shows the ring: 2px of --ring, 2px outside the edge
+  it("focus-visible", async () => {
+    const { fixture, getByRole } = await renderFixture(
+      <Checkbox.Root aria-label="Focused">
+        <Checkbox.Indicator />
+      </Checkbox.Root>,
+    );
+    const checkbox = getByRole("checkbox");
+    checkbox.focus();
+    expect(checkbox.matches(":focus-visible")).toBe(true);
+    await expect(fixture).toMatchScreenshot();
+  });
 });

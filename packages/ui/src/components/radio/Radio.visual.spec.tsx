@@ -134,4 +134,17 @@ describe("Radio", () => {
     expect(drawnOpacity(getByRole("radio", { name: "Option" }))).toBe(1);
     expect(drawnOpacity(getByText("Option"))).toBe(1);
   });
+
+  // Keyboard focus shows the ring: 2px of --ring, 2px outside the edge
+  it("focus-visible", async () => {
+    const { fixture, getByRole } = await renderFixture(
+      <Radio.Group defaultValue="a">
+        <Radio.Item value="a">Option A</Radio.Item>
+      </Radio.Group>,
+    );
+    const radio = getByRole("radio");
+    radio.focus();
+    expect(radio.matches(":focus-visible")).toBe(true);
+    await expect(fixture).toMatchScreenshot();
+  });
 });

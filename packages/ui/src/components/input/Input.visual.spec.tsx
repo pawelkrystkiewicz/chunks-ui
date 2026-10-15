@@ -40,4 +40,33 @@ describe("Input", () => {
     );
     await expect(fixture).toMatchScreenshot();
   });
+
+  // Keyboard focus shows the ring: 2px of --ring, 2px outside the edge
+  it("focus-visible", async () => {
+    const { fixture, getByRole } = await renderFixture(
+      <Input aria-label="Focused" defaultValue="Hello world" />,
+    );
+    const input = getByRole("textbox");
+    input.focus();
+    expect(input.matches(":focus-visible")).toBe(true);
+    await expect(fixture).toMatchScreenshot();
+  });
+
+  // The wrapper that positions the adornments sets no overflow, so the input's ring shows in full
+  it("with adornments focus-visible", async () => {
+    const { fixture, getByRole } = await renderFixture(
+      <div style={{ width: 300 }}>
+        <Input
+          aria-label="Focused"
+          startAdornment={searchIcon}
+          defaultValue="Hello"
+          onClear={() => {}}
+        />
+      </div>,
+    );
+    const input = getByRole("textbox");
+    input.focus();
+    expect(input.matches(":focus-visible")).toBe(true);
+    await expect(fixture).toMatchScreenshot();
+  });
 });

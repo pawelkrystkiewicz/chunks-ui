@@ -41,6 +41,16 @@ describe("Calendar", () => {
     );
     await expect(getByTestId("theme")).toMatchScreenshot();
   });
+
+  // Keyboard focus shows the ring: 2px of --ring, 2px outside the day, which reaches 2px over the
+  // neighbouring cells (2px padding each); the grid clips nothing
+  it("selected day focus-visible", async () => {
+    const { fixture } = await renderFixture(<Calendar value={new Date(2026, 2, 15)} />);
+    const day = screen.getByLabelText("Sunday, March 15, 2026", { selector: "button" });
+    day.focus();
+    expect(day.matches(":focus-visible")).toBe(true);
+    await expect(fixture).toMatchScreenshot();
+  });
 });
 
 describe("Calendar in forced-colors mode", () => {

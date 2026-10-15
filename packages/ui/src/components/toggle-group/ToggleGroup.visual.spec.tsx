@@ -26,4 +26,20 @@ describe("ToggleGroup", () => {
     );
     await expect(fixture).toMatchScreenshot();
   });
+
+  // Keyboard focus shows the ring: 2px of --ring, 2px outside the item, which reaches into the
+  // root's 4px padding and 2px over the neighbouring items, past the 2px gap
+  it("pressed item focus-visible", async () => {
+    const { fixture, getByRole } = await renderFixture(
+      <ToggleGroup.Root defaultValue={["center"]}>
+        <ToggleGroup.Item value="left">Left</ToggleGroup.Item>
+        <ToggleGroup.Item value="center">Center</ToggleGroup.Item>
+        <ToggleGroup.Item value="right">Right</ToggleGroup.Item>
+      </ToggleGroup.Root>,
+    );
+    const pressed = getByRole("button", { name: "Center", pressed: true });
+    pressed.focus();
+    expect(pressed.matches(":focus-visible")).toBe(true);
+    await expect(fixture).toMatchScreenshot();
+  });
 });

@@ -30,6 +30,19 @@ describe("Switch", () => {
     );
     await expect(fixture).toMatchScreenshot();
   });
+
+  // Keyboard focus shows the ring: 2px of --ring, 2px outside the edge
+  it("focus-visible", async () => {
+    const { fixture, getByRole } = await renderFixture(
+      <Switch.Root aria-label="Focused">
+        <Switch.Thumb />
+      </Switch.Root>,
+    );
+    const toggle = getByRole("switch");
+    toggle.focus();
+    expect(toggle.matches(":focus-visible")).toBe(true);
+    await expect(fixture).toMatchScreenshot();
+  });
 });
 
 describe("Switch in forced-colors mode", () => {

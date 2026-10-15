@@ -47,4 +47,15 @@ describe("Textarea", () => {
     expect(borderOf("Bio")).toBe(borderOf("Email"));
     expect(borderOf("Bio")).not.toBe(borderOf("Notes"));
   });
+
+  // Keyboard focus shows the ring: 2px of --ring, 2px outside the edge
+  it("focus-visible", async () => {
+    const { fixture, getByRole } = await renderFixture(
+      <Textarea aria-label="Focused" placeholder="Enter text..." style={{ width: 300 }} />,
+    );
+    const textarea = getByRole("textbox");
+    textarea.focus();
+    expect(textarea.matches(":focus-visible")).toBe(true);
+    await expect(fixture).toMatchScreenshot();
+  });
 });

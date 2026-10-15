@@ -101,6 +101,25 @@ describe("Tabs", () => {
     );
     expectDimmed(getByRole("tab", { name: "Disabled" }), getByRole("tab", { name: "Enabled" }));
   });
+
+  // Keyboard focus shows the ring: 2px of --ring, 2px outside the tab, which reaches into the
+  // list's 4px padding and over the indicator under the tab
+  it("active tab focus-visible", async () => {
+    const { fixture } = await renderFixture(
+      <Tabs.Root defaultValue="tab-1">
+        <Tabs.List>
+          <Tabs.Tab value="tab-1">Account</Tabs.Tab>
+          <Tabs.Tab value="tab-2">Security</Tabs.Tab>
+          <Tabs.Indicator data-testid="indicator" />
+        </Tabs.List>
+      </Tabs.Root>,
+    );
+    await expectIndicatorOverActiveTab();
+    const tab = activeTab() as HTMLElement;
+    tab.focus();
+    expect(tab.matches(":focus-visible")).toBe(true);
+    await expect(fixture).toMatchScreenshot();
+  });
 });
 
 const PATHS = [
