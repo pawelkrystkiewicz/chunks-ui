@@ -114,7 +114,7 @@ describe("Popover.Content with Motion loaded", () => {
     await reloadMotion();
     const el = renderContent();
     expect(el).not.toHaveClass("micro-interactions");
-    // Motion writes its `initial` values inline once it attaches
+    // A motion.div renders its initial values inline
     expect(el.style.opacity).not.toBe("");
   });
 
