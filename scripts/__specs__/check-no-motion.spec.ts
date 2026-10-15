@@ -109,11 +109,12 @@ describe("nextWithoutMotionProblem", () => {
     expect(nextWithoutMotionProblem(0, NEXT_OK, PAGE)).toBeUndefined();
   });
 
-  it("names the try around the import when Turbopack cannot resolve motion/react, and keeps the output", () => {
+  it("says the import has neither a try nor a turbopackOptional comment when Turbopack cannot resolve motion/react, and keeps the output", () => {
     const problem = nextWithoutMotionProblem(1, NEXT_UNRESOLVED, undefined);
-    expect(problem?.startsWith("Turbopack cannot resolve motion/react: the try around")).toBe(true);
-    expect(problem).toContain("turbopackOptional");
-    expect(problem).toContain("check:dist");
+    expect(problem?.startsWith("Turbopack cannot resolve motion/react:")).toBe(true);
+    expect(problem).toContain("neither a try around it nor a turbopackOptional comment");
+    expect(problem).toContain("Either alone makes Turbopack build");
+    expect(problem).toContain("check:dist requires both");
     expect(problem).toContain(NEXT_UNRESOLVED);
   });
 

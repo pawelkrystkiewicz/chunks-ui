@@ -144,7 +144,7 @@ export function nextWithoutMotionProblem(
 ): string | undefined {
   if (exitCode !== 0) {
     const hint = output.includes("Can't resolve 'motion/react'")
-      ? "Turbopack cannot resolve motion/react: the try around the import() in packages/ui/src/lib/use-motion.ts is gone (the try alone makes Turbopack build without Motion). The turbopackOptional comment on that import is guarded by check:dist.\n"
+      ? "Turbopack cannot resolve motion/react: the import() in packages/ui/src/lib/use-motion.ts has neither a try around it nor a turbopackOptional comment. Either alone makes Turbopack build without Motion; check:dist requires both.\n"
       : "";
     return `${hint}next build (Turbopack) failed in a consumer without motion (exit ${exitCode}):\n${output}`;
   }
