@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - master
-  # A run by hand, to finish a release whose run failed; see TESTING_STRATEGY.md, CI, Release
+  # A run by hand at master HEAD (the job skips other branches); see TESTING_STRATEGY.md, CI, Release
   workflow_dispatch:
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
@@ -12,6 +12,8 @@ concurrency: ${{ github.workflow }}-${{ github.ref }}
 jobs:
   release:
     name: Release
+    # An npm publish cannot be undone: a manual run from another branch must not reach it
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
