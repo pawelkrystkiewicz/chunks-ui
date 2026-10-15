@@ -56,9 +56,11 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           working-directory: packages/ui
 
+      # The root scripts and the packages/ui build check (check-dist.spec.ts): the ui `test`
+      # script runs the second only in the floors job, which is not required
       - name: Test the repo scripts
         if: ${{ !cancelled() }}
-        run: bun test ./scripts
+        run: bun test ./scripts ./packages/ui/scripts
 
   # The ui unit suite at the lowest versions the peer ranges allow. Informational until it has
   # three stable runs, then it becomes required (#393).
