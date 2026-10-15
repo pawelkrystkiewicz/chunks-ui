@@ -40,6 +40,20 @@ describe("useMergedRef", () => {
     expect(own()).toBeNull();
   });
 
+  it("calls an own callback ref and fills the consumer ref, and clears both on unmount", () => {
+    const own = vi.fn();
+    const consumer = createRef<HTMLDivElement>();
+    function CallbackBox() {
+      return <div data-testid="box" ref={useMergedRef(own, consumer)} />;
+    }
+    const { getByTestId, unmount } = render(<CallbackBox />);
+    expect(own).toHaveBeenLastCalledWith(getByTestId("box"));
+    expect(consumer.current).toBe(getByTestId("box"));
+    unmount();
+    expect(own).toHaveBeenLastCalledWith(null);
+    expect(consumer.current).toBeNull();
+  });
+
   it("calls a consumer callback ref with the element, then with null on unmount", () => {
     const consumer = vi.fn();
     const { getByTestId, unmount } = setup(consumer);

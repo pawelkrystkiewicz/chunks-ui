@@ -8,6 +8,7 @@ import {
   useContext,
   useState,
 } from "react";
+import { useMergedRef } from "./use-merged-ref";
 
 const PortalContainerContext = createContext<HTMLElement | null | undefined>(undefined);
 
@@ -36,23 +37,11 @@ export function usePortalNode(
   consumer?: Ref<HTMLDivElement>,
 ): [ref: RefCallback<HTMLDivElement>, node: HTMLElement | null] {
   const [node, setNode] = useState<HTMLElement | null>(null);
-  const ref = useCallback<RefCallback<HTMLDivElement>>(
-    (el) => {
-      setNode(el);
-      if (typeof consumer === "function") {
-        const cleanup = consumer(el);
-        // A React 19 callback ref may return a cleanup, run on detach instead of ref(null)
-        if (typeof cleanup === "function") {
-          return () => {
-            setNode(null);
-            cleanup();
-          };
-        }
-      } else if (consumer) {
-        consumer.current = el;
-      }
-    },
-    [consumer],
-  );
-  return [ref, node];
+  // Ignores `null`, as Base UI's own portal node ref does: clearing on detach would re-render on
+  // every close, and under React 19.2 `<Activity>` nested popups would get `container={null}`
+  // while hidden and remount on reveal
+  const keep = useCallback((el: HTMLDivElement | null) => {
+    if (el) setNode(el);
+  }, []);
+  return [useMergedRef(keep, consumer), node];
 }
