@@ -66,9 +66,11 @@ function setMotion(load: number, m: MotionLike | null) {
   for (const notify of motionListeners) notify();
 }
 
-// `motion` is optional: webpack and Turbopack build without it only when the import() sits in a
-// `try` (with `turbopackOptional` for Turbopack). Never use `webpackIgnore`: it leaves a bare
-// "motion/react" specifier that a browser cannot resolve. check:dist and check:no-motion guard this.
+// `motion` is optional. webpack builds without it only when the import() sits in a `try`.
+// Turbopack builds without it when the import() sits in a `try` or carries a `turbopackOptional`
+// comment: either alone is enough, only losing both fails (#420). check:dist requires both, and
+// check:no-motion builds with each bundler. Never use `webpackIgnore`: it leaves a bare
+// "motion/react" specifier that a browser cannot resolve.
 function loadMotion() {
   if (_cache !== undefined) return;
   const load = loads;
