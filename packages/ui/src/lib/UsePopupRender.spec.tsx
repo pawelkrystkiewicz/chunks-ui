@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
 import type { ReactElement, ReactNode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { Combobox } from "../components/combobox";
@@ -14,13 +14,10 @@ import { reloadMotion } from "./use-motion";
 const restore: (() => void)[] = [];
 
 function emulateReducedMotion() {
-  const target = new EventTarget();
-  const query = Object.assign(target, {
+  // An EventTarget already has addEventListener and removeEventListener, which useReducedMotion uses
+  const query = Object.assign(new EventTarget(), {
     matches: true,
     media: "(prefers-reduced-motion: reduce)",
-    // The deprecated pair, which Motion below 12.20.4 subscribes with
-    addListener: (listener: EventListener) => target.addEventListener("change", listener),
-    removeListener: (listener: EventListener) => target.removeEventListener("change", listener),
   });
   const matchMedia = window.matchMedia;
   window.matchMedia = () => query as unknown as MediaQueryList;
@@ -193,6 +190,18 @@ describe.each(parts)(
       const el = screen.getByTestId("popup");
       expect(el).toHaveClass("micro-interactions");
       expect(el.style[property]).toBe("");
+    });
+
+    // The Motion choice is frozen at mount: a part that opened on CSS keeps its element when Motion arrives
+    it("keeps its element when Motion finishes loading after it opened", async () => {
+      const loading = reloadMotion();
+      render(ui());
+      const el = screen.getByTestId("popup");
+      expect(el).toHaveClass("micro-interactions");
+      await act(async () => {
+        await loading;
+      });
+      expect(screen.getByTestId("popup")).toBe(el);
     });
   },
 );

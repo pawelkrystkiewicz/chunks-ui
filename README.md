@@ -63,9 +63,9 @@ See the [component index](https://ui-kit.chunk-creations.com/components) in the 
 ```
 chunks-ui/
   apps/
-    docs/                   # Next.js 16 + Nextra 4 docs site
+    docs/                     # Next.js 16 + Nextra 4 docs site
   packages/
-    ui/                     # published chunks-ui package
+    ui/                       # published chunks-ui package
       src/
         components/
           button/
@@ -75,13 +75,13 @@ chunks-ui/
             index.ts
           ...
         lib/
-          cn.ts             # clsx + tailwind-merge
-          motion.ts         # shared spring presets
-          use-motion.ts     # useMotion() + useReducedMotion() hooks
-          PopupMotion.tsx   # createPopupRenderer() for Base UI popups
-          use-popup-render.ts  # usePopupRender(): Motion spring or CSS path
-        theme.css           # CSS variables
-        index.ts            # barrel export
+          cn.ts               # clsx + tailwind-merge
+          motion.ts           # shared spring presets
+          use-motion.ts       # useMotion() + useReducedMotion() hooks
+          PopupMotion.tsx     # createPopupRenderer() for Base UI popups
+          use-popup-render.ts # usePopupRender() for popup parts
+        theme.css             # CSS variables
+        index.ts              # barrel export
       tsup.config.ts
       vitest.config.ts
       package.json
