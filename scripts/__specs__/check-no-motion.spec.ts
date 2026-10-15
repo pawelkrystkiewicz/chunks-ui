@@ -259,7 +259,6 @@ describe("the fixture app", () => {
     const docs = JSON.parse(readFileSync(join(dir, "../../apps/docs/package.json"), "utf8"));
     const range: string = docs.dependencies.next;
     expect(pins("package.fixture.json").next).toBe(range.replace(/^[\^~]/, ""));
-    expect(pins("with-motion/package.fixture.json").next).toBe(pins("package.fixture.json").next);
   });
 
   it("pins the same version of every dependency the two consumers share", () => {
