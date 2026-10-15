@@ -1,7 +1,7 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { page } from "vitest/browser";
-import { focusVisible, renderFixture, renderPage } from "../../VisualTest.utils";
+import { expectNotAllowed, focusVisible, renderFixture, renderPage } from "../../VisualTest.utils";
 import { Select } from "./index";
 
 const fruits = [
@@ -86,7 +86,6 @@ describe("Select", () => {
         </Select.Trigger>
       </Select.Root>,
     );
-    const { cursor, pointerEvents } = getComputedStyle(getByRole("combobox"));
-    expect({ cursor, pointerEvents }).toEqual({ cursor: "not-allowed", pointerEvents: "auto" });
+    expectNotAllowed(getByRole("combobox"));
   });
 });

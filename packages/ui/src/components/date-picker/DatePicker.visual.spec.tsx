@@ -2,7 +2,7 @@ import { Form } from "@base-ui/react/form";
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { page, userEvent } from "vitest/browser";
-import { renderFixture } from "../../VisualTest.utils";
+import { expectNotAllowed, renderFixture } from "../../VisualTest.utils";
 import { Field } from "../field";
 import { DatePicker } from "./index";
 
@@ -27,10 +27,7 @@ describe("DatePicker", () => {
 
   it("shows a not-allowed cursor on a disabled trigger", () => {
     const { getByRole } = render(<DatePicker disabled />);
-    const { cursor, pointerEvents } = getComputedStyle(
-      getByRole("button", { name: "Pick a date" }),
-    );
-    expect({ cursor, pointerEvents }).toEqual({ cursor: "not-allowed", pointerEvents: "auto" });
+    expectNotAllowed(getByRole("button", { name: "Pick a date" }));
   });
 });
 

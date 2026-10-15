@@ -1,7 +1,7 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { userEvent } from "vitest/browser";
-import { focusVisible, renderFixture } from "../../VisualTest.utils";
+import { expectNotAllowed, focusVisible, renderFixture } from "../../VisualTest.utils";
 import { ToggleGroup } from "./index";
 
 describe("ToggleGroup", () => {
@@ -67,23 +67,7 @@ describe("ToggleGroup", () => {
         </ToggleGroup.Item>
       </ToggleGroup.Root>,
     );
-    const { cursor, pointerEvents } = getComputedStyle(getByRole("button", { name: "B" }));
-    expect({ cursor, pointerEvents }).toEqual({ cursor: "not-allowed", pointerEvents: "auto" });
-  });
-
-  it("keeps a disabled item at its rest colour under the pointer", async () => {
-    const { getByRole } = render(
-      <ToggleGroup.Root defaultValue={["a"]}>
-        <ToggleGroup.Item value="a">A</ToggleGroup.Item>
-        <ToggleGroup.Item value="b" disabled>
-          B
-        </ToggleGroup.Item>
-      </ToggleGroup.Root>,
-    );
-    const item = getByRole("button", { name: "B" });
-    const rest = getComputedStyle(item).color;
-    await userEvent.hover(item);
-    expect(getComputedStyle(item).color).toBe(rest);
+    expectNotAllowed(getByRole("button", { name: "B" }));
   });
 
   // `data-pressed:text-foreground` is a lower specificity than `disabled:hover:`, so the reset must

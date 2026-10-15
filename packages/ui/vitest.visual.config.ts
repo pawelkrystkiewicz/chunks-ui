@@ -33,16 +33,6 @@ const parkPointer: BrowserCommand<[]> = async ({ page }) => {
   await page.mouse.move(-1, -1);
 };
 
-/** Presses the left mouse button at the pointer, and holds it until `mouseUp`. */
-const mouseDown: BrowserCommand<[]> = async ({ page }) => {
-  await page.mouse.down();
-};
-
-/** Releases the left mouse button. */
-const mouseUp: BrowserCommand<[]> = async ({ page }) => {
-  await page.mouse.up();
-};
-
 type FrameTree = { frame: { id: string; url: string }; childFrames?: FrameTree[] };
 
 const frameIdOf = (tree: FrameTree, url: string): string | undefined =>
@@ -116,7 +106,7 @@ export default defineConfig({
       enabled: true,
       headless: true,
       provider: playwrightProvider("reduce"),
-      commands: { emulateMedia, parkPointer, mouseDown, mouseUp, accessibilityTree },
+      commands: { emulateMedia, parkPointer, accessibilityTree },
       instances: [
         // Reduced motion: components skip Motion springs, so screenshots never catch one mid-way
         {

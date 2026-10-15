@@ -198,6 +198,14 @@ export function focusVisible(el: HTMLElement) {
   expect(el.matches(":focus-visible")).toBe(true);
 }
 
+/** Asserts each element shows the not-allowed cursor and still takes the pointer. */
+export function expectNotAllowed(...elements: HTMLElement[]) {
+  for (const el of elements) {
+    const { cursor, pointerEvents } = getComputedStyle(el);
+    expect({ cursor, pointerEvents }).toEqual({ cursor: "not-allowed", pointerEvents: "auto" });
+  }
+}
+
 /** Pauses all CSS animations — use for components with loaders/spinners. */
 export function pauseAnimations() {
   for (const el of document.querySelectorAll("*")) {
@@ -220,10 +228,6 @@ declare module "vitest/browser" {
     emulateMedia: (options: EmulatedMedia) => Promise<void>;
     /** Moves the mouse outside the viewport, registered in vitest.visual.config.ts. */
     parkPointer: () => Promise<void>;
-    /** Presses the left mouse button at the pointer; pair with `mouseUp`. Registered in vitest.visual.config.ts. */
-    mouseDown: () => Promise<void>;
-    /** Releases the left mouse button, registered in vitest.visual.config.ts. */
-    mouseUp: () => Promise<void>;
     /** Chromium's accessibility tree for a CSS selector; see vitest.visual.config.ts. */
     accessibilityTree: (selector: string) => Promise<AccessibilityNode>;
   }

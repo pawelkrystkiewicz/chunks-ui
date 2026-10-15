@@ -1,7 +1,7 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { userEvent } from "vitest/browser";
-import { renderFixture } from "../../VisualTest.utils";
+import { expectNotAllowed, renderFixture } from "../../VisualTest.utils";
 import { Slider } from "./index";
 
 describe("Slider", () => {
@@ -119,7 +119,6 @@ describe("Slider", () => {
       </div>,
     );
     const thumb = getByRole("slider", { name: "Volume" }).parentElement as HTMLElement;
-    const { cursor, pointerEvents } = getComputedStyle(thumb);
-    expect({ cursor, pointerEvents }).toEqual({ cursor: "not-allowed", pointerEvents: "auto" });
+    expectNotAllowed(thumb);
   });
 });

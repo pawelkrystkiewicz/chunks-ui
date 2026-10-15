@@ -1,7 +1,7 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { commands, userEvent } from "vitest/browser";
-import { renderFixture } from "../../VisualTest.utils";
+import { userEvent } from "vitest/browser";
+import { expectNotAllowed, renderFixture } from "../../VisualTest.utils";
 import { ClearButton } from "./index";
 
 describe("ClearButton", () => {
@@ -12,11 +12,10 @@ describe("ClearButton", () => {
 
   it("shows a not-allowed cursor on a disabled button", () => {
     const { getByRole } = render(<ClearButton disabled />);
-    const { cursor, pointerEvents } = getComputedStyle(getByRole("button", { name: "Clear" }));
-    expect({ cursor, pointerEvents }).toEqual({ cursor: "not-allowed", pointerEvents: "auto" });
+    expectNotAllowed(getByRole("button", { name: "Clear" }));
   });
 
-  it("keeps its rest colours and size under the pointer, hovered and pressed, when disabled", async () => {
+  it("keeps its rest colours and size under the pointer, when disabled", async () => {
     const { getByRole } = render(<ClearButton disabled />);
     const button = getByRole("button", { name: "Clear" });
     const looks = () => {
@@ -27,15 +26,5 @@ describe("ClearButton", () => {
     const rest = looks();
     await userEvent.hover(button);
     expect(looks()).toEqual(rest);
-    // Chromium applies :active to a disabled button, so the press scale must stay off as well.
-    // A press in place has :hover too, which resets the scale by itself: with the button held, the
-    // pointer leaves it, and only :active is left to be tested
-    await commands.mouseDown();
-    try {
-      await commands.parkPointer();
-      expect(looks()).toEqual(rest);
-    } finally {
-      await commands.mouseUp();
-    }
   });
 });

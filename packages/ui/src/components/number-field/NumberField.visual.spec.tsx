@@ -1,7 +1,7 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it, onTestFinished } from "vitest";
 import { userEvent } from "vitest/browser";
-import { focusVisible, renderFixture } from "../../VisualTest.utils";
+import { expectNotAllowed, focusVisible, renderFixture } from "../../VisualTest.utils";
 import { Dialog } from "../dialog";
 import { NumberField } from "./index";
 
@@ -18,6 +18,16 @@ function ScrubField() {
     </NumberField.Root>
   );
 }
+
+const disabledField = () => (
+  <NumberField.Root defaultValue={42} disabled>
+    <NumberField.Group>
+      <NumberField.Decrement />
+      <NumberField.Input aria-label="Amount" />
+      <NumberField.Increment />
+    </NumberField.Group>
+  </NumberField.Root>
+);
 
 // Specs run in an iframe, where Chromium refuses pointer lock ("WrongDocumentError") and Base UI
 // then removes the cursor. Grant the lock so the cursor stays.
@@ -117,44 +127,17 @@ describe("NumberField", () => {
   });
 
   it("shows a not-allowed cursor on every part of a disabled field", () => {
-    const { getByRole } = render(
-      <NumberField.Root defaultValue={42} disabled>
-        <NumberField.Group>
-          <NumberField.Decrement />
-          <NumberField.Input aria-label="Amount" />
-          <NumberField.Increment />
-        </NumberField.Group>
-      </NumberField.Root>,
-    );
-    const looks = (element: HTMLElement) => {
-      const { cursor, pointerEvents } = getComputedStyle(element);
-      return { cursor, pointerEvents };
-    };
-    const parts = {
-      group: getByRole("group"),
-      input: getByRole("textbox", { name: "Amount" }),
-      increment: getByRole("button", { name: "Increase" }),
-      decrement: getByRole("button", { name: "Decrease" }),
-    };
-    expect(
-      Object.fromEntries(Object.entries(parts).map(([name, part]) => [name, looks(part)])),
-    ).toEqual(
-      Object.fromEntries(
-        Object.keys(parts).map((name) => [name, { cursor: "not-allowed", pointerEvents: "auto" }]),
-      ),
+    const { getByRole } = render(disabledField());
+    expectNotAllowed(
+      getByRole("group"),
+      getByRole("textbox", { name: "Amount" }),
+      getByRole("button", { name: "Increase" }),
+      getByRole("button", { name: "Decrease" }),
     );
   });
 
   it("keeps a disabled increment button at its rest colour under the pointer", async () => {
-    const { getByRole } = render(
-      <NumberField.Root defaultValue={42} disabled>
-        <NumberField.Group>
-          <NumberField.Decrement />
-          <NumberField.Input aria-label="Amount" />
-          <NumberField.Increment />
-        </NumberField.Group>
-      </NumberField.Root>,
-    );
+    const { getByRole } = render(disabledField());
     const increment = getByRole("button", { name: "Increase" });
     const rest = getComputedStyle(increment).color;
     await userEvent.hover(increment);

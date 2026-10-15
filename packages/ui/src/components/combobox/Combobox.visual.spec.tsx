@@ -1,7 +1,7 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { page, userEvent } from "vitest/browser";
-import { focusVisible, renderFixture, renderPage } from "../../VisualTest.utils";
+import { expectNotAllowed, focusVisible, renderFixture, renderPage } from "../../VisualTest.utils";
 import { Combobox } from "./index";
 
 const options = [
@@ -126,24 +126,13 @@ describe("Combobox", () => {
 
   it("shows a not-allowed cursor on every part of a disabled Combobox", () => {
     const { getByRole, getByTestId } = render(disabledChipsCombobox());
-    const looks = (element: HTMLElement) => {
-      const { cursor, pointerEvents } = getComputedStyle(element);
-      return { cursor, pointerEvents };
-    };
     // A `<button>` has `cursor: default` from the user-agent stylesheet, so each needs its own
-    const parts = {
-      control: getByTestId("control"),
-      input: getByRole("combobox"),
-      trigger: getByRole("button", { name: "Show options" }),
-      clear: getByRole("button", { name: "Clear selection" }),
-      chipRemove: getByRole("button", { name: "Remove React" }),
-    };
-    expect(
-      Object.fromEntries(Object.entries(parts).map(([name, part]) => [name, looks(part)])),
-    ).toEqual(
-      Object.fromEntries(
-        Object.keys(parts).map((name) => [name, { cursor: "not-allowed", pointerEvents: "auto" }]),
-      ),
+    expectNotAllowed(
+      getByTestId("control"),
+      getByRole("combobox"),
+      getByRole("button", { name: "Show options" }),
+      getByRole("button", { name: "Clear selection" }),
+      getByRole("button", { name: "Remove React" }),
     );
   });
 
@@ -156,7 +145,6 @@ describe("Combobox", () => {
       const rest = getComputedStyle(button).color;
       await userEvent.hover(button);
       expect(getComputedStyle(button).color, name).toBe(rest);
-      expect(getComputedStyle(button).cursor, name).toBe("not-allowed");
     }
   });
 });
