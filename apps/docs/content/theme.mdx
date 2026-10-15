@@ -91,7 +91,7 @@ Relative colour syntax needs Chrome 119+, Safari 18+ or Firefox 128+. Older brow
 | `--input` | `oklch(0.922 0 0)` | `oklch(0.269 0 0)` |
 | `--ring` | `color-mix(in oklab, var(--primary) 60%, var(--background))` | same as light |
 | `--radius` | `0.625rem` | `0.625rem` |
-| `--touch-target-size` (optional) | `44px` (fallback, not defined) | `44px` (fallback, not defined) |
+| [`--touch-target-size`](/utilities#touch-target) (optional) | `44px` (fallback, not defined) | `44px` (fallback, not defined) |
 
 ### Focus Ring
 
@@ -148,8 +148,28 @@ Components automatically adapt -- no extra props needed.
 |---|---|
 | `--font-sans` | `"Manrope", sans-serif` |
 | `--font-mono` | `"Fira Code", monospace` |
+| `--font-heading` | not defined: titles inherit their font until you set it |
 
-Use in Tailwind: `font-sans`, `font-mono`.
+Use in Tailwind: `font-sans`, `font-mono`, `font-heading`.
+
+Manrope and Fira Code are not shipped with the package. Load them in your app, or the browser falls back to its generic `sans-serif` and `monospace`. Tailwind's preflight applies `--font-sans` to the page, so importing the theme changes the page font. To keep your own font, set the token after the import:
+
+```css
+@import "tailwindcss";
+@import "chunks-ui/theme.css";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+```
+
+The `Title` parts of Card, Dialog, Drawer, Popover and Empty have the `font-heading` utility, which sets `font-family: var(--font-heading)`. The token has no default, so the declaration is invalid at computed-value time and the titles inherit their font. Set it on `:root`, or on any element, to apply it to the titles inside:
+
+```css
+:root {
+  --font-heading: "Fraunces", serif;
+}
+```
 
 ## Easing Curves
 
