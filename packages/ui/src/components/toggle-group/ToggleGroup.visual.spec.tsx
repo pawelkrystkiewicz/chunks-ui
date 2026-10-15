@@ -1,4 +1,4 @@
-import { describe, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { renderFixture } from "../../VisualTest.utils";
 import { ToggleGroup } from "./index";
 
@@ -40,6 +40,27 @@ describe("ToggleGroup", () => {
     const pressed = getByRole("button", { name: "Center", pressed: true });
     pressed.focus();
     expect(pressed.matches(":focus-visible")).toBe(true);
+    await expect(fixture).toMatchScreenshot();
+  });
+
+  // In a `multiple` group a pressed item has an opaque background. The next sibling paints over
+  // the one before it at the same z-index, so the focused item rises above it: its ring shows
+  // whole on the side the pressed neighbour would otherwise cover.
+  it("multiple, focused item before a pressed one", async () => {
+    const { fixture, getByRole } = await renderFixture(
+      <ToggleGroup.Root multiple defaultValue={["italic"]}>
+        <ToggleGroup.Item value="bold">Bold</ToggleGroup.Item>
+        <ToggleGroup.Item value="italic">Italic</ToggleGroup.Item>
+        <ToggleGroup.Item value="underline">Underline</ToggleGroup.Item>
+      </ToggleGroup.Root>,
+    );
+    const focused = getByRole("button", { name: "Bold", pressed: false });
+    const pressed = getByRole("button", { name: "Italic", pressed: true });
+    focused.focus();
+    expect(focused.matches(":focus-visible")).toBe(true);
+    expect(Number(getComputedStyle(focused).zIndex)).toBeGreaterThan(
+      Number(getComputedStyle(pressed).zIndex),
+    );
     await expect(fixture).toMatchScreenshot();
   });
 });
