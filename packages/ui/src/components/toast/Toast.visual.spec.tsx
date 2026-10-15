@@ -11,17 +11,21 @@ function AddToast({
   title,
   description,
   actionProps,
+  dismissible,
+  timeout,
 }: {
   title: string;
   description?: string;
   actionProps?: ComponentPropsWithoutRef<"button">;
+  dismissible?: boolean;
+  timeout?: number;
 }) {
   const manager = Toast.useToast();
   // A fixed id: a remount updates this toast instead of adding a second one. Mount-only on
   // purpose: `manager` and `actionProps` change every render, and updating the toast renders again.
   // biome-ignore lint/correctness/useExhaustiveDependencies: the props are fixed in each spec
   useEffect(() => {
-    manager.add({ id: "visual-toast", title, description, actionProps });
+    manager.add({ id: "visual-toast", title, description, actionProps, dismissible, timeout });
   }, []);
   return null;
 }
@@ -51,6 +55,30 @@ describe("Toast", () => {
     );
     await screen.findByRole("button", { name: "Retry now" });
     await expect(page.elementLocator(document.body)).toMatchScreenshot();
+  });
+
+  // The root is `overflow-hidden` and the close button sits 8px inside it, so its ring (2px
+  // offset, 2px wide) has 4px to spare: this shows whether the root clips the ring. `timeout={0}`
+  // keeps the toast up however long a slow runner takes.
+  it("close focus-visible", async () => {
+    render(
+      <Toast.Provider>
+        <AddToast
+          title="Connection lost"
+          description="Reconnecting automatically."
+          actionProps={{ children: "Retry now" }}
+          dismissible
+          timeout={0}
+        />
+        <Toast.Viewport />
+      </Toast.Provider>,
+    );
+    // Base UI hides the close button from assistive tech until the toast is focused or hovered,
+    // so it has no accessible role yet
+    const close = await screen.findByLabelText("Close", { selector: "button" });
+    close.focus();
+    expect(close.matches(":focus-visible")).toBe(true);
+    await expect(page.elementLocator(close.closest(".Toast") as HTMLElement)).toMatchScreenshot();
   });
 });
 
