@@ -48,11 +48,11 @@ Derives the lowest version each `^range` in `packages/ui` `peerDependencies` all
 
 `@types/react` and `@types/react-dom` are floored too, at the `<major>.<minor>` of the `react` and `react-dom` floors (`19.2.0` gives `19.2`), so a moved React floor moves them. There is no list of type versions to keep in step by hand.
 
-- `--overrides` merges every floor into `overrides` of the root `package.json`, in place: the peers at their exact floor, the types at `<major>.<minor>.x`. Entries already there (`zod`) stay. A plain `bun install` then resolves every dependent of those packages at the floors, the `packages/ui` devDependencies included. It edits a tracked file and the install rewrites `bun.lock`: run it only in a throwaway checkout (the job's own, or a copy of the repo).
+- `--overrides` merges every floor into `overrides` of the root `package.json`, in place: the peers at their exact floor, the types at `<major>.<minor>.x`. Entries already there (`zod`) stay. A plain `bun install` then resolves every dependent of those packages at the floors, the `packages/ui` devDependencies included. It edits a tracked file and the install rewrites `bun.lock`: run it only in a throwaway checkout (the job's own, or a copy of the repo). It refuses to run unless `CI` is set (GitHub Actions sets it) or `--force` is passed.
 - `--check` (the default) fails unless `packages/ui` resolves each peer to its floor and each types package to a patch of its `<major>.<minor>`. It fails on a normal install, where React is above the floors.
 
 ```bash
-bun scripts/check-peer-floors.ts --overrides && bun install && bun scripts/check-peer-floors.ts --check   # in a copy of the repo
+bun scripts/check-peer-floors.ts --overrides --force && bun install && bun scripts/check-peer-floors.ts --check   # in a copy of the repo
 ```
 
 Tests: `scripts/__specs__/check-peer-floors.spec.ts`.

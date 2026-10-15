@@ -1,5 +1,15 @@
-import { describe, expect, it } from "bun:test";
-import { floorsOf, overridesOf, typeFloorsOf, verdictsOf } from "../check-peer-floors";
+import { afterEach, describe, expect, it } from "bun:test";
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import {
+  EXEMPT,
+  floorsOf,
+  overridesOf,
+  overridesRefusal,
+  typeFloorsOf,
+  verdictsOf,
+} from "../check-peer-floors";
 
 const TYPES = { react: "@types/react", "react-dom": "@types/react-dom" };
 
@@ -115,5 +125,88 @@ describe("verdictsOf", () => {
       "@types/react",
       false,
     ]);
+  });
+});
+
+describe("overridesRefusal", () => {
+  it("refuses outside CI without --force, naming the way out", () => {
+    expect(overridesRefusal(undefined, false)).toContain("--force");
+  });
+
+  it("treats an empty CI as unset", () => {
+    expect(overridesRefusal("", false)).toBeDefined();
+  });
+
+  it("lets a run with CI set through", () => {
+    expect(overridesRefusal("true", false)).toBeUndefined();
+  });
+
+  it("lets --force through", () => {
+    expect(overridesRefusal(undefined, true)).toBeUndefined();
+  });
+});
+
+describe("--overrides on the command line", () => {
+  const dirs: string[] = [];
+
+  /** A throwaway repo layout, so a guard that fails to refuse edits no tracked file. */
+  function repo(): string {
+    const dir = mkdtempSync(join(tmpdir(), "peer-floors-"));
+    dirs.push(dir);
+    mkdirSync(join(dir, "scripts"));
+    mkdirSync(join(dir, "packages/ui"), { recursive: true });
+    cpSync(
+      join(import.meta.dirname, "../check-peer-floors.ts"),
+      join(dir, "scripts/check-peer-floors.ts"),
+    );
+    writeFileSync(
+      join(dir, "packages/ui/package.json"),
+      JSON.stringify({
+        peerDependencies: {
+          react: "^19.2.0",
+          "react-dom": "^19.2.0",
+          // The script throws on an exempt name that is not a peer
+          ...Object.fromEntries(Object.keys(EXEMPT).map((name) => [name, ">=1"])),
+        },
+      }),
+    );
+    writeFileSync(join(dir, "package.json"), '{"name":"root"}\n');
+    return dir;
+  }
+
+  /** Runs the copy of the script in `dir` with a clean environment plus `env`. */
+  function run(dir: string, args: string[], env: Record<string, string> = {}) {
+    const { exitCode, stderr } = Bun.spawnSync(
+      [process.execPath, join(dir, "scripts/check-peer-floors.ts"), ...args],
+      { env: { PATH: process.env.PATH ?? "", ...env } },
+    );
+    return {
+      exitCode,
+      stderr: stderr.toString(),
+      root: readFileSync(join(dir, "package.json"), "utf8"),
+    };
+  }
+
+  afterEach(() => {
+    for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true });
+  });
+
+  it("exits 1 and leaves package.json alone outside CI", () => {
+    const result = run(repo(), ["--overrides"]);
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("--force");
+    expect(result.root).toBe('{"name":"root"}\n');
+  });
+
+  it("writes the overrides when CI is set", () => {
+    const result = run(repo(), ["--overrides"], { CI: "true" });
+    expect(result.exitCode).toBe(0);
+    expect(JSON.parse(result.root).overrides.react).toBe("19.2.0");
+  });
+
+  it("writes the overrides with --force and no CI", () => {
+    const result = run(repo(), ["--overrides", "--force"]);
+    expect(result.exitCode).toBe(0);
+    expect(JSON.parse(result.root).overrides["@types/react"]).toBe("19.2.x");
   });
 });

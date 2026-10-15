@@ -12,11 +12,12 @@
  *   peers at their exact floor, the types at `<major>.<minor>.x`. Entries already there (zod)
  *   stay. A plain `bun install` then resolves every dependent of those packages at the floors,
  *   packages/ui's own devDependencies (motion, the types) included. It edits a tracked file and
- *   the install changes bun.lock: run it only in a throwaway checkout.
+ *   the install changes bun.lock: run it only in a throwaway checkout. It refuses to run unless
+ *   `CI` is set (GitHub Actions sets it) or `--force` is passed.
  * - `--check` (the default) fails unless every non-exempt peer resolves from packages/ui to its
  *   floor and each types package to a `<major>.<minor>.x` patch.
  *
- * Run: bun scripts/check-peer-floors.ts [--overrides|--check]
+ * Run: bun scripts/check-peer-floors.ts [--overrides [--force]|--check]
  */
 import { createRequire } from "node:module";
 import { join } from "node:path";
@@ -86,6 +87,12 @@ export function overridesOf(
   };
 }
 
+/** Why `--overrides` must not run here, or undefined when it may: it edits tracked files. */
+export function overridesRefusal(ci: string | undefined, force: boolean): string | undefined {
+  if (ci || force) return undefined;
+  return "--overrides edits the tracked package.json (and the install after it bun.lock): run it in CI or in a throwaway copy of the repo, or pass --force";
+}
+
 export type Verdict = { name: string; got: string; want: string; ok: boolean };
 
 /**
@@ -119,6 +126,11 @@ if (import.meta.main) {
   );
   const typeFloors = typeFloorsOf(floors, TYPES);
   if (process.argv.includes("--overrides")) {
+    const refusal = overridesRefusal(process.env.CI, process.argv.includes("--force"));
+    if (refusal !== undefined) {
+      console.error(refusal);
+      process.exit(1);
+    }
     const file = join(import.meta.dirname, "../package.json");
     const root = await Bun.file(file).json();
     root.overrides = overridesOf(root.overrides, floors, typeFloors);
