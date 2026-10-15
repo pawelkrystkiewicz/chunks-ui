@@ -1,4 +1,4 @@
-import { DrawerBasicExample } from '@/examples/Drawer'
+import { DrawerBasicExample, DrawerLongContentExample } from '@/examples/Drawer'
 import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
 # Drawer
@@ -50,9 +50,46 @@ The `side` prop on `Drawer.Popup` controls which edge the drawer slides from:
 
 - `left` and `right` drawers have a fixed width of `w-80`.
 - `bottom` drawer spans the full width with automatic height (up to `80dvh`) and rounded top corners.
-- Content taller than the drawer scrolls inside it.
+- Content taller than the drawer scrolls inside it. To keep the Title and the actions in place, put the content in a `Drawer.Body` (below).
 - With long content and actions only at the bottom, Base UI focuses the first tabbable element and scrolls to it. Pass `initialFocus` a ref to a top element, such as the Close button or the Title with `tabIndex={-1}`, to open at the top.
 - With nothing tabbable inside, or with `initialFocus` on the popup itself, the popup takes focus. When the browser shows focus there (after keyboard use, for example), the ring is 2px in `--ring` and drawn just inside the 1px border on the open side, 3px from the popup's edge, so the border stays visible.
+
+## Long content
+
+Put long content in a `Drawer.Body` between the Title and the actions. The Title, the Description and the actions stay in place, and only the Body scrolls. In a `left` or `right` drawer the Body fills the height, so the actions sit at the bottom edge; a `bottom` drawer grows with its content up to `80dvh`:
+
+```tsx
+<Drawer.Root>
+  <Drawer.Trigger>Read the terms</Drawer.Trigger>
+  <Drawer.Portal>
+    <Drawer.Backdrop />
+    <Drawer.Popup>
+      <Drawer.Title>Terms of service</Drawer.Title>
+      <Drawer.Description>Read the terms before you accept them.</Drawer.Description>
+      <Drawer.Body className="mt-4 space-y-3 text-sm">
+        <p>These terms apply to your use of the service.</p>
+        <p>Keep your account details safe.</p>
+      </Drawer.Body>
+      <div className="mt-4 flex justify-end gap-2">
+        <Drawer.Close render={<Button variant="outlined" color="secondary" />}>
+          Cancel
+        </Drawer.Close>
+        <Drawer.Close render={<Button />}>Accept</Drawer.Close>
+      </div>
+    </Drawer.Popup>
+  </Drawer.Portal>
+</Drawer.Root>
+```
+
+<DrawerLongContentExample />
+
+- Use `Drawer.Body` only when the content can overflow. A short Body is still a tab stop, and it takes the initial focus from the first action.
+- `Drawer.Body` must be a direct child of `Drawer.Popup`. Wrapping the Body in a `<form>` or a `<div>` loses the layout: the popup scrolls as a whole again, the actions are not pinned and the Body does not scroll. For a form, see the [Dialog](/components/dialog#form-in-a-body): the Drawer parts work the same way.
+- With a Body, the popup is a flex column. Bare inline children, such as a lone `Drawer.Close` button, stretch to the full width, and the margins between children do not collapse. Wrap the actions in a block, as in the example.
+- The Body has a 0.25rem gutter (`-m-1 p-1`), so the focus rings of full-width fields are not clipped at its edges. The content does not move. A margin class on the Body, such as `mt-4`, replaces the negative margin on that side and adds the 0.25rem of padding.
+- The Body is a tab stop, so the keyboard can scroll it (arrow keys, Page Up and Page Down, Home and End). It is a region that the Title names.
+- When nothing tabbable comes before the Body, the Body gets the focus when the drawer opens with a keyboard or a mouse. The drawer opens at the top of the content, and a screen reader reads the Body's name. On touch, Base UI focuses the popup itself. The Body shows a focus ring when the drawer was opened with the keyboard.
+- For a form in the Body, pass `initialFocus` on `Drawer.Popup` a ref to the first field.
 
 ## Controlled
 
@@ -90,11 +127,12 @@ The drawer slides in from its edge: on the x-axis for `left` and `right`, on the
 | `Drawer.Popup` | The sliding panel. Accepts `side` prop. |
 | `Drawer.Title` | Drawer heading. |
 | `Drawer.Description` | Supporting description text. |
+| `Drawer.Body` | Optional scrolling area for long content, between the Title and the actions. Only the Body scrolls; the other parts stay in place. |
 | `Drawer.Close` | Button that closes the drawer. |
 
 ## Drawer.Root Props
 
-All `Drawer.Root` props are forwarded to the underlying Base UI [`Dialog`](https://base-ui.com/react/components/dialog#api-reference).
+All `Drawer.Root` props are forwarded to the underlying Base UI [`Dialog`](https://base-ui.com/react/components/dialog#api-reference). `Drawer.Body` is a `<section>` and takes its props. Pass `aria-label` or `aria-labelledby` to give it a name other than the Title.
 
 ## Drawer.Popup Props
 

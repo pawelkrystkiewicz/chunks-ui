@@ -105,6 +105,7 @@ export type {
 export { Dialog } from "./components/dialog";
 export type {
   DrawerBackdropProps,
+  DrawerBodyProps,
   DrawerCloseProps,
   DrawerDescriptionProps,
   DrawerPopupProps,
