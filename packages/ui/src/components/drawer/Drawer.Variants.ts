@@ -1,4 +1,4 @@
-import { cva } from "class-variance-authority";
+import { cva } from "../../lib/cva";
 
 /** The edge of the viewport a drawer slides in from. */
 export type DrawerSide = "left" | "right" | "bottom";

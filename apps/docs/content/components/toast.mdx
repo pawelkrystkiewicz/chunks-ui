@@ -156,7 +156,7 @@ add({
 
 That toast gets a `×` button in its top-end corner (top-right in left-to-right layouts, top-left in right-to-left ones) that dismisses it via Base UI's `Toast.Close`. Other toasts in the same viewport are unaffected — dismissibility is a per-toast concern, not a viewport-wide setting.
 
-> **Note**: Early versions of this branch exposed the field as `dissmissable` (double-s typo). That name is kept as a `@deprecated` alias for backwards compatibility — if both are set, `dismissible` wins. Prefer `dismissible` in new code.
+> **Note**: `dissmissable` is a deprecated misspelled alias of `dismissible`. When both are set, `dismissible` wins.
 
 ### Reacting to Close
 
@@ -256,7 +256,7 @@ Pass any subset of these at the call site. The fields below are chunks-ui additi
   definition={generateDefinition({
     code: `
 import type { ToastStyleOptions } from 'chunks-ui'
-type Props = Pick<ToastStyleOptions, 'icon' | 'iconClassName' | 'className' | 'dismissible' | 'dissmissable' | 'onClose'>
+type Props = Pick<ToastStyleOptions, 'icon' | 'iconClassName' | 'className' | 'dismissible' | 'onClose'>
 export default Props
 `
   })}
@@ -264,7 +264,7 @@ export default Props
 
 ### Toast.Viewport
 
-`Toast.Viewport` is a thin style wrapper. It renders the toast list itself and forwards every other prop to Base UI's [`Toast.Viewport`](https://base-ui.com/react/components/toast#api-reference); `children` you pass are not rendered. All per-toast behaviour (`icon`, `iconClassName`, `className`, `dissmissable`, `onClose`) lives on the individual `add()` call, not the container, so a single viewport can host a mix of dismissable and non-dismissable toasts, styled and unstyled ones, etc.
+`Toast.Viewport` is a thin style wrapper. It renders the toast list itself and forwards every other prop to Base UI's [`Toast.Viewport`](https://base-ui.com/react/components/toast#api-reference); `children` you pass are not rendered. All per-toast behaviour (`icon`, `iconClassName`, `className`, `dismissible`, `onClose`) lives on the individual `add()` call, not the container, so a single viewport can host a mix of dismissible and non-dismissible toasts, styled and unstyled ones, etc.
 
 Only string-level overrides are worth knowing about here:
 

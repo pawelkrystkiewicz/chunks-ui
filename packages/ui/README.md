@@ -51,6 +51,8 @@ Add the `touch-target` class to give a small control a 44×44px hit area without
 
 Accordion, Avatar, Breadcrumb, Button, Calendar, Card, Checkbox, Chip, ClearButton, Collapsible, Combobox, CopyButton, DatePicker, Dialog, Drawer, Empty, Field, IconButton, Input, InputCopy, Label, Loader, Menu, NumberField, Pagination, Popover, Progress, Radio, ScrollArea, Select, Separator, Skeleton, Slider, Switch, Table, Tabs, Textarea, ThemeToggle, Toast, ToggleGroup, Tooltip
 
+Each has a page in the [component index](https://ui-kit.chunk-creations.com/components).
+
 ## Stack
 
 | Layer     | Technology                                    |
@@ -81,7 +83,7 @@ Use with Tailwind: `bg-primary text-primary-foreground`, `bg-destructive text-de
 
 ## Typography
 
-The theme sets the page font to Manrope; see [Theme › Typography](https://ui-kit.chunk-creations.com/theme#typography) to keep your own.
+Manrope (`--font-sans`) and Fira Code (`--font-mono`) are not shipped; the theme falls back to the generic family, and [Theme › Typography](https://ui-kit.chunk-creations.com/theme#typography) shows the `--font-sans` override.
 
 ## Animation
 

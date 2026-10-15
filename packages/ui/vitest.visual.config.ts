@@ -12,9 +12,16 @@ import type { AccessibilityNode, EmulatedMedia } from "./src/VisualTest.utils";
  */
 const RUNNER_WINDOW = { width: 1280, height: 1024 };
 
-/** Playwright with the runner window above and the given reduced-motion preference */
+/** Playwright with the window above, the pinned time zone and the given reduced-motion preference */
 export const playwrightProvider = (reducedMotion: "reduce" | "no-preference") =>
-  playwright({ contextOptions: { reducedMotion, viewport: RUNNER_WINDOW } });
+  playwright({
+    contextOptions: {
+      reducedMotion,
+      viewport: RUNNER_WINDOW,
+      // The unit suite pins TZ the same way; see TESTING_STRATEGY.md "Time zone".
+      timezoneId: "Europe/Warsaw",
+    },
+  });
 
 /** Emulates media features (e.g. no reduced-motion preference, to reach the Motion path). */
 const emulateMedia: BrowserCommand<[options: EmulatedMedia]> = async ({ page }, options) => {

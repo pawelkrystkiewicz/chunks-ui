@@ -21,7 +21,7 @@ Given the component name `$ARGUMENTS`, produce a structured task brief in the fo
 **File scope** (only touch these paths):
 - `packages/ui/src/components/$ARGUMENTS_lowercase/`
   - `$ARGUMENTS.tsx` — component implementation
-  - `$ARGUMENTS.Variants.ts` — CVA variant definitions
+  - `$ARGUMENTS.Variants.ts` — CVA variant definitions (import `cva` from `src/lib/cva`)
   - `index.ts` — barrel export
 - `packages/ui/src/index.ts` — add export (one line only)
 
