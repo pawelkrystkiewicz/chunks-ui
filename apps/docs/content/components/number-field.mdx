@@ -57,7 +57,7 @@ Use `min` and `max` to constrain the value, and `step` to set how far the button
 
 ## Scrub Area
 
-Wrap a label with `NumberField.ScrubArea` to allow click-and-drag adjustment. While you drag with a mouse, the browser locks and hides the system pointer. `NumberField.ScrubAreaCursor` shows in its place, as a left-right arrow by default; pass children or a `render` element to draw your own. Without `ScrubAreaCursor`, a mouse scrub shows no pointer at all, so always include it. Safari and touch input keep the system pointer, so the part does not render there:
+Wrap a label with `NumberField.ScrubArea` to allow click-and-drag adjustment. While you drag with a mouse, the browser locks and hides the system pointer. `NumberField.ScrubAreaCursor` shows in its place, as a left-right arrow by default; pass children or a `render` element to draw your own. Without `ScrubAreaCursor`, a mouse scrub shows no pointer at all, so always include it. Safari and touch input keep the system pointer, so the part does not render there. Inside a `PortalContainerProvider` the cursor renders in the provider's element, like the popups, so a theme scoped to that element reaches it:
 
 ```tsx
 <NumberField.Root defaultValue={100}>
