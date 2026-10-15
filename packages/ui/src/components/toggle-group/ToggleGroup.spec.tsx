@@ -4,6 +4,7 @@ import { axe } from "jest-axe";
 import { createRef, useState } from "react";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { reloadMotion } from "../../lib/use-motion";
+import { FOCUS_RING } from "../shared";
 import { ToggleGroup } from "./ToggleGroup";
 
 type Watched = {
@@ -477,5 +478,19 @@ describe("ToggleGroup indicator measurement", () => {
     expect(watched(c)).toBe(true);
     rerender(withLateItem(["a"], false));
     expect(watched(c)).toBe(false);
+  });
+});
+
+describe("ToggleGroup focus ring", () => {
+  const item = () =>
+    render(
+      <ToggleGroup.Root>
+        <ToggleGroup.Item value="a">A</ToggleGroup.Item>
+      </ToggleGroup.Root>,
+    );
+
+  it("draws the library focus ring on Item", () => {
+    item();
+    expect(screen.getByRole("button")).toHaveClass(FOCUS_RING);
   });
 });

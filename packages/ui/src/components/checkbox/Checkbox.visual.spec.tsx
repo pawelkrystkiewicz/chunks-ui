@@ -1,7 +1,7 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { page } from "vitest/browser";
-import { renderFixture } from "../../VisualTest.utils";
+import { focusVisible, renderFixture } from "../../VisualTest.utils";
 import { Checkbox } from "./index";
 
 describe("Checkbox", () => {
@@ -34,6 +34,17 @@ describe("Checkbox", () => {
         </span>
       </div>,
     );
+    await expect(fixture).toMatchScreenshot();
+  });
+
+  it("focus-visible", async () => {
+    const { fixture, getByRole } = await renderFixture(
+      <Checkbox.Root aria-label="Focused">
+        <Checkbox.Indicator />
+      </Checkbox.Root>,
+    );
+    const checkbox = getByRole("checkbox");
+    focusVisible(checkbox);
     await expect(fixture).toMatchScreenshot();
   });
 

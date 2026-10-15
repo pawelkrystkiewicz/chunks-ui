@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, it, vi } from "vitest";
 import { commands } from "vitest/browser";
-import { renderFixture, systemColour } from "../../VisualTest.utils";
+import { focusVisible, renderFixture, systemColour } from "../../VisualTest.utils";
 import { Calendar } from "./index";
 
 // Freeze time for deterministic visual snapshots
@@ -40,6 +40,15 @@ describe("Calendar", () => {
       </div>,
     );
     await expect(getByTestId("theme")).toMatchScreenshot();
+  });
+
+  // Keyboard focus shows the ring: 2px of --ring, 2px outside the day, which reaches 2px over the
+  // neighbouring cells (2px padding each); the grid clips nothing
+  it("selected day focus-visible", async () => {
+    const { fixture } = await renderFixture(<Calendar value={new Date(2026, 2, 15)} />);
+    const day = screen.getByLabelText("Sunday, March 15, 2026", { selector: "button" });
+    focusVisible(day);
+    await expect(fixture).toMatchScreenshot();
   });
 });
 

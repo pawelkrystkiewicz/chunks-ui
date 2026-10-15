@@ -1,7 +1,7 @@
 import { render } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { commands, page, userEvent } from "vitest/browser";
-import { renderFixture } from "../../VisualTest.utils";
+import { focusVisible, renderFixture } from "../../VisualTest.utils";
 import { Switch } from "./index";
 
 describe("Switch", () => {
@@ -28,6 +28,17 @@ describe("Switch", () => {
         </span>
       </div>,
     );
+    await expect(fixture).toMatchScreenshot();
+  });
+
+  it("focus-visible", async () => {
+    const { fixture, getByRole } = await renderFixture(
+      <Switch.Root aria-label="Focused">
+        <Switch.Thumb />
+      </Switch.Root>,
+    );
+    const toggle = getByRole("switch");
+    focusVisible(toggle);
     await expect(fixture).toMatchScreenshot();
   });
 });

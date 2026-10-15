@@ -4,6 +4,7 @@ import { axe } from "jest-axe";
 import * as React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PortalContainerProvider } from "../../lib/portal-container";
+import { FOCUS_RING_WITHIN } from "../shared";
 import { NumberField } from "./NumberField";
 import { DEFAULT_NUMBER_FIELD_LABELS } from "./NumberField.Labels";
 
@@ -301,5 +302,35 @@ describe("NumberField labels", () => {
     );
     expect(screen.getByRole("button", { name: "Add one" })).toBeInTheDocument();
     expect(screen.getByRole("textbox")).toHaveAttribute("aria-roledescription", "Counter");
+  });
+});
+
+describe("NumberField focus ring", () => {
+  const group = (className?: string) =>
+    render(
+      <NumberField.Root defaultValue={0}>
+        <NumberField.Group data-testid="group" className={className}>
+          <NumberField.Input aria-label="Quantity" />
+        </NumberField.Group>
+      </NumberField.Root>,
+    );
+
+  // The Group draws the ring while the input inside it has keyboard focus; the input draws none
+  it("draws the focus-within ring classes on Group", () => {
+    group();
+    expect(screen.getByTestId("group")).toHaveClass(FOCUS_RING_WITHIN);
+    expect(screen.getByRole("textbox")).toHaveClass("focus-visible:outline-none");
+  });
+
+  // Both offsets are in one tailwind-merge group under the same variant: the consumer's wins
+  it("keeps a flush ring with has-[:focus-visible]:outline-offset-0 in className", () => {
+    group("has-[:focus-visible]:outline-offset-0");
+    const el = screen.getByTestId("group");
+    expect(el).toHaveClass(
+      "has-[:focus-visible]:outline-offset-0",
+      "has-[:focus-visible]:outline-2",
+      "has-[:focus-visible]:outline-ring",
+    );
+    expect(el).not.toHaveClass("has-[:focus-visible]:outline-offset-2");
   });
 });

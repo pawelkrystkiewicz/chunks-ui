@@ -1,7 +1,13 @@
 import { DirectionProvider } from "@base-ui/react/direction-provider";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { commands, userEvent } from "vitest/browser";
-import { expectDimmed, offBy, renderFixture, waitForStable } from "../../VisualTest.utils";
+import {
+  expectDimmed,
+  focusVisible,
+  offBy,
+  renderFixture,
+  waitForStable,
+} from "../../VisualTest.utils";
 import { Tabs } from "./index";
 
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
@@ -100,6 +106,24 @@ describe("Tabs", () => {
       </Tabs.Root>,
     );
     expectDimmed(getByRole("tab", { name: "Disabled" }), getByRole("tab", { name: "Enabled" }));
+  });
+
+  // Keyboard focus shows the ring: 2px of --ring, 2px outside the tab, which reaches into the
+  // list's 4px padding and over the indicator under the tab
+  it("active tab focus-visible", async () => {
+    const { fixture } = await renderFixture(
+      <Tabs.Root defaultValue="tab-1">
+        <Tabs.List>
+          <Tabs.Tab value="tab-1">Account</Tabs.Tab>
+          <Tabs.Tab value="tab-2">Security</Tabs.Tab>
+          <Tabs.Indicator data-testid="indicator" />
+        </Tabs.List>
+      </Tabs.Root>,
+    );
+    await expectIndicatorOverActiveTab();
+    const tab = activeTab() as HTMLElement;
+    focusVisible(tab);
+    await expect(fixture).toMatchScreenshot();
   });
 });
 

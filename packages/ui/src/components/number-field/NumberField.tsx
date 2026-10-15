@@ -7,7 +7,7 @@ import { cnState } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
 import { usePortalContainer } from "../../lib/portal-container";
 import { type PartRenderProp, useRenderPart } from "../../lib/use-render-part";
-import { RING_TRANSITION } from "../shared";
+import { FOCUS_RING_WITHIN, RING_TRANSITION } from "../shared";
 import { DEFAULT_NUMBER_FIELD_LABELS, type NumberFieldLabels } from "./NumberField.Labels";
 
 // ---------------------------------------------------------------------------
@@ -50,7 +50,7 @@ function NumberFieldGroup({ className, ...props }: NumberFieldGroupProps) {
     <BaseNumberField.Group
       className={cnState(
         "flex items-center rounded-md border border-input bg-background",
-        "has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ring",
+        FOCUS_RING_WITHIN,
         RING_TRANSITION,
         "has-[input:disabled]:pointer-events-none has-[input:disabled]:opacity-50",
         className,

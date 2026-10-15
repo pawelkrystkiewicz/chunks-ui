@@ -2,6 +2,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { FOCUS_RING } from "../shared";
 import { Radio } from "./Radio";
 
 afterEach(cleanup);
@@ -101,5 +102,16 @@ describe("Radio", () => {
     await waitFor(() => {
       expect(screen.getByTestId("ind")).toBeInTheDocument();
     });
+  });
+});
+
+describe("Radio focus ring", () => {
+  it("draws the library focus ring on Root", () => {
+    render(
+      <Radio.Group>
+        <Radio.Root value="a" />
+      </Radio.Group>,
+    );
+    expect(screen.getByRole("radio")).toHaveClass(FOCUS_RING);
   });
 });

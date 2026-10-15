@@ -4,6 +4,7 @@ import { axe } from "jest-axe";
 import { type ChangeEvent, createRef, useRef, useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
 import { Field } from "../field";
+import { FOCUS_RING } from "../shared";
 import { Input } from "./Input";
 import { DEFAULT_INPUT_LABELS } from "./Input.Labels";
 
@@ -423,5 +424,26 @@ describe("Input labels", () => {
   it("does not pass labels to the input element", () => {
     render(<Input aria-label="Search" labels={{ clear: "Wyczyść" }} />);
     expect(screen.getByRole("textbox")).not.toHaveAttribute("labels");
+  });
+});
+
+describe("Input focus ring", () => {
+  it("draws the library focus ring", () => {
+    render(<Input data-testid="inp" />);
+    expect(screen.getByTestId("inp")).toHaveClass(FOCUS_RING);
+  });
+
+  // With adornments a string className goes on the wrapper, so the opt-out takes a function
+  it("keeps a flush ring with adornments through a className function", () => {
+    render(
+      <Input
+        data-testid="inp"
+        startAdornment={<span>$</span>}
+        className={() => "focus-visible:outline-offset-0"}
+      />,
+    );
+    const input = screen.getByTestId("inp");
+    expect(input).toHaveClass("focus-visible:outline-offset-0", "focus-visible:outline-2");
+    expect(input).not.toHaveClass("focus-visible:outline-offset-2");
   });
 });

@@ -7,7 +7,7 @@ import { springs } from "../../lib/motion";
 import { useMotion, useReducedMotion } from "../../lib/use-motion";
 import { useHeldWhileDriving, useMotionAnimate } from "../../lib/use-motion-animate";
 import { type PartRenderProp, useRenderPart } from "../../lib/use-render-part";
-import { RING_ANIMATION_CLASSES } from "../shared";
+import { FOCUS_RING, RING_ANIMATION_CLASSES } from "../shared";
 
 export type CheckboxRootProps = ComponentProps<typeof BaseCheckbox.Root>;
 
@@ -17,7 +17,7 @@ function CheckboxRoot({ className, ...props }: CheckboxRootProps) {
       className={cnState(
         "peer inline-flex size-4 shrink-0 items-center justify-center rounded-[min(calc(var(--radius)-4px),4px)] border border-input",
         ...RING_ANIMATION_CLASSES,
-        "focus-visible:outline-2 focus-visible:outline-ring",
+        FOCUS_RING,
         "data-[checked]:border-primary data-[checked]:bg-primary data-[checked]:text-primary-foreground",
         "data-[indeterminate]:border-primary data-[indeterminate]:bg-primary data-[indeterminate]:text-primary-foreground",
         // No pointer-events-none: it would hide the cursor, and Base UI ignores the click anyway

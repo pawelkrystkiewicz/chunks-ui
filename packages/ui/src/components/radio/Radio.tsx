@@ -8,7 +8,7 @@ import { springs } from "../../lib/motion";
 import { useMotion, useReducedMotion } from "../../lib/use-motion";
 import { useMotionAnimate } from "../../lib/use-motion-animate";
 import { type PartRenderProp, useRenderPart } from "../../lib/use-render-part";
-import { RING_ANIMATION_CLASSES } from "../shared";
+import { FOCUS_RING, RING_ANIMATION_CLASSES } from "../shared";
 
 /**
  * `Value` is the type of `value`, `defaultValue` and the value `onValueChange` receives. It is
@@ -38,7 +38,7 @@ function RadioRoot({ className, ...props }: RadioRootProps) {
         "peer inline-flex size-4 shrink-0 items-center justify-center rounded-full border border-input",
         ...RING_ANIMATION_CLASSES,
         "cursor-pointer",
-        "focus-visible:outline-2 focus-visible:outline-ring",
+        FOCUS_RING,
         "data-[checked]:border-primary",
         // No pointer-events-none: it would hide the cursor, and Base UI ignores the click anyway.
         // A disabled Radio.Group dims itself, so inside one the root drops its own dim and isn't

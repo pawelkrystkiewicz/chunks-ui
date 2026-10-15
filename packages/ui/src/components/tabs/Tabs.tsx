@@ -21,7 +21,7 @@ import { useMergedRef } from "../../lib/use-merged-ref";
 import { type MotionOptions, useMotion, useReducedMotion } from "../../lib/use-motion";
 import { useMotionAnimate } from "../../lib/use-motion-animate";
 import { type PartRenderProp, useRenderPart } from "../../lib/use-render-part";
-import { RING_ANIMATION_CLASSES, RING_TRANSITION } from "../shared";
+import { FOCUS_RING, RING_ANIMATION_CLASSES, RING_TRANSITION } from "../shared";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -123,11 +123,12 @@ function TabsTab({ className, ...props }: TabsTabProps) {
   return (
     <BaseTabs.Tab
       className={cnState(
-        "relative z-[1] inline-flex items-center justify-center px-4 py-2 font-medium text-sm",
+        // `rounded-md`, as the indicator: a square ring would stick past the list's `rounded-lg` corners
+        "relative z-[1] inline-flex items-center justify-center rounded-md px-4 py-2 font-medium text-sm",
         ...RING_ANIMATION_CLASSES,
         "text-muted-foreground hover:text-foreground",
         "data-active:text-foreground",
-        "focus-visible:outline-2 focus-visible:outline-ring",
+        FOCUS_RING,
         // Base UI keeps a disabled tab focusable: aria-disabled, never the disabled attribute
         "aria-disabled:pointer-events-none aria-disabled:opacity-50",
         className,
@@ -140,11 +141,7 @@ function TabsTab({ className, ...props }: TabsTabProps) {
 function TabsPanel({ className, ...props }: TabsPanelProps) {
   return (
     <BaseTabs.Panel
-      className={cnState(
-        "mt-2 focus-visible:outline-2 focus-visible:outline-ring",
-        RING_TRANSITION,
-        className,
-      )}
+      className={cnState("mt-2", FOCUS_RING, RING_TRANSITION, className)}
       {...props}
     />
   );

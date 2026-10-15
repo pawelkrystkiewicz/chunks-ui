@@ -1,7 +1,7 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { page } from "vitest/browser";
-import { renderFixture } from "../../VisualTest.utils";
+import { focusVisible, renderFixture } from "../../VisualTest.utils";
 import { Field } from "../field";
 import { Radio } from "./index";
 
@@ -147,5 +147,16 @@ describe("Radio", () => {
     );
     expect(drawnOpacity(getByRole("radio", { name: "Option" }))).toBe(1);
     expect(drawnOpacity(getByText("Option"))).toBe(1);
+  });
+
+  it("focus-visible", async () => {
+    const { fixture, getByRole } = await renderFixture(
+      <Radio.Group defaultValue="a">
+        <Radio.Item value="a">Option A</Radio.Item>
+      </Radio.Group>,
+    );
+    const radio = getByRole("radio");
+    focusVisible(radio);
+    await expect(fixture).toMatchScreenshot();
   });
 });
