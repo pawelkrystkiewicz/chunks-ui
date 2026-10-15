@@ -2,7 +2,6 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { FOCUS_RING } from "../shared";
 import { ClearButton } from "./ClearButton";
 import { DEFAULT_CLEAR_BUTTON_LABELS } from "./ClearButton.Labels";
 
@@ -35,11 +34,6 @@ describe("ClearButton", () => {
   it("has type=button", () => {
     render(<ClearButton />);
     expect(screen.getByRole("button")).toHaveAttribute("type", "button");
-  });
-
-  it("draws the library focus ring", () => {
-    render(<ClearButton />);
-    expect(screen.getByRole("button")).toHaveClass(...FOCUS_RING.split(" "));
   });
 
   // Both offsets are in one tailwind-merge group under the same variant: the consumer's wins

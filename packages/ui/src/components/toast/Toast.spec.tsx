@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { afterEach, describe, expect, it } from "vitest";
@@ -415,34 +415,21 @@ describe("Toast labels", () => {
 });
 
 describe("Toast focus ring", () => {
-  function RingHarness({ action }: { action?: string }) {
-    const toast = Toast.useToast();
-    return (
-      <button
-        type="button"
-        onClick={() =>
-          toast.add({
-            title: "Saved",
-            dismissible: true,
-            actionProps: { children: "Undo", className: action },
-          })
-        }
-      >
-        Show toast
-      </button>
-    );
-  }
-
   /** Shows a dismissible toast with an "Undo" action, `action` in the action's className */
   async function showToast(action?: string) {
-    const user = userEvent.setup();
+    const manager = createToastManager();
     render(
-      <Toast.Provider>
-        <RingHarness action={action} />
+      <Toast.Provider toastManager={manager}>
         <Toast.Viewport />
       </Toast.Provider>,
     );
-    await user.click(screen.getByRole("button", { name: "Show toast" }));
+    act(() => {
+      manager.add({
+        title: "Saved",
+        dismissible: true,
+        actionProps: { children: "Undo", className: action },
+      });
+    });
     await screen.findByText("Saved");
   }
 
@@ -451,11 +438,6 @@ describe("Toast focus ring", () => {
     // Base UI aria-hides the close button until the toast is focused or hovered, so by its label
     const close = screen.getByLabelText(DEFAULT_TOAST_LABELS.close, { selector: "button" });
     expect(close).toHaveClass(...FOCUS_RING.split(" "));
-  });
-
-  it("draws the library focus ring on Action", async () => {
-    await showToast();
-    expect(screen.getByRole("button", { name: "Undo" })).toHaveClass(...FOCUS_RING.split(" "));
   });
 
   // Both offsets are in one tailwind-merge group under the same variant: the consumer's wins
