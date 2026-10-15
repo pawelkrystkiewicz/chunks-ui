@@ -10,10 +10,11 @@ import { useMotionAnimate } from "../../lib/use-motion-animate";
 import { type PartRenderProp, useRenderPart } from "../../lib/use-render-part";
 import { RING_ANIMATION_CLASSES } from "../shared";
 
+// The default matches ComponentProps<typeof BaseRadioGroup>, the type before Radio.Group was generic
 /**
  * `Value` is the type of `value`, `defaultValue` and the value `onValueChange` receives. It is
  * inferred from `value` or `defaultValue`, so a typed `useState` setter is an `onValueChange`.
- * Without either it is `unknown`, as `ComponentProps<typeof BaseRadioGroup>` made it before.
+ * Without either it is `unknown`.
  */
 export type RadioGroupProps<Value = unknown> = BaseRadioGroup.Props<Value>;
 

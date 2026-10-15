@@ -1,5 +1,6 @@
 import type { Slider as BaseSlider } from "@base-ui/react/slider";
 import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import {
   type ComponentProps,
   type Dispatch,
@@ -29,7 +30,8 @@ const frozen: readonly number[] = [20, 80];
 const setFrozen: Setter<readonly number[]> = () => {};
 
 describe("Slider.Root types", () => {
-  it("takes a typed useState setter as onValueChange", () => {
+  it("takes a typed useState setter as onValueChange", async () => {
+    const user = userEvent.setup();
     function Controlled() {
       const [value, setValue] = useState(50);
       return (
@@ -61,9 +63,20 @@ describe("Slider.Root types", () => {
         <ControlledRange />
       </>,
     );
-    expect(screen.getByRole("slider", { name: "Volume" })).toHaveValue("50");
-    expect(screen.getByRole("slider", { name: "Min" })).toHaveValue("20");
-    expect(screen.getByRole("slider", { name: "Max" })).toHaveValue("80");
+    const volume = screen.getByRole("slider", { name: "Volume" });
+    const min = screen.getByRole("slider", { name: "Min" });
+    const max = screen.getByRole("slider", { name: "Max" });
+    expect(volume).toHaveValue("50");
+    expect(min).toHaveValue("20");
+    expect(max).toHaveValue("80");
+    // Tab order is Volume, Min, Max
+    await user.tab();
+    await user.keyboard("{ArrowRight}");
+    expect(volume).toHaveValue("51");
+    await user.tab();
+    await user.keyboard("{ArrowRight}");
+    expect(min).toHaveValue("21");
+    expect(max).toHaveValue("80");
   });
 
   it("infers a number or an array from value or defaultValue", () => {
@@ -77,9 +90,23 @@ describe("Slider.Root types", () => {
         value={range}
         onValueChange={(next) => expectTypeOf(next).toEqualTypeOf<number[]>()}
       />,
+      // The inline callback gives Value no candidate of its own, so only defaultValue pins it
+      <Slider.Root
+        defaultValue={range}
+        onValueChange={(next) => expectTypeOf(next).toEqualTypeOf<number[]>()}
+      />,
     );
     expectTypeOf<SliderRootProps<number>["value"]>().toEqualTypeOf<number | undefined>();
     expectTypeOf<SliderRootProps<number[]>["value"]>().toEqualTypeOf<number[] | undefined>();
+  });
+
+  it("keeps a literal default widened", () => {
+    typeChecks(
+      <Slider.Root
+        defaultValue={50}
+        onValueChange={(next) => expectTypeOf(next).toEqualTypeOf<number>()}
+      />,
+    );
   });
 
   it("rejects a setter of the other shape", () => {

@@ -13,15 +13,16 @@ import { DEFAULT_SLIDER_LABELS, type SliderLabels } from "./Slider.Labels";
 // `range`: the slider has two values, the only case where Base UI adds range text to the thumbs
 const SliderLabelsContext = createContext({ labels: DEFAULT_SLIDER_LABELS, range: false });
 
-type SliderValue = number | readonly number[];
-
+// The default matches ComponentProps<typeof BaseSlider.Root>, the type before Slider.Root was generic.
+// The union is written out, not aliased: a local alias named SliderValue would clash with the
+// SliderValue component in consumers' error messages.
 /**
  * `Value` is the type of `value`, `defaultValue` and the value `onValueChange` receives: a
  * `number`, or an array of them for a range slider. It is inferred from `value` or `defaultValue`,
  * so a typed `useState` setter is an `onValueChange`. Without either it is
- * `number | readonly number[]`, as `ComponentProps<typeof BaseSlider.Root>` made it before.
+ * `number | readonly number[]`.
  */
-export type SliderRootProps<Value extends SliderValue = SliderValue> =
+export type SliderRootProps<Value extends number | readonly number[] = number | readonly number[]> =
   BaseSlider.Root.Props<Value> & {
     /**
      * Replaces the built-in English strings, e.g. to translate them. Keys you leave out keep the
@@ -40,7 +41,7 @@ export type SliderThumbProps = ComponentProps<typeof BaseSlider.Thumb>;
 // Components
 // ---------------------------------------------------------------------------
 
-function SliderRoot<Value extends SliderValue = SliderValue>({
+function SliderRoot<Value extends number | readonly number[] = number | readonly number[]>({
   className,
   labels,
   ...props

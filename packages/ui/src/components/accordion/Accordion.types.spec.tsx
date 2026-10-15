@@ -1,5 +1,6 @@
 import type { Accordion as BaseAccordion } from "@base-ui/react/accordion";
 import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import {
   type ComponentProps,
   type Dispatch,
@@ -27,7 +28,8 @@ const setSections: Setter<("a" | "b")[]> = () => {};
 const setNumbers: Setter<number[]> = () => {};
 
 describe("Accordion.Root types", () => {
-  it("takes a typed useState setter as onValueChange", () => {
+  it("takes a typed useState setter as onValueChange", async () => {
+    const user = userEvent.setup();
     function Controlled() {
       const [value, setValue] = useState<string[]>(["a"]);
       return (
@@ -42,7 +44,12 @@ describe("Accordion.Root types", () => {
       );
     }
     render(<Controlled />);
-    expect(screen.getByRole("button", { name: "A" })).toHaveAttribute("data-panel-open");
+    const trigger = screen.getByRole("button", { name: "A" });
+    expect(trigger).toHaveAttribute("data-panel-open");
+    await user.click(trigger);
+    expect(trigger).not.toHaveAttribute("data-panel-open");
+    await user.click(trigger);
+    expect(trigger).toHaveAttribute("data-panel-open");
   });
 
   it("infers the item type from value or defaultValue", () => {
@@ -54,10 +61,24 @@ describe("Accordion.Root types", () => {
         value={sections}
         onValueChange={(next) => expectTypeOf(next).toEqualTypeOf<("a" | "b")[]>()}
       />,
+      // The inline callback gives Value no candidate of its own, so only defaultValue pins it
+      <Accordion.Root
+        defaultValue={sections}
+        onValueChange={(next) => expectTypeOf(next).toEqualTypeOf<("a" | "b")[]>()}
+      />,
     );
     expectTypeOf<AccordionRootProps<"a" | "b">["value"]>().toEqualTypeOf<
       ("a" | "b")[] | undefined
     >();
+  });
+
+  it("keeps a literal default widened", () => {
+    typeChecks(
+      <Accordion.Root
+        defaultValue={["item-1"]}
+        onValueChange={(next) => expectTypeOf(next).toEqualTypeOf<string[]>()}
+      />,
+    );
   });
 
   it("rejects a setter of another item type", () => {
