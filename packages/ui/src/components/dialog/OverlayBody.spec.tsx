@@ -405,14 +405,15 @@ describe("Body", () => {
 
   describe("role on a render element", () => {
     it("gives a div role=region, so the Title's name is exposed", async () => {
-      const { container } = renderBody(
+      renderBody(
         <Dialog.Title>Terms</Dialog.Title>,
         <Dialog.Body render={<div />}>Text</Dialog.Body>,
       );
       const body = screen.getByRole("region", { name: "Terms" });
       expect(body.tagName).toBe("DIV");
       expect(body).toHaveAttribute("role", "region");
-      expect(await axe(container)).toHaveNoViolations();
+      // The popup is portalled into the body, outside the container RTL hands back
+      expect(await axe(document.body)).toHaveNoViolations();
     });
 
     it("gives a div returned by a function render role=region", () => {
@@ -454,6 +455,19 @@ describe("Body", () => {
       const body = screen.getByRole("region", { name: "Terms" });
       expect(body.tagName).toBe("DIV");
       expect(body).toHaveAttribute("role", "region");
+    });
+
+    it("reads the name of a lazy render element, so its aria-label wins over the Title", () => {
+      const lazy = {
+        $$typeof: Symbol.for("react.lazy"),
+        // biome-ignore lint/a11y/useAriaPropsSupportedByRole: a generic div, which the Body gives the region role
+        _payload: <div aria-label="Notes" />,
+        _init: (payload: ReactElement) => payload,
+      } as unknown as ReactElement;
+      renderBody(<Dialog.Title>Terms</Dialog.Title>, <Dialog.Body render={lazy}>Text</Dialog.Body>);
+      const body = screen.getByRole("region", { name: "Notes" });
+      expect(body).toHaveAttribute("aria-label", "Notes");
+      expect(body).not.toHaveAttribute("aria-labelledby");
     });
 
     it("gives a div named by an aria-label on the Body the role, with no Title", () => {
@@ -512,6 +526,26 @@ describe("Body", () => {
       expect(screen.queryByRole("region")).toBeNull();
     });
 
+    it("gives a span the role", () => {
+      renderBody(
+        <Dialog.Title>Terms</Dialog.Title>,
+        <Dialog.Body render={<span />}>Text</Dialog.Body>,
+      );
+      const body = screen.getByRole("region", { name: "Terms" });
+      expect(body.tagName).toBe("SPAN");
+    });
+
+    it("keeps a role set on the Body for a div returned by a function render", () => {
+      renderBody(
+        <Dialog.Title>Terms</Dialog.Title>,
+        <Dialog.Body role="note" render={(props) => <div {...props} />}>
+          Text
+        </Dialog.Body>,
+      );
+      expect(screen.getByRole("note", { name: "Terms" })).toBeInTheDocument();
+      expect(screen.queryByRole("region")).toBeNull();
+    });
+
     it("keeps a role set on the Body", () => {
       renderBody(
         <Dialog.Title>Terms</Dialog.Title>,
@@ -525,7 +559,7 @@ describe("Body", () => {
   });
 
   it("has no a11y violations", async () => {
-    const { container } = renderBody(
+    renderBody(
       <>
         <Dialog.Title>Terms</Dialog.Title>
         <Dialog.Description>Read before you accept.</Dialog.Description>
@@ -534,6 +568,7 @@ describe("Body", () => {
         <p>Text</p>
       </Dialog.Body>,
     );
-    expect(await axe(container)).toHaveNoViolations();
+    // The popup is portalled into the body, outside the container RTL hands back
+    expect(await axe(document.body)).toHaveNoViolations();
   });
 });
