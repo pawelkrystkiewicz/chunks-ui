@@ -5,6 +5,7 @@ import { join } from "node:path";
 import {
   EXEMPT,
   floorsOf,
+  inCI,
   overridesOf,
   TYPES,
   typeFloorsOf,
@@ -118,6 +119,22 @@ describe("verdictsOf", () => {
   });
 });
 
+describe("inCI", () => {
+  it("is true for a CI set to anything but empty, false or 0", () => {
+    expect(inCI({ CI: "true" })).toBe(true);
+    expect(inCI({ CI: "1" })).toBe(true);
+    expect(inCI({ CI: "github" })).toBe(true);
+  });
+
+  it("is false when CI is unset, empty, false or 0, whatever the case", () => {
+    expect(inCI({})).toBe(false);
+    expect(inCI({ CI: "" })).toBe(false);
+    expect(inCI({ CI: "false" })).toBe(false);
+    expect(inCI({ CI: "FALSE" })).toBe(false);
+    expect(inCI({ CI: "0" })).toBe(false);
+  });
+});
+
 describe("--overrides on the command line", () => {
   const dirs: string[] = [];
 
@@ -168,6 +185,15 @@ describe("--overrides on the command line", () => {
     expect(result.exitCode).toBe(1);
     expect(result.stderr).toContain("--force");
     expect(result.root).toBe('{"name":"root"}\n');
+  });
+
+  it("exits 1 and leaves package.json alone when CI is false or 0", () => {
+    for (const CI of ["false", "0"]) {
+      const result = run(repo(), ["--overrides"], { CI });
+      expect(result.exitCode).toBe(1);
+      expect(result.stderr).toContain("--force");
+      expect(result.root).toBe('{"name":"root"}\n');
+    }
   });
 
   it("writes the overrides when CI is set", () => {
