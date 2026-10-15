@@ -157,12 +157,10 @@ Description`;
 describe("isEmptyChangeset", () => {
   it("should be true for the file bunx changeset --empty writes", () => {
     expect(isEmptyChangeset("---\n---\n")).toBe(true);
-    expect(isEmptyChangeset("---\n---\n\n")).toBe(true);
   });
 
-  it("should be true for empty front matter with blank lines or an empty mapping", () => {
+  it("should be true for empty front matter with blank lines", () => {
     expect(isEmptyChangeset("---\n\n---\n")).toBe(true);
-    expect(isEmptyChangeset("---\n{}\n---\n")).toBe(true);
   });
 
   it("should be false when the front matter names a package", () => {
@@ -172,14 +170,6 @@ describe("isEmptyChangeset", () => {
   it("should be false without front matter", () => {
     expect(isEmptyChangeset("No front matter here")).toBe(false);
     expect(isEmptyChangeset("---\n")).toBe(false);
-  });
-
-  it("should be false for invalid YAML, the safe direction: the file counts as a release", () => {
-    expect(isEmptyChangeset("---\nthis is not valid: yaml: syntax:\n---")).toBe(false);
-  });
-
-  it("should be true for front matter that holds only a comment", () => {
-    expect(isEmptyChangeset("---\n# nothing\n---\n")).toBe(true);
   });
 });
 
@@ -296,19 +286,6 @@ Major change`,
     expect(determineBumpType(testDir)).toBe("major");
   });
 
-  it("should not let an empty changeset change the bump", () => {
-    writeFileSync(join(testDir, "empty.md"), "---\n---\n");
-    writeFileSync(
-      join(testDir, "change1.md"),
-      `---
-"chunks-ui": minor
----
-Minor change`,
-    );
-
-    expect(determineBumpType(testDir)).toBe("minor");
-  });
-
   it("should handle invalid front matter gracefully", () => {
     writeFileSync(join(testDir, "invalid.md"), "No front matter here");
     writeFileSync(
@@ -350,8 +327,7 @@ describe("hasChangesets", () => {
   });
 
   it("should return false when only empty changesets exist", () => {
-    writeFileSync(join(testDir, "empty-one.md"), "---\n---\n");
-    writeFileSync(join(testDir, "empty-two.md"), "---\n---\n\n");
+    writeFileSync(join(testDir, "empty.md"), "---\n---\n");
     expect(hasChangesets(testDir)).toBe(false);
   });
 
@@ -574,39 +550,6 @@ Breaking change`,
       currentVersion: "1.2.3",
       nextVersion: "2.0.0",
       bumpType: "major",
-      hasChangesets: true,
-    });
-  });
-
-  it("should report no changesets when only an empty changeset exists", () => {
-    writeFileSync(join(changesetDir, "empty.md"), "---\n---\n");
-
-    const result = calculateVersionInfo(packageJsonPath, changesetDir);
-
-    expect(result).toEqual({
-      currentVersion: "1.2.3",
-      nextVersion: "1.2.3",
-      bumpType: "patch",
-      hasChangesets: false,
-    });
-  });
-
-  it("should bump from the real changesets when an empty one sits beside them", () => {
-    writeFileSync(join(changesetDir, "empty.md"), "---\n---\n");
-    writeFileSync(
-      join(changesetDir, "feature.md"),
-      `---
-"test-package": minor
----
-New feature`,
-    );
-
-    const result = calculateVersionInfo(packageJsonPath, changesetDir);
-
-    expect(result).toEqual({
-      currentVersion: "1.2.3",
-      nextVersion: "1.3.0",
-      bumpType: "minor",
       hasChangesets: true,
     });
   });

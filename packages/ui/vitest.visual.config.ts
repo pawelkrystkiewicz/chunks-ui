@@ -12,18 +12,15 @@ import type { AccessibilityNode, EmulatedMedia } from "./src/VisualTest.utils";
  */
 const RUNNER_WINDOW = { width: 1280, height: 1024 };
 
-/**
- * The browser's time zone. The unit suite pins `TZ` to the same zone in vitest.config.ts; here the
- * Playwright context gets it, for the Chromium projects below and the WebKit project of
- * vitest.webkit.config.ts, which calls `playwrightProvider`. Off UTC (CI is UTC), so a local date
- * read through UTC fails here too; see TESTING_STRATEGY "Time zone".
- */
-const TIME_ZONE = "Europe/Warsaw";
-
-/** Playwright with the window and time zone above and the given reduced-motion preference */
+/** Playwright with the window above, the pinned time zone and the given reduced-motion preference */
 export const playwrightProvider = (reducedMotion: "reduce" | "no-preference") =>
   playwright({
-    contextOptions: { reducedMotion, viewport: RUNNER_WINDOW, timezoneId: TIME_ZONE },
+    contextOptions: {
+      reducedMotion,
+      viewport: RUNNER_WINDOW,
+      // The unit suite pins TZ the same way; see TESTING_STRATEGY.md "Time zone".
+      timezoneId: "Europe/Warsaw",
+    },
   });
 
 /** Emulates media features (e.g. no reduced-motion preference, to reach the Motion path). */

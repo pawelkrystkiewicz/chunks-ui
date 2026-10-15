@@ -91,26 +91,11 @@ function parseChangesetFrontMatter(content: string): "major" | "minor" | "patch"
 }
 
 /**
- * An empty changeset (`bunx changeset --empty`) has front matter that names no package: it
- * releases nothing and adds no changelog entry, so it must not count as a pending release
+ * An empty changeset (`bunx changeset --empty`) has nothing between the front matter delimiters:
+ * it releases nothing and adds no changelog entry, so it must not count as a pending release
  */
 function isEmptyChangeset(content: string): boolean {
-  const yamlContent = readFrontMatter(content);
-  if (yamlContent === null) {
-    return false;
-  }
-
-  try {
-    const parsed = YAML.load(yamlContent);
-    return (
-      parsed === undefined ||
-      parsed === null ||
-      (typeof parsed === "object" && Object.keys(parsed).length === 0)
-    );
-  } catch {
-    // Invalid YAML is not an empty changeset
-    return false;
-  }
+  return readFrontMatter(content) === "";
 }
 
 /**
