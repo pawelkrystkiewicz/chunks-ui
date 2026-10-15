@@ -287,6 +287,33 @@ describe("NumberField", () => {
         expect(portalNode).toContainElement(screen.getByTestId("popup"));
         expect(cursor.style.transform).toMatch(/translate3d/);
       });
+
+      // The Portal unmounts on close and mounts a new node on reopen. The kept node must follow
+      // it, or the cursor renders in a detached element and never shows.
+      it("renders in the new portal node when a Dialog is reopened", async () => {
+        const dialog = (open: boolean) => (
+          <Dialog.Root open={open}>
+            <Dialog.Portal>
+              <Dialog.Popup data-testid="popup">
+                <ScrubField />
+              </Dialog.Popup>
+            </Dialog.Portal>
+          </Dialog.Root>
+        );
+        const { rerender } = render(dialog(true));
+        const firstNode = (await screen.findByTestId("popup")).closest("[data-base-ui-portal]");
+        rerender(dialog(false));
+        await waitFor(() => expect(screen.queryByTestId("popup")).not.toBeInTheDocument());
+        rerender(dialog(true));
+        await screen.findByTestId("popup");
+
+        startScrub();
+        const portalNode = (await screen.findByTestId("cursor")).parentElement;
+        expect(portalNode).not.toBe(firstNode);
+        expect(portalNode).toHaveAttribute("data-base-ui-portal");
+        expect(portalNode?.isConnected).toBe(true);
+        expect(portalNode).toContainElement(screen.getByTestId("popup"));
+      });
     });
   });
 

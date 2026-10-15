@@ -1,6 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { ReactNode } from "react";
+import { Activity, createRef, type ReactNode, type Ref, useEffect, useState } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { Combobox } from "../components/combobox";
 import { DatePicker } from "../components/date-picker";
@@ -157,5 +157,113 @@ describe("PortalContainerProvider", () => {
 
     rerender(<PortalContainerProvider value={container}>{popover}</PortalContainerProvider>);
     expect(container).toContainElement(await screen.findByTestId("popup"));
+  });
+});
+
+// Each Portal merges the consumer's `ref` with the one that feeds the node to its
+// PortalContainerProvider. Dropping the consumer's side leaves `ref.current` null; dropping ours
+// leaves the nested popup in <body>.
+describe("a Portal's consumer ref", () => {
+  const portals: {
+    name: string;
+    ui: (ref: Ref<HTMLDivElement>, nested: ReactNode) => ReactNode;
+  }[] = [
+    {
+      name: "Dialog.Portal",
+      ui: (ref, nested) => (
+        <Dialog.Root open>
+          <Dialog.Portal ref={ref}>
+            <Dialog.Popup data-testid="popup">{nested}</Dialog.Popup>
+          </Dialog.Portal>
+        </Dialog.Root>
+      ),
+    },
+    {
+      name: "Drawer.Portal",
+      ui: (ref, nested) => (
+        <Drawer.Root open>
+          <Drawer.Portal ref={ref}>
+            <Drawer.Popup data-testid="popup">{nested}</Drawer.Popup>
+          </Drawer.Portal>
+        </Drawer.Root>
+      ),
+    },
+    {
+      name: "Combobox.Portal",
+      ui: (ref, nested) => (
+        <Combobox.Root open items={["a"]}>
+          <Combobox.Input />
+          <Combobox.Portal ref={ref}>
+            <Combobox.Positioner>
+              <Combobox.Popup data-testid="popup">{nested}</Combobox.Popup>
+            </Combobox.Positioner>
+          </Combobox.Portal>
+        </Combobox.Root>
+      ),
+    },
+  ];
+
+  it.each(portals)(
+    "$name: receives the portal node, which holds the popup and a popup opened inside it",
+    async ({ ui }) => {
+      const ref = createRef<HTMLDivElement>();
+      render(
+        ui(
+          ref,
+          <Popover.Root open>
+            <Popover.Trigger>Open</Popover.Trigger>
+            <Popover.Content data-testid="nested">Nested</Popover.Content>
+          </Popover.Root>,
+        ),
+      );
+      const nested = await screen.findByTestId("nested");
+      expect(ref.current).toHaveAttribute("data-base-ui-portal");
+      expect(ref.current).toContainElement(screen.getByTestId("popup"));
+      expect(ref.current).toContainElement(nested);
+    },
+  );
+});
+
+// `usePortalNode` keeps the node when React detaches the ref. A hidden <Activity> detaches refs
+// without unmounting, so clearing the node there would hand nested popups `container={null}`
+// while hidden and remount them on reveal.
+describe("usePortalNode under <Activity>", () => {
+  // One entry per mounted instance. StrictMode and a hidden <Activity> re-run effects on the same
+  // instance, so a counter of effect runs would grow without any remount.
+  const instances = new Set<symbol>();
+  function Counted() {
+    const [id] = useState(() => Symbol("instance"));
+    useEffect(() => {
+      instances.add(id);
+    }, [id]);
+    return <span data-testid="counted">Counted</span>;
+  }
+
+  it("does not remount a popup nested in an open Dialog when the Activity is hidden and revealed", async () => {
+    instances.clear();
+    const tree = (mode: "visible" | "hidden") => (
+      <Activity mode={mode}>
+        <Dialog.Root open>
+          <Dialog.Portal>
+            <Dialog.Popup>
+              <Popover.Root open>
+                <Popover.Trigger>Open</Popover.Trigger>
+                <Popover.Content>
+                  <Counted />
+                </Popover.Content>
+              </Popover.Root>
+            </Dialog.Popup>
+          </Dialog.Portal>
+        </Dialog.Root>
+      </Activity>
+    );
+    const { rerender } = render(tree("visible"));
+    await screen.findByTestId("counted");
+    expect(instances.size).toBe(1);
+
+    rerender(tree("hidden"));
+    rerender(tree("visible"));
+    expect(await screen.findByTestId("counted")).toBeInTheDocument();
+    expect(instances.size).toBe(1);
   });
 });
