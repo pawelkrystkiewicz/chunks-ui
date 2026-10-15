@@ -75,7 +75,7 @@ Wrap a label with `NumberField.ScrubArea` to allow click-and-drag adjustment. Wh
 
 <NumberFieldScrubExample />
 
-Inside a [`PortalContainerProvider`](/utilities#portalcontainerprovider) the cursor renders in the provider's element, like the popups, so a theme scoped to that element reaches it. Unlike the popups, it has two limits, listed there.
+The cursor renders where the popups do: in the [`PortalContainerProvider`](/utilities#portalcontainerprovider)'s element, or in the portal of the `Dialog`, `Drawer`, `Popover` or `Combobox` it sits in. Its layer is in [Z-Index Layers](/theme#z-index-layers). Unlike the popups, it has one limit, listed under [`PortalContainerProvider`](/utilities#portalcontainerprovider).
 
 ## Disabled
 

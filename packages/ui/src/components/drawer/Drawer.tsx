@@ -5,7 +5,11 @@ import type { VariantProps } from "class-variance-authority";
 import type { ComponentProps } from "react";
 import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
-import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
+import {
+  PortalContainerProvider,
+  usePortalContainer,
+  usePortalNode,
+} from "../../lib/portal-container";
 import { usePopupRender } from "../../lib/use-popup-render";
 import {
   OverlayBody,
@@ -50,16 +54,18 @@ export type DrawerBodyProps = OverlayBodyProps;
 export type DrawerDescriptionProps = ComponentProps<typeof BaseDialog.Description>;
 export type DrawerCloseProps = ComponentProps<typeof BaseDialog.Close>;
 
-function DrawerPortal({ className, children, ...props }: DrawerPortalProps) {
+function DrawerPortal({ className, children, ref, ...props }: DrawerPortalProps) {
   const container = usePortalContainer();
+  const [portalRef, portalNode] = usePortalNode(ref);
   return (
     <BaseDialog.Portal
+      ref={portalRef}
       container={container}
       // The portal node carries the z-layer, not the popup: whatever opens from the drawer portals in here and stacks above it
       className={cnState("relative z-drawers", className)}
       {...props}
     >
-      <PortalContainerProvider value={undefined}>{children}</PortalContainerProvider>
+      <PortalContainerProvider value={portalNode}>{children}</PortalContainerProvider>
     </BaseDialog.Portal>
   );
 }

@@ -6,7 +6,11 @@ import { type ComponentProps, createContext, useContext, useId } from "react";
 import { cn, cnState } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
 import { springs } from "../../lib/motion";
-import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
+import {
+  PortalContainerProvider,
+  usePortalContainer,
+  usePortalNode,
+} from "../../lib/portal-container";
 import { usePopupRender } from "../../lib/use-popup-render";
 import { CloseIcon } from "../CloseIcon";
 import { removeButtonName } from "../chip/Chip";
@@ -334,11 +338,12 @@ function ComboboxChipRemove({ className, children, ...props }: ComboboxChipRemov
   );
 }
 
-function ComboboxPortal({ children, ...props }: ComponentProps<typeof BaseCombobox.Portal>) {
+function ComboboxPortal({ children, ref, ...props }: ComponentProps<typeof BaseCombobox.Portal>) {
+  const [portalRef, portalNode] = usePortalNode(ref);
   return (
-    <BaseCombobox.Portal container={usePortalContainer()} {...props}>
-      {/* The open popup aria-hides nodes outside its portal, so popups opened inside portal in here */}
-      <PortalContainerProvider value={undefined}>{children}</PortalContainerProvider>
+    <BaseCombobox.Portal ref={portalRef} container={usePortalContainer()} {...props}>
+      {/* The open popup aria-hides nodes outside its portal, so popups opened inside portal in here, and the scrub cursor with them */}
+      <PortalContainerProvider value={portalNode}>{children}</PortalContainerProvider>
     </BaseCombobox.Portal>
   );
 }
