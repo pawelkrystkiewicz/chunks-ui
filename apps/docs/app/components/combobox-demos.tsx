@@ -140,7 +140,7 @@ export function ComboboxMultiDemo() {
           ))}
         </Combobox.Chips>
         <Combobox.Input
-          className="h-7 min-w-20 flex-1 border-0 bg-transparent px-0 focus-visible:outline-none"
+          className="h-7 min-w-20 flex-1 border-0 bg-transparent px-0"
           placeholder="Select frameworks..."
           aria-label="Frameworks"
         />

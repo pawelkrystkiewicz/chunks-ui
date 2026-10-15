@@ -158,7 +158,7 @@ function MultiSelectCombobox() {
           ))}
         </Combobox.Chips>
         <Combobox.Input
-          className="h-7 min-w-20 flex-1 border-0 bg-transparent px-0 focus-visible:outline-none"
+          className="h-7 min-w-20 flex-1 border-0 bg-transparent px-0"
           placeholder="Select frameworks..."
           aria-label="Frameworks"
         />
@@ -241,12 +241,12 @@ The popup enters with a scale-up and fade (from `scale-95` and `opacity-0`): the
 | Part | Description |
 |---|---|
 | `Combobox.Root` | State container. Manages open/close, filtering, and selected value(s). |
-| `Combobox.Control` | Bordered wrapper for multi-select (chips + input). Draws the focus ring (`has-[:focus-visible]`) while the input inside it has keyboard focus, and turns the input's own ring off. |
+| `Combobox.Control` | Bordered wrapper for multi-select (chips + input). Draws the focus ring (`has-[:focus-visible]`) while the input or a chip inside it has keyboard focus. It turns the ring of its combobox input off, so one ring shows while the input has focus; while a chip has focus, the Control and the chip each draw one. |
 | `Combobox.Input` | Text input with built-in filtering. |
 | `Combobox.Trigger` | Button that toggles the popup. Renders a default chevron icon. |
 | `Combobox.Icon` | Chevron icon, usable standalone outside the trigger. |
 | `Combobox.Portal` | Renders the popup in a portal. |
-| `Combobox.Positioner` | Handles Floating UI positioning. |
+| `Combobox.Positioner` | Handles Floating UI positioning. Default `sideOffset={8}`, as on `Popover.Content` and `Menu.Content`: the input's focus ring, 4px outside its edge, stays clear of the popup. A `sideOffset` you pass replaces it, so `sideOffset={0}` opens the popup flush against the input. |
 | `Combobox.Popup` | The dropdown panel containing items. Scrolls when the items need more than the space between the input and the viewport edge. |
 | `Combobox.List` | List container. Takes a function child that renders each matching item (or each group, when `items` holds groups). |
 | `Combobox.Item` | An individual selectable option. |
@@ -256,7 +256,7 @@ The popup enters with a scale-up and fade (from `scale-95` and `opacity-0`): the
 | `Combobox.Group` | Groups related items together. |
 | `Combobox.GroupLabel` | Label for a group of items. |
 | `Combobox.Chips` | Container for selected chips in multi-select mode. Takes ordinary children: map the selected values to `Combobox.Chip`s. |
-| `Combobox.Chip` | A styled chip representing a selected value. |
+| `Combobox.Chip` | A styled chip representing a selected value. Draws the focus ring when the arrow keys focus it, which works with the input inside `Combobox.Chips`. |
 | `Combobox.ChipRemove` | Button to remove a chip. Renders a default X icon. |
 | `Combobox.Value` | Displays the selected value. |
 | `Combobox.Status` | Accessible status announcements for screen readers. |

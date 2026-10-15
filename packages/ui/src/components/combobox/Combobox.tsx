@@ -38,7 +38,16 @@ export type ComboboxEmptyProps = ComponentProps<typeof BaseCombobox.Empty>;
 export type ComboboxClearProps = ComponentProps<typeof BaseCombobox.Clear>;
 export type ComboboxGroupLabelProps = ComponentProps<typeof BaseCombobox.GroupLabel>;
 export type ComboboxIconProps = ComponentProps<typeof BaseCombobox.Icon>;
-export type ComboboxPositionerProps = ComponentProps<typeof BaseCombobox.Positioner>;
+export type ComboboxPositionerProps = Omit<
+  ComponentProps<typeof BaseCombobox.Positioner>,
+  "sideOffset"
+> & {
+  /**
+   * Distance from the input element in pixels.
+   * @default 8
+   */
+  sideOffset?: ComponentProps<typeof BaseCombobox.Positioner>["sideOffset"];
+};
 export type ComboboxGroupProps = ComponentProps<typeof BaseCombobox.Group>;
 export type ComboboxListProps = ComponentProps<typeof BaseCombobox.List>;
 export type ComboboxChipsProps = ComponentProps<typeof BaseCombobox.Chips>;
