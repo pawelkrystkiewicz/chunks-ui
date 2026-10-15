@@ -56,6 +56,7 @@ function TooltipPopup({ className, ...props }: TooltipPopupProps) {
         // either side of the arrow's centre, so they go elliptical on short tooltips. See the
         // Tooltip docs.
         "[--tooltip-arrow-corner:min(var(--radius-md),calc(50%-1px-var(--spacing)*1.77))]",
+        // `.PopupArrow` is POPUP_ARROW_CLASS, written out so Tailwind's scanner sees each variant
         "has-[.PopupArrow]:data-[side=left]:rounded-r-(--tooltip-arrow-corner)",
         "has-[.PopupArrow]:data-[side=right]:rounded-l-(--tooltip-arrow-corner)",
         "has-[.PopupArrow]:data-[side=inline-start]:rounded-e-(--tooltip-arrow-corner)",
