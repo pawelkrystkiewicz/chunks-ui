@@ -8,12 +8,13 @@ import { Dialog } from "./index";
 
 afterEach(cleanup);
 
-// jsdom has no layout, so an element's content and box heights come from these attributes. The
-// browser specs (OverlayBody.visual.spec.tsx) cover the real measurement.
+// jsdom has no layout, so an element's content and box heights come from these attributes; in a
+// hidden popup (`keepMounted`, before it opens) they are 0, as in the browser. The browser specs
+// (OverlayBody.visual.spec.tsx) cover the real measurement.
 const SCROLL = "data-scroll-height";
 const CLIENT = "data-client-height";
 const heightOf = (element: Element, attribute: string) =>
-  Number(element.getAttribute(attribute) ?? 0);
+  element.closest("[hidden]") ? 0 : Number(element.getAttribute(attribute) ?? 0);
 
 /** Content taller than the box: the Body scrolls */
 const tall = { [SCROLL]: 2000, [CLIENT]: 400 };
@@ -219,6 +220,29 @@ describe.each(OVERLAYS)("$name", ({ X, marker }) => {
     await waitFor(() => expect(screen.getByRole("region", { name: "Terms" })).toHaveFocus());
     // Named by the time it takes the focus
     expect(nameAtFocus).toBeTruthy();
+  });
+
+  it("takes the initial focus when a keepMounted popup opens from its Trigger", async () => {
+    // The Body mounts hidden and measures no overflow; the open renders the popup, not the Body
+    render(
+      <X.Root>
+        <X.Trigger>Open</X.Trigger>
+        <X.Portal keepMounted>
+          <X.Popup>
+            <X.Title>Terms</X.Title>
+            <X.Body data-testid="body" {...tall}>
+              Text
+            </X.Body>
+            <X.Close>Cancel</X.Close>
+          </X.Popup>
+        </X.Portal>
+      </X.Root>,
+    );
+    const body = screen.getByTestId("body");
+    expect(body).not.toHaveAttribute("tabindex", "0");
+    fireEvent.click(screen.getByRole("button", { name: "Open" }));
+    await waitFor(() => expect(body).toHaveFocus());
+    expect(body).toHaveAttribute("tabindex", "0");
   });
 
   it("leaves the initial focus to the first action when its content fits", async () => {

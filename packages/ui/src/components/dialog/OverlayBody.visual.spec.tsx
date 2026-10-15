@@ -67,6 +67,32 @@ describe.each(OVERLAYS)("$name", ({ X }) => {
     rerender(overlay(40));
     await expect.poll(() => body.hasAttribute("tabindex")).toBe(false);
   });
+
+  it("takes the initial focus when a keepMounted popup opens from its Trigger", async () => {
+    // The Body mounts hidden, so its first measurement finds nothing to scroll; opening re-renders
+    // the popup, not the Body
+    render(
+      <X.Root>
+        <X.Trigger>Open</X.Trigger>
+        <X.Portal keepMounted>
+          <X.Backdrop />
+          <X.Popup>
+            <X.Title>Terms</X.Title>
+            <X.Body>
+              <div style={{ height: 2000 }} />
+            </X.Body>
+            <div>
+              <X.Close>Cancel</X.Close>
+            </div>
+          </X.Popup>
+        </X.Portal>
+      </X.Root>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Open" }));
+    const body = await screen.findByRole("region", { name: "Terms" });
+    await expect.element(body).toHaveFocus();
+    expect(body).toHaveAttribute("tabindex", "0");
+  });
 });
 
 // In a left or right drawer the Body is `flex-1`: its box is the same whatever its content, so

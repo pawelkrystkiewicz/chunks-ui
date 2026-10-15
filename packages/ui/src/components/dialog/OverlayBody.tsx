@@ -12,6 +12,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { flushSync } from "react-dom";
 import { cn } from "../../lib/cn";
 import { FOCUS_RING, RING_TRANSITION } from "../shared";
 
@@ -55,10 +56,12 @@ const scrolls = (node: HTMLElement) => node.scrollHeight > node.clientHeight;
 
 /**
  * Whether the Body scrolls. Measured after every render of the Body, whenever its box or a child's
- * box resizes, and whenever its content changes. Layout effects, so Base UI's initial focus, which
- * waits a microtask for layout effects to set `tabIndex`, sees the result. Returns the state and
- * the ref that gives the hook the node; the observers are created once per node, not once per
- * render.
+ * box resizes, whenever its content changes, and when the popup around it is shown or hidden (a
+ * `keepMounted` popup, whose Body mounts with no box). Layout effects, so Base UI's initial focus,
+ * which waits a microtask for layout effects to set `tabIndex`, sees the result; the mutation
+ * observer's microtask is queued in React's mutation phase, before the one Base UI queues in its
+ * layout effect, so a `flushSync` there lands first too. Returns the state and the ref that gives
+ * the hook the node; the observers are created once per node, not once per render.
  */
 function useOverflows(): [overflows: boolean, ref: (node: HTMLElement | null) => void] {
   const [node, setNode] = useState<HTMLElement | null>(null);
@@ -69,7 +72,8 @@ function useOverflows(): [overflows: boolean, ref: (node: HTMLElement | null) =>
     if (node) setOverflows(scrolls(node));
   });
 
-  // Once per node: the box resizes, a child resizes on its own, or the content changes
+  // Once per node: the box resizes, a child resizes on its own, the content changes, or the popup
+  // is shown
   useLayoutEffect(() => {
     if (!node) return;
     const measure = () => setOverflows(scrolls(node));
@@ -89,9 +93,16 @@ function useOverflows(): [overflows: boolean, ref: (node: HTMLElement | null) =>
       if (records.some((record) => record.type === "childList" && record.target === node)) {
         observe();
       }
-      measure();
+      // The popup was shown or hidden: committed now, before Base UI's initial focus reads
+      // `tabIndex` in the next microtask
+      if (records.some((record) => record.type === "attributes")) flushSync(measure);
+      else measure();
     });
     mutation.observe(node, { childList: true, subtree: true, characterData: true });
+    // A `keepMounted` popup is `hidden` until it opens, and the Body is its direct child
+    if (node.parentElement) {
+      mutation.observe(node.parentElement, { attributes: true, attributeFilter: ["hidden"] });
+    }
     return () => {
       resize?.disconnect();
       mutation.disconnect();
