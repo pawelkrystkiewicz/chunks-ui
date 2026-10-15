@@ -46,7 +46,7 @@ export function PreviewPanel({ theme }: { theme: Theme }) {
       data-pagefind-ignore
       className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-[14px] border border-border bg-background shadow-[0_1px_2px_oklch(0_0_0/0.04)]"
     >
-      <div className="flex h-[50px] items-center justify-between gap-4 border-border border-b pr-2.5 pl-[18px]">
+      <div className="flex h-[50px] items-center justify-between gap-4 border-border border-b pe-2.5 ps-[18px]">
         <div className="flex min-w-0 items-center gap-3">
           <span className="font-semibold text-[13px]">Preview</span>
           <span className="truncate font-mono text-[11.5px] text-muted-foreground">{summary}</span>

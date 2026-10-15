@@ -10,7 +10,7 @@ export function NewTaskDrawer() {
 
   return (
     <Drawer.Root>
-      <Drawer.Trigger render={<Button startIcon={<Plus size={16} />} className="pl-3" />}>
+      <Drawer.Trigger render={<Button startIcon={<Plus size={16} />} className="ps-3" />}>
         New task
       </Drawer.Trigger>
       <Drawer.Portal>

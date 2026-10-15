@@ -85,10 +85,10 @@ import { Button, Toast } from 'chunks-ui'
 import { AlertTriangle, CheckCircle2, Info, XCircle } from 'lucide-react'
 
 const TYPE_STYLES = {
-  primary:     { icon: Info,          iconClassName: 'text-primary-text',     className: 'border-l-4 border-primary' },
-  success:     { icon: CheckCircle2,  iconClassName: 'text-success-text',     className: 'border-l-4 border-success' },
-  destructive: { icon: XCircle,       iconClassName: 'text-destructive-text', className: 'border-l-4 border-destructive' },
-  warning:     { icon: AlertTriangle, iconClassName: 'text-warning-text',     className: 'border-l-4 border-warning' },
+  primary:     { icon: Info,          iconClassName: 'text-primary-text',     className: 'border-s-4 border-primary' },
+  success:     { icon: CheckCircle2,  iconClassName: 'text-success-text',     className: 'border-s-4 border-success' },
+  destructive: { icon: XCircle,       iconClassName: 'text-destructive-text', className: 'border-s-4 border-destructive' },
+  warning:     { icon: AlertTriangle, iconClassName: 'text-warning-text',     className: 'border-s-4 border-warning' },
 } as const
 
 type ToastType = keyof typeof TYPE_STYLES

@@ -40,7 +40,7 @@ export function InputsPreview() {
     <div className="flex w-[min(100%,236px)] flex-col gap-3">
       <div className="flex flex-col gap-1.5">
         <span className="font-medium text-[12px]">Email</span>
-        <div className={`${FIELD} gap-2 pr-2 pl-3`}>
+        <div className={`${FIELD} gap-2 pe-2 ps-3`}>
           <span className="min-w-0 flex-1 text-[13px]">ada@chunk.dev</span>
           <span className="flex size-[18px] items-center justify-center rounded-full bg-muted text-muted-foreground">
             <X className="size-[11px]" strokeWidth={3} />
@@ -61,7 +61,7 @@ export function SelectionPreview() {
       <div className="flex items-center justify-between gap-3">
         <span className="font-medium text-[13px]">Notifications</span>
         <span className="relative h-5 w-9 rounded-full bg-primary">
-          <span className="absolute top-0.5 left-[18px] size-4 rounded-full bg-white shadow-[0_1px_2px_oklch(0_0_0/.2)]" />
+          <span className="absolute top-0.5 start-[18px] size-4 rounded-full bg-white shadow-[0_1px_2px_oklch(0_0_0/.2)]" />
         </span>
       </div>
       <div className="flex items-center gap-2">
@@ -73,8 +73,8 @@ export function SelectionPreview() {
       <Segmented items={["Day", "Week", "Month"]} active={1} className="h-6" />
       <div className="relative flex h-4 items-center">
         <span className="absolute inset-x-0 h-1 rounded-full bg-muted" />
-        <span className="absolute left-0 h-1 w-[62%] rounded-full bg-primary" />
-        <span className="absolute left-[calc(62%-8px)] size-4 rounded-full border-2 border-primary bg-background" />
+        <span className="absolute start-0 h-1 w-[62%] rounded-full bg-primary" />
+        <span className="absolute start-[calc(62%-8px)] size-4 rounded-full border-2 border-primary bg-background" />
       </div>
     </div>
   );
@@ -83,7 +83,7 @@ export function SelectionPreview() {
 export function PickersPreview() {
   return (
     <div className="flex w-[min(100%,216px)] flex-col gap-1.5">
-      <div className={`${FIELD} justify-between pr-2.5 pl-3`}>
+      <div className={`${FIELD} justify-between pe-2.5 ps-3`}>
         <span className="text-[13px]">Next.js</span>
         <ChevronDown className="size-3.5 text-muted-foreground" />
       </div>
@@ -161,8 +161,8 @@ export function FeedbackPreview() {
       <div className="flex items-center justify-between gap-2">
         <span className="flex">
           <span className={`${AVATAR} bg-primary/16 text-primary-text`}>AK</span>
-          <span className={`${AVATAR} -ml-[7px] bg-muted text-muted-foreground`}>BR</span>
-          <span className={`${AVATAR} -ml-[7px] bg-muted text-muted-foreground`}>+3</span>
+          <span className={`${AVATAR} -ms-[7px] bg-muted text-muted-foreground`}>BR</span>
+          <span className={`${AVATAR} -ms-[7px] bg-muted text-muted-foreground`}>+3</span>
         </span>
         <span className="flex gap-1">
           <span className={`${CHIP} border-primary/30 bg-primary/10 text-primary-text`}>New</span>
