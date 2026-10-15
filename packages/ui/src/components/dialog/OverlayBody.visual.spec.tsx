@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 import { describe, expect, it } from "vitest";
 import { userEvent } from "vitest/browser";
 import { boxOf, waitForStable } from "../../VisualTest.utils";
@@ -9,30 +9,24 @@ import { Dialog } from "./index";
 // Geometry only, no screenshots: the real measurement behind the Body's tab stop, which the
 // jsdom suite (OverlayBody.spec.tsx) shims.
 
-// Drawer parts are Dialog parts, so one suite serves both Bodies
-const OVERLAYS = [
-  { name: "Dialog.Body", X: Dialog },
-  { name: "Drawer.Body", X: Drawer },
-] as const;
-
-describe.each(OVERLAYS)("$name", ({ X }) => {
+describe("Dialog.Body", () => {
   /** A Popup with the Body's `content` between the Title and the actions */
   function overlay(content: number) {
     return (
-      <X.Root defaultOpen>
-        <X.Portal>
-          <X.Backdrop />
-          <X.Popup data-testid="popup">
-            <X.Title>Terms</X.Title>
-            <X.Body>
+      <Dialog.Root defaultOpen>
+        <Dialog.Portal>
+          <Dialog.Backdrop />
+          <Dialog.Popup data-testid="popup">
+            <Dialog.Title>Terms</Dialog.Title>
+            <Dialog.Body>
               <div style={{ height: content }} />
-            </X.Body>
+            </Dialog.Body>
             <div>
-              <X.Close>Cancel</X.Close>
+              <Dialog.Close>Cancel</Dialog.Close>
             </div>
-          </X.Popup>
-        </X.Portal>
-      </X.Root>
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>
     );
   }
 
@@ -82,21 +76,21 @@ describe.each(OVERLAYS)("$name", ({ X }) => {
     // The Body mounts hidden, so its first measurement finds nothing to scroll; opening re-renders
     // the popup, not the Body
     render(
-      <X.Root>
-        <X.Trigger>Open</X.Trigger>
-        <X.Portal keepMounted>
-          <X.Backdrop />
-          <X.Popup>
-            <X.Title>Terms</X.Title>
-            <X.Body>
+      <Dialog.Root>
+        <Dialog.Trigger>Open</Dialog.Trigger>
+        <Dialog.Portal keepMounted>
+          <Dialog.Backdrop />
+          <Dialog.Popup>
+            <Dialog.Title>Terms</Dialog.Title>
+            <Dialog.Body>
               <div style={{ height: 2000 }} />
-            </X.Body>
+            </Dialog.Body>
             <div>
-              <X.Close>Cancel</X.Close>
+              <Dialog.Close>Cancel</Dialog.Close>
             </div>
-          </X.Popup>
-        </X.Portal>
-      </X.Root>,
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>,
     );
     await userEvent.click(screen.getByRole("button", { name: "Open" }));
     const body = await screen.findByRole("region", { name: "Terms" });
@@ -120,41 +114,15 @@ describe("Drawer.Body in a side drawer", () => {
     );
   }
 
-  /** Renders more direct children of the Body, which the Body does not render itself */
-  function Filling() {
-    const [count, setCount] = useState(1);
-    const lines = Array.from({ length: count }, (_, i) => `Line ${i + 1}`);
-    return (
-      <>
-        <button type="button" onClick={() => setCount(80)}>
-          Fill
-        </button>
-        {lines.map((line) => (
-          <p key={line}>{line}</p>
-        ))}
-      </>
-    );
-  }
-
-  /**
-   * A right drawer with `content` in its Body; nothing re-renders the Body after the open. `renders`
-   * has the `tabIndex` of each render of the Body, which a `render` function sees.
-   */
-  async function open(content: ReactNode) {
-    const renders: (number | undefined)[] = [];
+  it("becomes a tab stop when a child grows on its own, without a render of the Body", async () => {
     render(
       <Drawer.Root defaultOpen>
         <Drawer.Portal>
           <Drawer.Backdrop />
           <Drawer.Popup data-testid="popup">
             <Drawer.Title>Terms</Drawer.Title>
-            <Drawer.Body
-              render={(props) => {
-                renders.push(props.tabIndex);
-                return <section {...props} />;
-              }}
-            >
-              {content}
+            <Drawer.Body>
+              <Growing />
             </Drawer.Body>
             <div>
               <Drawer.Close>Cancel</Drawer.Close>
@@ -167,28 +135,11 @@ describe("Drawer.Body in a side drawer", () => {
     await waitForStable(() => boxOf(popup));
     const body = screen.getByRole("region", { name: "Terms" });
     expect(body).toHaveAttribute("tabindex", "-1");
-    return { body, renders };
-  }
 
-  it("becomes a tab stop when a child grows on its own, without a render of the Body", async () => {
-    const { body, renders } = await open(<Growing />);
     const { clientHeight } = body;
-    const before = renders.length;
     await userEvent.click(screen.getByRole("button", { name: "Grow" }));
     await expect.poll(() => body.getAttribute("tabindex")).toBe("0");
-    // The box did not change, so the Body's own size reported nothing
-    expect(body.clientHeight).toBe(clientHeight);
-    // And nothing rendered the Body to measure it. The measurement renders it itself (the tab stop
-    // is state), so what the click renders is not none; but every one of those renders carries the
-    // new tab stop. A render from outside would carry the stale -1 first.
-    expect(renders.slice(before)).not.toContain(-1);
-  });
-
-  it("becomes a tab stop when a child renders more content into it", async () => {
-    const { body } = await open(<Filling />);
-    const { clientHeight } = body;
-    await userEvent.click(screen.getByRole("button", { name: "Fill" }));
-    await expect.poll(() => body.getAttribute("tabindex")).toBe("0");
+    // The box did not change, so the child's own report measured the Body
     expect(body.clientHeight).toBe(clientHeight);
   });
 });

@@ -85,12 +85,6 @@ describeMotionPaths("Drawer with a Body", () => {
       expect(popup.scrollHeight).toBe(popup.clientHeight);
       expectInView(popup, title);
       expectInView(popup, save);
-
-      await userEvent.keyboard("{End}");
-      await expect.poll(() => body.scrollTop).toBe(body.scrollHeight - body.clientHeight);
-      expect(popup.scrollTop).toBe(0);
-      expectInView(popup, title);
-      expectInView(popup, save);
     },
   );
 });

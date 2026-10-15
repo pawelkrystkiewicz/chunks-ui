@@ -11,10 +11,18 @@ afterEach(cleanup);
 // jsdom has no layout, so an element's content and box sizes come from these attributes; in a
 // hidden popup (`keepMounted`, before it opens) they are 0, as in the browser. The browser specs
 // (OverlayBody.visual.spec.tsx) cover the real measurement.
-const SCROLL = "data-scroll-height";
-const CLIENT = "data-client-height";
-const SCROLL_WIDTH = "data-scroll-width";
-const CLIENT_WIDTH = "data-client-width";
+const SIZES = {
+  scrollHeight: "data-scroll-height",
+  clientHeight: "data-client-height",
+  scrollWidth: "data-scroll-width",
+  clientWidth: "data-client-width",
+};
+const {
+  scrollHeight: SCROLL,
+  clientHeight: CLIENT,
+  scrollWidth: SCROLL_WIDTH,
+  clientWidth: CLIENT_WIDTH,
+} = SIZES;
 const sizeOf = (element: Element, attribute: string) =>
   element.closest("[hidden]") ? 0 : Number(element.getAttribute(attribute) ?? 0);
 
@@ -40,13 +48,6 @@ function resize(target: Element) {
   }
 }
 
-const SIZES = {
-  scrollHeight: SCROLL,
-  clientHeight: CLIENT,
-  scrollWidth: SCROLL_WIDTH,
-  clientWidth: CLIENT_WIDTH,
-};
-
 beforeAll(() => {
   for (const [property, attribute] of Object.entries(SIZES)) {
     Object.defineProperty(HTMLElement.prototype, property, {
@@ -66,15 +67,13 @@ beforeAll(() => {
       this.#watched.targets.add(target);
       observers.add(this.#watched);
     }
-    unobserve(target: Element) {
-      this.#watched.targets.delete(target);
-    }
     disconnect() {
       // As in the browser, a disconnected observer watches nothing until it observes again
       this.#watched.targets.clear();
       observers.delete(this.#watched);
     }
-  };
+    // The hook never calls `unobserve`, so the fake leaves it out
+  } as unknown as typeof ResizeObserver;
 });
 
 afterAll(() => {
@@ -90,54 +89,62 @@ function setSizes(element: Element, attributes: Record<string, number>) {
   }
 }
 
-/** Gives `element` the sizes in `attributes`, then lets its ResizeObserver report the new box */
-function setHeights(element: Element, attributes: Record<string, number>) {
-  setSizes(element, attributes);
-  act(() => resize(element));
+/** A Popup with `title`, `body` and a Cancel button after the Body: a Dialog's, or `X`'s */
+function renderBody(title: ReactNode, body: ReactNode, X: typeof Dialog | typeof Drawer = Dialog) {
+  return render(
+    <X.Root open>
+      <X.Portal>
+        <X.Popup data-testid="popup">
+          {title}
+          {body}
+          <X.Close>Cancel</X.Close>
+        </X.Popup>
+      </X.Portal>
+    </X.Root>,
+  );
 }
 
-// Drawer parts are Dialog parts, so one suite serves both Bodies
+// The Popup and the Title are each overlay's own; the Body is one component, tested on Dialog
 const OVERLAYS = [
-  { name: "Dialog.Body", X: Dialog, marker: "OverlayBody" },
-  { name: "Drawer.Body", X: Drawer, marker: "OverlayBody" },
+  { name: "Dialog", X: Dialog },
+  { name: "Drawer", X: Drawer },
 ] as const;
 
-describe.each(OVERLAYS)("$name", ({ X, marker }) => {
-  /** A Popup with `title`, `body` and a Cancel button after the Body */
-  function renderBody(title: ReactNode, body: ReactNode) {
-    return render(
-      <X.Root open>
-        <X.Portal>
-          <X.Popup data-testid="popup">
-            {title}
-            {body}
-            <X.Close>Cancel</X.Close>
-          </X.Popup>
-        </X.Portal>
-      </X.Root>,
-    );
-  }
-
-  it("renders with custom className and forwards ref; the Popup becomes a flex column", () => {
-    const ref = createRef<HTMLElement>();
-    renderBody(
-      <X.Title>Terms</X.Title>,
-      <X.Body ref={ref} className="custom" {...tall}>
-        Text
-      </X.Body>,
-    );
-    const body = screen.getByRole("region", { name: "Terms" });
-    expect(body).toHaveClass("custom", marker, "overflow-y-auto", ...FOCUS_RING.split(" "));
-    expect(body).toHaveAttribute("tabindex", "0");
-    expect(ref.current).toBe(body);
+describe.each(OVERLAYS)("$name around a Body", ({ X }) => {
+  it("makes the Popup a flex column", () => {
+    renderBody(<X.Title>Terms</X.Title>, <X.Body>Text</X.Body>, X);
     expect(screen.getByTestId("popup")).toHaveClass(
-      `has-[>.${marker}]:flex`,
-      `has-[>.${marker}]:flex-col`,
+      "has-[>.OverlayBody]:flex",
+      "has-[>.OverlayBody]:flex-col",
     );
   });
 
+  it("names the Body by its Title", () => {
+    renderBody(<X.Title>Terms</X.Title>, <X.Body>Text</X.Body>, X);
+    expect(screen.getByRole("region", { name: "Terms" })).toBeInTheDocument();
+  });
+});
+
+describe("Body", () => {
+  it("renders with custom className and forwards ref", () => {
+    const ref = createRef<HTMLElement>();
+    renderBody(
+      <Dialog.Title>Terms</Dialog.Title>,
+      <Dialog.Body ref={ref} className="custom" {...tall}>
+        Text
+      </Dialog.Body>,
+    );
+    const body = screen.getByRole("region", { name: "Terms" });
+    expect(body).toHaveClass("custom", "OverlayBody", "overflow-y-auto", ...FOCUS_RING.split(" "));
+    expect(body).toHaveAttribute("tabindex", "0");
+    expect(ref.current).toBe(body);
+  });
+
   it("is named by the Title when the Title has its own id", () => {
-    renderBody(<X.Title id="terms-title">Terms</X.Title>, <X.Body>Text</X.Body>);
+    renderBody(
+      <Dialog.Title id="terms-title">Terms</Dialog.Title>,
+      <Dialog.Body>Text</Dialog.Body>,
+    );
     expect(screen.getByRole("region", { name: "Terms" })).toHaveAttribute(
       "aria-labelledby",
       "terms-title",
@@ -146,17 +153,20 @@ describe.each(OVERLAYS)("$name", ({ X, marker }) => {
   });
 
   it("takes the name passed to it over the Title", () => {
-    renderBody(<X.Title>Terms</X.Title>, <X.Body aria-label="Terms text">Text</X.Body>);
+    renderBody(
+      <Dialog.Title>Terms</Dialog.Title>,
+      <Dialog.Body aria-label="Terms text">Text</Dialog.Body>,
+    );
     const body = screen.getByRole("region", { name: "Terms text" });
     expect(body).not.toHaveAttribute("aria-labelledby");
   });
 
   it("takes the name on the render element over the Title", () => {
     renderBody(
-      <X.Title>New task</X.Title>,
-      <X.Body render={<form aria-label="Task fields" />}>
+      <Dialog.Title>New task</Dialog.Title>,
+      <Dialog.Body render={<form aria-label="Task fields" />}>
         <input aria-label="Title" />
-      </X.Body>,
+      </Dialog.Body>,
     );
     const body = screen.getByRole("form", { name: "Task fields" });
     expect(body).not.toHaveAttribute("aria-labelledby");
@@ -165,14 +175,14 @@ describe.each(OVERLAYS)("$name", ({ X, marker }) => {
   it("drops the name when the Title unmounts", () => {
     function Toggle({ title }: { title: boolean }) {
       return (
-        <X.Root open>
-          <X.Portal>
-            <X.Popup aria-label="Terms">
-              {title && <X.Title>Terms</X.Title>}
-              <X.Body data-testid="body">Text</X.Body>
-            </X.Popup>
-          </X.Portal>
-        </X.Root>
+        <Dialog.Root open>
+          <Dialog.Portal>
+            <Dialog.Popup aria-label="Terms">
+              {title && <Dialog.Title>Terms</Dialog.Title>}
+              <Dialog.Body data-testid="body">Text</Dialog.Body>
+            </Dialog.Popup>
+          </Dialog.Portal>
+        </Dialog.Root>
       );
     }
     const { rerender } = render(<Toggle title />);
@@ -182,30 +192,32 @@ describe.each(OVERLAYS)("$name", ({ X, marker }) => {
   });
 
   it("is a tab stop only while its content overflows, and stays focusable when it fits", () => {
-    renderBody(<X.Title>Terms</X.Title>, <X.Body {...short}>Text</X.Body>);
+    renderBody(<Dialog.Title>Terms</Dialog.Title>, <Dialog.Body {...short}>Text</Dialog.Body>);
     const body = screen.getByRole("region", { name: "Terms" });
     expect(body).toHaveAttribute("tabindex", "-1");
 
     // The viewport shrinks, or the content grows: the box reports its new size
-    setHeights(body, tall);
+    setSizes(body, tall);
+    act(() => resize(body));
     expect(body).toHaveAttribute("tabindex", "0");
 
-    setHeights(body, short);
+    setSizes(body, short);
+    act(() => resize(body));
     expect(body).toHaveAttribute("tabindex", "-1");
   });
 
   it("is a tab stop while its content overflows sideways", () => {
-    renderBody(<X.Title>Terms</X.Title>, <X.Body {...wide}>Text</X.Body>);
+    renderBody(<Dialog.Title>Terms</Dialog.Title>, <Dialog.Body {...wide}>Text</Dialog.Body>);
     expect(screen.getByRole("region", { name: "Terms" })).toHaveAttribute("tabindex", "0");
   });
 
   it("stays a tab stop when its ref never arrives, so nothing measures it", () => {
     // A render function that drops the ref: the Body never gets its node, and fails closed
     renderBody(
-      <X.Title>Terms</X.Title>,
-      <X.Body render={({ ref: _ref, ...props }) => <section {...props} />} {...short}>
+      <Dialog.Title>Terms</Dialog.Title>,
+      <Dialog.Body render={({ ref: _ref, ...props }) => <section {...props} />} {...short}>
         Text
-      </X.Body>,
+      </Dialog.Body>,
     );
     expect(screen.getByRole("region", { name: "Terms" })).toHaveAttribute("tabindex", "0");
   });
@@ -214,10 +226,10 @@ describe.each(OVERLAYS)("$name", ({ X, marker }) => {
     // In a side drawer the Body is `flex-1`: the box is the same whatever the content, so only the
     // child reports that it grew
     renderBody(
-      <X.Title>Terms</X.Title>,
-      <X.Body {...short}>
+      <Dialog.Title>Terms</Dialog.Title>,
+      <Dialog.Body {...short}>
         <img alt="" data-testid="child" />
-      </X.Body>,
+      </Dialog.Body>,
     );
     const body = screen.getByRole("region", { name: "Terms" });
     setSizes(body, tall);
@@ -241,10 +253,10 @@ describe.each(OVERLAYS)("$name", ({ X, marker }) => {
       );
     }
     renderBody(
-      <X.Title>Terms</X.Title>,
-      <X.Body {...short}>
+      <Dialog.Title>Terms</Dialog.Title>,
+      <Dialog.Body {...short}>
         <Filling />
-      </X.Body>,
+      </Dialog.Body>,
     );
     const body = screen.getByRole("region", { name: "Terms" });
     expect(body).toHaveAttribute("tabindex", "-1");
@@ -270,16 +282,16 @@ describe.each(OVERLAYS)("$name", ({ X, marker }) => {
 
   it("creates one observer per node, and releases it on unmount", () => {
     const popup = (className: string) => (
-      <X.Root open>
-        <X.Portal>
-          <X.Popup>
-            <X.Title>Terms</X.Title>
-            <X.Body className={className} {...short}>
+      <Dialog.Root open>
+        <Dialog.Portal>
+          <Dialog.Popup>
+            <Dialog.Title>Terms</Dialog.Title>
+            <Dialog.Body className={className} {...short}>
               Text
-            </X.Body>
-          </X.Popup>
-        </X.Portal>
-      </X.Root>
+            </Dialog.Body>
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>
     );
     const { rerender } = render(popup("a"));
     const [live, made] = [observers.size, created];
@@ -298,13 +310,13 @@ describe.each(OVERLAYS)("$name", ({ X, marker }) => {
   it("takes the initial focus when it overflows and nothing tabbable comes before it", async () => {
     let nameAtFocus: string | null | undefined;
     renderBody(
-      <X.Title>Terms</X.Title>,
-      <X.Body
+      <Dialog.Title>Terms</Dialog.Title>,
+      <Dialog.Body
         onFocus={(e) => (nameAtFocus = e.currentTarget.getAttribute("aria-labelledby"))}
         {...tall}
       >
         Text
-      </X.Body>,
+      </Dialog.Body>,
     );
     await waitFor(() => expect(screen.getByRole("region", { name: "Terms" })).toHaveFocus());
     // Named by the time it takes the focus
@@ -314,18 +326,18 @@ describe.each(OVERLAYS)("$name", ({ X, marker }) => {
   it("takes the initial focus when a keepMounted popup opens from its Trigger", async () => {
     // The Body mounts hidden and measures no overflow; the open renders the popup, not the Body
     render(
-      <X.Root>
-        <X.Trigger>Open</X.Trigger>
-        <X.Portal keepMounted>
-          <X.Popup>
-            <X.Title>Terms</X.Title>
-            <X.Body data-testid="body" {...tall}>
+      <Dialog.Root>
+        <Dialog.Trigger>Open</Dialog.Trigger>
+        <Dialog.Portal keepMounted>
+          <Dialog.Popup>
+            <Dialog.Title>Terms</Dialog.Title>
+            <Dialog.Body data-testid="body" {...tall}>
               Text
-            </X.Body>
-            <X.Close>Cancel</X.Close>
-          </X.Popup>
-        </X.Portal>
-      </X.Root>,
+            </Dialog.Body>
+            <Dialog.Close>Cancel</Dialog.Close>
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>,
     );
     const body = screen.getByTestId("body");
     expect(body).toHaveAttribute("tabindex", "-1");
@@ -335,38 +347,38 @@ describe.each(OVERLAYS)("$name", ({ X, marker }) => {
   });
 
   it("leaves the initial focus to the first action when its content fits", async () => {
-    renderBody(<X.Title>Terms</X.Title>, <X.Body {...short}>Text</X.Body>);
+    renderBody(<Dialog.Title>Terms</Dialog.Title>, <Dialog.Body {...short}>Text</Dialog.Body>);
     await waitFor(() => expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus());
   });
 
   it("renders as a form through render, which a button outside it submits", () => {
     const onSubmit = vi.fn((e: FormEvent) => e.preventDefault());
     render(
-      <X.Root open>
-        <X.Portal>
-          <X.Popup>
-            <X.Title>New task</X.Title>
-            <X.Body
+      <Dialog.Root open>
+        <Dialog.Portal>
+          <Dialog.Popup>
+            <Dialog.Title>New task</Dialog.Title>
+            <Dialog.Body
               render={<form id="new-task" onSubmit={onSubmit} />}
               className="custom"
               {...tall}
             >
               <input aria-label="Title" />
-            </X.Body>
+            </Dialog.Body>
             <div>
-              <X.Close>Cancel</X.Close>
+              <Dialog.Close>Cancel</Dialog.Close>
               <button type="submit" form="new-task">
                 Create
               </button>
             </div>
-          </X.Popup>
-        </X.Portal>
-      </X.Root>,
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>,
     );
-    // The form is the Body: named by the Title, with the scroll region, its marker and its tab stop
+    // The form is the Body: named by the Title, with the scroll region, its class and its tab stop
     const body = screen.getByRole("form", { name: "New task" });
     expect(body.tagName).toBe("FORM");
-    expect(body).toHaveClass("custom", marker, "overflow-y-auto");
+    expect(body).toHaveClass("custom", "OverlayBody", "overflow-y-auto");
     expect(body).toHaveAttribute("tabindex", "0");
     expect(body).toContainElement(screen.getByRole("textbox", { name: "Title" }));
 
@@ -377,12 +389,12 @@ describe.each(OVERLAYS)("$name", ({ X, marker }) => {
   it("has no a11y violations", async () => {
     const { container } = renderBody(
       <>
-        <X.Title>Terms</X.Title>
-        <X.Description>Read before you accept.</X.Description>
+        <Dialog.Title>Terms</Dialog.Title>
+        <Dialog.Description>Read before you accept.</Dialog.Description>
       </>,
-      <X.Body {...tall}>
+      <Dialog.Body {...tall}>
         <p>Text</p>
-      </X.Body>,
+      </Dialog.Body>,
     );
     expect(await axe(container)).toHaveNoViolations();
   });
