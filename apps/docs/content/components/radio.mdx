@@ -65,6 +65,20 @@ A disabled `Radio.Root` dims and shows a not-allowed cursor on its own too, outs
 </Radio.Group>
 ```
 
+The `Radio.Item` dim is keyed on the radio's `data-disabled`, so an override in `className` on `Radio.Item` is spelled with the same variant; a plain `opacity-75` loses to it:
+
+```tsx
+<Radio.Item value="pro" disabled className="has-[>[data-disabled]]:opacity-75">Pro</Radio.Item>
+```
+
+That holds for the item's own `disabled`. In a disabled `Radio.Group`, or a group inside a disabled `Field.Root`, the group carries the dim and the item turns its own off, so override it there on `Radio.Group` with `data-disabled:opacity-75`:
+
+```tsx
+<Radio.Group disabled className="data-disabled:opacity-75" aria-label="Plan">
+  <Radio.Item value="pro">Pro</Radio.Item>
+</Radio.Group>
+```
+
 ## Compound Parts
 
 | Part              | Description                                                                  |

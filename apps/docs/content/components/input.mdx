@@ -51,7 +51,7 @@ Use `startAdornment` and `endAdornment` to place icons or text at the edges of t
 
 ## Clear Button
 
-Add `clearable` to show a built-in clear button (the `ClearButton` component). The button shows while the input has text, and not on a `disabled` or `readOnly` input. While it is visible it takes the place of `endAdornment`, so the two don't show together.
+Add `clearable` to show a built-in clear button (the `ClearButton` component). The button shows while the input has text and can be edited: it hides while the input is disabled or read-only, whichever sets it (`disabled`, `readOnly`, or a disabled `Field.Root`). While it is visible it takes the place of `endAdornment`, so the two don't show together.
 
 Clearing empties the input the way typing does: `onChange` and `onValueChange` fire with `''`. With a mouse click, focus stays in the input, because the click doesn't blur it, so a `Field.Root` with `validationMode="onBlur"` doesn't validate in the middle of a clear. With the keyboard (Tab to the button, then Enter or Space), the input blurs, and focus then returns to it.
 
