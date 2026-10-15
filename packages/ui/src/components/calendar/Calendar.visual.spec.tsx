@@ -43,6 +43,13 @@ describe("Calendar", () => {
   });
 });
 
+// The number's `<span>` inside a day's button
+function dayNumber(name: string) {
+  const span = screen.getByLabelText(name, { selector: "button" }).querySelector("span");
+  if (!span) throw new Error(`The day "${name}" has no number element`);
+  return span;
+}
+
 describe("Calendar in forced-colors mode", () => {
   // Forced colours replace author colours, so the muted text of outside days needs a system colour
   afterEach(() => commands.emulateMedia({ forcedColors: "none" }));
@@ -73,10 +80,12 @@ describe("Calendar in forced-colors mode", () => {
     );
     const style = (name: string) =>
       getComputedStyle(screen.getByLabelText(name, { selector: "button" }));
+    const numberStyle = (name: string) => getComputedStyle(dayNumber(name));
     const selected = style("Wednesday, March 18, 2026");
     expect(selected.backgroundColor).toBe(systemColour("Highlight"));
     expect(selected.color).toBe(systemColour("HighlightText"));
-    expect(style("Sunday, March 15, 2026").textDecorationLine).toBe("underline");
+    // Today's underline is on the number's span, so a strike on the button does not replace it
+    expect(numberStyle("Sunday, March 15, 2026").textDecorationLine).toBe("underline");
     const outside = style("Monday, February 23, 2026");
     expect(outside.color).toBe(systemColour("GrayText"));
     expect(outside.textDecorationLine).toBe("none");
@@ -86,5 +95,24 @@ describe("Calendar in forced-colors mode", () => {
     expect(disabled.textDecorationLine).toBe("line-through");
     expect(disabled.opacity).toBe("1");
     await expect(fixture).toMatchScreenshot();
+  });
+
+  // Today is the 15th. The strike is on the button and the underline on the number's span: both
+  // set `text-decoration-line`, so on one element the strike would drop the underline.
+  it("underlines today when it is disabled, and strikes it through", async () => {
+    await commands.emulateMedia({ forcedColors: "active" });
+    await expect.poll(() => matchMedia("(forced-colors: active)").matches).toBe(true);
+    render(
+      <Calendar
+        value={new Date(2026, 2, 18)}
+        weekStartsOn={1}
+        isDateDisabled={(date) => date.getMonth() === 2 && date.getDate() === 15}
+      />,
+    );
+    const name = "Sunday, March 15, 2026";
+    expect(
+      getComputedStyle(screen.getByLabelText(name, { selector: "button" })).textDecorationLine,
+    ).toBe("line-through");
+    expect(getComputedStyle(dayNumber(name)).textDecorationLine).toBe("underline");
   });
 });
