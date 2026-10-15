@@ -187,6 +187,17 @@ describe.each(OVERLAYS)("$name", ({ X, marker }) => {
     expect(screen.getByRole("region", { name: "Terms" })).toHaveAttribute("tabindex", "0");
   });
 
+  it("stays a tab stop when its ref never arrives, so nothing measures it", () => {
+    // A render function that drops the ref: the Body never gets its node, and fails closed
+    renderBody(
+      <X.Title>Terms</X.Title>,
+      <X.Body render={({ ref: _ref, ...props }) => <section {...props} />} {...short}>
+        Text
+      </X.Body>,
+    );
+    expect(screen.getByRole("region", { name: "Terms" })).toHaveAttribute("tabindex", "0");
+  });
+
   it("measures again when a child grows on its own, without a render of the Body", () => {
     // In a side drawer the Body is `flex-1`: the box is the same whatever the content, so only the
     // child reports that it grew

@@ -7,3 +7,5 @@ Added `Dialog.Body` (its props type, `DialogBodyProps`, is exported too), for di
 While its content overflows, the Body is a tab stop, so the keyboard can scroll it; it measures itself again when its box or its content changes, including a child that grows on its own, such as an image that loads or a list that fills in. It is a region that the Title names. When it overflows and nothing tabbable comes before it, it gets the focus when the dialog opens with a keyboard or a mouse, at the top of the content. A Body whose content fits is skipped, and the first action takes the focus. On touch, Base UI focuses the popup itself.
 
 The Body takes Base UI's `render`, so a form can be the Body: `<Dialog.Body render={<form id="new-task" onSubmit={…} />}>` keeps the scroll region, its name and its tab stop, and a `<Button type="submit" form="new-task">` in the actions outside the Body submits it. `Drawer.Body` takes it too.
+
+In jsdom, which has no layout, the Body is never a tab stop and the first action takes the initial focus; to test the overflow path, shim `scrollHeight` and `clientHeight` (`scrollWidth` and `clientWidth` for sideways overflow) on the element.

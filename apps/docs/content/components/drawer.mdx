@@ -83,7 +83,7 @@ Put long content in a `Drawer.Body` between the Title and the actions. The Title
 
 <DrawerLongContentExample />
 
-- A Body whose content fits is skipped by the keyboard, and the first action takes the initial focus, so a Body costs nothing when the content turns out short.
+- A Body whose content fits is skipped by the keyboard, and the first action takes the initial focus, so a short Body adds no tab stop.
 - `Drawer.Body` must be a direct child of `Drawer.Popup`. Wrapping the Body in a `<form>` or a `<div>` loses the layout: the popup scrolls as a whole again, the actions are not pinned and the Body does not scroll. For a form, see the [Dialog](/components/dialog#form-in-a-body): the Drawer parts work the same way.
 - With a Body, the popup is a flex column. Bare inline children, such as a lone `Drawer.Close` button, stretch to the full width, and the margins between children do not collapse. Wrap the actions in a block, as in the example.
 - The Body has a 0.25rem gutter (`-m-1 p-1`), so the focus rings of full-width fields are not clipped at its edges. The content does not move. A margin class on the Body, such as `mt-4`, replaces the negative margin on that side and adds the 0.25rem of padding.
@@ -138,7 +138,7 @@ All `Drawer.Root` props are forwarded to the underlying Base UI [`Dialog`](https
 
 ## Drawer.Body Props
 
-`Drawer.Body` is a `<section>` and takes its props, plus Base UI's `render` to replace the element (a `<form>`, for example; see the [Dialog](/components/dialog#form-in-a-body)). Pass `aria-label` or `aria-labelledby`, on the Body or on the `render` element, to give it a name other than the Title.
+`Drawer.Body` is a `<section>` and takes its props, plus Base UI's `render` to replace the element (a `<form>`, for example; see the [Dialog](/components/dialog#form-in-a-body)). Pass `aria-label` or `aria-labelledby`, on the Body or on the `render` element, to give it a name other than the Title; with a function `render`, put it on the Body. A `render` element needs a role that takes a name, such as `form` or `role="region"`: a name on a `<div>` is not exposed.
 
 ## Drawer.Popup Props
 

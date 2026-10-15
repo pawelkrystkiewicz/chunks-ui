@@ -21,6 +21,12 @@ import { FOCUS_RING, RING_TRANSITION } from "../shared";
  * The props of `Dialog.Body` and `Drawer.Body`: a `<section>`'s, and Base UI's `render`, which
  * replaces the section with another element that keeps the scroll region and its name, such as
  * `render={<form id="new-task" onSubmit={…} />}` for a form that a button outside the Body submits.
+ *
+ * A name other than the Title's goes on the Body, or on the `render` element. With a function
+ * `render`, put it on the Body: the Body reads the name from its own props and from a `render`
+ * element, not from what a function returns, so the Title's `aria-labelledby` would win over an
+ * `aria-label` set inside the function. A `render` element needs a role that takes a name (`form`,
+ * or `role="region"`): a name on a generic element, such as a `<div>`, is not exposed.
  */
 export type OverlayBodyProps = useRender.ComponentProps<"section">;
 
@@ -57,15 +63,17 @@ const scrolls = (node: HTMLElement) =>
   node.scrollHeight > node.clientHeight || node.scrollWidth > node.clientWidth;
 
 /**
- * Whether the Body scrolls. Measured after every render of the Body, whenever its box or a child's
- * box resizes, whenever its content changes, and when the popup around it is shown or hidden (a
+ * Whether the Body fits: it has its node and its content does not scroll. False without a node, so
+ * a Body whose `ref` never arrives (a `render` function that drops it) is never measured and stays
+ * a tab stop. Measured after every render of the Body, whenever its box or a child's box resizes,
+ * whenever its content changes, and when the popup around it is shown or hidden (a
  * `keepMounted` popup, whose Body mounts with no box). Layout effects, so Base UI's initial focus,
  * which waits a microtask for layout effects to set `tabIndex`, sees the result; the mutation
  * observer's microtask is queued in React's mutation phase, before the one Base UI queues in its
- * layout effect, so a `flushSync` there lands first too. Returns the state and the ref that gives
- * the hook the node; the observers are created once per node, not once per render.
+ * layout effect, so a `flushSync` there lands first too. Returns whether it fits and the ref that
+ * gives the hook the node; the observers are created once per node, not once per render.
  */
-function useOverflows(): [overflows: boolean, ref: (node: HTMLElement | null) => void] {
+function useFits(): [fits: boolean, ref: (node: HTMLElement | null) => void] {
   const [node, setNode] = useState<HTMLElement | null>(null);
   const [overflows, setOverflows] = useState(false);
 
@@ -111,7 +119,7 @@ function useOverflows(): [overflows: boolean, ref: (node: HTMLElement | null) =>
     };
   }, [node]);
 
-  return [overflows, setNode];
+  return [node !== null && !overflows, setNode];
 }
 
 /**
@@ -120,6 +128,7 @@ function useOverflows(): [overflows: boolean, ref: (node: HTMLElement | null) =>
  * Body scrolls. While its content overflows, the Body is a tab stop, so the keyboard can scroll
  * it; a Body that fits is skipped by Tab. It is a region the Title names (a named `<section>`), or the
  * element `render` gives it. `marker` is the class the Popup finds the Body by (`has-[>.marker]`).
+ * A name of its own goes on the Body, or on a `render` element; see {@link OverlayBodyProps}.
  */
 export function OverlayBody({
   marker,
@@ -129,7 +138,7 @@ export function OverlayBody({
   ...props
 }: OverlayBodyProps & { marker: string }) {
   const { titleId } = useContext(TitleIdContext);
-  const [overflows, ref] = useOverflows();
+  const [fits, ref] = useFits();
   // A name on the Body, or on the element `render` gives it (its props are merged over these),
   // wins over the Title: `aria-labelledby` would take precedence over its `aria-label` otherwise
   const renderProps = isValidElement<Record<string, unknown>>(render) ? render.props : undefined;
@@ -145,8 +154,10 @@ export function OverlayBody({
     ref: [ref, forwardedRef ?? null],
     props: {
       // The keyboard scrolls a scroll container only once it has the focus. One that fits is skipped
-      // by Tab, yet stays focusable: a focused Body whose content shrinks to fit keeps the focus
-      tabIndex: overflows ? 0 : -1,
+      // by Tab, yet stays focusable: a focused Body whose content shrinks to fit keeps the focus.
+      // Fails closed: with no node (the server render, the first client render, or a `ref` that
+      // never arrives) the Body is a tab stop, so it never loses its keyboard scrolling
+      tabIndex: fits ? -1 : 0,
       "aria-labelledby": named ? undefined : titleId,
       className: cn(
         // The -m-1 p-1 gutter keeps the focus rings of full-width fields inside the scroll box, without moving them

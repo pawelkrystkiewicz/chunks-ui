@@ -108,7 +108,7 @@ Put long content in a `Dialog.Body` between the Title and the actions. The popup
 
 <DialogLongContentExample />
 
-- A Body whose content fits is skipped by the keyboard, and the first action takes the initial focus, so a Body costs nothing when the content turns out short.
+- A Body whose content fits is skipped by the keyboard, and the first action takes the initial focus, so a short Body adds no tab stop.
 - `Dialog.Body` must be a direct child of `Dialog.Popup`. Wrapping the Body in a `<form>` or a `<div>` loses the layout: the popup scrolls as a whole again, the actions are not pinned and the Body does not scroll. For a form, see below.
 - With a Body, the popup is a flex column. Bare inline children, such as a lone `Dialog.Close` button, stretch to the full width, and the margins between children do not collapse. Wrap the actions in a block, as in the example.
 - The Body has a 0.25rem gutter (`-m-1 p-1`), so the focus rings of full-width fields are not clipped at its edges. The content does not move. A margin class on the Body, such as `mt-4`, replaces the negative margin on that side and adds the 0.25rem of padding.
@@ -147,7 +147,7 @@ Render the Body as the `<form>` with `render`, as on any Base UI part, and let t
 </Dialog.Root>
 ```
 
-A `<form>` inside the Body, around the fields, works the same way; a `<form>` around the Body and the actions does not (the Body must be a direct child of the Popup, as above). `render` also takes a function of the props, as on Base UI parts.
+A `<form>` inside the Body, around the fields, works the same way; a `<form>` around the Body and the actions does not (the Body must be a direct child of the Popup, as above). `render` also takes a function of the props, as on Base UI parts. With a function, put the name on the Body (`aria-label` or `aria-labelledby`): the Body reads a name from its own props and from a `render` element, not from what a function returns, so the Title's name wins over one set inside the function.
 
 Without a Body, content taller than the popup makes the whole popup scroll. Base UI focuses the first tabbable element and scrolls to it, so a dialog with its actions only at the bottom opens at the bottom. Pass `initialFocus` a ref to a top element, such as the Close button or the Title with `tabIndex={-1}`, to open at the top.
 
@@ -175,4 +175,4 @@ The popup enters with a scale-up and fade (from `scale-95` and `opacity-0`). Wit
 
 ## Props
 
-All Dialog parts except `Dialog.Body` are pass-throughs to the underlying Base UI [`Dialog`](https://base-ui.com/react/components/dialog#api-reference). `Dialog.Body` is a `<section>` and takes its props, plus Base UI's `render` to replace the element (see the form above). Pass `aria-label` or `aria-labelledby`, on the Body or on the `render` element, to give it a name other than the Title.
+All Dialog parts except `Dialog.Body` are pass-throughs to the underlying Base UI [`Dialog`](https://base-ui.com/react/components/dialog#api-reference). `Dialog.Body` is a `<section>` and takes its props, plus Base UI's `render` to replace the element (see the form above). Pass `aria-label` or `aria-labelledby`, on the Body or on the `render` element, to give it a name other than the Title; with a function `render`, put it on the Body. A `render` element needs a role that takes a name, such as `form` or `role="region"`: a name on a `<div>` is not exposed.
