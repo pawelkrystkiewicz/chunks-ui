@@ -10,14 +10,36 @@ import { Select } from "../components/select";
 import { Tooltip } from "../components/tooltip";
 import { reloadMotion } from "./use-motion";
 
-afterEach(cleanup);
+// jsdom has no media queries, so a test sets what `prefers-reduced-motion` reports
+const restore: (() => void)[] = [];
+
+function emulateReducedMotion() {
+  const target = new EventTarget();
+  const query = Object.assign(target, {
+    matches: true,
+    media: "(prefers-reduced-motion: reduce)",
+    // The deprecated pair, which Motion below 12.20.4 subscribes with
+    addListener: (listener: EventListener) => target.addEventListener("change", listener),
+    removeListener: (listener: EventListener) => target.removeEventListener("change", listener),
+  });
+  const matchMedia = window.matchMedia;
+  window.matchMedia = () => query as unknown as MediaQueryList;
+  restore.push(() => {
+    window.matchMedia = matchMedia;
+  });
+}
+
+afterEach(() => {
+  cleanup();
+  for (const undo of restore.splice(0).reverse()) undo();
+});
 
 type Row = {
   part: string;
   /** Mounts the part open as `data-testid="popup"`, with a consumer `render` when given one. */
   ui: (renderProp?: ReactElement) => ReactNode;
-  /** The style Motion writes inline from the part's `from` values. Most parts fade. */
-  inline?: "opacity" | "transform";
+  /** The style Motion writes inline from the part's `from` values, as [property, value]. Most parts fade. */
+  inline?: ["opacity", string] | ["transform", string];
   /** The CSS path's starting-style class. Most parts fade. */
   starting?: string;
 };
@@ -70,7 +92,7 @@ const parts: Row[] = [
       </Drawer.Root>
     ),
     // The drawer slides, so Motion writes a transform and the CSS path a translate
-    inline: "transform",
+    inline: ["transform", "translateY(100%)"],
     starting: "data-[starting-style]:translate-y-full",
   },
   {
@@ -142,14 +164,16 @@ const parts: Row[] = [
 
 describe.each(parts)(
   "$part with Motion loaded",
-  ({ ui, inline = "opacity", starting = "data-starting-style:opacity-0" }) => {
+  ({ ui, inline = ["opacity", "0"], starting = "data-starting-style:opacity-0" }) => {
+    const [property, closed] = inline;
+
     it("animates the default element with Motion, not CSS", async () => {
       await reloadMotion();
       render(ui());
       const el = screen.getByTestId("popup");
       expect(el).not.toHaveClass("micro-interactions");
-      // A motion.div renders its initial values inline
-      expect(el.style[inline]).not.toBe("");
+      // A motion.div renders its initial values inline: the part's `from`, not its `to`
+      expect(el.style[property]).toBe(closed);
     });
 
     // A consumer's `render` replaces the animated element, so the spring cannot attach to it
@@ -159,6 +183,16 @@ describe.each(parts)(
       const el = screen.getByTestId("popup");
       expect(el.tagName).toBe("SECTION");
       expect(el).toHaveClass("micro-interactions", starting);
+    });
+
+    // The user's preference is read live and wins over a loaded Motion
+    it("keeps the CSS transition for a user who prefers reduced motion", async () => {
+      emulateReducedMotion();
+      await reloadMotion();
+      render(ui());
+      const el = screen.getByTestId("popup");
+      expect(el).toHaveClass("micro-interactions");
+      expect(el.style[property]).toBe("");
     });
   },
 );
