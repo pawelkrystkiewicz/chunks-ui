@@ -1,8 +1,15 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { page, userEvent } from "vitest/browser";
-import { expectNotAllowed, focusVisible, renderFixture, renderPage } from "../../VisualTest.utils";
-import { Combobox } from "./index";
+import {
+  boxOf,
+  expectNotAllowed,
+  focusVisible,
+  renderFixture,
+  renderPage,
+  waitForStable,
+} from "../../VisualTest.utils";
+import { Combobox, type ComboboxPositionerProps } from "./index";
 
 const options = [
   { value: "react", label: "React" },
@@ -13,12 +20,18 @@ const options = [
 
 // Combobox.Empty reads the filtered `items` on Root: without them it counts no matches and
 // shows its message under the items
-const combobox = ({ defaultOpen = false } = {}) => (
+const combobox = ({
+  defaultOpen = false,
+  positionerProps,
+}: {
+  defaultOpen?: boolean;
+  positionerProps?: ComboboxPositionerProps;
+} = {}) => (
   <Combobox.Root items={options} defaultOpen={defaultOpen}>
     <Combobox.Input placeholder="Search framework..." />
     <Combobox.Portal>
-      <Combobox.Positioner>
-        <Combobox.Popup>
+      <Combobox.Positioner {...positionerProps}>
+        <Combobox.Popup data-testid="popup">
           <Combobox.List>
             {(item: (typeof options)[number]) => (
               <Combobox.Item key={item.value} value={item}>
@@ -109,6 +122,21 @@ describe("Combobox", () => {
       <div style={{ padding: 40 }}>{combobox({ defaultOpen: true })}</div>,
     );
     await expect(body).toMatchScreenshot();
+  });
+
+  // The ring is 2px of --ring 2px outside the input: 8px keeps the popup clear of it, as on
+  // Popover.Content and Menu.Content. A consumer's sideOffset replaces the default.
+  it.each([
+    { offset: "by default", positionerProps: undefined, gap: 8 },
+    { offset: "with sideOffset={2}", positionerProps: { sideOffset: 2 }, gap: 2 },
+  ])("opens the popup $gap px below the input $offset", async ({ positionerProps, gap }) => {
+    const { getByRole, getByTestId } = render(
+      <div style={{ padding: 40 }}>{combobox({ defaultOpen: true, positionerProps })}</div>,
+    );
+    const popup = getByTestId("popup");
+    // Floating UI positions the popup a moment after it mounts
+    const box = await waitForStable(() => boxOf(popup));
+    expect(box.top - getByRole("combobox").getBoundingClientRect().bottom).toBe(gap);
   });
 
   // Combobox.Empty stays mounted as a live region, so while items match it must take no space

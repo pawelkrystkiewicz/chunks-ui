@@ -153,10 +153,13 @@ function ComboboxIcon({ className, ...props }: ComboboxIconProps) {
   );
 }
 
-function ComboboxPositioner({ className, ...props }: ComboboxPositionerProps) {
+// 8px clears the input's focus ring (2px of --ring, 2px outside the input), as on Popover.Content
+// and Menu.Content
+function ComboboxPositioner({ className, sideOffset = 8, ...props }: ComboboxPositionerProps) {
   return (
     <BaseCombobox.Positioner
       className={cnState("z-dropdowns w-[var(--anchor-width)]", className)}
+      sideOffset={sideOffset}
       {...props}
     />
   );
