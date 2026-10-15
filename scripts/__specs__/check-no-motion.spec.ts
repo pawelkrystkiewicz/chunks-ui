@@ -142,25 +142,38 @@ describe("nextWithMotionProblem", () => {
   const RUNTIME = "turbopack-3-ry682tkyiqk.js";
   const PAGE_CHUNK = "245lujbzn6avk.js";
   const MOTION_CHUNK = "3s70qt748849t.js";
-  // Shaped like out/index.html of a Next 16 static export: script tags, a preload link, the
-  // Turbopack bootstrap and the flight payload (quotes escaped inside a JS string) name chunks
-  const exported = (scripts: string[], flight: string[] = []) =>
+  // The ways out/index.html of a Next 16 static export names a chunk, each as the tag or string
+  // that holds the name. The bootstrap names it without the /_next/ prefix, the flight payload
+  // escapes its quotes inside a JS string, and a deployment id adds a ?dpl= suffix to a URL.
+  const script = (name: string) => `<script src="/_next/static/chunks/${name}" async=""></script>`;
+  const flight = (name: string) =>
+    `<script>self.__next_f.push([1,"7:\\"/_next/static/chunks/${name}\\"\\n"])</script>`;
+  const CHANNELS: [string, (name: string) => string][] = [
+    ["a script src", script],
     [
-      "<!DOCTYPE html><html><head>",
-      `<link rel="preload" as="script" href="/_next/static/chunks/preload.js"/>`,
-      ...scripts.map((name) => `<script src="/_next/static/chunks/${name}" async=""></script>`),
-      "</head><body>",
-      `<script>(globalThis["TURBOPACK"]||[]).push({"otherChunks":["static/chunks/boot.js"]});</script>`,
-      `<script>self.__next_f.push([1,"${flight.map((name) => `7:\\"/_next/static/chunks/${name}\\"\\n`).join("")}"])</script>`,
-      "</body></html>",
-    ].join("");
-  const HTML = exported([RUNTIME], [PAGE_CHUNK]);
+      "a preload link",
+      (name) => `<link rel="preload" as="script" href="/_next/static/chunks/${name}"/>`,
+    ],
+    [
+      "the Turbopack bootstrap otherChunks (bare static/chunks prefix)",
+      (name) =>
+        `<script>(globalThis["TURBOPACK"]||[]).push({"otherChunks":["static/chunks/${name}"]});</script>`,
+    ],
+    ["the escaped flight payload", flight],
+    [
+      "a script src with a ?dpl= suffix",
+      (name) => `<script src="/_next/static/chunks/${name}?dpl=dpl_5ZxqL" async=""></script>`,
+    ],
+  ];
+  const exported = (...refs: string[]) =>
+    `<!DOCTYPE html><html><head></head><body>${refs.join("")}</body></html>`;
+  const HTML = exported(script(RUNTIME), flight(PAGE_CHUNK));
   const runtime = file(RUNTIME, "runtime");
   const page = file(PAGE_CHUNK, `${DIALOG} DialogBody`);
   const motion = file(MOTION_CHUNK, "MotionGlobalConfig");
   const files = [runtime, page, motion];
 
-  it("accepts a clean build with Motion in a chunk the page does not load", () => {
+  it("accepts a clean build with Motion in a chunk out/index.html does not name", () => {
     expect(nextWithMotionProblem(0, NEXT_OK, files, HTML)).toBeUndefined();
   });
 
@@ -193,27 +206,24 @@ describe("nextWithMotionProblem", () => {
     expect(nextWithMotionProblem(0, NEXT_OK, files, undefined)).toContain('output: "export"');
   });
 
-  it("rejects the Motion chunk named by a script tag", () => {
-    const html = exported([RUNTIME, MOTION_CHUNK], [PAGE_CHUNK]);
-    const problem = nextWithMotionProblem(0, NEXT_OK, files, html);
-    expect(problem).toContain(MOTION_CHUNK);
-    expect(problem).toContain("loads up front");
-  });
-
-  it("rejects the Motion chunk named only in the flight payload", () => {
-    const html = exported([RUNTIME], [PAGE_CHUNK, MOTION_CHUNK]);
-    expect(nextWithMotionProblem(0, NEXT_OK, files, html)).toContain(MOTION_CHUNK);
-  });
+  for (const [channel, name] of CHANNELS) {
+    it(`rejects the Motion chunk named by ${channel}`, () => {
+      const html = exported(script(RUNTIME), flight(PAGE_CHUNK), name(MOTION_CHUNK));
+      const problem = nextWithMotionProblem(0, NEXT_OK, files, html);
+      expect(problem).toContain(MOTION_CHUNK);
+      expect(problem).toContain("initial load");
+    });
+  }
 
   it("rejects Motion inlined into the page's chunk", () => {
     const inlined = file(PAGE_CHUNK, `${DIALOG} MotionGlobalConfig`);
     const problem = nextWithMotionProblem(0, NEXT_OK, [inlined, motion], HTML);
     expect(problem).toContain(PAGE_CHUNK);
-    expect(problem).toContain("loads up front");
+    expect(problem).toContain("initial load");
   });
 
   it("rejects an HTML that names none of the page's code, instead of passing vacuously", () => {
-    const html = exported([RUNTIME]);
+    const html = exported(script(RUNTIME));
     expect(nextWithMotionProblem(0, NEXT_OK, files, html)).toContain(
       "names no chunk with the page",
     );

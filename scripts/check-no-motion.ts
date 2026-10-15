@@ -15,8 +15,9 @@
  *   prerender. It runs no Motion code: loadMotion() runs only in the browser, and the popups sit
  *   in closed client-only portals, so the server render reaches Root and Trigger only. The browser
  *   path (the import() rejecting into the catch, the CSS fallback) is not exercised here. With
- *   Motion a client chunk must hold Motion's code, out/index.html must not load that chunk up
- *   front, and none may keep a bare `import("motion/react")`.
+ *   Motion a client chunk must hold Motion's code, out/index.html must not name that chunk (it
+ *   would be part of the initial load instead of an async chunk), and none may keep a bare
+ *   `import("motion/react")`.
  * Fixtures: scripts/no-motion (recipe in scripts/README.md). Needs the network.
  * Run: bun run check:no-motion (builds first)
  */
@@ -182,13 +183,13 @@ export function nextWithMotionProblem(
   }
   if (html === undefined) return NO_PAGE(output);
   const named = new Set([...html.matchAll(CHUNK_REF)].map(([, name = ""]) => name));
-  const upFront = files.filter(({ name }) => named.has(name));
-  if (!upFront.some(({ code }) => code.includes(NEXT_TRIGGERS[0]))) {
-    return `out/index.html names no chunk with the page's own code (looked for "${NEXT_TRIGGERS[0]}" in the ${named.size} chunks it names), so the check cannot tell what loads up front: the layout of the export changed.`;
+  const initial = files.filter(({ name }) => named.has(name));
+  if (!initial.some(({ code }) => code.includes(NEXT_TRIGGERS[0]))) {
+    return `out/index.html names no chunk with the page's own code (looked for "${NEXT_TRIGGERS[0]}" in the ${named.size} chunks it names), so the check cannot tell which chunks belong to the initial load: the layout of the export changed.`;
   }
-  const eager = upFront.filter(({ code }) => code.includes(MOTION_MARKER));
+  const eager = initial.filter(({ code }) => code.includes(MOTION_MARKER));
   if (eager.length > 0) {
-    return `Motion's code sits in ${eager.map(({ name }) => name).join(", ")}, which out/index.html loads up front, so every visitor downloads it: the import() in packages/ui/src/lib/use-motion.ts no longer splits it.`;
+    return `Motion's code sits in ${eager.map(({ name }) => name).join(", ")}, which out/index.html names (in a script, a preload link or the flight payload), so it is part of the initial load instead of an async chunk: the import() in packages/ui/src/lib/use-motion.ts no longer splits it.`;
   }
 }
 
@@ -323,7 +324,7 @@ if (import.meta.main) {
       console.log(
         [
           "webpack bundles chunks-ui without motion (one expected warning, types compile with skipLibCheck: false) and with motion (async chunk, no bare import).",
-          `next build (Turbopack) exports the page without motion in ${nextWithout.seconds.toFixed(1)} s and with motion in ${nextWith.seconds.toFixed(1)} s (Motion in a chunk the page does not load up front).`,
+          `next build (Turbopack) exports the page without motion in ${nextWithout.seconds.toFixed(1)} s and with motion in ${nextWith.seconds.toFixed(1)} s (Motion in a chunk out/index.html does not name, so it stays an async chunk).`,
         ].join("\n"),
       );
     }
