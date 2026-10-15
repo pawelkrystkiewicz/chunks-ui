@@ -52,6 +52,40 @@ describe("checkDist", () => {
     expect(await checkDist(dist(edits), EXPECTED)).toEqual(['index.js starts with "use client"']);
   });
 
+  it('fails a utils entry that gains a "use client" banner', async () => {
+    const edits = { "utils.js": `"use client";\n${PASSING["utils.js"]}` };
+    expect(await checkDist(dist(edits), EXPECTED)).toEqual(['utils.js has no "use client"']);
+  });
+
+  it("fails a motion/react import that is not awaited inside a try block", async () => {
+    // ESM: the import outside the try; CJS: esbuild's rewrite of it, also outside
+    const esm =
+      'async function loadMotion() {\n  return import(/* turbopackOptional: true */ "motion/react");\n}\n';
+    const cjs =
+      'const loadMotion = () => Promise.resolve().then(() => __toESM(require("motion/react")));\n';
+    const edits = {
+      "index.js": PASSING["index.js"].replace(MOTION_IMPORT, esm),
+      "index.cjs": PASSING["index.cjs"].replace(MOTION_IMPORT, cjs),
+    };
+    const motionImport =
+      'awaits import(/* turbopackOptional: true */ "motion/react") inside a try block';
+    expect(await checkDist(dist(edits), EXPECTED)).toEqual([
+      `index.js ${motionImport}`,
+      `index.cjs ${motionImport}`,
+    ]);
+  });
+
+  it("fails a CJS re-export that is undefined behind a getter", async () => {
+    // tsup defines each CJS export as an enumerable getter, so the key exists either way
+    const edits = {
+      "index.cjs": `"use client";\n"use strict";\nconst Button = () => null;\nObject.defineProperty(exports, "Button", { enumerable: true, get: () => Button });\nObject.defineProperty(exports, "cn", { enumerable: true, get: () => undefined });\n${MOTION_IMPORT}`,
+    };
+    expect(await checkDist(dist(edits), EXPECTED)).toEqual([
+      "cn from index.cjs is not undefined",
+      "cn from index.cjs is the one in utils.cjs",
+    ]);
+  });
+
   it("fails a typings file that imports a class-variance-authority subpath", async () => {
     const edits = {
       "index.d.ts": `import type { ClassValue } from "class-variance-authority/types";\n${PASSING["index.d.ts"]}`,
