@@ -56,7 +56,7 @@ export interface ToastStyleOptions {
   /**
    * Called once when the toast closes, whichever way (close button, timeout, swipe, Escape with
    * focus inside the toast, `manager.close`). Passing this prop also implicitly renders the close
-   * button (no need to also set `dismissible`), unless `dismissible` is `false`.
+   * button (no need to also set `dismissible`).
    */
   onClose?: () => void;
   /**

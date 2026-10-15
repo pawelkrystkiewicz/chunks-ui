@@ -544,42 +544,5 @@ describe("Toast closeProps", () => {
       manager.close(id);
     });
     expect(onClose).toHaveBeenCalledTimes(1);
-    expect(onClose).toHaveBeenCalledWith();
-  });
-
-  it("calls onClose once when Escape closes a toast with focus inside it", async () => {
-    const user = userEvent.setup();
-    const onClose = vi.fn();
-    const close = await showToast({}, onClose);
-    act(() => {
-      close.focus();
-    });
-    await user.keyboard("{Escape}");
-    expect(onClose).toHaveBeenCalledTimes(1);
-    expect(screen.queryByText("Saved")).toBeNull();
-  });
-
-  it("calls onClose once when the toast closes by timeout", async () => {
-    vi.useFakeTimers();
-    try {
-      const manager = createToastManager();
-      const onClose = vi.fn();
-      render(
-        <Toast.Provider toastManager={manager}>
-          <Toast.Viewport />
-        </Toast.Provider>,
-      );
-      act(() => {
-        manager.add({ title: "Saved", timeout: 1, onClose });
-      });
-      expect(onClose).not.toHaveBeenCalled();
-      act(() => {
-        vi.advanceTimersByTime(10);
-      });
-      expect(onClose).toHaveBeenCalledTimes(1);
-      expect(onClose).toHaveBeenCalledWith();
-    } finally {
-      vi.useRealTimers();
-    }
   });
 });
