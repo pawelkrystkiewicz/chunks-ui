@@ -19,15 +19,14 @@ it("matches boolean data variants only, in any group form", () => {
 });
 
 it("spells boolean data variants without brackets", () => {
-  const files = Object.keys(sources);
-  expect(files).toEqual(
+  expect(Object.keys(sources)).toEqual(
     expect.arrayContaining([
       "../components/menu/Menu.tsx",
       "../components/drawer/Drawer.Variants.ts",
     ]),
   );
-  const found = files.flatMap(
-    (file) => (sources[file] ?? "").match(bracketed)?.map((m) => `${file}: ${m}`) ?? [],
+  const found = Object.entries(sources).flatMap(([file, src]) =>
+    (src.match(bracketed) ?? []).map((m) => `${file}: ${m}`),
   );
   expect(found).toEqual([]);
 });
