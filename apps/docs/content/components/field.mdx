@@ -102,7 +102,7 @@ Labels dim to 50% opacity when the field is disabled:
 
 | Part | Description |
 |---|---|
-| `Field.Root` | Wrapper element. Vertical flex with `gap-1`. Manages `invalid` and `disabled` state. |
+| `Field.Root` | Wrapper element. Vertical flex with `gap-2`, so the control's focus ring (4px past its edge) stays clear of the label and the text below. Manages `invalid` and `disabled` state. |
 | `Field.Label` | Form label. `text-sm font-medium`. Dims when disabled. |
 | `Field.Description` | Help text below the label. `text-xs text-muted-foreground`. |
 | `Field.Error` | Error message. `text-xs text-destructive-text`. Renders on a failed validation, a server error, or with `match`. |

@@ -69,7 +69,8 @@ describe("Field", () => {
   });
 
   // The ring reaches 4px past the control (2px offset, 2px wide). The Label and the Description
-  // sit at the default gap-1 (4px), so the ring meets their line boxes and overlaps neither.
+  // sit at the default gap-2 (8px), so the ring stays 4px clear of their line boxes. At gap-1 it
+  // met them, and descenders under the Label's `leading-none` reached about 1px into the ring.
   it("focused Input, ring clear of the Label and Description", async () => {
     const { fixture, getByRole, getByText } = await renderFixture(
       inField(<Field.Control render={<Input placeholder="you@example.com" />} />),
@@ -79,8 +80,8 @@ describe("Field", () => {
     expect(input.matches(":focus-visible")).toBe(true);
     const clearance = ringClearance(input, getByText("Email"), getByText(/never share/));
     expect(clearance.reach).toBe(4);
-    expect(clearance.aboveLabel).toBeGreaterThanOrEqual(0);
-    expect(clearance.belowText).toBeGreaterThanOrEqual(0);
+    expect(clearance.aboveLabel).toBeGreaterThanOrEqual(4);
+    expect(clearance.belowText).toBeGreaterThanOrEqual(4);
     await expect(fixture).toMatchScreenshot();
   });
 
@@ -116,8 +117,8 @@ describe("Field", () => {
       expect(control.matches(":focus-visible")).toBe(true);
       const clearance = ringClearance(control, getByText("Email"), getByText(/never share/));
       expect(clearance.reach).toBe(4);
-      expect(clearance.aboveLabel).toBeGreaterThanOrEqual(0);
-      expect(clearance.belowText).toBeGreaterThanOrEqual(0);
+      expect(clearance.aboveLabel).toBeGreaterThanOrEqual(4);
+      expect(clearance.belowText).toBeGreaterThanOrEqual(4);
     },
   );
 });

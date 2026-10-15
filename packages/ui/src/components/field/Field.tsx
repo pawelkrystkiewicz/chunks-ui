@@ -5,7 +5,9 @@ import { cnState } from "../../lib/cn";
 export type FieldRootProps = ComponentProps<typeof BaseField.Root>;
 
 function FieldRoot({ className, ...props }: FieldRootProps) {
-  return <BaseField.Root className={cnState("flex flex-col gap-1", className)} {...props} />;
+  // 8px: the control's ring reaches 4px past its edge, so the label and the text below keep 4px
+  // of clearance from it
+  return <BaseField.Root className={cnState("flex flex-col gap-2", className)} {...props} />;
 }
 
 export type FieldLabelProps = ComponentProps<typeof BaseField.Label>;
