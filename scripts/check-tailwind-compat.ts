@@ -5,10 +5,11 @@
  * the oldest does not generate a class the installed one does: a consumer on that version would
  * get no CSS for it, and no error.
  *
- * Tailwind does not scan CSS files, so a utility that theme.css (or a stylesheet it imports) defines
- * with `@utility` and that no component uses (`touch-target`) would not be compiled. Both versions also scan a file that lists
- * each of those utilities, and the installed one must generate them all. The run fails when that
- * list is empty or lacks `touch-target`, so the check cannot pass without testing anything.
+ * Tailwind does not scan CSS files, so a utility that theme.css (or a stylesheet it imports)
+ * defines with `@utility` and that no component uses (`touch-target`) would not be compiled. Both
+ * versions also scan a file that lists each of those utilities, and the installed one must
+ * generate them all. The run fails when that list is empty or lacks `touch-target`, or when an
+ * import of the theme does not resolve, so the check cannot pass without testing anything.
  *
  * The installed version compiles in this process, with the `@tailwindcss/node` and
  * `@tailwindcss/oxide` from bun.lock. The oldest compiles with the CLI installed from the
@@ -32,7 +33,8 @@ const CLASS = /\.(-?(?:[\w-]|\\[0-9a-fA-F]{1,6} ?|\\.)+)/g;
 const KNOWN_CLASS = "disabled:pointer-events-none";
 /**
  * A utility theme.css defines with `@utility` and no component uses; it keeps the check honest
- * if the utilities ever move where the scan does not follow (assertThemeUtilities fails the run then).
+ * if the utilities ever move where the scan does not follow (assertThemeUtilities fails the run
+ * then).
  */
 const KNOWN_UTILITY = "touch-target";
 const ESCAPE = /\\([0-9a-fA-F]{1,6}) ?|\\(.)/g;
@@ -43,26 +45,55 @@ export function themeUtilities(css: string): string[] {
   return [...rules].map(([, name = ""]) => name);
 }
 
+const IMPORT = /@import\s+(?:url\()?\s*["']([^"']+)["']/g;
+const SCHEME = /^(?:[a-z][\w+.-]*:|\/\/)/i; // `https:`, `data:`, or protocol-relative `//host`
+const RELATIVE = /^\.\.?\//;
+
+function tryResolve(spec: string, from: string): string | undefined {
+  try {
+    return Bun.resolveSync(spec, from);
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * The file `spec` names when `importer` imports it, or a throw. Tailwind resolves a CSS import
+ * with `extensions: [".css"]` and `conditionNames: ["style"]`; Bun's resolver does neither, so a
+ * relative specifier is retried with `.css` added. A package that exports its stylesheet only
+ * under the `style` condition does not resolve here: that is the known limit, and it throws
+ * rather than dropping the utilities the stylesheet defines.
+ */
+function resolveImport(spec: string, importer: string): string {
+  const from = dirname(importer);
+  const target =
+    tryResolve(spec, from) ?? (RELATIVE.test(spec) ? tryResolve(`${spec}.css`, from) : undefined);
+  if (target === undefined) {
+    throw new Error(
+      `${importer}: cannot resolve @import "${spec}". themeUtilitiesIn resolves with Bun, which adds no ".css" to a bare specifier and ignores the "style" export condition Tailwind reads, so a stylesheet a package exports only under "style" fails here and its @utility names would be missing from the scan.`,
+    );
+  }
+  return target;
+}
+
 /**
  * The utilities `file` and the stylesheets it `@import`s define: a relative specifier from its
- * directory, a bare one (`chunks-ui-core/theme.css`) through node_modules from there. Tailwind's
- * own imports and a specifier that does not resolve to a `.css` file are Tailwind's to compile,
- * so they are skipped. Each file is read once (`seen`, by real path: node_modules and macOS temp
- * directories are symlinks), so an import cycle ends.
+ * directory (`./core` finds `core.css`), a bare one (`chunks-ui-core/theme.css`) through
+ * node_modules from there, either in `"..."` or `url("...")` form. A URL (`https:`, `//host`) and a target
+ * that is not a `.css` file (`tailwindcss` resolves to its JS) are skipped, as Tailwind's own CSS
+ * defines no `@utility`. An import that does not resolve throws (see resolveImport), as does a
+ * stylesheet that cannot be read. Each file is read once (`seen`, by real path: node_modules and
+ * macOS temp directories are symlinks), so an import cycle ends.
  */
 export function themeUtilitiesIn(file: string, seen = new Set<string>()): string[] {
   const path = realpathSync(file);
   if (seen.has(path)) return [];
   seen.add(path);
   const css = readFileSync(path, "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
-  const imported = [...css.matchAll(/@import\s+["']([^"']+)["']/g)].flatMap(([, spec = ""]) => {
-    if (/^tailwindcss(\/|$)/.test(spec)) return [];
-    try {
-      const target = Bun.resolveSync(spec, dirname(path));
-      return target.endsWith(".css") ? themeUtilitiesIn(target, seen) : [];
-    } catch {
-      return [];
-    }
+  const imported = [...css.matchAll(IMPORT)].flatMap(([, spec = ""]) => {
+    if (SCHEME.test(spec)) return [];
+    const target = resolveImport(spec, path);
+    return target.endsWith(".css") ? themeUtilitiesIn(target, seen) : [];
   });
   return [...themeUtilities(css), ...imported];
 }
@@ -151,7 +182,10 @@ async function compileOldest(css: string, dir: string): Promise<string> {
   return await Bun.file(join(dir, "output.css")).text();
 }
 
-/** The CSS of the installed version and of OLDEST, and the utilities theme.css and its imports define. */
+/**
+ * The CSS of the installed version and of OLDEST, and the utilities the theme and its imports
+ * define.
+ */
 async function compileBoth() {
   const utilities = themeUtilitiesIn(THEME);
   assertThemeUtilities(utilities);

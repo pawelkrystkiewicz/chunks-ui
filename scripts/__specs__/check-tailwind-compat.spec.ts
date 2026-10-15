@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import {
   assertThemeUtilities,
   classNames,
@@ -125,27 +125,46 @@ describe("themeUtilities", () => {
 describe("themeUtilitiesIn", () => {
   let dir: string;
   const file = (name: string) => join(dir, name);
+  const write = (name: string, css: string) => {
+    mkdirSync(dirname(file(name)), { recursive: true });
+    writeFileSync(file(name), css);
+  };
 
   beforeAll(() => {
     dir = mkdtempSync(join(tmpdir(), "theme-utilities-"));
-    writeFileSync(
-      file("core.css"),
+    write(
+      "core.css",
       "@utility font-heading {\n  font-family: var(--font-heading);\n}\n@utility touch-target {\n  position: relative;\n}\n",
     );
     // Shaped like the wrapper chunks-ui/theme.css becomes: Tailwind, an import, a source, no utilities
-    writeFileSync(
-      file("wrapper.css"),
-      '@import "tailwindcss";\n@import "./core.css";\n@import "missing-pkg/theme.css";\n@source "./";\n',
-    );
-    mkdirSync(join(dir, "node_modules/fake-core"), { recursive: true });
-    writeFileSync(
-      join(dir, "node_modules/fake-core/package.json"),
+    write("wrapper.css", '@import "tailwindcss";\n@import "./core.css";\n@source "./";\n');
+    write(
+      "node_modules/fake-core/package.json",
       JSON.stringify({ name: "fake-core", exports: { "./theme.css": "./theme.css" } }),
     );
-    writeFileSync(join(dir, "node_modules/fake-core/theme.css"), "@utility from-package {}\n");
-    writeFileSync(file("bare.css"), '@import "fake-core/theme.css";\n');
-    writeFileSync(file("a.css"), '@import "./b.css";\n@utility from-a {}\n');
-    writeFileSync(file("b.css"), '@import "./a.css";\n@utility from-b {}\n');
+    write("node_modules/fake-core/theme.css", "@utility from-package {}\n");
+    write("bare.css", '@import "fake-core/theme.css";\n');
+    write("a.css", '@import "./b.css";\n@utility from-a {}\n');
+    write("b.css", '@import "./a.css";\n@utility from-b {}\n');
+    write("extensionless.css", '@import "./core";\n');
+    write("url.css", '@import url("./core.css");\n@import url( "./a.css" ) layer(base);\n');
+    write("remote.css", '@import "https://example.com/x.css";\n@import url("//cdn/y.css");\n');
+    write("missing.css", '@import "missing-pkg/theme.css";\n');
+    write("nested-missing.css", '@import "./missing.css";\n');
+    // Tailwind's own package: "." is JavaScript, which is skipped, not followed
+    write(
+      "node_modules/tailwindcss/package.json",
+      JSON.stringify({ name: "tailwindcss", exports: { ".": "./dist/lib.mjs" } }),
+    );
+    write("node_modules/tailwindcss/dist/lib.mjs", "// @utility from-js {}\n");
+    write("tailwind.css", '@import "tailwindcss" source(none);\n@utility from-tailwind-user {}\n');
+    // Only a `style` condition exports the stylesheet: Bun's resolver cannot see it
+    write(
+      "node_modules/style-only/package.json",
+      JSON.stringify({ name: "style-only", exports: { ".": { style: "./index.css" } } }),
+    );
+    write("node_modules/style-only/index.css", "@utility from-style {}\n");
+    write("style-only.css", '@import "style-only";\n');
   });
 
   afterAll(() => rmSync(dir, { recursive: true, force: true }));
@@ -154,7 +173,7 @@ describe("themeUtilitiesIn", () => {
     expect(themeUtilitiesIn(file("core.css"))).toEqual(["font-heading", "touch-target"]);
   });
 
-  it("follows a relative @import from a wrapper that defines none, and skips the rest", () => {
+  it("follows a relative @import from a wrapper that defines none", () => {
     expect(themeUtilitiesIn(file("wrapper.css"))).toEqual(["font-heading", "touch-target"]);
   });
 
@@ -162,8 +181,43 @@ describe("themeUtilitiesIn", () => {
     expect(themeUtilitiesIn(file("bare.css"))).toEqual(["from-package"]);
   });
 
+  it("finds core.css for an extensionless relative import", () => {
+    expect(themeUtilitiesIn(file("extensionless.css"))).toEqual(["font-heading", "touch-target"]);
+  });
+
+  it("follows url(...) imports like quoted ones", () => {
+    expect(themeUtilitiesIn(file("url.css"))).toEqual([
+      "font-heading",
+      "touch-target",
+      "from-a",
+      "from-b",
+    ]);
+  });
+
+  it("skips imports by URL", () => {
+    expect(themeUtilitiesIn(file("remote.css"))).toEqual([]);
+  });
+
+  it("skips a package whose entry is not a .css file", () => {
+    expect(themeUtilitiesIn(file("tailwind.css"))).toEqual(["from-tailwind-user"]);
+  });
+
   it("reads each file of an import cycle once", () => {
     expect(themeUtilitiesIn(file("a.css"))).toEqual(["from-a", "from-b"]);
+  });
+
+  it("throws on an import it cannot resolve, naming the file and the specifier", () => {
+    expect(() => themeUtilitiesIn(file("missing.css"))).toThrow(
+      /missing\.css.*"missing-pkg\/theme\.css"/,
+    );
+  });
+
+  it("throws on an unresolvable import in a nested stylesheet", () => {
+    expect(() => themeUtilitiesIn(file("nested-missing.css"))).toThrow(/"missing-pkg\/theme\.css"/);
+  });
+
+  it("throws on a package that exports its stylesheet only under the style condition", () => {
+    expect(() => themeUtilitiesIn(file("style-only.css"))).toThrow(/"style-only".*"style"/);
   });
 });
 
