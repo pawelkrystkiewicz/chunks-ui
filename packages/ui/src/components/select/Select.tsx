@@ -56,10 +56,11 @@ function SelectIcon({ className, ...props }: SelectIconProps) {
   );
 }
 
-function SelectPopup({ className, ...props }: SelectPopupProps) {
+function SelectPopup({ className, render: renderProp, ...props }: SelectPopupProps) {
   const m = useLoadedMotion();
   const reduced = useReducedMotion();
-  const useSpring = !!m && !reduced;
+  // A consumer's `render` replaces the animated element, so that popup keeps the CSS transition
+  const useSpring = !!m && !reduced && !renderProp;
   const render = useSpring
     ? createPopupRenderer({
         m,
@@ -67,7 +68,7 @@ function SelectPopup({ className, ...props }: SelectPopupProps) {
         from: { opacity: 0, scale: 0.95 },
         to: { opacity: 1, scale: 1 },
       })
-    : undefined;
+    : renderProp;
 
   return (
     <BaseSelect.Popup

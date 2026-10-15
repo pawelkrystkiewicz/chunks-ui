@@ -44,10 +44,16 @@ function DialogPortal({ className, children, ...props }: DialogPortalProps) {
   );
 }
 
-function DialogBackdrop({ className, forceRender = true, ...props }: DialogBackdropProps) {
+function DialogBackdrop({
+  className,
+  forceRender = true,
+  render: renderProp,
+  ...props
+}: DialogBackdropProps) {
   const m = useLoadedMotion();
   const reduced = useReducedMotion();
-  const useSpring = !!m && !reduced;
+  // A consumer's `render` replaces the animated element, so that backdrop keeps the CSS transition
+  const useSpring = !!m && !reduced && !renderProp;
   const render = useSpring
     ? createPopupRenderer({
         m,
@@ -55,7 +61,7 @@ function DialogBackdrop({ className, forceRender = true, ...props }: DialogBackd
         from: { opacity: 0 },
         to: { opacity: 1 },
       })
-    : undefined;
+    : renderProp;
 
   return (
     <BaseDialog.Backdrop

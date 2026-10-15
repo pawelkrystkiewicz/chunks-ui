@@ -66,11 +66,13 @@ function PopoverContentPopup({
   align,
   alignOffset,
   arrowPadding,
+  render: renderProp,
   ...props
 }: PopoverContentProps) {
   const m = useLoadedMotion();
   const reduced = useReducedMotion();
-  const useSpring = !!m && !reduced;
+  // A consumer's `render` replaces the animated element, so that popup keeps the CSS transition
+  const useSpring = !!m && !reduced && !renderProp;
   const [positioner, arrowPaddingByDefault] = useArrowPadding();
   const render = useSpring
     ? createPopupRenderer({
@@ -79,7 +81,7 @@ function PopoverContentPopup({
         from: { opacity: 0, scale: 0.95 },
         to: { opacity: 1, scale: 1 },
       })
-    : undefined;
+    : renderProp;
 
   return (
     <BasePopover.Positioner

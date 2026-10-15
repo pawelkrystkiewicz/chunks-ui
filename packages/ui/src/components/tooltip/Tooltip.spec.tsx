@@ -1,6 +1,6 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { axe } from "jest-axe";
-import { createRef, type ReactNode } from "react";
+import { createRef, type ReactElement, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { reloadMotion } from "../../lib/use-motion";
 import { Tooltip } from "./Tooltip";
@@ -210,5 +210,38 @@ describe("Tooltip open delay", () => {
     fireEvent.mouseMove(screen.getByText("B"));
     advance(0);
     expect(screen.getByText("Tip B")).toBeInTheDocument();
+  });
+});
+
+describe("Tooltip.Popup with Motion loaded", () => {
+  function renderPopup(renderProp?: ReactElement) {
+    render(
+      <Tooltip.Root open>
+        <Tooltip.Trigger>Hover</Tooltip.Trigger>
+        <Tooltip.Portal>
+          <Tooltip.Positioner>
+            <Tooltip.Popup render={renderProp} data-testid="popup">
+              Tip
+            </Tooltip.Popup>
+          </Tooltip.Positioner>
+        </Tooltip.Portal>
+      </Tooltip.Root>,
+    );
+    return screen.getByTestId("popup");
+  }
+
+  it("animates the default element with Motion, not CSS", async () => {
+    await reloadMotion();
+    const el = renderPopup();
+    expect(el).not.toHaveClass("micro-interactions");
+    // A motion.div renders its initial values inline
+    expect(el.style.opacity).not.toBe("");
+  });
+
+  it("keeps the CSS transition on the element a render prop gives it", async () => {
+    await reloadMotion();
+    const el = renderPopup(<section />);
+    expect(el.tagName).toBe("SECTION");
+    expect(el).toHaveClass("micro-interactions", "data-starting-style:opacity-0");
   });
 });

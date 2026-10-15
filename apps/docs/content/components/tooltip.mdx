@@ -89,6 +89,12 @@ The popup sits 2 spacing units (8px at the default `--spacing`) from the trigger
 
 <TooltipPositioningExample />
 
+## Animation
+
+The popup enters with a scale-up and fade (from `scale-95` and `opacity-0`): the `popup` spring (`springs.popup`) with Motion installed, a CSS transition of `opacity` and `scale` without it; reduced motion turns off both.
+
+`render` on `Tooltip.Popup` replaces the element the spring animates, so a popup with `render` uses the CSS transition even with Motion installed. To restyle the popup, pass `className`.
+
 ## Compound Parts
 
 | Part | Description |

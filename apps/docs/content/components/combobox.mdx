@@ -230,6 +230,12 @@ function ControlledCombobox() {
 }
 ```
 
+## Animation
+
+The popup enters with a fade: the `popup` spring (`springs.popup`, with a scale-up from `scale-95`) with Motion installed, a CSS fade without it; reduced motion turns off both.
+
+`render` on `Combobox.Popup` replaces the element the spring animates, so a popup with `render` uses the CSS transition even with Motion installed. To restyle the popup, pass `className`.
+
 ## Compound Parts
 
 | Part | Description |
