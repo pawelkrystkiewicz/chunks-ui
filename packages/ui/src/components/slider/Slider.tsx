@@ -13,7 +13,6 @@ import { DEFAULT_SLIDER_LABELS, type SliderLabels } from "./Slider.Labels";
 // `range`: the slider has two values, the only case where Base UI adds range text to the thumbs
 const SliderLabelsContext = createContext({ labels: DEFAULT_SLIDER_LABELS, range: false });
 
-// The default matches ComponentProps<typeof BaseSlider.Root>, the type before Slider.Root was generic.
 // The union is written out, not aliased: a local alias named SliderValue would clash with the
 // SliderValue component in consumers' error messages.
 /**

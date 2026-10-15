@@ -103,22 +103,6 @@ function ControlledSlider() {
     </Slider.Root>
   );
 }
-
-function ControlledRange() {
-  const [value, setValue] = useState([20, 80]);
-
-  return (
-    <Slider.Root value={value} onValueChange={setValue}>
-      <Slider.Control>
-        <Slider.Track>
-          <Slider.Indicator />
-          <Slider.Thumb index={0} aria-label="Minimum" />
-          <Slider.Thumb index={1} aria-label="Maximum" />
-        </Slider.Track>
-      </Slider.Control>
-    </Slider.Root>
-  );
-}
 ```
 
 ## Disabled

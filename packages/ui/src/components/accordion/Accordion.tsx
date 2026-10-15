@@ -9,7 +9,6 @@ import { FOCUS_RING, RING_TRANSITION } from "../shared";
 // Types
 // ---------------------------------------------------------------------------
 
-// The default matches ComponentProps<typeof BaseAccordion.Root>, the type before Accordion.Root was generic
 /**
  * `Value` is the type of one `Accordion.Item`'s `value`; `value`, `defaultValue` and the value
  * `onValueChange` receives are `Value[]`. It is inferred from `value` or `defaultValue`, so a

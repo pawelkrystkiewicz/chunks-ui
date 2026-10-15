@@ -1,13 +1,7 @@
 import type { RadioGroup as BaseRadioGroup } from "@base-ui/react/radio-group";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import {
-  type ComponentProps,
-  type Dispatch,
-  type ReactElement,
-  type SetStateAction,
-  useState,
-} from "react";
+import { type ComponentProps, type ReactElement, useState } from "react";
 import { afterEach, describe, expect, expectTypeOf, it } from "vitest";
 import { Radio, type RadioGroupProps } from "./Radio";
 
@@ -18,23 +12,10 @@ afterEach(cleanup);
 /** Holds JSX whose only job is to compile, or not to under `@ts-expect-error` */
 function typeChecks(..._elements: ReactElement[]) {}
 
-/** A `useState` setter, as a type: `useState` itself runs only in a rendering component */
-type Setter<T> = Dispatch<SetStateAction<T>>;
-
 // `as`, not an annotation: TS narrows `const value: "a" | "b" = "a"` to "a" at every use
 const value = "a" as "a" | "b";
-const setValue: Setter<"a" | "b"> = () => {};
-const setNumber: Setter<number> = () => {};
 const onLetter = (_next: "a" | "b") => {};
-
-/**
- * The `Value` that `Radio.Group` infers from `props`. Nothing else on the group is typed by
- * `Value`, so no JSX attribute can read it back when the handler is the only candidate. The
- * parameter is the component's own signature, through an instantiation expression
- */
-function inferValue<Value>(_props: Parameters<typeof Radio.Group<Value>>[0]): Value {
-  return undefined as never;
-}
+const onNumber = (_next: number) => {};
 
 describe("Radio.Group types", () => {
   it("takes a typed useState setter as onValueChange", async () => {
@@ -55,10 +36,8 @@ describe("Radio.Group types", () => {
     expect(screen.getByRole("radio", { name: "A" })).not.toBeChecked();
   });
 
-  it("infers Value from value or defaultValue", () => {
+  it("infers Value from value, defaultValue or an annotated onValueChange", () => {
     typeChecks(
-      <Radio.Group value={value} onValueChange={setValue} />,
-      <Radio.Group defaultValue={value} onValueChange={setValue} />,
       <Radio.Group
         value={value}
         onValueChange={(next) => expectTypeOf(next).toEqualTypeOf<"a" | "b">()}
@@ -68,6 +47,8 @@ describe("Radio.Group types", () => {
         defaultValue={value}
         onValueChange={(next) => expectTypeOf(next).toEqualTypeOf<"a" | "b">()}
       />,
+      // Nothing else types Value, so this compiles only when the handler's parameter is inferred
+      <Radio.Group onValueChange={onLetter} />,
     );
     expectTypeOf<RadioGroupProps<"a" | "b">["value"]>().toEqualTypeOf<"a" | "b" | undefined>();
   });
@@ -84,12 +65,8 @@ describe("Radio.Group types", () => {
   it("rejects a setter of another type", () => {
     typeChecks(
       // @ts-expect-error the value is "a" | "b", so the setter cannot take a number
-      <Radio.Group value={value} onValueChange={setNumber} />,
+      <Radio.Group value={value} onValueChange={onNumber} />,
     );
-  });
-
-  it("infers Value from an annotated onValueChange alone", () => {
-    expectTypeOf(inferValue({ onValueChange: onLetter })).toEqualTypeOf<"a" | "b">();
   });
 
   it("keeps unknown without a value, as before", () => {
