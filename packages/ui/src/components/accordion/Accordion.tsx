@@ -9,7 +9,13 @@ import { FOCUS_RING, RING_TRANSITION } from "../shared";
 // Types
 // ---------------------------------------------------------------------------
 
-export type AccordionRootProps = ComponentProps<typeof BaseAccordion.Root>;
+/**
+ * `Value` is the type of one `Accordion.Item`'s `value`; `value`, `defaultValue` and the value
+ * `onValueChange` receives are `Value[]`. It is inferred from `value` or `defaultValue`, so a
+ * typed `useState` setter is an `onValueChange`. Without either it is `unknown`, as
+ * `ComponentProps<typeof BaseAccordion.Root>` made it before.
+ */
+export type AccordionRootProps<Value = unknown> = BaseAccordion.Root.Props<Value>;
 export type AccordionItemProps = ComponentProps<typeof BaseAccordion.Item>;
 export type AccordionHeaderProps = ComponentProps<typeof BaseAccordion.Header>;
 export type AccordionTriggerProps = ComponentProps<typeof BaseAccordion.Trigger>;
@@ -19,7 +25,7 @@ export type AccordionPanelProps = ComponentProps<typeof BaseAccordion.Panel>;
 // Components
 // ---------------------------------------------------------------------------
 
-function AccordionRoot({ className, ...props }: AccordionRootProps) {
+function AccordionRoot<Value = unknown>({ className, ...props }: AccordionRootProps<Value>) {
   return (
     <BaseAccordion.Root
       className={cnState("w-full divide-y divide-border", className)}

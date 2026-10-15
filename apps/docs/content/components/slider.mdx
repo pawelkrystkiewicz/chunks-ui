@@ -86,16 +86,34 @@ Set `orientation="vertical"` on the root. The track and indicator switch to a ve
 
 ## Controlled
 
+`Slider.Root` infers whether its value is a number or an array from `value` or `defaultValue`, so a typed `useState` setter is an `onValueChange`, for a single value and for a range:
+
 ```tsx
 function ControlledSlider() {
   const [value, setValue] = useState(50);
 
   return (
-    <Slider.Root value={value} onValueChange={(next) => setValue(next as number)}>
+    <Slider.Root value={value} onValueChange={setValue}>
       <Slider.Control>
         <Slider.Track>
           <Slider.Indicator />
           <Slider.Thumb aria-label="Value" />
+        </Slider.Track>
+      </Slider.Control>
+    </Slider.Root>
+  );
+}
+
+function ControlledRange() {
+  const [value, setValue] = useState([20, 80]);
+
+  return (
+    <Slider.Root value={value} onValueChange={setValue}>
+      <Slider.Control>
+        <Slider.Track>
+          <Slider.Indicator />
+          <Slider.Thumb index={0} aria-label="Minimum" />
+          <Slider.Thumb index={1} aria-label="Maximum" />
         </Slider.Track>
       </Slider.Control>
     </Slider.Root>
