@@ -377,7 +377,7 @@ describe("controls once Motion has loaded", () => {
       const start = measure(element());
       subject.change();
       // Hidden only once Motion has moved it and come to rest
-      await expect.poll(() => measure(element())).not.toBe(start);
+      await expect.poll(() => measure(element()), { timeout: SETTLE_TIMEOUT_MS }).not.toBe(start);
       await settled(() => measure(element()));
       rerender(ui("hidden"));
       await reducedMotion(true);
@@ -407,8 +407,10 @@ describe("controls once Motion has loaded", () => {
       await expect.poll(element, { timeout: SETTLE_TIMEOUT_MS }).toBeNull();
 
       await reducedMotion(false);
-      // Motion drives it again: mounted, and at rest at opacity 0
+      // Motion drives it again: mounted, and at rest at opacity 0. A remounted indicator has no inline
+      // opacity until Motion's first rAF batch writes it, so wait one frame before sampling.
       await expect.poll(element, { timeout: SETTLE_TIMEOUT_MS }).not.toBeNull();
+      await nextFrame();
       expect(new Set(await sample(() => opacity(element()), 10))).toEqual(new Set([0]));
     },
   );
