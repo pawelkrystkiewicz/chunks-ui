@@ -5,12 +5,11 @@ import {
   createContext,
   type Dispatch,
   type ReactNode,
-  type RefObject,
   type SetStateAction,
   useContext,
   useId,
   useLayoutEffect,
-  useRef,
+  useMemo,
   useState,
 } from "react";
 import { cn } from "../../lib/cn";
@@ -32,9 +31,9 @@ const TitleIdContext = createContext<{
 /** Holds the id of the Title for the Body. A Popup wraps its children in it. */
 export function TitleIdProvider({ children }: { children: ReactNode }) {
   const [titleId, setTitleId] = useState<string>();
-  return (
-    <TitleIdContext.Provider value={{ titleId, setTitleId }}>{children}</TitleIdContext.Provider>
-  );
+  // One value per id, so a render of the Popup does not render the Body and the Title again
+  const value = useMemo(() => ({ titleId, setTitleId }), [titleId]);
+  return <TitleIdContext.Provider value={value}>{children}</TitleIdContext.Provider>;
 }
 
 /** The Title's id, `idProp` or a generated one, registered with the Popup so the Body is named by it */
@@ -51,24 +50,33 @@ export function useTitleId(idProp?: string) {
   return id;
 }
 
+/** Whether the element scrolls: its content is taller than its box */
+const scrolls = (node: HTMLElement) => node.scrollHeight > node.clientHeight;
+
 /**
- * Whether the element scrolls: its content is taller than its box. Measured after every render,
- * for a change of content, and whenever the box resizes. A layout effect, so Base UI's initial
- * focus, which waits a microtask for layout effects to set `tabIndex`, sees the result.
+ * Whether the Body scrolls. Measured after every render of the Body, for a change of content, and
+ * whenever its box resizes. Layout effects, so Base UI's initial focus, which waits a microtask
+ * for layout effects to set `tabIndex`, sees the result. Returns the state and the ref that gives
+ * the hook the node; the observers are created once per node, not once per render.
  */
-function useOverflows(ref: RefObject<HTMLElement | null>) {
+function useOverflows(): [overflows: boolean, ref: (node: HTMLElement | null) => void] {
+  const [node, setNode] = useState<HTMLElement | null>(null);
   const [overflows, setOverflows] = useState(false);
+
+  // After every render: the content may have changed
   useLayoutEffect(() => {
-    const node = ref.current;
-    if (!node) return;
-    const measure = () => setOverflows(node.scrollHeight > node.clientHeight);
-    measure();
-    if (typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver(measure);
-    observer.observe(node);
-    return () => observer.disconnect();
+    if (node) setOverflows(scrolls(node));
   });
-  return overflows;
+
+  // Once per node: the box resizes
+  useLayoutEffect(() => {
+    if (!node || typeof ResizeObserver === "undefined") return;
+    const resize = new ResizeObserver(() => setOverflows(scrolls(node)));
+    resize.observe(node);
+    return () => resize.disconnect();
+  }, [node]);
+
+  return [overflows, setNode];
 }
 
 /**
@@ -86,8 +94,7 @@ export function OverlayBody({
   ...props
 }: OverlayBodyProps & { marker: string }) {
   const { titleId } = useContext(TitleIdContext);
-  const ref = useRef<HTMLElement>(null);
-  const overflows = useOverflows(ref);
+  const [overflows, ref] = useOverflows();
   // Base UI's render: an element is cloned with these props, a function gets them
   return useRender({
     defaultTagName: "section",
