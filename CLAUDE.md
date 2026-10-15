@@ -50,7 +50,7 @@ Personal React 19+ component library. Single npm package (`chunks-ui`) replacing
 - Always use `bun`, never `npm`/`yarn`/`pnpm`
 - Components use Base UI compound pattern: `<X.Root>`, `<X.Trigger>`, `<X.Content>`
 - Composition via Base UI `render` prop, not `asChild`
-- Variants defined with CVA in separate `*.Variants.ts` files
+- Variants defined with CVA in separate `*.Variants.ts` files; import `cva` from `src/lib/cva`, not from `class-variance-authority`
 - CSS variables follow shadcn/ui naming: `--primary`, `--destructive`, `--success`, `--warning`
 - Props over config objects: `<Button color="primary" variant="outlined">`
 - One component, one job — no mode-switching god components
