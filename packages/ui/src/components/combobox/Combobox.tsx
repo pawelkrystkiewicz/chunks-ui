@@ -6,9 +6,8 @@ import { type ComponentProps, createContext, useContext, useId } from "react";
 import { cn, cnState } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
 import { springs } from "../../lib/motion";
-import { createPopupRenderer } from "../../lib/PopupMotion";
 import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
-import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
+import { usePopupRender } from "../../lib/use-popup-render";
 import { CloseIcon } from "../CloseIcon";
 import { removeButtonName } from "../chip/Chip";
 import { FOCUS_RING, FOCUS_RING_WITHIN, RING_TRANSITION } from "../shared";
@@ -164,18 +163,11 @@ function ComboboxPositioner({ className, ...props }: ComboboxPositionerProps) {
 }
 
 function ComboboxPopup({ className, render: renderProp, ...props }: ComboboxPopupProps) {
-  const m = useLoadedMotion();
-  const reduced = useReducedMotion();
-  // A consumer's `render` replaces the animated element, so that popup keeps the CSS transition
-  const useSpring = !!m && !reduced && !renderProp;
-  const render = useSpring
-    ? createPopupRenderer({
-        m,
-        spring: springs.popup,
-        from: { opacity: 0, scale: 0.95 },
-        to: { opacity: 1, scale: 1 },
-      })
-    : renderProp;
+  const { useSpring, render } = usePopupRender(renderProp, {
+    spring: springs.popup,
+    from: { opacity: 0, scale: 0.95 },
+    to: { opacity: 1, scale: 1 },
+  });
 
   return (
     <BaseCombobox.Popup

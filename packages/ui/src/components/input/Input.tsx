@@ -34,14 +34,14 @@ export type InputProps = ComponentProps<typeof BaseInput> &
      */
     endAdornment?: ReactNode;
     /**
-     * Shows a built-in clear button while the input has text and is not `disabled` or
-     * `readOnly`. While it shows, it takes the place of `endAdornment`.
+     * Shows a built-in clear button while the input has text and can be edited: it hides while
+     * the input is disabled or read-only, whichever sets it (`disabled`, `readOnly`, or a
+     * disabled `Field.Root`). While it shows, it takes the place of `endAdornment`.
      *
      * Clearing empties the input the way typing does: `onChange` and `onValueChange` fire with
      * `""`, so the handler that sets a controlled `value` clears it, and `onClear`, if given, is
      * called afterwards. Focus stays in the input with a mouse click; with the keyboard (Tab to
      * the button, Enter or Space) the input blurs and focus then returns to it.
-     * Inside a disabled `Field.Root`, the button still shows, but a click changes nothing.
      * @default false
      */
     clearable?: boolean;
@@ -51,7 +51,8 @@ export type InputProps = ComponentProps<typeof BaseInput> &
      *
      * With `onClear` alone, a controlled input fires no `onChange` or `onValueChange` and keeps
      * its `value` until `onClear` sets it. With `clearable` too, the value handlers fire first
-     * and `onClear` only notifies. Inside a disabled `Field.Root`, it is not called.
+     * and `onClear` only notifies. The button hides while the input is disabled or read-only.
+     * Inside a disabled `Field.Root`, it is not called.
      */
     onClear?: () => void;
     /**
@@ -160,7 +161,7 @@ export function Input({
 
   const handleClear = () => {
     const input = inputRef.current as HTMLInputElement | null;
-    // The user can't edit it, e.g. inside a disabled Field.Root, which sets the attribute
+    // CSS hides the button in a disabled Field.Root; this catches a click that gets through (jsdom, programmatic)
     if (input?.disabled || input?.readOnly) return;
     // Focus the input before the clear button unmounts, or focus falls to <body>
     input?.focus();
@@ -189,14 +190,15 @@ export function Input({
         typeof className === "string" && className,
       )}
     >
-      {startAdornment && (
+      {startAdornment ? (
         <span className="pointer-events-none absolute start-3 flex items-center text-muted-foreground">
           {startAdornment}
         </span>
-      )}
+      ) : null}
       <BaseInput
         className={cnState(
           inputVariants(),
+          "peer/input",
           startAdornment && "ps-9",
           (endAdornment || hasClearButton) && "pe-9",
           typeof className === "function" ? className : undefined,
@@ -205,22 +207,29 @@ export function Input({
         onValueChange={handleValueChange}
         {...props}
       />
-      {/* The clear button and endAdornment share one slot: while the button shows, it wins */}
-      {(endAdornment || showsClearButton) && (
-        <span className="absolute end-3 flex items-center">
-          {showsClearButton ? (
-            <ClearButton
-              labels={{ clear: clearLabel }}
-              onClick={handleClear}
-              // A mousedown would move focus to the button and blur the input, which validates
-              // a validationMode="onBlur" field mid-clear
-              onMouseDown={(event) => event.preventDefault()}
-            />
-          ) : (
-            endAdornment
-          )}
+      {/* Two spans so each follows the input's state by CSS (peer): a disabled Field.Root sets
+          disabled without the prop, so the button hides and the adornment shows. */}
+      {showsClearButton && (
+        <span className="absolute end-3 flex items-center peer-disabled/input:hidden">
+          <ClearButton
+            labels={{ clear: clearLabel }}
+            onClick={handleClear}
+            // A mousedown would move focus to the button and blur the input, which validates
+            // a validationMode="onBlur" field mid-clear
+            onMouseDown={(event) => event.preventDefault()}
+          />
         </span>
       )}
+      {endAdornment ? (
+        <span
+          className={cn(
+            "absolute end-3 flex items-center",
+            showsClearButton && "peer-enabled/input:hidden",
+          )}
+        >
+          {endAdornment}
+        </span>
+      ) : null}
     </div>
   );
 }

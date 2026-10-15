@@ -22,6 +22,7 @@ Personal React 19+ component library. Single npm package (`chunks-ui`) replacing
 - `packages/ui/src/lib/motion.ts` — shared spring presets
 - `packages/ui/src/lib/use-motion.ts` — `useMotion()` (lazy Motion loader) + `useReducedMotion()` hooks
 - `packages/ui/src/lib/PopupMotion.tsx` — `createPopupRenderer()` for Base UI popup animations
+- `packages/ui/src/lib/use-popup-render.ts` — `usePopupRender()`: a popup part's `render`, Motion spring or CSS path
 - `packages/ui/src/theme.css` — CSS variables (OKLCH, shadcn convention)
 - `packages/ui/src/index.ts` — barrel export
 - `apps/docs/` — Next.js 16 + Nextra 4 docs site
