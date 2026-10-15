@@ -35,7 +35,7 @@ export type InputProps = ComponentProps<typeof BaseInput> &
     endAdornment?: ReactNode;
     /**
      * Shows a built-in clear button while the input has text and can be edited: it hides while
-     * the input is disabled or read-only, whichever disables it (`disabled`, `readOnly`, or a
+     * the input is disabled or read-only, whichever sets it (`disabled`, `readOnly`, or a
      * disabled `Field.Root`). While it shows, it takes the place of `endAdornment`.
      *
      * Clearing empties the input the way typing does: `onChange` and `onValueChange` fire with
@@ -208,28 +208,29 @@ export function Input({
         onValueChange={handleValueChange}
         {...props}
       />
-      {/* The clear button and endAdornment share one slot: while the button shows, it wins */}
-      {(endAdornment || showsClearButton) && (
+      {/* The clear button and endAdornment share one slot: while the button shows, it wins. They
+          are two spans so that each can follow the input's state by CSS (the `peer`), which a
+          disabled Field.Root sets without the `disabled` prop that showsClearButton reads: the
+          button hides and the adornment shows in its place */}
+      {showsClearButton && (
+        <span className="absolute end-3 flex items-center peer-disabled/input:hidden">
+          <ClearButton
+            labels={{ clear: clearLabel }}
+            onClick={handleClear}
+            // A mousedown would move focus to the button and blur the input, which validates
+            // a validationMode="onBlur" field mid-clear
+            onMouseDown={(event) => event.preventDefault()}
+          />
+        </span>
+      )}
+      {endAdornment && (
         <span
           className={cn(
             "absolute end-3 flex items-center",
-            // A disabled Field.Root disables the input through Base UI, not through the
-            // `disabled` prop that showsClearButton reads, so the button hides by CSS off the
-            // input's attribute. An endAdornment stays: it is not an action
-            showsClearButton && "peer-disabled/input:hidden",
+            showsClearButton && "peer-enabled/input:hidden",
           )}
         >
-          {showsClearButton ? (
-            <ClearButton
-              labels={{ clear: clearLabel }}
-              onClick={handleClear}
-              // A mousedown would move focus to the button and blur the input, which validates
-              // a validationMode="onBlur" field mid-clear
-              onMouseDown={(event) => event.preventDefault()}
-            />
-          ) : (
-            endAdornment
-          )}
+          {endAdornment}
         </span>
       )}
     </div>

@@ -81,13 +81,13 @@ describe("Input", () => {
   // A disabled Field.Root disables the input through Base UI, not through the `disabled` prop,
   // so the button hides by CSS, off the input's disabled attribute
   it("hides the clear button inside a disabled Field.Root", () => {
-    const { queryByRole } = render(
+    const { getByRole } = render(
       <Field.Root disabled>
         <Input aria-label="Name" clearable defaultValue="x" />
       </Field.Root>,
     );
     // `hidden: true` finds the button also when display: none takes it out of the a11y tree
-    expect(queryByRole("button", { name: /clear/i, hidden: true })).not.toBeVisible();
+    expect(getByRole("button", { name: /clear/i, hidden: true })).not.toBeVisible();
   });
 
   it("shows the clear button inside an enabled Field.Root", () => {
@@ -97,5 +97,35 @@ describe("Input", () => {
       </Field.Root>,
     );
     expect(getByRole("button", { name: /clear/i })).toBeVisible();
+  });
+
+  // The button and the endAdornment share one slot. Inside a disabled Field.Root the button
+  // hides by CSS, so the adornment has to show in its place, as it does for the `disabled` prop
+  it("shows the endAdornment in place of the hidden clear button inside a disabled Field.Root", () => {
+    const { getByRole, getByText } = render(
+      <Field.Root disabled>
+        <Input aria-label="Amount" clearable endAdornment="USD" defaultValue="x" />
+      </Field.Root>,
+    );
+    expect(getByRole("button", { name: /clear/i, hidden: true })).not.toBeVisible();
+    expect(getByText("USD")).toBeVisible();
+  });
+
+  it("shows the clear button in place of the endAdornment", () => {
+    const { getByRole, getByText } = render(
+      <Input aria-label="Amount" clearable endAdornment="USD" defaultValue="x" />,
+    );
+    expect(getByRole("button", { name: /clear/i })).toBeVisible();
+    expect(getByText("USD")).not.toBeVisible();
+  });
+
+  it("shows the clear button in place of the endAdornment inside an enabled Field.Root", () => {
+    const { getByRole, getByText } = render(
+      <Field.Root>
+        <Input aria-label="Amount" clearable endAdornment="USD" defaultValue="x" />
+      </Field.Root>,
+    );
+    expect(getByRole("button", { name: /clear/i })).toBeVisible();
+    expect(getByText("USD")).not.toBeVisible();
   });
 });

@@ -380,18 +380,11 @@ describe("Input", () => {
     expect(ref.current).toBe(screen.getByRole("textbox"));
   });
 
-  it("prefers clear button over end adornment when value is non-empty", () => {
-    const onClear = vi.fn();
-    render(
-      <Input
-        onClear={onClear}
-        value="text"
-        endAdornment={<span data-testid="end" />}
-        data-testid="inp"
-      />,
-    );
+  // The end adornment stays in the DOM and hides by CSS, which jsdom doesn't load: the visual
+  // spec checks that the button takes its place
+  it("shows the clear button with an end adornment when value is non-empty", () => {
+    render(<Input onClear={vi.fn()} value="text" endAdornment={<span data-testid="end" />} />);
     expect(screen.getByRole("button", { name: "Clear" })).toBeInTheDocument();
-    expect(screen.queryByTestId("end")).not.toBeInTheDocument();
   });
 
   it("has no a11y violations", async () => {
