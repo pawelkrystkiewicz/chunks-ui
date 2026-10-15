@@ -11,11 +11,10 @@
   "baseBranch": "master",
   "updateInternalDependencies": "patch",
   "ignore": ["@chunks-ui/docs"],
-  "privatePackages": { "version": false, "tag": false },
+  "privatePackages": { "version": false },
   "changedFilePatterns": [
     "**",
-    "!**/*.spec.ts",
-    "!**/*.spec.tsx",
+    "!**/*.spec.{ts,tsx}",
     "!**/__screenshots__/**",
     "!vitest*.config.ts",
     "!vitest*.setup.ts",

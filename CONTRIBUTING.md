@@ -186,7 +186,7 @@ The changelog entry links the PR that added the changeset (`@changesets/changelo
 
 `changedFilePatterns` in `.changeset/config.json` lists the files that do not count as a change. The patterns match the path inside `packages/ui`:
 
-- `**/*.spec.ts` and `**/*.spec.tsx` (unit, visual and WebKit specs)
+- `**/*.spec.{ts,tsx}` (unit, visual and WebKit specs)
 - `**/__screenshots__/**` (visual baselines)
 - `vitest*.config.ts` and `vitest*.setup.ts` in the package root
 - `src/VisualTest.*` and `src/visual-test.css` (visual test helpers and styles, never bundled)
@@ -202,4 +202,4 @@ bunx changeset --empty
 
 ### Renovate and release PRs
 
-The gate does not run on Renovate branches (`renovate/*`) or on the Version Packages PR (`changeset-release/master`). Renovate cannot write a changeset, so the gate would fail every bump. It merges patch bumps by itself, and minor bumps of packages that are not on 0.x (`.github/renovate.json5`). Major bumps wait for approval on the dependency dashboard, and the Playwright group never merges by itself. A bump of a runtime `dependencies` entry of `packages/ui` (`clsx`, `tailwind-merge`) reaches users, so add a changeset for it by hand in a PR of its own. That PR changes no package file, so the gate passes it. Bumps of dev dependencies need none.
+The gate does not run on the Version Packages PR (`changeset-release/master`). Renovate cannot write a changeset, so the gate skips `renovate/*` branches. A bump of a runtime `dependencies` entry of `packages/ui` (`clsx`, `tailwind-merge`) reaches users, so add a changeset for it by hand in a PR of its own. That PR changes no package file, so the gate passes it. Bumps of dev dependencies need none. Automerge rules: `.github/renovate.json5`.
