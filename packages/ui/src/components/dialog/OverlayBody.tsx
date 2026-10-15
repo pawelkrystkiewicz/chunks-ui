@@ -5,13 +5,16 @@ import {
   createContext,
   type Dispatch,
   type ReactNode,
+  type RefObject,
   type SetStateAction,
   useContext,
   useId,
   useLayoutEffect,
+  useRef,
   useState,
 } from "react";
 import { cn } from "../../lib/cn";
+import { useMergedRef } from "../../lib/use-merged-ref";
 import { FOCUS_RING, RING_TRANSITION } from "../shared";
 
 /** The props of `Dialog.Body` and `Drawer.Body`: a `<section>`'s */
@@ -46,21 +49,47 @@ export function useTitleId(idProp?: string) {
 }
 
 /**
+ * Whether the element scrolls: its content is taller than its box. Measured after every render,
+ * for a change of content, and whenever the box resizes. A layout effect, so Base UI's initial
+ * focus, which waits a microtask for layout effects to set `tabIndex`, sees the result.
+ */
+function useOverflows(ref: RefObject<HTMLElement | null>) {
+  const [overflows, setOverflows] = useState(false);
+  useLayoutEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const measure = () => setOverflows(node.scrollHeight > node.clientHeight);
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    return () => observer.disconnect();
+  });
+  return overflows;
+}
+
+/**
  * The scrolling middle of a tall dialog or drawer, between the Title and the actions. With a Body
  * as its child, the Popup is a flex column: the other children keep their height and only the
- * Body scrolls. The Body is a tab stop, so the keyboard can scroll it, and a region the Title
- * names (a named `<section>`). `marker` is the class the Popup finds the Body by (`has-[>.marker]`).
+ * Body scrolls. While its content overflows, the Body is a tab stop, so the keyboard can scroll
+ * it; a Body that fits is skipped. It is a region the Title names (a named `<section>`).
+ * `marker` is the class the Popup finds the Body by (`has-[>.marker]`).
  */
 export function OverlayBody({
   marker,
   className,
+  ref: forwardedRef,
   ...props
 }: OverlayBodyProps & { marker: string }) {
   const { titleId } = useContext(TitleIdContext);
+  const ownRef = useRef<HTMLElement>(null);
+  const ref = useMergedRef(ownRef, forwardedRef);
+  const overflows = useOverflows(ownRef);
   return (
     <section
-      // biome-ignore lint/a11y/noNoninteractiveTabindex: the keyboard scrolls a scroll container only once it has the focus
-      tabIndex={0}
+      ref={ref}
+      // The keyboard scrolls a scroll container only once it has the focus; one that fits is skipped
+      tabIndex={overflows ? 0 : undefined}
       aria-labelledby={props["aria-label"] ? undefined : titleId}
       className={cn(
         // The -m-1 p-1 gutter keeps the focus rings of full-width fields inside the scroll box, without moving them
