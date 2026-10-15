@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import {
@@ -154,11 +154,15 @@ describe("themeUtilitiesIn", () => {
     write("theme.js", "// @utility from-theme-js {}\n");
     write("theme.css", "@utility from-theme-css {}\n");
     write("js-first.css", '@import "./theme";\n@utility from-js-first {}\n');
+    // Tailwind leaves these as native CSS imports and inlines nothing from them
     write("url.css", '@import url("./core.css");\n@import url( "./a.css" ) layer(base);\n');
+    write("url-bare.css", "@import url(./core.css);\n@utility from-url-bare {}\n");
     write("commented.css", '/* @import "./nope.css"; */\n@utility from-commented {}\n');
     write("remote.css", '@import "https://example.com/x.css";\n@import url("//cdn/y.css");\n');
     write("missing.css", '@import "missing-pkg/theme.css";\n');
     write("nested-missing.css", '@import "./missing.css";\n');
+    symlinkSync("gone.css", file("dangling.css"));
+    write("dangling-import.css", '@import "./dangling.css";\n');
     // Tailwind's own package: Tailwind reads `style`, Bun takes the JavaScript, which is skipped
     write(
       "node_modules/tailwindcss/package.json",
@@ -204,13 +208,10 @@ describe("themeUtilitiesIn", () => {
     expect(themeUtilitiesIn(file("extensionless.css"))).toEqual(["font-heading", "touch-target"]);
   });
 
-  it("follows url(...) imports like quoted ones", () => {
-    expect(themeUtilitiesIn(file("url.css"))).toEqual([
-      "font-heading",
-      "touch-target",
-      "from-a",
-      "from-b",
-    ]);
+  it("skips url(...) imports, which Tailwind does not inline", () => {
+    expect(() => themeUtilitiesIn(file("url.css"))).not.toThrow();
+    expect(themeUtilitiesIn(file("url.css"))).toEqual([]);
+    expect(themeUtilitiesIn(file("url-bare.css"))).toEqual(["from-url-bare"]);
   });
 
   it("ignores an @import inside a comment", () => {
@@ -243,6 +244,12 @@ describe("themeUtilitiesIn", () => {
   it("throws on an unresolvable import in a nested stylesheet, naming the nested file", () => {
     expect(() => themeUtilitiesIn(file("nested-missing.css"))).toThrow(
       /\/missing\.css: cannot resolve @import "missing-pkg\/theme\.css"/,
+    );
+  });
+
+  it("throws on a target that does not exist, naming the file and the specifier", () => {
+    expect(() => themeUtilitiesIn(file("dangling-import.css"))).toThrow(
+      /dangling-import\.css: cannot read @import ".\/dangling\.css"/,
     );
   });
 

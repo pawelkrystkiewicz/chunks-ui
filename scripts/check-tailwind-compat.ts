@@ -20,7 +20,7 @@
  *
  * Run: bun run check:tailwind (builds chunks-ui first)
  */
-import { cpSync, mkdtempSync, readFileSync, realpathSync, rmSync } from "node:fs";
+import { cpSync, existsSync, mkdtempSync, readFileSync, realpathSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
@@ -45,7 +45,8 @@ export function themeUtilities(css: string): string[] {
   return [...rules].map(([, name = ""]) => name);
 }
 
-const IMPORT = /@import\s+(?:url\()?\s*["']([^"']+)["']/g;
+// Quoted only: Tailwind leaves `@import url(...)` as a native CSS import, inlining nothing from it
+const IMPORT = /@import\s+["']([^"']+)["']/g;
 const SCHEME = /^(?:[a-z][\w+.-]*:|\/\/)/i; // `https:`, `data:`, or protocol-relative `//host`
 const RELATIVE = /^\.\.?\//;
 
@@ -59,10 +60,17 @@ function tryResolve(spec: string, from: string): string | undefined {
 
 /**
  * The file `spec` names when `importer` imports it, or a throw. Tailwind resolves a CSS import
- * with `extensions: [".css"]` and `conditionNames: ["style"]`; Bun's resolver does neither, so a
- * relative specifier is retried with `.css` added. A package that exports its stylesheet only
- * under the `style` condition does not resolve here: that is the known limit, and it throws
- * rather than dropping the utilities the stylesheet defines.
+ * with enhanced-resolve (`extensions: [".css"]`, `mainFields: ["style"]`,
+ * `conditionNames: ["style"]`); Bun's resolver has none of these, so a relative specifier is
+ * retried with `.css` added and nothing else differs. The limits:
+ * - A subpath with a plain string target (`chunks-ui-core/theme.css`) resolves.
+ * - A package that exports its stylesheet only under `style` throws.
+ * - A package with `style` and a JS condition (the shape of `tailwindcss` itself) resolves to its
+ *   JS, which the caller skips: a `@utility` in its stylesheet would be missed.
+ * - An extensionless `./theme` beside both `theme.js` and `theme.css` resolves to the JS, which is
+ *   skipped too.
+ * - `@import "./dir"`, where Tailwind finds `dir/index.css`, throws.
+ * - A target that does not exist (a dangling symlink) throws, naming the importer and specifier.
  */
 function resolveImport(spec: string, importer: string): string {
   const from = dirname(importer);
@@ -73,17 +81,21 @@ function resolveImport(spec: string, importer: string): string {
       `${importer}: cannot resolve @import "${spec}". themeUtilitiesIn resolves with Bun, which adds no ".css" to a bare specifier and ignores the "style" export condition Tailwind reads, so a stylesheet a package exports only under "style" fails here and its @utility names would be missing from the scan.`,
     );
   }
+  if (!existsSync(target)) {
+    throw new Error(`${importer}: cannot read @import "${spec}" (${target})`);
+  }
   return target;
 }
 
 /**
  * The utilities `file` and the stylesheets it `@import`s define: a relative specifier from its
  * directory (`./core` finds `core.css`), a bare one (`chunks-ui-core/theme.css`) through
- * node_modules from there, either in `"..."` or `url("...")` form. A URL (`https:`, `//host`) and a target
- * that is not a `.css` file (`tailwindcss` resolves to its JS) are skipped, as Tailwind's own CSS
- * defines no `@utility`. An import that does not resolve throws (see resolveImport), as does a
- * stylesheet that cannot be read. Each file is read once (`seen`, by real path: node_modules and
- * macOS temp directories are symlinks), so an import cycle ends.
+ * node_modules from there, in the quoted form only. `url(...)` imports (Tailwind leaves them as
+ * native CSS imports), URLs (`https:`, `//host`) and a target that is not a `.css` file
+ * (`tailwindcss` resolves to its JS) are skipped. An import that does not resolve or does not exist
+ * throws (see resolveImport), as does a stylesheet that cannot be read. Each file is read once
+ * (`seen`, by real path: node_modules and macOS temp directories are symlinks), so an import cycle
+ * ends.
  */
 export function themeUtilitiesIn(file: string, seen = new Set<string>()): string[] {
   const path = realpathSync(file);
