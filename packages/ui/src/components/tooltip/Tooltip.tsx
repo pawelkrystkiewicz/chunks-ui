@@ -30,10 +30,11 @@ function TooltipPortal(props: TooltipPortalProps) {
   return <BaseTooltip.Portal container={usePortalContainer()} {...props} />;
 }
 
-function TooltipPopup({ className, ...props }: TooltipPopupProps) {
+function TooltipPopup({ className, render: renderProp, ...props }: TooltipPopupProps) {
   const m = useLoadedMotion();
   const reduced = useReducedMotion();
-  const useSpring = !!m && !reduced;
+  // A consumer's `render` replaces the animated element, so that popup keeps the CSS transition
+  const useSpring = !!m && !reduced && !renderProp;
   const render = useSpring
     ? createPopupRenderer({
         m,
@@ -41,7 +42,7 @@ function TooltipPopup({ className, ...props }: TooltipPopupProps) {
         from: { opacity: 0, scale: 0.95 },
         to: { opacity: 1, scale: 1 },
       })
-    : undefined;
+    : renderProp;
 
   return (
     <BaseTooltip.Popup

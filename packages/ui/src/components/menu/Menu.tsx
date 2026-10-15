@@ -73,11 +73,13 @@ function MenuContentPopup({
   arrowPadding,
   onPointerMove,
   onKeyDown,
+  render: renderProp,
   ...props
 }: MenuContentProps) {
   const m = useLoadedMotion();
   const reduced = useReducedMotion();
-  const useSpring = !!m && !reduced;
+  // A consumer's `render` replaces the animated element, so that popup keeps the CSS transition
+  const useSpring = !!m && !reduced && !renderProp;
   const [positioner, arrowPaddingByDefault] = useArrowPadding();
   // Pointer over the popup until the next key press keeps its ring off (W151); a reopen during the
   // exit animation keeps a stale flag until the next key press (accepted).
@@ -89,7 +91,7 @@ function MenuContentPopup({
         from: { opacity: 0, scale: 0.95 },
         to: { opacity: 1, scale: 1 },
       })
-    : undefined;
+    : renderProp;
 
   return (
     <BaseMenu.Positioner

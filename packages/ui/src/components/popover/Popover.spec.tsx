@@ -1,6 +1,8 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { axe } from "jest-axe";
+import type { ReactElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { reloadMotion } from "../../lib/use-motion";
 import { Popover } from "./Popover";
 
 afterEach(cleanup);
@@ -92,5 +94,33 @@ describe("Popover", () => {
         },
       }),
     ).toHaveNoViolations();
+  });
+});
+
+// Last, since Motion stays loaded for the tests that follow
+describe("Popover.Content with Motion loaded", () => {
+  function renderContent(renderProp?: ReactElement) {
+    render(
+      <Popover.Root open>
+        <Popover.Trigger>Open</Popover.Trigger>
+        <Popover.Content render={renderProp} data-testid="content">
+          Content
+        </Popover.Content>
+      </Popover.Root>,
+    );
+    return screen.getByTestId("content");
+  }
+
+  it("animates the default element with Motion, not CSS", async () => {
+    await reloadMotion();
+    expect(renderContent()).not.toHaveClass("micro-interactions");
+  });
+
+  // A consumer's `render` replaces the animated element, so the spring cannot attach to it
+  it("keeps the CSS transition on the element a render prop gives it", async () => {
+    await reloadMotion();
+    const el = renderContent(<section />);
+    expect(el.tagName).toBe("SECTION");
+    expect(el).toHaveClass("micro-interactions", "data-starting-style:opacity-0");
   });
 });
