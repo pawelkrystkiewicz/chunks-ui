@@ -77,7 +77,7 @@ Wrap a label with `NumberField.ScrubArea` to allow click-and-drag adjustment. Wh
 
 Inside a [`PortalContainerProvider`](/utilities#portalcontainerprovider) the cursor renders in the provider's element, like the popups, so a theme scoped to that element reaches it. Two limits apply:
 
-- Base UI positions the cursor with viewport coordinates (`position: fixed` and `translate3d`). The provider's element must therefore not establish a containing block: give it no `transform`, `filter`, `perspective`, `contain`, `will-change` or `container-type`. Otherwise the cursor is offset from the pointer.
+- Base UI positions the cursor with viewport coordinates (`position: fixed` and `translate3d`). The provider's element must therefore not establish a containing block: give it no `transform`, `translate`, `rotate`, `scale`, `filter`, `backdrop-filter`, `perspective`, `contain`, `content-visibility`, `will-change` or `container-type`. Otherwise the cursor is offset from the pointer.
 - Inside the content of a `Dialog`, `Drawer`, `Popover` or `Combobox`, which reset the provider to `undefined`, the cursor renders in `<body>`, with the root theme. It also does so while the provider's `value` is `null`.
 
 ## Disabled
