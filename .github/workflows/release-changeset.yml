@@ -76,20 +76,28 @@ jobs:
             text: "Published ${{ fromJSON(steps.changesets.outputs.publishedPackages)[0].name }}@${{ fromJSON(steps.changesets.outputs.publishedPackages)[0].version }} to npm\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>"
 
       # Nothing published: a run that refreshed the Version Packages PR, a run where master holds
-      # only empty changesets (the action logs "All changesets are empty; not creating PR" and skips
-      # the publish; hasChangesets is 'true' in both runs, so it cannot tell them apart), or a
-      # publish that found the version on npm already. Master's package.json is at a published
-      # version in all but the second case, so npm decides whether a message goes out.
+      # only empty changesets (the action logs "All changesets are empty; not creating PR"), or a
+      # publish that found the version on npm already. The action publishes only when no changeset
+      # is left on master, and hasChangesets is 'true' for empty ones too, so only that log line
+      # tells the first two apart. Master's package.json is at a published version in all of these
+      # unless a Version Packages PR was merged before the Release run of the newest master push had
+      # refreshed it: master then sits at the bumped, unpublished version with the changesets the PR
+      # did not consume, empty or real, and no run publishes until they are gone. Empty: delete them
+      # in a PR. Real: that run refreshed the Version Packages PR; merge it. npm decides whether a
+      # message goes out: only an E404 for the version does (any other npm failure is a warning).
       - name: Check npm has the version master is at
         id: unpublished
         if: steps.changesets.outputs.published != 'true'
         run: |
           version=$(node -p "require('./packages/ui/package.json').version")
-          if npm view "chunks-ui@$version" version >/dev/null; then
+          if out=$(npm view "chunks-ui@$version" version 2>&1); then
             echo "chunks-ui@$version is on npm"
-          else
+          elif grep -q E404 <<<"$out"; then
             echo "chunks-ui@$version is not on npm"
             echo "version=$version" >> "$GITHUB_OUTPUT"
+          else
+            echo "$out"
+            echo "::warning::npm view failed: ${out//$'\n'/%0A}"
           fi
 
       - name: Notify Slack when the run published nothing and npm lacks the version
@@ -100,7 +108,7 @@ jobs:
           token: ${{ secrets.SLACK_BOT_TOKEN }}
           payload: |
             channel: "${{ secrets.SLACK_CHANNEL_ID }}"
-            text: "Release run published nothing but chunks-ui@${{ steps.unpublished.outputs.version }} is not on npm; master holds only empty changesets or the publish was skipped\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>"
+            text: "Release run published nothing but chunks-ui@${{ steps.unpublished.outputs.version }} is not on npm; a Version Packages PR was merged too early and master still holds changesets (TESTING_STRATEGY.md, CI, Release)\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>"
 
       - name: Notify Slack on Release Failure
         if: failure()
