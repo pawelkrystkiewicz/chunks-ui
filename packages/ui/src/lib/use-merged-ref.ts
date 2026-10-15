@@ -1,6 +1,9 @@
 import { type Ref, type RefCallback, type RefObject, useCallback } from "react";
 
-/** A component's own ref: an object to fill, or a callback to call with the node. */
+/**
+ * A component's own ref: an object to fill, or a callback to call with the node. A callback must
+ * not return a cleanup (it is dropped).
+ */
 type OwnRef<T> = RefObject<T | null> | ((node: T | null) => void);
 
 function assign<T>(ref: OwnRef<T>, node: T | null) {
