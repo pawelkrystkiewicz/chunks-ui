@@ -75,7 +75,7 @@ Wrap a label with `NumberField.ScrubArea` to allow click-and-drag adjustment. Wh
 
 <NumberFieldScrubExample />
 
-The cursor renders where the popups do. Inside a [`PortalContainerProvider`](/utilities#portalcontainerprovider) that is the provider's element, so a theme scoped to it reaches the cursor. Inside `Dialog`, `Drawer`, `Popover` or `Combobox` content it is that overlay's portal, so the cursor keeps the overlay's theme and stacks with the popups opened from it. Unlike the popups, it has one limit, listed there.
+The cursor renders where the popups do. Inside a [`PortalContainerProvider`](/utilities#portalcontainerprovider) that is the provider's element, so a theme scoped to it reaches the cursor. Inside `Dialog`, `Drawer`, `Popover` or `Combobox` content it is that overlay's portal, so the cursor keeps the overlay's theme and renders with the popups opened from it. In a `Dialog` or `Drawer` that portal is a stacking context, so the cursor stacks in the overlay's layer (`z-modals`, `z-drawers`) and a `Toast` at the root paints over it during a scrub. The portal of a `Popover` or `Combobox` is not one, so there the cursor stays at `z-cursor`. Unlike the popups, it has one limit, listed there.
 
 ## Disabled
 
