@@ -282,10 +282,12 @@ function ComboboxChip({ className, id, ...props }: ComboboxChipProps) {
       <BaseCombobox.Chip
         id={chipId}
         // The arrow keys move the focus from the input to a chip: the library ring, not the
-        // browser's outline
+        // browser's outline. The chips sit flush, so the focused chip rises above the next one,
+        // whose opaque background would paint over the ring's edge (`z-*` needs `relative`).
         className={cnState(
           "inline-flex items-center gap-1 rounded-sm border border-border bg-muted px-1.5 py-0.5 text-xs",
           FOCUS_RING,
+          "focus-visible:relative focus-visible:z-[1]",
           RING_TRANSITION,
           className,
         )}

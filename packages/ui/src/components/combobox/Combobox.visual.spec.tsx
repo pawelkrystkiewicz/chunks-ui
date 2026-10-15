@@ -79,7 +79,7 @@ const chipsCombobox = () => (
 // when the input is inside Combobox.Chips
 const chipsAroundInput = () => (
   <Combobox.Root multiple items={options} defaultValue={options.slice(0, 2)}>
-    <Combobox.Control>
+    <Combobox.Control data-testid="control">
       <Combobox.Chips>
         {options.slice(0, 2).map((item) => (
           <Combobox.Chip key={item.value}>
@@ -87,7 +87,10 @@ const chipsAroundInput = () => (
             <Combobox.ChipRemove />
           </Combobox.Chip>
         ))}
-        <Combobox.Input aria-label="Frameworks" />
+        <Combobox.Input
+          className="h-7 min-w-20 flex-1 border-0 bg-transparent px-0"
+          aria-label="Frameworks"
+        />
       </Combobox.Chips>
     </Combobox.Control>
   </Combobox.Root>
@@ -173,6 +176,22 @@ describe("Combobox", () => {
       outlineOffset: "2px",
       outlineColor: ringColor(),
     });
+  });
+
+  // The chips sit flush: the next chip's opaque background would paint over the right edge of the
+  // focused chip's ring (and a wrapped row's over its bottom edge), so the focused chip rises
+  // above it. The screenshot shows the whole ring beside the second chip.
+  it("chip focus-visible, above the next chip", async () => {
+    const { fixture, getByRole, getByText } = await renderFixture(
+      <div style={{ width: 300 }}>{chipsAroundInput()}</div>,
+    );
+    focusVisible(getByRole("combobox"));
+    // The first ArrowLeft focuses the last chip, the second the first of the two
+    await userEvent.keyboard("{ArrowLeft}{ArrowLeft}");
+    const chip = getByText("React");
+    expect(document.activeElement).toBe(chip);
+    expect(chip.matches(":focus-visible")).toBe(true);
+    await expect(fixture).toMatchScreenshot();
   });
 
   it("open", async () => {
