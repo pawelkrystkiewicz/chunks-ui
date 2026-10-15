@@ -1,4 +1,4 @@
-import { cva } from "class-variance-authority";
+import { cva } from "../../lib/cva";
 import { RING_ANIMATION_CLASSES } from "../shared";
 
 export const inputVariants = cva([

@@ -7,6 +7,7 @@
  * - Only the main entry starts with "use client"; utils has none, for React Server Components.
  * - Each built entry, ESM and CJS, exports the same names as its source file.
  * - The `motion/react` import keeps the shape described in src/lib/use-motion.ts.
+ * - The typings import nothing from a `class-variance-authority/` subpath (`src/lib/cva.ts` keeps it out).
  *
  * Run: bun run check:dist
  */
@@ -37,6 +38,7 @@ for (const format of ["js", "cjs"] as const) {
   const utils = await load[format](utilsFile);
   const indexCode = readFileSync(join(DIST, indexFile), "utf8");
   const utilsCode = readFileSync(join(DIST, utilsFile), "utf8");
+  const declarationExtension = format === "js" ? "d.ts" : "d.cts";
 
   check(names(index) === names(source), `${indexFile} exports the names src/index.ts exports`);
   check(names(utils) === names(sourceUtils), `${utilsFile} exports the names src/utils.ts exports`);
@@ -57,6 +59,14 @@ for (const format of ["js", "cjs"] as const) {
   );
   check(!indexCode.includes("webpackIgnore"), `${indexFile} has no webpackIgnore`);
 
+  for (const entry of ["index", "utils"]) {
+    const declarationFile = `${entry}.${declarationExtension}`;
+    check(
+      !readFileSync(join(DIST, declarationFile), "utf8").includes("class-variance-authority/"),
+      `${declarationFile} imports nothing from a "class-variance-authority/" subpath`,
+    );
+  }
+
   for (const name of Object.keys(sourceUtils)) {
     check(index[name] === utils[name], `${name} from ${indexFile} is the one in ${utilsFile}`);
   }
@@ -67,5 +77,5 @@ if (failures.length > 0) {
   process.exit(1);
 }
 console.log(
-  "dist/: index.{js,cjs} use the helpers in utils.{js,cjs}; banners, exports and the motion import match",
+  "dist/: index.{js,cjs} use the helpers in utils.{js,cjs}; banners, exports and the motion import match; the typings import no cva subpath",
 );

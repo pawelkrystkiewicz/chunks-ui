@@ -50,6 +50,10 @@ Importing the theme sets the page's default font to Manrope through Tailwind's p
 }
 ```
 
+Dark mode is the `.dark` class on `<html>`: with it, every component uses the dark values of the tokens. See [Theme › Dark Mode](/theme#dark-mode).
+
+A React Server Component imports `cn`, `cnState` and the `*Variants` functions from `chunks-ui/utils`, which has no `"use client"`. See [Utilities › Server components](/utilities#server-components).
+
 ## Architecture
 
 - **Headless layer:** `@base-ui/react` v1.9+ (includes Floating UI for positioning)
