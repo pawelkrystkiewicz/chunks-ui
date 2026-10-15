@@ -356,7 +356,9 @@ export function Calendar({
                           ...RING_ANIMATION_CLASSES,
                           "focus-visible:outline-2 focus-visible:outline-ring",
                           !isSelected && !isToday && "hover:bg-accent hover:text-accent-foreground",
-                          isSelected && "bg-primary text-primary-foreground",
+                          // Forced colours drop author backgrounds: the system highlight stands in
+                          isSelected &&
+                            "bg-primary text-primary-foreground forced-colors:bg-[Highlight] forced-colors:text-[HighlightText]",
                           isToday &&
                             !isSelected &&
                             "font-medium text-primary-text ring-1 ring-primary",
@@ -364,10 +366,26 @@ export function Calendar({
                           !isCurrentMonth &&
                             !isSelected &&
                             "text-muted-foreground forced-colors:text-[GrayText]",
-                          disabled && "pointer-events-none opacity-40",
+                          // Forced colours keep the opacity, so a disabled day would look like an
+                          // outside day: there, GrayText at full opacity, struck through
+                          disabled &&
+                            "pointer-events-none opacity-40 forced-colors:line-through forced-colors:opacity-100",
+                          disabled && !isSelected && "forced-colors:text-[GrayText]",
                         )}
                       >
-                        {date.getDate()}
+                        {/* Forced colours paint a Canvas backplate behind the selected day's number:
+                            off for that span alone. Today's underline is on the span because the
+                            button carries the strike, and both set `text-decoration-line`. */}
+                        <span
+                          className={cn(
+                            isSelected && "forced-color-adjust-none",
+                            isToday &&
+                              !isSelected &&
+                              "forced-colors:underline forced-colors:decoration-2 forced-colors:underline-offset-2",
+                          )}
+                        >
+                          {date.getDate()}
+                        </span>
                       </button>
                     </td>
                   );

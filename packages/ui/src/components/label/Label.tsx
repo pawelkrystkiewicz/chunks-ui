@@ -1,23 +1,22 @@
 import type { ComponentProps } from "react";
 import { cn } from "../../lib/cn";
 
-export type LabelProps = ComponentProps<"label">;
+export type LabelProps = ComponentProps<"label"> & {
+  /**
+   * Dims the label and shows a not-allowed cursor. It does not read its control's state: pass
+   * `disabled` to both.
+   */
+  disabled?: boolean;
+};
 
-export function Label({ className, ...props }: LabelProps) {
+export function Label({ className, disabled, ...props }: LabelProps) {
   return (
     // biome-ignore lint/a11y/noLabelWithoutControl: Label is a primitive; htmlFor is passed by consumers via props spread
     <label
+      data-disabled={disabled ? "" : undefined}
       className={cn(
         "font-medium text-sm leading-none",
-        "peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
-        // Dims when the control right after it (its next sibling) is disabled, whatever `htmlFor`
-        // points at: a native control is :disabled, a Base UI part gets data-disabled, and an
-        // Input with adornments is a wrapper (data-slot="input-adornments") with the disabled input as a
-        // child, which excludes the hidden `<input disabled>` Base UI puts inside a Radio.Group. No
-        // `peer-data-disabled:`, because Checkbox, Switch and Radio.Root carry `peer` and it would
-        // dim every later label in the same parent.
-        "has-[+:disabled,+[data-disabled],+[data-slot=input-adornments]>input:disabled]:cursor-not-allowed",
-        "has-[+:disabled,+[data-disabled],+[data-slot=input-adornments]>input:disabled]:opacity-50",
+        "data-disabled:cursor-not-allowed data-disabled:opacity-50",
         className,
       )}
       {...props}

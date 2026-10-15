@@ -1,6 +1,6 @@
 import { render } from "@testing-library/react";
-import { afterEach, describe, it } from "vitest";
-import { commands, userEvent } from "vitest/browser";
+import { afterEach, describe, expect, it } from "vitest";
+import { commands, page, userEvent } from "vitest/browser";
 import { renderFixture } from "../../VisualTest.utils";
 import { Switch } from "./index";
 
@@ -29,6 +29,38 @@ describe("Switch", () => {
       </div>,
     );
     await expect(fixture).toMatchScreenshot();
+  });
+});
+
+describe("Switch disabled", () => {
+  it("shows a not-allowed cursor on the root and the thumb, and a click does not switch it on", async () => {
+    const { getByRole, getByTestId } = render(
+      <div>
+        <input aria-label="Name" />
+        <Switch.Root aria-label="Enabled">
+          <Switch.Thumb />
+        </Switch.Root>
+        <Switch.Root aria-label="Disabled" disabled>
+          <Switch.Thumb data-testid="thumb" />
+        </Switch.Root>
+      </div>,
+    );
+    const root = getByRole("switch", { name: "Disabled" });
+    const { cursor, pointerEvents } = getComputedStyle(root);
+    expect({ cursor, pointerEvents }).toEqual({ cursor: "not-allowed", pointerEvents: "auto" });
+    expect(getComputedStyle(getByRole("switch", { name: "Enabled" })).cursor).not.toBe(
+      "not-allowed",
+    );
+    // The thumb ignores the pointer, so the root under it supplies the cursor
+    const box = getByTestId("thumb").getBoundingClientRect();
+    expect(document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2)).toBe(root);
+
+    const input = getByRole("textbox", { name: "Name" });
+    input.focus();
+    // force: Playwright refuses to click a disabled element, a user can
+    await page.elementLocator(root).click({ force: true });
+    expect(root.getAttribute("aria-checked")).toBe("false");
+    expect(document.activeElement).toBe(input);
   });
 });
 

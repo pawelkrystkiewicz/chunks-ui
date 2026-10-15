@@ -1,6 +1,7 @@
 import { Label } from 'chunks-ui'
 import { LabelDisabledControlExample } from '@/examples/Label'
 import { Container } from '@/components'
+import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
 # Label
 
@@ -38,11 +39,13 @@ import { Label } from "chunks-ui";
   </div>
 </Container>
 
-## Next to a Disabled Control
+## Disabled
+
+`disabled` dims the label and shows a not-allowed cursor. The label does not read its control's state, so pass `disabled` to both:
 
 ```tsx
 <div className="flex items-center gap-2">
-  <Label htmlFor="terms">Accept terms</Label>
+  <Label htmlFor="terms" disabled>Accept terms</Label>
   <Checkbox.Root id="terms" disabled>
     <Checkbox.Indicator />
   </Checkbox.Root>
@@ -51,28 +54,30 @@ import { Label } from "chunks-ui";
 
 <LabelDisabledControlExample />
 
-The label dims when the element right after it, usually its control but any disabled element, is disabled. An `Input` with adornments counts too: it renders a wrapper (`data-slot="input-adornments"`) around the input, and the label dims when the input in that wrapper is disabled. A hidden input that another component renders inside the next element, such as the one of a disabled `Radio.Root`, doesn't count.
+A disabled label carries `data-disabled`, the attribute Base UI sets on `Field.Label` inside a disabled `Field.Root`, and its disabled look is keyed on that attribute alone. One `data-disabled:` class in `className` restyles it (spell the variant `data-disabled:`, as the component does, so `cn` drops the default):
 
 ```tsx
-<div className="flex items-center gap-2">
-  <Label htmlFor="price">Price</Label>
-  <Input id="price" startAdornment="$" disabled />
-</div>
+<Label htmlFor="terms" disabled className="data-disabled:opacity-75">
+  Accept terms
+</Label>
 ```
-
-It doesn't dim when:
-
-- the control comes first (a native input with the `peer` class is the exception)
-- other elements sit in between. Wrap each pair, or dim the label yourself, for example with `className={cn(disabled && "opacity-50")}`.
 
 Inside a `Field.Root`, use `Field.Label`, which dims when the field is disabled.
 
 ## Props
 
-This component accepts all props from the native `<label>` element.
+<TSDoc
+  definition={generateDefinition({
+    code: `
+import type { LabelProps } from 'chunks-ui'
+type Props = Pick<LabelProps, 'disabled'>
+export default Props
+`
+  })}
+/>
+
+All other props are forwarded to the underlying native `<label>` element.
 
 ## Styling
 
 - `font-medium text-sm leading-none` — matches `Field.Label` typography
-- `has-[+:disabled,+[data-disabled],+[data-slot=input-adornments]>input:disabled]:` sets `opacity-50` and `cursor-not-allowed` when the control right after the label is disabled, or the input inside it for an `Input` with adornments (see [Next to a Disabled Control](#next-to-a-disabled-control))
-- `peer-disabled:cursor-not-allowed peer-disabled:opacity-50` — dims after a disabled native input with the `peer` class
