@@ -53,7 +53,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "test": "vitest run",
+    "test": "vitest run && bun test ./scripts",
     "test:unit:coverage": "vitest run --coverage",
     "test:visual": "vitest run --config vitest.visual.config.ts",
     "test:visual:update": "vitest run --config vitest.visual.config.ts --update=true",
