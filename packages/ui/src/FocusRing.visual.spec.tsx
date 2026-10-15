@@ -543,6 +543,16 @@ describe("focus ring with no reduced-motion preference", () => {
     expect(getComputedStyle(drawn).transitionProperty).toContain(property);
   });
 
+  // The offset ring of Button, not the flush one these parts drew before
+  it.each(["Toast.Close", "Toast.Action", "ClearButton"])(
+    "%s draws the ring 2px outside the edge",
+    async (part) => {
+      const c = RING_CASES.find((r) => r.part === part);
+      if (!c) throw new Error(`No ring case for ${part}`);
+      expect(getComputedStyle(await focusRing(c)).outlineOffset).toBe("2px");
+    },
+  );
+
   // Motion writes these on the popups, so a CSS transition on them would lag the spring
   it.each(["Popover.Content", "Menu.Content", "Dialog.Popup", "Drawer.Popup"])(
     "%s leaves the properties Motion writes out of its transitions",

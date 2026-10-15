@@ -6,7 +6,7 @@ import { cn, cnState } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
 import { useReducedMotion } from "../../lib/use-motion";
 import { CloseIcon } from "../CloseIcon";
-import { RING_ANIMATION_CLASSES } from "../shared";
+import { FOCUS_RING, RING_ANIMATION_CLASSES, TOAST_CONTENT_CLASS } from "../shared";
 import { DEFAULT_TOAST_LABELS, type ToastLabels } from "./Toast.Labels";
 
 /**
@@ -48,11 +48,8 @@ export interface ToastStyleOptions {
    */
   dismissible?: boolean;
   /**
-   * Misspelled alias of `dismissible`. Kept for backwards compatibility
-   * with early adopters of this branch — prefer `dismissible` in new code.
-   * If both are set, `dismissible` wins.
-   *
-   * @deprecated Use `dismissible` instead.
+   * Misspelled alias of `dismissible`.
+   * @deprecated Use `dismissible`. Kept for compatibility; `dismissible` wins when both are set.
    */
   dissmissable?: boolean;
   /**
@@ -112,7 +109,9 @@ function ToastViewport({ className, labels, ...props }: ToastViewportProps) {
         return (
           <ToastRoot key={toast.id} toast={toast} className={toast.className}>
             {Icon && <Icon className={cn("size-5 shrink-0 self-start", toast.iconClassName)} />}
-            <BaseToast.Content className="ToastContent flex min-w-0 flex-1 flex-col gap-1">
+            <BaseToast.Content
+              className={cn(TOAST_CONTENT_CLASS, "flex min-w-0 flex-1 flex-col gap-1")}
+            >
               {toast.title != null && <ToastTitle>{toast.title}</ToastTitle>}
               {toast.description != null && (
                 <ToastDescription>{toast.description}</ToastDescription>
@@ -189,7 +188,7 @@ function ToastClose({ className, children, ...props }: ToastCloseProps) {
       className={cnState(
         ...RING_ANIMATION_CLASSES,
         "absolute end-2 top-5 flex size-6 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground",
-        "focus-visible:outline-2 focus-visible:outline-ring",
+        FOCUS_RING,
         className,
       )}
       {...props}
@@ -205,7 +204,7 @@ function ToastAction({ className, ...props }: ToastActionProps) {
       className={cnState(
         ...RING_ANIMATION_CLASSES,
         "mt-1 inline-flex h-7 w-fit items-center rounded-md border border-border px-3 font-medium text-xs hover:bg-accent hover:text-accent-foreground",
-        "focus-visible:outline-2 focus-visible:outline-ring",
+        FOCUS_RING,
         className,
       )}
       {...props}

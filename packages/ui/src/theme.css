@@ -384,7 +384,8 @@
  * stack, and restore it when the viewport is hovered/focused. Scoped to
  * `.toast-stack` because Base UI also sets `data-behind` on regular
  * (non-stacked) viewports — without the scope, every non-frontmost toast
- * in the app would have invisible content. */
+ * in the app would have invisible content. `.ToastContent` is TOAST_CONTENT_CLASS in
+ * components/shared.ts; Toast.Content carries it. */
 .toast-stack .ToastContent {
   transition: opacity 250ms;
 }

@@ -2,7 +2,7 @@
  * The arrow shared by Popover.Arrow and Menu.Arrow: a square in the popup's colours, standing on
  * the corner between its two bordered sides, which each side turns to point at the trigger.
  */
-import { FOCUS_RING } from "../components/shared";
+import { FOCUS_RING, POPUP_ARROW_CLASS } from "../components/shared";
 
 /**
  * For a popup that can hold an arrow. `relative` makes the popup the arrow's containing block at
@@ -25,6 +25,7 @@ import { FOCUS_RING } from "../components/shared";
  */
 export const arrowPopupClasses = [
   "relative",
+  // `.PopupArrow` is POPUP_ARROW_CLASS, written out so Tailwind's scanner sees each variant
   "[--popup-arrow-reach:0px] has-[.PopupArrow]:[--popup-arrow-reach:calc(var(--spacing)*1.75)]",
   "has-[.PopupArrow]:data-[side=top]:mb-(--popup-arrow-reach)",
   "has-[.PopupArrow]:data-[side=bottom]:mt-(--popup-arrow-reach)",
@@ -47,7 +48,8 @@ export const arrowPopupClasses = [
 ];
 
 export const arrowClasses = [
-  "PopupArrow absolute size-2.5 border-border border-t border-l bg-popover",
+  POPUP_ARROW_CLASS,
+  "absolute size-2.5 border-border border-t border-l bg-popover",
   // Only the half with the tip: the other half would cover the popup's content
   "[clip-path:polygon(0_0,100%_0,0_100%)]",
   // Half the arrow's size, so its centre sits on the inner edge of the popup's border: the arrow

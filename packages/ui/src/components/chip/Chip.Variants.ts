@@ -1,4 +1,4 @@
-import { cva } from "class-variance-authority";
+import { cva } from "../../lib/cva";
 import type { ElementBaseVariant, ElementColor } from "../../types";
 
 export const chipVariants = cva(
