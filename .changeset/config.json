@@ -18,6 +18,9 @@
     "!**/*.spec.tsx",
     "!**/__screenshots__/**",
     "!vitest*.config.ts",
-    "!vitest*.setup.ts"
+    "!vitest*.setup.ts",
+    "!src/VisualTest.*",
+    "!src/visual-test.css",
+    "!scripts/**"
   ]
 }

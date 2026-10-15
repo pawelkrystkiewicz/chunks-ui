@@ -189,8 +189,10 @@ The changelog entry links the PR that added the changeset (`@changesets/changelo
 - `**/*.spec.ts` and `**/*.spec.tsx` (unit, visual and WebKit specs)
 - `**/__screenshots__/**` (visual baselines)
 - `vitest*.config.ts` and `vitest*.setup.ts` in the package root
+- `src/VisualTest.*` and `src/visual-test.css` (visual test helpers and styles, never bundled)
+- `scripts/**` (the package's own `scripts/check-dist.ts`, which checks `dist` and ships nothing)
 
-A PR that changes only these files passes the gate with no changeset. Any other file in `packages/ui` counts: source, `package.json`, build config and test helpers such as `VisualTest.utils.tsx`. Keep `**` first in the list and add exclusions after it: a later positive pattern adds back the files an earlier negation removed (micromatch applies the list in order).
+A PR that changes only these files passes the gate with no changeset. Any other file in `packages/ui` counts: source, `package.json` and build config such as `tsup.config.ts`. Keep `**` first in the list and add exclusions after it: a later positive pattern adds back the files an earlier negation removed (micromatch applies the list in order).
 
 A change to such a file with no user-facing effect (a comment, a refactor) gets an empty changeset, which bumps nothing and adds no changelog entry:
 
