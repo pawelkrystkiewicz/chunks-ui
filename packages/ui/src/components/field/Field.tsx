@@ -15,7 +15,9 @@ function FieldLabel({ className, ...props }: FieldLabelProps) {
     <BaseField.Label
       className={cnState(
         "font-medium text-sm leading-none",
-        "data-[disabled]:opacity-50",
+        // Spelled `data-disabled:`, as in Label, so one such class in `className` restyles both
+        // (`cn` drops a default only for the same spelling of the variant).
+        "data-disabled:cursor-not-allowed data-disabled:opacity-50",
         className,
       )}
       {...props}

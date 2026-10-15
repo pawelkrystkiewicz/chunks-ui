@@ -87,7 +87,7 @@ Use `Field.Validity` for native constraint validation:
 
 ## Disabled State
 
-Labels dim to 50% opacity when the field is disabled:
+Labels dim to 50% opacity and show a not-allowed cursor when the field is disabled:
 
 ```tsx
 <Field.Root disabled>
@@ -98,12 +98,14 @@ Labels dim to 50% opacity when the field is disabled:
 
 <FieldDisabledExample />
 
+The disabled look is keyed on `data-disabled`, the attribute that `Label` sets with its `disabled` prop. One `data-disabled:` class in `className`, for example `data-disabled:opacity-75`, restyles both labels.
+
 ## Compound Parts
 
 | Part | Description |
 |---|---|
 | `Field.Root` | Wrapper element. Vertical flex with `gap-1`. Manages `invalid` and `disabled` state. |
-| `Field.Label` | Form label. `text-sm font-medium`. Dims when disabled. |
+| `Field.Label` | Form label. `text-sm font-medium`. Dims and shows a not-allowed cursor when disabled. |
 | `Field.Description` | Help text below the label. `text-xs text-muted-foreground`. |
 | `Field.Error` | Error message. `text-xs text-destructive-text`. Renders on a failed validation, a server error, or with `match`. |
 | `Field.Control` | Connects a form control to the field (for native validation). Uses `render` prop. |
