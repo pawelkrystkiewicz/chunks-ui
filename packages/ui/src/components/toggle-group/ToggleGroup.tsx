@@ -302,7 +302,7 @@ function ToggleGroupItem({ className, value, ref, ...props }: ToggleGroupItemPro
       className={cnState(
         "relative z-[1] inline-flex items-center justify-center gap-2 rounded-md px-3 py-1.5 font-medium text-sm",
         ...RING_ANIMATION_CLASSES,
-        "text-muted-foreground enabled:hover:text-foreground",
+        "text-muted-foreground hover:text-foreground disabled:hover:text-muted-foreground",
         "data-pressed:text-foreground",
         FOCUS_RING,
         // The ring reaches 2px past the 2px gap, under a later sibling at the same z-index; in a

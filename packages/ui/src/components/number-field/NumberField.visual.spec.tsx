@@ -1,5 +1,6 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it, onTestFinished } from "vitest";
+import { userEvent } from "vitest/browser";
 import { focusVisible, renderFixture } from "../../VisualTest.utils";
 import { Dialog } from "../dialog";
 import { NumberField } from "./index";
@@ -127,5 +128,21 @@ describe("NumberField", () => {
     );
     const { cursor, pointerEvents } = getComputedStyle(getByRole("textbox", { name: "Amount" }));
     expect({ cursor, pointerEvents }).toEqual({ cursor: "not-allowed", pointerEvents: "auto" });
+  });
+
+  it("keeps a disabled increment button at its rest colour under the pointer", async () => {
+    const { getByRole } = render(
+      <NumberField.Root defaultValue={42} disabled>
+        <NumberField.Group>
+          <NumberField.Decrement />
+          <NumberField.Input aria-label="Amount" />
+          <NumberField.Increment />
+        </NumberField.Group>
+      </NumberField.Root>,
+    );
+    const increment = getByRole("button", { name: "Increase" });
+    const rest = getComputedStyle(increment).color;
+    await userEvent.hover(increment);
+    expect(getComputedStyle(increment).color).toBe(rest);
   });
 });

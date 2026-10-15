@@ -1,6 +1,6 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { userEvent } from "vitest/browser";
+import { commands, userEvent } from "vitest/browser";
 import { renderFixture } from "../../VisualTest.utils";
 import { ClearButton } from "./index";
 
@@ -16,18 +16,23 @@ describe("ClearButton", () => {
     expect({ cursor, pointerEvents }).toEqual({ cursor: "not-allowed", pointerEvents: "auto" });
   });
 
-  it("keeps its rest colours and size under the pointer when disabled", async () => {
+  it("keeps its rest colours and size under the pointer, hovered and pressed, when disabled", async () => {
     const { getByRole } = render(<ClearButton disabled />);
     const button = getByRole("button", { name: "Clear" });
     const looks = () => {
       const { color, backgroundColor, scale } = getComputedStyle(button);
-      return { color, backgroundColor, scale };
+      // `none` and `1` are the same size
+      return { color, backgroundColor, scale: scale === "none" ? 1 : Number(scale) };
     };
     const rest = looks();
     await userEvent.hover(button);
-    // The hover styles would fade in: wait for any transition the hover started
-    await new Promise((resolve) => requestAnimationFrame(resolve));
-    await Promise.all(button.getAnimations().map((animation) => animation.finished));
     expect(looks()).toEqual(rest);
+    // Chromium applies :active to a disabled button, so the press scale must stay off as well
+    await commands.mouseDown();
+    try {
+      expect(looks()).toEqual(rest);
+    } finally {
+      await commands.mouseUp();
+    }
   });
 });

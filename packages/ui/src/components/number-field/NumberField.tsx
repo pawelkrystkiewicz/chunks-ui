@@ -83,7 +83,7 @@ function NumberFieldIncrement({ className, ...props }: NumberFieldIncrementProps
     <BaseNumberField.Increment
       aria-label={labels.increment}
       className={cnState(
-        "micro-interactions flex h-ui-height items-center justify-center px-2 text-muted-foreground enabled:hover:text-foreground",
+        "micro-interactions flex h-ui-height items-center justify-center px-2 text-muted-foreground hover:text-foreground disabled:hover:text-muted-foreground",
         "border-input border-s",
         "disabled:cursor-not-allowed disabled:opacity-50",
         "data-disabled:opacity-50",
@@ -114,7 +114,7 @@ function NumberFieldDecrement({ className, ...props }: NumberFieldDecrementProps
     <BaseNumberField.Decrement
       aria-label={labels.decrement}
       className={cnState(
-        "micro-interactions flex h-ui-height items-center justify-center px-2 text-muted-foreground enabled:hover:text-foreground",
+        "micro-interactions flex h-ui-height items-center justify-center px-2 text-muted-foreground hover:text-foreground disabled:hover:text-muted-foreground",
         "border-input border-e",
         "disabled:cursor-not-allowed disabled:opacity-50",
         "data-disabled:opacity-50",

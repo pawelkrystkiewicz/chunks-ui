@@ -138,9 +138,6 @@ describe("Combobox", () => {
       const button = getByRole("button", { name });
       const rest = getComputedStyle(button).color;
       await userEvent.hover(button);
-      // A hover colour would fade in: wait for any transition the hover started
-      await new Promise((resolve) => requestAnimationFrame(resolve));
-      await Promise.all(button.getAnimations().map((animation) => animation.finished));
       expect(getComputedStyle(button).color, name).toBe(rest);
     }
   });

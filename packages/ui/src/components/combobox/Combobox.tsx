@@ -256,7 +256,7 @@ function ComboboxClear({ className, children, ...props }: ComboboxClearProps) {
         <CloseIcon className="size-3.5" />,
       )}
       className={cnState(
-        "absolute inset-y-0 end-7 flex items-center text-muted-foreground enabled:hover:text-foreground",
+        "absolute inset-y-0 end-7 flex items-center text-muted-foreground hover:text-foreground disabled:hover:text-muted-foreground",
         "micro-interactions",
         className,
       )}
@@ -312,7 +312,7 @@ function ComboboxChipRemove({ className, children, ...props }: ComboboxChipRemov
         </>,
       )}
       className={cnState(
-        "micro-interactions inline-flex items-center text-muted-foreground not-data-disabled:hover:text-foreground",
+        "micro-interactions inline-flex items-center text-muted-foreground hover:text-foreground data-disabled:hover:text-muted-foreground",
         className,
       )}
       {...props}
