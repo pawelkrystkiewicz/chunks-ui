@@ -25,6 +25,16 @@ type Setter<T> = Dispatch<SetStateAction<T>>;
 const value = "a" as "a" | "b";
 const setValue: Setter<"a" | "b"> = () => {};
 const setNumber: Setter<number> = () => {};
+const onLetter = (_next: "a" | "b") => {};
+
+/**
+ * The `Value` that `Radio.Group` infers from `props`. Nothing else on the group is typed by
+ * `Value`, so no JSX attribute can read it back when the handler is the only candidate. The
+ * parameter is the component's own signature, through an instantiation expression
+ */
+function inferValue<Value>(_props: Parameters<typeof Radio.Group<Value>>[0]): Value {
+  return undefined as never;
+}
 
 describe("Radio.Group types", () => {
   it("takes a typed useState setter as onValueChange", async () => {
@@ -76,6 +86,10 @@ describe("Radio.Group types", () => {
       // @ts-expect-error the value is "a" | "b", so the setter cannot take a number
       <Radio.Group value={value} onValueChange={setNumber} />,
     );
+  });
+
+  it("infers Value from an annotated onValueChange alone", () => {
+    expectTypeOf(inferValue({ onValueChange: onLetter })).toEqualTypeOf<"a" | "b">();
   });
 
   it("keeps unknown without a value, as before", () => {

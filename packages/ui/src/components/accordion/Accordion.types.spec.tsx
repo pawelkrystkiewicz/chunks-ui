@@ -26,6 +26,16 @@ const setOpen: Setter<string[]> = () => {};
 const sections: ("a" | "b")[] = [];
 const setSections: Setter<("a" | "b")[]> = () => {};
 const setNumbers: Setter<number[]> = () => {};
+const onSections = (_next: ("a" | "b")[]) => {};
+
+/**
+ * The item type that `Accordion.Root` infers from `props`. It is read back through a function, not
+ * a JSX attribute, to match the other type specs. The parameter is the component's own signature,
+ * through an instantiation expression
+ */
+function inferItem<Value>(_props: Parameters<typeof Accordion.Root<Value>>[0]): Value {
+  return undefined as never;
+}
 
 describe("Accordion.Root types", () => {
   it("takes a typed useState setter as onValueChange", async () => {
@@ -86,6 +96,10 @@ describe("Accordion.Root types", () => {
       // @ts-expect-error the items are strings, so the setter cannot take numbers
       <Accordion.Root value={open} onValueChange={setNumbers} />,
     );
+  });
+
+  it("infers the item type from an annotated onValueChange alone", () => {
+    expectTypeOf(inferItem({ onValueChange: onSections })).toEqualTypeOf<"a" | "b">();
   });
 
   it("keeps unknown[] without a value, as before", () => {

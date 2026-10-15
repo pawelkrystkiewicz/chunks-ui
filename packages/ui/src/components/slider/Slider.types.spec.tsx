@@ -28,6 +28,18 @@ const range: number[] = [20, 80];
 const setRange: Setter<number[]> = () => {};
 const frozen: readonly number[] = [20, 80];
 const setFrozen: Setter<readonly number[]> = () => {};
+const onRange = (_next: number[]) => {};
+
+/**
+ * The `Value` that `Slider.Root` infers from `props`. It is read back through a function, not a
+ * JSX attribute, to match the other type specs. The parameter is the component's own signature,
+ * through an instantiation expression
+ */
+function inferValue<Value extends number | readonly number[]>(
+  _props: Parameters<typeof Slider.Root<Value>>[0],
+): Value {
+  return undefined as never;
+}
 
 describe("Slider.Root types", () => {
   it("takes a typed useState setter as onValueChange", async () => {
@@ -100,7 +112,9 @@ describe("Slider.Root types", () => {
     expectTypeOf<SliderRootProps<number[]>["value"]>().toEqualTypeOf<number[] | undefined>();
   });
 
-  it("keeps a literal default widened", () => {
+  it("gives onValueChange a number for a literal default", () => {
+    // `defaultValue={50}` infers Value as 50, since the constraint holds a primitive. The callback
+    // still gets a number: Base UI types its parameter as `Value extends number ? number : Value`
     typeChecks(
       <Slider.Root
         defaultValue={50}
@@ -116,6 +130,10 @@ describe("Slider.Root types", () => {
       // @ts-expect-error a range does not take a single-value setter
       <Slider.Root value={range} onValueChange={setSingle} />,
     );
+  });
+
+  it("infers number[] from an annotated onValueChange alone", () => {
+    expectTypeOf(inferValue({ onValueChange: onRange })).toEqualTypeOf<number[]>();
   });
 
   it("keeps number | readonly number[] without a value, as before", () => {
