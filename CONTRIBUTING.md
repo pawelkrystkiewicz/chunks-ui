@@ -180,6 +180,8 @@ bunx changeset
 
 Describe the change, select semver bump level, and commit the generated `.changeset/*.md` file with your PR.
 
+The changelog entry links the PR that added the changeset (`@changesets/changelog-github`), so add the changeset in the PR with the change. `changeset version` needs a GitHub token to resolve those links: the release workflow passes `PAT_TOKEN`; locally, run `GITHUB_TOKEN=$(gh auth token) bunx changeset version`.
+
 A `packages/ui` change with no user-facing effect (a spec, a test config, a comment) gets an empty changeset, which bumps nothing and adds no changelog entry:
 
 ```bash
