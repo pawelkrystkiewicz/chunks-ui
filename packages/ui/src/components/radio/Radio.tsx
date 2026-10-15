@@ -109,19 +109,24 @@ export type RadioItemProps = Omit<RadioRootProps, "children" | "className"> & {
   className?: string;
 };
 
-function RadioItem({ children, className, disabled, ...props }: RadioItemProps) {
+function RadioItem({ children, className, ...props }: RadioItemProps) {
   return (
     <label
       className={cn(
-        "flex cursor-pointer items-center gap-2 group-data-[disabled]/radio-group:cursor-not-allowed",
-        // Dims the radio and its text together. A disabled Radio.Group dims itself, so inside one
-        // the item drops its own dim and isn't dimmed twice.
-        disabled && "cursor-not-allowed opacity-50 group-data-[disabled]/radio-group:opacity-100",
+        "flex cursor-pointer items-center gap-2",
+        // Dims the radio and its text together when the radio is disabled, whichever disables it:
+        // its own prop, its Radio.Group or a Field.Root. Base UI marks the radio with
+        // `data-disabled` in every case; the item's `disabled` prop alone would miss the field.
+        "has-[>[data-disabled]]:cursor-not-allowed has-[>[data-disabled]]:opacity-50",
+        // A disabled Radio.Group dims itself, so inside one the item drops its own dim and isn't
+        // dimmed twice. Stacked on `has-`: Tailwind sorts a `group-` variant before `has-`, so a
+        // `group-` class alone would lose to the dim at the same specificity.
+        "group-data-[disabled]/radio-group:has-[>[data-disabled]]:opacity-100",
         className,
       )}
     >
       {/* The label above, or a disabled group, dims the radio with its text: no second dim */}
-      <RadioRoot disabled={disabled} className="data-[disabled]:opacity-100" {...props}>
+      <RadioRoot className="data-[disabled]:opacity-100" {...props}>
         <RadioIndicator />
       </RadioRoot>
       <span>{children}</span>

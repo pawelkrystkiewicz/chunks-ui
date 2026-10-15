@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import * as React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { PortalContainerProvider } from "../../lib/portal-container";
 import { FOCUS_RING_WITHIN } from "../shared";
 import { NumberField } from "./NumberField";
 import { DEFAULT_NUMBER_FIELD_LABELS } from "./NumberField.Labels";
@@ -163,6 +164,55 @@ describe("NumberField", () => {
       await screen.findByTestId("cursor");
       fireEvent.pointerUp(window);
       await waitFor(() => expect(screen.queryByTestId("cursor")).not.toBeInTheDocument());
+    });
+
+    // Base UI portals the cursor to <body>, so a theme scoped to the provider's element would
+    // not reach it there
+    describe("inside a PortalContainerProvider", () => {
+      let container: HTMLElement;
+      beforeEach(() => {
+        container = document.createElement("div");
+        document.body.appendChild(container);
+      });
+      afterEach(() => container.remove());
+
+      it("renders inside the provider's element and leaves when the scrub ends", async () => {
+        render(
+          <PortalContainerProvider value={container}>
+            <ScrubField />
+          </PortalContainerProvider>,
+        );
+        startScrub();
+        const cursor = await screen.findByTestId("cursor");
+        expect(container.contains(cursor)).toBe(true);
+        // Base UI positions the cursor through its ref, which must reach the re-portalled element
+        expect(cursor.style.transform).toMatch(/translate3d/);
+        fireEvent.pointerUp(window);
+        await waitFor(() => expect(screen.queryByTestId("cursor")).not.toBeInTheDocument());
+      });
+
+      it("keeps a render element and its children inside the provider's element", async () => {
+        render(
+          <PortalContainerProvider value={container}>
+            <ScrubField cursor={<span>drag</span>} render={<em />} />
+          </PortalContainerProvider>,
+        );
+        startScrub();
+        const cursor = await screen.findByTestId("cursor");
+        expect(cursor.tagName).toBe("EM");
+        expect(cursor).toHaveTextContent("drag");
+        expect(container.contains(cursor)).toBe(true);
+      });
+
+      it("renders in <body> while the provider's element is still null", async () => {
+        render(
+          <PortalContainerProvider value={null}>
+            <ScrubField />
+          </PortalContainerProvider>,
+        );
+        startScrub();
+        expect((await screen.findByTestId("cursor")).parentElement).toBe(document.body);
+      });
     });
   });
 

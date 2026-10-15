@@ -20,7 +20,8 @@ function CheckboxRoot({ className, ...props }: CheckboxRootProps) {
         FOCUS_RING,
         "data-[checked]:border-primary data-[checked]:bg-primary data-[checked]:text-primary-foreground",
         "data-[indeterminate]:border-primary data-[indeterminate]:bg-primary data-[indeterminate]:text-primary-foreground",
-        "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+        // No pointer-events-none: it would hide the cursor, and Base UI ignores the click anyway
+        "data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50",
         className,
       )}
       {...props}

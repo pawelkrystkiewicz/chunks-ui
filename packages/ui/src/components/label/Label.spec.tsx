@@ -34,4 +34,32 @@ describe("Label", () => {
     );
     expect(await axe(container)).toHaveNoViolations();
   });
+
+  describe("disabled", () => {
+    // One state attribute, as Base UI sets on Field.Label; the look keyed on it is measured in
+    // Label.visual.spec
+    it("sets data-disabled, not the disabled attribute", () => {
+      render(<Label disabled>Email</Label>);
+      const label = screen.getByText("Email");
+      expect(label).toHaveAttribute("data-disabled", "");
+      expect(label).not.toHaveAttribute("disabled");
+    });
+
+    it("has no data-disabled when enabled", () => {
+      render(<Label>Email</Label>);
+      expect(screen.getByText("Email")).not.toHaveAttribute("data-disabled");
+    });
+
+    it("has no a11y violations", async () => {
+      const { container } = render(
+        <>
+          <Label htmlFor="a11y-disabled" disabled>
+            Accessible
+          </Label>
+          <input id="a11y-disabled" disabled />
+        </>,
+      );
+      expect(await axe(container)).toHaveNoViolations();
+    });
+  });
 });

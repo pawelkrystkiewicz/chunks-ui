@@ -1,3 +1,4 @@
+import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { focusVisible, renderFixture } from "../../VisualTest.utils";
 import { Field } from "../field";
@@ -24,6 +25,26 @@ describe("Textarea", () => {
       <Textarea placeholder="Disabled" disabled style={{ width: 300 }} />,
     );
     await expect(fixture).toMatchScreenshot();
+  });
+
+  it("shows a not-allowed cursor and no resize grip on a disabled textarea", () => {
+    const { getByRole } = render(
+      <div>
+        <Textarea aria-label="Enabled" />
+        <Textarea aria-label="Disabled" disabled />
+      </div>,
+    );
+    const { cursor, pointerEvents, resize } = getComputedStyle(
+      getByRole("textbox", { name: "Disabled" }),
+    );
+    expect({ cursor, pointerEvents, resize }).toEqual({
+      cursor: "not-allowed",
+      pointerEvents: "auto",
+      resize: "none",
+    });
+    const enabled = getComputedStyle(getByRole("textbox", { name: "Enabled" }));
+    expect(enabled.cursor).not.toBe("not-allowed");
+    expect(enabled.resize).not.toBe("none");
   });
 
   it("in an invalid Field, has the same border colour as an invalid Input", async () => {

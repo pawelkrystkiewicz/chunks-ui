@@ -20,6 +20,9 @@ import { toIsoDate, validDate } from "../calendar/date";
 import { FOCUS_RING, RING_TRANSITION } from "../shared";
 import { type DatePickerLabels, DEFAULT_DATE_PICKER_LABELS } from "./DatePicker.Labels";
 
+// The app's bundler replaces it, as it does in @base-ui/react. The package has no Node types.
+declare const process: { env: { NODE_ENV?: string } };
+
 type DatePickerOwnProps = Pick<
   CalendarProps,
   "weekStartsOn" | "showOutsideDays" | "month" | "onMonthChange"
@@ -172,6 +175,8 @@ export function DatePicker({
     return () => root.removeEventListener("reset", reset);
   });
 
+  const warnedRef = useRef(false);
+
   const displayValue = selectedDate ? names.selectedDate(selectedDate) : "";
   const isoValue = selectedDate ? toIsoDate(selectedDate) : "";
 
@@ -215,6 +220,22 @@ export function DatePicker({
               ref: fieldRef,
               ...buttonProps
             } = controlProps as typeof controlProps & { name?: string };
+            // The field's name wins over the picker's without a sign, so warn once in development.
+            // NODE_ENV is read bare, as Base UI does: a bundler replaces it, and a `typeof process`
+            // guard would turn the check off in a browser that has no `process` global.
+            if (
+              process.env.NODE_ENV !== "production" &&
+              !warnedRef.current &&
+              name !== undefined &&
+              formName !== name
+            ) {
+              warnedRef.current = true;
+              console.warn(
+                `chunks-ui: DatePicker has name "${name}", but its Field.Root has name "${formName}". ` +
+                  `The field's name wins: the date is submitted and reported as "${formName}". ` +
+                  "Drop one of the two names.",
+              );
+            }
             const hasFormInput = formName !== undefined || required;
             // A label replaces a button's text as its name. The trigger has no other way to
             // expose the date, so name it by its label and then the date. The label comes from

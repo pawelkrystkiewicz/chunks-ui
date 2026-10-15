@@ -26,7 +26,9 @@ function SwitchRoot({ className, ...props }: SwitchRootProps) {
         "bg-input",
         FOCUS_RING,
         "data-checked:bg-primary",
-        "data-disabled:pointer-events-none data-disabled:opacity-50",
+        // No pointer-events-none: it would hide the cursor, and Base UI ignores the click anyway.
+        // The thumb keeps its own, so a click on it reaches the root.
+        "data-disabled:cursor-not-allowed data-disabled:opacity-50",
         className,
       )}
       {...props}

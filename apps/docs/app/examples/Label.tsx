@@ -7,7 +7,9 @@ export function LabelDisabledControlExample() {
   return (
     <Container>
       <div className="flex items-center gap-2">
-        <Label htmlFor="terms">Accept terms</Label>
+        <Label htmlFor="terms" disabled>
+          Accept terms
+        </Label>
         <Checkbox.Root id="terms" disabled>
           <Checkbox.Indicator />
         </Checkbox.Root>

@@ -2,8 +2,11 @@
 
 import { NumberField as BaseNumberField } from "@base-ui/react/number-field";
 import { type ComponentProps, createContext, useContext } from "react";
+import { createPortal } from "react-dom";
 import { cnState } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
+import { usePortalContainer } from "../../lib/portal-container";
+import { type PartRenderProp, useRenderPart } from "../../lib/use-render-part";
 import { FOCUS_RING_WITHIN, RING_TRANSITION } from "../shared";
 import { DEFAULT_NUMBER_FIELD_LABELS, type NumberFieldLabels } from "./NumberField.Labels";
 
@@ -165,6 +168,7 @@ const SCRUB_CURSOR_ICON = (
  * Base UI hides the system cursor with pointer lock while the user scrubs, and renders this part
  * (only while scrubbing) as the stand-in. With neither children nor `render` it shows a
  * left-right arrow; a `render` element draws its own cursor and may be a void element like <img>.
+ * It renders in the provider's element, like the popups: see `PortalContainerProvider`.
  */
 function NumberFieldScrubAreaCursor({
   className,
@@ -175,12 +179,31 @@ function NumberFieldScrubAreaCursor({
   return (
     <BaseNumberField.ScrubAreaCursor
       className={cnState("z-cursor text-foreground drop-shadow-sm", className)}
-      render={render}
       {...props}
+      render={(renderProps, state) => (
+        <ScrubAreaCursorElement {...renderProps} state={state} render={render} />
+      )}
     >
       {children == null && !render ? SCRUB_CURSOR_ICON : children}
     </BaseNumberField.ScrubAreaCursor>
   );
+}
+
+// Base UI has no `container` prop on ScrubAreaCursor (1.9.0), so a second portal inside its own
+// puts the cursor in the PortalContainerProvider's element; Base UI's refs still reach it.
+// Without a provider, or while its element is null, the cursor stays in <body>.
+function ScrubAreaCursorElement({
+  state,
+  render,
+  ref,
+  ...props
+}: ComponentProps<"span"> & {
+  state: BaseNumberField.ScrubAreaCursor.State;
+  render: PartRenderProp<BaseNumberField.ScrubAreaCursor.State>;
+}) {
+  const container = usePortalContainer();
+  const element = useRenderPart(render, state, ref ?? null, props);
+  return container ? createPortal(element, container) : element;
 }
 
 // ---------------------------------------------------------------------------

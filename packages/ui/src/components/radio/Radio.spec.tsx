@@ -1,6 +1,7 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { FOCUS_RING } from "../shared";
 import { Radio } from "./Radio";
 
@@ -54,15 +55,26 @@ describe("Radio", () => {
     expect(screen.getByRole("radio")).toBeInTheDocument();
   });
 
-  it("renders disabled Item with cursor-not-allowed class", () => {
-    const { container } = render(
-      <Radio.Group aria-label="Options">
+  // The item's dimmed, not-allowed look is measured in Radio.visual.spec
+  it("marks a disabled Item and ignores clicks on it", async () => {
+    const user = userEvent.setup();
+    const onValueChange = vi.fn();
+    render(
+      <Radio.Group aria-label="Plan" onValueChange={onValueChange}>
         <Radio.Item value="a" disabled>
-          Option A
+          Disabled
         </Radio.Item>
+        <Radio.Item value="b">Enabled</Radio.Item>
       </Radio.Group>,
     );
-    expect(container.querySelector("label")).toHaveClass("cursor-not-allowed");
+    const disabled = screen.getByRole("radio", { name: "Disabled" });
+    expect(disabled).toHaveAttribute("data-disabled");
+    await user.click(screen.getByText("Disabled"));
+    expect(disabled).toHaveAttribute("aria-checked", "false");
+    expect(onValueChange).not.toHaveBeenCalled();
+    expect(screen.getByRole("radio", { name: "Enabled" })).not.toHaveAttribute("data-disabled");
+    await user.click(screen.getByText("Enabled"));
+    expect(onValueChange).toHaveBeenCalledWith("b", expect.anything());
   });
 
   it("has no a11y violations", async () => {
