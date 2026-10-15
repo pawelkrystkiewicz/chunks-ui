@@ -172,7 +172,7 @@ Pre-commit hook (Lefthook) auto-runs Biome on staged files.
 
 ## Changesets
 
-Every PR that changes a publishable package needs a changeset. That is `chunks-ui` only: `@chunks-ui/docs` is in `ignore` and `@chunks-ui/typescript-config` is private, and `privatePackages.version` is `false` in `.changeset/config.json`, so neither is gated. The `lint` job of `quality-gates.yml` runs `changeset status --since=origin/master` on pull requests and fails without a changeset. For a user-facing change:
+Every PR that changes a publishable package needs a changeset. That is `chunks-ui` only: `@chunks-ui/docs` is in `ignore` and `@chunks-ui/typescript-config` is private, and `privatePackages.version` is `false` in `.changeset/config.json`, so neither is gated. `typescript-config` is still a devDependency that shapes the `chunks-ui` build (`target`, `jsx`): a change there that alters the build output gets a changeset written by hand, because the gate does not see it. The `lint` job of `quality-gates.yml` runs `changeset status --since=origin/master` on pull requests and fails without a changeset. For a user-facing change:
 
 ```bash
 bunx changeset
@@ -190,7 +190,7 @@ The changelog entry links the PR that added the changeset (`@changesets/changelo
 - `**/__screenshots__/**` (visual baselines)
 - `vitest*.config.ts` and `vitest*.setup.ts` in the package root
 
-A PR that changes only these files passes the gate with no changeset. Any other file in `packages/ui` counts: source, `package.json`, build config and test helpers such as `VisualTest.utils.tsx`.
+A PR that changes only these files passes the gate with no changeset. Any other file in `packages/ui` counts: source, `package.json`, build config and test helpers such as `VisualTest.utils.tsx`. Keep `**` first in the list and add exclusions after it: a later positive pattern adds back the files an earlier negation removed (micromatch applies the list in order).
 
 A change to such a file with no user-facing effect (a comment, a refactor) gets an empty changeset, which bumps nothing and adds no changelog entry:
 
@@ -200,4 +200,4 @@ bunx changeset --empty
 
 ### Renovate and release PRs
 
-The gate does not run on Renovate branches (`renovate/*`) or on the Version Packages PR (`changeset-release/master`). Renovate merges patch and minor bumps by itself and cannot write a changeset. A bump of a runtime `dependencies` entry of `packages/ui` (`clsx`, `tailwind-merge`) reaches users, so add a changeset for it by hand in a PR of its own. That PR changes no package file, so the gate passes it. Bumps of dev dependencies need none.
+The gate does not run on Renovate branches (`renovate/*`) or on the Version Packages PR (`changeset-release/master`). Renovate cannot write a changeset, so the gate would fail every bump. It merges patch bumps by itself, and minor bumps of packages that are not on 0.x (`.github/renovate.json5`). Major bumps wait for approval on the dependency dashboard, and the Playwright group never merges by itself. A bump of a runtime `dependencies` entry of `packages/ui` (`clsx`, `tailwind-merge`) reaches users, so add a changeset for it by hand in a PR of its own. That PR changes no package file, so the gate passes it. Bumps of dev dependencies need none.
