@@ -67,9 +67,14 @@ const scrolls = (node: HTMLElement) =>
  * focus waits a microtask for them to set `tabIndex`. A popup shown or hidden (a `keepMounted`
  * popup, whose Body mounts with no box) is seen by a mutation observer, whose microtask is queued
  * in React's mutation phase, before the one Base UI queues in its layout effect, so a `flushSync`
- * there lands first. Returns whether it fits and the ref that gives the hook the node.
+ * there lands first. Returns whether it fits, whether it was measured to overflow (false until it
+ * has a node), and the ref that gives the hook the node.
  */
-function useFits(): [fits: boolean, ref: (node: HTMLElement | null) => void] {
+function useFits(): {
+  fits: boolean;
+  overflows: boolean;
+  ref: (node: HTMLElement | null) => void;
+} {
   const [node, setNode] = useState<HTMLElement | null>(null);
   const [overflows, setOverflows] = useState(false);
 
@@ -106,7 +111,7 @@ function useFits(): [fits: boolean, ref: (node: HTMLElement | null) => void] {
     };
   }, [node]);
 
-  return [node !== null && !overflows, setNode];
+  return { fits: node !== null && !overflows, overflows, ref: setNode };
 }
 
 /**
@@ -118,7 +123,7 @@ function useFits(): [fits: boolean, ref: (node: HTMLElement | null) => void] {
  */
 export function OverlayBody({ className, render, ref: forwardedRef, ...props }: OverlayBodyProps) {
   const { titleId } = useContext(TitleIdContext);
-  const [fits, ref] = useFits();
+  const { fits, overflows, ref } = useFits();
   // A name on the Body, or on the element `render` gives it (its props are merged over these),
   // wins over the Title: `aria-labelledby` would take precedence over its `aria-label` otherwise
   const renderProps = isValidElement<Record<string, unknown>>(render) ? render.props : undefined;
@@ -138,6 +143,8 @@ export function OverlayBody({ className, render, ref: forwardedRef, ...props }: 
       // Fails closed: with no node (the server render, the first client render, or a `ref` that
       // never arrives) the Body is a tab stop, so it never loses its keyboard scrolling
       tabIndex: fits ? -1 : 0,
+      // The same measurement, for a style that shows there is more to scroll (`data-overflowing:`)
+      "data-overflowing": overflows ? "" : undefined,
       "aria-labelledby": named ? undefined : titleId,
       className: cn(
         // The class the Popup finds the Body by (`has-[>.OverlayBody]`)

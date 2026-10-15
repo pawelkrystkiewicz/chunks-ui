@@ -211,6 +211,20 @@ describe("Body", () => {
     expect(screen.getByRole("region", { name: "Terms" })).toHaveAttribute("tabindex", "0");
   });
 
+  it("has data-overflowing while its content overflows, and drops it when it fits", () => {
+    renderBody(<Dialog.Title>Terms</Dialog.Title>, <Dialog.Body {...tall}>Text</Dialog.Body>);
+    const body = screen.getByRole("region", { name: "Terms" });
+    expect(body).toHaveAttribute("data-overflowing", "");
+
+    setSizes(body, short);
+    act(() => resize(body));
+    expect(body).not.toHaveAttribute("data-overflowing");
+
+    setSizes(body, tall);
+    act(() => resize(body));
+    expect(body).toHaveAttribute("data-overflowing", "");
+  });
+
   it("stays a tab stop when its ref never arrives, so nothing measures it", () => {
     // A render function that drops the ref: the Body never gets its node, and fails closed
     renderBody(
@@ -219,7 +233,10 @@ describe("Body", () => {
         Text
       </Dialog.Body>,
     );
-    expect(screen.getByRole("region", { name: "Terms" })).toHaveAttribute("tabindex", "0");
+    const body = screen.getByRole("region", { name: "Terms" });
+    expect(body).toHaveAttribute("tabindex", "0");
+    // Unmeasured is not overflowing: the attribute reports a measurement, the tab stop fails closed
+    expect(body).not.toHaveAttribute("data-overflowing");
   });
 
   it("measures again when a child grows on its own, without a render of the Body", () => {
