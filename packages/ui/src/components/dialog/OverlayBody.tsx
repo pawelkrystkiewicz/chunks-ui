@@ -51,8 +51,9 @@ export function useTitleId(idProp?: string) {
   return id;
 }
 
-/** Whether the element scrolls: its content is taller than its box */
-const scrolls = (node: HTMLElement) => node.scrollHeight > node.clientHeight;
+/** Whether the element scrolls: its content is taller or wider than its box */
+const scrolls = (node: HTMLElement) =>
+  node.scrollHeight > node.clientHeight || node.scrollWidth > node.clientWidth;
 
 /**
  * Whether the Body scrolls. Measured after every render of the Body, whenever its box or a child's
@@ -116,7 +117,7 @@ function useOverflows(): [overflows: boolean, ref: (node: HTMLElement | null) =>
  * The scrolling middle of a tall dialog or drawer, between the Title and the actions. With a Body
  * as its child, the Popup is a flex column: the other children keep their height and only the
  * Body scrolls. While its content overflows, the Body is a tab stop, so the keyboard can scroll
- * it; a Body that fits is skipped. It is a region the Title names (a named `<section>`), or the
+ * it; a Body that fits is skipped by Tab. It is a region the Title names (a named `<section>`), or the
  * element `render` gives it. `marker` is the class the Popup finds the Body by (`has-[>.marker]`).
  */
 export function OverlayBody({
@@ -134,8 +135,9 @@ export function OverlayBody({
     render,
     ref: [ref, forwardedRef ?? null],
     props: {
-      // The keyboard scrolls a scroll container only once it has the focus; one that fits is skipped
-      tabIndex: overflows ? 0 : undefined,
+      // The keyboard scrolls a scroll container only once it has the focus. One that fits is skipped
+      // by Tab, yet stays focusable: a focused Body whose content shrinks to fit keeps the focus
+      tabIndex: overflows ? 0 : -1,
       "aria-labelledby": props["aria-label"] ? undefined : titleId,
       className: cn(
         // The -m-1 p-1 gutter keeps the focus rings of full-width fields inside the scroll box, without moving them

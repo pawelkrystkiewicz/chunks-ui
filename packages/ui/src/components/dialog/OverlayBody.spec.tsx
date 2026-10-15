@@ -8,18 +8,22 @@ import { Dialog } from "./index";
 
 afterEach(cleanup);
 
-// jsdom has no layout, so an element's content and box heights come from these attributes; in a
+// jsdom has no layout, so an element's content and box sizes come from these attributes; in a
 // hidden popup (`keepMounted`, before it opens) they are 0, as in the browser. The browser specs
 // (OverlayBody.visual.spec.tsx) cover the real measurement.
 const SCROLL = "data-scroll-height";
 const CLIENT = "data-client-height";
-const heightOf = (element: Element, attribute: string) =>
+const SCROLL_WIDTH = "data-scroll-width";
+const CLIENT_WIDTH = "data-client-width";
+const sizeOf = (element: Element, attribute: string) =>
   element.closest("[hidden]") ? 0 : Number(element.getAttribute(attribute) ?? 0);
 
 /** Content taller than the box: the Body scrolls */
 const tall = { [SCROLL]: 2000, [CLIENT]: 400 };
 /** Content that fits: the Body does not scroll */
 const short = { [SCROLL]: 400, [CLIENT]: 400 };
+/** Content wider than the box, and no taller: the Body scrolls sideways */
+const wide = { ...short, [SCROLL_WIDTH]: 800, [CLIENT_WIDTH]: 400 };
 
 type Watched = { callback: ResizeObserverCallback; targets: Set<Element> };
 /** What each live ResizeObserver watches, and its callback */
@@ -32,19 +36,22 @@ function resize(target: Element) {
   }
 }
 
+const SIZES = {
+  scrollHeight: SCROLL,
+  clientHeight: CLIENT,
+  scrollWidth: SCROLL_WIDTH,
+  clientWidth: CLIENT_WIDTH,
+};
+
 beforeAll(() => {
-  Object.defineProperty(HTMLElement.prototype, "scrollHeight", {
-    configurable: true,
-    get(this: Element) {
-      return heightOf(this, SCROLL);
-    },
-  });
-  Object.defineProperty(HTMLElement.prototype, "clientHeight", {
-    configurable: true,
-    get(this: Element) {
-      return heightOf(this, CLIENT);
-    },
-  });
+  for (const [property, attribute] of Object.entries(SIZES)) {
+    Object.defineProperty(HTMLElement.prototype, property, {
+      configurable: true,
+      get(this: Element) {
+        return sizeOf(this, attribute);
+      },
+    });
+  }
   globalThis.ResizeObserver = class {
     #watched: Watched;
     constructor(callback: ResizeObserverCallback) {
@@ -64,12 +71,12 @@ beforeAll(() => {
 });
 
 afterAll(() => {
-  Reflect.deleteProperty(HTMLElement.prototype, "scrollHeight");
-  Reflect.deleteProperty(HTMLElement.prototype, "clientHeight");
+  for (const property of Object.keys(SIZES))
+    Reflect.deleteProperty(HTMLElement.prototype, property);
   Reflect.deleteProperty(globalThis, "ResizeObserver");
 });
 
-/** Gives `element` the heights in `attributes`, then lets its ResizeObserver report the new box */
+/** Gives `element` the sizes in `attributes`, then lets its ResizeObserver report the new box */
 function setHeights(element: Element, attributes: Record<string, number>) {
   for (const [name, value] of Object.entries(attributes)) {
     element.setAttribute(name, String(value));
@@ -151,17 +158,22 @@ describe.each(OVERLAYS)("$name", ({ X, marker }) => {
     expect(screen.getByTestId("body")).not.toHaveAttribute("aria-labelledby");
   });
 
-  it("is a tab stop only while its content overflows", () => {
+  it("is a tab stop only while its content overflows, and stays focusable when it fits", () => {
     renderBody(<X.Title>Terms</X.Title>, <X.Body {...short}>Text</X.Body>);
     const body = screen.getByRole("region", { name: "Terms" });
-    expect(body).not.toHaveAttribute("tabindex");
+    expect(body).toHaveAttribute("tabindex", "-1");
 
     // The viewport shrinks, or the content grows: the box reports its new size
     setHeights(body, tall);
     expect(body).toHaveAttribute("tabindex", "0");
 
     setHeights(body, short);
-    expect(body).not.toHaveAttribute("tabindex");
+    expect(body).toHaveAttribute("tabindex", "-1");
+  });
+
+  it("is a tab stop while its content overflows sideways", () => {
+    renderBody(<X.Title>Terms</X.Title>, <X.Body {...wide}>Text</X.Body>);
+    expect(screen.getByRole("region", { name: "Terms" })).toHaveAttribute("tabindex", "0");
   });
 
   it("measures again when a child grows on its own, without a render of the Body", () => {
@@ -239,7 +251,7 @@ describe.each(OVERLAYS)("$name", ({ X, marker }) => {
       </X.Root>,
     );
     const body = screen.getByTestId("body");
-    expect(body).not.toHaveAttribute("tabindex", "0");
+    expect(body).toHaveAttribute("tabindex", "-1");
     fireEvent.click(screen.getByRole("button", { name: "Open" }));
     await waitFor(() => expect(body).toHaveFocus());
     expect(body).toHaveAttribute("tabindex", "0");

@@ -53,19 +53,29 @@ describe.each(OVERLAYS)("$name", ({ X }) => {
   it("is skipped, and the first action takes the initial focus, when its content fits", async () => {
     const { body } = await open(40);
     expect(body.scrollHeight).toBe(body.clientHeight);
-    expect(body).not.toHaveAttribute("tabindex");
+    expect(body).toHaveAttribute("tabindex", "-1");
     await expect.element(screen.getByRole("button", { name: "Cancel" })).toHaveFocus();
   });
 
   it("becomes a tab stop when its content grows past its box, and stops being one when it shrinks", async () => {
     const { body, rerender } = await open(40);
-    expect(body).not.toHaveAttribute("tabindex");
+    expect(body).toHaveAttribute("tabindex", "-1");
 
     rerender(overlay(2000));
     await expect.poll(() => body.getAttribute("tabindex")).toBe("0");
 
     rerender(overlay(40));
-    await expect.poll(() => body.hasAttribute("tabindex")).toBe(false);
+    await expect.poll(() => body.getAttribute("tabindex")).toBe("-1");
+  });
+
+  it("keeps the focus when its content shrinks to fit", async () => {
+    // Removing `tabindex` from the focused element drops the focus to <body>; -1 keeps it
+    const { body, rerender } = await open(2000);
+    await expect.element(body).toHaveFocus();
+
+    rerender(overlay(40));
+    await expect.poll(() => body.getAttribute("tabindex")).toBe("-1");
+    expect(body).toHaveFocus();
   });
 
   it("takes the initial focus when a keepMounted popup opens from its Trigger", async () => {
@@ -145,7 +155,7 @@ describe("Drawer.Body in a side drawer", () => {
     const popup = await screen.findByTestId("popup");
     await waitForStable(() => boxOf(popup));
     const body = screen.getByRole("region", { name: "Terms" });
-    expect(body).not.toHaveAttribute("tabindex");
+    expect(body).toHaveAttribute("tabindex", "-1");
     return body;
   }
 
