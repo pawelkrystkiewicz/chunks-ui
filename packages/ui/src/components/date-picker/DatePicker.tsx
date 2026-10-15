@@ -70,8 +70,7 @@ type DatePickerOwnProps = Pick<
    * Name of the form field. Renders a hidden input that submits the selected date as
    * `yyyy-mm-dd`, or an empty string when no date is selected. A name on a surrounding
    * `Field.Root` wins over this one, as with Base UI's `Field.Control`: the form data, and a Base
-   * UI `Form`'s `errors` and `onFormSubmit`, then use the field's name. In development, a picker
-   * whose name differs from its field's warns once.
+   * UI `Form`'s `errors` and `onFormSubmit`, then use the field's name.
    */
   name?: string;
   /**
@@ -176,25 +175,7 @@ export function DatePicker({
     return () => root.removeEventListener("reset", reset);
   });
 
-  // The field's name wins over the picker's without a sign, so warn once when they differ. The
-  // resolved name is only known inside Field.Control's render, which stores it here before the
-  // effect reads it.
-  const fieldNameRef = useRef<string | undefined>(undefined);
   const warnedRef = useRef(false);
-  useEffect(() => {
-    // Read bare, as Base UI does: a bundler replaces `process.env.NODE_ENV`, and a `typeof process`
-    // guard would turn the check off in a browser that has no `process` global.
-    const isDev = process.env.NODE_ENV !== "production";
-    const fieldName = fieldNameRef.current;
-    if (!isDev || warnedRef.current || name === undefined || fieldName === undefined) return;
-    if (fieldName === name) return;
-    warnedRef.current = true;
-    console.warn(
-      `chunks-ui: DatePicker has name "${name}", but its Field.Root has name "${fieldName}". ` +
-        `The field's name wins: the date is submitted and reported as "${fieldName}". ` +
-        "Drop one of the two names.",
-    );
-  });
 
   const displayValue = selectedDate ? names.selectedDate(selectedDate) : "";
   const isoValue = selectedDate ? toIsoDate(selectedDate) : "";
@@ -239,7 +220,22 @@ export function DatePicker({
               ref: fieldRef,
               ...buttonProps
             } = controlProps as typeof controlProps & { name?: string };
-            fieldNameRef.current = formName;
+            // The field's name wins over the picker's without a sign, so warn once in development.
+            // NODE_ENV is read bare, as Base UI does: a bundler replaces it, and a `typeof process`
+            // guard would turn the check off in a browser that has no `process` global.
+            if (
+              process.env.NODE_ENV !== "production" &&
+              !warnedRef.current &&
+              name !== undefined &&
+              formName !== name
+            ) {
+              warnedRef.current = true;
+              console.warn(
+                `chunks-ui: DatePicker has name "${name}", but its Field.Root has name "${formName}". ` +
+                  `The field's name wins: the date is submitted and reported as "${formName}". ` +
+                  "Drop one of the two names.",
+              );
+            }
             const hasFormInput = formName !== undefined || required;
             // A label replaces a button's text as its name. The trigger has no other way to
             // expose the date, so name it by its label and then the date. The label comes from

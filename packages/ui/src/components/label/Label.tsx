@@ -3,10 +3,8 @@ import { cn } from "../../lib/cn";
 
 export type LabelProps = ComponentProps<"label"> & {
   /**
-   * Dims the label and shows a not-allowed cursor, for the label of a disabled control. The label
-   * does not read its control's state: pass `disabled` to both. It sets `data-disabled` on the
-   * label, as Base UI does on `Field.Label`, so one `data-disabled:` class in `className`
-   * restyles the disabled look.
+   * Dims the label and shows a not-allowed cursor. It does not read its control's state: pass
+   * `disabled` to both.
    */
   disabled?: boolean;
 };

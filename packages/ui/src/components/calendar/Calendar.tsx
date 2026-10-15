@@ -366,23 +366,16 @@ export function Calendar({
                           !isCurrentMonth &&
                             !isSelected &&
                             "text-muted-foreground forced-colors:text-[GrayText]",
-                          // Forced colours keep the opacity, which dims GrayText below legibility and
-                          // makes a disabled day look like an outside day: there, the system's dimmed
-                          // colour at full opacity, struck through, tells the two apart. The strike
-                          // is on the button and today's underline on the span below: both set
-                          // `text-decoration-line`, so on one element the later class would drop
-                          // the other, and a disabled today would lose its underline.
+                          // Forced colours keep the opacity, so a disabled day would look like an
+                          // outside day: there, GrayText at full opacity, struck through
                           disabled &&
                             "pointer-events-none opacity-40 forced-colors:line-through forced-colors:opacity-100",
                           disabled && !isSelected && "forced-colors:text-[GrayText]",
                         )}
                       >
-                        {/* Forced colours paint a Canvas backplate behind text over a non-Canvas
-                            background, which hides the selected day's HighlightText number. Off for
-                            that number alone: the button's outline stays forced, and so do the
-                            other days, whose text would otherwise inherit the author colour. The
-                            ring is a box shadow, which forced colours drop: an underline marks
-                            today there, a cue the focus outline does not use. */}
+                        {/* Forced colours paint a Canvas backplate behind the selected day's number:
+                            off for that span alone. Today's underline is on the span because the
+                            button carries the strike, and both set `text-decoration-line`. */}
                         <span
                           className={cn(
                             isSelected && "forced-color-adjust-none",
