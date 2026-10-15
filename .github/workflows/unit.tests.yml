@@ -95,13 +95,28 @@ jobs:
       # floors land under packages/ui/node_modules too, except motion: it is a devDependency of
       # packages/ui, so that link stays on the locked version. Removing it lets packages/ui
       # resolve the root floor. The check step proves what resolves.
+      # @types/react and @types/react-dom at 19.2, the floor of the react peer, go in the same
+      # add: a second --no-save add re-links node_modules from bun.lock and undoes the first.
+      # They are devDependencies of packages/ui too, and the peer links of its other
+      # devDependencies (@base-ui/react, @testing-library/react) point at that locked copy, so
+      # tsc would see two copies of the React types and fail on "two different types with this
+      # name". The find points every such link at the root floor instead.
       - name: Install the peer floors
         run: |
-          bun add --no-save $(bun scripts/check-peer-floors.ts --specs)
+          bun add --no-save $(bun scripts/check-peer-floors.ts --specs) @types/react@19.2 @types/react-dom@19.2
           rm packages/ui/node_modules/motion
+          for pkg in react react-dom; do
+            find node_modules/.bun packages/ui/node_modules -maxdepth 4 -path "*/node_modules/@types/$pkg" -type l \
+              -exec ln -sfn "$PWD/node_modules/@types/$pkg" {} \;
+          done
 
       - name: Check what chunks-ui resolves
-        run: bun scripts/check-peer-floors.ts
+        run: |
+          bun scripts/check-peer-floors.ts
+          cd packages/ui && bun -e 'for (const p of ["@types/react", "@types/react-dom"]) { const v = require(`${p}/package.json`).version; console.log(`${p}: resolves ${v}, floor 19.2`); if (!v.startsWith("19.2.")) process.exit(1); }'
+
+      - name: Type-check chunks-ui at the floors
+        run: bun run --cwd packages/ui check-types
 
       - name: Run the ui unit tests at the floors
         run: bun run --cwd packages/ui test
