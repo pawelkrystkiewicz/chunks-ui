@@ -65,7 +65,6 @@ function DrawerPortal({ className, children, ref, ...props }: DrawerPortalProps)
       className={cnState("relative z-drawers", className)}
       {...props}
     >
-      {/* The portal node, so the scrub cursor lands in here as well as nested popups: see usePortalNode */}
       <PortalContainerProvider value={portalNode}>{children}</PortalContainerProvider>
     </BaseDialog.Portal>
   );

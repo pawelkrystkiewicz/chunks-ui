@@ -44,7 +44,6 @@ function DialogPortal({ className, children, ref, ...props }: DialogPortalProps)
       className={cnState("relative z-modals", className)}
       {...props}
     >
-      {/* The portal node, so the scrub cursor lands in here as well as nested popups: see usePortalNode */}
       <PortalContainerProvider value={portalNode}>{children}</PortalContainerProvider>
     </BaseDialog.Portal>
   );

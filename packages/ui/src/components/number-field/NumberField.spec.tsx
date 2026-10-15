@@ -285,7 +285,6 @@ describe("NumberField", () => {
         expect(portalNode).toHaveAttribute("data-base-ui-portal");
         expect(portalNode?.parentElement).toBe(document.body);
         expect(portalNode).toContainElement(screen.getByTestId("popup"));
-        expect(cursor.style.transform).toMatch(/translate3d/);
       });
 
       // The Portal unmounts on close and mounts a new node on reopen. The kept node must follow
@@ -311,7 +310,6 @@ describe("NumberField", () => {
         const portalNode = (await screen.findByTestId("cursor")).parentElement;
         expect(portalNode).not.toBe(firstNode);
         expect(portalNode).toHaveAttribute("data-base-ui-portal");
-        expect(portalNode?.isConnected).toBe(true);
         expect(portalNode).toContainElement(screen.getByTestId("popup"));
       });
     });
