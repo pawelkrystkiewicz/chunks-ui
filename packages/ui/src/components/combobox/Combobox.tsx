@@ -277,8 +277,12 @@ function ComboboxChip({ className, id, ...props }: ComboboxChipProps) {
     <ComboboxChipIdContext.Provider value={chipId}>
       <BaseCombobox.Chip
         id={chipId}
+        // The arrow keys move the focus from the input to a chip: the library ring, not the
+        // browser's outline
         className={cnState(
           "inline-flex items-center gap-1 rounded-sm border border-border bg-muted px-1.5 py-0.5 text-xs",
+          FOCUS_RING,
+          RING_TRANSITION,
           className,
         )}
         {...props}

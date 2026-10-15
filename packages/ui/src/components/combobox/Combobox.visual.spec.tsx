@@ -7,6 +7,7 @@ import {
   focusVisible,
   renderFixture,
   renderPage,
+  ringColor,
   waitForStable,
 } from "../../VisualTest.utils";
 import { Combobox, type ComboboxPositionerProps } from "./index";
@@ -71,6 +72,24 @@ const chipsCombobox = () => (
   </Combobox.Root>
 );
 
+// Base UI hands the focus from the input to the chips (ArrowLeft at the start of the input) only
+// when the input is inside Combobox.Chips
+const chipsAroundInput = () => (
+  <Combobox.Root multiple items={options} defaultValue={options.slice(0, 2)}>
+    <Combobox.Control>
+      <Combobox.Chips>
+        {options.slice(0, 2).map((item) => (
+          <Combobox.Chip key={item.value}>
+            {item.label}
+            <Combobox.ChipRemove />
+          </Combobox.Chip>
+        ))}
+        <Combobox.Input aria-label="Frameworks" />
+      </Combobox.Chips>
+    </Combobox.Control>
+  </Combobox.Root>
+);
+
 // One disabled multi-select with a chip, so that every part that shows a cursor is in it
 const disabledChipsCombobox = () => (
   <Combobox.Root multiple items={options} defaultValue={options.slice(0, 1)} disabled>
@@ -115,6 +134,24 @@ describe("Combobox", () => {
     focusVisible(input);
     expect(getComputedStyle(input).outlineStyle).toBe("none");
     await expect(fixture).toMatchScreenshot();
+  });
+
+  // The arrow keys move the focus from the input to the chips: a chip draws the library ring,
+  // not the browser's outline
+  it("draws the ring on a chip the arrow keys focus", async () => {
+    const { getByRole, getByText } = render(chipsAroundInput());
+    focusVisible(getByRole("combobox"));
+    await userEvent.keyboard("{ArrowLeft}");
+    const chip = getByText("Vue");
+    expect(document.activeElement).toBe(chip);
+    expect(chip.matches(":focus-visible")).toBe(true);
+    const { outlineStyle, outlineWidth, outlineOffset, outlineColor } = getComputedStyle(chip);
+    expect({ outlineStyle, outlineWidth, outlineOffset, outlineColor }).toEqual({
+      outlineStyle: "solid",
+      outlineWidth: "2px",
+      outlineOffset: "2px",
+      outlineColor: ringColor(),
+    });
   });
 
   it("open", async () => {
