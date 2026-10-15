@@ -59,4 +59,4 @@ Tests: `scripts/__specs__/check-peer-floors.spec.ts`.
 
 ## Previewing the next version
 
-There is no script for it. `bunx changeset status --output=<file>` writes JSON whose `releases[]` holds `oldVersion` and `newVersion` per package for every pending changeset; it compares with the local `master` branch, and `--since=origin/master` narrows it to the changesets the current branch adds.
+There is no script for it. `bunx changeset status --output=<file>` writes JSON whose `releases[]` holds `oldVersion` and `newVersion` per package for every pending changeset; it compares with the local `master` branch, and `--since=origin/master` narrows it to the changesets the current branch adds. It exits 1 before it writes the file when the branch changes `packages/ui` without a changeset (`changeset add --empty` for a change that needs no release).
