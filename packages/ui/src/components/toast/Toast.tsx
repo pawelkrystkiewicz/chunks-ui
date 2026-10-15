@@ -48,8 +48,8 @@ export interface ToastStyleOptions {
    */
   dismissible?: boolean;
   /**
-   * @deprecated Use `dismissible`. Misspelled alias kept for compatibility; `dismissible` wins
-   * when both are set.
+   * Misspelled alias of `dismissible`.
+   * @deprecated Use `dismissible`. Kept for compatibility; `dismissible` wins when both are set.
    */
   dissmissable?: boolean;
   /**
