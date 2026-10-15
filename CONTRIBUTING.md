@@ -108,6 +108,7 @@ button/
 - **Compound pattern** via Base UI: `<X.Root>`, `<X.Trigger>`, `<X.Content>`
 - **Composition** via Base UI `render` prop, not `asChild`
 - **Variants** defined with CVA in separate `*.Variants.ts` files
+  - Import `cva` from `src/lib/cva`, not from `class-variance-authority`, so the emitted typings never reference cva's `./types` subpath.
 - **Props over config objects**: `<Button color="primary" variant="outlined">`
 - **One component, one job** — no mode-switching god components
 

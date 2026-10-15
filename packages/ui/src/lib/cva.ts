@@ -18,7 +18,10 @@ type VariantKeys<Props> = Exclude<keyof NonNullable<Props>, "class" | "className
 
 /**
  * The variant props among a cva function's props: everything but `class` and `className`.
- * `unknown` when there are none, so that `& ClassProp` leaves `ClassProp` alone.
+ * `unknown` when there are none, so that `& ClassProp` leaves `ClassProp` alone. Keep it a local,
+ * non-exported mapped type: written with `VariantProps` or `Omit`, the `class-variance-authority/types`
+ * import comes back, because tsc keeps an alias it can reach and prints cva's `ClassProp` inside
+ * its argument.
  */
 type VariantsOf<Props> = [VariantKeys<Props>] extends [never]
   ? unknown
