@@ -46,6 +46,7 @@ const GENERIC_TAGS = new Set(["div", "span"]);
 const isGeneric = (element: ReactElement<Record<string, unknown>>) =>
   typeof element.type === "string" &&
   GENERIC_TAGS.has(element.type) &&
+  // An explicit `role={undefined}` counts as none, so Base UI's merge drops the region role: accepted
   element.props.role === undefined;
 
 /** `render`, with the region role on a generic element it returns */
@@ -66,6 +67,7 @@ const REACT_LAZY_TYPE = Symbol.for("react.lazy");
  * `render`, with a lazy wrapper replaced by its element. A `render={<div />}` written in a Server
  * Component arrives as one, with no `props` to read; Base UI unwraps it only inside `useRender`,
  * as it does here. A wrapper that does not unwrap to an element is left for Base UI to report.
+ * Base UI's own workaround is https://github.com/react/react/issues/32392: delete this when fixed.
  */
 function unwrapLazyRender(render: OverlayBodyProps["render"]): OverlayBodyProps["render"] {
   if ((render as { $$typeof?: symbol } | undefined)?.$$typeof !== REACT_LAZY_TYPE) return render;
