@@ -128,4 +128,21 @@ describe("Drawer", () => {
     );
     expect(await axe(container)).toHaveNoViolations();
   });
+
+  // A consumer's `render` replaces the animated element, so the spring cannot attach to it
+  it("keeps the CSS transition on the element a render prop gives the Popup, with Motion loaded", async () => {
+    await reloadMotion();
+    render(
+      <Drawer.Root open>
+        <Drawer.Portal>
+          <Drawer.Popup side="bottom" render={<section />} data-testid="popup">
+            Content
+          </Drawer.Popup>
+        </Drawer.Portal>
+      </Drawer.Root>,
+    );
+    const popup = screen.getByTestId("popup");
+    expect(popup.tagName).toBe("SECTION");
+    expect(popup).toHaveClass("micro-interactions", "data-[starting-style]:translate-y-full");
+  });
 });

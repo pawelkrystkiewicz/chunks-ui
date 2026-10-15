@@ -145,3 +145,30 @@ describe("Drawer.Popup CSS fallback with no reduced-motion preference", () => {
     expect(style.transitionDuration).not.toBe("0s");
   });
 });
+
+describe("Drawer.Popup with a render prop, Motion loaded", () => {
+  beforeAll(() => enterMotionPath(true));
+  beforeEach(() => emulateReducedMotion("no-preference"));
+  afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
+
+  // The element `render` gives the popup replaces the one the spring would slide
+  it("slides the popup with the CSS transition", async () => {
+    render(
+      <Drawer.Root defaultOpen>
+        <Drawer.Portal>
+          <Drawer.Popup side="right" render={<section />} data-testid="popup">
+            <Drawer.Title>Drawer Title</Drawer.Title>
+          </Drawer.Popup>
+        </Drawer.Portal>
+      </Drawer.Root>,
+    );
+    const popup = await screen.findByTestId("popup");
+    expect(popup.tagName).toBe("SECTION");
+    // No inline values from a motion.div
+    expect(popup.style.transform).toBe("");
+    expect(popup).toHaveClass("micro-interactions");
+    const style = getComputedStyle(popup);
+    expect(style.transitionProperty).toBe("translate");
+    expect(style.transitionDuration).not.toBe("0s");
+  });
+});

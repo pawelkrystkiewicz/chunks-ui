@@ -94,10 +94,17 @@ function DrawerBackdrop({ className, forceRender = true, ...props }: DrawerBackd
   );
 }
 
-function DrawerPopup({ side = "right", className, children, ...props }: DrawerPopupProps) {
+function DrawerPopup({
+  side = "right",
+  className,
+  children,
+  render: renderProp,
+  ...props
+}: DrawerPopupProps) {
   const m = useLoadedMotion();
   const reduced = useReducedMotion();
-  const useSpring = !!m && !reduced;
+  // A consumer's `render` replaces the animated element, so that popup keeps the CSS transition
+  const useSpring = !!m && !reduced && !renderProp;
   const resolvedSide = side ?? "right";
   const dir = drawerSlide[resolvedSide];
   const render = useSpring
@@ -107,7 +114,7 @@ function DrawerPopup({ side = "right", className, children, ...props }: DrawerPo
         from: dir.from,
         to: dir.to,
       })
-    : undefined;
+    : renderProp;
 
   return (
     <BaseDialog.Popup
