@@ -28,6 +28,10 @@ const wide = { ...short, [SCROLL_WIDTH]: 800, [CLIENT_WIDTH]: 400 };
 type Watched = { callback: ResizeObserverCallback; targets: Set<Element> };
 /** What each live ResizeObserver watches, and its callback */
 const observers = new Set<Watched>();
+/** How many ResizeObservers were created so far */
+let created = 0;
+/** Whether a live ResizeObserver watches `target` */
+const isObserved = (target: Element) => [...observers].some((w) => w.targets.has(target));
 
 /** Notifies the observers that watch `target`, as the browser does after layout */
 function resize(target: Element) {
@@ -55,6 +59,7 @@ beforeAll(() => {
   globalThis.ResizeObserver = class {
     #watched: Watched;
     constructor(callback: ResizeObserverCallback) {
+      created++;
       this.#watched = { callback, targets: new Set() };
     }
     observe(target: Element) {
@@ -65,6 +70,8 @@ beforeAll(() => {
       this.#watched.targets.delete(target);
     }
     disconnect() {
+      // As in the browser, a disconnected observer watches nothing until it observes again
+      this.#watched.targets.clear();
       observers.delete(this.#watched);
     }
   };
@@ -76,11 +83,16 @@ afterAll(() => {
   Reflect.deleteProperty(globalThis, "ResizeObserver");
 });
 
-/** Gives `element` the sizes in `attributes`, then lets its ResizeObserver report the new box */
-function setHeights(element: Element, attributes: Record<string, number>) {
+/** Gives `element` the sizes in `attributes`; no observer reports them */
+function setSizes(element: Element, attributes: Record<string, number>) {
   for (const [name, value] of Object.entries(attributes)) {
     element.setAttribute(name, String(value));
   }
+}
+
+/** Gives `element` the sizes in `attributes`, then lets its ResizeObserver report the new box */
+function setHeights(element: Element, attributes: Record<string, number>) {
+  setSizes(element, attributes);
   act(() => resize(element));
 }
 
@@ -208,7 +220,7 @@ describe.each(OVERLAYS)("$name", ({ X, marker }) => {
       </X.Body>,
     );
     const body = screen.getByRole("region", { name: "Terms" });
-    for (const [name, value] of Object.entries(tall)) body.setAttribute(name, String(value));
+    setSizes(body, tall);
     act(() => resize(screen.getByTestId("child")));
     expect(body).toHaveAttribute("tabindex", "0");
   });
@@ -235,9 +247,52 @@ describe.each(OVERLAYS)("$name", ({ X, marker }) => {
       </X.Body>,
     );
     const body = screen.getByRole("region", { name: "Terms" });
-    for (const [name, value] of Object.entries(tall)) body.setAttribute(name, String(value));
+    expect(body).toHaveAttribute("tabindex", "-1");
+    expect(isObserved(screen.getByText("Line 1"))).toBe(true);
+
+    // The content grows and the sizes are `tall` now, but no observer has reported them: the
+    // Body's own render did not run, only its mutation observer sees the new children
+    setSizes(body, tall);
     fireEvent.click(screen.getByRole("button", { name: "Fill" }));
     await waitFor(() => expect(body).toHaveAttribute("tabindex", "0"));
+
+    // The new children are observed too, so one that grows on its own is reported. `short` first,
+    // so the flip below comes from the report of the new child alone
+    const newLine = screen.getByText("Line 50");
+    expect(isObserved(newLine)).toBe(true);
+    setSizes(body, short);
+    act(() => resize(newLine));
+    expect(body).toHaveAttribute("tabindex", "-1");
+    setSizes(body, tall);
+    act(() => resize(newLine));
+    expect(body).toHaveAttribute("tabindex", "0");
+  });
+
+  it("creates one observer per node, and releases it on unmount", () => {
+    const popup = (className: string) => (
+      <X.Root open>
+        <X.Portal>
+          <X.Popup>
+            <X.Title>Terms</X.Title>
+            <X.Body className={className} {...short}>
+              Text
+            </X.Body>
+          </X.Popup>
+        </X.Portal>
+      </X.Root>
+    );
+    const { rerender } = render(popup("a"));
+    const [live, made] = [observers.size, created];
+    expect(live).toBeGreaterThan(0);
+
+    // A render of the Body neither creates nor leaves an observer behind
+    rerender(popup("b"));
+    rerender(popup("c"));
+    expect(observers.size).toBe(live);
+    expect(created).toBe(made);
+
+    cleanup();
+    expect(observers.size).toBe(0);
   });
 
   it("takes the initial focus when it overflows and nothing tabbable comes before it", async () => {

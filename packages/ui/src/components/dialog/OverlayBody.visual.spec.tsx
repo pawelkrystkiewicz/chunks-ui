@@ -136,15 +136,26 @@ describe("Drawer.Body in a side drawer", () => {
     );
   }
 
-  /** A right drawer with `content` in its Body; the Body never re-renders after the open */
+  /**
+   * A right drawer with `content` in its Body; nothing re-renders the Body after the open. `renders`
+   * has the `tabIndex` of each render of the Body, which a `render` function sees.
+   */
   async function open(content: ReactNode) {
+    const renders: (number | undefined)[] = [];
     render(
       <Drawer.Root defaultOpen>
         <Drawer.Portal>
           <Drawer.Backdrop />
           <Drawer.Popup data-testid="popup">
             <Drawer.Title>Terms</Drawer.Title>
-            <Drawer.Body>{content}</Drawer.Body>
+            <Drawer.Body
+              render={(props) => {
+                renders.push(props.tabIndex);
+                return <section {...props} />;
+              }}
+            >
+              {content}
+            </Drawer.Body>
             <div>
               <Drawer.Close>Cancel</Drawer.Close>
             </div>
@@ -156,20 +167,25 @@ describe("Drawer.Body in a side drawer", () => {
     await waitForStable(() => boxOf(popup));
     const body = screen.getByRole("region", { name: "Terms" });
     expect(body).toHaveAttribute("tabindex", "-1");
-    return body;
+    return { body, renders };
   }
 
   it("becomes a tab stop when a child grows on its own, without a render of the Body", async () => {
-    const body = await open(<Growing />);
+    const { body, renders } = await open(<Growing />);
     const { clientHeight } = body;
+    const before = renders.length;
     await userEvent.click(screen.getByRole("button", { name: "Grow" }));
     await expect.poll(() => body.getAttribute("tabindex")).toBe("0");
     // The box did not change, so the Body's own size reported nothing
     expect(body.clientHeight).toBe(clientHeight);
+    // And nothing rendered the Body to measure it. The measurement renders it itself (the tab stop
+    // is state), so what the click renders is not none; but every one of those renders carries the
+    // new tab stop. A render from outside would carry the stale -1 first.
+    expect(renders.slice(before)).not.toContain(-1);
   });
 
   it("becomes a tab stop when a child renders more content into it", async () => {
-    const body = await open(<Filling />);
+    const { body } = await open(<Filling />);
     const { clientHeight } = body;
     await userEvent.click(screen.getByRole("button", { name: "Fill" }));
     await expect.poll(() => body.getAttribute("tabindex")).toBe("0");
