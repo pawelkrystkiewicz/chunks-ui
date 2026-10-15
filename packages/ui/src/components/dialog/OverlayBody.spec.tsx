@@ -1,6 +1,6 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { axe } from "jest-axe";
-import { createRef, type FormEvent, type ReactNode, useState } from "react";
+import { createRef, type FormEvent, type ReactElement, type ReactNode, useState } from "react";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { Drawer } from "../drawer";
 import { FOCUS_RING } from "../shared";
@@ -211,6 +211,20 @@ describe("Body", () => {
     expect(screen.getByRole("region", { name: "Terms" })).toHaveAttribute("tabindex", "0");
   });
 
+  it("has data-overflowing while its content overflows, and drops it when it fits", () => {
+    renderBody(<Dialog.Title>Terms</Dialog.Title>, <Dialog.Body {...tall}>Text</Dialog.Body>);
+    const body = screen.getByRole("region", { name: "Terms" });
+    expect(body).toHaveAttribute("data-overflowing", "");
+
+    setSizes(body, short);
+    act(() => resize(body));
+    expect(body).not.toHaveAttribute("data-overflowing");
+
+    setSizes(body, tall);
+    act(() => resize(body));
+    expect(body).toHaveAttribute("data-overflowing", "");
+  });
+
   it("stays a tab stop when its ref never arrives, so nothing measures it", () => {
     // A render function that drops the ref: the Body never gets its node, and fails closed
     renderBody(
@@ -219,7 +233,10 @@ describe("Body", () => {
         Text
       </Dialog.Body>,
     );
-    expect(screen.getByRole("region", { name: "Terms" })).toHaveAttribute("tabindex", "0");
+    const body = screen.getByRole("region", { name: "Terms" });
+    expect(body).toHaveAttribute("tabindex", "0");
+    // Unmeasured is not overflowing: the attribute reports a measurement, the tab stop fails closed
+    expect(body).not.toHaveAttribute("data-overflowing");
   });
 
   it("measures again when a child grows on its own, without a render of the Body", () => {
@@ -386,8 +403,148 @@ describe("Body", () => {
     expect(onSubmit).toHaveBeenCalledTimes(1);
   });
 
+  describe("role on a render element", () => {
+    it("gives a div role=region, so the Title's name is exposed", async () => {
+      renderBody(
+        <Dialog.Title>Terms</Dialog.Title>,
+        <Dialog.Body render={<div />}>Text</Dialog.Body>,
+      );
+      const body = screen.getByRole("region", { name: "Terms" });
+      expect(body.tagName).toBe("DIV");
+      // The popup is portalled into the body, outside the container RTL hands back
+      expect(await axe(document.body)).toHaveNoViolations();
+    });
+
+    it("gives a div returned by a function render role=region", () => {
+      renderBody(
+        <Dialog.Title>Terms</Dialog.Title>,
+        <Dialog.Body render={(props) => <div {...props} />}>Text</Dialog.Body>,
+      );
+      const body = screen.getByRole("region", { name: "Terms" });
+      expect(body.tagName).toBe("DIV");
+      // jsdom has no layout, so the Body reads as fitting only if its ref survived the wrapper
+      expect(body).toHaveAttribute("tabindex", "-1");
+    });
+
+    it("leaves a form, which has a role of its own, without one", () => {
+      renderBody(
+        <Dialog.Title>New task</Dialog.Title>,
+        <Dialog.Body render={<form />}>Text</Dialog.Body>,
+      );
+      expect(screen.getByRole("form", { name: "New task" })).not.toHaveAttribute("role");
+    });
+
+    it("leaves a form returned by a function render without a role, though its props could carry one", () => {
+      renderBody(
+        <Dialog.Title>New task</Dialog.Title>,
+        <Dialog.Body render={(props) => <form {...props} />}>Text</Dialog.Body>,
+      );
+      expect(screen.getByRole("form", { name: "New task" })).not.toHaveAttribute("role");
+    });
+
+    it("reads the name of a lazy render element, so its aria-label wins over the Title", () => {
+      // The Flight client hands over `{ $$typeof: react.lazy, _payload, _init }` in place of the
+      // element; React's own children logic reads it through `_init`
+      const lazy = {
+        $$typeof: Symbol.for("react.lazy"),
+        // biome-ignore lint/a11y/useAriaPropsSupportedByRole: a generic div, which the Body gives the region role
+        _payload: <div aria-label="Notes" />,
+        _init: (payload: ReactElement) => payload,
+      } as unknown as ReactElement;
+      renderBody(<Dialog.Title>Terms</Dialog.Title>, <Dialog.Body render={lazy}>Text</Dialog.Body>);
+      expect(screen.getByRole("region", { name: "Notes" })).toBeInTheDocument();
+    });
+
+    it("gives a div named by an aria-label on the Body the role, with no Title", () => {
+      renderBody(
+        null,
+        <Dialog.Body aria-label="Notes" render={<div />}>
+          Text
+        </Dialog.Body>,
+      );
+      expect(screen.getByRole("region", { name: "Notes" })).toHaveAttribute("role", "region");
+    });
+
+    // A region must have a name: with none it is a generic element, and a role would only add noise
+    it("gives an unnamed div no role", () => {
+      renderBody(null, <Dialog.Body render={<div data-testid="body" />}>Text</Dialog.Body>);
+      expect(screen.getByTestId("body")).not.toHaveAttribute("role");
+    });
+
+    it("gives an unnamed div returned by a function render no role", () => {
+      renderBody(
+        null,
+        <Dialog.Body render={(props) => <div data-testid="body" {...props} />}>Text</Dialog.Body>,
+      );
+      expect(screen.getByTestId("body")).not.toHaveAttribute("role");
+    });
+
+    it("still warns about a component passed as a function render", () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      // Named like a component, as Base UI checks: `render={MyBodyRender}` calls it as a function
+      function MyBodyRender(props: object) {
+        return <div {...props} />;
+      }
+      try {
+        // Named by its label, so the wrapper is in place from the first render: the Title's id
+        // arrives only after it, and Base UI warns once per message
+        renderBody(
+          null,
+          <Dialog.Body aria-label="Terms" render={MyBodyRender}>
+            Text
+          </Dialog.Body>,
+        );
+        expect(warn).toHaveBeenCalledWith(expect.stringContaining("`MyBodyRender`"));
+      } finally {
+        warn.mockRestore();
+      }
+    });
+
+    // The specs use role="note" for another role on a <div>: Biome's `useSemanticElements` flags
+    // role="region" on one
+    it("keeps a role set on the render element", () => {
+      renderBody(
+        <Dialog.Title>Terms</Dialog.Title>,
+        <Dialog.Body render={<div role="note" />}>Text</Dialog.Body>,
+      );
+      expect(screen.getByRole("note", { name: "Terms" })).toBeInTheDocument();
+      expect(screen.queryByRole("region")).toBeNull();
+    });
+
+    it("gives a span the role", () => {
+      renderBody(
+        <Dialog.Title>Terms</Dialog.Title>,
+        <Dialog.Body render={<span />}>Text</Dialog.Body>,
+      );
+      const body = screen.getByRole("region", { name: "Terms" });
+      expect(body.tagName).toBe("SPAN");
+    });
+
+    it("keeps a role set on the Body for a div returned by a function render", () => {
+      renderBody(
+        <Dialog.Title>Terms</Dialog.Title>,
+        <Dialog.Body role="note" render={(props) => <div {...props} />}>
+          Text
+        </Dialog.Body>,
+      );
+      expect(screen.getByRole("note", { name: "Terms" })).toBeInTheDocument();
+      expect(screen.queryByRole("region")).toBeNull();
+    });
+
+    it("keeps a role set on the Body", () => {
+      renderBody(
+        <Dialog.Title>Terms</Dialog.Title>,
+        <Dialog.Body role="note" render={<div />}>
+          Text
+        </Dialog.Body>,
+      );
+      expect(screen.getByRole("note", { name: "Terms" })).toBeInTheDocument();
+      expect(screen.queryByRole("region")).toBeNull();
+    });
+  });
+
   it("has no a11y violations", async () => {
-    const { container } = renderBody(
+    renderBody(
       <>
         <Dialog.Title>Terms</Dialog.Title>
         <Dialog.Description>Read before you accept.</Dialog.Description>
@@ -396,6 +553,7 @@ describe("Body", () => {
         <p>Text</p>
       </Dialog.Body>,
     );
-    expect(await axe(container)).toHaveNoViolations();
+    // The popup is portalled into the body, outside the container RTL hands back
+    expect(await axe(document.body)).toHaveNoViolations();
   });
 });

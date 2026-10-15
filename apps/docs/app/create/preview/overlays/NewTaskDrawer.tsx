@@ -15,12 +15,9 @@ export function NewTaskDrawer() {
       </Drawer.Trigger>
       <Drawer.Portal>
         <Drawer.Backdrop />
-        <Drawer.Popup
-          initialFocus={focusOnOpen(title)}
-          className="flex flex-col gap-6 overflow-y-auto"
-        >
+        <Drawer.Popup initialFocus={focusOnOpen(title)} className="gap-6">
           <OverlayHeader title="New task" description="Add a task to Sprint 14." />
-          <div className="flex flex-col gap-4">
+          <Drawer.Body className="flex flex-col gap-4">
             <Field.Root className="gap-2">
               <Field.Label>Title</Field.Label>
               <Input ref={title} placeholder="What needs doing?" />
@@ -33,8 +30,8 @@ export function NewTaskDrawer() {
               <SelectField label="Assignee" items={["Alice", "Bob", "Eve"]} />
               <SelectField label="Priority" items={["Medium", "High", "Low"]} />
             </div>
-          </div>
-          <div className="mt-auto flex justify-end gap-2">
+          </Drawer.Body>
+          <div className="flex justify-end gap-2">
             <Drawer.Close render={<Button variant="outlined" color="secondary" />}>
               Cancel
             </Drawer.Close>
