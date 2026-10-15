@@ -41,26 +41,23 @@ describe("Switch", () => {
     expect(await axe(container)).toHaveNoViolations();
   });
 
-  // pointer-events: none on the root would hide the not-allowed cursor; Base UI ignores the click
-  // anyway. The thumb keeps it, so a click on the thumb reaches the root.
+  // The cursor and the thumb's pointer-events are measured in Switch.visual.spec; Base UI ignores
+  // the click
   it.each<[string, boolean, (control: ReactNode) => ReactNode]>([
     ["its own prop", true, (control) => control],
     ["a disabled Field.Root", false, (control) => <Field.Root disabled>{control}</Field.Root>],
-  ])("shows a not-allowed cursor and ignores clicks when disabled by %s", async (_, own, wrap) => {
+  ])("ignores clicks when disabled by %s", async (_, own, wrap) => {
     const user = userEvent.setup();
     const onCheckedChange = vi.fn();
     render(
       wrap(
         <Switch.Root aria-label="Alerts" disabled={own} onCheckedChange={onCheckedChange}>
-          <Switch.Thumb data-testid="thumb" />
+          <Switch.Thumb />
         </Switch.Root>,
       ),
     );
     const root = screen.getByRole("switch", { name: "Alerts" });
     expect(root).toHaveAttribute("data-disabled");
-    expect(root).toHaveClass("data-disabled:cursor-not-allowed", "data-disabled:opacity-50");
-    expect(root).not.toHaveClass("data-disabled:pointer-events-none");
-    expect(screen.getByTestId("thumb")).toHaveClass("pointer-events-none");
     await user.click(root);
     expect(onCheckedChange).not.toHaveBeenCalled();
     expect(root).toHaveAttribute("aria-checked", "false");

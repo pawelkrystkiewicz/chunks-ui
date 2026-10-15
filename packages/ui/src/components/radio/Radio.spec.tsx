@@ -55,13 +55,7 @@ describe("Radio", () => {
     expect(screen.getByRole("radio")).toBeInTheDocument();
   });
 
-  // The item's label dims and shows a not-allowed cursor when the radio inside it carries Base
-  // UI's `data-disabled`, whichever disables it. The opacity itself is measured in Radio.visual.spec.
-  const ITEM_DISABLED_CLASSES = [
-    "has-[>[data-disabled]]:cursor-not-allowed",
-    "has-[>[data-disabled]]:opacity-50",
-  ];
-
+  // The item's dimmed, not-allowed look is measured in Radio.visual.spec
   it("marks an Item disabled by its prop, its group or a Field.Root, and ignores clicks on it", async () => {
     const user = userEvent.setup();
     const onValueChange = vi.fn();
@@ -92,7 +86,6 @@ describe("Radio", () => {
     for (const text of ["By prop", "By group", "By field, in a group", "By field, no group"]) {
       const { label, radio } = item(text);
       expect(radio).toHaveAttribute("data-disabled");
-      expect(label).toHaveClass(...ITEM_DISABLED_CLASSES);
       await user.click(label);
       // The group's spy cannot see an item outside a group: check the radio itself
       expect(radio).toHaveAttribute("aria-checked", "false");

@@ -35,7 +35,7 @@ describe("Radio", () => {
     ["a disabled item", { item: true }],
     ["the items of a disabled group", { group: true }],
     ["a disabled item of a disabled group", { group: true, item: true }],
-  ])("dims %s once", (_, disabled) => {
+  ])("dims %s once and shows a not-allowed cursor", (_, disabled) => {
     const { getByRole, getByText } = render(
       <Radio.Group defaultValue="a" disabled={disabled.group}>
         <Radio.Item value="a" disabled={disabled.item}>
@@ -45,6 +45,8 @@ describe("Radio", () => {
     );
     expect(drawnOpacity(getByRole("radio", { name: "Option" }))).toBe(0.5);
     expect(drawnOpacity(getByText("Option"))).toBe(0.5);
+    const label = getByText("Option").closest("label");
+    expect(label && getComputedStyle(label).cursor).toBe("not-allowed");
   });
 
   // A Field.Root disables the radio through Base UI (`data-disabled`), not through the item's prop

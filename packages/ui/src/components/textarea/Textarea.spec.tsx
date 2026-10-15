@@ -95,11 +95,11 @@ describe("Textarea inside Field", () => {
     expect(screen.getByRole("textbox", { name: "Bio" })).toBeDisabled();
   });
 
-  // pointer-events: none would hide the not-allowed cursor; a disabled textarea takes no input anyway
+  // The cursor and the missing resize grip are measured in Textarea.visual.spec
   it.each<[string, { field?: boolean; own?: boolean }]>([
     ["its own prop", { own: true }],
     ["a disabled Field.Root", { field: true }],
-  ])("shows a not-allowed cursor and takes no input when disabled by %s", async (_, by) => {
+  ])("takes no input when disabled by %s", async (_, by) => {
     const onChange = vi.fn();
     render(
       <Field.Root disabled={by.field}>
@@ -109,8 +109,6 @@ describe("Textarea inside Field", () => {
     );
     const textarea = screen.getByRole("textbox", { name: "Bio" });
     expect(textarea).toBeDisabled();
-    expect(textarea).toHaveClass("disabled:cursor-not-allowed", "disabled:opacity-50");
-    expect(textarea).not.toHaveClass("disabled:pointer-events-none");
     await userEvent.type(textarea, "d");
     expect(onChange).not.toHaveBeenCalled();
     expect(textarea).toHaveValue("abc");

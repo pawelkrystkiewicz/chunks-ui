@@ -84,6 +84,10 @@ describe("Calendar in forced-colors mode", () => {
     const selected = style("Wednesday, March 18, 2026");
     expect(selected.backgroundColor).toBe(systemColour("Highlight"));
     expect(selected.color).toBe(systemColour("HighlightText"));
+    // The number's span, which the text sits in, takes the colour too and is left to the system
+    const selectedNumber = numberStyle("Wednesday, March 18, 2026");
+    expect(selectedNumber.color).toBe(systemColour("HighlightText"));
+    expect(selectedNumber.forcedColorAdjust).toBe("none");
     // Today's underline is on the number's span, so a strike on the button does not replace it
     expect(numberStyle("Sunday, March 15, 2026").textDecorationLine).toBe("underline");
     const outside = style("Monday, February 23, 2026");

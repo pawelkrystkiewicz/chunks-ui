@@ -46,11 +46,11 @@ describe("Checkbox", () => {
     expect(await axe(container)).toHaveNoViolations();
   });
 
-  // pointer-events: none would hide the not-allowed cursor; Base UI ignores the click anyway
+  // The not-allowed cursor is measured in Checkbox.visual.spec; Base UI ignores the click
   it.each<[string, boolean, (checkbox: ReactNode) => ReactNode]>([
     ["its own prop", true, (checkbox) => checkbox],
     ["a disabled Field.Root", false, (checkbox) => <Field.Root disabled>{checkbox}</Field.Root>],
-  ])("shows a not-allowed cursor and ignores clicks when disabled by %s", async (_, own, wrap) => {
+  ])("ignores clicks when disabled by %s", async (_, own, wrap) => {
     const user = userEvent.setup();
     const onCheckedChange = vi.fn();
     render(
@@ -62,11 +62,6 @@ describe("Checkbox", () => {
     );
     const checkbox = screen.getByRole("checkbox", { name: "Accept" });
     expect(checkbox).toHaveAttribute("data-disabled");
-    expect(checkbox).toHaveClass(
-      "data-[disabled]:cursor-not-allowed",
-      "data-[disabled]:opacity-50",
-    );
-    expect(checkbox).not.toHaveClass("data-[disabled]:pointer-events-none");
     await user.click(checkbox);
     expect(onCheckedChange).not.toHaveBeenCalled();
     expect(checkbox).toHaveAttribute("aria-checked", "false");

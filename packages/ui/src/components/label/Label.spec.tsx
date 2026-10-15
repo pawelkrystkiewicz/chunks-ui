@@ -36,29 +36,18 @@ describe("Label", () => {
   });
 
   describe("disabled", () => {
-    // One state attribute, as Base UI sets on Field.Label, so one `data-disabled:` class restyles it
-    it("sets data-disabled and keys the dimmed, not-allowed look on it", () => {
+    // One state attribute, as Base UI sets on Field.Label; the look keyed on it is measured in
+    // Label.visual.spec
+    it("sets data-disabled, not the disabled attribute", () => {
       render(<Label disabled>Email</Label>);
       const label = screen.getByText("Email");
       expect(label).toHaveAttribute("data-disabled", "");
       expect(label).not.toHaveAttribute("disabled");
-      expect(label).toHaveClass("data-disabled:cursor-not-allowed", "data-disabled:opacity-50");
     });
 
     it("has no data-disabled when enabled", () => {
       render(<Label>Email</Label>);
       expect(screen.getByText("Email")).not.toHaveAttribute("data-disabled");
-    });
-
-    it("lets one class in className replace the disabled opacity", () => {
-      render(
-        <Label disabled className="data-disabled:opacity-75">
-          Email
-        </Label>,
-      );
-      const label = screen.getByText("Email");
-      expect(label).toHaveClass("data-disabled:opacity-75");
-      expect(label).not.toHaveClass("data-disabled:opacity-50");
     });
 
     it("has no a11y violations", async () => {
