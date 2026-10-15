@@ -63,7 +63,7 @@ export default ClearButtonLabels
 
 ## Styling
 
-The button renders at `size-6` (24px) with a rounded-full shape. It shows `text-muted-foreground` by default. On hover the icon turns `text-destructive-text` over a faint `bg-destructive/5` background, and the button grows slightly (`hover:scale-105`).
+The button renders at `size-6` (24px) with a rounded-full shape. It shows `text-muted-foreground` by default. On hover the icon turns `text-destructive-text` over a faint `bg-destructive/5` background, and the button grows slightly (`hover:scale-105`). While `disabled` it shows the not-allowed cursor and its hover and press feedback stay off.
 
 To make it easier to tap, add [`touch-target`](/utilities#touch-target): the hit area grows to 44×44px, and the button's size and the layout stay the same.
 
