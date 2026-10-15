@@ -72,7 +72,7 @@ export function ThemeSidebar({
       aria-label="Theme"
       className="flex w-full max-w-md flex-col overflow-hidden rounded-[14px] border border-border bg-background shadow-[0_1px_2px_oklch(0_0_0/0.04)] lg:sticky lg:top-[72px] lg:max-h-[calc(100vh-88px)] lg:w-80 lg:max-w-none lg:flex-none"
     >
-      <div className="flex items-start justify-between gap-3 border-border border-b pt-[18px] pr-4 pb-4 pl-5">
+      <div className="flex items-start justify-between gap-3 border-border border-b pt-[18px] pe-4 pb-4 ps-5">
         <div className="flex flex-col gap-1">
           <h2 className="font-semibold text-base leading-tight tracking-[-0.01em]">Theme</h2>
           <p className="text-[12.5px] text-muted-foreground">Saved in this browser.</p>
@@ -115,7 +115,7 @@ export function ThemeSidebar({
                   onClick={() => onChange(preset.theme)}
                   className={cn(
                     TILE,
-                    "flex h-[66px] flex-col justify-between rounded-[10px] px-2.5 py-[9px] text-left",
+                    "flex h-[66px] flex-col justify-between rounded-[10px] px-2.5 py-[9px] text-start",
                     active && RING,
                   )}
                 >
@@ -129,7 +129,7 @@ export function ThemeSidebar({
                     </span>
                     <span aria-hidden className="flex">
                       <Dot color={pal.primary} />
-                      <Dot color={pal["chart-2"]} className="-ml-[3px]" />
+                      <Dot color={pal["chart-2"]} className="-ms-[3px]" />
                     </span>
                   </span>
                   <span className="whitespace-nowrap font-medium text-xs">{preset.name}</span>
@@ -248,7 +248,7 @@ export function ThemeSidebar({
                       <span key={c} className="rounded-[3px]" style={{ background: c }} />
                     ))}
                   </span>
-                  <span className="text-left font-medium text-[11px]">{o.name}</span>
+                  <span className="text-start font-medium text-[11px]">{o.name}</span>
                 </button>
               ))}
             </div>
@@ -304,8 +304,8 @@ export function ThemeSidebar({
                   )}
                 >
                   <span
-                    className="size-3.5 border-current border-t-2 border-r-2"
-                    style={{ borderTopRightRadius: Math.min(v, 12) }}
+                    className="size-3.5 border-current border-t-2 border-e-2"
+                    style={{ borderStartEndRadius: Math.min(v, 12) }}
                   />
                 </button>
               ))}
@@ -456,7 +456,7 @@ function FontPicker({
     <Field.Root className="flex flex-col gap-2">
       <Field.Label className={LABEL}>{label}</Field.Label>
       <Select.Root value={value} onValueChange={(v) => v && onChange(v)}>
-        <Select.Trigger className="h-[42px] gap-2.5 rounded-[9px] pr-2.5 pl-1.5 hover:bg-secondary">
+        <Select.Trigger className="h-[42px] gap-2.5 rounded-[9px] pe-2.5 ps-1.5 hover:bg-secondary">
           <span
             className={cn(
               "flex size-[30px] flex-none items-center justify-center overflow-hidden rounded-md bg-secondary text-[15px]",
@@ -466,7 +466,7 @@ function FontPicker({
           >
             Aa
           </span>
-          <Select.Value className="min-w-0 flex-1 truncate text-left font-medium text-[13px]" />
+          <Select.Value className="min-w-0 flex-1 truncate text-start font-medium text-[13px]" />
           <span className="font-mono text-[10.5px] text-muted-foreground">{font.kind}</span>
           <ChevronsUpDown className="size-[15px] text-muted-foreground" />
         </Select.Trigger>
