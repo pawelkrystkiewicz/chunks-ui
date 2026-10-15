@@ -501,7 +501,6 @@ describe("Combobox focus ring", () => {
   });
 });
 
-// Last, since Motion stays loaded for the tests that follow
 describe("Combobox.Popup with Motion loaded", () => {
   function renderPopup(renderProp?: ReactElement) {
     render(
@@ -523,7 +522,10 @@ describe("Combobox.Popup with Motion loaded", () => {
 
   it("animates the default element with Motion, not CSS", async () => {
     await reloadMotion();
-    expect(renderPopup()).not.toHaveClass("micro-interactions");
+    const el = renderPopup();
+    expect(el).not.toHaveClass("micro-interactions");
+    // Motion writes its `initial` values inline once it attaches
+    expect(el.style.opacity).not.toBe("");
   });
 
   // A consumer's `render` replaces the animated element, so the spring cannot attach to it

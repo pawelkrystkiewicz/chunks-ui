@@ -97,7 +97,6 @@ describe("Popover", () => {
   });
 });
 
-// Last, since Motion stays loaded for the tests that follow
 describe("Popover.Content with Motion loaded", () => {
   function renderContent(renderProp?: ReactElement) {
     render(
@@ -113,7 +112,10 @@ describe("Popover.Content with Motion loaded", () => {
 
   it("animates the default element with Motion, not CSS", async () => {
     await reloadMotion();
-    expect(renderContent()).not.toHaveClass("micro-interactions");
+    const el = renderContent();
+    expect(el).not.toHaveClass("micro-interactions");
+    // Motion writes its `initial` values inline once it attaches
+    expect(el.style.opacity).not.toBe("");
   });
 
   // A consumer's `render` replaces the animated element, so the spring cannot attach to it

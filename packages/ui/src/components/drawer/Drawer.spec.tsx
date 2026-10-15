@@ -131,7 +131,6 @@ describe("Drawer", () => {
   });
 });
 
-// Last, since Motion stays loaded for the tests that follow
 describe("Drawer.Backdrop with Motion loaded", () => {
   function renderBackdrop(renderProp?: ReactElement) {
     render(
@@ -147,7 +146,10 @@ describe("Drawer.Backdrop with Motion loaded", () => {
 
   it("animates the default element with Motion, not CSS", async () => {
     await reloadMotion();
-    expect(renderBackdrop()).not.toHaveClass("micro-interactions");
+    const el = renderBackdrop();
+    expect(el).not.toHaveClass("micro-interactions");
+    // Motion writes its `initial` values inline once it attaches
+    expect(el.style.opacity).not.toBe("");
   });
 
   // A consumer's `render` replaces the animated element, so the spring cannot attach to it
