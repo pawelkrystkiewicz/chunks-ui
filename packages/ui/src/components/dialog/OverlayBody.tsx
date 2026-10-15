@@ -2,6 +2,7 @@
 
 import { useRender } from "@base-ui/react/use-render";
 import {
+  Children,
   cloneElement,
   createContext,
   type Dispatch,
@@ -29,8 +30,9 @@ import { FOCUS_RING, RING_TRANSITION } from "../shared";
  * element, not from what a function returns, so the Title's `aria-labelledby` would win over an
  * `aria-label` set inside the function. The name needs a role that takes it: a `<form>` has one,
  * and a `<div>` or `<span>` with no `role`, as the `render` element or returned by a function
- * `render`, gets `role="region"`, the `<section>`'s. A `role` set on the Body or on the element is
- * kept; a component in `render` gets none from the Body.
+ * `render`, gets `role="region"`, the `<section>`'s, while the Body is named (a region must be: an
+ * unnamed one is a generic element). A `role` set on the Body or on the element is kept; a
+ * component in `render` gets none from the Body.
  */
 export type OverlayBodyProps = useRender.ComponentProps<"section">;
 
@@ -47,14 +49,29 @@ const isGeneric = (element: ReactElement<Record<string, unknown>>) =>
   element.props.role === undefined;
 
 /** `render`, with the region role on a generic element it returns */
-const withRegionRole =
-  (render: RenderFunction): RenderFunction =>
-  (props, state) => {
+const withRegionRole = (render: RenderFunction): RenderFunction => {
+  const wrapped: RenderFunction = (props, state) => {
     const element = render(props, state);
     return isValidElement<Record<string, unknown>>(element) && isGeneric(element)
       ? cloneElement(element, { role: "region" })
       : element;
   };
+  // Base UI warns about `render={MyBody}`, a component called as a function, by the function's name
+  return Object.defineProperty(wrapped, "name", { value: render.name });
+};
+
+const REACT_LAZY_TYPE = Symbol.for("react.lazy");
+
+/**
+ * `render`, with a lazy wrapper replaced by its element. A `render={<div />}` written in a Server
+ * Component arrives as one, with no `props` to read; Base UI unwraps it only inside `useRender`,
+ * as it does here. A wrapper that does not unwrap to an element is left for Base UI to report.
+ */
+function unwrapLazyRender(render: OverlayBodyProps["render"]): OverlayBodyProps["render"] {
+  if ((render as { $$typeof?: symbol } | undefined)?.$$typeof !== REACT_LAZY_TYPE) return render;
+  const unwrapped = Children.toArray(render as ReactNode)[0];
+  return isValidElement(unwrapped) ? (unwrapped as ReactElement) : render;
+}
 
 /** The id of the Title mounted in this Popup, which names the Body, and its setter */
 const TitleIdContext = createContext<{
@@ -137,19 +154,26 @@ function useFits(): {
     };
   }, [node]);
 
-  return { fits: node !== null && !overflows, overflows, ref: setNode };
+  return { fits: node !== null && !overflows, overflows: node !== null && overflows, ref: setNode };
 }
 
 /**
  * The scrolling middle of a tall dialog or drawer, between the Title and the actions. With a Body
  * as its child, the Popup is a flex column: the other children keep their height and only the
  * Body scrolls. It is a region the Title names: a `<section>`, or the element `render` gives it,
- * with `role="region"` when that is a generic `<div>` or `<span>`. A name of its own goes on the
- * Body, or on a `render` element; see {@link OverlayBodyProps}.
+ * with `role="region"` when that is a generic `<div>` or `<span>` and the Body is named. A name of
+ * its own goes on the Body, or on a `render` element; see {@link OverlayBodyProps}.
  */
-export function OverlayBody({ className, render, ref: forwardedRef, ...props }: OverlayBodyProps) {
+export function OverlayBody({
+  className,
+  render: renderProp,
+  ref: forwardedRef,
+  ...props
+}: OverlayBodyProps) {
   const { titleId } = useContext(TitleIdContext);
   const { fits, overflows, ref } = useFits();
+  // Once, for the name and role checks and for `useRender`
+  const render = unwrapLazyRender(renderProp);
   const renderElement = isValidElement<Record<string, unknown>>(render) ? render : undefined;
   // A name on the Body, or on the element `render` gives it (its props are merged over these),
   // wins over the Title: `aria-labelledby` would take precedence over its `aria-label` otherwise
@@ -158,16 +182,18 @@ export function OverlayBody({ className, render, ref: forwardedRef, ...props }: 
     props["aria-labelledby"] ??
     renderElement?.props["aria-label"] ??
     renderElement?.props["aria-labelledby"];
+  // A region must have a name: the role goes only on a named Body
+  const hasName = Boolean(named || titleId);
   // Base UI's render: an element is cloned with these props, a function gets them
   return useRender({
     defaultTagName: "section",
     // A function gets the role on the element it returns, not in its props: it may return a form
-    render: typeof render === "function" ? withRegionRole(render) : render,
+    render: typeof render === "function" && hasName ? withRegionRole(render) : render,
     ref: [ref, forwardedRef ?? null],
     props: {
       // The <section>'s role on a generic render element, so the name is exposed. A role set on
       // the Body (spread below) or on the element (merged over these) wins
-      role: renderElement && isGeneric(renderElement) ? "region" : undefined,
+      role: hasName && renderElement && isGeneric(renderElement) ? "region" : undefined,
       // The keyboard scrolls a scroll container only once it has the focus. One that fits is skipped
       // by Tab, yet stays focusable: a focused Body whose content shrinks to fit keeps the focus.
       // Fails closed: with no node (the server render, the first client render, or a `ref` that
