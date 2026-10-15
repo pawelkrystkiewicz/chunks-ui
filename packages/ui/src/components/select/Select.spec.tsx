@@ -1,6 +1,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { axe } from "jest-axe";
+import type { ReactElement } from "react";
 import { afterEach, describe, expect, it } from "vitest";
+import { reloadMotion } from "../../lib/use-motion";
 import { FOCUS_RING } from "../shared";
 import { Select } from "./Select";
 
@@ -119,5 +121,35 @@ describe("Select focus ring", () => {
   it("draws the library focus ring on the Trigger", () => {
     trigger();
     expect(screen.getByTestId("trigger")).toHaveClass(FOCUS_RING);
+  });
+});
+
+// Last, since Motion stays loaded for the tests that follow
+describe("Select.Popup with Motion loaded", () => {
+  function renderPopup(renderProp?: ReactElement) {
+    render(
+      <Select.Root open>
+        <Select.Trigger>Pick</Select.Trigger>
+        <Select.Positioner>
+          <Select.Popup render={renderProp} data-testid="popup">
+            <Select.Item value="a">A</Select.Item>
+          </Select.Popup>
+        </Select.Positioner>
+      </Select.Root>,
+    );
+    return screen.getByTestId("popup");
+  }
+
+  it("animates the default element with Motion, not CSS", async () => {
+    await reloadMotion();
+    expect(renderPopup()).not.toHaveClass("micro-interactions");
+  });
+
+  // A consumer's `render` replaces the animated element, so the spring cannot attach to it
+  it("keeps the CSS transition on the element a render prop gives it", async () => {
+    await reloadMotion();
+    const popup = renderPopup(<section />);
+    expect(popup.tagName).toBe("SECTION");
+    expect(popup).toHaveClass("micro-interactions", "data-starting-style:opacity-0");
   });
 });

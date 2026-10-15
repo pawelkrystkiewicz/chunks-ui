@@ -1,8 +1,9 @@
 import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
 import { cleanup, render, screen } from "@testing-library/react";
 import { axe } from "jest-axe";
-import type { ComponentProps } from "react";
+import type { ComponentProps, ReactElement } from "react";
 import { afterEach, describe, expect, expectTypeOf, it } from "vitest";
+import { reloadMotion } from "../../lib/use-motion";
 import { FOCUS_RING, FOCUS_RING_WITHIN } from "../shared";
 import {
   Combobox,
@@ -497,5 +498,39 @@ describe("Combobox focus ring", () => {
   it("draws the focus-within ring classes on Control", () => {
     render(<Combobox.Control data-testid="control" />);
     expect(screen.getByTestId("control")).toHaveClass(FOCUS_RING_WITHIN);
+  });
+});
+
+// Last, since Motion stays loaded for the tests that follow
+describe("Combobox.Popup with Motion loaded", () => {
+  function renderPopup(renderProp?: ReactElement) {
+    render(
+      <Combobox.Root open items={items}>
+        <Combobox.Input />
+        <Combobox.Portal>
+          <Combobox.Positioner>
+            <Combobox.Popup render={renderProp} data-testid="popup">
+              <Combobox.List>
+                {(item) => <Combobox.Item key={item.value} value={item.value} />}
+              </Combobox.List>
+            </Combobox.Popup>
+          </Combobox.Positioner>
+        </Combobox.Portal>
+      </Combobox.Root>,
+    );
+    return screen.getByTestId("popup");
+  }
+
+  it("animates the default element with Motion, not CSS", async () => {
+    await reloadMotion();
+    expect(renderPopup()).not.toHaveClass("micro-interactions");
+  });
+
+  // A consumer's `render` replaces the animated element, so the spring cannot attach to it
+  it("keeps the CSS transition on the element a render prop gives it", async () => {
+    await reloadMotion();
+    const popup = renderPopup(<section />);
+    expect(popup.tagName).toBe("SECTION");
+    expect(popup).toHaveClass("micro-interactions", "data-starting-style:opacity-0");
   });
 });
