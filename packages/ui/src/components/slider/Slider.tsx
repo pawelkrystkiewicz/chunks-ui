@@ -127,7 +127,7 @@ function SliderThumb({ className, getAriaValueText, ...props }: SliderThumbProps
         "data-[dragging]:scale-110 data-[dragging]:shadow-md",
         // Keyboard focus lands on the visually hidden range input inside the thumb
         FOCUS_RING_WITHIN,
-        "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+        "data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50",
         className,
       )}
       {...props}

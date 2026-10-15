@@ -24,6 +24,14 @@ describe("DatePicker", () => {
     );
     await expect(fixture).toMatchScreenshot();
   });
+
+  it("shows a not-allowed cursor on a disabled trigger", () => {
+    const { getByRole } = render(<DatePicker disabled />);
+    const { cursor, pointerEvents } = getComputedStyle(
+      getByRole("button", { name: "Pick a date" }),
+    );
+    expect({ cursor, pointerEvents }).toEqual({ cursor: "not-allowed", pointerEvents: "auto" });
+  });
 });
 
 // Lives in the browser suite, not jsdom: only a real browser runs the popup's exit transition,

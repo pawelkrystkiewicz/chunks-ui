@@ -52,7 +52,7 @@ function NumberFieldGroup({ className, ...props }: NumberFieldGroupProps) {
         "flex items-center rounded-md border border-input bg-background",
         FOCUS_RING_WITHIN,
         RING_TRANSITION,
-        "has-[input:disabled]:pointer-events-none has-[input:disabled]:opacity-50",
+        "has-[input:disabled]:cursor-not-allowed has-[input:disabled]:opacity-50",
         className,
       )}
       {...props}
@@ -69,7 +69,7 @@ function NumberFieldInput({ className, ...props }: NumberFieldInputProps) {
         "h-ui-height w-full min-w-16 flex-1 bg-transparent px-3 text-center text-foreground text-sm tabular-nums",
         "placeholder:text-muted-foreground",
         "focus-visible:outline-none",
-        "disabled:pointer-events-none",
+        "disabled:cursor-not-allowed",
         className,
       )}
       {...props}
@@ -83,9 +83,9 @@ function NumberFieldIncrement({ className, ...props }: NumberFieldIncrementProps
     <BaseNumberField.Increment
       aria-label={labels.increment}
       className={cnState(
-        "micro-interactions flex h-ui-height items-center justify-center px-2 text-muted-foreground hover:text-foreground",
+        "micro-interactions flex h-ui-height items-center justify-center px-2 text-muted-foreground enabled:hover:text-foreground",
         "border-input border-s",
-        "disabled:pointer-events-none disabled:opacity-50",
+        "disabled:cursor-not-allowed disabled:opacity-50",
         "data-[disabled]:opacity-50",
         className,
       )}
@@ -114,9 +114,9 @@ function NumberFieldDecrement({ className, ...props }: NumberFieldDecrementProps
     <BaseNumberField.Decrement
       aria-label={labels.decrement}
       className={cnState(
-        "micro-interactions flex h-ui-height items-center justify-center px-2 text-muted-foreground hover:text-foreground",
+        "micro-interactions flex h-ui-height items-center justify-center px-2 text-muted-foreground enabled:hover:text-foreground",
         "border-input border-e",
-        "disabled:pointer-events-none disabled:opacity-50",
+        "disabled:cursor-not-allowed disabled:opacity-50",
         "data-[disabled]:opacity-50",
         className,
       )}

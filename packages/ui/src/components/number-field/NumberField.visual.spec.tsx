@@ -1,3 +1,4 @@
+import { render } from "@testing-library/react";
 import { describe, expect, it, onTestFinished } from "vitest";
 import { focusVisible, renderFixture } from "../../VisualTest.utils";
 import { Dialog } from "../dialog";
@@ -112,5 +113,19 @@ describe("NumberField", () => {
     const input = getByRole("textbox");
     focusVisible(input);
     await expect(fixture).toMatchScreenshot();
+  });
+
+  it("shows a not-allowed cursor on a disabled input", () => {
+    const { getByRole } = render(
+      <NumberField.Root defaultValue={42} disabled>
+        <NumberField.Group>
+          <NumberField.Decrement />
+          <NumberField.Input aria-label="Amount" />
+          <NumberField.Increment />
+        </NumberField.Group>
+      </NumberField.Root>,
+    );
+    const { cursor, pointerEvents } = getComputedStyle(getByRole("textbox", { name: "Amount" }));
+    expect({ cursor, pointerEvents }).toEqual({ cursor: "not-allowed", pointerEvents: "auto" });
   });
 });

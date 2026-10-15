@@ -1,3 +1,4 @@
+import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { focusVisible, renderFixture } from "../../VisualTest.utils";
 import { ToggleGroup } from "./index";
@@ -54,5 +55,18 @@ describe("ToggleGroup", () => {
     );
     focusVisible(getByRole("button", { name: "Bold", pressed: false }));
     await expect(fixture).toMatchScreenshot();
+  });
+
+  it("shows a not-allowed cursor on a disabled item", () => {
+    const { getByRole } = render(
+      <ToggleGroup.Root defaultValue={["a"]}>
+        <ToggleGroup.Item value="a">A</ToggleGroup.Item>
+        <ToggleGroup.Item value="b" disabled>
+          B
+        </ToggleGroup.Item>
+      </ToggleGroup.Root>,
+    );
+    const { cursor, pointerEvents } = getComputedStyle(getByRole("button", { name: "B" }));
+    expect({ cursor, pointerEvents }).toEqual({ cursor: "not-allowed", pointerEvents: "auto" });
   });
 });

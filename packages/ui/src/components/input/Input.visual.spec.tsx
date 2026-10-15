@@ -1,5 +1,8 @@
-import { describe, it } from "vitest";
+import { render } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
 import { focusVisible, renderFixture } from "../../VisualTest.utils";
+import { Field } from "../field";
+import { Textarea } from "../textarea";
 import { Input } from "./index";
 
 const searchIcon = (
@@ -65,5 +68,20 @@ describe("Input", () => {
     const input = getByRole("textbox");
     focusVisible(input);
     await expect(fixture).toMatchScreenshot();
+  });
+
+  it("shows a not-allowed cursor on an Input and a Textarea in one disabled Field.Root", () => {
+    const { getByRole } = render(
+      <Field.Root disabled>
+        <Input aria-label="Name" />
+        <Textarea aria-label="Bio" />
+      </Field.Root>,
+    );
+    const looks = (name: string) => {
+      const { cursor, pointerEvents } = getComputedStyle(getByRole("textbox", { name }));
+      return { cursor, pointerEvents };
+    };
+    expect(looks("Name")).toEqual({ cursor: "not-allowed", pointerEvents: "auto" });
+    expect(looks("Bio")).toEqual({ cursor: "not-allowed", pointerEvents: "auto" });
   });
 });

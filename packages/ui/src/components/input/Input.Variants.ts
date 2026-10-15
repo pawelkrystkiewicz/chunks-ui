@@ -6,6 +6,6 @@ export const inputVariants = cva([
   "text-foreground placeholder:text-muted-foreground",
   ...RING_ANIMATION_CLASSES,
   FOCUS_RING,
-  "disabled:pointer-events-none disabled:opacity-50",
+  "disabled:cursor-not-allowed disabled:opacity-50",
   "data-[invalid]:border-destructive",
 ]);

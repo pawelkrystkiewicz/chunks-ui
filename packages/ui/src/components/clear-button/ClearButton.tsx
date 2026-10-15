@@ -34,13 +34,13 @@ export function ClearButton({ className, label, labels, ...props }: ClearButtonP
       aria-label={resolvedLabel}
       className={cn(
         "inline-flex size-6 items-center justify-center rounded-full",
-        "text-muted-foreground hover:bg-destructive/5 hover:text-foreground",
+        "text-muted-foreground enabled:hover:bg-destructive/5 enabled:hover:text-foreground",
         FOCUS_RING,
-        "disabled:pointer-events-none disabled:opacity-50",
-        "hover:text-destructive-text",
+        "disabled:cursor-not-allowed disabled:opacity-50",
+        "enabled:hover:text-destructive-text",
         "cursor-pointer",
         ...BUTTON_ANIMATION_CLASSES,
-        "hover:scale-105",
+        "enabled:hover:scale-105",
         className,
       )}
       {...props}

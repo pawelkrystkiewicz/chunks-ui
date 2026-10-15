@@ -1,4 +1,5 @@
-import { describe, it } from "vitest";
+import { render } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
 import { page } from "vitest/browser";
 import { focusVisible, renderFixture, renderPage } from "../../VisualTest.utils";
 import { Select } from "./index";
@@ -74,5 +75,18 @@ describe("Select", () => {
       </div>,
     );
     await expect(body).toMatchScreenshot();
+  });
+
+  it("shows a not-allowed cursor on a disabled trigger", () => {
+    const { getByRole } = render(
+      <Select.Root defaultValue="apple" disabled>
+        <Select.Trigger aria-label="Fruit">
+          <Select.Value />
+          <Select.Icon />
+        </Select.Trigger>
+      </Select.Root>,
+    );
+    const { cursor, pointerEvents } = getComputedStyle(getByRole("combobox"));
+    expect({ cursor, pointerEvents }).toEqual({ cursor: "not-allowed", pointerEvents: "auto" });
   });
 });

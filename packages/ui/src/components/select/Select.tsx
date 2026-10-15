@@ -29,7 +29,7 @@ function SelectTrigger({ className, ...props }: SelectTriggerProps) {
         "placeholder:text-muted-foreground",
         FOCUS_RING,
         RING_TRANSITION,
-        "disabled:pointer-events-none disabled:opacity-50",
+        "disabled:cursor-not-allowed disabled:opacity-50",
         "data-placeholder:text-muted-foreground",
         className,
       )}
@@ -90,7 +90,7 @@ function SelectItem({ className, ...props }: SelectItemProps) {
       className={cnState(
         "relative flex w-full cursor-default items-center rounded-sm py-1.5 ps-2 pe-8 text-sm outline-none",
         "data-highlighted:bg-accent data-highlighted:text-accent-foreground",
-        "data-disabled:pointer-events-none data-disabled:opacity-50",
+        "data-disabled:cursor-not-allowed data-disabled:opacity-50",
         "cursor-pointer",
         className,
       )}

@@ -50,6 +50,18 @@ describe("Calendar", () => {
     focusVisible(day);
     await expect(fixture).toMatchScreenshot();
   });
+
+  it("shows a not-allowed cursor on a disabled day", () => {
+    render(
+      <Calendar
+        value={new Date(2026, 2, 18)}
+        isDateDisabled={(date) => date.getMonth() === 2 && date.getDate() === 20}
+      />,
+    );
+    const day = screen.getByLabelText("Friday, March 20, 2026", { selector: "button" });
+    const { cursor, pointerEvents } = getComputedStyle(day);
+    expect({ cursor, pointerEvents }).toEqual({ cursor: "not-allowed", pointerEvents: "auto" });
+  });
 });
 
 // The number's `<span>` inside a day's button
