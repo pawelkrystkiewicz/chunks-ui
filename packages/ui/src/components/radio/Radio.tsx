@@ -39,7 +39,7 @@ function RadioRoot({ className, ...props }: RadioRootProps) {
         ...RING_ANIMATION_CLASSES,
         "cursor-pointer",
         FOCUS_RING,
-        "data-[checked]:border-primary",
+        "data-checked:border-primary",
         // No pointer-events-none: it would hide the cursor, and Base UI ignores the click anyway.
         // A disabled Radio.Group dims itself, so inside one the root drops its own dim and isn't
         // dimmed twice.

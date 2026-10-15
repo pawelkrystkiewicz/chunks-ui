@@ -40,7 +40,7 @@ const renderIndeterminate = (className?: string) =>
 
 /*
  * The indeterminate pulse is an essential status indicator, like the Loader spinner, so it
- * keeps running with reduced motion. A `data-[indeterminate]:animate-*` class on the indicator
+ * keeps running with reduced motion. A `data-indeterminate:animate-*` class on the indicator
  * replaces it; an `animate-*` class without that prefix does not.
  */
 describe("Progress.Indicator indeterminate animation", () => {
@@ -51,29 +51,29 @@ describe("Progress.Indicator indeterminate animation", () => {
     { reducedMotion: "no-preference", className: undefined, animation: "pulse" },
     {
       reducedMotion: "no-preference",
-      className: "data-[indeterminate]:animate-bounce",
+      className: "data-indeterminate:animate-bounce",
       animation: "bounce",
     },
     {
       reducedMotion: "no-preference",
-      className: "data-[indeterminate]:animate-none",
+      className: "data-indeterminate:animate-none",
       animation: "none",
     },
     { reducedMotion: "reduce", className: undefined, animation: "pulse" },
     {
       reducedMotion: "reduce",
-      className: "data-[indeterminate]:animate-bounce",
+      className: "data-indeterminate:animate-bounce",
       animation: "bounce",
     },
     {
       reducedMotion: "reduce",
-      className: "data-[indeterminate]:animate-none",
+      className: "data-indeterminate:animate-none",
       animation: "none",
     },
     // Opt-out for apps that stop the pulse with reduced motion
     {
       reducedMotion: "reduce",
-      className: "data-[indeterminate]:motion-reduce:animate-none",
+      className: "data-indeterminate:motion-reduce:animate-none",
       animation: "none",
     },
   ] as const)(

@@ -50,7 +50,7 @@ function ScrollAreaScrollbar({ className, ...props }: ScrollAreaScrollbarProps) 
         "data-[orientation=vertical]:h-full data-[orientation=vertical]:w-2 data-[orientation=vertical]:flex-col data-[orientation=vertical]:p-0.5",
         "data-[orientation=horizontal]:h-2 data-[orientation=horizontal]:w-full data-[orientation=horizontal]:flex-row data-[orientation=horizontal]:p-0.5",
         "opacity-0 transition-opacity duration-300 motion-reduce:transition-none",
-        "data-[hovering]:opacity-100 data-[scrolling]:opacity-100",
+        "data-hovering:opacity-100 data-scrolling:opacity-100",
         className,
       )}
       {...props}

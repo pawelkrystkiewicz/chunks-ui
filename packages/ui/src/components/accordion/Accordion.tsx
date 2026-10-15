@@ -68,7 +68,7 @@ function AccordionTrigger({ className, children, ...props }: AccordionTriggerPro
         strokeLinecap="round"
         strokeLinejoin="round"
         aria-hidden="true"
-        className="shrink-0 transition-transform duration-200 motion-reduce:transition-none group-data-[panel-open]/trigger:rotate-180"
+        className="shrink-0 transition-transform duration-200 motion-reduce:transition-none group-data-panel-open/trigger:rotate-180"
       >
         <path d="m6 9 6 6 6-6" />
       </svg>

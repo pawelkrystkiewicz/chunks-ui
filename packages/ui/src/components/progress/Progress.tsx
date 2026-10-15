@@ -36,7 +36,7 @@ function ProgressIndicator({ className, ...props }: ProgressIndicatorProps) {
         "h-full rounded-full bg-primary",
         "transition-[width] duration-300 ease-out motion-reduce:transition-none",
         // Pulses with reduced motion too: an essential status indicator, like the Loader
-        "data-[indeterminate]:w-full data-[indeterminate]:animate-pulse data-[indeterminate]:opacity-75",
+        "data-indeterminate:w-full data-indeterminate:animate-pulse data-indeterminate:opacity-75",
         className,
       )}
       {...props}

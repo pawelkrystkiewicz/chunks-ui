@@ -36,7 +36,7 @@ export function Textarea({ autoResize, className, ...props }: TextareaProps) {
         // anyway. Without it the resize grip would still drag (Chromium resizes a disabled
         // textarea), so the grip goes.
         "disabled:cursor-not-allowed disabled:opacity-50 disabled:resize-none",
-        "data-[invalid]:border-destructive",
+        "data-invalid:border-destructive",
         autoResize && "field-sizing-content",
         className,
       )}
