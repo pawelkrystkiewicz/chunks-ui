@@ -1,4 +1,4 @@
-import { cva } from "class-variance-authority";
+import { cva } from "../../lib/cva";
 import type { ElementColor, ElementVariant } from "../../types";
 import { BUTTON_ANIMATION_CLASSES, FOCUS_RING } from "../shared";
 

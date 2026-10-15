@@ -1,4 +1,4 @@
-import { cva } from "class-variance-authority";
+import { cva } from "../../lib/cva";
 
 /**
  * Shared by the CSS variants and the Motion path, which positions the popup with its own classes.
