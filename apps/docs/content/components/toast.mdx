@@ -156,6 +156,16 @@ add({
 
 That toast gets a `×` button in its top-end corner (top-right in left-to-right layouts, top-left in right-to-left ones) that dismisses it via Base UI's `Toast.Close`. Other toasts in the same viewport are unaffected — dismissibility is a per-toast concern, not a viewport-wide setting.
 
+`closeProps` takes the props of that button, as `actionProps` does for the action: `className` merges after the library classes, `aria-label` replaces `labels.close` for that toast, and `onClick` runs before `onClose`. To keep the focus ring flush with the button instead of 2px outside it:
+
+```tsx
+add({
+  title: "Saved",
+  dismissible: true,
+  closeProps: { className: "focus-visible:outline-offset-0" },
+})
+```
+
 > **Note**: `dissmissable` is a deprecated misspelled alias of `dismissible`. When both are set, `dismissible` wins.
 
 ### Reacting to Close
@@ -256,7 +266,7 @@ Pass any subset of these at the call site. The fields below are chunks-ui additi
   definition={generateDefinition({
     code: `
 import type { ToastStyleOptions } from 'chunks-ui'
-type Props = Pick<ToastStyleOptions, 'icon' | 'iconClassName' | 'className' | 'dismissible' | 'onClose'>
+type Props = Pick<ToastStyleOptions, 'icon' | 'iconClassName' | 'className' | 'dismissible' | 'onClose' | 'closeProps'>
 export default Props
 `
   })}
@@ -264,7 +274,7 @@ export default Props
 
 ### Toast.Viewport
 
-`Toast.Viewport` is a thin style wrapper. It renders the toast list itself and forwards every other prop to Base UI's [`Toast.Viewport`](https://base-ui.com/react/components/toast#api-reference); `children` you pass are not rendered. All per-toast behaviour (`icon`, `iconClassName`, `className`, `dismissible`, `onClose`) lives on the individual `add()` call, not the container, so a single viewport can host a mix of dismissible and non-dismissible toasts, styled and unstyled ones, etc.
+`Toast.Viewport` is a thin style wrapper. It renders the toast list itself and forwards every other prop to Base UI's [`Toast.Viewport`](https://base-ui.com/react/components/toast#api-reference); `children` you pass are not rendered. All per-toast behaviour (`icon`, `iconClassName`, `className`, `dismissible`, `onClose`, `closeProps`) lives on the individual `add()` call, not the container, so a single viewport can host a mix of dismissible and non-dismissible toasts, styled and unstyled ones, etc.
 
 Only string-level overrides are worth knowing about here:
 
@@ -289,7 +299,7 @@ All other compound parts (`Toast.Provider`, `Toast.Root`, `Toast.Title`, `Toast.
 
 ## Labels
 
-`labels` replaces the built-in English text, for example to translate it. Keys you leave out keep their default from `DEFAULT_TOAST_LABELS`. `labels.viewport` names the region that Base UI announces the toasts in, and `labels.close` names the close button of a dismissible toast. `aria-label` on `Toast.Viewport` takes precedence over `labels.viewport`. See [Labels](/labels).
+`labels` replaces the built-in English text, for example to translate it. Keys you leave out keep their default from `DEFAULT_TOAST_LABELS`. `labels.viewport` names the region that Base UI announces the toasts in, and `labels.close` names the close button of a dismissible toast. `aria-label` on `Toast.Viewport` takes precedence over `labels.viewport`, and a toast's `closeProps["aria-label"]` over `labels.close`. See [Labels](/labels).
 
 <TSDoc
   definition={generateDefinition({

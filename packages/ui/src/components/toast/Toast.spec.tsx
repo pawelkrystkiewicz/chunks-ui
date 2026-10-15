@@ -1,9 +1,9 @@
 import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { FOCUS_RING } from "../shared";
-import { createToastManager, Toast } from "./Toast";
+import { createToastManager, Toast, type ToastCloseProps } from "./Toast";
 import { DEFAULT_TOAST_LABELS } from "./Toast.Labels";
 
 afterEach(cleanup);
@@ -450,5 +450,66 @@ describe("Toast focus ring", () => {
       "focus-visible:outline-ring",
     );
     expect(action).not.toHaveClass("focus-visible:outline-offset-2");
+  });
+});
+
+describe("Toast closeProps", () => {
+  /** Shows a dismissible toast titled "Saved" with `closeProps` on its built-in close button */
+  async function showToast(closeProps: Partial<ToastCloseProps>, onClose?: () => void) {
+    const manager = createToastManager();
+    render(
+      <Toast.Provider toastManager={manager}>
+        <Toast.Viewport labels={{ close: "Zamknij" }} />
+      </Toast.Provider>,
+    );
+    act(() => {
+      manager.add({ title: "Saved", dismissible: true, closeProps, onClose });
+    });
+    await screen.findByText("Saved");
+    // Base UI aria-hides the close button until the toast is focused or hovered, so by its label
+    return screen.getByLabelText(closeProps["aria-label"] ?? "Zamknij", { selector: "button" });
+  }
+
+  // Both offsets are in one tailwind-merge group under the same variant: the consumer's wins
+  it("merges closeProps.className after the library classes", async () => {
+    const close = await showToast({ className: "focus-visible:outline-offset-0" });
+    expect(close).toHaveClass(
+      "focus-visible:outline-offset-0",
+      "focus-visible:outline-2",
+      "focus-visible:outline-ring",
+    );
+    expect(close).not.toHaveClass("focus-visible:outline-offset-2");
+  });
+
+  it("prefers closeProps aria-label over labels.close", async () => {
+    await showToast({ "aria-label": "Dismiss" });
+    expect(screen.getByLabelText("Dismiss", { selector: "button" })).toBeInTheDocument();
+    expect(screen.queryByLabelText("Zamknij", { selector: "button" })).toBeNull();
+  });
+
+  it("runs closeProps.onClick, then onClose with the click, and closes the toast", async () => {
+    const user = userEvent.setup();
+    const onClick = vi.fn();
+    const onClose = vi.fn();
+    const close = await showToast({ onClick }, onClose);
+    await user.click(close);
+    expect(onClick).toHaveBeenCalledTimes(1);
+    const click = onClick.mock.calls[0]?.[0];
+    expect(click).toBeDefined();
+    expect(onClose).toHaveBeenCalledWith(click);
+    expect(onClick.mock.invocationCallOrder[0]).toBeLessThan(
+      onClose.mock.invocationCallOrder[0] ?? 0,
+    );
+    expect(screen.queryByText("Saved")).toBeNull();
+  });
+
+  it("skips the click call of onClose when closeProps.onClick prevents default", async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    const close = await showToast({ onClick: (event) => event.preventDefault() }, onClose);
+    await user.click(close);
+    // Base UI's manager still calls `onClose` with no arguments once the toast closes
+    expect(onClose).not.toHaveBeenCalledWith(expect.anything());
+    expect(screen.queryByText("Saved")).toBeNull();
   });
 });
