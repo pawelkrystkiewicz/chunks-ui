@@ -79,17 +79,23 @@ jobs:
       # only empty changesets (the action logs "All changesets are empty; not creating PR"), or a
       # publish that found the version on npm already. The action publishes only when no changeset
       # is left on master, and hasChangesets is 'true' for empty ones too, so only that log line
-      # tells the first two apart. Master's package.json is at a published version in all of these
-      # unless a Version Packages PR was merged before the Release run of the newest master push had
-      # refreshed it: master then sits at the bumped, unpublished version with the changesets the PR
-      # did not consume, empty or real, and no run publishes until they are gone. Empty: delete them
-      # in a PR. Real: that run refreshed the Version Packages PR; merge it. npm decides whether a
-      # message goes out: only an E404 for the version does (any other npm failure is a warning).
+      # tells the first two apart. The version at the run's commit is a published one in all of
+      # these unless a Version Packages PR was merged before the Release run of the newest master
+      # push had refreshed it: master then sits at the bumped, unpublished version with the
+      # changesets the PR did not consume, empty or real, and no run publishes until they are gone.
+      # Empty: delete them in a PR and the next run publishes. Real: that run refreshed the Version
+      # Packages PR, but the version the message names is never published: `changeset version`
+      # bumps again from it and `changeset publish` publishes only the version in package.json.
+      # Merging the PR publishes the next version; npm skips the stale one, CHANGELOG.md keeps its
+      # section, and it gets no tag or GitHub release. The message repeats on each master push
+      # until then. npm decides whether a message goes out: only an E404 for the version does (any
+      # other npm failure is a warning).
       - name: Check npm has the version master is at
         id: unpublished
         if: steps.changesets.outputs.published != 'true'
         run: |
-          version=$(node -p "require('./packages/ui/package.json').version")
+          # Not the workspace: changesets/action leaves it on its release branch, versions bumped
+          version=$(git show "$GITHUB_SHA:packages/ui/package.json" | jq -r .version)
           if out=$(npm view "chunks-ui@$version" version 2>&1); then
             echo "chunks-ui@$version is on npm"
           elif grep -q E404 <<<"$out"; then
