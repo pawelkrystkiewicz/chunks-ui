@@ -1,5 +1,8 @@
 import { describe, expect, it } from "bun:test";
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import {
+  isNextAppFile,
   NEXT_TRIGGERS,
   nextWithMotionProblem,
   nextWithoutMotionProblem,
@@ -213,5 +216,46 @@ describe("nextWithMotionProblem", () => {
     expect(nextWithMotionProblem(0, NEXT_OK, files, html)).toContain(
       "names no chunk with the page",
     );
+  });
+});
+
+describe("isNextAppFile", () => {
+  it("keeps the app directory and the Next config", () => {
+    for (const path of ["", "app", "app/page.jsx", "app/nested/layout.jsx", "next.config.mjs"]) {
+      expect(isNextAppFile(path)).toBe(true);
+    }
+  });
+
+  it("drops what a local next build leaves beside them", () => {
+    const left = [".next", ".next/cache", "out", "tsconfig.json", "next-env.d.ts", "node_modules"];
+    for (const path of left) expect(isNextAppFile(path)).toBe(false);
+  });
+});
+
+describe("the fixture app", () => {
+  const dir = join(import.meta.dirname, "../no-motion");
+  const read = (path: string) => readFileSync(join(dir, path), "utf8");
+  const pins = (path: string): Record<string, string> => JSON.parse(read(path)).dependencies;
+
+  it("holds every trigger text of NEXT_TRIGGERS in its page", () => {
+    const pages = readdirSync(join(dir, "next/app")).filter((name) => name.startsWith("page."));
+    expect(pages).toHaveLength(1);
+    const page = read(`next/app/${pages[0]}`);
+    for (const text of NEXT_TRIGGERS) expect(page).toContain(text);
+  });
+
+  it("pins the next version of the docs app", () => {
+    const docs = JSON.parse(readFileSync(join(dir, "../../apps/docs/package.json"), "utf8"));
+    const range: string = docs.dependencies.next;
+    expect(pins("package.fixture.json").next).toBe(range.replace(/^[\^~]/, ""));
+    expect(pins("with-motion/package.fixture.json").next).toBe(pins("package.fixture.json").next);
+  });
+
+  it("pins the same version of every dependency the two consumers share", () => {
+    const without = pins("package.fixture.json");
+    const withMotion = pins("with-motion/package.fixture.json");
+    const shared = Object.keys(without).filter((name) => name in withMotion);
+    expect(shared.length).toBeGreaterThan(5);
+    for (const name of shared) expect([name, withMotion[name]]).toEqual([name, without[name]]);
   });
 });
