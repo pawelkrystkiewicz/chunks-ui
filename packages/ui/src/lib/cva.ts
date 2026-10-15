@@ -1,11 +1,10 @@
 import { cva as cvaBase } from "class-variance-authority";
 import type { ClassValue } from "clsx";
 
-/**
- * cva's `ClassProp`, copied. cva exposes it only through the `./types` entry of its exports map,
- * which node10 resolution (`moduleResolution: "node"`) cannot see, so an import of that entry in
- * the typings fails with TS2307.
- */
+// Why `ClassProp` is copied here: cva exposes it only through the `./types` entry of its exports
+// map, which node10 resolution (`moduleResolution: "node"`) cannot see, so an import of that
+// entry in the typings fails with TS2307. A `//` comment, so that none of this reaches the typings.
+/** cva's `ClassProp`, declared here so the emitted typings never import cva's `./types` subpath. */
 export type ClassProp =
   | { class: ClassValue; className?: never }
   | { class?: never; className: ClassValue }
@@ -30,7 +29,9 @@ type VariantsOf<Props> = [VariantKeys<Props>] extends [never]
 /**
  * cva, with its result typed through the `ClassProp` above instead of cva's own. TypeScript
  * writes the inferred type of every exported variants function into the typings, and cva's type
- * names `ClassProp` through the `./types` entry. Use this in place of cva's `cva`.
+ * names `ClassProp` through the `./types` entry. Use this in place of cva's `cva`. `cva.spec.ts`
+ * asserts these types equal cva's, and `bun run check:dist` fails when the typings import a cva
+ * subpath.
  */
 export function cva<T>(base?: ClassValue, config?: Parameters<typeof cvaBase<T>>[1]) {
   return cvaBase(base, config) as (props?: VariantsOf<CvaProps<T>> & ClassProp) => string;
