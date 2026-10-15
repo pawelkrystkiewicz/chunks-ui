@@ -1,6 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { axe } from "jest-axe";
 import { afterEach, describe, expect, it } from "vitest";
+import { reloadMotion } from "../../lib/use-motion";
 import { Drawer } from "./Drawer";
 
 afterEach(cleanup);
@@ -96,6 +97,23 @@ describe("Drawer", () => {
       </Drawer.Root>,
     );
     expect(screen.getByTestId("desc")).toHaveClass("custom");
+  });
+
+  // The Motion path positions the popup with its own classes, the same ones the CSS variants use
+  it("positions the Popup by its side on the Motion path", async () => {
+    await reloadMotion();
+    render(
+      <Drawer.Root open>
+        <Drawer.Portal>
+          <Drawer.Popup side="bottom" data-testid="popup">
+            Content
+          </Drawer.Popup>
+        </Drawer.Portal>
+      </Drawer.Root>,
+    );
+    const popup = screen.getByTestId("popup");
+    expect(popup).not.toHaveClass("micro-interactions");
+    expect(popup).toHaveClass("inset-x-0 bottom-0 h-auto max-h-[80dvh] border-t rounded-t-xl");
   });
 
   it("has no a11y violations", async () => {

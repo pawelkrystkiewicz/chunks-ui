@@ -1,3 +1,5 @@
+import { POPUP_ARROW_CLASS } from "../components/shared";
+
 const CORNERS = [
   "borderTopLeftRadius",
   "borderTopRightRadius",
@@ -7,13 +9,13 @@ const CORNERS = [
 
 /**
  * The default `arrowPadding` for the popup in `positioner`, or `undefined` while it holds no
- * `.PopupArrow`: the largest of the four corner radii (the larger component of an elliptical
- * corner; a percentage counts as 0) plus the arrow's overhang, (√2 − 1)/2 of its size, so the foot
- * starts on the straight edge. Read from the open popup, as `--radius` and `--spacing` are CSS
- * variables.
+ * `.PopupArrow` (POPUP_ARROW_CLASS): the largest of the four corner radii (the larger component of
+ * an elliptical corner; a percentage counts as 0) plus the arrow's overhang, (√2 − 1)/2 of its
+ * size, so the foot starts on the straight edge. Read from the open popup, as `--radius` and
+ * `--spacing` are CSS variables.
  */
 export function arrowPaddingIn(positioner: Element): number | undefined {
-  const arrow = positioner.querySelector(".PopupArrow");
+  const arrow = positioner.querySelector(`.${POPUP_ARROW_CLASS}`);
   // Not the first child: Base UI puts focus guards around the popup
   const popup = arrow && [...positioner.children].find((child) => child.contains(arrow));
   if (!arrow || !popup) return undefined;

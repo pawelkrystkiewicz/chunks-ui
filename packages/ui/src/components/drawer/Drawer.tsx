@@ -9,7 +9,13 @@ import { createPopupRenderer } from "../../lib/PopupMotion";
 import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
 import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
 import { RING_TRANSITION_MOTION } from "../shared";
-import { drawerBase, drawerPopupVariants } from "./Drawer.Variants";
+import {
+  type DrawerSide,
+  drawerBase,
+  drawerPopupVariants,
+  drawerSidePosition,
+  drawerSlide,
+} from "./Drawer.Variants";
 
 export type DrawerProps = ComponentProps<typeof BaseDialog.Root>;
 export type DrawerTriggerProps = ComponentProps<typeof BaseDialog.Trigger>;
@@ -21,7 +27,7 @@ export type DrawerPopupProps = ComponentProps<typeof BaseDialog.Popup> &
      * @default "right"
      * @remarks `"left" | "right" | "bottom"`
      */
-    side?: "left" | "right" | "bottom";
+    side?: DrawerSide;
   };
 export type DrawerBackdropProps = Omit<
   ComponentProps<typeof BaseDialog.Backdrop>,
@@ -37,20 +43,6 @@ export type DrawerBackdropProps = Omit<
 export type DrawerTitleProps = ComponentProps<typeof BaseDialog.Title>;
 export type DrawerDescriptionProps = ComponentProps<typeof BaseDialog.Description>;
 export type DrawerCloseProps = ComponentProps<typeof BaseDialog.Close>;
-
-// `transform` rather than x/y: Motion runs it as a browser animation, which Base UI waits for
-// (element.getAnimations()) before it unmounts a closing popup, so the drawer can slide out
-const slideDirections = {
-  left: { from: { transform: "translateX(-100%)" }, to: { transform: "translateX(0%)" } },
-  right: { from: { transform: "translateX(100%)" }, to: { transform: "translateX(0%)" } },
-  bottom: { from: { transform: "translateY(100%)" }, to: { transform: "translateY(0%)" } },
-} as const;
-
-const motionPositionClasses = {
-  left: "inset-y-0 left-0 w-80 border-r",
-  right: "inset-y-0 right-0 w-80 border-l",
-  bottom: "inset-x-0 bottom-0 h-auto max-h-[80dvh] border-t rounded-t-xl",
-} as const;
 
 function DrawerPortal({ className, children, ...props }: DrawerPortalProps) {
   const container = usePortalContainer();
@@ -100,7 +92,7 @@ function DrawerPopup({ side = "right", className, ...props }: DrawerPopupProps) 
   const reduced = useReducedMotion();
   const useSpring = !!m && !reduced;
   const resolvedSide = side ?? "right";
-  const dir = slideDirections[resolvedSide];
+  const dir = drawerSlide[resolvedSide];
   const render = useSpring
     ? createPopupRenderer({
         m,
@@ -115,7 +107,7 @@ function DrawerPopup({ side = "right", className, ...props }: DrawerPopupProps) 
       render={render}
       className={cnState(
         useSpring && drawerBase,
-        useSpring && motionPositionClasses[resolvedSide],
+        useSpring && drawerSidePosition[resolvedSide],
         // Motion slides the popup: a list with no outline keeps a timing utility off the ring
         useSpring && RING_TRANSITION_MOTION,
         !useSpring && drawerPopupVariants({ side }),

@@ -1,10 +1,14 @@
-import { describe, expect, it } from "bun:test";
+import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
 import {
   assertThemeUtilities,
   classNames,
   missingClasses,
   scanProblem,
   themeUtilities,
+  themeUtilitiesIn,
 } from "../check-tailwind-compat";
 
 // Shaped like Tailwind CLI output: a banner comment with a URL, nested variants, media queries
@@ -115,6 +119,83 @@ describe("themeUtilities", () => {
   // A functional utility has no class of its own: only `tab-2`, `tab-4`... are classes
   it("skips functional utilities", () => {
     expect(themeUtilities("@utility tab-* {\n  tab-size: --value(integer);\n}\n")).toEqual([]);
+  });
+});
+
+describe("themeUtilitiesIn", () => {
+  let dir: string;
+  const file = (name: string) => join(dir, name);
+  const write = (name: string, css: string) => {
+    mkdirSync(dirname(file(name)), { recursive: true });
+    writeFileSync(file(name), css);
+  };
+
+  beforeAll(() => {
+    dir = mkdtempSync(join(tmpdir(), "theme-utilities-"));
+    write(
+      "core.css",
+      "@utility font-heading {\n  font-family: var(--font-heading);\n}\n@utility touch-target {\n  position: relative;\n}\n",
+    );
+    // Shaped like the wrapper chunks-ui/theme.css becomes: an import of core, a source, no
+    // utilities of its own
+    write("wrapper.css", '@import "./core.css";\n@source "./";\n');
+    write(
+      "node_modules/fake-core/package.json",
+      JSON.stringify({ name: "fake-core", exports: { "./theme.css": "./theme.css" } }),
+    );
+    write("node_modules/fake-core/theme.css", "@utility from-package {}\n");
+    write("bare.css", '@import "fake-core/theme.css";\n');
+    // Tailwind leaves this as a native CSS import and inlines nothing from it
+    write("url.css", '@import url("./core.css");\n');
+    write("commented.css", '/* @import "./nope.css"; */\n@utility from-commented {}\n');
+    write("remote.css", '@import "https://example.com/x.css";\n');
+    write("missing.css", '@import "missing-pkg/theme.css";\n');
+    write("node_modules/js-pkg/package.json", JSON.stringify({ main: "index.js" }));
+    write("node_modules/js-pkg/index.js", "// @utility from-js {}\n");
+    write("js.css", '@import "js-pkg";\n@utility from-js-user {}\n');
+    // Only a `style` condition exports the stylesheet: Bun's resolver cannot see it
+    write(
+      "node_modules/style-only/package.json",
+      JSON.stringify({ name: "style-only", exports: { ".": { style: "./index.css" } } }),
+    );
+    write("node_modules/style-only/index.css", "@utility from-style {}\n");
+    write("style-only.css", '@import "style-only";\n');
+  });
+
+  afterAll(() => rmSync(dir, { recursive: true, force: true }));
+
+  it("follows a relative @import from a wrapper that defines none", () => {
+    expect(themeUtilitiesIn(file("wrapper.css"))).toEqual(["font-heading", "touch-target"]);
+  });
+
+  it("resolves a bare specifier through node_modules", () => {
+    expect(themeUtilitiesIn(file("bare.css"))).toEqual(["from-package"]);
+  });
+
+  it("skips a url(...) import, which Tailwind does not inline", () => {
+    expect(themeUtilitiesIn(file("url.css"))).toEqual([]);
+  });
+
+  it("ignores an @import inside a comment", () => {
+    expect(themeUtilitiesIn(file("commented.css"))).toEqual(["from-commented"]);
+  });
+
+  it("skips an import by URL", () => {
+    expect(themeUtilitiesIn(file("remote.css"))).toEqual([]);
+  });
+
+  it("skips an import that resolves to JavaScript", () => {
+    expect(themeUtilitiesIn(file("js.css"))).toEqual(["from-js-user"]);
+  });
+
+  it("throws on an import it cannot resolve, naming the file and the specifier", () => {
+    expect(() => themeUtilitiesIn(file("missing.css"))).toThrow(
+      /missing\.css.*"missing-pkg\/theme\.css"/,
+    );
+  });
+
+  it("throws on a package that exports its stylesheet only under the style condition", () => {
+    expect(() => themeUtilitiesIn(file("style-only.css"))).toThrow(/"style-only".*"style"/);
   });
 });
 

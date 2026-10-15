@@ -544,6 +544,7 @@ const STATEMENT = "flex min-w-0 flex-col border-(--l-line) border-r border-b px-
 const STATEMENT_LABEL = "font-mono text-primary-text text-[12px]";
 const STATEMENT_TEXT = "text-pretty text-(--l-fg) text-[20px] leading-normal tracking-[-.01em]";
 
+// core-prep: moves with the presets to core
 function MotionSection() {
   return (
     <section id="motion" className="pt-6 pb-24">

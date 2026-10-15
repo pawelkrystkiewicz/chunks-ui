@@ -9,6 +9,8 @@ export function parseOklch(value: string): Oklch {
   return { l: Number(l) / (percent ? 100 : 1), c: Number(c), h: Number(h) };
 }
 
+// core-prep: reads the source file, not dist: the dist file becomes an `@import` wrapper when core
+// is extracted.
 /** The library's theme.css without its comments. */
 const themeCss = readFileSync(
   new URL("../../../../packages/ui/src/theme.css", import.meta.url),
