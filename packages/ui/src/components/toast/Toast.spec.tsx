@@ -1,9 +1,9 @@
 import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { FOCUS_RING } from "../shared";
-import { createToastManager, Toast } from "./Toast";
+import { createToastManager, Toast, type ToastCloseProps } from "./Toast";
 import { DEFAULT_TOAST_LABELS } from "./Toast.Labels";
 
 afterEach(cleanup);
@@ -450,5 +450,99 @@ describe("Toast focus ring", () => {
       "focus-visible:outline-ring",
     );
     expect(action).not.toHaveClass("focus-visible:outline-offset-2");
+  });
+});
+
+type AddOptions = Parameters<ReturnType<typeof createToastManager>["add"]>[0];
+
+describe("Toast closeProps", () => {
+  /** Renders a viewport labelled "Zamknij" and adds a toast titled "Saved" with the given options */
+  async function addToast(options: AddOptions) {
+    const manager = createToastManager();
+    render(
+      <Toast.Provider toastManager={manager}>
+        <Toast.Viewport labels={{ close: "Zamknij" }} />
+      </Toast.Provider>,
+    );
+    let id = "";
+    act(() => {
+      id = manager.add({ title: "Saved", ...options });
+    });
+    await screen.findByText("Saved");
+    return { manager, id };
+  }
+
+  /** Shows a dismissible toast titled "Saved" with `closeProps` on its built-in close button */
+  async function showToast(closeProps: ToastCloseProps, onClose?: () => void) {
+    await addToast({ dismissible: true, closeProps, onClose });
+    // Base UI aria-hides the close button until the toast is focused or hovered, so by its label
+    return screen.getByLabelText(closeProps["aria-label"] ?? "Zamknij", { selector: "button" });
+  }
+
+  // Both offsets are in one tailwind-merge group under the same variant: the consumer's wins
+  it("merges closeProps.className after the library classes", async () => {
+    const close = await showToast({ className: "focus-visible:outline-offset-0" });
+    expect(close).toHaveClass(
+      "focus-visible:outline-offset-0",
+      "focus-visible:outline-2",
+      "focus-visible:outline-ring",
+    );
+    expect(close).not.toHaveClass("focus-visible:outline-offset-2");
+  });
+
+  it("prefers closeProps aria-label over labels.close", async () => {
+    await showToast({ "aria-label": "Dismiss" });
+    expect(screen.getByLabelText("Dismiss", { selector: "button" })).toBeInTheDocument();
+    expect(screen.queryByLabelText("Zamknij", { selector: "button" })).toBeNull();
+  });
+
+  it("falls back to labels.close when closeProps sets aria-label to undefined", async () => {
+    await showToast({ "aria-label": undefined });
+    expect(screen.getByLabelText("Zamknij", { selector: "button" })).toBeInTheDocument();
+  });
+
+  it("renders no close button for closeProps alone", async () => {
+    await addToast({ closeProps: { className: "x" } });
+    expect(screen.queryByLabelText("Zamknij", { selector: "button" })).toBeNull();
+  });
+
+  it("renders the close button for onClose alone", async () => {
+    await addToast({ onClose: vi.fn() });
+    expect(screen.getByLabelText("Zamknij", { selector: "button" })).toBeInTheDocument();
+  });
+
+  it("renders no close button for dismissible: false, even with onClose", async () => {
+    await addToast({ dismissible: false, onClose: vi.fn() });
+    expect(screen.queryByLabelText("Zamknij", { selector: "button" })).toBeNull();
+  });
+
+  it("runs closeProps.onClick and onClose once each, with no argument, and closes the toast", async () => {
+    const user = userEvent.setup();
+    const onClick = vi.fn();
+    const onClose = vi.fn();
+    const close = await showToast({ onClick }, onClose);
+    await user.click(close);
+    expect(onClick).toHaveBeenCalledTimes(1);
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onClose).toHaveBeenCalledWith();
+    expect(screen.queryByText("Saved")).toBeNull();
+  });
+
+  it("keeps the toast open when closeProps.onClick calls preventBaseUIHandler", async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    const close = await showToast({ onClick: (event) => event.preventBaseUIHandler() }, onClose);
+    await user.click(close);
+    expect(screen.getByText("Saved")).toBeInTheDocument();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("calls onClose once when manager.close closes the toast", async () => {
+    const onClose = vi.fn();
+    const { manager, id } = await addToast({ onClose });
+    act(() => {
+      manager.close(id);
+    });
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

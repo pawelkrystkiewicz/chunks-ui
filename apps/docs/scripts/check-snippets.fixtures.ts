@@ -46,6 +46,7 @@ export const fixtures: Record<string, string> = {
   "components/toast.mdx": `
     const add: ReturnType<typeof Toast.useToast>["add"];
     const restoreMessage: () => void;
+    const hasUnsaved: boolean;
     const analytics: { track: (event: string, data: Record<string, unknown>) => void };
     const uploadFile: () => Promise<{ name: string }>;
     const TriggerButton: () => React.ReactElement;
