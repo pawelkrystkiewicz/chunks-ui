@@ -3,8 +3,8 @@ import visual, { playwrightProvider } from "./vitest.visual.config";
 
 /**
  * WebKit (Playwright's Safari engine) smoke project: a few geometry and paint checks, no
- * screenshot baselines. It shares the plugins, CSS, setup file, commands and runner window of
- * the Chromium visual suite, and runs only the `*.webkit.visual.spec.tsx` specs, which that
+ * screenshot baselines. It shares the plugins, CSS, setup file, commands, runner window and time
+ * zone of the Chromium visual suite, and runs only the `*.webkit.visual.spec.tsx` specs, which that
  * suite excludes.
  */
 export default defineConfig({

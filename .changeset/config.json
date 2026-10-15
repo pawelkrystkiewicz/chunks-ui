@@ -1,10 +1,25 @@
 {
   "$schema": "https://unpkg.com/@changesets/config@2.0.0/schema.json",
-  "changelog": "@changesets/cli/changelog",
+  "changelog": [
+    "@changesets/changelog-github",
+    { "repo": "pawelkrystkiewicz/chunks-ui", "disableThanks": true }
+  ],
   "commit": false,
   "fixed": [],
   "linked": [],
   "access": "public",
+  "baseBranch": "master",
   "updateInternalDependencies": "patch",
-  "ignore": ["@chunks-ui/docs"]
+  "ignore": ["@chunks-ui/docs"],
+  "privatePackages": { "version": false },
+  "changedFilePatterns": [
+    "**",
+    "!**/*.spec.{ts,tsx}",
+    "!**/__screenshots__/**",
+    "!vitest*.config.ts",
+    "!vitest*.setup.ts",
+    "!src/VisualTest.*",
+    "!src/visual-test.css",
+    "!scripts/**"
+  ]
 }
