@@ -21,19 +21,42 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
+          # Full history: the step below diffs a pull request against its merge base with the base branch
+          fetch-depth: 0
           persist-credentials: false
+
+      # A pull request that touches none of the WATCH paths (docs, markdown) skips the suite: every
+      # later step has `if: steps.changes.outputs.run_full == 'true'`, and the job still succeeds, so
+      # the required check passes. Master pushes and manual runs always run the full suite.
+      - name: Decide whether the suite runs
+        id: changes
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          # git pathspecs: a directory matches everything under it
+          WATCH='packages/ui bun.lock package.json turbo.json .github/workflows/visual-regression.tests.yml packages/typescript-config'
+          run_full=true
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+            git config --global --add safe.directory "$GITHUB_WORKSPACE"
+            changed=$(git diff --name-only "origin/$BASE_REF...HEAD" -- $WATCH)
+            if [ -n "$changed" ]; then echo "$changed"; else run_full=false; fi
+          fi
+          echo "run_full=$run_full" | tee -a "$GITHUB_OUTPUT"
 
       # setup-bun needs unzip; the image lacks it
       - name: Install unzip
+        if: steps.changes.outputs.run_full == 'true'
         run: apt-get update && apt-get install -y --no-install-recommends unzip
 
       - name: Setup Bun
+        if: steps.changes.outputs.run_full == 'true'
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version-file: package.json
 
       # bun install cache (container HOME)
       - name: Cache the bun install cache
+        if: steps.changes.outputs.run_full == 'true'
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.bun/install/cache
@@ -41,16 +64,18 @@ jobs:
           restore-keys: ${{ runner.os }}-bun-container-
 
       - name: Install dependencies
+        if: steps.changes.outputs.run_full == 'true'
         run: bun install --frozen-lockfile
 
       - name: Run Visual Regression Tests
         id: visual
+        if: steps.changes.outputs.run_full == 'true'
         run: cd packages/ui && bun run test:visual
 
       # The image ships WebKit too. Runs when only the Chromium suite failed, so a PR sees both.
       - name: Run WebKit Smoke Tests
         id: webkit
-        if: success() || (failure() && steps.visual.outcome == 'failure')
+        if: steps.changes.outputs.run_full == 'true' && (success() || (failure() && steps.visual.outcome == 'failure'))
         run: cd packages/ui && bun run test:webkit
 
       # The Chromium suite again in a random order, to catch a spec that leans on state an earlier
@@ -60,12 +85,12 @@ jobs:
       #   cd packages/ui && bunx vitest run --config vitest.visual.config.ts --sequence.shuffle --sequence.seed=<seed>
       - name: Run Visual Regression Tests in shuffled order
         id: shuffled
-        if: (github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch') && !cancelled() && steps.visual.outcome != 'skipped'
+        if: steps.changes.outputs.run_full == 'true' && (github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch') && !cancelled() && steps.visual.outcome != 'skipped'
         run: cd packages/ui && bunx vitest run --config vitest.visual.config.ts --sequence.shuffle --sequence.seed=${{ github.run_number }}
 
       # Vitest writes each failed screenshot's actual and diff PNGs to <root>/.vitest-attachments
       - name: Upload diff screenshots on failure
-        if: failure()
+        if: steps.changes.outputs.run_full == 'true' && failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: visual-regression-diffs
@@ -76,7 +101,7 @@ jobs:
           retention-days: 7
 
       - name: Notify Slack on Success
-        if: success() && github.ref == 'refs/heads/master'
+        if: steps.changes.outputs.run_full == 'true' && success() && github.ref == 'refs/heads/master'
         uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
         with:
           method: chat.postMessage
@@ -88,7 +113,7 @@ jobs:
       # Names the suites that failed: Chromium visual and WebKit smoke are one job.
       - name: Name the failed suites
         id: failed
-        if: failure() && github.ref == 'refs/heads/master'
+        if: steps.changes.outputs.run_full == 'true' && failure() && github.ref == 'refs/heads/master'
         env:
           VISUAL: ${{ steps.visual.outcome }}
           WEBKIT: ${{ steps.webkit.outcome }}
@@ -104,7 +129,7 @@ jobs:
           echo "suites=${joined%, }" >> "$GITHUB_OUTPUT"
 
       - name: Notify Slack on Failure
-        if: failure() && github.ref == 'refs/heads/master'
+        if: steps.changes.outputs.run_full == 'true' && failure() && github.ref == 'refs/heads/master'
         uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
         with:
           method: chat.postMessage
@@ -112,3 +137,7 @@ jobs:
           payload: |
             channel: "${{ secrets.SLACK_CHANNEL_ID }}"
             text: "Visual Regression Tests failed on master: ${{ steps.failed.outputs.suites }}\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>"
+
+      - name: Report the skip
+        if: steps.changes.outputs.run_full != 'true'
+        run: echo "docs-only change, visual suite skipped"
