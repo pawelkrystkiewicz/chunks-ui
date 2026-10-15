@@ -61,12 +61,14 @@ Pass an array of item values to `defaultValue` to start with those items expande
 
 ## Controlled
 
+`Accordion.Root` infers the type of an item's value from `value` or `defaultValue` (arrays of it), so a typed `useState` setter is an `onValueChange`:
+
 ```tsx
 function ControlledAccordion() {
   const [value, setValue] = useState<string[]>([]);
 
   return (
-    <Accordion.Root value={value} onValueChange={(next) => setValue(next as string[])}>
+    <Accordion.Root value={value} onValueChange={setValue}>
       <Accordion.Item value="item-1">
         <Accordion.Header>
           <Accordion.Trigger>Section</Accordion.Trigger>
