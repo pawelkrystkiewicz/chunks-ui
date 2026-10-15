@@ -1,7 +1,7 @@
-import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { axe } from "jest-axe";
-import { createRef, type ReactNode } from "react";
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { createRef, type FormEvent, type ReactNode } from "react";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { Drawer } from "../drawer";
 import { FOCUS_RING } from "../shared";
 import { Dialog } from "./index";
@@ -182,6 +182,41 @@ describe.each(OVERLAYS)("$name", ({ X, marker }) => {
   it("leaves the initial focus to the first action when its content fits", async () => {
     renderBody(<X.Title>Terms</X.Title>, <X.Body {...short}>Text</X.Body>);
     await waitFor(() => expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus());
+  });
+
+  it("renders as a form through render, which a button outside it submits", () => {
+    const onSubmit = vi.fn((e: FormEvent) => e.preventDefault());
+    render(
+      <X.Root open>
+        <X.Portal>
+          <X.Popup>
+            <X.Title>New task</X.Title>
+            <X.Body
+              render={<form id="new-task" onSubmit={onSubmit} />}
+              className="custom"
+              {...tall}
+            >
+              <input aria-label="Title" />
+            </X.Body>
+            <div>
+              <X.Close>Cancel</X.Close>
+              <button type="submit" form="new-task">
+                Create
+              </button>
+            </div>
+          </X.Popup>
+        </X.Portal>
+      </X.Root>,
+    );
+    // The form is the Body: named by the Title, with the scroll region, its marker and its tab stop
+    const body = screen.getByRole("form", { name: "New task" });
+    expect(body.tagName).toBe("FORM");
+    expect(body).toHaveClass("custom", marker, "overflow-y-auto");
+    expect(body).toHaveAttribute("tabindex", "0");
+    expect(body).toContainElement(screen.getByRole("textbox", { name: "Title" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Create" }));
+    expect(onSubmit).toHaveBeenCalledTimes(1);
   });
 
   it("has no a11y violations", async () => {

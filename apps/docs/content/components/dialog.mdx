@@ -118,7 +118,7 @@ Put long content in a `Dialog.Body` between the Title and the actions. The popup
 
 ### Form in a Body
 
-Put the `<form>` inside the Body, and let the submit button in the actions point at it with the `form` attribute:
+Render the Body as the `<form>` with `render`, as on any Base UI part, and let the submit button in the actions point at it with the `form` attribute. The form is the Body: it keeps the scroll region, its name and its tab stop, and the actions stay in place while the fields scroll:
 
 ```tsx
 <Dialog.Root>
@@ -127,11 +127,12 @@ Put the `<form>` inside the Body, and let the submit button in the actions point
     <Dialog.Backdrop />
     <Dialog.Popup>
       <Dialog.Title>New task</Dialog.Title>
-      <Dialog.Body className="mt-4">
-        <form id="new-task" className="space-y-3" onSubmit={(e) => e.preventDefault()}>
-          <Input aria-label="Title" placeholder="Title" />
-          <Textarea aria-label="Notes" placeholder="Notes" />
-        </form>
+      <Dialog.Body
+        render={<form id="new-task" onSubmit={(e) => e.preventDefault()} />}
+        className="mt-4 space-y-3"
+      >
+        <Input aria-label="Title" placeholder="Title" />
+        <Textarea aria-label="Notes" placeholder="Notes" />
       </Dialog.Body>
       <div className="mt-4 flex justify-end gap-2">
         <Dialog.Close render={<Button variant="outlined" color="secondary" />}>
@@ -145,6 +146,8 @@ Put the `<form>` inside the Body, and let the submit button in the actions point
   </Dialog.Portal>
 </Dialog.Root>
 ```
+
+A `<form>` inside the Body, around the fields, works the same way; a `<form>` around the Body and the actions does not (the Body must be a direct child of the Popup, as above). `render` also takes a function of the props, as on Base UI parts.
 
 Without a Body, content taller than the popup makes the whole popup scroll. Base UI focuses the first tabbable element and scrolls to it, so a dialog with its actions only at the bottom opens at the bottom. Pass `initialFocus` a ref to a top element, such as the Close button or the Title with `tabIndex={-1}`, to open at the top.
 
@@ -170,4 +173,4 @@ The popup enters with a scale-up and fade (from `scale-95` and `opacity-0`). Wit
 
 ## Props
 
-All Dialog parts except `Dialog.Body` are pass-throughs to the underlying Base UI [`Dialog`](https://base-ui.com/react/components/dialog#api-reference). `Dialog.Body` is a `<section>` and takes its props. Pass `aria-label` or `aria-labelledby` to give it a name other than the Title.
+All Dialog parts except `Dialog.Body` are pass-throughs to the underlying Base UI [`Dialog`](https://base-ui.com/react/components/dialog#api-reference). `Dialog.Body` is a `<section>` and takes its props, plus Base UI's `render` to replace the element (see the form above). Pass `aria-label` or `aria-labelledby` to give it a name other than the Title.
