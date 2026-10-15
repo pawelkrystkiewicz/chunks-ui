@@ -453,19 +453,28 @@ describe("Toast focus ring", () => {
   });
 });
 
+type AddOptions = Parameters<ReturnType<typeof createToastManager>["add"]>[0];
+
 describe("Toast closeProps", () => {
-  /** Shows a dismissible toast titled "Saved" with `closeProps` on its built-in close button */
-  async function showToast(closeProps: Partial<ToastCloseProps>, onClose?: () => void) {
+  /** Renders a viewport labelled "Zamknij" and adds a toast titled "Saved" with the given options */
+  async function addToast(options: AddOptions) {
     const manager = createToastManager();
     render(
       <Toast.Provider toastManager={manager}>
         <Toast.Viewport labels={{ close: "Zamknij" }} />
       </Toast.Provider>,
     );
+    let id = "";
     act(() => {
-      manager.add({ title: "Saved", dismissible: true, closeProps, onClose });
+      id = manager.add({ title: "Saved", ...options });
     });
     await screen.findByText("Saved");
+    return { manager, id };
+  }
+
+  /** Shows a dismissible toast titled "Saved" with `closeProps` on its built-in close button */
+  async function showToast(closeProps: ToastCloseProps, onClose?: () => void) {
+    await addToast({ dismissible: true, closeProps, onClose });
     // Base UI aria-hides the close button until the toast is focused or hovered, so by its label
     return screen.getByLabelText(closeProps["aria-label"] ?? "Zamknij", { selector: "button" });
   }
@@ -484,6 +493,26 @@ describe("Toast closeProps", () => {
   it("prefers closeProps aria-label over labels.close", async () => {
     await showToast({ "aria-label": "Dismiss" });
     expect(screen.getByLabelText("Dismiss", { selector: "button" })).toBeInTheDocument();
+    expect(screen.queryByLabelText("Zamknij", { selector: "button" })).toBeNull();
+  });
+
+  it("falls back to labels.close when closeProps sets aria-label to undefined", async () => {
+    await showToast({ "aria-label": undefined });
+    expect(screen.getByLabelText("Zamknij", { selector: "button" })).toBeInTheDocument();
+  });
+
+  it("renders no close button for closeProps alone", async () => {
+    await addToast({ closeProps: { className: "x" } });
+    expect(screen.queryByLabelText("Zamknij", { selector: "button" })).toBeNull();
+  });
+
+  it("renders the close button for onClose alone", async () => {
+    await addToast({ onClose: vi.fn() });
+    expect(screen.getByLabelText("Zamknij", { selector: "button" })).toBeInTheDocument();
+  });
+
+  it("renders no close button for dismissible: false, even with onClose", async () => {
+    await addToast({ dismissible: false, onClose: vi.fn() });
     expect(screen.queryByLabelText("Zamknij", { selector: "button" })).toBeNull();
   });
 
@@ -506,6 +535,28 @@ describe("Toast closeProps", () => {
     await user.click(close);
     expect(screen.getByText("Saved")).toBeInTheDocument();
     expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("calls onClose once when manager.close closes the toast", async () => {
+    const onClose = vi.fn();
+    const { manager, id } = await addToast({ onClose });
+    act(() => {
+      manager.close(id);
+    });
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onClose).toHaveBeenCalledWith();
+  });
+
+  it("calls onClose once when Escape closes a toast with focus inside it", async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    const close = await showToast({}, onClose);
+    act(() => {
+      close.focus();
+    });
+    await user.keyboard("{Escape}");
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText("Saved")).toBeNull();
   });
 
   it("calls onClose once when the toast closes by timeout", async () => {

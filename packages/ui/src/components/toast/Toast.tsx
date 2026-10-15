@@ -41,8 +41,9 @@ export interface ToastStyleOptions {
   /**
    * When `true`, renders a close (×) button on this toast. Clicking it
    * dismisses the toast via Base UI's `Toast.Close`. Passing `onClose`
-   * implicitly enables this — you only need to set `dismissible` when
-   * you want the button without a side-effect handler.
+   * implicitly enables this, so you only need to set `dismissible` when
+   * you want the button without a side-effect handler. `dismissible: false`
+   * hides the button even when `onClose` is set.
    *
    * @default false
    */
@@ -53,9 +54,9 @@ export interface ToastStyleOptions {
    */
   dissmissable?: boolean;
   /**
-   * Called once when the toast closes, whichever way (close button, timeout, swipe,
-   * `manager.close`). Passing this prop also implicitly renders the close button (no need to
-   * also set `dismissible`).
+   * Called once when the toast closes, whichever way (close button, timeout, swipe, Escape with
+   * focus inside the toast, `manager.close`). Passing this prop also implicitly renders the close
+   * button (no need to also set `dismissible`), unless `dismissible` is `false`.
    */
   onClose?: () => void;
   /**
@@ -63,7 +64,7 @@ export interface ToastStyleOptions {
    * `aria-label` overrides `labels.close`; `event.preventBaseUIHandler()` in `onClick` keeps
    * the toast open. Renders no button on its own: set `dismissible` or `onClose` to show it.
    */
-  closeProps?: Partial<ToastCloseProps>;
+  closeProps?: ToastCloseProps;
 }
 
 /**
@@ -124,7 +125,9 @@ function ToastViewport({ className, labels, ...props }: ToastViewportProps) {
               )}
               {toast.actionProps != null && <ToastAction {...toast.actionProps} />}
             </BaseToast.Content>
-            {(dismissible || toast.onClose) && (
+            {(dismissible ?? Boolean(toast.onClose)) && (
+              // `aria-label` goes after the spread so `{ "aria-label": undefined }` falls back to
+              // `labels.close` instead of clearing the label.
               <ToastClose {...closeProps} aria-label={closeProps?.["aria-label"] ?? names.close} />
             )}
           </ToastRoot>
