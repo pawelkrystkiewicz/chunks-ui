@@ -7,5 +7,5 @@ export const inputVariants = cva([
   ...RING_ANIMATION_CLASSES,
   FOCUS_RING,
   "disabled:cursor-not-allowed disabled:opacity-50",
-  "data-[invalid]:border-destructive",
+  "data-invalid:border-destructive",
 ]);

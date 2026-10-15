@@ -124,7 +124,7 @@ function SliderThumb({ className, getAriaValueText, ...props }: SliderThumbProps
         "size-4 rounded-full border-2 border-primary bg-background shadow-sm",
         // Only the colours (`transition-colors` also lists `outline-color`: the ring would fade in; the utility sorts before this list)
         "micro-interactions [transition-property:color,background-color,border-color] duration-150",
-        "data-[dragging]:scale-110 data-[dragging]:shadow-md",
+        "data-dragging:scale-110 data-dragging:shadow-md",
         // Keyboard focus lands on the visually hidden range input inside the thumb
         FOCUS_RING_WITHIN,
         "data-disabled:cursor-not-allowed data-disabled:opacity-50",

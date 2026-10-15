@@ -66,7 +66,7 @@ export function Avatar({
           keepMounted
           src={src}
           alt={alt ?? ""}
-          className="absolute inset-0 size-full object-cover data-[error]:hidden data-[loading]:invisible"
+          className="absolute inset-0 size-full object-cover data-error:hidden data-loading:invisible"
         />
       )}
       {/* Shown while there is no image: an image named by alt, or decorative without one */}

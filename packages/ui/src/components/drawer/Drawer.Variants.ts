@@ -45,18 +45,18 @@ export const drawerPopupVariants = cva([drawerBase, cssSlide], {
     side: {
       left: [
         drawerSidePosition.left,
-        "data-[starting-style]:-translate-x-full",
-        "data-[ending-style]:-translate-x-full",
+        "data-starting-style:-translate-x-full",
+        "data-ending-style:-translate-x-full",
       ],
       right: [
         drawerSidePosition.right,
-        "data-[starting-style]:translate-x-full",
-        "data-[ending-style]:translate-x-full",
+        "data-starting-style:translate-x-full",
+        "data-ending-style:translate-x-full",
       ],
       bottom: [
         drawerSidePosition.bottom,
-        "data-[starting-style]:translate-y-full",
-        "data-[ending-style]:translate-y-full",
+        "data-starting-style:translate-y-full",
+        "data-ending-style:translate-y-full",
       ],
     },
   },

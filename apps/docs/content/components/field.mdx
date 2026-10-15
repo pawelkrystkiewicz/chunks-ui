@@ -35,7 +35,7 @@ import { Field } from "chunks-ui";
 
 ## Validation Error
 
-Set `invalid` on `Field.Root` to activate error styling. The input receives `aria-invalid` and `data-[invalid]` for red border styling. `invalid` alone does not show `Field.Error`: it renders only for a failed validation (see Native Validation), a server error passed to `Form`, or `match={true}`. To show a message for the `invalid` prop, add `match`:
+Set `invalid` on `Field.Root` to activate error styling. The input receives `aria-invalid` and `data-invalid` for red border styling. `invalid` alone does not show `Field.Error`: it renders only for a failed validation (see Native Validation), a server error passed to `Form`, or `match={true}`. To show a message for the `invalid` prop, add `match`:
 
 ```tsx
 <Field.Root invalid>
