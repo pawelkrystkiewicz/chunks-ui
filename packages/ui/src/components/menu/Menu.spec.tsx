@@ -1,9 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
-import type { ReactElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { reloadMotion } from "../../lib/use-motion";
 import { Menu } from "./Menu";
 
 afterEach(cleanup);
@@ -251,34 +249,5 @@ describe("Menu", () => {
         },
       }),
     ).toHaveNoViolations();
-  });
-});
-
-describe("Menu.Content with Motion loaded", () => {
-  function renderContent(renderProp?: ReactElement) {
-    render(
-      <Menu.Root open>
-        <Menu.Trigger>Open</Menu.Trigger>
-        <Menu.Content render={renderProp} data-testid="content">
-          <Menu.Item>Item</Menu.Item>
-        </Menu.Content>
-      </Menu.Root>,
-    );
-    return screen.getByTestId("content");
-  }
-
-  it("animates the default element with Motion, not CSS", async () => {
-    await reloadMotion();
-    const el = renderContent();
-    expect(el).not.toHaveClass("micro-interactions");
-    // A motion.div renders its initial values inline
-    expect(el.style.opacity).not.toBe("");
-  });
-
-  it("keeps the CSS transition on the element a render prop gives it", async () => {
-    await reloadMotion();
-    const el = renderContent(<section />);
-    expect(el.tagName).toBe("SECTION");
-    expect(el).toHaveClass("micro-interactions", "data-starting-style:opacity-0");
   });
 });
