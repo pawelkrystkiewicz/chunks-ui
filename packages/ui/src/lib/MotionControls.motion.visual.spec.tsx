@@ -408,7 +408,8 @@ describe("controls once Motion has loaded", () => {
 
       await reducedMotion(false);
       // Motion drives it again: mounted, and at rest at opacity 0
-      await expect.poll(() => opacity(element()), { timeout: SETTLE_TIMEOUT_MS }).toBe(0);
+      await expect.poll(element, { timeout: SETTLE_TIMEOUT_MS }).not.toBeNull();
+      expect(new Set(await sample(() => opacity(element()), 10))).toEqual(new Set([0]));
     },
   );
 
