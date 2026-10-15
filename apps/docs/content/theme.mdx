@@ -163,13 +163,7 @@ Manrope and Fira Code are not shipped with the package. Load them in your app, o
 }
 ```
 
-The `Title` parts of Card, Dialog, Drawer, Popover and Empty have the `font-heading` utility, which sets `font-family: var(--font-heading)`. The token has no default, so the declaration is invalid at computed-value time and the titles inherit their font. Set it on `:root`, or on any element, to apply it to the titles inside:
-
-```css
-:root {
-  --font-heading: "Fraunces", serif;
-}
-```
+The `Title` parts of Card, Dialog, Drawer, Popover and Empty use `font-heading`. Set `--font-heading` on `:root` or any element to style the titles inside.
 
 ## Easing Curves
 

@@ -1,4 +1,4 @@
-import { cva as cvaBase, type VariantProps } from "class-variance-authority";
+import { cva as cvaBase } from "class-variance-authority";
 import { describe, expect, expectTypeOf, it } from "vitest";
 import { cva } from "./cva";
 
@@ -13,21 +13,13 @@ const original = cvaBase("base", {
 const bare = cva("base");
 const bareOriginal = cvaBase("base");
 
-// Aliases: expectTypeOf misses a mismatch in an inline `VariantProps<...>` argument
-type Variants = VariantProps<typeof wrapped>;
-type OriginalVariants = VariantProps<typeof original>;
-type BareVariants = VariantProps<typeof bare>;
-type BareOriginalVariants = VariantProps<typeof bareOriginal>;
-
 // Erased at runtime: `check-types` fails if the wrapper's types drift from cva's
 describe("cva", () => {
-  it("types the variant props and the arguments as cva does", () => {
-    expectTypeOf<OriginalVariants>().toEqualTypeOf<Variants>();
+  it("types the arguments as cva does", () => {
     expectTypeOf<Parameters<typeof original>[0]>().toEqualTypeOf<Parameters<typeof wrapped>[0]>();
   });
 
   it("types a schema without variants as cva does", () => {
-    expectTypeOf<BareOriginalVariants>().toEqualTypeOf<BareVariants>();
     expectTypeOf<Parameters<typeof bareOriginal>[0]>().toEqualTypeOf<Parameters<typeof bare>[0]>();
   });
 

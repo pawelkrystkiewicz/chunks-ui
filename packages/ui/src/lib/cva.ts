@@ -16,22 +16,16 @@ type CvaProps<T> = Parameters<ReturnType<typeof cvaBase<T>>>[0];
 type VariantKeys<Props> = Exclude<keyof NonNullable<Props>, "class" | "className">;
 
 /**
- * The variant props among a cva function's props: everything but `class` and `className`.
- * `unknown` when there are none, so that `& ClassProp` leaves `ClassProp` alone. Keep it a local,
- * non-exported mapped type: written with `VariantProps` or `Omit`, the `class-variance-authority/types`
- * import comes back, because tsc keeps an alias it can reach and prints cva's `ClassProp` inside
- * its argument.
+ * Keep this a local, non-exported mapped type: `VariantProps` or `Omit` here brings the
+ * `class-variance-authority/types` import back into the emitted typings.
  */
 type VariantsOf<Props> = [VariantKeys<Props>] extends [never]
   ? unknown
   : { [Key in VariantKeys<Props>]?: NonNullable<Props>[Key] };
 
 /**
- * cva, with its result typed through the `ClassProp` above instead of cva's own. TypeScript
- * writes the inferred type of every exported variants function into the typings, and cva's type
- * names `ClassProp` through the `./types` entry. Use this in place of cva's `cva`. `cva.spec.ts`
- * asserts these types equal cva's, and `bun run check:dist` fails when the typings import a cva
- * subpath.
+ * cva typed through the local `ClassProp`; import this instead of cva's own `cva`.
+ * `cva.spec.ts` pins the types to cva's; `check:dist` fails on a cva subpath in the typings.
  */
 export function cva<T>(base?: ClassValue, config?: Parameters<typeof cvaBase<T>>[1]) {
   return cvaBase(base, config) as (props?: VariantsOf<CvaProps<T>> & ClassProp) => string;
