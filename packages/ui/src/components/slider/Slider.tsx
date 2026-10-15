@@ -79,7 +79,7 @@ function SliderControl({ className, ...props }: SliderControlProps) {
       className={cnState(
         "flex w-full cursor-pointer touch-none select-none items-center py-1",
         "data-[orientation=vertical]:h-full data-[orientation=vertical]:w-auto data-[orientation=vertical]:flex-col data-[orientation=vertical]:px-1 data-[orientation=vertical]:py-0",
-        "data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50",
+        "data-disabled:cursor-not-allowed data-disabled:opacity-50",
         className,
       )}
       {...props}
@@ -127,7 +127,7 @@ function SliderThumb({ className, getAriaValueText, ...props }: SliderThumbProps
         "data-[dragging]:scale-110 data-[dragging]:shadow-md",
         // Keyboard focus lands on the visually hidden range input inside the thumb
         FOCUS_RING_WITHIN,
-        "data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50",
+        "data-disabled:cursor-not-allowed data-disabled:opacity-50",
         className,
       )}
       {...props}

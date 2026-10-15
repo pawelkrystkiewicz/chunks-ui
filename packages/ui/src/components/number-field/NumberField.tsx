@@ -86,7 +86,7 @@ function NumberFieldIncrement({ className, ...props }: NumberFieldIncrementProps
         "micro-interactions flex h-ui-height items-center justify-center px-2 text-muted-foreground enabled:hover:text-foreground",
         "border-input border-s",
         "disabled:cursor-not-allowed disabled:opacity-50",
-        "data-[disabled]:opacity-50",
+        "data-disabled:opacity-50",
         className,
       )}
       {...props}
@@ -117,7 +117,7 @@ function NumberFieldDecrement({ className, ...props }: NumberFieldDecrementProps
         "micro-interactions flex h-ui-height items-center justify-center px-2 text-muted-foreground enabled:hover:text-foreground",
         "border-input border-e",
         "disabled:cursor-not-allowed disabled:opacity-50",
-        "data-[disabled]:opacity-50",
+        "data-disabled:opacity-50",
         className,
       )}
       {...props}

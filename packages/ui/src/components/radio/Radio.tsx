@@ -21,7 +21,7 @@ function RadioGroup<Value = unknown>({ className, ...props }: RadioGroupProps<Va
   return (
     <BaseRadioGroup
       className={cnState(
-        "group/radio-group flex flex-col gap-2 data-[disabled]:opacity-50",
+        "group/radio-group flex flex-col gap-2 data-disabled:opacity-50",
         className,
       )}
       {...props}
@@ -43,8 +43,8 @@ function RadioRoot({ className, ...props }: RadioRootProps) {
         // No pointer-events-none: it would hide the cursor, and Base UI ignores the click anyway.
         // A disabled Radio.Group dims itself, so inside one the root drops its own dim and isn't
         // dimmed twice.
-        "data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50",
-        "group-data-[disabled]/radio-group:data-[disabled]:opacity-100",
+        "data-disabled:cursor-not-allowed data-disabled:opacity-50",
+        "group-data-disabled/radio-group:data-disabled:opacity-100",
         className,
       )}
       {...props}
@@ -121,12 +121,12 @@ function RadioItem({ children, className, ...props }: RadioItemProps) {
         // A disabled Radio.Group dims itself, so inside one the item drops its own dim and isn't
         // dimmed twice. Stacked on `has-`: Tailwind sorts a `group-` variant before `has-`, so a
         // `group-` class alone would lose to the dim at the same specificity.
-        "group-data-[disabled]/radio-group:has-[>[data-disabled]]:opacity-100",
+        "group-data-disabled/radio-group:has-[>[data-disabled]]:opacity-100",
         className,
       )}
     >
       {/* The label above, or a disabled group, dims the radio with its text: no second dim */}
-      <RadioRoot className="data-[disabled]:opacity-100" {...props}>
+      <RadioRoot className="data-disabled:opacity-100" {...props}>
         <RadioIndicator />
       </RadioRoot>
       <span>{children}</span>
