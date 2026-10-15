@@ -672,7 +672,7 @@ describe("own transition lists with no reduced-motion preference", () => {
     {
       part: "Combobox.Popup",
       ui: comboboxPopup(),
-      properties: ["opacity"],
+      properties: ["opacity", "scale"],
     },
     {
       part: "Dialog.Popup",
