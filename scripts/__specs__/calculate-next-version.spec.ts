@@ -173,6 +173,14 @@ describe("isEmptyChangeset", () => {
     expect(isEmptyChangeset("No front matter here")).toBe(false);
     expect(isEmptyChangeset("---\n")).toBe(false);
   });
+
+  it("should be false for invalid YAML, the safe direction: the file counts as a release", () => {
+    expect(isEmptyChangeset("---\nthis is not valid: yaml: syntax:\n---")).toBe(false);
+  });
+
+  it("should be true for front matter that holds only a comment", () => {
+    expect(isEmptyChangeset("---\n# nothing\n---\n")).toBe(true);
+  });
 });
 
 describe("determineBumpType", () => {
