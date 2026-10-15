@@ -15,6 +15,7 @@ import {
   determineBumpType,
   getCurrentVersion,
   hasChangesets,
+  isEmptyChangeset,
   parseChangesetFrontMatter,
   parseVersion,
 } from "../calculate-next-version";
@@ -150,6 +151,25 @@ this is not valid: yaml: syntax:
 
 Description`;
     expect(parseChangesetFrontMatter(content)).toBe(null);
+  });
+});
+
+describe("isEmptyChangeset", () => {
+  it("should be true for the file bunx changeset --empty writes", () => {
+    expect(isEmptyChangeset("---\n---\n")).toBe(true);
+  });
+
+  it("should be true for empty front matter with blank lines", () => {
+    expect(isEmptyChangeset("---\n\n---\n")).toBe(true);
+  });
+
+  it("should be false when the front matter names a package", () => {
+    expect(isEmptyChangeset('---\n"chunks-ui": patch\n---\n\nFix')).toBe(false);
+  });
+
+  it("should be false without front matter", () => {
+    expect(isEmptyChangeset("No front matter here")).toBe(false);
+    expect(isEmptyChangeset("---\n")).toBe(false);
   });
 });
 
@@ -304,6 +324,17 @@ describe("hasChangesets", () => {
   it("should return false when only README.md exists", () => {
     writeFileSync(join(testDir, "README.md"), "Readme content");
     expect(hasChangesets(testDir)).toBe(false);
+  });
+
+  it("should return false when only empty changesets exist", () => {
+    writeFileSync(join(testDir, "empty.md"), "---\n---\n");
+    expect(hasChangesets(testDir)).toBe(false);
+  });
+
+  it("should return true when an empty changeset sits beside a real one", () => {
+    writeFileSync(join(testDir, "empty.md"), "---\n---\n");
+    writeFileSync(join(testDir, "fix.md"), '---\n"chunks-ui": patch\n---\n\nFix');
+    expect(hasChangesets(testDir)).toBe(true);
   });
 
   it("should return false when no markdown files exist", () => {

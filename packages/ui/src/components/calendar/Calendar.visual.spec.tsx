@@ -17,6 +17,11 @@ afterEach(() => {
 });
 
 describe("Calendar", () => {
+  // Canary for the `timezoneId` pin in vitest.visual.config.ts: January in Europe/Warsaw is UTC+1
+  it("runs in the pinned time zone", () => {
+    expect(new Date(2026, 0, 15).getTimezoneOffset()).toBe(-60);
+  });
+
   it("with selected date", async () => {
     const { fixture } = await renderFixture(<Calendar value={new Date(2026, 2, 15)} />);
     await expect(fixture).toMatchScreenshot();
