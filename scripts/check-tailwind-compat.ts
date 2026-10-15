@@ -20,7 +20,7 @@
  *
  * Run: bun run check:tailwind (builds chunks-ui first)
  */
-import { cpSync, existsSync, mkdtempSync, readFileSync, realpathSync, rmSync } from "node:fs";
+import { cpSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
@@ -48,64 +48,36 @@ export function themeUtilities(css: string): string[] {
 // Quoted only: Tailwind leaves `@import url(...)` as a native CSS import, inlining nothing from it
 const IMPORT = /@import\s+["']([^"']+)["']/g;
 const SCHEME = /^(?:[a-z][\w+.-]*:|\/\/)/i; // `https:`, `data:`, or protocol-relative `//host`
-const RELATIVE = /^\.\.?\//;
-
-function tryResolve(spec: string, from: string): string | undefined {
-  try {
-    return Bun.resolveSync(spec, from);
-  } catch {
-    return undefined;
-  }
-}
 
 /**
  * The file `spec` names when `importer` imports it, or a throw. Tailwind resolves a CSS import
- * with enhanced-resolve (`extensions: [".css"]`, `mainFields: ["style"]`,
- * `conditionNames: ["style"]`); Bun's resolver has none of these, so a relative specifier is
- * retried with `.css` added and nothing else differs. The limits:
- * - A subpath with a plain string target (`chunks-ui-core/theme.css`) resolves.
+ * with enhanced-resolve (`extensions: [".css"]`, `conditionNames: ["style"]`); Bun's resolver has
+ * neither. The limits:
  * - A package that exports its stylesheet only under `style` throws.
  * - A package with `style` and a JS condition (the shape of `tailwindcss` itself) resolves to its
  *   JS, which the caller skips: a `@utility` in its stylesheet would be missed.
- * - An extensionless `./theme` beside both `theme.js` and `theme.css` resolves to the JS, which is
- *   skipped too.
- * - `@import "./dir"`, where Tailwind finds `dir/index.css`, throws.
- * - A target that does not exist (a dangling symlink) throws, naming the importer and specifier.
+ * - No `.css` is added: an extensionless `./core` throws.
  */
 function resolveImport(spec: string, importer: string): string {
-  const from = dirname(importer);
-  const target =
-    tryResolve(spec, from) ?? (RELATIVE.test(spec) ? tryResolve(`${spec}.css`, from) : undefined);
-  if (target === undefined) {
+  try {
+    return Bun.resolveSync(spec, dirname(importer));
+  } catch {
     throw new Error(
-      `${importer}: cannot resolve @import "${spec}". themeUtilitiesIn resolves with Bun, which adds no ".css" to a bare specifier and ignores the "style" export condition Tailwind reads, so a stylesheet a package exports only under "style" fails here and its @utility names would be missing from the scan.`,
+      `${importer}: cannot resolve @import "${spec}" (Bun's resolver adds no ".css" to bare specifiers and ignores the "style" export condition)`,
     );
   }
-  if (!existsSync(target)) {
-    throw new Error(`${importer}: cannot read @import "${spec}" (${target})`);
-  }
-  return target;
 }
 
 /**
- * The utilities `file` and the stylesheets it `@import`s define: a relative specifier from its
- * directory (`./core` finds `core.css`), a bare one (`chunks-ui-core/theme.css`) through
- * node_modules from there, in the quoted form only. `url(...)` imports (Tailwind leaves them as
- * native CSS imports), URLs (`https:`, `//host`) and a target that is not a `.css` file
- * (`tailwindcss` resolves to its JS) are skipped. An import that does not resolve or does not exist
- * throws (see resolveImport), as does a stylesheet that cannot be read. Each file is read once
- * (`seen`, by real path: node_modules and macOS temp directories are symlinks), so an import cycle
- * ends.
+ * The utilities `file` and the stylesheets it `@import`s define. Quoted imports only; `url(...)`,
+ * URLs and a target that is not `.css` are skipped. Throws, see resolveImport.
  */
-export function themeUtilitiesIn(file: string, seen = new Set<string>()): string[] {
-  const path = realpathSync(file);
-  if (seen.has(path)) return [];
-  seen.add(path);
-  const css = readFileSync(path, "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+export function themeUtilitiesIn(file: string): string[] {
+  const css = readFileSync(file, "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
   const imported = [...css.matchAll(IMPORT)].flatMap(([, spec = ""]) => {
     if (SCHEME.test(spec)) return [];
-    const target = resolveImport(spec, path);
-    return target.endsWith(".css") ? themeUtilitiesIn(target, seen) : [];
+    const target = resolveImport(spec, file);
+    return target.endsWith(".css") ? themeUtilitiesIn(target) : [];
   });
   return [...themeUtilities(css), ...imported];
 }
