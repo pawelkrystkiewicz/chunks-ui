@@ -40,6 +40,15 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      # A changed package needs a changeset since origin/master (bunx changeset, or --empty for a
+      # change with no user-facing effect, see CONTRIBUTING.md). Placed before Lint so a lint
+      # failure does not hide a missing changeset. Pull requests only; skipped on the release
+      # branch, where the version commit has consumed the changesets, and on Renovate branches
+      # (default branchPrefix renovate/), which automerge and cannot add one
+      - name: Check changed packages have a changeset
+        if: github.event_name == 'pull_request' && github.head_ref != 'changeset-release/master' && !startsWith(github.head_ref, 'renovate/')
+        run: bunx changeset status --since=origin/master
+
       - name: Lint
         run: bun run lint
 
@@ -52,13 +61,6 @@ jobs:
 
       - name: Check the bun version matches packageManager everywhere
         run: bun run check:bun
-
-      # A changed package needs a changeset since origin/master (bunx changeset, or --empty for a
-      # change with no user-facing effect, see CONTRIBUTING.md). Skipped on the release branch,
-      # where the version commit has consumed them
-      - name: Check changed packages have a changeset
-        if: github.head_ref != 'changeset-release/master'
-        run: bunx changeset status --since=origin/master
 
   typecheck:
     timeout-minutes: 10
