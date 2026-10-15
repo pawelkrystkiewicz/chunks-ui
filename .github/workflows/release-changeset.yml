@@ -80,7 +80,9 @@ jobs:
         id: unpublished
         if: steps.changesets.outputs.published != 'true'
         run: |
-          # pipefail: a failed git show must not leave version empty and the check asking npm for "chunks-ui@"
+          # The -z test below stops an empty version from reaching `npm view "chunks-ui@"`: jq exits 0 on empty
+          # input, so a failed git show alone leaves version empty. `|| version=` keeps bash -e alive to print the
+          # ::error::. pipefail is only a guard: it makes a failed git show fail the whole pipeline too.
           set -o pipefail
           # Not the workspace: changesets/action leaves it on its release branch, versions bumped
           version=$(git show "$GITHUB_SHA:packages/ui/package.json" | jq -r .version) || version=
