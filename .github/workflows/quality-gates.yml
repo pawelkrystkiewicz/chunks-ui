@@ -5,7 +5,7 @@ on:
   pull_request:
 permissions:
   contents: read
-# A newer push to the same PR cancels this run; master pushes and manual runs never share a group.
+# A newer push to the same PR cancels this run; master pushes never share a group.
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: true
@@ -20,6 +20,8 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
+          # Full history: the changeset check below diffs against the merge base with origin/master
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Setup Bun
@@ -50,6 +52,13 @@ jobs:
 
       - name: Check the bun version matches packageManager everywhere
         run: bun run check:bun
+
+      # A changed package needs a changeset since origin/master (bunx changeset, or --empty for a
+      # change with no user-facing effect, see CONTRIBUTING.md). Skipped on the release branch,
+      # where the version commit has consumed them
+      - name: Check changed packages have a changeset
+        if: github.head_ref != 'changeset-release/master'
+        run: bunx changeset status --since=origin/master
 
   typecheck:
     timeout-minutes: 10

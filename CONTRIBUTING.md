@@ -172,10 +172,16 @@ Pre-commit hook (Lefthook) auto-runs Biome on staged files.
 
 ## Changesets
 
-For version bumps, create a changeset:
+Every PR that changes `packages/ui` needs a changeset: the `lint` job of `quality-gates.yml` runs `changeset status --since=origin/master` and fails without one. For a user-facing change:
 
 ```bash
 bunx changeset
 ```
 
 Describe the change, select semver bump level, and commit the generated `.changeset/*.md` file with your PR.
+
+A `packages/ui` change with no user-facing effect (a spec, a test config, a comment) gets an empty changeset, which bumps nothing and adds no changelog entry:
+
+```bash
+bunx changeset --empty
+```
