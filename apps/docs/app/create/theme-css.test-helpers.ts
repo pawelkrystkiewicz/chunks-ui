@@ -9,10 +9,10 @@ export function parseOklch(value: string): Oklch {
   return { l: Number(l) / (percent ? 100 : 1), c: Number(c), h: Number(h) };
 }
 
-// core-prep: Phase 1 of the split (#403) points this at core's theme.css
-// (packages/core/src/theme.css). The source file, not the built chunks-ui/theme.css: after Phase 1
+// core-prep: the core extraction (Phase 1 of the split; prep in #403) points this at core's
+// `theme.css`. The source file, not the built chunks-ui/theme.css: after the extraction
 // dist/theme.css is a wrapper with no :root or .dark block, and reading dist needs a build first.
-export const THEME_CSS = "../../../../packages/ui/src/theme.css";
+const THEME_CSS = "../../../../packages/ui/src/theme.css";
 
 /** The library's theme.css without its comments. */
 const themeCss = readFileSync(new URL(THEME_CSS, import.meta.url), "utf8").replace(

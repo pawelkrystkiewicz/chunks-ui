@@ -28,7 +28,8 @@ import {
 
 const INSTALL = "bun add chunks-ui motion";
 const GITHUB = "https://github.com/pawelkrystkiewicz/chunks-ui";
-// core-prep: the presets move to the core package with Phase 1 of the split (#403); move this path with them
+// core-prep: the presets move to the core package with the core extraction (Phase 1 of the
+// split; prep in #403); move this path with them
 const MOTION_PRESETS = `${GITHUB}/blob/master/packages/ui/src/lib/motion.ts`;
 const DOCS = "/getting-started";
 const COMPONENTS = "/components";
