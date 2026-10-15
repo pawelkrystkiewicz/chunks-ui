@@ -6,4 +6,3 @@ Fixed: with Motion, `Tabs.Contents` kept the height of its tallest panel, so swi
 
 - Inside a `Dialog` (whose popup opens at 95% scale), the first panel measured about 5% short and its bottom was clipped until you switched tabs. The container now measures the panel's layout height, which a transform doesn't change.
 - Switching back to a panel right after leaving it could show the previous panel's height for a frame. A pending re-measure of the previous panel is now cancelled on switch.
-- Turning on reduced motion while the panels were sliding or resizing left them shifted sideways and the container stuck at an in-between height, clipping the panel. The animation now stops and the panels go back to the plain layout. Turning reduced motion off again while at rest leaves the active panel in place and the container at its height.
