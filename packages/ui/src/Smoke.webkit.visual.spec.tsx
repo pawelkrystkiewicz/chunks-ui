@@ -112,6 +112,13 @@ withViewport(1000, 700);
 // Safari users mostly have no reduced-motion preference: Motion drives the springs here
 beforeEach(() => enterMotionPath(true));
 
+describe("The browser time zone", () => {
+  // Canary for the `timezoneId` pin in vitest.visual.config.ts: January in Europe/Warsaw is UTC+1
+  it("is the pinned time zone", () => {
+    expect(new Date(2026, 0, 15).getTimezoneOffset()).toBe(-60);
+  });
+});
+
 describe("The paint probe", () => {
   it("counts a child that paints although its parent is hidden", async () => {
     render(

@@ -18,6 +18,13 @@ import {
 
 const NO_MODIFIERS = { altKey: false, ctrlKey: false, metaKey: false, shiftKey: false };
 
+describe("the unit suite's time zone", () => {
+  // Canary for the `process.env.TZ` pin in vitest.config.ts: January in Europe/Warsaw is UTC+1
+  it("is the pinned time zone", () => {
+    expect(new Date(2026, 0, 15).getTimezoneOffset()).toBe(-60);
+  });
+});
+
 describe("validDate", () => {
   it("returns a valid date as it is", () => {
     const date = createDate(2026, 2, 15);
