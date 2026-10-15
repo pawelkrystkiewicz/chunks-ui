@@ -28,9 +28,6 @@ import {
 
 const INSTALL = "bun add chunks-ui motion";
 const GITHUB = "https://github.com/pawelkrystkiewicz/chunks-ui";
-// core-prep: the presets move to the core package with the core extraction (Phase 1 of the
-// split; prep in #403); move this path with them
-const MOTION_PRESETS = `${GITHUB}/blob/master/packages/ui/src/lib/motion.ts`;
 const DOCS = "/getting-started";
 const COMPONENTS = "/components";
 
@@ -547,6 +544,7 @@ const STATEMENT = "flex min-w-0 flex-col border-(--l-line) border-r border-b px-
 const STATEMENT_LABEL = "font-mono text-primary-text text-[12px]";
 const STATEMENT_TEXT = "text-pretty text-(--l-fg) text-[20px] leading-normal tracking-[-.01em]";
 
+// core-prep: moves with the presets to core
 function MotionSection() {
   return (
     <section id="motion" className="pt-6 pb-24">
@@ -573,7 +571,7 @@ function MotionSection() {
             STIFFNESS / DAMPING
             <SpringList />
           </span>
-          <Href href={MOTION_PRESETS} className={TEXT_LINK}>
+          <Href href={`${GITHUB}/blob/master/packages/ui/src/lib/motion.ts`} className={TEXT_LINK}>
             Motion presets →
           </Href>
         </div>

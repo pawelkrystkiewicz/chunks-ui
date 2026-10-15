@@ -9,16 +9,13 @@ export function parseOklch(value: string): Oklch {
   return { l: Number(l) / (percent ? 100 : 1), c: Number(c), h: Number(h) };
 }
 
-// core-prep: the core extraction (Phase 1 of the split; prep in #403) points this at core's
-// `theme.css`. The source file, not the built chunks-ui/theme.css: after the extraction
-// dist/theme.css is a wrapper with no :root or .dark block, and reading dist needs a build first.
-const THEME_CSS = "../../../../packages/ui/src/theme.css";
-
+// core-prep: reads the source file, not dist: the dist file becomes an `@import` wrapper when core
+// is extracted.
 /** The library's theme.css without its comments. */
-const themeCss = readFileSync(new URL(THEME_CSS, import.meta.url), "utf8").replace(
-  /\/\*[\s\S]*?\*\//g,
-  "",
-);
+const themeCss = readFileSync(
+  new URL("../../../../packages/ui/src/theme.css", import.meta.url),
+  "utf8",
+).replace(/\/\*[\s\S]*?\*\//g, "");
 
 /** The `--name: value` declarations of one top-level block of theme.css, without the `--`. */
 export function themeTokens(selector: ":root" | ".dark"): Record<string, string> {

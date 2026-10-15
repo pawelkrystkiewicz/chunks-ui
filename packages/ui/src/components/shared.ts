@@ -43,7 +43,6 @@ export const TOAST_CONTENT_CLASS = "ToastContent";
 
 /**
  * The class the popups' `has-[.PopupArrow]:` variants and `arrowPaddingIn` find the arrow by; see
- * `popup-arrow.ts` and `arrow-padding.ts`. Those variants spell it out so Tailwind's scanner sees
- * the whole class.
+ * `popup-arrow.ts` and `arrow-padding.ts`.
  */
 export const POPUP_ARROW_CLASS = "PopupArrow";
