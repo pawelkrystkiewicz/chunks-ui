@@ -27,9 +27,12 @@ describe("ClearButton", () => {
     const rest = looks();
     await userEvent.hover(button);
     expect(looks()).toEqual(rest);
-    // Chromium applies :active to a disabled button, so the press scale must stay off as well
+    // Chromium applies :active to a disabled button, so the press scale must stay off as well.
+    // A press in place has :hover too, which resets the scale by itself: with the button held, the
+    // pointer leaves it, and only :active is left to be tested
     await commands.mouseDown();
     try {
+      await commands.parkPointer();
       expect(looks()).toEqual(rest);
     } finally {
       await commands.mouseUp();

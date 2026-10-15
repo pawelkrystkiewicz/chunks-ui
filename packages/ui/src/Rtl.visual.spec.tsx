@@ -376,7 +376,6 @@ describe.each(DIRS)("in %s", (dir) => {
     expect(close.start).toBeGreaterThanOrEqual(contentSpan(toast, dir).end);
   });
 
-  // DatePicker's trigger takes the same `text-start`
   it("starts the wrapped text of Accordion's trigger at the inline start", () => {
     renderIn(
       dir,

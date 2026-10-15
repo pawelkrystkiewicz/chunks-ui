@@ -85,4 +85,24 @@ describe("ToggleGroup", () => {
     await userEvent.hover(item);
     expect(getComputedStyle(item).color).toBe(rest);
   });
+
+  // `data-pressed:text-foreground` is a lower specificity than `disabled:hover:`, so the reset must
+  // skip a pressed item, or the pointer would turn its colour to the muted one
+  it("keeps a disabled item's colour under the pointer, pressed or not", async () => {
+    const { getByRole } = render(
+      <ToggleGroup.Root disabled defaultValue={["b"]}>
+        <ToggleGroup.Item value="a">A</ToggleGroup.Item>
+        <ToggleGroup.Item value="b">B</ToggleGroup.Item>
+      </ToggleGroup.Root>,
+    );
+    for (const [name, pressed] of [
+      ["A", false],
+      ["B", true],
+    ] as const) {
+      const item = getByRole("button", { name, pressed });
+      const rest = getComputedStyle(item).color;
+      await userEvent.hover(item);
+      expect(getComputedStyle(item).color, name).toBe(rest);
+    }
+  });
 });

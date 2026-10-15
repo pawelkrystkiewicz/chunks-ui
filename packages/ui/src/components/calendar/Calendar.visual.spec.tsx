@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, it, vi } from "vitest";
-import { commands } from "vitest/browser";
+import { commands, userEvent } from "vitest/browser";
 import { focusVisible, renderFixture, systemColour } from "../../VisualTest.utils";
 import { Calendar } from "./index";
 
@@ -61,6 +61,24 @@ describe("Calendar", () => {
     const day = screen.getByLabelText("Friday, March 20, 2026", { selector: "button" });
     const { cursor, pointerEvents } = getComputedStyle(day);
     expect({ cursor, pointerEvents }).toEqual({ cursor: "not-allowed", pointerEvents: "auto" });
+  });
+
+  // The day receives the pointer now, so the hover fill of an enabled day must stay off it
+  it("keeps a disabled day at its rest colours under the pointer", async () => {
+    render(
+      <Calendar
+        value={new Date(2026, 2, 18)}
+        isDateDisabled={(date) => date.getMonth() === 2 && date.getDate() === 20}
+      />,
+    );
+    const day = screen.getByLabelText("Friday, March 20, 2026", { selector: "button" });
+    const looks = () => {
+      const { backgroundColor, color } = getComputedStyle(day);
+      return { backgroundColor, color };
+    };
+    const rest = looks();
+    await userEvent.hover(day);
+    expect(looks()).toEqual(rest);
   });
 });
 

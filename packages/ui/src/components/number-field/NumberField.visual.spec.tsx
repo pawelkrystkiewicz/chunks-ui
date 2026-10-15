@@ -116,7 +116,7 @@ describe("NumberField", () => {
     await expect(fixture).toMatchScreenshot();
   });
 
-  it("shows a not-allowed cursor on a disabled input", () => {
+  it("shows a not-allowed cursor on every part of a disabled field", () => {
     const { getByRole } = render(
       <NumberField.Root defaultValue={42} disabled>
         <NumberField.Group>
@@ -126,8 +126,23 @@ describe("NumberField", () => {
         </NumberField.Group>
       </NumberField.Root>,
     );
-    const { cursor, pointerEvents } = getComputedStyle(getByRole("textbox", { name: "Amount" }));
-    expect({ cursor, pointerEvents }).toEqual({ cursor: "not-allowed", pointerEvents: "auto" });
+    const looks = (element: HTMLElement) => {
+      const { cursor, pointerEvents } = getComputedStyle(element);
+      return { cursor, pointerEvents };
+    };
+    const parts = {
+      group: getByRole("group"),
+      input: getByRole("textbox", { name: "Amount" }),
+      increment: getByRole("button", { name: "Increase" }),
+      decrement: getByRole("button", { name: "Decrease" }),
+    };
+    expect(
+      Object.fromEntries(Object.entries(parts).map(([name, part]) => [name, looks(part)])),
+    ).toEqual(
+      Object.fromEntries(
+        Object.keys(parts).map((name) => [name, { cursor: "not-allowed", pointerEvents: "auto" }]),
+      ),
+    );
   });
 
   it("keeps a disabled increment button at its rest colour under the pointer", async () => {

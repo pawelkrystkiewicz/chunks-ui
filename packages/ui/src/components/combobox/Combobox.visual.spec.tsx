@@ -58,6 +58,25 @@ const chipsCombobox = () => (
   </Combobox.Root>
 );
 
+// One disabled multi-select with a chip, so that every part that shows a cursor is in it
+const disabledChipsCombobox = () => (
+  <Combobox.Root multiple items={options} defaultValue={options.slice(0, 1)} disabled>
+    <Combobox.Control data-testid="control">
+      <Combobox.Chips>
+        {options.slice(0, 1).map((item) => (
+          <Combobox.Chip key={item.value}>
+            {item.label}
+            <Combobox.ChipRemove />
+          </Combobox.Chip>
+        ))}
+      </Combobox.Chips>
+      <Combobox.Input aria-label="Frameworks" />
+      <Combobox.Clear />
+      <Combobox.Trigger />
+    </Combobox.Control>
+  </Combobox.Root>
+);
+
 describe("Combobox", () => {
   it("closed", async () => {
     const { fixture } = await renderFixture(<div style={{ width: 250 }}>{combobox()}</div>);
@@ -105,40 +124,39 @@ describe("Combobox", () => {
     expect(empty.getBoundingClientRect().height).toBeGreaterThan(0);
   });
 
-  it("shows a not-allowed cursor on a disabled input", () => {
-    const { getByRole } = render(
-      <Combobox.Root items={options} disabled>
-        <Combobox.Input aria-label="Framework" />
-      </Combobox.Root>,
+  it("shows a not-allowed cursor on every part of a disabled Combobox", () => {
+    const { getByRole, getByTestId } = render(disabledChipsCombobox());
+    const looks = (element: HTMLElement) => {
+      const { cursor, pointerEvents } = getComputedStyle(element);
+      return { cursor, pointerEvents };
+    };
+    // A `<button>` has `cursor: default` from the user-agent stylesheet, so each needs its own
+    const parts = {
+      control: getByTestId("control"),
+      input: getByRole("combobox"),
+      trigger: getByRole("button", { name: "Show options" }),
+      clear: getByRole("button", { name: "Clear selection" }),
+      chipRemove: getByRole("button", { name: "Remove React" }),
+    };
+    expect(
+      Object.fromEntries(Object.entries(parts).map(([name, part]) => [name, looks(part)])),
+    ).toEqual(
+      Object.fromEntries(
+        Object.keys(parts).map((name) => [name, { cursor: "not-allowed", pointerEvents: "auto" }]),
+      ),
     );
-    const { cursor, pointerEvents } = getComputedStyle(getByRole("combobox"));
-    expect({ cursor, pointerEvents }).toEqual({ cursor: "not-allowed", pointerEvents: "auto" });
   });
 
   // The Control no longer turns its pointer events off when disabled, so the pointer reaches
   // the buttons inside it: their hover colour must stay off
   it("keeps the clear and chip-remove buttons at their rest colour under the pointer when disabled", async () => {
-    const { getByRole } = render(
-      <Combobox.Root multiple items={options} defaultValue={options.slice(0, 1)} disabled>
-        <Combobox.Control>
-          <Combobox.Chips>
-            {options.slice(0, 1).map((item) => (
-              <Combobox.Chip key={item.value}>
-                {item.label}
-                <Combobox.ChipRemove />
-              </Combobox.Chip>
-            ))}
-          </Combobox.Chips>
-          <Combobox.Input aria-label="Frameworks" />
-          <Combobox.Clear />
-        </Combobox.Control>
-      </Combobox.Root>,
-    );
+    const { getByRole } = render(disabledChipsCombobox());
     for (const name of ["Clear selection", "Remove React"]) {
       const button = getByRole("button", { name });
       const rest = getComputedStyle(button).color;
       await userEvent.hover(button);
       expect(getComputedStyle(button).color, name).toBe(rest);
+      expect(getComputedStyle(button).cursor, name).toBe("not-allowed");
     }
   });
 });
