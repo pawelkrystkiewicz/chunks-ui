@@ -169,7 +169,10 @@ const SCRUB_CURSOR_ICON = (
  * (only while scrubbing) as the stand-in. With neither children nor `render` it shows a
  * left-right arrow; a `render` element draws its own cursor and may be a void element like <img>.
  * Inside a `PortalContainerProvider` it renders in the provider's element, like the popups, so a
- * theme scoped to that element reaches it.
+ * theme scoped to that element reaches it. That element must not establish a containing block (no
+ * `transform`, `filter`, `perspective`, `contain`, `will-change` or `container-type`): Base UI
+ * positions the cursor with viewport coordinates (`position: fixed` and `translate3d`). Inside
+ * Dialog, Drawer, Popover and Combobox content, which reset the provider, it renders in `<body>`.
  */
 function NumberFieldScrubAreaCursor({
   className,
@@ -190,12 +193,15 @@ function NumberFieldScrubAreaCursor({
   );
 }
 
-// Base UI portals the cursor to <body> and has no container prop (1.9.0), so a theme scoped to the
-// PortalContainerProvider's element would not reach it. A second portal, inside Base UI's, puts
-// the element in that container; Base UI's refs still reach it, so the cursor still follows the
-// pointer. Without a provider, or while its element is still null, the cursor stays in <body>: it
-// only exists during a scrub, and a hidden pointer with no stand-in would be worse than the root
-// theme.
+// Base UI portals the cursor to <body> and exposes no `container` prop on ScrubAreaCursor (1.9.0),
+// so a theme scoped to the PortalContainerProvider's element would not reach it. A second portal,
+// inside Base UI's, puts the element in that container; Base UI's refs still reach it, so the
+// cursor still follows the pointer. A `container` prop upstream would remove this wrapper. Without
+// a provider, or while its element is still null, the cursor stays in <body>: it only exists
+// during a scrub, and a hidden pointer with no stand-in would be worse than the root theme.
+// Base UI sets the cursor's `position: fixed` and a viewport `translate3d`, so a container that
+// establishes a containing block (transform, filter, perspective, contain, will-change,
+// container-type) offsets the cursor from the pointer: the docs state this limit.
 function ScrubAreaCursorElement({
   state,
   render,
