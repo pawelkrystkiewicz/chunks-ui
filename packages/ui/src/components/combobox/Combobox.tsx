@@ -163,10 +163,11 @@ function ComboboxPositioner({ className, ...props }: ComboboxPositionerProps) {
   );
 }
 
-function ComboboxPopup({ className, ...props }: ComboboxPopupProps) {
+function ComboboxPopup({ className, render: renderProp, ...props }: ComboboxPopupProps) {
   const m = useLoadedMotion();
   const reduced = useReducedMotion();
-  const useSpring = !!m && !reduced;
+  // A consumer's `render` replaces the animated element, so that popup keeps the CSS transition
+  const useSpring = !!m && !reduced && !renderProp;
   const render = useSpring
     ? createPopupRenderer({
         m,
@@ -174,7 +175,7 @@ function ComboboxPopup({ className, ...props }: ComboboxPopupProps) {
         from: { opacity: 0, scale: 0.95 },
         to: { opacity: 1, scale: 1 },
       })
-    : undefined;
+    : renderProp;
 
   return (
     <BaseCombobox.Popup
