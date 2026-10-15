@@ -35,8 +35,9 @@ export function GetCodeDialog({
               <X className="size-4" />
             </Dialog.Close>
           </div>
-          {/* The Body scrolls the CSS and is named by the Title; the popup has no padding, so no gutter */}
-          <Dialog.Body className="m-0 border-border border-y bg-muted/40 px-6 py-4">
+          {/* The Body scrolls the CSS and is named by the Title; the popup has no padding, so no gutter,
+              and the ring is drawn inside the edge, where the popup's overflow does not clip it */}
+          <Dialog.Body className="m-0 border-border border-y bg-muted/40 px-6 py-4 focus-visible:-outline-offset-2">
             <pre className="font-mono text-xs leading-[1.7]">{css}</pre>
           </Dialog.Body>
           <div className="flex items-center justify-between gap-3 py-3.5 pe-4 ps-6">
