@@ -50,7 +50,6 @@ Derives the lowest version each `^range` in `packages/ui` `peerDependencies` all
 
 - `--overrides` merges every floor into `overrides` of the root `package.json`, in place: the peers at their exact floor, the types at `<major>.<minor>.x`. Entries already there (`zod`) stay. A plain `bun install` then resolves every dependent of those packages at the floors, the `packages/ui` devDependencies included. It edits a tracked file and the install rewrites `bun.lock`: run it only in a throwaway checkout (the job's own, or a copy of the repo).
 - `--check` (the default) fails unless `packages/ui` resolves each peer to its floor and each types package to a patch of its `<major>.<minor>`. It fails on a normal install, where React is above the floors.
-- `--specs` prints `name@floor` (the types as `@types/react@19.2`) for a manual `bun add --no-save`. The job does not use it.
 
 ```bash
 bun scripts/check-peer-floors.ts --overrides && bun install && bun scripts/check-peer-floors.ts --check   # in a copy of the repo

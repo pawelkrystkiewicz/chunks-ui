@@ -13,12 +13,10 @@
  *   stay. A plain `bun install` then resolves every dependent of those packages at the floors,
  *   packages/ui's own devDependencies (motion, the types) included. It edits a tracked file and
  *   the install changes bun.lock: run it only in a throwaway checkout.
- * - `--specs` prints `name@floor` for a manual `bun add --no-save`; the types come as
- *   `@types/react@19.2`.
  * - `--check` (the default) fails unless every non-exempt peer resolves from packages/ui to its
  *   floor and each types package to a `<major>.<minor>.x` patch.
  *
- * Run: bun scripts/check-peer-floors.ts [--overrides|--specs|--check]
+ * Run: bun scripts/check-peer-floors.ts [--overrides|--check]
  */
 import { createRequire } from "node:module";
 import { join } from "node:path";
@@ -70,11 +68,6 @@ export function typeFloorsOf(
     typeFloors.set(typesName, majorMinor);
   }
   return typeFloors;
-}
-
-/** The `name@floor` specs for `bun add`: the peers at their floors, then the types at theirs. */
-export function specsOf(floors: Map<string, string>, typeFloors: Map<string, string>): string[] {
-  return [...floors, ...typeFloors].map(([name, floor]) => `${name}@${floor}`);
 }
 
 /**
@@ -131,8 +124,6 @@ if (import.meta.main) {
     root.overrides = overridesOf(root.overrides, floors, typeFloors);
     await Bun.write(file, `${JSON.stringify(root, null, 2)}\n`);
     console.log(`overrides in ${file}:\n${JSON.stringify(root.overrides, null, 2)}`);
-  } else if (process.argv.includes("--specs")) {
-    console.log(specsOf(floors, typeFloors).join(" "));
   } else {
     const require = createRequire(join(ui, "package.json"));
     const verdicts = verdictsOf(

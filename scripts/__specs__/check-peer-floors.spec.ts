@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { floorsOf, overridesOf, specsOf, typeFloorsOf, verdictsOf } from "../check-peer-floors";
+import { floorsOf, overridesOf, typeFloorsOf, verdictsOf } from "../check-peer-floors";
 
 const TYPES = { react: "@types/react", "react-dom": "@types/react-dom" };
 
@@ -54,14 +54,6 @@ describe("typeFloorsOf", () => {
     expect(() => typeFloorsOf(new Map([["react", "19"]]), { react: "@types/react" })).toThrow(
       "react",
     );
-  });
-});
-
-describe("specsOf", () => {
-  it("lists the peers at their floors, then the types at theirs", () => {
-    const floors = new Map([["react", "19.2.0"]]);
-    const typeFloors = new Map([["@types/react", "19.2"]]);
-    expect(specsOf(floors, typeFloors)).toEqual(["react@19.2.0", "@types/react@19.2"]);
   });
 });
 
