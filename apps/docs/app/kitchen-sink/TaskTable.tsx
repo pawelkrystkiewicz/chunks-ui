@@ -156,7 +156,7 @@ export function TaskTable() {
                   className="!px-0"
                 >
                   Title
-                  <ArrowUpDown className="ml-1 size-3" />
+                  <ArrowUpDown className="ms-1 size-3" />
                 </Button>
               </Table.Head>
               <Table.Head>Status</Table.Head>
@@ -168,7 +168,7 @@ export function TaskTable() {
                   className="!px-0"
                 >
                   Priority
-                  <ArrowUpDown className="ml-1 size-3" />
+                  <ArrowUpDown className="ms-1 size-3" />
                 </Button>
               </Table.Head>
               <Table.Head>Assignee</Table.Head>
@@ -180,7 +180,7 @@ export function TaskTable() {
                   className="!px-0"
                 >
                   Due
-                  <ArrowUpDown className="ml-1 size-3" />
+                  <ArrowUpDown className="ms-1 size-3" />
                 </Button>
               </Table.Head>
               <Table.Head>Tags</Table.Head>
