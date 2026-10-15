@@ -24,7 +24,13 @@ import { FOCUS_RING, RING_ANIMATION_CLASSES } from "../shared";
 // Types
 // ---------------------------------------------------------------------------
 
-export type ToggleGroupRootProps = ComponentProps<typeof BaseToggleGroup>;
+/**
+ * `Value` is the type of one item's value: `value` and `defaultValue` are read-only arrays of it,
+ * and `onValueChange` receives an array of it. It is inferred from `value`, `defaultValue` or an
+ * annotated `onValueChange`, so a typed `useState` setter is an `onValueChange`. Without either
+ * it is `string`.
+ */
+export type ToggleGroupRootProps<Value extends string = string> = BaseToggleGroup.Props<Value>;
 export type ToggleGroupItemProps = ComponentProps<typeof BaseToggle>;
 
 // ---------------------------------------------------------------------------
@@ -48,7 +54,7 @@ const ITEM_BOX: ResizeObserverOptions = { box: "border-box" };
 // Root
 // ---------------------------------------------------------------------------
 
-function ToggleGroupRoot({
+function ToggleGroupRoot<Value extends string = string>({
   className,
   value,
   defaultValue,
@@ -57,17 +63,17 @@ function ToggleGroupRoot({
   children,
   ref,
   ...props
-}: ToggleGroupRootProps) {
+}: ToggleGroupRootProps<Value>) {
   const containerRef = useRef<HTMLDivElement>(null);
   // The indicator measures against the container, so a consumer's ref must not replace this one
   const mergedRef = useMergedRef(containerRef, ref);
   const itemsRef = useRef(new Map<string, HTMLElement>());
   // Watches the container and the items while the group shows an indicator
   const observerRef = useRef<ResizeObserver | null>(null);
-  const [trackedValue, setTrackedValue] = useState<readonly unknown[]>(value ?? defaultValue ?? []);
+  const [trackedValue, setTrackedValue] = useState<readonly Value[]>(value ?? defaultValue ?? []);
 
   const handleValueChange = useCallback(
-    (...args: Parameters<NonNullable<ToggleGroupRootProps["onValueChange"]>>) => {
+    (...args: Parameters<NonNullable<ToggleGroupRootProps<Value>["onValueChange"]>>) => {
       onValueChange?.(...args);
       // Only uncontrolled mode tracks the value. A controlled group shows `value`, so a consumer
       // can reject a change (e.g. to prevent an empty selection) by not passing it on.
