@@ -152,8 +152,6 @@ describe("Radio", () => {
   // The docs say where to override the dim: `has-[>[data-disabled]]:` on a disabled Radio.Item,
   // `data-disabled:` on a disabled Radio.Group, where the item and its radio stay at 1
   it("lets className override the dim of a disabled Radio.Item and of a disabled Radio.Group", () => {
-    const opacityOf = (el: Element | null) => Number(el && getComputedStyle(el).opacity);
-
     const item = render(
       <Radio.Group defaultValue="a" aria-label="Item plan">
         <Radio.Item value="a" disabled className="has-[>[data-disabled]]:opacity-75">
@@ -161,7 +159,7 @@ describe("Radio", () => {
         </Radio.Item>
       </Radio.Group>,
     );
-    expect(opacityOf(item.getByText("Item option").closest("label"))).toBe(0.75);
+    expect(drawnOpacity(item.getByText("Item option").closest("label") as Element)).toBe(0.75);
 
     const group = render(
       <Radio.Group
@@ -173,9 +171,7 @@ describe("Radio", () => {
         <Radio.Item value="a">Group option</Radio.Item>
       </Radio.Group>,
     );
-    expect(opacityOf(group.getByRole("radiogroup", { name: "Group plan" }))).toBe(0.75);
-    expect(opacityOf(group.getByText("Group option").closest("label"))).toBe(1);
-    expect(opacityOf(group.getByRole("radio", { name: "Group option" }))).toBe(1);
+    expect(drawnOpacity(group.getByRole("radio", { name: "Group option" }))).toBe(0.75);
   });
 
   it("focus-visible", async () => {

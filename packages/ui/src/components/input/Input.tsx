@@ -51,8 +51,8 @@ export type InputProps = ComponentProps<typeof BaseInput> &
      *
      * With `onClear` alone, a controlled input fires no `onChange` or `onValueChange` and keeps
      * its `value` until `onClear` sets it. With `clearable` too, the value handlers fire first
-     * and `onClear` only notifies. The button hides while the input is disabled or read-only,
-     * also inside a disabled `Field.Root`, so it is not called then.
+     * and `onClear` only notifies. The button hides while the input is disabled or read-only.
+     * Inside a disabled `Field.Root`, it is not called.
      */
     onClear?: () => void;
     /**
@@ -161,9 +161,7 @@ export function Input({
 
   const handleClear = () => {
     const input = inputRef.current as HTMLInputElement | null;
-    // CSS hides the button inside a disabled Field.Root, which disables the input without the
-    // `disabled` prop; this guard is defence in depth for a click that gets through anyway
-    // (programmatic, or jsdom, which doesn't load the CSS)
+    // CSS hides the button in a disabled Field.Root; this catches a click that gets through (jsdom, programmatic)
     if (input?.disabled || input?.readOnly) return;
     // Focus the input before the clear button unmounts, or focus falls to <body>
     input?.focus();
@@ -200,7 +198,6 @@ export function Input({
       <BaseInput
         className={cnState(
           inputVariants(),
-          // Named peer for the clear button's span, which follows the input in the DOM
           "peer/input",
           startAdornment && "ps-9",
           (endAdornment || hasClearButton) && "pe-9",
@@ -210,10 +207,8 @@ export function Input({
         onValueChange={handleValueChange}
         {...props}
       />
-      {/* The clear button and endAdornment share one slot: while the button shows, it wins. They
-          are two spans so that each can follow the input's state by CSS (the `peer`), which a
-          disabled Field.Root sets without the `disabled` prop that showsClearButton reads: the
-          button hides and the adornment shows in its place */}
+      {/* Two spans so each follows the input's state by CSS (peer): a disabled Field.Root sets
+          disabled without the prop, so the button hides and the adornment shows. */}
       {showsClearButton && (
         <span className="absolute end-3 flex items-center peer-disabled/input:hidden">
           <ClearButton
