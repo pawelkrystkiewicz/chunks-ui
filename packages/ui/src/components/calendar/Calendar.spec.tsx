@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { startTransition, useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { FOCUS_RING } from "../shared";
 import { Calendar } from "./Calendar";
 import { DEFAULT_CALENDAR_LABELS } from "./Calendar.Labels";
 import { createDate } from "./date";
@@ -951,5 +952,17 @@ describe("Calendar labels", () => {
     render(<Calendar value={MARCH_15_2026} labels={{ nextMonth: "Następny miesiąc" }} />);
     expect(getButton("Previous month")).toBeInTheDocument();
     expect(getButton("Następny miesiąc")).toBeInTheDocument();
+  });
+});
+
+// The buttons take no className of their own, so there is no flush-ring opt-out to check
+describe("Calendar focus ring", () => {
+  it.each([
+    ["the previous month button", () => getButton(DEFAULT_CALENDAR_LABELS.previousMonth)],
+    ["the next month button", () => getButton(DEFAULT_CALENDAR_LABELS.nextMonth)],
+    ["a day", () => dayButton(MARCH_15_2026)],
+  ])("draws the library focus ring on %s", (_, button) => {
+    render(<Calendar value={MARCH_15_2026} />);
+    expect(button()).toHaveClass(...FOCUS_RING.split(" "));
   });
 });

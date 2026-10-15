@@ -4,6 +4,7 @@ import { axe } from "jest-axe";
 import { createRef, useState } from "react";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { reloadMotion } from "../../lib/use-motion";
+import { FOCUS_RING } from "../shared";
 import { ToggleGroup } from "./ToggleGroup";
 
 type Watched = {
@@ -477,5 +478,33 @@ describe("ToggleGroup indicator measurement", () => {
     expect(watched(c)).toBe(true);
     rerender(withLateItem(["a"], false));
     expect(watched(c)).toBe(false);
+  });
+});
+
+describe("ToggleGroup focus ring", () => {
+  const item = (className?: string) =>
+    render(
+      <ToggleGroup.Root>
+        <ToggleGroup.Item value="a" className={className}>
+          A
+        </ToggleGroup.Item>
+      </ToggleGroup.Root>,
+    );
+
+  it("draws the library focus ring on Item", () => {
+    item();
+    expect(screen.getByRole("button")).toHaveClass(...FOCUS_RING.split(" "));
+  });
+
+  // Both offsets are in one tailwind-merge group under the same variant: the consumer's wins
+  it("keeps a flush ring with focus-visible:outline-offset-0 in className", () => {
+    item("focus-visible:outline-offset-0");
+    const button = screen.getByRole("button");
+    expect(button).toHaveClass(
+      "focus-visible:outline-offset-0",
+      "focus-visible:outline-2",
+      "focus-visible:outline-ring",
+    );
+    expect(button).not.toHaveClass("focus-visible:outline-offset-2");
   });
 });

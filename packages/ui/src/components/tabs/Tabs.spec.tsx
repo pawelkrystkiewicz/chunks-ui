@@ -5,6 +5,7 @@ import { type ReactNode, StrictMode, useEffect, useState } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { renderToString } from "react-dom/server";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { FOCUS_RING } from "../shared";
 import { Tabs, type TabsRootProps, useTabsValue } from "./Tabs";
 
 beforeAll(() => {
@@ -508,5 +509,69 @@ describe("Tabs.Animate", () => {
       </Tabs.Root>,
     );
     expect(screen.getByTestId("anim")).toHaveClass("custom");
+  });
+});
+
+describe("Tabs focus ring", () => {
+  const ring = FOCUS_RING.split(" ");
+  const flush = (el: HTMLElement) => {
+    expect(el).toHaveClass(
+      "focus-visible:outline-offset-0",
+      "focus-visible:outline-2",
+      "focus-visible:outline-ring",
+    );
+    expect(el).not.toHaveClass("focus-visible:outline-offset-2");
+  };
+  const tabs = ({ tab, panel }: { tab?: string; panel?: string } = {}) =>
+    render(
+      <Tabs.Root defaultValue="a">
+        <Tabs.List>
+          <Tabs.Tab value="a" className={tab}>
+            A
+          </Tabs.Tab>
+        </Tabs.List>
+        <Tabs.Panel value="a" className={panel} data-testid="panel">
+          Content
+        </Tabs.Panel>
+      </Tabs.Root>,
+    );
+
+  it("draws the library focus ring on Tab", () => {
+    tabs();
+    expect(screen.getByRole("tab")).toHaveClass(...ring);
+  });
+
+  it("draws the library focus ring on Panel", () => {
+    tabs();
+    expect(screen.getByTestId("panel")).toHaveClass(...ring);
+  });
+
+  // Both offsets are in one tailwind-merge group under the same variant: the consumer's wins
+  it("keeps a flush ring on Tab with focus-visible:outline-offset-0 in className", () => {
+    tabs({ tab: "focus-visible:outline-offset-0" });
+    flush(screen.getByRole("tab"));
+  });
+
+  it("keeps a flush ring on Panel with focus-visible:outline-offset-0 in className", () => {
+    tabs({ panel: "focus-visible:outline-offset-0" });
+    flush(screen.getByTestId("panel"));
+  });
+
+  // Tabs.Contents clips its panels, so Tabs.Content keeps the ring inside its edge
+  it("keeps the inset ring on Content", () => {
+    render(
+      <Tabs.Root defaultValue="a">
+        <Tabs.List>
+          <Tabs.Tab value="a">A</Tabs.Tab>
+        </Tabs.List>
+        <Tabs.Contents>
+          <Tabs.Content value="a" data-testid="content">
+            Content
+          </Tabs.Content>
+        </Tabs.Contents>
+      </Tabs.Root>,
+    );
+    expect(screen.getByTestId("content")).toHaveClass("focus-visible:-outline-offset-2");
+    expect(screen.getByTestId("content")).not.toHaveClass("focus-visible:outline-offset-2");
   });
 });
