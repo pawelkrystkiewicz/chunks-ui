@@ -16,7 +16,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 /** The export names of each entry's source file. */
-export type ExpectedExports = { index: string[]; utils: string[] };
+type ExpectedExports = { index: string[]; utils: string[] };
 
 const names = (keys: Iterable<string>) => [...keys].sort().join(", ");
 const TRIED_MOTION_IMPORT =

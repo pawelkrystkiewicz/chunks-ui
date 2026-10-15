@@ -75,21 +75,7 @@ jobs:
             channel: "${{ secrets.SLACK_CHANNEL_ID }}"
             text: "Published ${{ fromJSON(steps.changesets.outputs.publishedPackages)[0].name }}@${{ fromJSON(steps.changesets.outputs.publishedPackages)[0].version }} to npm\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>"
 
-      # Nothing published: a run that refreshed the Version Packages PR, a run where master holds
-      # only empty changesets (the action logs "All changesets are empty; not creating PR"), or a
-      # publish that found the version on npm already. The action publishes only when no changeset
-      # is left on master, and hasChangesets is 'true' for empty ones too, so only that log line
-      # tells the first two apart. The version at the run's commit is a published one in all of
-      # these unless a Version Packages PR was merged before the Release run of the newest master
-      # push had refreshed it: master then sits at the bumped, unpublished version with the
-      # changesets the PR did not consume, empty or real, and no run publishes until they are gone.
-      # Empty: delete them in a PR and the next run publishes. Real: that run refreshed the Version
-      # Packages PR, but the version the message names is never published: `changeset version`
-      # bumps again from it and `changeset publish` publishes only the version in package.json.
-      # Merging the PR publishes the next version; npm skips the stale one, CHANGELOG.md keeps its
-      # section, and it gets no tag or GitHub release. The message repeats on each master push
-      # until then. npm decides whether a message goes out: only an E404 for the version does (any
-      # other npm failure is a warning).
+      # Nothing published: when this fires and what to do are in TESTING_STRATEGY.md, CI, Release.
       - name: Check npm has the version master is at
         id: unpublished
         if: steps.changesets.outputs.published != 'true'
@@ -102,7 +88,6 @@ jobs:
             echo "chunks-ui@$version is not on npm"
             echo "version=$version" >> "$GITHUB_OUTPUT"
           else
-            echo "$out"
             echo "::warning::npm view failed: ${out//$'\n'/%0A}"
           fi
 

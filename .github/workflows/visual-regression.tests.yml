@@ -25,11 +25,8 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      # A pull request that touches none of the WATCH paths (docs, markdown) skips the suite: the
-      # setup and test steps have `if: steps.changes.outputs.run_full == 'true'`, and the job still
-      # succeeds, so the required check passes. Master pushes and manual runs always run the full
-      # suite. The steps that react to a failure or to master do not test run_full, so a failing
-      # checkout or decide step on master still posts the Slack failure message.
+      # The failure and master steps carry no run_full condition on purpose: a failing checkout or
+      # decide step on master still posts the Slack failure message.
       - name: Decide whether the suite runs
         id: changes
         env:
@@ -42,7 +39,12 @@ jobs:
           if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
             git config --global --add safe.directory "$GITHUB_WORKSPACE"
             changed=$(git diff --name-only "origin/$BASE_REF...HEAD" -- $WATCH)
-            if [ -n "$changed" ]; then echo "$changed"; else run_full=false; fi
+            if [ -n "$changed" ]; then
+              echo "$changed"
+            else
+              run_full=false
+              echo "no WATCH path changed, visual suite skipped"
+            fi
           fi
           echo "run_full=$run_full" | tee -a "$GITHUB_OUTPUT"
 
@@ -140,7 +142,3 @@ jobs:
           payload: |
             channel: "${{ secrets.SLACK_CHANNEL_ID }}"
             text: "Visual Regression Tests failed on master: ${{ steps.failed.outputs.suites }}\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>"
-
-      - name: Report the skip
-        if: steps.changes.outputs.run_full != 'true'
-        run: echo "no WATCH path changed, visual suite skipped"

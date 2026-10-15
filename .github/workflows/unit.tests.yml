@@ -56,8 +56,6 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           working-directory: packages/ui
 
-      # The root scripts and the packages/ui build check (check-dist.spec.ts): the ui `test`
-      # script runs the second only in the floors job, which is not required
       - name: Test the repo scripts
         if: ${{ !cancelled() }}
         run: bun test ./scripts ./packages/ui/scripts
@@ -90,13 +88,8 @@ jobs:
           key: ${{ runner.os }}-bun-host-${{ hashFiles('bun.lock') }}
           restore-keys: ${{ runner.os }}-bun-host-
 
-      # The floors go in as `overrides` in the root package.json, so bun resolves every dependent
-      # of the peers at them: packages/ui's own devDependencies (motion, @types/react,
-      # @types/react-dom, @base-ui/react) and the peer links of the rest, one copy of each, with
-      # no node_modules surgery. The types are floored at the <major>.<minor> of the react and
-      # react-dom floors. Not --frozen-lockfile: the overrides change bun.lock. The edit and the
-      # new lockfile stay in this throwaway checkout, which nothing commits or caches. The check
-      # step proves what resolves.
+      # Not --frozen-lockfile: the overrides change bun.lock. The edit stays in this throwaway
+      # checkout, which nothing commits or caches.
       - name: Install the peer floors
         run: |
           bun scripts/check-peer-floors.ts --overrides
