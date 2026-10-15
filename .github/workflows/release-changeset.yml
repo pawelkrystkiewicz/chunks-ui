@@ -75,6 +75,33 @@ jobs:
             channel: "${{ secrets.SLACK_CHANNEL_ID }}"
             text: "Published ${{ fromJSON(steps.changesets.outputs.publishedPackages)[0].name }}@${{ fromJSON(steps.changesets.outputs.publishedPackages)[0].version }} to npm\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>"
 
+      # Nothing published: a run that refreshed the Version Packages PR, a run where master holds
+      # only empty changesets (the action logs "All changesets are empty; not creating PR" and skips
+      # the publish; hasChangesets is 'true' in both runs, so it cannot tell them apart), or a
+      # publish that found the version on npm already. Master's package.json is at a published
+      # version in all but the second case, so npm decides whether a message goes out.
+      - name: Check npm has the version master is at
+        id: unpublished
+        if: steps.changesets.outputs.published != 'true'
+        run: |
+          version=$(node -p "require('./packages/ui/package.json').version")
+          if npm view "chunks-ui@$version" version >/dev/null; then
+            echo "chunks-ui@$version is on npm"
+          else
+            echo "chunks-ui@$version is not on npm"
+            echo "version=$version" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Notify Slack when the run published nothing and npm lacks the version
+        if: steps.unpublished.outputs.version != ''
+        uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
+        with:
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload: |
+            channel: "${{ secrets.SLACK_CHANNEL_ID }}"
+            text: "Release run published nothing but chunks-ui@${{ steps.unpublished.outputs.version }} is not on npm; master holds only empty changesets or the publish was skipped\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>"
+
       - name: Notify Slack on Release Failure
         if: failure()
         uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
