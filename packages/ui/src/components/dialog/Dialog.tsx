@@ -4,9 +4,8 @@ import { Dialog as BaseDialog } from "@base-ui/react/dialog";
 import type { ComponentProps } from "react";
 import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
-import { createPopupRenderer } from "../../lib/PopupMotion";
 import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
-import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
+import { usePopupRender } from "../../lib/use-popup-render";
 import { FOCUS_RING, RING_TRANSITION_MOTION } from "../shared";
 import { OverlayBody, type OverlayBodyProps, TitleIdProvider, useTitleId } from "./OverlayBody";
 
@@ -50,18 +49,11 @@ function DialogBackdrop({
   render: renderProp,
   ...props
 }: DialogBackdropProps) {
-  const m = useLoadedMotion();
-  const reduced = useReducedMotion();
-  // A consumer's `render` replaces the animated element, so that backdrop keeps the CSS transition
-  const useSpring = !!m && !reduced && !renderProp;
-  const render = useSpring
-    ? createPopupRenderer({
-        m,
-        spring: springs.overlay,
-        from: { opacity: 0 },
-        to: { opacity: 1 },
-      })
-    : renderProp;
+  const { useSpring, render } = usePopupRender(renderProp, {
+    spring: springs.overlay,
+    from: { opacity: 0 },
+    to: { opacity: 1 },
+  });
 
   return (
     <BaseDialog.Backdrop
@@ -80,18 +72,11 @@ function DialogBackdrop({
 }
 
 function DialogPopup({ className, children, render: renderProp, ...props }: DialogPopupProps) {
-  const m = useLoadedMotion();
-  const reduced = useReducedMotion();
-  // A consumer's `render` replaces the animated element, so that popup keeps the CSS transition
-  const useSpring = !!m && !reduced && !renderProp;
-  const render = useSpring
-    ? createPopupRenderer({
-        m,
-        spring: springs.overlay,
-        from: { opacity: 0, scale: 0.95 },
-        to: { opacity: 1, scale: 1 },
-      })
-    : renderProp;
+  const { useSpring, render } = usePopupRender(renderProp, {
+    spring: springs.overlay,
+    from: { opacity: 0, scale: 0.95 },
+    to: { opacity: 1, scale: 1 },
+  });
 
   return (
     <BaseDialog.Popup

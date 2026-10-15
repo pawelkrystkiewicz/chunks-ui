@@ -4,11 +4,10 @@ import { Popover as BasePopover } from "@base-ui/react/popover";
 import type { ComponentProps } from "react";
 import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
-import { createPopupRenderer } from "../../lib/PopupMotion";
 import { arrowClasses, arrowPopupClasses } from "../../lib/popup-arrow";
 import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
 import { useArrowPadding } from "../../lib/use-arrow-padding";
-import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
+import { usePopupRender } from "../../lib/use-popup-render";
 import { RING_TRANSITION_MOTION } from "../shared";
 
 export type PopoverRootProps = ComponentProps<typeof BasePopover.Root>;
@@ -69,19 +68,12 @@ function PopoverContentPopup({
   render: renderProp,
   ...props
 }: PopoverContentProps) {
-  const m = useLoadedMotion();
-  const reduced = useReducedMotion();
-  // A consumer's `render` replaces the animated element, so that popup keeps the CSS transition
-  const useSpring = !!m && !reduced && !renderProp;
   const [positioner, arrowPaddingByDefault] = useArrowPadding();
-  const render = useSpring
-    ? createPopupRenderer({
-        m,
-        spring: springs.popup,
-        from: { opacity: 0, scale: 0.95 },
-        to: { opacity: 1, scale: 1 },
-      })
-    : renderProp;
+  const { useSpring, render } = usePopupRender(renderProp, {
+    spring: springs.popup,
+    from: { opacity: 0, scale: 0.95 },
+    to: { opacity: 1, scale: 1 },
+  });
 
   return (
     <BasePopover.Positioner

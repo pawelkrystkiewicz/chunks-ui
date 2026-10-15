@@ -4,11 +4,10 @@ import { Menu as BaseMenu } from "@base-ui/react/menu";
 import { type ComponentProps, useState } from "react";
 import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
-import { createPopupRenderer } from "../../lib/PopupMotion";
 import { arrowClasses, arrowPopupClasses } from "../../lib/popup-arrow";
 import { usePortalContainer } from "../../lib/portal-container";
 import { useArrowPadding } from "../../lib/use-arrow-padding";
-import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
+import { usePopupRender } from "../../lib/use-popup-render";
 import { RING_TRANSITION_MOTION } from "../shared";
 
 export type MenuRootProps = ComponentProps<typeof BaseMenu.Root>;
@@ -76,22 +75,15 @@ function MenuContentPopup({
   render: renderProp,
   ...props
 }: MenuContentProps) {
-  const m = useLoadedMotion();
-  const reduced = useReducedMotion();
-  // A consumer's `render` replaces the animated element, so that popup keeps the CSS transition
-  const useSpring = !!m && !reduced && !renderProp;
   const [positioner, arrowPaddingByDefault] = useArrowPadding();
   // Pointer over the popup until the next key press keeps its ring off (W151); a reopen during the
   // exit animation keeps a stale flag until the next key press (accepted).
   const [pointer, setPointer] = useState(false);
-  const popupRenderer = useSpring
-    ? createPopupRenderer({
-        m,
-        spring: springs.popup,
-        from: { opacity: 0, scale: 0.95 },
-        to: { opacity: 1, scale: 1 },
-      })
-    : renderProp;
+  const { useSpring, render } = usePopupRender(renderProp, {
+    spring: springs.popup,
+    from: { opacity: 0, scale: 0.95 },
+    to: { opacity: 1, scale: 1 },
+  });
 
   return (
     <BaseMenu.Positioner
@@ -104,7 +96,7 @@ function MenuContentPopup({
       arrowPadding={arrowPadding ?? arrowPaddingByDefault}
     >
       <BaseMenu.Popup
-        render={popupRenderer}
+        render={render}
         data-pointer={pointer || undefined}
         onPointerMove={(event) => {
           onPointerMove?.(event);
