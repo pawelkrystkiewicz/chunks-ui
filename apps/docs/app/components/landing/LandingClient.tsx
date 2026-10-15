@@ -107,7 +107,7 @@ export function HeroCopy({ text }: { text: string }) {
         type="button"
         onClick={copy}
         title="Copy install command"
-        className={`inline-flex h-11 cursor-pointer items-center gap-2.5 rounded-lg border border-white/15 bg-black/30 pr-3 pl-3.5 font-mono text-[13px] text-white leading-[normal] transition duration-250 hover:border-white/40 ${FOCUS_RING} active:scale-[.97]`}
+        className={`inline-flex h-11 cursor-pointer items-center gap-2.5 rounded-lg border border-white/15 bg-black/30 pe-3 ps-3.5 font-mono text-[13px] text-white leading-[normal] transition duration-250 hover:border-white/40 ${FOCUS_RING} active:scale-[.97]`}
       >
         <span aria-hidden="true" className="text-white/60">
           $
@@ -167,7 +167,7 @@ const PRESET_FONTS_HREF = `https://fonts.googleapis.com/css2?${[
 
 export function PresetGrid() {
   return (
-    <div className="-mr-px -mb-px grid grid-cols-2 lg:grid-cols-3">
+    <div className="-me-px -mb-px grid grid-cols-2 lg:grid-cols-3">
       {/* No `precedence`: rendered in place, so it is removed on unmount */}
       <link rel="stylesheet" href={PRESET_FONTS_HREF} />
       {PRESETS.map((preset) => {
@@ -182,7 +182,7 @@ export function PresetGrid() {
             // Keep the visitor's stored mode; the preset sets everything else.
             onClick={() => saveTheme({ ...(loadTheme() ?? DEFAULT_THEME), ...preset.theme })}
             // The ring sits inside the tile: the grid frame clips what is outside
-            className={`flex min-w-0 flex-col items-start gap-3.5 border-(--l-line) border-r border-b px-6 pt-[22px] pb-6 text-left text-(--l-fg) leading-[normal] transition-colors duration-300 ease-in-out hover:bg-(--l-card) ${FOCUS_RING_INSET}`}
+            className={`flex min-w-0 flex-col items-start gap-3.5 border-(--l-line) border-e border-b px-6 pt-[22px] pb-6 text-start text-(--l-fg) leading-[normal] transition-colors duration-300 ease-in-out hover:bg-(--l-card) ${FOCUS_RING_INSET}`}
           >
             <span className="flex w-full items-center justify-between gap-2">
               <span
@@ -194,7 +194,7 @@ export function PresetGrid() {
               <span aria-hidden className="flex">
                 <span className="size-3.5 rounded-full" style={{ background: pal.primary }} />
                 <span
-                  className="-ml-1 size-3.5 rounded-full shadow-[0_0_0_2px_var(--l-bg)]"
+                  className="-ms-1 size-3.5 rounded-full shadow-[0_0_0_2px_var(--l-bg)]"
                   style={{ background: pal["chart-2"] }}
                 />
               </span>

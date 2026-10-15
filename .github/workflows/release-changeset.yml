@@ -75,6 +75,32 @@ jobs:
             channel: "${{ secrets.SLACK_CHANNEL_ID }}"
             text: "Published ${{ fromJSON(steps.changesets.outputs.publishedPackages)[0].name }}@${{ fromJSON(steps.changesets.outputs.publishedPackages)[0].version }} to npm\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>"
 
+      # Nothing published: when this fires and what to do are in TESTING_STRATEGY.md, CI, Release.
+      - name: Check npm has the version master is at
+        id: unpublished
+        if: steps.changesets.outputs.published != 'true'
+        run: |
+          # Not the workspace: changesets/action leaves it on its release branch, versions bumped
+          version=$(git show "$GITHUB_SHA:packages/ui/package.json" | jq -r .version)
+          if out=$(npm view "chunks-ui@$version" version 2>&1); then
+            echo "chunks-ui@$version is on npm"
+          elif grep -q E404 <<<"$out"; then
+            echo "chunks-ui@$version is not on npm"
+            echo "version=$version" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::npm view failed: ${out//$'\n'/%0A}"
+          fi
+
+      - name: Notify Slack when the run published nothing and npm lacks the version
+        if: steps.unpublished.outputs.version != ''
+        uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
+        with:
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload: |
+            channel: "${{ secrets.SLACK_CHANNEL_ID }}"
+            text: "Release run published nothing but chunks-ui@${{ steps.unpublished.outputs.version }} is not on npm; a Version Packages PR was merged too early and master still holds changesets (TESTING_STRATEGY.md, CI, Release)\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>"
+
       - name: Notify Slack on Release Failure
         if: failure()
         uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1

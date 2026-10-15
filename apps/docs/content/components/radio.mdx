@@ -25,12 +25,14 @@ import { Radio } from 'chunks-ui'
 
 ## Controlled
 
+`Radio.Group` infers the type of its value from `value` or `defaultValue`, so a typed `useState` setter is an `onValueChange`:
+
 ```tsx
 function ControlledRadio() {
-  const [value, setValue] = useState('a')
+  const [value, setValue] = useState<'a' | 'b'>('a')
 
   return (
-    <Radio.Group value={value} onValueChange={(next) => setValue(next as string)}>
+    <Radio.Group value={value} onValueChange={setValue}>
       <Radio.Item value="a">Option A</Radio.Item>
       <Radio.Item value="b">Option B</Radio.Item>
     </Radio.Group>
