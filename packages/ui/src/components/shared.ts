@@ -33,14 +33,15 @@ export const RING_ANIMATION_CLASSES = ["micro-interactions", RING_TRANSITION, "d
 
 /**
  * The library's keyboard focus ring: 2px `--ring`, 2px offset, `:focus-visible` only. Not used by
- * popup-arrow's overlay or Slider's `has-[:focus-visible]` ring.
+ * popup-arrow's overlay, which draws the ring above the arrow.
  */
 export const FOCUS_RING =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
 
 /**
- * `FOCUS_RING` for a wrapper that draws the ring while a control inside it has keyboard focus
- * (`Combobox.Control` around its input and chips)
+ * `FOCUS_RING` for a wrapper that draws the ring while a control inside it has keyboard focus:
+ * `Combobox.Control` around its input and chips, `NumberField.Group` around its input and buttons,
+ * and `Slider.Thumb` around its visually hidden range input
  */
 export const FOCUS_RING_WITHIN =
   "has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ring";

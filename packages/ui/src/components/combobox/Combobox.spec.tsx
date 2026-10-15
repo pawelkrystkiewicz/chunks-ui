@@ -514,7 +514,7 @@ describe("Combobox focus ring", () => {
   });
 
   // The wrapper draws the ring while the input inside it has the focus
-  it("draws the library focus ring on Control while a control inside has focus", () => {
+  it("draws the focus-within ring classes on Control", () => {
     render(<Combobox.Control data-testid="control" />);
     expect(screen.getByTestId("control")).toHaveClass(...FOCUS_RING_WITHIN.split(" "));
   });

@@ -96,4 +96,22 @@ describe("NumberField", () => {
     );
     await expect(fixture).toMatchScreenshot();
   });
+
+  // Keyboard focus on the input shows the ring on the Group around it: 2px of --ring, 2px outside
+  // the border, as on Input. The input itself draws none.
+  it("focused input, ring on the Group", async () => {
+    const { fixture, getByRole } = await renderFixture(
+      <NumberField.Root defaultValue={42} max={100} min={0}>
+        <NumberField.Group>
+          <NumberField.Decrement />
+          <NumberField.Input />
+          <NumberField.Increment />
+        </NumberField.Group>
+      </NumberField.Root>,
+    );
+    const input = getByRole("textbox");
+    input.focus();
+    expect(input.matches(":focus-visible")).toBe(true);
+    await expect(fixture).toMatchScreenshot();
+  });
 });

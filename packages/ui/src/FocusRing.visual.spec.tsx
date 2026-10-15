@@ -563,6 +563,7 @@ describe("focus ring with no reduced-motion preference", () => {
     "Select.Trigger",
     "Combobox.Input",
     "Combobox.Control",
+    "NumberField.Group",
   ])("%s draws the ring 2px outside the edge", async (part) => {
     const c = RING_CASES.find((r) => r.part === part);
     if (!c) throw new Error(`No ring case for ${part}`);

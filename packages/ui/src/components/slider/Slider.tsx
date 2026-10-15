@@ -4,6 +4,7 @@ import { Slider as BaseSlider } from "@base-ui/react/slider";
 import { type ComponentProps, createContext, useContext } from "react";
 import { cnState } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
+import { FOCUS_RING_WITHIN } from "../shared";
 import { DEFAULT_SLIDER_LABELS, type SliderLabels } from "./Slider.Labels";
 
 // ---------------------------------------------------------------------------
@@ -112,7 +113,7 @@ function SliderThumb({ className, getAriaValueText, ...props }: SliderThumbProps
         "micro-interactions [transition-property:color,background-color,border-color] duration-150",
         "data-[dragging]:scale-110 data-[dragging]:shadow-md",
         // Keyboard focus lands on the visually hidden range input inside the thumb
-        "has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ring has-[:focus-visible]:outline-offset-2",
+        FOCUS_RING_WITHIN,
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         className,
       )}
