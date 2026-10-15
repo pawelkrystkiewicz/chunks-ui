@@ -20,6 +20,8 @@ Upgrading from 0.1.4. Details are in the other entries, quoted by their first wo
   - `Pagination.Root` is named "Pagination", not "pagination"; the `Chip` remove button and `Combobox.ChipRemove` are named "Remove" plus the chip's text ("Changed: the default name", "Added: a `labels` prop").
   - `Tooltip.Provider` `delay` now applies to its tooltips; `DatePicker` opens with focus on the selected day; toasts past `limit` are hidden; a toast can be swiped left or right; `Textarea` `value` must be controlled from the first render; disabled `Calendar` days use `aria-disabled` ("`Tooltip.Provider`'s `delay`", "`DatePicker` now opens", "In the default `Toast.Viewport`", "Fixed: under `dir="rtl"`, the `Toast` viewport", "`Combobox.Trigger` and `Combobox.Clear`", "`Calendar` accepts `weekStartsOn`").
   - `Label` no longer dims after a disabled `peer` input; pass `disabled` to it, or `peer-disabled:` classes in `className` to keep the old look ("Disabled form controls show a not-allowed cursor").
+  - `Field.Label` sets its disabled look as `data-disabled:opacity-50`, where 0.1.4 had `data-[disabled]:opacity-50`; spell an override `data-disabled:opacity-75`, or the default can win ("Disabled form controls show a not-allowed cursor").
+  - A disabled `Checkbox`, `Switch` and `Textarea` keep their pointer events and show a not-allowed cursor, and a disabled `Textarea` has no resize grip; `pointer-events-none` in `className` restores the old behaviour, `disabled:resize-y` the grip ("Disabled form controls show a not-allowed cursor").
   - `Input`'s clear button no longer shows on a `disabled` or `readOnly` input, shows on an uncontrolled input that has text and an `onClear`, and clearing moves focus to the input ("`Input` has a `clearable` prop").
   - Under `prefers-reduced-motion: reduce`, the `micro-interactions` class now sets `transition: none !important`, so no `transition-*` utility turns it back on, and `Slider.Thumb`, `Textarea` and `Table.Row` no longer fade their colours ("Fixed: timing utilities").
   - `useMotion()` returns the Motion module on the first render of a component that mounts after Motion has loaded, where 0.1.4 returned `null`; `useReducedMotion()` returns `false` while hydrating ("`useMotion()` now returns", "Fixed: for users with `prefers-reduced-motion: reduce`").
@@ -27,6 +29,7 @@ Upgrading from 0.1.4. Details are in the other entries, quoted by their first wo
   - `Menu.Content` puts its items in a scrolling child element; layout classes on the Content no longer reach them.
   - `Tabs.Content` is a Base UI `tabpanel` that stays mounted and is a tab stop; without Motion or with reduced motion, `Tabs.Contents` has one extra track `div` and no longer clips.
   - `Calendar` column headers hold a visible short name and a visually hidden long name.
+  - Every `Calendar` day button wraps its number in a `<span>`, so `getByText("15")` returns the span, not the button ("Fixed: in forced-colors mode").
   - `Avatar` is built on Base UI's `Avatar`: the `<img>` is hidden until it loads and, with `alt`, the fallback has `role="img"`.
   - `Dialog.Portal` and `Drawer.Portal` carry the z-layer; their popups and backdrops do not, and `z-overlays` is unused.
   - Popups opened inside a Dialog, Drawer, Popover or Combobox render in the parent's portal, not under `document.body`.
