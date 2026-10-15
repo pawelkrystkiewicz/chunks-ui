@@ -1,6 +1,14 @@
 "use client";
 
-import { createContext, useContext } from "react";
+import {
+  createContext,
+  type Ref,
+  type RefCallback,
+  useCallback,
+  useContext,
+  useState,
+} from "react";
+import { useMergedRef } from "./use-merged-ref";
 
 const PortalContainerContext = createContext<HTMLElement | null | undefined>(undefined);
 
@@ -14,4 +22,23 @@ export const PortalContainerProvider = PortalContainerContext.Provider;
 
 export function usePortalContainer() {
   return useContext(PortalContainerContext);
+}
+
+/**
+ * For a popup's Portal: the ref to give Base UI's Portal, and the portal node it renders, for the
+ * `PortalContainerProvider` around the Portal's children. Base UI gives a nested popup with no
+ * `container` the parent's portal node anyway, but the scrub cursor has no such fallback, so the
+ * node is provided outright.
+ */
+export function usePortalNode(
+  consumer?: Ref<HTMLDivElement>,
+): [ref: RefCallback<HTMLDivElement>, node: HTMLElement | null] {
+  const [node, setNode] = useState<HTMLElement | null>(null);
+  // Ignores `null`, as Base UI's own portal node ref does: clearing on detach would re-render on
+  // every close, and under React 19.2 `<Activity>` nested popups would get `container={null}`
+  // while hidden and remount on reveal
+  const keep = useCallback((el: HTMLDivElement | null) => {
+    if (el) setNode(el);
+  }, []);
+  return [useMergedRef(keep, consumer), node];
 }

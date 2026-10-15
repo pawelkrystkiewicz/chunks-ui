@@ -71,8 +71,9 @@ describe("NumberField", () => {
     window.dispatchEvent(new PointerEvent("pointerup"));
   });
 
-  // The cursor portals to <body>, beside the overlay layers, so it must stack above them
-  it("keeps the scrub cursor above an open Dialog", async () => {
+  // The cursor portals into the dialog's own portal node (#438), so it stacks in the dialog's layer
+  // and above the popup inside it, not above the overlay layers from <body>
+  it("keeps the scrub cursor in the dialog's portal, above the popup", async () => {
     grantPointerLock();
     const { getByText, findByTestId, getByRole } = await renderFixture(
       <Dialog.Root defaultOpen>
@@ -87,12 +88,10 @@ describe("NumberField", () => {
     );
     startScrub(getByText("Amount"));
     const cursor = await findByTestId("cursor");
-    const layer = (element: Element) => {
-      let node = element;
-      while (node.parentElement && node.parentElement !== document.body) node = node.parentElement;
-      return Number(getComputedStyle(node).zIndex);
-    };
-    expect(layer(cursor)).toBeGreaterThan(layer(getByRole("dialog")));
+    const popup = getByRole("dialog");
+    expect(cursor.closest("[data-base-ui-portal]")).toContainElement(popup);
+    const z = (element: Element) => Number(getComputedStyle(element).zIndex) || 0;
+    expect(z(cursor)).toBeGreaterThan(z(popup));
     window.dispatchEvent(new PointerEvent("pointerup"));
   });
 

@@ -4,6 +4,10 @@ import { axe } from "jest-axe";
 import * as React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PortalContainerProvider } from "../../lib/portal-container";
+import { Combobox } from "../combobox";
+import { Dialog } from "../dialog";
+import { Drawer } from "../drawer";
+import { Popover } from "../popover";
 import { FOCUS_RING_WITHIN } from "../shared";
 import { NumberField } from "./NumberField";
 import { DEFAULT_NUMBER_FIELD_LABELS } from "./NumberField.Labels";
@@ -212,6 +216,101 @@ describe("NumberField", () => {
         );
         startScrub();
         expect((await screen.findByTestId("cursor")).parentElement).toBe(document.body);
+      });
+    });
+
+    // An overlay's portal node carries its z-layer and is where popups opened inside it render.
+    // The cursor must land there too, or a theme scoped to the overlay or its provider's element
+    // does not reach it.
+    describe("inside an overlay", () => {
+      const cases: { name: string; ui: React.ReactNode }[] = [
+        {
+          name: "Dialog",
+          ui: (
+            <Dialog.Root open>
+              <Dialog.Portal>
+                <Dialog.Popup data-testid="popup">
+                  <ScrubField />
+                </Dialog.Popup>
+              </Dialog.Portal>
+            </Dialog.Root>
+          ),
+        },
+        {
+          name: "Drawer",
+          ui: (
+            <Drawer.Root open>
+              <Drawer.Portal>
+                <Drawer.Popup data-testid="popup">
+                  <ScrubField />
+                </Drawer.Popup>
+              </Drawer.Portal>
+            </Drawer.Root>
+          ),
+        },
+        {
+          name: "Popover",
+          ui: (
+            <Popover.Root open>
+              <Popover.Trigger>Open</Popover.Trigger>
+              <Popover.Content data-testid="popup">
+                <ScrubField />
+              </Popover.Content>
+            </Popover.Root>
+          ),
+        },
+        {
+          name: "Combobox",
+          ui: (
+            <Combobox.Root open items={["a"]}>
+              <Combobox.Input />
+              <Combobox.Portal>
+                <Combobox.Positioner>
+                  <Combobox.Popup data-testid="popup">
+                    <ScrubField />
+                  </Combobox.Popup>
+                </Combobox.Positioner>
+              </Combobox.Portal>
+            </Combobox.Root>
+          ),
+        },
+      ];
+
+      it.each(cases)("renders in the $name's portal node, with the popup", async ({ ui }) => {
+        render(ui);
+        startScrub();
+        const cursor = await screen.findByTestId("cursor");
+        const portalNode = cursor.parentElement;
+        // The portal node itself: not <body>, and not the Positioner between it and the popup
+        expect(portalNode).toHaveAttribute("data-base-ui-portal");
+        expect(portalNode?.parentElement).toBe(document.body);
+        expect(portalNode).toContainElement(screen.getByTestId("popup"));
+      });
+
+      // The Portal unmounts on close and mounts a new node on reopen. The kept node must follow
+      // it, or the cursor renders in a detached element and never shows.
+      it("renders in the new portal node when a Dialog is reopened", async () => {
+        const dialog = (open: boolean) => (
+          <Dialog.Root open={open}>
+            <Dialog.Portal>
+              <Dialog.Popup data-testid="popup">
+                <ScrubField />
+              </Dialog.Popup>
+            </Dialog.Portal>
+          </Dialog.Root>
+        );
+        const { rerender } = render(dialog(true));
+        const firstNode = (await screen.findByTestId("popup")).closest("[data-base-ui-portal]");
+        rerender(dialog(false));
+        await waitFor(() => expect(screen.queryByTestId("popup")).not.toBeInTheDocument());
+        rerender(dialog(true));
+        await screen.findByTestId("popup");
+
+        startScrub();
+        const portalNode = (await screen.findByTestId("cursor")).parentElement;
+        expect(portalNode).not.toBe(firstNode);
+        expect(portalNode).toHaveAttribute("data-base-ui-portal");
+        expect(portalNode).toContainElement(screen.getByTestId("popup"));
       });
     });
   });

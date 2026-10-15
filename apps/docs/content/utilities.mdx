@@ -242,7 +242,7 @@ The area is the control's `::after` pseudo-element, which has `position: absolut
 
 ## PortalContainerProvider
 
-Popups (`Select`, `Combobox`, `Menu`, `Popover`, `DatePicker`, `Dialog`, `Drawer`, `Tooltip`) and the `NumberField.ScrubAreaCursor` render into `document.body`. `PortalContainerProvider` renders them into the element you pass as `value` instead, for example an element that scopes theme variables, so they get the same tokens. Popups opened inside another popup render inside that popup, so they end up in the same element.
+Popups (`Select`, `Combobox`, `Menu`, `Popover`, `DatePicker`, `Dialog`, `Drawer`, `Tooltip`) and the `NumberField.ScrubAreaCursor` render into `document.body`. `PortalContainerProvider` renders them into the element you pass as `value` instead, for example an element that scopes theme variables, so they get the same tokens. Popups opened directly in the content of a `Dialog`, `Drawer`, `Popover` or `Combobox`, and the scrub cursor of a `NumberField` there, render inside that overlay's portal, so they end up in the same element. So do popups opened from inside a `Menu`, `Select`, `DatePicker` or `Tooltip` that sits in an overlay: they render in the overlay's portal, beside that popup's node rather than inside it (no visible or a11y effect, same stacking context).
 
 Hold the element in state with a callback ref. A `useRef().current` is `null` on the first render, and setting it does not re-render. While `value` is `null`, popups are held back; once the element exists they render inside it. The scrub cursor is not held back: it exists only during a scrub, so it renders in `<body>` until the element exists.
 
@@ -266,9 +266,6 @@ export function ScopedPopover() {
 }
 ```
 
-`usePortalContainer()` returns the current container as `HTMLElement | null | undefined`: `undefined` means no provider (including inside `Popover`, `Combobox`, `Dialog` or `Drawer` content, where the context is reset), `null` means not mounted yet.
+`usePortalContainer()` returns the current container as `HTMLElement | null | undefined`: `undefined` means no provider, `null` means not mounted yet. Inside `Popover`, `Combobox`, `Dialog` or `Drawer` content it is that popup's own portal element.
 
-The scrub cursor has two limits that the popups do not:
-
-- **The element must not establish a containing block.** Base UI positions the cursor with viewport coordinates (`position: fixed` and `translate3d`), and an ancestor with `transform`, `translate`, `rotate`, `scale`, `filter`, `backdrop-filter`, `perspective`, `contain`, `content-visibility`, `will-change` or `container-type` makes `fixed` relative to itself, so the cursor is offset from the pointer.
-- **Inside `Dialog`, `Drawer`, `Popover` and `Combobox` content** the provider is reset to `undefined`, so a `NumberField` there renders its cursor in `<body>`, with the root theme.
+The scrub cursor has one limit that the popups do not: **the element must not establish a containing block.** Base UI positions the cursor with viewport coordinates (`position: fixed` and `translate3d`), and an ancestor with `transform`, `translate`, `rotate`, `scale`, `filter`, `backdrop-filter`, `perspective`, `contain`, `content-visibility`, `will-change` or `container-type` makes `fixed` relative to itself, so the cursor is offset from the pointer. The popups' portal elements have none of these.

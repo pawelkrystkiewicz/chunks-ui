@@ -5,7 +5,11 @@ import type { ComponentProps } from "react";
 import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { arrowClasses, arrowPopupClasses } from "../../lib/popup-arrow";
-import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
+import {
+  PortalContainerProvider,
+  usePortalContainer,
+  usePortalNode,
+} from "../../lib/portal-container";
 import { useArrowPadding } from "../../lib/use-arrow-padding";
 import { usePopupRender } from "../../lib/use-popup-render";
 import { RING_TRANSITION_MOTION } from "../shared";
@@ -47,10 +51,11 @@ export type PopoverContentProps = ComponentProps<typeof BasePopover.Popup> & {
 };
 
 function PopoverContent(props: PopoverContentProps) {
+  const [portalRef, portalNode] = usePortalNode();
   return (
-    <BasePopover.Portal container={usePortalContainer()}>
-      {/* A modal popover aria-hides nodes outside its portal, so popups opened inside portal in here */}
-      <PortalContainerProvider value={undefined}>
+    <BasePopover.Portal ref={portalRef} container={usePortalContainer()}>
+      {/* A modal popover aria-hides nodes outside its portal, so popups opened inside portal in here, and the scrub cursor with them */}
+      <PortalContainerProvider value={portalNode}>
         {/* Mounts only while open, so it picks Motion or CSS each time the popover opens */}
         <PopoverContentPopup {...props} />
       </PortalContainerProvider>
