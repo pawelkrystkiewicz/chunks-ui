@@ -4,7 +4,11 @@ import { Dialog as BaseDialog } from "@base-ui/react/dialog";
 import type { ComponentProps } from "react";
 import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
-import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
+import {
+  PortalContainerProvider,
+  usePortalContainer,
+  usePortalNode,
+} from "../../lib/portal-container";
 import { usePopupRender } from "../../lib/use-popup-render";
 import { FOCUS_RING, RING_TRANSITION_MOTION } from "../shared";
 import { OverlayBody, type OverlayBodyProps, TitleIdProvider, useTitleId } from "./OverlayBody";
@@ -29,16 +33,19 @@ export type DialogBodyProps = OverlayBodyProps;
 export type DialogDescriptionProps = ComponentProps<typeof BaseDialog.Description>;
 export type DialogCloseProps = ComponentProps<typeof BaseDialog.Close>;
 
-function DialogPortal({ className, children, ...props }: DialogPortalProps) {
+function DialogPortal({ className, children, ref, ...props }: DialogPortalProps) {
   const container = usePortalContainer();
+  const [portalRef, portalNode] = usePortalNode(ref);
   return (
     <BaseDialog.Portal
+      ref={portalRef}
       container={container}
       // The portal node carries the z-layer, not the popup: whatever opens from the dialog portals in here and stacks above it
       className={cnState("relative z-modals", className)}
       {...props}
     >
-      <PortalContainerProvider value={undefined}>{children}</PortalContainerProvider>
+      {/* The node itself, not `undefined`, so the scrub cursor lands in here as well: see usePortalNode */}
+      <PortalContainerProvider value={portalNode}>{children}</PortalContainerProvider>
     </BaseDialog.Portal>
   );
 }

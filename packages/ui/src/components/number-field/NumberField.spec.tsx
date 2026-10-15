@@ -4,6 +4,8 @@ import { axe } from "jest-axe";
 import * as React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PortalContainerProvider } from "../../lib/portal-container";
+import { Dialog } from "../dialog";
+import { Popover } from "../popover";
 import { FOCUS_RING_WITHIN } from "../shared";
 import { NumberField } from "./NumberField";
 import { DEFAULT_NUMBER_FIELD_LABELS } from "./NumberField.Labels";
@@ -212,6 +214,47 @@ describe("NumberField", () => {
         );
         startScrub();
         expect((await screen.findByTestId("cursor")).parentElement).toBe(document.body);
+      });
+    });
+
+    // An overlay's portal node carries its z-layer and is where popups opened inside it render.
+    // The cursor must land there too, or it sits under the overlay with the root theme.
+    describe("inside an overlay", () => {
+      it("renders in the Dialog's portal node, with the popups opened from the dialog", async () => {
+        let portalNode: HTMLElement | null = null;
+        render(
+          <Dialog.Root open>
+            <Dialog.Portal
+              ref={(el) => {
+                portalNode = el;
+              }}
+            >
+              <Dialog.Popup>
+                <ScrubField />
+              </Dialog.Popup>
+            </Dialog.Portal>
+          </Dialog.Root>,
+        );
+        startScrub();
+        const cursor = await screen.findByTestId("cursor");
+        expect(portalNode).not.toBeNull();
+        expect(cursor.parentElement).toBe(portalNode);
+        expect(cursor.style.transform).toMatch(/translate3d/);
+      });
+
+      it("renders in the Popover's portal node, next to the popup", async () => {
+        render(
+          <Popover.Root open>
+            <Popover.Trigger>Open</Popover.Trigger>
+            <Popover.Content data-testid="popup">
+              <ScrubField />
+            </Popover.Content>
+          </Popover.Root>,
+        );
+        startScrub();
+        const cursor = await screen.findByTestId("cursor");
+        expect(cursor.parentElement).not.toBe(document.body);
+        expect(cursor.parentElement).toContainElement(screen.getByTestId("popup"));
       });
     });
   });

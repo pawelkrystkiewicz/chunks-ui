@@ -1,6 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { axe } from "jest-axe";
 import { afterEach, describe, expect, it } from "vitest";
+import { Popover } from "../popover";
 import { FOCUS_RING } from "../shared";
 import { Dialog } from "./Dialog";
 
@@ -71,6 +72,31 @@ describe("Dialog", () => {
       </Dialog.Root>,
     );
     expect(screen.getByTestId("desc")).toHaveClass("custom");
+  });
+
+  // The portal node carries the z-layer, so a popup opened from the dialog stacks above it
+  it("renders a popup opened inside it in its own portal node", async () => {
+    let portalNode: HTMLElement | null = null;
+    render(
+      <Dialog.Root open>
+        <Dialog.Portal
+          ref={(el) => {
+            portalNode = el;
+          }}
+        >
+          <Dialog.Popup data-testid="popup">
+            <Popover.Root open>
+              <Popover.Trigger>Open</Popover.Trigger>
+              <Popover.Content data-testid="nested">Nested</Popover.Content>
+            </Popover.Root>
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>,
+    );
+    const nested = await screen.findByTestId("nested");
+    expect(portalNode).not.toBeNull();
+    expect(portalNode).toContainElement(screen.getByTestId("popup"));
+    expect(portalNode).toContainElement(nested);
   });
 
   it("has no a11y violations", async () => {
