@@ -17,7 +17,7 @@ export function SettingsDrawer() {
           <Drawer.Title>Project Settings</Drawer.Title>
           <Drawer.Description>Configure project preferences and notifications.</Drawer.Description>
 
-          <div className="mt-6 space-y-6">
+          <Drawer.Body className="mt-6 space-y-6">
             <Field.Root>
               <Field.Label>Project Name</Field.Label>
               <Input defaultValue="Acme Dashboard" />
@@ -72,7 +72,7 @@ export function SettingsDrawer() {
                 <Slider.Value />
               </Slider.Root>
             </Field.Root>
-          </div>
+          </Drawer.Body>
 
           <div className="mt-8 flex justify-end gap-2">
             <Drawer.Close render={<Button variant="outlined" color="secondary" />}>

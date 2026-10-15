@@ -1,7 +1,13 @@
 import { render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { commands, page, userEvent } from "vitest/browser";
-import { renderPage, ringColor, systemColour, withViewport } from "../../VisualTest.utils";
+import {
+  enterMotionPath,
+  renderPage,
+  ringColor,
+  systemColour,
+  withViewport,
+} from "../../VisualTest.utils";
 import { Button } from "../button";
 import { Dialog } from "./index";
 
@@ -122,5 +128,35 @@ describe("Dialog.Popup in forced colours", () => {
     await commands.emulateMedia({ forcedColors: "active" });
     await expect.poll(() => matchMedia("(forced-colors: active)").matches).toBe(true);
     expect(getComputedStyle(await focusedPopup()).outlineColor).toBe(systemColour("Highlight"));
+  });
+});
+
+describe("Dialog.Popup with a render prop, Motion loaded", () => {
+  beforeAll(() => enterMotionPath(true));
+  beforeEach(async () => {
+    await commands.emulateMedia({ reducedMotion: "no-preference" });
+    await expect.poll(() => matchMedia("(prefers-reduced-motion: reduce)").matches).toBe(false);
+  });
+  afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
+
+  // The element `render` gives the popup replaces the one the spring would animate
+  it("fades and scales the popup with the CSS transition", async () => {
+    render(
+      <Dialog.Root defaultOpen>
+        <Dialog.Portal>
+          <Dialog.Popup render={<section />} data-testid="popup">
+            <Dialog.Title>Dialog Title</Dialog.Title>
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>,
+    );
+    const popup = await screen.findByTestId("popup");
+    expect(popup.tagName).toBe("SECTION");
+    // No inline values from a motion.div
+    expect(popup.style.transform).toBe("");
+    expect(popup).toHaveClass("micro-interactions");
+    const style = getComputedStyle(popup);
+    expect(style.transitionProperty).toBe("opacity, scale");
+    expect(style.transitionDuration).not.toBe("0s");
   });
 });

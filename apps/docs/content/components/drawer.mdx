@@ -1,4 +1,4 @@
-import { DrawerBasicExample } from '@/examples/Drawer'
+import { DrawerBasicExample, DrawerLongContentExample } from '@/examples/Drawer'
 import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
 # Drawer
@@ -50,9 +50,40 @@ The `side` prop on `Drawer.Popup` controls which edge the drawer slides from:
 
 - `left` and `right` drawers have a fixed width of `w-80`.
 - `bottom` drawer spans the full width with automatic height (up to `80dvh`) and rounded top corners.
-- Content taller than the drawer scrolls inside it.
+- Content taller than the drawer scrolls inside it. To keep the Title and the actions in place, put the content in a `Drawer.Body` (below).
 - With long content and actions only at the bottom, Base UI focuses the first tabbable element and scrolls to it. Pass `initialFocus` a ref to a top element, such as the Close button or the Title with `tabIndex={-1}`, to open at the top.
 - With nothing tabbable inside, or with `initialFocus` on the popup itself, the popup takes focus. When the browser shows focus there (after keyboard use, for example), the ring is 2px in `--ring` and drawn just inside the 1px border on the open side, 3px from the popup's edge, so the border stays visible.
+
+## Long content
+
+Put long content in a `Drawer.Body` between the Title and the actions. The Title, the Description and the actions stay in place, and only the Body scrolls. In a `left` or `right` drawer the Body fills the height, so the actions sit at the bottom edge; a `bottom` drawer grows with its content up to `80dvh`:
+
+```tsx
+<Drawer.Root>
+  <Drawer.Trigger>Read the terms</Drawer.Trigger>
+  <Drawer.Portal>
+    <Drawer.Backdrop />
+    <Drawer.Popup>
+      <Drawer.Title>Terms of service</Drawer.Title>
+      <Drawer.Description>Read the terms before you accept them.</Drawer.Description>
+      <Drawer.Body className="mt-4 space-y-3 text-sm">
+        <p>These terms apply to your use of the service.</p>
+        <p>Keep your account details safe.</p>
+      </Drawer.Body>
+      <div className="mt-4 flex justify-end gap-2">
+        <Drawer.Close render={<Button variant="outlined" color="secondary" />}>
+          Cancel
+        </Drawer.Close>
+        <Drawer.Close render={<Button />}>Accept</Drawer.Close>
+      </div>
+    </Drawer.Popup>
+  </Drawer.Portal>
+</Drawer.Root>
+```
+
+<DrawerLongContentExample />
+
+`Drawer.Body` works as `Dialog.Body`: the tab stop, the name from the Title and the form through `render`. See [Dialog](/components/dialog#form-in-a-body).
 
 ## Controlled
 
@@ -79,6 +110,8 @@ function ControlledDrawer() {
 
 The drawer slides in from its edge: on the x-axis for `left` and `right`, on the y-axis for `bottom`. With Motion installed it uses the `overlay` spring (`springs.overlay`). Without Motion it is a CSS transition (`micro-interactions`: 300ms, `cubic-bezier(0.4, 0, 0.2, 1)`). Reduced motion turns off both. The backdrop fades in independently.
 
+`render` on `Drawer.Popup` replaces the element the spring slides, so a popup with `render` uses the CSS transition even with Motion installed. To restyle the popup, pass `className`; to change the element of the content, put `render` on `Drawer.Body`.
+
 ## Compound Parts
 
 | Part | Description |
@@ -90,11 +123,16 @@ The drawer slides in from its edge: on the x-axis for `left` and `right`, on the
 | `Drawer.Popup` | The sliding panel. Accepts `side` prop. |
 | `Drawer.Title` | Drawer heading. |
 | `Drawer.Description` | Supporting description text. |
+| `Drawer.Body` | Optional scrolling area for long content, between the Title and the actions. Only the Body scrolls; the other parts stay in place. |
 | `Drawer.Close` | Button that closes the drawer. |
 
 ## Drawer.Root Props
 
 All `Drawer.Root` props are forwarded to the underlying Base UI [`Dialog`](https://base-ui.com/react/components/dialog#api-reference).
+
+## Drawer.Body Props
+
+`Drawer.Body` takes the props of `Dialog.Body`: a `<section>`'s, plus Base UI's `render`.
 
 ## Drawer.Popup Props
 

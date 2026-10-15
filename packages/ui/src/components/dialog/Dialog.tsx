@@ -1,22 +1,14 @@
 "use client";
 
 import { Dialog as BaseDialog } from "@base-ui/react/dialog";
-import {
-  type ComponentProps,
-  createContext,
-  type Dispatch,
-  type SetStateAction,
-  useContext,
-  useId,
-  useLayoutEffect,
-  useState,
-} from "react";
-import { cn, cnState } from "../../lib/cn";
+import type { ComponentProps } from "react";
+import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
 import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
 import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
-import { FOCUS_RING, RING_TRANSITION, RING_TRANSITION_MOTION } from "../shared";
+import { FOCUS_RING, RING_TRANSITION_MOTION } from "../shared";
+import { OverlayBody, type OverlayBodyProps, TitleIdProvider, useTitleId } from "./OverlayBody";
 
 export type DialogRootProps = ComponentProps<typeof BaseDialog.Root>;
 export type DialogTriggerProps = ComponentProps<typeof BaseDialog.Trigger>;
@@ -34,15 +26,9 @@ export type DialogBackdropProps = Omit<
   forceRender?: boolean;
 };
 export type DialogTitleProps = ComponentProps<typeof BaseDialog.Title>;
-export type DialogBodyProps = ComponentProps<"section">;
+export type DialogBodyProps = OverlayBodyProps;
 export type DialogDescriptionProps = ComponentProps<typeof BaseDialog.Description>;
 export type DialogCloseProps = ComponentProps<typeof BaseDialog.Close>;
-
-/** The id of the Title mounted in this Popup, which names the Body, and its setter */
-const TitleIdContext = createContext<{
-  titleId?: string;
-  setTitleId?: Dispatch<SetStateAction<string | undefined>>;
-}>({});
 
 function DialogPortal({ className, children, ...props }: DialogPortalProps) {
   const container = usePortalContainer();
@@ -87,11 +73,11 @@ function DialogBackdrop({ className, forceRender = true, ...props }: DialogBackd
   );
 }
 
-function DialogPopup({ className, children, ...props }: DialogPopupProps) {
-  const [titleId, setTitleId] = useState<string>();
+function DialogPopup({ className, children, render: renderProp, ...props }: DialogPopupProps) {
   const m = useLoadedMotion();
   const reduced = useReducedMotion();
-  const useSpring = !!m && !reduced;
+  // A consumer's `render` replaces the animated element, so that popup keeps the CSS transition
+  const useSpring = !!m && !reduced && !renderProp;
   const render = useSpring
     ? createPopupRenderer({
         m,
@@ -99,7 +85,7 @@ function DialogPopup({ className, children, ...props }: DialogPopupProps) {
         from: { opacity: 0, scale: 0.95 },
         to: { opacity: 1, scale: 1 },
       })
-    : undefined;
+    : renderProp;
 
   return (
     <BaseDialog.Popup
@@ -113,7 +99,7 @@ function DialogPopup({ className, children, ...props }: DialogPopupProps) {
         FOCUS_RING,
         "max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain",
         // With a Body, the parts before and after it keep their height and only the Body scrolls
-        "has-[>.DialogBody]:flex has-[>.DialogBody]:flex-col",
+        "has-[>.OverlayBody]:flex has-[>.OverlayBody]:flex-col",
         !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
         !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
         // Only the fade and scale, not the ring
@@ -124,22 +110,13 @@ function DialogPopup({ className, children, ...props }: DialogPopupProps) {
       )}
       {...props}
     >
-      <TitleIdContext.Provider value={{ titleId, setTitleId }}>{children}</TitleIdContext.Provider>
+      <TitleIdProvider>{children}</TitleIdProvider>
     </BaseDialog.Popup>
   );
 }
 
 function DialogTitle({ className, id: idProp, ...props }: DialogTitleProps) {
-  const fallbackId = useId();
-  const id = idProp ?? fallbackId;
-  const { setTitleId } = useContext(TitleIdContext);
-  // A layout effect, like Base UI's own title id: the Body is named before focus moves to it
-  useLayoutEffect(() => {
-    setTitleId?.(id);
-    // Clear only our own id, so another Title still mounted in this Popup keeps naming the Body
-    return () => setTitleId?.((current) => (current === id ? undefined : current));
-  }, [id, setTitleId]);
-
+  const id = useTitleId(idProp);
   return (
     <BaseDialog.Title
       id={id}
@@ -158,31 +135,6 @@ function DialogDescription({ className, ...props }: DialogDescriptionProps) {
   );
 }
 
-/**
- * The scrolling middle of a tall dialog, between the Title and the actions. With a Body as its
- * child, the Popup is a flex column: the other children keep their height and only the Body
- * scrolls. The Body is a tab stop, so the keyboard can scroll it, and a region the Title names
- * (a named `<section>`).
- */
-function DialogBody({ className, ...props }: DialogBodyProps) {
-  const { titleId } = useContext(TitleIdContext);
-  return (
-    <section
-      // biome-ignore lint/a11y/noNoninteractiveTabindex: the keyboard scrolls a scroll container only once it has the focus
-      tabIndex={0}
-      aria-labelledby={props["aria-label"] ? undefined : titleId}
-      className={cn(
-        // The -m-1 p-1 gutter keeps the focus rings of full-width fields inside the scroll box, without moving them
-        "DialogBody -m-1 min-h-0 flex-1 overflow-y-auto overscroll-contain p-1",
-        FOCUS_RING,
-        RING_TRANSITION,
-        className,
-      )}
-      {...props}
-    />
-  );
-}
-
 export const Dialog = {
   Root: BaseDialog.Root,
   Trigger: BaseDialog.Trigger,
@@ -191,6 +143,6 @@ export const Dialog = {
   Popup: DialogPopup,
   Title: DialogTitle,
   Description: DialogDescription,
-  Body: DialogBody,
+  Body: OverlayBody,
   Close: BaseDialog.Close,
 };

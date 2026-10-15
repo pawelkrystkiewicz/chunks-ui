@@ -11,6 +11,8 @@ export type DrawerSide = "left" | "right" | "bottom";
  */
 export const drawerBase = [
   "fixed overflow-y-auto overscroll-contain border-border bg-background p-6 shadow-xl",
+  // With a Body, the parts before and after it keep their height and only the Body scrolls
+  "has-[>.OverlayBody]:flex has-[>.OverlayBody]:flex-col",
   "focus-visible:outline-2 focus-visible:-outline-offset-3 focus-visible:outline-ring",
 ];
 

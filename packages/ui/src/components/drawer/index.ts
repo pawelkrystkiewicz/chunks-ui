@@ -1,5 +1,6 @@
 export type {
   DrawerBackdropProps,
+  DrawerBodyProps,
   DrawerCloseProps,
   DrawerDescriptionProps,
   DrawerPopupProps,

@@ -8,6 +8,12 @@ import { springs } from "../../lib/motion";
 import { createPopupRenderer } from "../../lib/PopupMotion";
 import { PortalContainerProvider, usePortalContainer } from "../../lib/portal-container";
 import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
+import {
+  OverlayBody,
+  type OverlayBodyProps,
+  TitleIdProvider,
+  useTitleId,
+} from "../dialog/OverlayBody";
 import { RING_TRANSITION_MOTION } from "../shared";
 import {
   type DrawerSide,
@@ -41,6 +47,7 @@ export type DrawerBackdropProps = Omit<
   forceRender?: boolean;
 };
 export type DrawerTitleProps = ComponentProps<typeof BaseDialog.Title>;
+export type DrawerBodyProps = OverlayBodyProps;
 export type DrawerDescriptionProps = ComponentProps<typeof BaseDialog.Description>;
 export type DrawerCloseProps = ComponentProps<typeof BaseDialog.Close>;
 
@@ -87,10 +94,17 @@ function DrawerBackdrop({ className, forceRender = true, ...props }: DrawerBackd
   );
 }
 
-function DrawerPopup({ side = "right", className, ...props }: DrawerPopupProps) {
+function DrawerPopup({
+  side = "right",
+  className,
+  children,
+  render: renderProp,
+  ...props
+}: DrawerPopupProps) {
   const m = useLoadedMotion();
   const reduced = useReducedMotion();
-  const useSpring = !!m && !reduced;
+  // A consumer's `render` replaces the animated element, so that popup keeps the CSS transition
+  const useSpring = !!m && !reduced && !renderProp;
   const resolvedSide = side ?? "right";
   const dir = drawerSlide[resolvedSide];
   const render = useSpring
@@ -100,7 +114,7 @@ function DrawerPopup({ side = "right", className, ...props }: DrawerPopupProps) 
         from: dir.from,
         to: dir.to,
       })
-    : undefined;
+    : renderProp;
 
   return (
     <BaseDialog.Popup
@@ -114,13 +128,17 @@ function DrawerPopup({ side = "right", className, ...props }: DrawerPopupProps) 
         className,
       )}
       {...props}
-    />
+    >
+      <TitleIdProvider>{children}</TitleIdProvider>
+    </BaseDialog.Popup>
   );
 }
 
-function DrawerTitle({ className, ...props }: DrawerTitleProps) {
+function DrawerTitle({ className, id: idProp, ...props }: DrawerTitleProps) {
+  const id = useTitleId(idProp);
   return (
     <BaseDialog.Title
+      id={id}
       className={cnState("font-heading font-semibold text-lg", className)}
       {...props}
     />
@@ -144,5 +162,6 @@ export const Drawer = {
   Popup: DrawerPopup,
   Title: DrawerTitle,
   Description: DrawerDescription,
+  Body: OverlayBody,
   Close: BaseDialog.Close,
 };
