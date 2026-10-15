@@ -182,7 +182,9 @@ export function DatePicker({
   const fieldNameRef = useRef<string | undefined>(undefined);
   const warnedRef = useRef(false);
   useEffect(() => {
-    const isDev = typeof process !== "undefined" && process.env.NODE_ENV !== "production";
+    // Read bare, as Base UI does: a bundler replaces `process.env.NODE_ENV`, and a `typeof process`
+    // guard would turn the check off in a browser that has no `process` global.
+    const isDev = process.env.NODE_ENV !== "production";
     const fieldName = fieldNameRef.current;
     if (!isDev || warnedRef.current || name === undefined || fieldName === undefined) return;
     if (fieldName === name) return;

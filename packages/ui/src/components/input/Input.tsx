@@ -107,7 +107,7 @@ export function Input({
     !onClear;
   const warnedRef = useRef(false);
   useEffect(() => {
-    const isDev = typeof process !== "undefined" && process.env.NODE_ENV !== "production";
+    const isDev = process.env.NODE_ENV !== "production";
     if (!isDev || !clearChangesNothing || warnedRef.current) return;
     warnedRef.current = true;
     console.warn(
