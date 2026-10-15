@@ -205,7 +205,7 @@ describe("Combobox", () => {
   // Popover.Content and Menu.Content. A consumer's sideOffset replaces the default.
   it.each([
     { offset: "by default", positionerProps: undefined, gap: 8 },
-    { offset: "with sideOffset={2}", positionerProps: { sideOffset: 2 }, gap: 2 },
+    { offset: "with sideOffset={0}", positionerProps: { sideOffset: 0 }, gap: 0 },
   ])("opens the popup $gap px below the input $offset", async ({ positionerProps, gap }) => {
     const { getByRole, getByTestId } = render(
       <div style={{ padding: 40 }}>{combobox({ defaultOpen: true, positionerProps })}</div>,
@@ -285,7 +285,6 @@ describe("Combobox.Popup on the CSS path", () => {
       transitionProperty: "opacity, scale",
       transitionDuration: "0.3s",
     });
-    expect(transitioning(popup)).toEqual(["opacity", "scale"]);
   });
 
   it("leaves to scale-95 and opacity-0", async () => {

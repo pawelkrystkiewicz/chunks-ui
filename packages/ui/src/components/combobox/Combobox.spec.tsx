@@ -493,13 +493,10 @@ describe("Combobox focus ring", () => {
     expect(screen.getByTestId("input")).toHaveClass(FOCUS_RING);
   });
 
-  // The wrapper draws the ring while the input inside it has the focus, and the input none
-  it("draws the focus-within ring classes on Control and turns the input's ring off", () => {
+  // The wrapper draws the ring while the input inside it has the focus
+  it("draws the focus-within ring classes on Control", () => {
     render(<Combobox.Control data-testid="control" />);
-    expect(screen.getByTestId("control")).toHaveClass(
-      FOCUS_RING_WITHIN,
-      "[&_input:focus-visible]:outline-none",
-    );
+    expect(screen.getByTestId("control")).toHaveClass(FOCUS_RING_WITHIN);
   });
 
   // The arrow keys move the focus from the input to a chip

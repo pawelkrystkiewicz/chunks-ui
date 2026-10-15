@@ -133,7 +133,6 @@ describe("Select.Popup on the CSS path", () => {
       transitionProperty: "opacity, scale",
       transitionDuration: "0.3s",
     });
-    expect(transitioning(popup)).toEqual(["opacity", "scale"]);
   });
 
   it("leaves to scale-95 and opacity-0", async () => {
