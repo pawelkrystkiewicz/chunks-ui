@@ -403,6 +403,55 @@ describe("Body", () => {
     expect(onSubmit).toHaveBeenCalledTimes(1);
   });
 
+  describe("role on a render element", () => {
+    it("gives a div role=region, so the Title's name is exposed", async () => {
+      const { container } = renderBody(
+        <Dialog.Title>Terms</Dialog.Title>,
+        <Dialog.Body render={<div />}>Text</Dialog.Body>,
+      );
+      const body = screen.getByRole("region", { name: "Terms" });
+      expect(body.tagName).toBe("DIV");
+      expect(body).toHaveAttribute("role", "region");
+      expect(await axe(container)).toHaveNoViolations();
+    });
+
+    it("gives a div returned by a function render role=region", () => {
+      renderBody(
+        <Dialog.Title>Terms</Dialog.Title>,
+        <Dialog.Body render={(props) => <div {...props} />}>Text</Dialog.Body>,
+      );
+      expect(screen.getByRole("region", { name: "Terms" }).tagName).toBe("DIV");
+    });
+
+    it("leaves a form, which has a role of its own, without one", () => {
+      renderBody(
+        <Dialog.Title>New task</Dialog.Title>,
+        <Dialog.Body render={<form />}>Text</Dialog.Body>,
+      );
+      expect(screen.getByRole("form", { name: "New task" })).not.toHaveAttribute("role");
+    });
+
+    it("keeps a role set on the render element", () => {
+      renderBody(
+        <Dialog.Title>Terms</Dialog.Title>,
+        <Dialog.Body render={<div role="note" />}>Text</Dialog.Body>,
+      );
+      expect(screen.getByRole("note", { name: "Terms" })).toBeInTheDocument();
+      expect(screen.queryByRole("region")).toBeNull();
+    });
+
+    it("keeps a role set on the Body", () => {
+      renderBody(
+        <Dialog.Title>Terms</Dialog.Title>,
+        <Dialog.Body role="note" render={<div />}>
+          Text
+        </Dialog.Body>,
+      );
+      expect(screen.getByRole("note", { name: "Terms" })).toBeInTheDocument();
+      expect(screen.queryByRole("region")).toBeNull();
+    });
+  });
+
   it("has no a11y violations", async () => {
     const { container } = renderBody(
       <>

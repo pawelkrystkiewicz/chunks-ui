@@ -2,9 +2,11 @@
 
 import { useRender } from "@base-ui/react/use-render";
 import {
+  cloneElement,
   createContext,
   type Dispatch,
   isValidElement,
+  type ReactElement,
   type ReactNode,
   type SetStateAction,
   useContext,
@@ -25,10 +27,34 @@ import { FOCUS_RING, RING_TRANSITION } from "../shared";
  * A name other than the Title's goes on the Body, or on the `render` element. With a function
  * `render`, put it on the Body: the Body reads the name from its own props and from a `render`
  * element, not from what a function returns, so the Title's `aria-labelledby` would win over an
- * `aria-label` set inside the function. A `render` element needs a role that takes a name (`form`,
- * or `role="region"`): a name on a generic element, such as a `<div>`, is not exposed.
+ * `aria-label` set inside the function. The name needs a role that takes it: a `<form>` has one,
+ * and a `<div>` or `<span>` with no `role`, as the `render` element or returned by a function
+ * `render`, gets `role="region"`, the `<section>`'s. A `role` set on the Body or on the element is
+ * kept; a component in `render` gets none from the Body.
  */
 export type OverlayBodyProps = useRender.ComponentProps<"section">;
+
+/** A function `render`, as Base UI calls it: with the Body's props and its state */
+type RenderFunction = Exclude<NonNullable<OverlayBodyProps["render"]>, ReactElement>;
+
+/** The tags with no role of their own; a name on them is not exposed */
+const GENERIC_TAGS = new Set(["div", "span"]);
+
+/** Whether `element` is a `<div>` or a `<span>` with no `role` */
+const isGeneric = (element: ReactElement<Record<string, unknown>>) =>
+  typeof element.type === "string" &&
+  GENERIC_TAGS.has(element.type) &&
+  element.props.role === undefined;
+
+/** `render`, with the region role on a generic element it returns */
+const withRegionRole =
+  (render: RenderFunction): RenderFunction =>
+  (props, state) => {
+    const element = render(props, state);
+    return isValidElement<Record<string, unknown>>(element) && isGeneric(element)
+      ? cloneElement(element, { role: "region" })
+      : element;
+  };
 
 /** The id of the Title mounted in this Popup, which names the Body, and its setter */
 const TitleIdContext = createContext<{
@@ -117,27 +143,31 @@ function useFits(): {
 /**
  * The scrolling middle of a tall dialog or drawer, between the Title and the actions. With a Body
  * as its child, the Popup is a flex column: the other children keep their height and only the
- * Body scrolls. It is a region the Title names (a named `<section>`), or the element `render`
- * gives it. A name of its own goes on the Body, or on a `render` element; see
- * {@link OverlayBodyProps}.
+ * Body scrolls. It is a region the Title names: a `<section>`, or the element `render` gives it,
+ * with `role="region"` when that is a generic `<div>` or `<span>`. A name of its own goes on the
+ * Body, or on a `render` element; see {@link OverlayBodyProps}.
  */
 export function OverlayBody({ className, render, ref: forwardedRef, ...props }: OverlayBodyProps) {
   const { titleId } = useContext(TitleIdContext);
   const { fits, overflows, ref } = useFits();
+  const renderElement = isValidElement<Record<string, unknown>>(render) ? render : undefined;
   // A name on the Body, or on the element `render` gives it (its props are merged over these),
   // wins over the Title: `aria-labelledby` would take precedence over its `aria-label` otherwise
-  const renderProps = isValidElement<Record<string, unknown>>(render) ? render.props : undefined;
   const named =
     props["aria-label"] ??
     props["aria-labelledby"] ??
-    renderProps?.["aria-label"] ??
-    renderProps?.["aria-labelledby"];
+    renderElement?.props["aria-label"] ??
+    renderElement?.props["aria-labelledby"];
   // Base UI's render: an element is cloned with these props, a function gets them
   return useRender({
     defaultTagName: "section",
-    render,
+    // A function gets the role on the element it returns, not in its props: it may return a form
+    render: typeof render === "function" ? withRegionRole(render) : render,
     ref: [ref, forwardedRef ?? null],
     props: {
+      // The <section>'s role on a generic render element, so the name is exposed. A role set on
+      // the Body (spread below) or on the element (merged over these) wins
+      role: renderElement && isGeneric(renderElement) ? "region" : undefined,
       // The keyboard scrolls a scroll container only once it has the focus. One that fits is skipped
       // by Tab, yet stays focusable: a focused Body whose content shrinks to fit keeps the focus.
       // Fails closed: with no node (the server render, the first client render, or a `ref` that
