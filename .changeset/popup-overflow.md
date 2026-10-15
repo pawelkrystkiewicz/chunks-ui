@@ -8,4 +8,4 @@ Fixed: long content ran off the screen and could not be reached in `Combobox`, `
 - `Dialog.Popup` is at most the viewport height less 2rem and scrolls its content. It stays centred; short dialogs look the same.
 - `Drawer.Popup` scrolls its content. The bottom drawer is at most `80dvh` tall.
 
-To remove a cap, pass `max-h-none` in that part's `className` (`Combobox.Popup`, `Menu.Content`, `Dialog.Popup` or `Drawer.Popup`): tailwind-merge replaces the library's `max-h-*` class with yours, and the popup grows with its content as before.
+To remove a cap, pass `max-h-none` in that part's `className`; the popup then grows with its content as before.

@@ -2,7 +2,7 @@
 "chunks-ui": minor
 ---
 
-Upgrading from 0.1.4: the requirements, defaults, DOM changes, types and CSS variables a consumer meets, in one place. The other entries of this release hold the details; they are quoted here by their first words.
+Upgrading from 0.1.4. Details are in the other entries, quoted by their first words.
 
 - Requirements ("Peer dependency ranges")
   - Peers: `@base-ui/react` `^1.9.0`, `react` and `react-dom` `^19.2.0`, optional `motion` `^12.0.0` and `tailwindcss` `^4.0.0`. Node 22 or newer. npm 7+ refuses to install over an older peer (`ERESOLVE`) until it is upgraded.
@@ -23,26 +23,22 @@ Upgrading from 0.1.4: the requirements, defaults, DOM changes, types and CSS var
   - Under `prefers-reduced-motion: reduce`, the `micro-interactions` class now sets `transition: none !important`, so no `transition-*` utility turns it back on, and `Slider.Thumb`, `Textarea` and `Table.Row` no longer fade their colours ("Fixed: timing utilities").
   - `useMotion()` returns the Motion module on the first render of a component that mounts after Motion has loaded, where 0.1.4 returned `null`; `useReducedMotion()` returns `false` while hydrating ("`useMotion()` now returns", "Fixed: for users with `prefers-reduced-motion: reduce`").
 - DOM changes
-  - `Menu.Content` puts its items in a scrolling child element; layout classes on the Content no longer reach them ("`Menu.Content` now puts its items").
-  - `Tabs.Content` is a Base UI `tabpanel` that stays mounted and is a tab stop; without Motion or with reduced motion, `Tabs.Contents` has one extra track `div` and no longer clips ("`Tabs.Content` is now a Base UI", "Fixed: when Motion finished loading, `Tabs.Contents`").
-  - `Calendar` column headers hold a visible short name and a visually hidden long name ("Added: screen readers now read the full weekday name").
-  - `Avatar` is built on Base UI's `Avatar`: the `<img>` is hidden until it loads and, with `alt`, the fallback has `role="img"` ("`Avatar` now shows the initials").
-  - `Chip` always renders an `id` ("Added: a `labels` prop").
-  - `Dialog.Portal` and `Drawer.Portal` carry the z-layer; their popups and backdrops do not, and `z-overlays` is unused ("Fixed: a `Drawer` opened from inside").
-  - Popups opened inside a Dialog, Drawer, Popover or Combobox render in the parent's portal, not under `document.body` ("Fixed: a `Select`, `Combobox`, `DatePicker`").
-  - With Motion installed, closed popups are no longer in the DOM ("Fixed: with Motion installed, `Dialog`, `Drawer`, `Popover`").
-  - `Tooltip.Arrow`, `Popover.Arrow` and `Menu.Arrow` carry the `PopupArrow` class; the last two draw an arrow where they rendered nothing ("`Popover.Arrow` and `Menu.Arrow`", "`Tooltip.Arrow` now sits").
-  - `Popover.Content` and `Menu.Content` are `position: relative`, so content you position absolutely in them is placed against the padding box, not the border box ("`Popover.Arrow` and `Menu.Arrow`").
-  - `Switch.Root` has `p-0.5` instead of `border-2 border-transparent`, so a `border-*` colour class on it no longer shows ("Fixed: when `--spacing` was not 4px").
-  - `group/trigger` moved from `Accordion.Item` to `Accordion.Trigger`; a `group-*/trigger` variant on other content of the item no longer matches ("Fixed state styles that never applied").
+  - `Menu.Content` puts its items in a scrolling child element; layout classes on the Content no longer reach them.
+  - `Tabs.Content` is a Base UI `tabpanel` that stays mounted and is a tab stop; without Motion or with reduced motion, `Tabs.Contents` has one extra track `div` and no longer clips.
+  - `Calendar` column headers hold a visible short name and a visually hidden long name.
+  - `Avatar` is built on Base UI's `Avatar`: the `<img>` is hidden until it loads and, with `alt`, the fallback has `role="img"`.
+  - `Dialog.Portal` and `Drawer.Portal` carry the z-layer; their popups and backdrops do not, and `z-overlays` is unused.
+  - Popups opened inside a Dialog, Drawer, Popover or Combobox render in the parent's portal, not under `document.body`.
+  - With Motion installed, closed popups are no longer in the DOM.
+  - `Popover.Arrow` and `Menu.Arrow` draw an arrow where they rendered nothing.
+  - `Popover.Content` and `Menu.Content` are `position: relative`, so content you position absolutely in them is placed against the padding box, not the border box.
+  - `Switch.Root` has `p-0.5` instead of `border-2 border-transparent`, so a `border-*` colour class on it no longer shows.
+  - `group/trigger` moved from `Accordion.Item` to `Accordion.Trigger`; a `group-*/trigger` variant on other content of the item no longer matches.
 - Types
-  - `useMotion()` returns `MotionLike | null`, not Motion's module type; cast it if you need the full types ("`useMotion()` now returns").
-  - `cn` rejects function arguments at the type level, and `Radio.Item` `className` is a string only ("Fixed: a `className` passed as a function").
-  - `TabsContentProps` no longer accepts `hidden` ("`Tabs.Content` is now a Base UI").
+  - `useMotion()` returns `MotionLike | null`, not Motion's module type; cast it if you need the full types.
+  - `cn` rejects function arguments at the type level, and `Radio.Item` `className` is a string only.
+  - `TabsContentProps` no longer accepts `hidden`.
 - CSS variables
-  - Changed in value: `--primary`, `--destructive`, `--success-foreground`, `--muted-foreground` (light mode), `--ring`.
-  - `--radius-xl` has a new formula, `calc(var(--radius) + min(var(--radius), 4px))`, but is the same 14px at the default `--radius` ("Theme tokens now reach every component").
-  - New: `--z-index-cursor`, `--colored-text-lightness`, `--success-border-lightness`, `--warning-border-lightness`, and the `--color-primary-text`, `--color-success-text`, `--color-warning-text`, `--color-destructive-text`, `--color-success-border` and `--color-warning-border` theme tokens.
-  - New, with no default, so you set them: `--font-heading` (titles inherit their font until you do) and `--touch-target-size` (the new `touch-target` utility falls back to 44px) ("Theme tokens now reach every component", "`chunks-ui/theme.css` has a new utility").
-  - `--tooltip-arrow-corner` is not in `theme.css`: `Tooltip.Popup` sets it in its own classes, and you change it by setting it on the popup ("`Tooltip.Arrow` now sits").
-  - `--font-sans`, `--font-mono` and `--spacing-ui-height` moved from `@theme inline` to `@theme`, so a scoped override reaches the utilities; `.micro-interactions` moved into `@layer components`, so timing utilities win over it; `theme.css` now has `@source "./"`, so an app `@source` for the package is no longer needed ("Theme tokens now reach every component", "Fixed: timing utilities", "`theme.css` now includes").
+  - New: `--z-index-cursor`, `--colored-text-lightness`, `--success-border-lightness` and `--warning-border-lightness`.
+  - New, additive: `--font-heading`, `--touch-target-size`, `--tooltip-arrow-corner` (set on `Tooltip.Popup`), and the `--color-*-text` and `--color-*-border` tokens.
+  - `--font-sans`, `--font-mono` and `--spacing-ui-height` moved from `@theme inline` to `@theme`, so a scoped override reaches the utilities; `.micro-interactions` moved into `@layer components`, so timing utilities win over it; `theme.css` now has `@source "./"`, so an app `@source` for the package is no longer needed.
