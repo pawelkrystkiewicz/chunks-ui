@@ -179,7 +179,7 @@ Every PR that changes a publishable package needs a changeset. That is `chunks-u
 bunx changeset
 ```
 
-Describe the change, select semver bump level, and commit the generated `.changeset/*.md` file with your PR.
+Describe the change, select semver bump level, and commit the generated `.changeset/*.md` file with your PR. To run the gate locally, use `bunx changeset status --since=origin/master`: a bare `bunx changeset status` compares with a local `master` branch (`baseBranch` in `.changeset/config.json`) and fails in a clone without one.
 
 The changelog entry links the PR that added the changeset (`@changesets/changelog-github`), so add the changeset in the PR with the change. `changeset version` needs a GitHub token to resolve those links: the release workflow passes `PAT_TOKEN`; locally, run `GITHUB_TOKEN=$(gh auth token) bunx changeset version`.
 

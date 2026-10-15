@@ -10,72 +10,90 @@
  * - The typings import nothing from a `class-variance-authority/` subpath (`src/lib/cva.ts` keeps it out).
  *
  * Run: bun run check:dist
+ * Tests: check-dist.spec.ts (fixture dists in a temporary directory)
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import * as source from "../src/index";
-import * as sourceUtils from "../src/utils";
 
-const DIST = join(import.meta.dirname, "..", "dist");
-// Paths built at runtime, so that type-checking this file doesn't need dist/
-const load = {
-  js: (file: string): Promise<Record<string, unknown>> => import(join(DIST, file)),
-  cjs: async (file: string): Promise<Record<string, unknown>> => require(join(DIST, file)),
-};
-const names = (module: object) => Object.keys(module).sort().join(", ");
+/** The export names of each entry's source file. */
+type ExpectedExports = { index: string[]; utils: string[] };
+
+const names = (keys: Iterable<string>) => [...keys].sort().join(", ");
 const TRIED_MOTION_IMPORT =
   /\btry\s*\{\s*[\w$.]+\s*=\s*await\s+import\(\s*\/\*\s*turbopackOptional:\s*true\s*\*\/\s*"motion\/react"\s*\)/;
 
-const failures: string[] = [];
-const check = (ok: boolean, message: string) => {
-  if (!ok) failures.push(message);
-};
+/** One line per failed check of the built entries in `dist`; empty when dist passes. */
+export async function checkDist(dist: string, expected: ExpectedExports): Promise<string[]> {
+  // Paths built at runtime, so that type-checking this file doesn't need dist/
+  const load = {
+    js: (file: string): Promise<Record<string, unknown>> => import(join(dist, file)),
+    cjs: async (file: string): Promise<Record<string, unknown>> => require(join(dist, file)),
+  };
+  const failures: string[] = [];
+  const check = (ok: boolean, message: string) => {
+    if (!ok) failures.push(message);
+  };
 
-for (const format of ["js", "cjs"] as const) {
-  const indexFile = `index.${format}`;
-  const utilsFile = `utils.${format}`;
-  const index = await load[format](indexFile);
-  const utils = await load[format](utilsFile);
-  const indexCode = readFileSync(join(DIST, indexFile), "utf8");
-  const utilsCode = readFileSync(join(DIST, utilsFile), "utf8");
-  const declarationExtension = format === "js" ? "d.ts" : "d.cts";
+  for (const format of ["js", "cjs"] as const) {
+    const indexFile = `index.${format}`;
+    const utilsFile = `utils.${format}`;
+    const index = await load[format](indexFile);
+    const utils = await load[format](utilsFile);
+    const indexCode = readFileSync(join(dist, indexFile), "utf8");
+    const utilsCode = readFileSync(join(dist, utilsFile), "utf8");
+    const declarationExtension = format === "js" ? "d.ts" : "d.cts";
 
-  check(names(index) === names(source), `${indexFile} exports the names src/index.ts exports`);
-  check(names(utils) === names(sourceUtils), `${utilsFile} exports the names src/utils.ts exports`);
-
-  // In CJS a missed re-export is `undefined`, but the key still exists
-  for (const [name, value] of Object.entries(index)) {
-    check(value !== undefined, `${name} from ${indexFile} is not undefined`);
-  }
-
-  check(indexCode.startsWith('"use client";'), `${indexFile} starts with "use client"`);
-  check(!utilsCode.includes("use client"), `${utilsFile} has no "use client"`);
-  // Next.js rejects `export *` in a "use client" module
-  check(!/^export \*/m.test(indexCode), `${indexFile} has no "export *"`);
-
-  check(
-    TRIED_MOTION_IMPORT.test(indexCode),
-    `${indexFile} awaits import(/* turbopackOptional: true */ "motion/react") inside a try block`,
-  );
-  check(!indexCode.includes("webpackIgnore"), `${indexFile} has no webpackIgnore`);
-
-  for (const entry of ["index", "utils"]) {
-    const declarationFile = `${entry}.${declarationExtension}`;
     check(
-      !readFileSync(join(DIST, declarationFile), "utf8").includes("class-variance-authority/"),
-      `${declarationFile} imports nothing from a "class-variance-authority/" subpath`,
+      names(Object.keys(index)) === names(expected.index),
+      `${indexFile} exports the names src/index.ts exports`,
     );
-  }
+    check(
+      names(Object.keys(utils)) === names(expected.utils),
+      `${utilsFile} exports the names src/utils.ts exports`,
+    );
 
-  for (const name of Object.keys(sourceUtils)) {
-    check(index[name] === utils[name], `${name} from ${indexFile} is the one in ${utilsFile}`);
+    // In CJS a missed re-export is `undefined`, but the key still exists
+    for (const [name, value] of Object.entries(index)) {
+      check(value !== undefined, `${name} from ${indexFile} is not undefined`);
+    }
+
+    check(indexCode.startsWith('"use client";'), `${indexFile} starts with "use client"`);
+    check(!utilsCode.includes("use client"), `${utilsFile} has no "use client"`);
+    // Next.js rejects `export *` in a "use client" module
+    check(!/^export \*/m.test(indexCode), `${indexFile} has no "export *"`);
+
+    check(
+      TRIED_MOTION_IMPORT.test(indexCode),
+      `${indexFile} awaits import(/* turbopackOptional: true */ "motion/react") inside a try block`,
+    );
+    check(!indexCode.includes("webpackIgnore"), `${indexFile} has no webpackIgnore`);
+
+    for (const entry of ["index", "utils"]) {
+      const declarationFile = `${entry}.${declarationExtension}`;
+      check(
+        !readFileSync(join(dist, declarationFile), "utf8").includes("class-variance-authority/"),
+        `${declarationFile} imports nothing from a "class-variance-authority/" subpath`,
+      );
+    }
+
+    for (const name of expected.utils) {
+      check(index[name] === utils[name], `${name} from ${indexFile} is the one in ${utilsFile}`);
+    }
   }
+  return failures;
 }
 
-if (failures.length > 0) {
-  console.error(`dist/ check failed:\n${failures.map((failure) => `  - ${failure}`).join("\n")}`);
-  process.exit(1);
+if (import.meta.main) {
+  const [source, sourceUtils] = await Promise.all([import("../src/index"), import("../src/utils")]);
+  const failures = await checkDist(join(import.meta.dirname, "..", "dist"), {
+    index: Object.keys(source),
+    utils: Object.keys(sourceUtils),
+  });
+  if (failures.length > 0) {
+    console.error(`dist/ check failed:\n${failures.map((failure) => `  - ${failure}`).join("\n")}`);
+    process.exit(1);
+  }
+  console.log(
+    "dist/: index.{js,cjs} use the helpers in utils.{js,cjs}; banners, exports and the motion import match; the typings import no cva subpath",
+  );
 }
-console.log(
-  "dist/: index.{js,cjs} use the helpers in utils.{js,cjs}; banners, exports and the motion import match; the typings import no cva subpath",
-);
