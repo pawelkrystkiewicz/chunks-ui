@@ -20,7 +20,7 @@ export function OverlayHeader({ title, description }: { title: string; descripti
       </div>
       <Dialog.Close
         render={<IconButton variant="text" color="secondary" aria-label="Close" />}
-        className="-mt-1 -mr-2 shrink-0 text-muted-foreground hover:text-foreground"
+        className="-mt-1 -me-2 shrink-0 text-muted-foreground hover:text-foreground"
       >
         <X size={16} />
       </Dialog.Close>

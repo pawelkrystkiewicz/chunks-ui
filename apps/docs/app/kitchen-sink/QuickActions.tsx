@@ -29,13 +29,13 @@ function ActionsMenu() {
           <Menu.Item
             onClick={() => add({ title: "Exported", description: "Tasks exported as CSV." })}
           >
-            <Download className="mr-2 size-4" />
+            <Download className="me-2 size-4" />
             Export CSV
           </Menu.Item>
           <Menu.Item
             onClick={() => add({ title: "Exported", description: "Report generated as PDF." })}
           >
-            <FileText className="mr-2 size-4" />
+            <FileText className="me-2 size-4" />
             Export PDF
           </Menu.Item>
         </Menu.Group>
@@ -47,11 +47,11 @@ function ActionsMenu() {
               add({ title: "Link copied", description: "Shareable link is on your clipboard." })
             }
           >
-            <Share2 className="mr-2 size-4" />
+            <Share2 className="me-2 size-4" />
             Share Board
           </Menu.Item>
           <Menu.Item className="text-destructive-text">
-            <Trash2 className="mr-2 size-4" />
+            <Trash2 className="me-2 size-4" />
             Archive Project
           </Menu.Item>
         </Menu.Group>

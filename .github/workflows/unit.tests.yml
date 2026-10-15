@@ -58,7 +58,7 @@ jobs:
 
       - name: Test the repo scripts
         if: ${{ !cancelled() }}
-        run: bun test ./scripts
+        run: bun test ./scripts ./packages/ui/scripts
 
   # The ui unit suite at the lowest versions the peer ranges allow. Informational until it has
   # three stable runs, then it becomes required (#393).
@@ -80,7 +80,7 @@ jobs:
         with:
           bun-version-file: package.json
 
-      # Restore only: the cache must never be saved after bun add put the floors on disk
+      # Restore only: the install below changes bun.lock, so the cache must never be saved from it
       - name: Restore the bun install cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -88,20 +88,18 @@ jobs:
           key: ${{ runner.os }}-bun-host-${{ hashFiles('bun.lock') }}
           restore-keys: ${{ runner.os }}-bun-host-
 
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      # --no-save: package.json and bun.lock stay as they are. With the isolated linker the
-      # floors land under packages/ui/node_modules too, except motion: it is a devDependency of
-      # packages/ui, so that link stays on the locked version. Removing it lets packages/ui
-      # resolve the root floor. The check step proves what resolves.
+      # Not --frozen-lockfile: the overrides change bun.lock. The edit stays in this throwaway
+      # checkout, which nothing commits or caches.
       - name: Install the peer floors
         run: |
-          bun add --no-save $(bun scripts/check-peer-floors.ts --specs)
-          rm packages/ui/node_modules/motion
+          bun scripts/check-peer-floors.ts --overrides
+          bun install
 
       - name: Check what chunks-ui resolves
         run: bun scripts/check-peer-floors.ts
+
+      - name: Type-check chunks-ui at the floors
+        run: bun run --cwd packages/ui check-types
 
       - name: Run the ui unit tests at the floors
         run: bun run --cwd packages/ui test

@@ -64,11 +64,13 @@ jobs:
       - name: Update Visual Regression Screenshots
         run: cd packages/ui && bun run test:visual:update
 
-      # check what changed
+      # Stage first: git detects a rename only in the index, and --name-only then prints the new
+      # path alone. -z leaves spaces and non-ASCII unquoted (git status --porcelain quotes them).
       - name: Check for changes
         id: check_changes
         run: |
-          CHANGED_FILES=$(git status --porcelain | awk '{print $2}')
+          git add -A
+          CHANGED_FILES=$(git diff --cached --name-only -z | tr '\0' '\n')
           if [ "${CHANGED_FILES:+x}" ]; then
             echo "changes=true" >> $GITHUB_OUTPUT
             echo "Changes detected"

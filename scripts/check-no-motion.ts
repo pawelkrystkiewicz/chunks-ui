@@ -1,12 +1,17 @@
 #!/usr/bin/env bun
 /**
- * Bundles two consumers of chunks-ui with webpack (as Next.js in webpack mode does), one without
- * Motion and one with it. webpack is the bundler because esbuild, bun and Vite build either way.
- * Both sides matter: a bare import fails the build without Motion, and `webpackIgnore` builds but
- * leaves `import("motion/react")` in the bundle, so every app with Motion loses the animations.
- * The consumer without Motion also type-checks an import of chunks-ui with `skipLibCheck: false`,
- * so the package types must not reference `motion/react` (see MotionLike in use-motion.ts).
- * Fixtures: scripts/no-motion. Needs the network. Run: bun run check:no-motion (builds first)
+ * Proves `motion` is an optional peer of chunks-ui in two throwaway consumers, one without Motion
+ * and one with it, each installed from a pinned fixture plus the packed package.
+ * - webpack (as Next.js in webpack mode does) bundles an entry that imports chunks-ui. esbuild, bun
+ *   and Vite build either way, so webpack is the bundler. Both sides matter: a bare import fails
+ *   the build without Motion, and `webpackIgnore` builds but leaves `import("motion/react")` in
+ *   the bundle, so every app with Motion loses the animations. The consumer without Motion also
+ *   type-checks an import of chunks-ui with `skipLibCheck: false`, so the package types must not
+ *   reference `motion/react` (see MotionLike in use-motion.ts).
+ * - `next build` with Turbopack (Next 16's default) builds the minimal static-export app in
+ *   no-motion/next in both consumers; what each build must show is in scripts/README.md.
+ * Fixtures: scripts/no-motion (recipe in scripts/README.md). Needs the network.
+ * Run: bun run check:no-motion (builds first)
  */
 import {
   cpSync,
@@ -44,9 +49,18 @@ const TSCONFIG = {
   },
   files: ["types.ts"],
 };
-/** A name only Motion's own code contains (verified: in the async chunk, not in main.js). */
+/**
+ * A name only Motion's own code contains: an export of `motion/react`, so it survives minification
+ * as a key of the imported namespace (verified in webpack's async chunk and Turbopack's Motion
+ * chunk, in neither bundler's page code).
+ */
 const MOTION_MARKER = "MotionGlobalConfig";
 const BARE_MOTION_IMPORT = /import\(\s*["']motion\/react["']\s*\)/;
+const MARKER_HINT = `if the motion pin moved, confirm ${MOTION_MARKER} is still exported by motion/react.`;
+/** A chunk under static/chunks that out/index.html names, in a script or link tag or the inline flight payload. */
+const CHUNK_REF = /static\/chunks\/([^\s"'\\<>?#]+\.js)/g;
+/** The trigger texts in no-motion/next/app/page.jsx; the first one marks the page's own chunk. */
+export const NEXT_TRIGGERS = ["Open the dialog", "Hover for a tip"] as const;
 
 const ANSI = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, "g");
 const MOTION_WARNING = /WARNING in [\s\S]*?Can't resolve 'motion\/react'/g;
@@ -80,6 +94,14 @@ export interface OutputFile {
   code: string;
 }
 
+/** Why a build with Motion keeps `import("motion/react")` bare in `files`, or undefined when none does. */
+function bareImportProblem(files: OutputFile[], hint?: string): string | undefined {
+  const bare = files.filter(({ code }) => BARE_MOTION_IMPORT.test(code));
+  if (bare.length > 0) {
+    return `import("motion/react") is left bare in ${bare.map(({ name }) => name).join(", ")}: a browser cannot resolve it, so apps with Motion lose the animations${hint ? ` (${hint})` : ""}.`;
+  }
+}
+
 /** Why the build of the consumer with Motion is wrong, or undefined when it is as expected. */
 export function withMotionProblem(
   exitCode: number,
@@ -92,21 +114,79 @@ export function withMotionProblem(
   if (motionWarnings(output) > 0) {
     return `webpack could not resolve motion/react although Motion is installed:\n${output}`;
   }
-  const bare = files.filter(({ code }) => BARE_MOTION_IMPORT.test(code));
-  if (bare.length > 0) {
-    return `import("motion/react") is left bare in ${bare.map(({ name }) => name).join(", ")}: a browser cannot resolve it, so apps with Motion lose the animations (a webpackIgnore comment does this).`;
-  }
+  const bare = bareImportProblem(files, "a webpackIgnore comment does this");
+  if (bare) return bare;
   const chunk = files.some(
     ({ name, code }) => name.endsWith(".js") && name !== "main.js" && code.includes(MOTION_MARKER),
   );
   if (!chunk) {
-    return `no async chunk holds Motion's code (looked for ${MOTION_MARKER} outside main.js; files: ${files.map(({ name }) => name).join(", ")}).`;
+    return `no async chunk holds Motion's code (looked for ${MOTION_MARKER} outside main.js; files: ${files.map(({ name }) => name).join(", ")}); ${MARKER_HINT}`;
+  }
+}
+
+const NO_PAGE = (output: string) =>
+  `next build wrote no out/index.html: scripts/no-motion/next/next.config.mjs must set output: "export".\n${output}`;
+
+/**
+ * Why the Next (Turbopack) build without Motion is wrong, or undefined when it built and exported
+ * the page. `html` is out/index.html, undefined when the build wrote none.
+ */
+export function nextWithoutMotionProblem(
+  exitCode: number,
+  output: string,
+  html: string | undefined,
+): string | undefined {
+  if (exitCode !== 0) {
+    const hint = output.includes("Can't resolve 'motion/react'")
+      ? "Turbopack cannot resolve motion/react: the import() in packages/ui/src/lib/use-motion.ts has neither a try around it nor a turbopackOptional comment. Either alone makes Turbopack build without Motion; check:dist requires both.\n"
+      : "";
+    return `${hint}next build (Turbopack) failed in a consumer without motion (exit ${exitCode}):\n${output}`;
+  }
+  if (html === undefined) return NO_PAGE(output);
+  const missing = NEXT_TRIGGERS.filter((text) => !html.includes(text));
+  if (missing.length > 0) {
+    return `the exported page lacks ${missing.map((text) => `"${text}"`).join(" and ")}: most likely NEXT_TRIGGERS and the text in scripts/no-motion/next/app/page.jsx drifted apart; otherwise the prerender without motion lost the Dialog or Tooltip trigger.\n${output}`;
+  }
+}
+
+/**
+ * Why the Next (Turbopack) build with Motion is wrong, or undefined when Motion sits in a client
+ * chunk that out/index.html does not load. `files` are the chunks under out/_next/static/chunks;
+ * `html` is out/index.html, undefined when the build wrote none.
+ */
+export function nextWithMotionProblem(
+  exitCode: number,
+  output: string,
+  files: OutputFile[],
+  html: string | undefined,
+): string | undefined {
+  const unresolved = output.includes("Can't resolve 'motion/react'")
+    ? "Turbopack could not resolve motion/react although Motion is installed: check that the install of scripts/no-motion/with-motion put motion in node_modules.\n"
+    : "";
+  if (exitCode !== 0) {
+    return `${unresolved}next build (Turbopack) failed in a consumer with motion (exit ${exitCode}):\n${output}`;
+  }
+  if (unresolved) return `${unresolved}${output}`;
+  const bare = bareImportProblem(files);
+  if (bare) return bare;
+  if (!files.some(({ code }) => code.includes(MOTION_MARKER))) {
+    return `no client chunk holds Motion's code (looked for ${MOTION_MARKER} in ${files.map(({ name }) => name).join(", ")}); ${MARKER_HINT}`;
+  }
+  if (html === undefined) return NO_PAGE(output);
+  const named = new Set([...html.matchAll(CHUNK_REF)].map(([, name = ""]) => name));
+  const initial = files.filter(({ name }) => named.has(name));
+  if (!initial.some(({ code }) => code.includes(NEXT_TRIGGERS[0]))) {
+    return `out/index.html names no chunk with the page's own code (looked for "${NEXT_TRIGGERS[0]}" in the ${named.size} chunks it names), so the check cannot tell which chunks belong to the initial load: the layout of the export changed.`;
+  }
+  const eager = initial.filter(({ code }) => code.includes(MOTION_MARKER));
+  if (eager.length > 0) {
+    return `Motion's code sits in ${eager.map(({ name }) => name).join(", ")}, which out/index.html names (in a script, a preload link or the flight payload), so it is part of the initial load instead of an async chunk: the import() in packages/ui/src/lib/use-motion.ts no longer splits it.`;
   }
 }
 
 function run(cmd: string[], cwd: string) {
   const { exitCode, stdout, stderr } = Bun.spawnSync(cmd, { cwd, stdout: "pipe", stderr: "pipe" });
-  // webpack-cli colours its output on CI runners too, which splits "WARNING in" with escape codes
+  // webpack-cli and Next colour their output on CI runners too, which splits "WARNING in" with escape codes
   return { exitCode, output: `${stdout}${stderr}`.replace(ANSI, "") };
 }
 
@@ -174,24 +254,54 @@ async function typecheck(dir: string) {
   return run([join(dir, "node_modules/.bin/tsc"), "-p", "tsconfig.json"], dir);
 }
 
+/**
+ * Builds the Next app of the fixture with Turbopack in `dir`/next, where bundle() installed the
+ * fixture and the tarball (the app resolves them from `dir`/node_modules). A subdirectory, so
+ * Next's tsconfig.json and out/ stay apart from those of typecheck() and webpack. Returns the
+ * exported page and the client chunks.
+ */
+function nextBuild(dir: string) {
+  const app = join(dir, "next");
+  const source = join(FIXTURES, "next");
+  cpSync(join(source, "app"), join(app, "app"), { recursive: true });
+  cpSync(join(source, "next.config.mjs"), join(app, "next.config.mjs"));
+  // `env` sets the variable for the child: assigning to process.env at runtime reaches no Bun child
+  const result = run(
+    ["env", "NEXT_TELEMETRY_DISABLED=1", join(dir, "node_modules/.bin/next"), "build"],
+    app,
+  );
+  const page = join(app, "out/index.html");
+  const html = existsSync(page) ? readFileSync(page, "utf8") : undefined;
+  const chunks = join(app, "out/_next/static/chunks");
+  const files = (existsSync(chunks) ? readdirSync(chunks, { recursive: true }) : [])
+    .map(String)
+    .filter((name) => name.endsWith(".js"))
+    .map((name) => ({ name, code: readFileSync(join(chunks, name), "utf8") }));
+  return { ...result, html, files };
+}
+
 if (import.meta.main) {
   const dir = mkdtempSync(join(tmpdir(), "chunks-ui-no-motion-"));
   try {
     const tarball = pack(dir);
     const without = await bundle(FIXTURES, join(dir, "without"), tarball);
     const types = await typecheck(join(dir, "without"));
+    const nextWithout = nextBuild(join(dir, "without"));
     const withMotion = await bundle(join(FIXTURES, "with-motion"), join(dir, "with"), tarball);
+    const nextWith = nextBuild(join(dir, "with"));
     const problems = [
       withoutMotionProblem(without.exitCode, without.output),
       typesProblem(types.exitCode, types.output),
+      nextWithoutMotionProblem(nextWithout.exitCode, nextWithout.output, nextWithout.html),
       withMotionProblem(withMotion.exitCode, withMotion.output, withMotion.files),
+      nextWithMotionProblem(nextWith.exitCode, nextWith.output, nextWith.files, nextWith.html),
     ].filter((problem) => problem !== undefined);
     if (problems.length > 0) {
       console.error(problems.join("\n\n"));
       process.exitCode = 1;
     } else {
       console.log(
-        "webpack bundles chunks-ui without motion (one expected warning, types compile with skipLibCheck: false) and with motion (async chunk, no bare import).",
+        "webpack and next build (Turbopack) build chunks-ui without motion (types compile with skipLibCheck: false) and with motion (an async chunk, no bare import).",
       );
     }
   } finally {

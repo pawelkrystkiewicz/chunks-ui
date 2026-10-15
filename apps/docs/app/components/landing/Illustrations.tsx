@@ -1,6 +1,7 @@
 // Isometric illustrations. Decorative only: callers wrap them in aria-hidden.
 // Hover lifts are CSS-only, driven by the nearest `group/iso` (hero) or `group/pr` (principle cell).
 // Server components: classes are joined as plain strings, so no two pieces set the same property.
+// Offsets are physical (`left-*`, `top-*`): they compose an isometric drawing, which keeps its arrangement in RTL.
 
 const ISO = "transform-3d [transform:rotateX(58deg)_rotateZ(-45deg)]";
 const LIFT = "transition-transform ease-fluid motion-reduce:transition-none";

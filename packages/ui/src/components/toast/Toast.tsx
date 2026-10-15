@@ -41,8 +41,9 @@ export interface ToastStyleOptions {
   /**
    * When `true`, renders a close (×) button on this toast. Clicking it
    * dismisses the toast via Base UI's `Toast.Close`. Passing `onClose`
-   * implicitly enables this — you only need to set `dismissible` when
-   * you want the button without a side-effect handler.
+   * implicitly enables this, so you only need to set `dismissible` when
+   * you want the button without a side-effect handler. `dismissible: false`
+   * hides the button even when `onClose` is set.
    *
    * @default false
    */
@@ -53,13 +54,17 @@ export interface ToastStyleOptions {
    */
   dissmissable?: boolean;
   /**
-   * Click handler attached to the close button. Passing this prop also
-   * implicitly renders the close button (no need to also set
-   * `dismissible`). Fires in addition to Base UI's built-in dismissal,
-   * so use it for side effects (analytics, undo stacks, etc.) — not to
-   * prevent the toast from closing.
+   * Called once when the toast closes, whichever way (close button, timeout, swipe, Escape with
+   * focus inside the toast, `manager.close`). Passing this prop also implicitly renders the close
+   * button (no need to also set `dismissible`).
    */
-  onClose?: ComponentProps<typeof BaseToast.Close>["onClick"];
+  onClose?: () => void;
+  /**
+   * Props for the built-in close button. `className` merges after the library classes;
+   * `aria-label` overrides `labels.close`; `event.preventBaseUIHandler()` in `onClick` keeps
+   * the toast open. Renders no button on its own: set `dismissible` or `onClose` to show it.
+   */
+  closeProps?: ToastCloseProps;
 }
 
 /**
@@ -77,7 +82,8 @@ export type ToastProviderProps = ComponentProps<typeof BaseToast.Provider>;
 export type ToastViewportProps = ComponentProps<typeof BaseToast.Viewport> & {
   /**
    * Replaces the built-in English strings, e.g. to translate them. Keys you leave out keep the
-   * default from `DEFAULT_TOAST_LABELS`. `aria-label` takes precedence over `labels.viewport`.
+   * default from `DEFAULT_TOAST_LABELS`. `aria-label` takes precedence over `labels.viewport`,
+   * and a toast's `closeProps["aria-label"]` over `labels.close`.
    */
   labels?: Partial<ToastLabels>;
 };
@@ -106,6 +112,7 @@ function ToastViewport({ className, labels, ...props }: ToastViewportProps) {
         // alias kept for backwards compatibility. If both are set,
         // `dismissible` wins.
         const dismissible = toast.dismissible ?? toast.dissmissable;
+        const { closeProps } = toast;
         return (
           <ToastRoot key={toast.id} toast={toast} className={toast.className}>
             {Icon && <Icon className={cn("size-5 shrink-0 self-start", toast.iconClassName)} />}
@@ -118,8 +125,10 @@ function ToastViewport({ className, labels, ...props }: ToastViewportProps) {
               )}
               {toast.actionProps != null && <ToastAction {...toast.actionProps} />}
             </BaseToast.Content>
-            {(dismissible || toast.onClose) && (
-              <ToastClose aria-label={names.close} onClick={toast.onClose} />
+            {(dismissible ?? Boolean(toast.onClose)) && (
+              // `aria-label` goes after the spread so `{ "aria-label": undefined }` falls back to
+              // `labels.close` instead of clearing the label.
+              <ToastClose {...closeProps} aria-label={closeProps?.["aria-label"] ?? names.close} />
             )}
           </ToastRoot>
         );

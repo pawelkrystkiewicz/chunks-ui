@@ -10,9 +10,14 @@ import { useMotionAnimate } from "../../lib/use-motion-animate";
 import { type PartRenderProp, useRenderPart } from "../../lib/use-render-part";
 import { FOCUS_RING, RING_ANIMATION_CLASSES } from "../shared";
 
-export type RadioGroupProps = ComponentProps<typeof BaseRadioGroup>;
+/**
+ * `Value` is the type of `value`, `defaultValue` and the value `onValueChange` receives. It is
+ * inferred from `value`, `defaultValue` or an annotated `onValueChange`, so a typed `useState` setter is an `onValueChange`.
+ * Without either it is `unknown`.
+ */
+export type RadioGroupProps<Value = unknown> = BaseRadioGroup.Props<Value>;
 
-function RadioGroup({ className, ...props }: RadioGroupProps) {
+function RadioGroup<Value = unknown>({ className, ...props }: RadioGroupProps<Value>) {
   return (
     <BaseRadioGroup
       className={cnState(
