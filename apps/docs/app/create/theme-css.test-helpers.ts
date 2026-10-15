@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { DEFAULT_THEME, type Oklch, type Theme } from "./palette";
 
 /** Reads an `oklch(l c h)` string as written by `palette()` or theme.css, whose lightness may be a percentage. */
@@ -9,9 +10,12 @@ export function parseOklch(value: string): Oklch {
   return { l: Number(l) / (percent ? 100 : 1), c: Number(c), h: Number(h) };
 }
 
-/** The library's theme.css without its comments. */
+/**
+ * The library's theme.css as consumers get it, through the `chunks-ui/theme.css` export (the built
+ * copy, so `bun run build` first), without its comments.
+ */
 const themeCss = readFileSync(
-  new URL("../../../../packages/ui/src/theme.css", import.meta.url),
+  createRequire(import.meta.url).resolve("chunks-ui/theme.css"),
   "utf8",
 ).replace(/\/\*[\s\S]*?\*\//g, "");
 
