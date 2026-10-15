@@ -50,9 +50,9 @@ describe("withMotionProblem", () => {
     expect(withMotionProblem(0, CLEAN, files)).toContain("main.js");
   });
 
-  it("rejects a build with no chunk holding Motion's code", () => {
+  it("rejects a build with no chunk holding Motion's code, and names the marker", () => {
     const files = [file("main.js", "MotionGlobalConfig"), file("743.js", "other code")];
-    expect(withMotionProblem(0, CLEAN, files)).toBeDefined();
+    expect(withMotionProblem(0, CLEAN, files)).toContain("MotionGlobalConfig is still exported");
   });
 });
 
@@ -106,9 +106,11 @@ describe("nextWithoutMotionProblem", () => {
     expect(nextWithoutMotionProblem(0, NEXT_OK, PAGE)).toBeUndefined();
   });
 
-  it("names the turbopackOptional comment when Turbopack cannot resolve motion/react, and keeps the output", () => {
+  it("names the try around the import when Turbopack cannot resolve motion/react, and keeps the output", () => {
     const problem = nextWithoutMotionProblem(1, NEXT_UNRESOLVED, undefined);
+    expect(problem?.startsWith("Turbopack cannot resolve motion/react: the try around")).toBe(true);
     expect(problem).toContain("turbopackOptional");
+    expect(problem).toContain("check:dist");
     expect(problem).toContain(NEXT_UNRESOLVED);
   });
 
@@ -123,39 +125,93 @@ describe("nextWithoutMotionProblem", () => {
     expect(nextWithoutMotionProblem(0, NEXT_OK, undefined)).toContain('output: "export"');
   });
 
-  it("names the trigger the exported page lacks", () => {
+  it("names the trigger the exported page lacks, and drift from the page as the likely cause", () => {
     const problem = nextWithoutMotionProblem(0, NEXT_OK, PAGE.replace(TOOLTIP, ""));
     expect(problem).toContain(`"${TOOLTIP}"`);
     expect(problem).not.toContain(`"${DIALOG}"`);
+    expect(problem).toContain("NEXT_TRIGGERS");
+    expect(problem).toContain("drifted");
   });
 });
 
 describe("nextWithMotionProblem", () => {
-  const page = file("09pgpbowlrzbr.js", `${DIALOG} DialogBody`);
-  const motion = file("3s70qt748849t.js", "MotionGlobalConfig");
+  const RUNTIME = "turbopack-3-ry682tkyiqk.js";
+  const PAGE_CHUNK = "245lujbzn6avk.js";
+  const MOTION_CHUNK = "3s70qt748849t.js";
+  // Shaped like out/index.html of a Next 16 static export: script tags, a preload link, the
+  // Turbopack bootstrap and the flight payload (quotes escaped inside a JS string) name chunks
+  const exported = (scripts: string[], flight: string[] = []) =>
+    [
+      "<!DOCTYPE html><html><head>",
+      `<link rel="preload" as="script" href="/_next/static/chunks/preload.js"/>`,
+      ...scripts.map((name) => `<script src="/_next/static/chunks/${name}" async=""></script>`),
+      "</head><body>",
+      `<script>(globalThis["TURBOPACK"]||[]).push({"otherChunks":["static/chunks/boot.js"]});</script>`,
+      `<script>self.__next_f.push([1,"${flight.map((name) => `7:\\"/_next/static/chunks/${name}\\"\\n`).join("")}"])</script>`,
+      "</body></html>",
+    ].join("");
+  const HTML = exported([RUNTIME], [PAGE_CHUNK]);
+  const runtime = file(RUNTIME, "runtime");
+  const page = file(PAGE_CHUNK, `${DIALOG} DialogBody`);
+  const motion = file(MOTION_CHUNK, "MotionGlobalConfig");
+  const files = [runtime, page, motion];
 
-  it("accepts a clean build with Motion in a chunk apart from the page", () => {
-    expect(nextWithMotionProblem(0, NEXT_OK, [page, motion])).toBeUndefined();
+  it("accepts a clean build with Motion in a chunk the page does not load", () => {
+    expect(nextWithMotionProblem(0, NEXT_OK, files, HTML)).toBeUndefined();
   });
 
   it("rejects a failed build and keeps its output", () => {
     const output = "Failed to compile.\n";
-    expect(nextWithMotionProblem(1, output, [])).toContain(output);
+    expect(nextWithMotionProblem(1, output, [], undefined)).toContain(output);
+  });
+
+  it("points at the install when Turbopack cannot resolve motion/react although it is installed", () => {
+    const failed = nextWithMotionProblem(1, NEXT_UNRESOLVED, [], undefined);
+    expect(failed).toContain("although Motion is installed");
+    expect(failed).toContain(NEXT_UNRESOLVED);
+    const warned = nextWithMotionProblem(0, NEXT_UNRESOLVED, files, HTML);
+    expect(warned).toContain("although Motion is installed");
   });
 
   it("names the chunk that keeps a bare import", () => {
-    const bare = file("09pgpbowlrzbr.js", `${DIALOG} x=import("motion/react")`);
-    expect(nextWithMotionProblem(0, NEXT_OK, [bare, motion])).toContain("09pgpbowlrzbr.js");
+    const bare = file(PAGE_CHUNK, `${DIALOG} x=import("motion/react")`);
+    expect(nextWithMotionProblem(0, NEXT_OK, [bare, motion], HTML)).toContain(PAGE_CHUNK);
   });
 
-  it("rejects a build with no chunk holding Motion's code", () => {
-    expect(nextWithMotionProblem(0, NEXT_OK, [page, file("3s70qt748849t.js", "other")])).toContain(
-      "MotionGlobalConfig",
+  it("rejects a build with no chunk holding Motion's code, and names the marker", () => {
+    const files = [runtime, page, file(MOTION_CHUNK, "other")];
+    expect(nextWithMotionProblem(0, NEXT_OK, files, HTML)).toContain(
+      "MotionGlobalConfig is still exported",
     );
   });
 
+  it("rejects a build that exported no page", () => {
+    expect(nextWithMotionProblem(0, NEXT_OK, files, undefined)).toContain('output: "export"');
+  });
+
+  it("rejects the Motion chunk named by a script tag", () => {
+    const html = exported([RUNTIME, MOTION_CHUNK], [PAGE_CHUNK]);
+    const problem = nextWithMotionProblem(0, NEXT_OK, files, html);
+    expect(problem).toContain(MOTION_CHUNK);
+    expect(problem).toContain("loads up front");
+  });
+
+  it("rejects the Motion chunk named only in the flight payload", () => {
+    const html = exported([RUNTIME], [PAGE_CHUNK, MOTION_CHUNK]);
+    expect(nextWithMotionProblem(0, NEXT_OK, files, html)).toContain(MOTION_CHUNK);
+  });
+
   it("rejects Motion inlined into the page's chunk", () => {
-    const inlined = file("09pgpbowlrzbr.js", `${DIALOG} MotionGlobalConfig`);
-    expect(nextWithMotionProblem(0, NEXT_OK, [inlined])).toContain("09pgpbowlrzbr.js");
+    const inlined = file(PAGE_CHUNK, `${DIALOG} MotionGlobalConfig`);
+    const problem = nextWithMotionProblem(0, NEXT_OK, [inlined, motion], HTML);
+    expect(problem).toContain(PAGE_CHUNK);
+    expect(problem).toContain("loads up front");
+  });
+
+  it("rejects an HTML that names none of the page's code, instead of passing vacuously", () => {
+    const html = exported([RUNTIME]);
+    expect(nextWithMotionProblem(0, NEXT_OK, files, html)).toContain(
+      "names no chunk with the page",
+    );
   });
 });
