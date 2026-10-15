@@ -37,3 +37,13 @@ export const RING_ANIMATION_CLASSES = ["micro-interactions", RING_TRANSITION, "d
  */
 export const FOCUS_RING =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
+
+/** The class `theme.css` styles the toast content box by; see `.ToastContent` there. */
+export const TOAST_CONTENT_CLASS = "ToastContent";
+
+/**
+ * The class the popups' `has-[.PopupArrow]:` variants and `arrowPaddingIn` find the arrow by; see
+ * `popup-arrow.ts` and `arrow-padding.ts`. Those variants spell it out so Tailwind's scanner sees
+ * the whole class.
+ */
+export const POPUP_ARROW_CLASS = "PopupArrow";

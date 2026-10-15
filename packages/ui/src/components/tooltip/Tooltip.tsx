@@ -9,6 +9,7 @@ import { usePortalContainer } from "../../lib/portal-container";
 import { useArrowPadding } from "../../lib/use-arrow-padding";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { useLoadedMotion, useReducedMotion } from "../../lib/use-motion";
+import { POPUP_ARROW_CLASS } from "../shared";
 
 export type TooltipRootProps = ComponentProps<typeof BaseTooltip.Root>;
 export type TooltipProviderProps = ComponentProps<typeof BaseTooltip.Provider>;
@@ -74,8 +75,9 @@ function TooltipArrow({ className, ...props }: TooltipArrowProps) {
   return (
     <BaseTooltip.Arrow
       className={cnState(
-        // `PopupArrow` marks it for the popup's `has-[.PopupArrow]:` and for `arrowPaddingIn`
-        "PopupArrow absolute size-2.5 rotate-45 bg-foreground",
+        // Marks it for the popup's `has-[.PopupArrow]:` and for `arrowPaddingIn`
+        POPUP_ARROW_CLASS,
+        "absolute size-2.5 rotate-45 bg-foreground",
         // Half the arrow's size, so its centre sits on the popup edge at any --spacing.
         "data-[side=top]:-bottom-1.25",
         "data-[side=bottom]:-top-1.25",

@@ -6,7 +6,7 @@ import { cn, cnState } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
 import { useReducedMotion } from "../../lib/use-motion";
 import { CloseIcon } from "../CloseIcon";
-import { RING_ANIMATION_CLASSES } from "../shared";
+import { RING_ANIMATION_CLASSES, TOAST_CONTENT_CLASS } from "../shared";
 import { DEFAULT_TOAST_LABELS, type ToastLabels } from "./Toast.Labels";
 
 /**
@@ -112,7 +112,9 @@ function ToastViewport({ className, labels, ...props }: ToastViewportProps) {
         return (
           <ToastRoot key={toast.id} toast={toast} className={toast.className}>
             {Icon && <Icon className={cn("size-5 shrink-0 self-start", toast.iconClassName)} />}
-            <BaseToast.Content className="ToastContent flex min-w-0 flex-1 flex-col gap-1">
+            <BaseToast.Content
+              className={`${TOAST_CONTENT_CLASS} flex min-w-0 flex-1 flex-col gap-1`}
+            >
               {toast.title != null && <ToastTitle>{toast.title}</ToastTitle>}
               {toast.description != null && (
                 <ToastDescription>{toast.description}</ToastDescription>
