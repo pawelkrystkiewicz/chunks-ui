@@ -4,6 +4,7 @@ import { useRender } from "@base-ui/react/use-render";
 import {
   createContext,
   type Dispatch,
+  isValidElement,
   type ReactNode,
   type SetStateAction,
   useContext,
@@ -129,6 +130,14 @@ export function OverlayBody({
 }: OverlayBodyProps & { marker: string }) {
   const { titleId } = useContext(TitleIdContext);
   const [overflows, ref] = useOverflows();
+  // A name on the Body, or on the element `render` gives it (its props are merged over these),
+  // wins over the Title: `aria-labelledby` would take precedence over its `aria-label` otherwise
+  const renderProps = isValidElement<Record<string, unknown>>(render) ? render.props : undefined;
+  const named =
+    props["aria-label"] ??
+    props["aria-labelledby"] ??
+    renderProps?.["aria-label"] ??
+    renderProps?.["aria-labelledby"];
   // Base UI's render: an element is cloned with these props, a function gets them
   return useRender({
     defaultTagName: "section",
@@ -138,7 +147,7 @@ export function OverlayBody({
       // The keyboard scrolls a scroll container only once it has the focus. One that fits is skipped
       // by Tab, yet stays focusable: a focused Body whose content shrinks to fit keeps the focus
       tabIndex: overflows ? 0 : -1,
-      "aria-labelledby": props["aria-label"] ? undefined : titleId,
+      "aria-labelledby": named ? undefined : titleId,
       className: cn(
         // The -m-1 p-1 gutter keeps the focus rings of full-width fields inside the scroll box, without moving them
         marker,

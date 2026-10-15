@@ -139,6 +139,17 @@ describe.each(OVERLAYS)("$name", ({ X, marker }) => {
     expect(body).not.toHaveAttribute("aria-labelledby");
   });
 
+  it("takes the name on the render element over the Title", () => {
+    renderBody(
+      <X.Title>New task</X.Title>,
+      <X.Body render={<form aria-label="Task fields" />}>
+        <input aria-label="Title" />
+      </X.Body>,
+    );
+    const body = screen.getByRole("form", { name: "Task fields" });
+    expect(body).not.toHaveAttribute("aria-labelledby");
+  });
+
   it("drops the name when the Title unmounts", () => {
     function Toggle({ title }: { title: boolean }) {
       return (
