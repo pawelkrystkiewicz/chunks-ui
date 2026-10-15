@@ -38,7 +38,7 @@ export function SelectField({
   ref?: Ref<HTMLButtonElement>;
 }) {
   return (
-    <Field.Root className="gap-2">
+    <Field.Root>
       <Field.Label>{label}</Field.Label>
       <Select.Root defaultValue={items[0]}>
         <Select.Trigger ref={ref}>
