@@ -255,6 +255,18 @@ describe("the fixture app", () => {
     for (const text of NEXT_TRIGGERS) expect(page).toContain(text);
   });
 
+  it("commits only entries that nextBuild() copies, so a new top-level one (public/) is not dropped silently", () => {
+    // git, not readdirSync: a local `next build` in the fixture leaves untracked files beside the app
+    const { exitCode, stdout } = Bun.spawnSync(["git", "ls-files", "."], {
+      cwd: join(dir, "next"),
+      stdout: "pipe",
+    });
+    expect(exitCode).toBe(0);
+    const committed = String(stdout).split("\n").filter(Boolean);
+    expect(committed).toContain("next.config.mjs");
+    expect(committed.filter((path) => !isNextAppFile(path))).toEqual([]);
+  });
+
   it("pins the next version of the docs app", () => {
     const docs = JSON.parse(readFileSync(join(dir, "../../apps/docs/package.json"), "utf8"));
     const range: string = docs.dependencies.next;
