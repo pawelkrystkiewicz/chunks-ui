@@ -128,7 +128,7 @@ const TOTAL = tally(CATEGORIES.flatMap((c) => Object.values(c.items)));
 
 const WRAP = "mx-auto max-w-[1200px] px-[clamp(22px,4vw,40px)]";
 const CELL =
-  "flex min-w-0 flex-col gap-3 border-(--l-line) border-r border-b px-7 pt-6 pb-8 text-(--l-fg) transition-colors duration-300 ease-in-out hover:bg-(--l-card)";
+  "flex min-w-0 flex-col gap-3 border-(--l-line) border-e border-b px-7 pt-6 pb-8 text-(--l-fg) transition-colors duration-300 ease-in-out hover:bg-(--l-card)";
 const TEXT_LINK = `inline-flex items-center gap-2 font-semibold text-(--l-fg) text-[14px] transition-colors duration-250 hover:text-primary-text ${FOCUS_RING}`;
 
 /** Internal routes go through next/link; files and external URLs stay plain anchors. */
@@ -189,11 +189,11 @@ function SectionHead({
   );
 }
 
-/** Hairline grid: each cell draws its right and bottom border; the frame hides the outer right edge. */
+/** Hairline grid: each cell draws its end and bottom border; the frame hides the outer end edge. */
 function Grid({ className, children }: { className: string; children: ReactNode }) {
   return (
     <div className="overflow-hidden border-(--l-line) border-t">
-      <div className={`-mr-px grid grid-cols-1 ${className}`}>{children}</div>
+      <div className={`-me-px grid grid-cols-1 ${className}`}>{children}</div>
     </div>
   );
 }
@@ -295,7 +295,7 @@ function Header() {
 
 const BADGE =
   "inline-flex items-center rounded-[4px] border border-white/15 bg-black/30 px-2.5 py-[5px]";
-const SQUARE = "mr-1.5 ml-0.5 inline-block size-1.5";
+const SQUARE = "me-1.5 ms-0.5 inline-block size-1.5";
 
 const BUILT_ON = [
   { label: "Base UI", href: "https://base-ui.com" },
@@ -426,7 +426,7 @@ function QuickStart() {
           {STEPS.map((s) => (
             <div key={s.step} className={CELL}>
               <CellMeta left={s.step} right={s.lang} />
-              <div className="mb-1 flex min-h-[76px] items-center gap-3 rounded-[10px] border border-(--l-line) bg-(--l-card) py-3 pr-3 pl-4">
+              <div className="mb-1 flex min-h-[76px] items-center gap-3 rounded-[10px] border border-(--l-line) bg-(--l-card) py-3 pe-3 ps-4">
                 <code className="min-w-0 flex-1 whitespace-pre-wrap break-words font-mono text-(--l-fg) text-[13px] leading-[1.6]">
                   {s.code}
                 </code>
@@ -478,7 +478,7 @@ function ComponentsSection() {
                   <div className="absolute inset-0 flex items-center justify-center px-5 pt-4 pb-[34px] font-sans text-[13px] text-foreground transition-transform duration-600 ease-fluid group-hover/card:scale-[1.03] motion-reduce:transition-none">
                     {c.preview}
                   </div>
-                  <span className="absolute bottom-2.5 left-2.5 rounded-full bg-black/70 px-[9px] py-1 font-mono text-[11px] text-white">
+                  <span className="absolute bottom-2.5 start-2.5 rounded-full bg-black/70 px-[9px] py-1 font-mono text-[11px] text-white">
                     docs →
                   </span>
                 </div>
@@ -540,7 +540,7 @@ function Principles() {
   );
 }
 
-const STATEMENT = "flex min-w-0 flex-col border-(--l-line) border-r border-b px-7 py-8";
+const STATEMENT = "flex min-w-0 flex-col border-(--l-line) border-e border-b px-7 py-8";
 const STATEMENT_LABEL = "font-mono text-primary-text text-[12px]";
 const STATEMENT_TEXT = "text-pretty text-(--l-fg) text-[20px] leading-normal tracking-[-.01em]";
 
@@ -596,7 +596,7 @@ function CreateSection() {
               <Cta href="/create">Open Create</Cta>
             </div>
           </div>
-          <div className="min-w-0 overflow-hidden border-(--l-line) border-r border-b">
+          <div className="min-w-0 overflow-hidden border-(--l-line) border-e border-b">
             <PresetGrid />
           </div>
         </Grid>
@@ -607,7 +607,7 @@ function CreateSection() {
 
 // Hover text is --l-brand-pale: over the brightest part of the gradient, a mid blue such as
 // oklch(70% .15 257) drops to 3.6:1 (390px wide) and 4.2:1 (1920px); --l-brand-pale keeps 5:1.
-const ROW = `flex flex-col gap-1 border-white/15 border-b py-[18px] text-left text-white transition-colors duration-300 hover:text-(--l-brand-pale) ${FOCUS_RING}`;
+const ROW = `flex flex-col gap-1 border-white/15 border-b py-[18px] text-start text-white transition-colors duration-300 hover:text-(--l-brand-pale) ${FOCUS_RING}`;
 const ROW_LABEL = "font-mono text-[11px] text-white/70 tracking-[.06em]";
 const ROW_VALUE = "font-semibold text-[20px] tracking-[-.015em]";
 

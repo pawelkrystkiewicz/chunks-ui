@@ -85,10 +85,10 @@ import { Button, Toast } from 'chunks-ui'
 import { AlertTriangle, CheckCircle2, Info, XCircle } from 'lucide-react'
 
 const TYPE_STYLES = {
-  primary:     { icon: Info,          iconClassName: 'text-primary-text',     className: 'border-l-4 border-primary' },
-  success:     { icon: CheckCircle2,  iconClassName: 'text-success-text',     className: 'border-l-4 border-success' },
-  destructive: { icon: XCircle,       iconClassName: 'text-destructive-text', className: 'border-l-4 border-destructive' },
-  warning:     { icon: AlertTriangle, iconClassName: 'text-warning-text',     className: 'border-l-4 border-warning' },
+  primary:     { icon: Info,          iconClassName: 'text-primary-text',     className: 'border-s-4 border-primary' },
+  success:     { icon: CheckCircle2,  iconClassName: 'text-success-text',     className: 'border-s-4 border-success' },
+  destructive: { icon: XCircle,       iconClassName: 'text-destructive-text', className: 'border-s-4 border-destructive' },
+  warning:     { icon: AlertTriangle, iconClassName: 'text-warning-text',     className: 'border-s-4 border-warning' },
 } as const
 
 type ToastType = keyof typeof TYPE_STYLES
@@ -156,22 +156,45 @@ add({
 
 That toast gets a `×` button in its top-end corner (top-right in left-to-right layouts, top-left in right-to-left ones) that dismisses it via Base UI's `Toast.Close`. Other toasts in the same viewport are unaffected — dismissibility is a per-toast concern, not a viewport-wide setting.
 
+`closeProps` takes the props of that button, as `actionProps` does for the action: `className` merges after the library classes, and `aria-label` replaces `labels.close` for that toast. Unlike `actionProps`, it does not render the button on its own: the button appears with `dismissible` or `onClose`. To keep the focus ring flush with the button instead of 2px outside it:
+
+```tsx
+add({
+  title: "Saved",
+  dismissible: true,
+  closeProps: { className: "focus-visible:outline-offset-0" },
+})
+```
+
 > **Note**: `dissmissable` is a deprecated misspelled alias of `dismissible`. When both are set, `dismissible` wins.
 
 ### Reacting to Close
 
-If you need to run a side effect when the user dismisses a toast — tracking analytics, offering an undo stack, syncing with a backend — pass `onClose`. It receives the close button's click event. Passing `onClose` also implicitly enables the close button, so you don't need to also set `dismissible`. The event doesn't say which toast closed; to know that, keep the id that `add()` returns:
+If you need to run a side effect when a toast closes, such as tracking analytics, offering an undo stack or syncing with a backend, pass `onClose`. It takes no arguments and fires once per close, whichever way the toast closes: the close button, the timeout, a swipe, Escape with focus inside the toast, or `manager.close`. Passing `onClose` also implicitly enables the close button, so you don't need to also set `dismissible`. To track a toast that closes by itself without showing a button, set `dismissible: false`. `onClose` doesn't say which toast closed; to know that, keep the id that `add()` returns:
 
 ```tsx
 const id = add({
   title: "Message archived",
   onClose: () => {
-    analytics.track('toast_dismissed', { id })
+    analytics.track('toast_closed', { id })
   },
 })
 ```
 
-`onClose` runs *in addition to* Base UI's built-in dismissal — it's for side effects, not for preventing the toast from closing.
+`onClose` runs *in addition to* Base UI's built-in dismissal. It is for side effects, not for preventing the toast from closing. To keep a toast open on a click of the close button, call `event.preventBaseUIHandler()` in `closeProps.onClick`: the toast stays and `onClose` does not fire. Set `timeout: 0` as well, or the timer closes the toast anyway:
+
+```tsx
+add({
+  title: "Unsaved changes",
+  timeout: 0,
+  dismissible: true,
+  closeProps: {
+    onClick: (event) => {
+      if (hasUnsaved) event.preventBaseUIHandler()
+    },
+  },
+})
+```
 
 ## Promise Toasts
 
@@ -256,7 +279,7 @@ Pass any subset of these at the call site. The fields below are chunks-ui additi
   definition={generateDefinition({
     code: `
 import type { ToastStyleOptions } from 'chunks-ui'
-type Props = Pick<ToastStyleOptions, 'icon' | 'iconClassName' | 'className' | 'dismissible' | 'onClose'>
+type Props = Pick<ToastStyleOptions, 'icon' | 'iconClassName' | 'className' | 'dismissible' | 'onClose' | 'closeProps'>
 export default Props
 `
   })}
@@ -264,7 +287,7 @@ export default Props
 
 ### Toast.Viewport
 
-`Toast.Viewport` is a thin style wrapper. It renders the toast list itself and forwards every other prop to Base UI's [`Toast.Viewport`](https://base-ui.com/react/components/toast#api-reference); `children` you pass are not rendered. All per-toast behaviour (`icon`, `iconClassName`, `className`, `dismissible`, `onClose`) lives on the individual `add()` call, not the container, so a single viewport can host a mix of dismissible and non-dismissible toasts, styled and unstyled ones, etc.
+`Toast.Viewport` is a thin style wrapper. It renders the toast list itself and forwards every other prop to Base UI's [`Toast.Viewport`](https://base-ui.com/react/components/toast#api-reference); `children` you pass are not rendered. All per-toast behaviour (`icon`, `iconClassName`, `className`, `dismissible`, `onClose`, `closeProps`) lives on the individual `add()` call, not the container, so a single viewport can host a mix of dismissible and non-dismissible toasts, styled and unstyled ones, etc.
 
 Only string-level overrides are worth knowing about here:
 

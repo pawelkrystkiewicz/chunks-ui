@@ -13,14 +13,23 @@ import { DEFAULT_SLIDER_LABELS, type SliderLabels } from "./Slider.Labels";
 // `range`: the slider has two values, the only case where Base UI adds range text to the thumbs
 const SliderLabelsContext = createContext({ labels: DEFAULT_SLIDER_LABELS, range: false });
 
-export type SliderRootProps = ComponentProps<typeof BaseSlider.Root> & {
-  /**
-   * Replaces the built-in English strings, e.g. to translate them. Keys you leave out keep the
-   * default from `DEFAULT_SLIDER_LABELS`. `getAriaValueText` and `aria-valuetext` on a thumb take
-   * precedence.
-   */
-  labels?: Partial<SliderLabels>;
-};
+// The union is written out, not aliased: a local alias named SliderValue would clash with the
+// SliderValue component in consumers' error messages.
+/**
+ * `Value` is the type of `value`, `defaultValue` and the value `onValueChange` receives: a
+ * `number`, or an array of them for a range slider. It is inferred from `value`, `defaultValue` or an annotated `onValueChange`,
+ * so a typed `useState` setter is an `onValueChange`. Without either it is
+ * `number | readonly number[]`.
+ */
+export type SliderRootProps<Value extends number | readonly number[] = number | readonly number[]> =
+  BaseSlider.Root.Props<Value> & {
+    /**
+     * Replaces the built-in English strings, e.g. to translate them. Keys you leave out keep the
+     * default from `DEFAULT_SLIDER_LABELS`. `getAriaValueText` and `aria-valuetext` on a thumb take
+     * precedence.
+     */
+    labels?: Partial<SliderLabels>;
+  };
 export type SliderValueProps = ComponentProps<typeof BaseSlider.Value>;
 export type SliderControlProps = ComponentProps<typeof BaseSlider.Control>;
 export type SliderTrackProps = ComponentProps<typeof BaseSlider.Track>;
@@ -31,7 +40,11 @@ export type SliderThumbProps = ComponentProps<typeof BaseSlider.Thumb>;
 // Components
 // ---------------------------------------------------------------------------
 
-function SliderRoot({ className, labels, ...props }: SliderRootProps) {
+function SliderRoot<Value extends number | readonly number[] = number | readonly number[]>({
+  className,
+  labels,
+  ...props
+}: SliderRootProps<Value>) {
   const value = props.value ?? props.defaultValue;
   const range = Array.isArray(value) && value.length === 2;
   return (
