@@ -44,7 +44,7 @@ export function TeamCard() {
               <Select.Root defaultValue={m.role}>
                 <Select.Trigger
                   aria-label={`Role for ${m.name}`}
-                  className="h-[calc(var(--spacing-ui-height)-7px)] w-auto gap-1 pr-2 pl-3 text-xs"
+                  className="h-[calc(var(--spacing-ui-height)-7px)] w-auto gap-1 pe-2 ps-3 text-xs"
                 >
                   <Select.Value />
                   <Select.Icon />
