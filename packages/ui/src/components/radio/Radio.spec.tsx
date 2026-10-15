@@ -1,6 +1,7 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { axe } from "jest-axe";
 import { afterEach, describe, expect, it } from "vitest";
+import { FOCUS_RING } from "../shared";
 import { Radio } from "./Radio";
 
 afterEach(cleanup);
@@ -89,5 +90,31 @@ describe("Radio", () => {
     await waitFor(() => {
       expect(screen.getByTestId("ind")).toBeInTheDocument();
     });
+  });
+});
+
+describe("Radio focus ring", () => {
+  const root = (className?: string) =>
+    render(
+      <Radio.Group>
+        <Radio.Root value="a" className={className} />
+      </Radio.Group>,
+    );
+
+  it("draws the library focus ring on Root", () => {
+    root();
+    expect(screen.getByRole("radio")).toHaveClass(...FOCUS_RING.split(" "));
+  });
+
+  // Both offsets are in one tailwind-merge group under the same variant: the consumer's wins
+  it("keeps a flush ring with focus-visible:outline-offset-0 in className", () => {
+    root("focus-visible:outline-offset-0");
+    const radio = screen.getByRole("radio");
+    expect(radio).toHaveClass(
+      "focus-visible:outline-offset-0",
+      "focus-visible:outline-2",
+      "focus-visible:outline-ring",
+    );
+    expect(radio).not.toHaveClass("focus-visible:outline-offset-2");
   });
 });

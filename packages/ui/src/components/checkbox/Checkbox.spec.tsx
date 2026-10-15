@@ -1,6 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { axe } from "jest-axe";
 import { afterEach, describe, expect, it } from "vitest";
+import { FOCUS_RING } from "../shared";
 import { Checkbox } from "./Checkbox";
 
 afterEach(cleanup);
@@ -41,5 +42,24 @@ describe("Checkbox", () => {
       </Checkbox.Root>,
     );
     expect(await axe(container)).toHaveNoViolations();
+  });
+});
+
+describe("Checkbox focus ring", () => {
+  it("draws the library focus ring on Root", () => {
+    render(<Checkbox.Root />);
+    expect(screen.getByRole("checkbox")).toHaveClass(...FOCUS_RING.split(" "));
+  });
+
+  // Both offsets are in one tailwind-merge group under the same variant: the consumer's wins
+  it("keeps a flush ring with focus-visible:outline-offset-0 in className", () => {
+    render(<Checkbox.Root className="focus-visible:outline-offset-0" />);
+    const root = screen.getByRole("checkbox");
+    expect(root).toHaveClass(
+      "focus-visible:outline-offset-0",
+      "focus-visible:outline-2",
+      "focus-visible:outline-ring",
+    );
+    expect(root).not.toHaveClass("focus-visible:outline-offset-2");
   });
 });
