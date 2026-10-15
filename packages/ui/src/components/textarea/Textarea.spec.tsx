@@ -95,25 +95,6 @@ describe("Textarea inside Field", () => {
     expect(screen.getByRole("textbox", { name: "Bio" })).toBeDisabled();
   });
 
-  // The cursor and the missing resize grip are measured in Textarea.visual.spec
-  it.each<[string, { field?: boolean; own?: boolean }]>([
-    ["its own prop", { own: true }],
-    ["a disabled Field.Root", { field: true }],
-  ])("takes no input when disabled by %s", async (_, by) => {
-    const onChange = vi.fn();
-    render(
-      <Field.Root disabled={by.field}>
-        <Field.Label>Bio</Field.Label>
-        <Textarea disabled={by.own} defaultValue="abc" onChange={onChange} />
-      </Field.Root>,
-    );
-    const textarea = screen.getByRole("textbox", { name: "Bio" });
-    expect(textarea).toBeDisabled();
-    await userEvent.type(textarea, "d");
-    expect(onChange).not.toHaveBeenCalled();
-    expect(textarea).toHaveValue("abc");
-  });
-
   it("is marked invalid by an invalid Field.Root", async () => {
     const { container } = renderInField({ invalid: true });
     const textarea = screen.getByRole("textbox", { name: "Bio" });

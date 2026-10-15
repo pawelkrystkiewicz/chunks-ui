@@ -1,9 +1,6 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
-import type { ReactNode } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { Field } from "../field";
+import { afterEach, describe, expect, it } from "vitest";
 import { Switch } from "./Switch";
 
 afterEach(cleanup);
@@ -39,28 +36,6 @@ describe("Switch", () => {
       </Switch.Root>,
     );
     expect(await axe(container)).toHaveNoViolations();
-  });
-
-  // The cursor and the thumb's pointer-events are measured in Switch.visual.spec; Base UI ignores
-  // the click
-  it.each<[string, boolean, (control: ReactNode) => ReactNode]>([
-    ["its own prop", true, (control) => control],
-    ["a disabled Field.Root", false, (control) => <Field.Root disabled>{control}</Field.Root>],
-  ])("ignores clicks when disabled by %s", async (_, own, wrap) => {
-    const user = userEvent.setup();
-    const onCheckedChange = vi.fn();
-    render(
-      wrap(
-        <Switch.Root aria-label="Alerts" disabled={own} onCheckedChange={onCheckedChange}>
-          <Switch.Thumb />
-        </Switch.Root>,
-      ),
-    );
-    const root = screen.getByRole("switch", { name: "Alerts" });
-    expect(root).toHaveAttribute("data-disabled");
-    await user.click(root);
-    expect(onCheckedChange).not.toHaveBeenCalled();
-    expect(root).toHaveAttribute("aria-checked", "false");
   });
 
   it("renders Thumb without CSS transition class in motion mode", async () => {

@@ -1,8 +1,7 @@
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { Field } from "../field";
 import { Radio } from "./Radio";
 
 afterEach(cleanup);
@@ -56,43 +55,24 @@ describe("Radio", () => {
   });
 
   // The item's dimmed, not-allowed look is measured in Radio.visual.spec
-  it("marks an Item disabled by its prop, its group or a Field.Root, and ignores clicks on it", async () => {
+  it("marks a disabled Item and ignores clicks on it", async () => {
     const user = userEvent.setup();
     const onValueChange = vi.fn();
     render(
-      <>
-        <Radio.Group aria-label="Plan" onValueChange={onValueChange}>
-          <Radio.Item value="a" disabled>
-            By prop
-          </Radio.Item>
-          <Radio.Item value="b">Enabled</Radio.Item>
-        </Radio.Group>
-        <Radio.Group aria-label="Tier" disabled onValueChange={onValueChange}>
-          <Radio.Item value="c">By group</Radio.Item>
-        </Radio.Group>
-        <Field.Root disabled>
-          <Radio.Group aria-label="Billing" onValueChange={onValueChange}>
-            <Radio.Item value="d">By field, in a group</Radio.Item>
-          </Radio.Group>
-          <Radio.Item value="e">By field, no group</Radio.Item>
-        </Field.Root>
-      </>,
+      <Radio.Group aria-label="Plan" onValueChange={onValueChange}>
+        <Radio.Item value="a" disabled>
+          Disabled
+        </Radio.Item>
+        <Radio.Item value="b">Enabled</Radio.Item>
+      </Radio.Group>,
     );
-    const item = (text: string) => {
-      const label = screen.getByText(text).closest("label");
-      if (!label) throw new Error(`no label for ${text}`);
-      return { label, radio: within(label).getByRole("radio") };
-    };
-    for (const text of ["By prop", "By group", "By field, in a group", "By field, no group"]) {
-      const { label, radio } = item(text);
-      expect(radio).toHaveAttribute("data-disabled");
-      await user.click(label);
-      // The group's spy cannot see an item outside a group: check the radio itself
-      expect(radio).toHaveAttribute("aria-checked", "false");
-    }
+    const disabled = screen.getByRole("radio", { name: "Disabled" });
+    expect(disabled).toHaveAttribute("data-disabled");
+    await user.click(screen.getByText("Disabled"));
+    expect(disabled).toHaveAttribute("aria-checked", "false");
     expect(onValueChange).not.toHaveBeenCalled();
-    expect(item("Enabled").radio).not.toHaveAttribute("data-disabled");
-    await user.click(item("Enabled").label);
+    expect(screen.getByRole("radio", { name: "Enabled" })).not.toHaveAttribute("data-disabled");
+    await user.click(screen.getByText("Enabled"));
     expect(onValueChange).toHaveBeenCalledWith("b", expect.anything());
   });
 

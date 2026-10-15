@@ -27,8 +27,6 @@ describe("Textarea", () => {
     await expect(fixture).toMatchScreenshot();
   });
 
-  // pointer-events: none would hide the not-allowed cursor; a disabled textarea takes no input.
-  // It would also have kept the resize grip from dragging: Chromium resizes a disabled textarea.
   it("shows a not-allowed cursor and no resize grip on a disabled textarea", () => {
     const { getByRole } = render(
       <div>

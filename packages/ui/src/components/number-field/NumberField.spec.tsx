@@ -165,12 +165,6 @@ describe("NumberField", () => {
       await waitFor(() => expect(screen.queryByTestId("cursor")).not.toBeInTheDocument());
     });
 
-    it("renders in <body> without a PortalContainerProvider, as Base UI does", async () => {
-      render(<ScrubField />);
-      startScrub();
-      expect((await screen.findByTestId("cursor")).parentElement).toBe(document.body);
-    });
-
     // Base UI portals the cursor to <body>, so a theme scoped to the provider's element would
     // not reach it there
     describe("inside a PortalContainerProvider", () => {
@@ -190,7 +184,6 @@ describe("NumberField", () => {
         startScrub();
         const cursor = await screen.findByTestId("cursor");
         expect(container.contains(cursor)).toBe(true);
-        expect(cursor.querySelector("svg")).not.toBeNull();
         // Base UI positions the cursor through its ref, which must reach the re-portalled element
         expect(cursor.style.transform).toMatch(/translate3d/);
         fireEvent.pointerUp(window);

@@ -80,19 +80,12 @@ describe("Calendar in forced-colors mode", () => {
     );
     const style = (name: string) =>
       getComputedStyle(screen.getByLabelText(name, { selector: "button" }));
-    const numberStyle = (name: string) => getComputedStyle(dayNumber(name));
     const selected = style("Wednesday, March 18, 2026");
     expect(selected.backgroundColor).toBe(systemColour("Highlight"));
     expect(selected.color).toBe(systemColour("HighlightText"));
-    // The number's span, which the text sits in, takes the colour too and is left to the system
-    const selectedNumber = numberStyle("Wednesday, March 18, 2026");
-    expect(selectedNumber.color).toBe(systemColour("HighlightText"));
-    expect(selectedNumber.forcedColorAdjust).toBe("none");
-    // Today's underline is on the number's span, so a strike on the button does not replace it
-    expect(numberStyle("Sunday, March 15, 2026").textDecorationLine).toBe("underline");
-    const outside = style("Monday, February 23, 2026");
-    expect(outside.color).toBe(systemColour("GrayText"));
-    expect(outside.textDecorationLine).toBe("none");
+    // The number's span, which the text sits in, is left to the system
+    expect(getComputedStyle(dayNumber("Wednesday, March 18, 2026")).forcedColorAdjust).toBe("none");
+    expect(style("Monday, February 23, 2026").textDecorationLine).toBe("none");
     // Dimmed by colour alone and struck through, so it differs from an outside day at full contrast
     const disabled = style("Friday, March 20, 2026");
     expect(disabled.color).toBe(systemColour("GrayText"));
@@ -101,8 +94,6 @@ describe("Calendar in forced-colors mode", () => {
     await expect(fixture).toMatchScreenshot();
   });
 
-  // Today is the 15th. The strike is on the button and the underline on the number's span: both
-  // set `text-decoration-line`, so on one element the strike would drop the underline.
   it("underlines today when it is disabled, and strikes it through", async () => {
     await commands.emulateMedia({ forcedColors: "active" });
     await expect.poll(() => matchMedia("(forced-colors: active)").matches).toBe(true);

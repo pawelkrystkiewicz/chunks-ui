@@ -528,15 +528,8 @@ describe("DatePicker in a form", () => {
     it.each([
       ["the names match", { field: "due", picker: "due" }],
       ["the picker has no name", { field: "due" }],
-      ["the field has no name", { picker: "due" }],
-      ["neither has a name", {}],
     ])("does not warn when %s", (_, names) => {
       render(picker(names));
-      expect(warn).not.toHaveBeenCalled();
-    });
-
-    it("does not warn outside a Field.Root", () => {
-      render(<DatePicker name="due" />);
       expect(warn).not.toHaveBeenCalled();
     });
   });

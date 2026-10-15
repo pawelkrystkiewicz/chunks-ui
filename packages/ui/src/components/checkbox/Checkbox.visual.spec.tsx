@@ -37,7 +37,6 @@ describe("Checkbox", () => {
     await expect(fixture).toMatchScreenshot();
   });
 
-  // pointer-events: none would hide the not-allowed cursor; Base UI ignores the click anyway
   it("shows a not-allowed cursor on a disabled checkbox, and a click does not check it", async () => {
     const { getByRole } = render(
       <div>

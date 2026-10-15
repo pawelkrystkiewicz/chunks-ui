@@ -33,7 +33,6 @@ describe("Switch", () => {
 });
 
 describe("Switch disabled", () => {
-  // pointer-events: none would hide the not-allowed cursor; Base UI ignores the click anyway
   it("shows a not-allowed cursor on the root and the thumb, and a click does not switch it on", async () => {
     const { getByRole, getByTestId } = render(
       <div>
