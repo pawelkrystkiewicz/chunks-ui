@@ -5,8 +5,8 @@
  * the oldest does not generate a class the installed one does: a consumer on that version would
  * get no CSS for it, and no error.
  *
- * Tailwind does not scan CSS files, so a utility that theme.css defines with `@utility` and that no
- * component uses (`touch-target`) would not be compiled. Both versions also scan a file that lists
+ * Tailwind does not scan CSS files, so a utility that theme.css (or a stylesheet it imports) defines
+ * with `@utility` and that no component uses (`touch-target`) would not be compiled. Both versions also scan a file that lists
  * each of those utilities, and the installed one must generate them all. The run fails when that
  * list is empty or lacks `touch-target`, so the check cannot pass without testing anything.
  *
@@ -19,7 +19,7 @@
  *
  * Run: bun run check:tailwind (builds chunks-ui first)
  */
-import { cpSync, mkdtempSync, rmSync } from "node:fs";
+import { cpSync, mkdtempSync, readFileSync, realpathSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
@@ -28,11 +28,11 @@ const UI = join(import.meta.dirname, "../packages/ui");
 const FIXTURE = join(import.meta.dirname, "tailwind-4.0");
 const THEME = join(UI, "dist/theme.css");
 const CLASS = /\.(-?(?:[\w-]|\\[0-9a-fA-F]{1,6} ?|\\.)+)/g;
-/** A class from Button's base variants, which stays in chunks-ui. */
+/** A class from Button's variants, wherever they live: the built code always carries it. */
 const KNOWN_CLASS = "disabled:pointer-events-none";
 /**
  * A utility theme.css defines with `@utility` and no component uses; it keeps the check honest
- * if the utilities ever move out of this file (assertThemeUtilities fails the run then).
+ * if the utilities ever move where the scan does not follow (assertThemeUtilities fails the run then).
  */
 const KNOWN_UTILITY = "touch-target";
 const ESCAPE = /\\([0-9a-fA-F]{1,6}) ?|\\(.)/g;
@@ -43,11 +43,35 @@ export function themeUtilities(css: string): string[] {
   return [...rules].map(([, name = ""]) => name);
 }
 
-/** Throws when `utilities` (what themeUtilities read from THEME) lacks KNOWN_UTILITY. */
+/**
+ * The utilities `file` and the stylesheets it `@import`s define: a relative specifier from its
+ * directory, a bare one (`chunks-ui-core/theme.css`) through node_modules from there. Tailwind's
+ * own imports and a specifier that does not resolve to a `.css` file are Tailwind's to compile,
+ * so they are skipped. Each file is read once (`seen`, by real path: node_modules and macOS temp
+ * directories are symlinks), so an import cycle ends.
+ */
+export function themeUtilitiesIn(file: string, seen = new Set<string>()): string[] {
+  const path = realpathSync(file);
+  if (seen.has(path)) return [];
+  seen.add(path);
+  const css = readFileSync(path, "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+  const imported = [...css.matchAll(/@import\s+["']([^"']+)["']/g)].flatMap(([, spec = ""]) => {
+    if (/^tailwindcss(\/|$)/.test(spec)) return [];
+    try {
+      const target = Bun.resolveSync(spec, dirname(path));
+      return target.endsWith(".css") ? themeUtilitiesIn(target, seen) : [];
+    } catch {
+      return [];
+    }
+  });
+  return [...themeUtilities(css), ...imported];
+}
+
+/** Throws when `utilities` (what themeUtilitiesIn read from THEME) lacks KNOWN_UTILITY. */
 export function assertThemeUtilities(utilities: readonly string[]) {
   if (!utilities.includes(KNOWN_UTILITY)) {
     throw new Error(
-      `${THEME} defines no @utility, or lacks ${KNOWN_UTILITY}: the scan broke or the utility moved`,
+      `${THEME} and the stylesheets it imports define no @utility, or lack ${KNOWN_UTILITY}: the scan broke or the utility moved`,
     );
   }
 }
@@ -91,7 +115,7 @@ export function scanProblem(
   }
   const absent = utilities.filter((name) => !names.has(name));
   if (absent.length > 0) {
-    return `Tailwind ${version} did not generate ${absent.join(", ")}, defined with @utility in ${THEME}: the scan of the file that lists them is broken.`;
+    return `Tailwind ${version} did not generate ${absent.join(", ")}, defined with @utility in ${THEME} or a stylesheet it imports: the scan of the file that lists them is broken.`;
   }
 }
 
@@ -127,9 +151,9 @@ async function compileOldest(css: string, dir: string): Promise<string> {
   return await Bun.file(join(dir, "output.css")).text();
 }
 
-/** The CSS of the installed version and of OLDEST, and the utilities theme.css defines. */
+/** The CSS of the installed version and of OLDEST, and the utilities theme.css and its imports define. */
 async function compileBoth() {
-  const utilities = themeUtilities(await Bun.file(THEME).text());
+  const utilities = themeUtilitiesIn(THEME);
   assertThemeUtilities(utilities);
   const dir = mkdtempSync(join(tmpdir(), `tailwind-${OLDEST}-`));
   try {
@@ -156,7 +180,7 @@ if (import.meta.main) {
   const missing = missingClasses(oldest, installed);
   if (missing.length > 0) {
     problems.push(
-      `Tailwind ${version} generates these classes for chunks-ui, and ${OLDEST} does not (a name can come from a word in a comment or string in packages/ui/dist/*.js, not only a class in use):\n${missing.map((name) => `  ${name}`).join("\n")}`,
+      `Tailwind ${version} generates these classes for chunks-ui, and ${OLDEST} does not (a name can come from a word in a comment or string in the built files the theme's @source scans, not only a class in use):\n${missing.map((name) => `  ${name}`).join("\n")}`,
     );
   }
   if (problems.length > 0) {
