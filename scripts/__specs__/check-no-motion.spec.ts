@@ -1,5 +1,12 @@
 import { describe, expect, it } from "bun:test";
-import { typesProblem, withMotionProblem, withoutMotionProblem } from "../check-no-motion";
+import {
+  NEXT_TRIGGERS,
+  nextWithMotionProblem,
+  nextWithoutMotionProblem,
+  typesProblem,
+  withMotionProblem,
+  withoutMotionProblem,
+} from "../check-no-motion";
 
 // Shaped like webpack 5's output: the location, then the resolve problem, then the summary
 const MISSING = (
@@ -69,5 +76,86 @@ describe("typesProblem", () => {
     const problem = typesProblem(2, output);
     expect(problem).not.toContain("MotionLike");
     expect(problem).toContain(output);
+  });
+});
+
+// Shaped like Next 16's Turbopack output
+const NEXT_OK = `▲ Next.js 16.4.0 (Turbopack)
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 1282ms
+✓ Generating static pages using 4 workers (3/3) in 148ms
+
+Route (app)
+┌ ○ /
+└ ○ /_not-found
+`;
+const NEXT_UNRESOLVED = `▲ Next.js 16.4.0 (Turbopack)
+
+  Creating an optimized production build ...
+Failed to compile.
+
+./node_modules/chunks-ui/dist/index.js:792:9
+Module not found: Can't resolve 'motion/react'
+`;
+const [DIALOG, TOOLTIP] = NEXT_TRIGGERS;
+const PAGE = `<!DOCTYPE html><html lang="en"><body><main><button type="button" aria-haspopup="dialog">${DIALOG}</button><button type="button">${TOOLTIP}</button></main></body></html>`;
+
+describe("nextWithoutMotionProblem", () => {
+  it("accepts a build that exited 0 and exported both triggers", () => {
+    expect(nextWithoutMotionProblem(0, NEXT_OK, PAGE)).toBeUndefined();
+  });
+
+  it("names the turbopackOptional comment when Turbopack cannot resolve motion/react, and keeps the output", () => {
+    const problem = nextWithoutMotionProblem(1, NEXT_UNRESOLVED, undefined);
+    expect(problem).toContain("turbopackOptional");
+    expect(problem).toContain(NEXT_UNRESOLVED);
+  });
+
+  it("rejects any other failed build without the hint", () => {
+    const output = "Type error: Property 'Root' does not exist on type 'Dialog'.\n";
+    const problem = nextWithoutMotionProblem(1, output, undefined);
+    expect(problem).not.toContain("turbopackOptional");
+    expect(problem).toContain(output);
+  });
+
+  it("rejects a build that exported no page", () => {
+    expect(nextWithoutMotionProblem(0, NEXT_OK, undefined)).toContain('output: "export"');
+  });
+
+  it("names the trigger the exported page lacks", () => {
+    const problem = nextWithoutMotionProblem(0, NEXT_OK, PAGE.replace(TOOLTIP, ""));
+    expect(problem).toContain(`"${TOOLTIP}"`);
+    expect(problem).not.toContain(`"${DIALOG}"`);
+  });
+});
+
+describe("nextWithMotionProblem", () => {
+  const page = file("09pgpbowlrzbr.js", `${DIALOG} DialogBody`);
+  const motion = file("3s70qt748849t.js", "MotionGlobalConfig");
+
+  it("accepts a clean build with Motion in a chunk apart from the page", () => {
+    expect(nextWithMotionProblem(0, NEXT_OK, [page, motion])).toBeUndefined();
+  });
+
+  it("rejects a failed build and keeps its output", () => {
+    const output = "Failed to compile.\n";
+    expect(nextWithMotionProblem(1, output, [])).toContain(output);
+  });
+
+  it("names the chunk that keeps a bare import", () => {
+    const bare = file("09pgpbowlrzbr.js", `${DIALOG} x=import("motion/react")`);
+    expect(nextWithMotionProblem(0, NEXT_OK, [bare, motion])).toContain("09pgpbowlrzbr.js");
+  });
+
+  it("rejects a build with no chunk holding Motion's code", () => {
+    expect(nextWithMotionProblem(0, NEXT_OK, [page, file("3s70qt748849t.js", "other")])).toContain(
+      "MotionGlobalConfig",
+    );
+  });
+
+  it("rejects Motion inlined into the page's chunk", () => {
+    const inlined = file("09pgpbowlrzbr.js", `${DIALOG} MotionGlobalConfig`);
+    expect(nextWithMotionProblem(0, NEXT_OK, [inlined])).toContain("09pgpbowlrzbr.js");
   });
 });
