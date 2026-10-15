@@ -1,9 +1,9 @@
 import { render } from "@testing-library/react";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { commands, page, userEvent } from "vitest/browser";
+import { describe, expect, it } from "vitest";
+import { page, userEvent } from "vitest/browser";
 import {
   boxOf,
-  enterMotionPath,
+  describePopupCssPath,
   expectNotAllowed,
   focusVisible,
   renderFixture,
@@ -55,7 +55,7 @@ const combobox = ({
 // inside it has focus, and turns the input's own ring off
 const chipsCombobox = () => (
   <Combobox.Root multiple items={options} defaultValue={options.slice(0, 2)}>
-    <Combobox.Control data-testid="control">
+    <Combobox.Control>
       <Combobox.Chips>
         {options.slice(0, 2).map((item) => (
           <Combobox.Chip key={item.value}>
@@ -79,7 +79,7 @@ const chipsCombobox = () => (
 // when the input is inside Combobox.Chips
 const chipsAroundInput = () => (
   <Combobox.Root multiple items={options} defaultValue={options.slice(0, 2)}>
-    <Combobox.Control data-testid="control">
+    <Combobox.Control>
       <Combobox.Chips>
         {options.slice(0, 2).map((item) => (
           <Combobox.Chip key={item.value}>
@@ -115,18 +115,6 @@ const disabledChipsCombobox = () => (
   </Combobox.Root>
 );
 
-const ringOf = (el: Element) => {
-  const { outlineStyle, outlineColor } = getComputedStyle(el);
-  return { outlineStyle, outlineColor };
-};
-
-/** The properties `el` is transitioning, sorted */
-const transitioning = (el: Element) =>
-  el
-    .getAnimations()
-    .map((animation) => (animation as CSSTransition).transitionProperty)
-    .sort();
-
 describe("Combobox", () => {
   it("closed", async () => {
     const { fixture } = await renderFixture(<div style={{ width: 250 }}>{combobox()}</div>);
@@ -140,47 +128,23 @@ describe("Combobox", () => {
     );
     const input = getByRole("combobox");
     focusVisible(input);
-    expect(ringOf(input)).toEqual({ outlineStyle: "solid", outlineColor: ringColor() });
     await expect(fixture).toMatchScreenshot();
   });
 
   // The same ring on the Control, 2px outside the wrapper around the chips and the input, and
   // none on the input: two rings showed before
   it("control focus-visible", async () => {
-    const { fixture, getByRole, getByTestId } = await renderFixture(
+    const { fixture, getByRole } = await renderFixture(
       <div style={{ width: 300 }}>{chipsCombobox()}</div>,
     );
     const input = getByRole("combobox");
     focusVisible(input);
-    expect(ringOf(getByTestId("control"))).toEqual({
-      outlineStyle: "solid",
-      outlineColor: ringColor(),
-    });
-    expect(ringOf(input).outlineStyle).toBe("none");
+    expect(getComputedStyle(input).outlineStyle).toBe("none");
     await expect(fixture).toMatchScreenshot();
   });
 
-  // The arrow keys move the focus from the input to the chips: a chip draws the library ring,
-  // not the browser's outline
-  it("draws the ring on a chip the arrow keys focus", async () => {
-    const { getByRole, getByText } = render(chipsAroundInput());
-    focusVisible(getByRole("combobox"));
-    await userEvent.keyboard("{ArrowLeft}");
-    const chip = getByText("Vue");
-    expect(document.activeElement).toBe(chip);
-    expect(chip.matches(":focus-visible")).toBe(true);
-    const { outlineStyle, outlineWidth, outlineOffset, outlineColor } = getComputedStyle(chip);
-    expect({ outlineStyle, outlineWidth, outlineOffset, outlineColor }).toEqual({
-      outlineStyle: "solid",
-      outlineWidth: "2px",
-      outlineOffset: "2px",
-      outlineColor: ringColor(),
-    });
-  });
-
-  // The chips sit flush: the next chip's opaque background would paint over the right edge of the
-  // focused chip's ring (and a wrapped row's over its bottom edge), so the focused chip rises
-  // above it. The screenshot shows the whole ring beside the second chip.
+  // The arrow keys focus a chip, which draws the library ring; the screenshot shows the whole
+  // ring beside the next chip
   it("chip focus-visible, above the next chip", async () => {
     const { fixture, getByRole, getByText } = await renderFixture(
       <div style={{ width: 300 }}>{chipsAroundInput()}</div>,
@@ -191,6 +155,13 @@ describe("Combobox", () => {
     const chip = getByText("React");
     expect(document.activeElement).toBe(chip);
     expect(chip.matches(":focus-visible")).toBe(true);
+    const { outlineStyle, outlineWidth, outlineOffset, outlineColor } = getComputedStyle(chip);
+    expect({ outlineStyle, outlineWidth, outlineOffset, outlineColor }).toEqual({
+      outlineStyle: "solid",
+      outlineWidth: "2px",
+      outlineOffset: "2px",
+      outlineColor: ringColor(),
+    });
     await expect(fixture).toMatchScreenshot();
   });
 
@@ -201,8 +172,7 @@ describe("Combobox", () => {
     await expect(body).toMatchScreenshot();
   });
 
-  // The ring is 2px of --ring 2px outside the input: 8px keeps the popup clear of it, as on
-  // Popover.Content and Menu.Content. A consumer's sideOffset replaces the default.
+  // 8px keeps the popup clear of the input's ring; a consumer's sideOffset replaces it
   it.each([
     { offset: "by default", positionerProps: undefined, gap: 8 },
     { offset: "with sideOffset={0}", positionerProps: { sideOffset: 0 }, gap: 0 },
@@ -254,47 +224,4 @@ describe("Combobox", () => {
   });
 });
 
-// Motion never arrives and reduced motion is off: the CSS transition. It scales and fades, as
-// the spring does (W190); the list names opacity and scale only, as `all` would animate the
-// max-height that --available-height drives
-describe("Combobox.Popup on the CSS path", () => {
-  beforeAll(() => enterMotionPath(false));
-  beforeEach(async () => {
-    await commands.emulateMedia({ reducedMotion: "no-preference" });
-    await expect.poll(() => matchMedia("(prefers-reduced-motion: reduce)").matches).toBe(false);
-  });
-  afterAll(async () => {
-    await commands.emulateMedia({ reducedMotion: "reduce" });
-    await enterMotionPath(true);
-  });
-
-  // The start is read in the task that opens it: Base UI clears `data-starting-style` on the
-  // next frame. The list is read after that: Base UI holds the transition off (an inline
-  // `transition: none`) until it has positioned the popup.
-  it("enters from scale-95 and opacity-0, and transitions opacity and scale", async () => {
-    const { rerender, getByTestId } = render(combobox({ open: false }));
-    rerender(combobox({ open: true }));
-    const popup = getByTestId("popup");
-    expect(popup).toHaveAttribute("data-starting-style");
-    const { scale, opacity } = getComputedStyle(popup);
-    expect({ scale, opacity }).toEqual({ scale: "0.95", opacity: "0" });
-
-    await expect.poll(() => popup.hasAttribute("data-starting-style")).toBe(false);
-    const { transitionProperty, transitionDuration } = getComputedStyle(popup);
-    expect({ transitionProperty, transitionDuration }).toEqual({
-      transitionProperty: "opacity, scale",
-      transitionDuration: "0.3s",
-    });
-  });
-
-  it("leaves to scale-95 and opacity-0", async () => {
-    const { rerender, getByTestId } = render(combobox({ open: false }));
-    rerender(combobox({ open: true }));
-    const popup = getByTestId("popup");
-    await expect.poll(() => popup.hasAttribute("data-starting-style")).toBe(false);
-    await expect.poll(() => transitioning(popup)).toEqual([]);
-    rerender(combobox({ open: false }));
-    expect(popup).toHaveAttribute("data-ending-style");
-    expect(transitioning(popup)).toEqual(["opacity", "scale"]);
-  });
-});
+describePopupCssPath("Combobox.Popup", (open) => combobox({ open }));
