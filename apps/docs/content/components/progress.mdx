@@ -38,11 +38,11 @@ Pass `value={null}` to activate the indeterminate pulse animation:
 
 <ProgressIndeterminateExample />
 
-To replace the pulse, add a `data-[indeterminate]:animate-*` class to the indicator, such as `data-[indeterminate]:animate-none`. An `animate-*` class without the `data-[indeterminate]:` prefix does not replace it.
+To replace the pulse, add a `data-indeterminate:animate-*` class to the indicator, such as `data-indeterminate:animate-none`. An `animate-*` class without the `data-indeterminate:` prefix does not replace it.
 
 ### Reduced motion
 
-With `prefers-reduced-motion: reduce`, the indeterminate pulse keeps running. It is an essential status indicator, like the [Loader](/components/loader) spinner: without it, an indeterminate bar is a static block that gives no sign of activity. To stop the pulse with reduced motion, add `data-[indeterminate]:motion-reduce:animate-none` to the indicator. The determinate bar does not transition its width, so it jumps to each new value.
+With `prefers-reduced-motion: reduce`, the indeterminate pulse keeps running. It is an essential status indicator, like the [Loader](/components/loader) spinner: without it, an indeterminate bar is a static block that gives no sign of activity. To stop the pulse with reduced motion, add `data-indeterminate:motion-reduce:animate-none` to the indicator. The determinate bar does not transition its width, so it jumps to each new value.
 
 ## Animated
 

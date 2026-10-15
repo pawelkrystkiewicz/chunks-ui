@@ -31,7 +31,7 @@ Set `defaultOpen` to render the panel expanded on first mount:
 <Collapsible.Root defaultOpen>
   <Collapsible.Trigger className="group flex items-center gap-1.5">
     Shipping information
-    <ChevronRightIcon className="size-4 rotate-0 group-data-[panel-open]:rotate-90" />
+    <ChevronRightIcon className="size-4 rotate-0 group-data-panel-open:rotate-90" />
   </Collapsible.Trigger>
   <Collapsible.Panel>...</Collapsible.Panel>
 </Collapsible.Root>
@@ -70,7 +70,7 @@ The panel height animates using CSS transitions via Base UI's `--collapsible-pan
 
 ## Styling with data attributes
 
-Base UI exposes data attributes on each part that you can target with Tailwind's `data-[]` modifier — no JavaScript state needed.
+Base UI exposes data attributes on each part that you can target with Tailwind's `data-*` variant — no JavaScript state needed.
 
 ### Trigger
 
@@ -79,7 +79,7 @@ The Trigger receives `data-panel-open` when the panel is expanded. Combine it wi
 ```tsx
 <Collapsible.Trigger className="group flex items-center gap-1.5">
   Details
-  <ChevronRightIcon className="size-4 transition-transform group-data-[panel-open]:rotate-90" />
+  <ChevronRightIcon className="size-4 transition-transform group-data-panel-open:rotate-90" />
 </Collapsible.Trigger>
 ```
 
@@ -89,7 +89,7 @@ The Panel exposes `data-open`, `data-closed`, `data-starting-style`, and `data-e
 
 ```tsx
 <Collapsible.Panel
-  className="h-(--collapsible-panel-height) data-[starting-style]:h-0 data-[ending-style]:h-0"
+  className="h-(--collapsible-panel-height) data-starting-style:h-0 data-ending-style:h-0"
 />
 ```
 
