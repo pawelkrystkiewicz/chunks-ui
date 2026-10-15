@@ -7,11 +7,14 @@ import { checkDocsDirection, DIRS, physicalTokens } from "../check-docs-directio
 const ROOT = join(import.meta.dirname, "../..");
 const dirs: string[] = [];
 
-/** A throwaway repo root with every scanned directory present and `files` (path -> text) in it. */
+/** A throwaway repo root with every scanned directory present, one clean `seed.ts` in each, and `files` (path -> text) beside them. */
 function tree(files: Record<string, string> = {}): string {
   const dir = mkdtempSync(join(tmpdir(), "docs-direction-"));
   dirs.push(dir);
-  for (const scanned of DIRS) mkdirSync(join(dir, scanned), { recursive: true });
+  for (const scanned of DIRS) {
+    mkdirSync(join(dir, scanned), { recursive: true });
+    writeFileSync(join(dir, scanned, "seed.ts"), "export {};\n");
+  }
   for (const [path, text] of Object.entries(files)) {
     mkdirSync(dirname(join(dir, path)), { recursive: true });
     writeFileSync(join(dir, path), text);
@@ -27,7 +30,7 @@ describe("physicalTokens", () => {
   it("finds a physical margin, padding, inset, text alignment, radius and border", () => {
     expect(
       physicalTokens(
-        'className="ml-4 pr-2 left-0 text-right rounded-l-lg rounded-tl-sm border-r-2"',
+        'className="ml-4 pr-2 left-0 text-right rounded-l-lg rounded-tl-sm border-r-2 float-left clear-right"',
       ),
     ).toEqual([
       "ml-4",
@@ -37,13 +40,36 @@ describe("physicalTokens", () => {
       "rounded-l-lg",
       "rounded-tl-sm",
       "border-r-2",
+      "float-left",
+      "clear-right",
     ]);
+  });
+
+  it("finds the scroll margin and padding, the float and the clear, behind a variant too", () => {
+    expect(
+      physicalTokens(
+        "scroll-ml-4 md:scroll-pr-2 -scroll-mr-1 scroll-pl-[10px] sm:float-right clear-left",
+      ),
+    ).toEqual([
+      "scroll-ml-4",
+      "scroll-pr-2",
+      "-scroll-mr-1",
+      "scroll-pl-[10px]",
+      "float-right",
+      "clear-left",
+    ]);
+  });
+
+  it("reports the class, not the ;, , or ) that follows it", () => {
+    expect(
+      physicalTokens("a: border-r-2; b: rounded-l-lg, c: (see border-l-4) d: border-l-(--l-ill)"),
+    ).toEqual(["border-r-2", "rounded-l-lg", "border-l-4", "border-l-(--l-ill)"]);
   });
 
   it("finds one behind a variant, a negative one, a fraction and an arbitrary value", () => {
     expect(
       physicalTokens(
-        "md:ml-4 -left-2 hover:-mr-px data-[open]:left-0 [&>svg]:-ml-1 left-[calc(50%-126px)] left-(--x) left-1/2 pl-0.5 rounded-br-[4px] border-l-(--l-ill) border-l",
+        "md:ml-4 -left-2 hover:-mr-px data-[open]:left-0 [&>svg]:-ml-1 left-[calc(50%-126px)] left-(--x) left-1/2 pl-0.5 rounded-br-[4px] border-l-(--l-ill) border-l rounded-l",
       ),
     ).toEqual([
       "ml-4",
@@ -58,15 +84,16 @@ describe("physicalTokens", () => {
       "rounded-br-[4px]",
       "border-l-(--l-ill)",
       "border-l",
+      "rounded-l",
     ]);
   });
 
   it("leaves the logical classes and the look-alikes alone", () => {
     expect(
       physicalTokens(
-        "ms-4 pe-2 start-0 -end-2 text-start rounded-s-lg rounded-ee-sm border-e-2 inset-x-0 rounded-lg rounded-l border-left translate-x-2",
+        "ms-4 pe-2 start-0 -end-2 text-start rounded-s-lg rounded-ee-sm border-e-2 inset-x-0 rounded-lg border-left translate-x-2 float-none clear-both scroll-ms-4 scroll-mx-2 overfloat-left",
       ),
-    ).toEqual(["rounded-l"]);
+    ).toEqual([]);
   });
 
   it("leaves prose and other words with left, right, ml, pl or pr in them alone", () => {
@@ -133,6 +160,67 @@ describe("checkDocsDirection", () => {
     ]);
   });
 
+  it("exempts the line a marker is on, not the line below it", async () => {
+    const dir = tree({
+      "apps/docs/app/x.tsx": [
+        'const A = "left-3"; // direction: physical, the first one',
+        'const B = "left-0";',
+        "",
+      ].join("\n"),
+    });
+    expect(await checkDocsDirection(dir)).toEqual(["apps/docs/app/x.tsx:2: left-0"]);
+  });
+
+  it("counts the line above only when it holds nothing but the comment", async () => {
+    const dir = tree({
+      "apps/docs/app/x.tsx": [
+        "// direction: physical, the tiles compose one drawing",
+        'const A = "left-3";',
+        "  /* direction: physical, same */",
+        'const B = "left-0";',
+        "{/* direction: physical, same */}",
+        'const C = "left-1";',
+        'const D = "left-2"; /* direction: physical, on its own line only */',
+        'const E = "left-4";',
+        "",
+      ].join("\n"),
+    });
+    expect(await checkDocsDirection(dir)).toEqual(["apps/docs/app/x.tsx:8: left-4"]);
+  });
+
+  it("needs a reason that starts with a word character", async () => {
+    const dir = tree({
+      "apps/docs/app/x.tsx": [
+        "{/* direction: physical, */}",
+        'const A = "left-3";',
+        "{/* direction: physical, art */}",
+        'const B = "left-0";',
+        "",
+      ].join("\n"),
+    });
+    expect(await checkDocsDirection(dir)).toEqual(["apps/docs/app/x.tsx:2: left-3"]);
+  });
+
+  it("flags a float, a clear and a scroll margin", async () => {
+    const dir = tree({
+      "apps/docs/content/y.mdx":
+        '<div className="float-left clear-right" />\n<div className="scroll-ml-4" />\n',
+    });
+    expect(await checkDocsDirection(dir)).toEqual([
+      "apps/docs/content/y.mdx:1: float-left",
+      "apps/docs/content/y.mdx:1: clear-right",
+      "apps/docs/content/y.mdx:2: scroll-ml-4",
+    ]);
+  });
+
+  it("scans the files directly in apps/docs, mdx-components.tsx among them", async () => {
+    const dir = tree({
+      "apps/docs/mdx-components.tsx": 'export const C = () => <div className="ml-4" />;\n',
+      "apps/docs/public/y.tsx": 'export const Y = "ml-4";\n',
+    });
+    expect(await checkDocsDirection(dir)).toEqual(["apps/docs/mdx-components.tsx:1: ml-4"]);
+  });
+
   it("passes a clean tree", async () => {
     const dir = tree({
       "apps/docs/app/x.tsx":
@@ -166,4 +254,15 @@ describe("checkDocsDirection", () => {
       expect.stringMatching(/^apps\/docs\/content: /),
     ]);
   });
+
+  it.each(DIRS)(
+    "fails when %s holds no .ts, .tsx or .mdx file, so an empty scan cannot pass",
+    async (scanned) => {
+      const dir = tree();
+      rmSync(join(dir, scanned, "seed.ts"));
+      expect(await checkDocsDirection(dir)).toEqual([
+        expect.stringMatching(new RegExp(`^${scanned}: no `)),
+      ]);
+    },
+  );
 });
