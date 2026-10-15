@@ -94,6 +94,8 @@ describe("Radio", () => {
       expect(radio).toHaveAttribute("data-disabled");
       expect(label).toHaveClass(...ITEM_DISABLED_CLASSES);
       await user.click(label);
+      // The group's spy cannot see an item outside a group: check the radio itself
+      expect(radio).toHaveAttribute("aria-checked", "false");
     }
     expect(onValueChange).not.toHaveBeenCalled();
     expect(item("Enabled").radio).not.toHaveAttribute("data-disabled");

@@ -191,6 +191,8 @@ describe("NumberField", () => {
         const cursor = await screen.findByTestId("cursor");
         expect(container.contains(cursor)).toBe(true);
         expect(cursor.querySelector("svg")).not.toBeNull();
+        // Base UI positions the cursor through its ref, which must reach the re-portalled element
+        expect(cursor.style.transform).toMatch(/translate3d/);
         fireEvent.pointerUp(window);
         await waitFor(() => expect(screen.queryByTestId("cursor")).not.toBeInTheDocument());
       });

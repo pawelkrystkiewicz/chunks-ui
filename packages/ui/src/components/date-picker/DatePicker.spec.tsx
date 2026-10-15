@@ -3,7 +3,16 @@ import { cleanup, isInaccessible, render, screen, waitFor, within } from "@testi
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { createRef } from "react";
-import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  type MockInstance,
+  onTestFinished,
+  vi,
+} from "vitest";
 import { createDate } from "../calendar/date";
 import { Field } from "../field";
 import { DatePicker } from "./DatePicker";
@@ -477,6 +486,7 @@ describe("DatePicker in a form", () => {
     const onFormSubmit = vi.fn();
     // The two names warn in development; that is covered below
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    onTestFinished(() => warn.mockRestore());
     render(
       <Form aria-label="Task" onFormSubmit={onFormSubmit}>
         <Field.Root name="due">
@@ -491,7 +501,6 @@ describe("DatePicker in a form", () => {
     await user.click(screen.getByRole("button", { name: "Save" }));
     expect(onFormSubmit).toHaveBeenCalledOnce();
     expect(onFormSubmit.mock.calls[0]?.[0]).toEqual({ due: "2026-03-15" });
-    warn.mockRestore();
   });
 
   describe("with a name that differs from its Field.Root's", () => {
