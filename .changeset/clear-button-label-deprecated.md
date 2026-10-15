@@ -1,5 +1,5 @@
 ---
-"chunks-ui": patch
+"chunks-ui": minor
 ---
 
 Deprecated: the `label` prop of `ClearButton`. Use `labels={{ clear: "…" }}`, as on the other components with built-in text, or `aria-label`. `label` still works and still takes precedence over `labels`.

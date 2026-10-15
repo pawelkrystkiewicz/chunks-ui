@@ -1,0 +1,44 @@
+---
+"chunks-ui": minor
+---
+
+Upgrading from 0.1.4. Details are in the other entries, quoted by their first words.
+
+- Requirements ("Peer dependency ranges")
+  - Peers: `@base-ui/react` `^1.9.0`, `react` and `react-dom` `^19.2.0`, optional `motion` `^12.0.0` and `tailwindcss` `^4.0.0`. Node 22 or newer. npm 7+ refuses to install over an older peer (`ERESOLVE`) until it is upgraded.
+  - `lucide-react` is no longer a dependency; add it to your app if you relied on it.
+- Changed defaults
+  - Focus ring: `--ring` is 60% primary instead of grey, shows at once with no fade, and is drawn on `Breadcrumb.Link`, `Slider` and the Popover, Menu, Dialog, Drawer and DatePicker popups ("The keyboard focus ring").
+  - Colours: `--primary`, `--destructive` and light `--muted-foreground` are darker and `--success-foreground` is dark text, for AA contrast; coloured text and outlined success and warning borders use new tokens ("The default text and fill colours", "Fixed: in light mode the border").
+  - Corners: controls and popups use `rounded-md`, 8px with the default `--radius` instead of a fixed 4px, and `Select` and `Combobox` options, `Combobox` chips and the `Calendar` navigation buttons use `rounded-sm`, 6px instead of 4px; `Select.Trigger`, the `Combobox` input and the `NumberField` input and buttons are 35px tall instead of 36px ("Theme tokens now reach every component").
+  - `Card.Root` has no shadow and carries the vertical padding and gap (`py-6 gap-6`); the parts have `px-6` only ("`Card` has no shadow by default").
+  - Height caps: `Dialog.Popup` has `max-h-[calc(100dvh-2rem)]`, `Combobox.Popup` and `Menu.Content` are limited by `--available-height`, and a bottom `Drawer.Popup` by `80dvh`; each scrolls its content, and `max-h-none` removes the cap ("Fixed: long content ran off the screen").
+  - `Dialog.Popup` is at most the viewport width less 2rem, so below 480px it is narrower than before ("Fixed: on a viewport narrower than about 456px").
+  - `Menu.Content` opens 8px from its trigger, not 4px; the Tooltip gap is 8px, not 6px, set as a margin on `Tooltip.Popup`, and `Tooltip.Positioner` has no default `sideOffset` ("The keyboard focus ring", "Fixed: the `Tooltip` popup sat").
+  - `Dialog.Backdrop` and `Drawer.Backdrop` default `forceRender` to `true` ("Fixed: a `Drawer` opened from inside").
+  - `Tabs.Indicator` renders an inline `<script>` in server HTML, which a strict CSP blocks ("`Tabs.Indicator` now shows on a server-rendered page").
+  - `Pagination.Root` is named "Pagination", not "pagination"; the `Chip` remove button and `Combobox.ChipRemove` are named "Remove" plus the chip's text ("Changed: the default name", "Added: a `labels` prop").
+  - `Tooltip.Provider` `delay` now applies to its tooltips; `DatePicker` opens with focus on the selected day; toasts past `limit` are hidden; a toast can be swiped left or right; `Textarea` `value` must be controlled from the first render; disabled `Calendar` days use `aria-disabled` ("`Tooltip.Provider`'s `delay`", "`DatePicker` now opens", "In the default `Toast.Viewport`", "Fixed: under `dir="rtl"`, the `Toast` viewport", "`Combobox.Trigger` and `Combobox.Clear`", "`Calendar` accepts `weekStartsOn`").
+  - `Input`'s clear button no longer shows on a `disabled` or `readOnly` input, shows on an uncontrolled input that has text and an `onClear`, and clearing moves focus to the input ("`Input` has a `clearable` prop").
+  - Under `prefers-reduced-motion: reduce`, the `micro-interactions` class now sets `transition: none !important`, so no `transition-*` utility turns it back on, and `Slider.Thumb`, `Textarea` and `Table.Row` no longer fade their colours ("Fixed: timing utilities").
+  - `useMotion()` returns the Motion module on the first render of a component that mounts after Motion has loaded, where 0.1.4 returned `null`; `useReducedMotion()` returns `false` while hydrating ("`useMotion()` now returns", "Fixed: for users with `prefers-reduced-motion: reduce`").
+- DOM changes
+  - `Menu.Content` puts its items in a scrolling child element; layout classes on the Content no longer reach them.
+  - `Tabs.Content` is a Base UI `tabpanel` that stays mounted and is a tab stop; without Motion or with reduced motion, `Tabs.Contents` has one extra track `div` and no longer clips.
+  - `Calendar` column headers hold a visible short name and a visually hidden long name.
+  - `Avatar` is built on Base UI's `Avatar`: the `<img>` is hidden until it loads and, with `alt`, the fallback has `role="img"`.
+  - `Dialog.Portal` and `Drawer.Portal` carry the z-layer; their popups and backdrops do not, and `z-overlays` is unused.
+  - Popups opened inside a Dialog, Drawer, Popover or Combobox render in the parent's portal, not under `document.body`.
+  - With Motion installed, closed popups are no longer in the DOM.
+  - `Popover.Arrow` and `Menu.Arrow` draw an arrow where they rendered nothing.
+  - `Popover.Content` and `Menu.Content` are `position: relative`, so content you position absolutely in them is placed against the padding box, not the border box.
+  - `Switch.Root` has `p-0.5` instead of `border-2 border-transparent`, so a `border-*` colour class on it no longer shows.
+  - `group/trigger` moved from `Accordion.Item` to `Accordion.Trigger`; a `group-*/trigger` variant on other content of the item no longer matches.
+- Types
+  - `useMotion()` returns `MotionLike | null`, not Motion's module type; cast it if you need the full types.
+  - `cn` rejects function arguments at the type level, and `Radio.Item` `className` is a string only.
+  - `TabsContentProps` no longer accepts `hidden`.
+- CSS variables
+  - New: `--z-index-cursor`, `--colored-text-lightness`, `--success-border-lightness` and `--warning-border-lightness`.
+  - New, additive: `--font-heading`, `--touch-target-size`, `--tooltip-arrow-corner` (set on `Tooltip.Popup`), and the `--color-*-text` and `--color-*-border` tokens.
+  - `--font-sans`, `--font-mono` and `--spacing-ui-height` moved from `@theme inline` to `@theme`, so a scoped override reaches the utilities; `.micro-interactions` moved into `@layer components`, so timing utilities win over it; `theme.css` now has `@source "./"`, so an app `@source` for the package is no longer needed.

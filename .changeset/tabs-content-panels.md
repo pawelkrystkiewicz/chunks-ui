@@ -4,7 +4,7 @@
 
 `Tabs.Content` is now a Base UI `Tabs.Panel` that stays mounted. Each panel has `role="tabpanel"`, its tab names it (`aria-labelledby`), and the tab's `aria-controls` points to it. `Tabs.Contents` no longer clips the focus ring of content at its edges: with Motion, it leaves 4px of room around the content (`overflow-clip-margin`), and the panels beside the active one stay out of that room.
 
-This is a minor bump because of three changes you may notice:
+Three changes you may notice:
 
 - The active panel is a new tab stop, as with `Tabs.Panel`. It shows a focus ring inside its edge.
 - `TabsContentProps` no longer accepts `hidden`, and doesn't take `keepMounted` either: `Tabs.Contents` decides which panel shows. They are now `Tabs.Panel`'s props, so `className` also accepts a function of the panel state.

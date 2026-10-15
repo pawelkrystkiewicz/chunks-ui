@@ -2,4 +2,4 @@
 "chunks-ui": patch
 ---
 
-Fix Calendar previous/next month buttons skipping a year at year boundaries under React StrictMode.
+Fixed: under React StrictMode (on by default in Next.js development), the previous and next month buttons of `Calendar` skipped a year when they crossed a year boundary.
