@@ -6,4 +6,4 @@ Fixed: the `Combobox` popup opened flush against the input, over the bottom edge
 
 Fixed: a `Combobox.Chip` that the arrow keys focused showed the browser's default outline. It now draws the library focus ring (2px of `--ring`, 2px outside the chip), like the input, and the focused chip sits above the next one, so the ring shows whole.
 
-Fixed: a focused `Combobox.Input` inside `Combobox.Control` drew two focus rings, its own and the Control's. The Control now turns the input's ring off, so one ring shows around the Control; a `focus-visible:outline-none` you passed to the input for this is no longer needed. A standalone input keeps its ring.
+Fixed: a focused `Combobox.Input` inside `Combobox.Control` drew two focus rings, its own and the Control's. The Control now turns the ring of its `Combobox.Input` off, so one ring shows around the Control; a `focus-visible:outline-none` you passed to the input for this is no longer needed. A standalone input keeps its ring.
