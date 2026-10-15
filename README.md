@@ -109,7 +109,18 @@ Use with Tailwind: `bg-primary text-primary-foreground`, `bg-destructive text-de
 
 ## Typography
 
-The theme sets the page font to Manrope; see [Theme › Typography](https://ui-kit.chunk-creations.com/theme#typography) to keep your own.
+The theme sets `--font-sans` to Manrope and `--font-mono` to Fira Code. Neither font ships with the package: load them in your app, or the browser falls back to its generic `sans-serif` and `monospace`. To keep your own font, set the token after the import:
+
+```css
+@import "tailwindcss";
+@import "chunks-ui/theme.css";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+```
+
+See [Theme › Typography](https://ui-kit.chunk-creations.com/theme#typography).
 
 ## Animation
 
