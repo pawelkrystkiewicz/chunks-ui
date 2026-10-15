@@ -113,7 +113,7 @@ function ToastViewport({ className, labels, ...props }: ToastViewportProps) {
           <ToastRoot key={toast.id} toast={toast} className={toast.className}>
             {Icon && <Icon className={cn("size-5 shrink-0 self-start", toast.iconClassName)} />}
             <BaseToast.Content
-              className={`${TOAST_CONTENT_CLASS} flex min-w-0 flex-1 flex-col gap-1`}
+              className={cn(TOAST_CONTENT_CLASS, "flex min-w-0 flex-1 flex-col gap-1")}
             >
               {toast.title != null && <ToastTitle>{toast.title}</ToastTitle>}
               {toast.description != null && (
