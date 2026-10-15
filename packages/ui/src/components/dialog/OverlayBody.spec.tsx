@@ -1,6 +1,6 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { axe } from "jest-axe";
-import { createRef, type FormEvent, type ReactNode } from "react";
+import { createRef, type FormEvent, type ReactNode, useState } from "react";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { Drawer } from "../drawer";
 import { FOCUS_RING } from "../shared";
@@ -161,6 +161,48 @@ describe.each(OVERLAYS)("$name", ({ X, marker }) => {
 
     setHeights(body, short);
     expect(body).not.toHaveAttribute("tabindex");
+  });
+
+  it("measures again when a child grows on its own, without a render of the Body", () => {
+    // In a side drawer the Body is `flex-1`: the box is the same whatever the content, so only the
+    // child reports that it grew
+    renderBody(
+      <X.Title>Terms</X.Title>,
+      <X.Body {...short}>
+        <img alt="" data-testid="child" />
+      </X.Body>,
+    );
+    const body = screen.getByRole("region", { name: "Terms" });
+    for (const [name, value] of Object.entries(tall)) body.setAttribute(name, String(value));
+    act(() => resize(screen.getByTestId("child")));
+    expect(body).toHaveAttribute("tabindex", "0");
+  });
+
+  it("measures again when a child renders more content into it", async () => {
+    function Filling() {
+      const [count, setCount] = useState(1);
+      const lines = Array.from({ length: count }, (_, i) => `Line ${i + 1}`);
+      return (
+        <>
+          <button type="button" onClick={() => setCount(50)}>
+            Fill
+          </button>
+          {lines.map((line) => (
+            <p key={line}>{line}</p>
+          ))}
+        </>
+      );
+    }
+    renderBody(
+      <X.Title>Terms</X.Title>,
+      <X.Body {...short}>
+        <Filling />
+      </X.Body>,
+    );
+    const body = screen.getByRole("region", { name: "Terms" });
+    for (const [name, value] of Object.entries(tall)) body.setAttribute(name, String(value));
+    fireEvent.click(screen.getByRole("button", { name: "Fill" }));
+    await waitFor(() => expect(body).toHaveAttribute("tabindex", "0"));
   });
 
   it("takes the initial focus when it overflows and nothing tabbable comes before it", async () => {

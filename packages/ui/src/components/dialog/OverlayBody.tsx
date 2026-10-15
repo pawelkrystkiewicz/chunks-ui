@@ -54,10 +54,11 @@ export function useTitleId(idProp?: string) {
 const scrolls = (node: HTMLElement) => node.scrollHeight > node.clientHeight;
 
 /**
- * Whether the Body scrolls. Measured after every render of the Body, for a change of content, and
- * whenever its box resizes. Layout effects, so Base UI's initial focus, which waits a microtask
- * for layout effects to set `tabIndex`, sees the result. Returns the state and the ref that gives
- * the hook the node; the observers are created once per node, not once per render.
+ * Whether the Body scrolls. Measured after every render of the Body, whenever its box or a child's
+ * box resizes, and whenever its content changes. Layout effects, so Base UI's initial focus, which
+ * waits a microtask for layout effects to set `tabIndex`, sees the result. Returns the state and
+ * the ref that gives the hook the node; the observers are created once per node, not once per
+ * render.
  */
 function useOverflows(): [overflows: boolean, ref: (node: HTMLElement | null) => void] {
   const [node, setNode] = useState<HTMLElement | null>(null);
@@ -68,12 +69,33 @@ function useOverflows(): [overflows: boolean, ref: (node: HTMLElement | null) =>
     if (node) setOverflows(scrolls(node));
   });
 
-  // Once per node: the box resizes
+  // Once per node: the box resizes, a child resizes on its own, or the content changes
   useLayoutEffect(() => {
-    if (!node || typeof ResizeObserver === "undefined") return;
-    const resize = new ResizeObserver(() => setOverflows(scrolls(node)));
-    resize.observe(node);
-    return () => resize.disconnect();
+    if (!node) return;
+    const measure = () => setOverflows(scrolls(node));
+    const resize = typeof ResizeObserver === "undefined" ? undefined : new ResizeObserver(measure);
+    // The node and each child: in a side drawer the Body is `flex-1`, so a child that grows on its
+    // own (an image that loads, a list that fills in) changes the child's box, not the Body's
+    const observe = () => {
+      if (!resize) return;
+      resize.disconnect();
+      resize.observe(node);
+      for (const child of node.children) resize.observe(child);
+    };
+    observe();
+    if (typeof MutationObserver === "undefined") return () => resize?.disconnect();
+    // Content a child rendered without a render of the Body: measure, and observe the new children
+    const mutation = new MutationObserver((records) => {
+      if (records.some((record) => record.type === "childList" && record.target === node)) {
+        observe();
+      }
+      measure();
+    });
+    mutation.observe(node, { childList: true, subtree: true, characterData: true });
+    return () => {
+      resize?.disconnect();
+      mutation.disconnect();
+    };
   }, [node]);
 
   return [overflows, setNode];
