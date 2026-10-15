@@ -108,7 +108,7 @@ Put long content in a `Dialog.Body` between the Title and the actions. The popup
 
 <DialogLongContentExample />
 
-- A Body whose content fits is skipped by the keyboard, and the first action takes the initial focus, so a short Body adds no tab stop.
+- A Body whose content fits is skipped by the keyboard, and the first action takes the initial focus, so a short Body adds no tab stop. In jsdom, which has no layout, no Body is a tab stop; to test the overflow path, shim `scrollHeight` and `clientHeight` (`scrollWidth` and `clientWidth` for sideways overflow) on the element.
 - `Dialog.Body` must be a direct child of `Dialog.Popup`. Wrapping the Body in a `<form>` or a `<div>` loses the layout: the popup scrolls as a whole again, the actions are not pinned and the Body does not scroll. For a form, see below.
 - With a Body, the popup is a flex column. Bare inline children, such as a lone `Dialog.Close` button, stretch to the full width, and the margins between children do not collapse. Wrap the actions in a block, as in the example.
 - The Body has a 0.25rem gutter (`-m-1 p-1`), so the focus rings of full-width fields are not clipped at its edges. The content does not move. A margin class on the Body, such as `mt-4`, replaces the negative margin on that side and adds the 0.25rem of padding.

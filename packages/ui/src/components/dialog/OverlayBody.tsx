@@ -63,27 +63,18 @@ const scrolls = (node: HTMLElement) =>
   node.scrollHeight > node.clientHeight || node.scrollWidth > node.clientWidth;
 
 /**
- * Whether the Body fits: it has its node and its content does not scroll. False without a node, so
- * a Body whose `ref` never arrives (a `render` function that drops it) is never measured and stays
- * a tab stop. Measured after every render of the Body, whenever its box or a child's box resizes,
- * whenever its content changes, and when the popup around it is shown or hidden (a
- * `keepMounted` popup, whose Body mounts with no box). Layout effects, so Base UI's initial focus,
- * which waits a microtask for layout effects to set `tabIndex`, sees the result; the mutation
- * observer's microtask is queued in React's mutation phase, before the one Base UI queues in its
- * layout effect, so a `flushSync` there lands first too. Returns whether it fits and the ref that
- * gives the hook the node; the observers are created once per node, not once per render.
+ * Whether the Body has its node and its content fits, measured in layout effects: Base UI's initial
+ * focus waits a microtask for them to set `tabIndex`. A popup shown or hidden (a `keepMounted`
+ * popup, whose Body mounts with no box) is seen by a mutation observer, whose microtask is queued
+ * in React's mutation phase, before the one Base UI queues in its layout effect, so a `flushSync`
+ * there lands first. Returns whether it fits and the ref that gives the hook the node.
  */
 function useFits(): [fits: boolean, ref: (node: HTMLElement | null) => void] {
   const [node, setNode] = useState<HTMLElement | null>(null);
   const [overflows, setOverflows] = useState(false);
 
-  // After every render: the content may have changed
-  useLayoutEffect(() => {
-    if (node) setOverflows(scrolls(node));
-  });
-
-  // Once per node: the box resizes, a child resizes on its own, the content changes, or the popup
-  // is shown
+  // Once per node: measure, then again when the box resizes, a child resizes on its own, the
+  // content changes, or the popup is shown
   useLayoutEffect(() => {
     if (!node) return;
     const measure = () => setOverflows(scrolls(node));
@@ -97,22 +88,18 @@ function useFits(): [fits: boolean, ref: (node: HTMLElement | null) => void] {
       for (const child of node.children) resize.observe(child);
     };
     observe();
-    if (typeof MutationObserver === "undefined") return () => resize?.disconnect();
-    // Content a child rendered without a render of the Body: measure, and observe the new children
-    const mutation = new MutationObserver((records) => {
-      if (records.some((record) => record.type === "childList" && record.target === node)) {
-        observe();
-      }
-      // The popup was shown or hidden: committed now, before Base UI's initial focus reads
-      // `tabIndex` in the next microtask
-      if (records.some((record) => record.type === "attributes")) flushSync(measure);
-      else measure();
+    // Content a child rendered without a render of the Body: observe the new children and measure.
+    // Committed now, before Base UI's initial focus reads `tabIndex` in the next microtask
+    const mutation = new MutationObserver(() => {
+      observe();
+      flushSync(measure);
     });
     mutation.observe(node, { childList: true, subtree: true, characterData: true });
     // A `keepMounted` popup is `hidden` until it opens, and the Body is its direct child
     if (node.parentElement) {
       mutation.observe(node.parentElement, { attributes: true, attributeFilter: ["hidden"] });
     }
+    measure();
     return () => {
       resize?.disconnect();
       mutation.disconnect();
@@ -125,18 +112,11 @@ function useFits(): [fits: boolean, ref: (node: HTMLElement | null) => void] {
 /**
  * The scrolling middle of a tall dialog or drawer, between the Title and the actions. With a Body
  * as its child, the Popup is a flex column: the other children keep their height and only the
- * Body scrolls. While its content overflows, the Body is a tab stop, so the keyboard can scroll
- * it; a Body that fits is skipped by Tab. It is a region the Title names (a named `<section>`), or the
- * element `render` gives it. `marker` is the class the Popup finds the Body by (`has-[>.marker]`).
- * A name of its own goes on the Body, or on a `render` element; see {@link OverlayBodyProps}.
+ * Body scrolls. It is a region the Title names (a named `<section>`), or the element `render`
+ * gives it. A name of its own goes on the Body, or on a `render` element; see
+ * {@link OverlayBodyProps}.
  */
-export function OverlayBody({
-  marker,
-  className,
-  render,
-  ref: forwardedRef,
-  ...props
-}: OverlayBodyProps & { marker: string }) {
+export function OverlayBody({ className, render, ref: forwardedRef, ...props }: OverlayBodyProps) {
   const { titleId } = useContext(TitleIdContext);
   const [fits, ref] = useFits();
   // A name on the Body, or on the element `render` gives it (its props are merged over these),
@@ -160,8 +140,9 @@ export function OverlayBody({
       tabIndex: fits ? -1 : 0,
       "aria-labelledby": named ? undefined : titleId,
       className: cn(
+        // The class the Popup finds the Body by (`has-[>.OverlayBody]`)
+        "OverlayBody",
         // The -m-1 p-1 gutter keeps the focus rings of full-width fields inside the scroll box, without moving them
-        marker,
         "-m-1 min-h-0 flex-1 overflow-y-auto overscroll-contain p-1",
         FOCUS_RING,
         RING_TRANSITION,

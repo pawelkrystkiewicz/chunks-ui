@@ -98,8 +98,8 @@ function setHeights(element: Element, attributes: Record<string, number>) {
 
 // Drawer parts are Dialog parts, so one suite serves both Bodies
 const OVERLAYS = [
-  { name: "Dialog.Body", X: Dialog, marker: "DialogBody" },
-  { name: "Drawer.Body", X: Drawer, marker: "DrawerBody" },
+  { name: "Dialog.Body", X: Dialog, marker: "OverlayBody" },
+  { name: "Drawer.Body", X: Drawer, marker: "OverlayBody" },
 ] as const;
 
 describe.each(OVERLAYS)("$name", ({ X, marker }) => {

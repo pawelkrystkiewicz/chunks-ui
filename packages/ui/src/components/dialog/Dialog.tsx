@@ -99,7 +99,7 @@ function DialogPopup({ className, children, render: renderProp, ...props }: Dial
         FOCUS_RING,
         "max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain",
         // With a Body, the parts before and after it keep their height and only the Body scrolls
-        "has-[>.DialogBody]:flex has-[>.DialogBody]:flex-col",
+        "has-[>.OverlayBody]:flex has-[>.OverlayBody]:flex-col",
         !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
         !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
         // Only the fade and scale, not the ring
@@ -135,11 +135,6 @@ function DialogDescription({ className, ...props }: DialogDescriptionProps) {
   );
 }
 
-/** The scrolling middle of a tall dialog, between the Title and the actions; see `OverlayBody` */
-function DialogBody(props: DialogBodyProps) {
-  return <OverlayBody marker="DialogBody" {...props} />;
-}
-
 export const Dialog = {
   Root: BaseDialog.Root,
   Trigger: BaseDialog.Trigger,
@@ -148,6 +143,6 @@ export const Dialog = {
   Popup: DialogPopup,
   Title: DialogTitle,
   Description: DialogDescription,
-  Body: DialogBody,
+  Body: OverlayBody,
   Close: BaseDialog.Close,
 };

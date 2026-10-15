@@ -145,11 +145,6 @@ function DrawerTitle({ className, id: idProp, ...props }: DrawerTitleProps) {
   );
 }
 
-/** The scrolling middle of a tall drawer, between the Title and the actions; see `OverlayBody` */
-function DrawerBody(props: DrawerBodyProps) {
-  return <OverlayBody marker="DrawerBody" {...props} />;
-}
-
 function DrawerDescription({ className, ...props }: DrawerDescriptionProps) {
   return (
     <BaseDialog.Description
@@ -167,6 +162,6 @@ export const Drawer = {
   Popup: DrawerPopup,
   Title: DrawerTitle,
   Description: DrawerDescription,
-  Body: DrawerBody,
+  Body: OverlayBody,
   Close: BaseDialog.Close,
 };
