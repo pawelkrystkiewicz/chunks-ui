@@ -31,7 +31,6 @@ export function SettingsDrawer() {
         <Drawer.Backdrop />
         <Drawer.Popup initialFocus={focusOnOpen(defaultView)} className="gap-6">
           <OverlayHeader title="Settings" description="Preferences for the Acme workspace." />
-          {/* The Body fills the drawer and scrolls the settings; the header and the actions stay put */}
           <Drawer.Body className="flex flex-col gap-6">
             <div className="flex flex-col gap-4">
               <SelectField

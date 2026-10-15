@@ -17,7 +17,6 @@ export function NewTaskDrawer() {
         <Drawer.Backdrop />
         <Drawer.Popup initialFocus={focusOnOpen(title)} className="gap-6">
           <OverlayHeader title="New task" description="Add a task to Sprint 14." />
-          {/* The Body fills the drawer and scrolls the fields; the header and the actions stay put */}
           <Drawer.Body className="flex flex-col gap-4">
             <Field.Root className="gap-2">
               <Field.Label>Title</Field.Label>

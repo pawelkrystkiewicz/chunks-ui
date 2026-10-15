@@ -39,15 +39,13 @@ export type OverlayBodyProps = useRender.ComponentProps<"section">;
 /** A function `render`, as Base UI calls it: with the Body's props and its state */
 type RenderFunction = Exclude<NonNullable<OverlayBodyProps["render"]>, ReactElement>;
 
-/** The tags with no role of their own; a name on them is not exposed */
-const GENERIC_TAGS = new Set(["div", "span"]);
-
-/** Whether `element` is a `<div>` or a `<span>` with no `role` */
+/**
+ * Whether `element` is a `<div>` or a `<span>` with no `role`: no role of its own, so a name on it
+ * is not exposed. An explicit `role={undefined}` counts as none, so Base UI's merge drops the
+ * region role: accepted.
+ */
 const isGeneric = (element: ReactElement<Record<string, unknown>>) =>
-  typeof element.type === "string" &&
-  GENERIC_TAGS.has(element.type) &&
-  // An explicit `role={undefined}` counts as none, so Base UI's merge drops the region role: accepted
-  element.props.role === undefined;
+  (element.type === "div" || element.type === "span") && element.props.role === undefined;
 
 /** `render`, with the region role on a generic element it returns */
 const withRegionRole = (render: RenderFunction): RenderFunction => {
@@ -162,9 +160,9 @@ function useFits(): {
 /**
  * The scrolling middle of a tall dialog or drawer, between the Title and the actions. With a Body
  * as its child, the Popup is a flex column: the other children keep their height and only the
- * Body scrolls. It is a region the Title names: a `<section>`, or the element `render` gives it,
- * with `role="region"` when that is a generic `<div>` or `<span>` and the Body is named. A name of
- * its own goes on the Body, or on a `render` element; see {@link OverlayBodyProps}.
+ * Body scrolls. It is a region the Title names (a named `<section>`), or the element `render`
+ * gives it. A name of its own goes on the Body, or on a `render` element; see
+ * {@link OverlayBodyProps}.
  */
 export function OverlayBody({
   className,

@@ -411,7 +411,6 @@ describe("Body", () => {
       );
       const body = screen.getByRole("region", { name: "Terms" });
       expect(body.tagName).toBe("DIV");
-      expect(body).toHaveAttribute("role", "region");
       // The popup is portalled into the body, outside the container RTL hands back
       expect(await axe(document.body)).toHaveNoViolations();
     });
@@ -443,21 +442,9 @@ describe("Body", () => {
       expect(screen.getByRole("form", { name: "New task" })).not.toHaveAttribute("role");
     });
 
-    it("gives a lazy render element, as a Server Component sends it, the role", () => {
+    it("reads the name of a lazy render element, so its aria-label wins over the Title", () => {
       // The Flight client hands over `{ $$typeof: react.lazy, _payload, _init }` in place of the
       // element; React's own children logic reads it through `_init`
-      const lazy = {
-        $$typeof: Symbol.for("react.lazy"),
-        _payload: <div />,
-        _init: (payload: ReactElement) => payload,
-      } as unknown as ReactElement;
-      renderBody(<Dialog.Title>Terms</Dialog.Title>, <Dialog.Body render={lazy}>Text</Dialog.Body>);
-      const body = screen.getByRole("region", { name: "Terms" });
-      expect(body.tagName).toBe("DIV");
-      expect(body).toHaveAttribute("role", "region");
-    });
-
-    it("reads the name of a lazy render element, so its aria-label wins over the Title", () => {
       const lazy = {
         $$typeof: Symbol.for("react.lazy"),
         // biome-ignore lint/a11y/useAriaPropsSupportedByRole: a generic div, which the Body gives the region role
@@ -465,9 +452,7 @@ describe("Body", () => {
         _init: (payload: ReactElement) => payload,
       } as unknown as ReactElement;
       renderBody(<Dialog.Title>Terms</Dialog.Title>, <Dialog.Body render={lazy}>Text</Dialog.Body>);
-      const body = screen.getByRole("region", { name: "Notes" });
-      expect(body).toHaveAttribute("aria-label", "Notes");
-      expect(body).not.toHaveAttribute("aria-labelledby");
+      expect(screen.getByRole("region", { name: "Notes" })).toBeInTheDocument();
     });
 
     it("gives a div named by an aria-label on the Body the role, with no Title", () => {
