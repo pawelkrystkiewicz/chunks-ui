@@ -65,7 +65,7 @@ A disabled `Radio.Root` dims and shows a not-allowed cursor on its own too, outs
 </Radio.Group>
 ```
 
-That dim is keyed on the radio's `data-disabled`, so an override in `className` on `Radio.Item` is spelled with the same variant; a plain `opacity-75` loses to it:
+The `Radio.Item` dim is keyed on the radio's `data-disabled`, so an override in `className` on `Radio.Item` is spelled with the same variant; a plain `opacity-75` loses to it:
 
 ```tsx
 <Radio.Item value="pro" disabled className="has-[>[data-disabled]]:opacity-75">Pro</Radio.Item>
