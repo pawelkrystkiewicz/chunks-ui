@@ -87,7 +87,7 @@ export function TabsAnimateExample() {
 
   return (
     <Container>
-      <Tabs.Root value={tab} onValueChange={(v) => setTab(v as string)}>
+      <Tabs.Root value={tab} onValueChange={setTab}>
         <Tabs.List>
           {ROUTES.map((r) => (
             <Tabs.Tab key={r.value} value={r.value}>
@@ -141,7 +141,7 @@ export function TabsHookExample() {
 
   return (
     <Container>
-      <Tabs.Root value={tab} onValueChange={(v) => setTab(v as string)}>
+      <Tabs.Root value={tab} onValueChange={setTab}>
         <Tabs.List>
           {ROUTES.map((r) => (
             <Tabs.Tab key={r.value} value={r.value}>
@@ -215,7 +215,7 @@ export function TabsDirectionExample() {
 
   return (
     <Container>
-      <Tabs.Root value={tab} onValueChange={(v) => setTab(v as string)}>
+      <Tabs.Root value={tab} onValueChange={setTab}>
         <Tabs.List>
           {ROUTES.map((r) => (
             <Tabs.Tab key={r.value} value={r.value}>
