@@ -244,7 +244,7 @@ The area is the control's `::after` pseudo-element, which has `position: absolut
 
 Popups (`Select`, `Combobox`, `Menu`, `Popover`, `DatePicker`, `Dialog`, `Drawer`, `Tooltip`) and the `NumberField.ScrubAreaCursor` render into `document.body`. `PortalContainerProvider` renders them into the element you pass as `value` instead, for example an element that scopes theme variables, so they get the same tokens. Popups opened inside another popup render inside that popup, so they end up in the same element.
 
-Hold the element in state with a callback ref. A `useRef().current` is `null` on the first render, and setting it does not re-render. While `value` is `null`, popups are held back; once the element exists they render inside it. The scrub cursor is not held back: it exists only during a scrub, and a hidden pointer with no stand-in would be worse than the root theme, so it renders in `<body>` until the element exists.
+Hold the element in state with a callback ref. A `useRef().current` is `null` on the first render, and setting it does not re-render. While `value` is `null`, popups are held back; once the element exists they render inside it. The scrub cursor is not held back: it exists only during a scrub, so it renders in `<body>` until the element exists.
 
 ```tsx
 import { Button, Popover, PortalContainerProvider } from "chunks-ui";
