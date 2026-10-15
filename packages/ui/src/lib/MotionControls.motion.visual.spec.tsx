@@ -371,22 +371,26 @@ describe("controls once Motion has loaded", () => {
     "shows a %s as the CSS fallback renders it when reduced motion turned on while hidden",
     async (name) => {
       const subject = control(name);
+      const { element, measure } = subject;
       const ui = (mode: "visible" | "hidden") => <Activity mode={mode}>{subject.ui()}</Activity>;
       const { rerender, unmount } = await renderSettled(ui("visible"));
+      const start = measure(element());
       subject.change();
-      await wait(400);
+      // Hidden only once Motion has moved it and come to rest
+      await expect.poll(() => measure(element())).not.toBe(start);
+      await settled(() => measure(element()));
       rerender(ui("hidden"));
       await reducedMotion(true);
       rerender(ui("visible"));
-      await wait(100);
-      const shown = snapshot(subject);
+      // Shown again, the element goes back to the CSS fallback; read it once nothing changes
+      await expect.poll(() => handedBack(subject), { timeout: SETTLE_TIMEOUT_MS }).toBe(true);
+      const shown = await waitForStable(() => snapshot(subject));
       expectOver(subject);
       unmount();
 
       render(subject.ui());
       subject.change();
-      await wait(100);
-      expect(shown).toEqual(snapshot(subject));
+      expect(await waitForStable(() => snapshot(subject))).toEqual(shown);
     },
   );
 
@@ -396,17 +400,15 @@ describe("controls once Motion has loaded", () => {
       const { ui, element, change } = control(name);
       await renderSettled(ui());
       change();
-      await wait(300);
-      expect(element()).not.toBeNull();
-      expect(opacity(element())).toBe(0);
+      // Motion fades the indicator out and keeps it mounted at opacity 0 (NaN once unmounted)
+      await expect.poll(() => opacity(element()), { timeout: SETTLE_TIMEOUT_MS }).toBe(0);
 
       await reducedMotion(true);
-      expect(element()).toBeNull();
+      await expect.poll(element, { timeout: SETTLE_TIMEOUT_MS }).toBeNull();
 
       await reducedMotion(false);
-      await wait(100);
-      expect(element()).not.toBeNull();
-      expect(opacity(element())).toBe(0);
+      // Motion drives it again: mounted, and at rest at opacity 0
+      await expect.poll(() => opacity(element()), { timeout: SETTLE_TIMEOUT_MS }).toBe(0);
     },
   );
 
