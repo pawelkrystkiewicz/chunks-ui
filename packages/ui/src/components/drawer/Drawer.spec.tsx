@@ -1,5 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { axe } from "jest-axe";
+import type { ReactElement } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { reloadMotion } from "../../lib/use-motion";
 import { Drawer } from "./Drawer";
@@ -127,5 +128,33 @@ describe("Drawer", () => {
       </Drawer.Root>,
     );
     expect(await axe(container)).toHaveNoViolations();
+  });
+});
+
+// Last, since Motion stays loaded for the tests that follow
+describe("Drawer.Backdrop with Motion loaded", () => {
+  function renderBackdrop(renderProp?: ReactElement) {
+    render(
+      <Drawer.Root open>
+        <Drawer.Portal>
+          <Drawer.Backdrop render={renderProp} data-testid="backdrop" />
+          <Drawer.Popup>Content</Drawer.Popup>
+        </Drawer.Portal>
+      </Drawer.Root>,
+    );
+    return screen.getByTestId("backdrop");
+  }
+
+  it("animates the default element with Motion, not CSS", async () => {
+    await reloadMotion();
+    expect(renderBackdrop()).not.toHaveClass("micro-interactions");
+  });
+
+  // A consumer's `render` replaces the animated element, so the spring cannot attach to it
+  it("keeps the CSS transition on the element a render prop gives it", async () => {
+    await reloadMotion();
+    const backdrop = renderBackdrop(<section />);
+    expect(backdrop.tagName).toBe("SECTION");
+    expect(backdrop).toHaveClass("micro-interactions", "data-starting-style:opacity-0");
   });
 });

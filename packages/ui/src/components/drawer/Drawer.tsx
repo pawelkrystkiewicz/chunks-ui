@@ -65,10 +65,16 @@ function DrawerPortal({ className, children, ...props }: DrawerPortalProps) {
   );
 }
 
-function DrawerBackdrop({ className, forceRender = true, ...props }: DrawerBackdropProps) {
+function DrawerBackdrop({
+  className,
+  forceRender = true,
+  render: renderProp,
+  ...props
+}: DrawerBackdropProps) {
   const m = useLoadedMotion();
   const reduced = useReducedMotion();
-  const useSpring = !!m && !reduced;
+  // A consumer's `render` replaces the animated element, so that backdrop keeps the CSS transition
+  const useSpring = !!m && !reduced && !renderProp;
   const render = useSpring
     ? createPopupRenderer({
         m,
@@ -76,7 +82,7 @@ function DrawerBackdrop({ className, forceRender = true, ...props }: DrawerBackd
         from: { opacity: 0 },
         to: { opacity: 1 },
       })
-    : undefined;
+    : renderProp;
 
   return (
     <BaseDialog.Backdrop
