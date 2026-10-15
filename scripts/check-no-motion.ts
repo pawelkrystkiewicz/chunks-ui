@@ -9,9 +9,14 @@
  *   type-checks an import of chunks-ui with `skipLibCheck: false`, so the package types must not
  *   reference `motion/react` (see MotionLike in use-motion.ts).
  * - `next build` with Turbopack (Next 16's default) builds the minimal app in no-motion/next, a
- *   static export. Without Motion the build must pass and out/index.html must hold the Dialog and
- *   Tooltip triggers (the prerender ran without a server error). With Motion a client chunk of its
- *   own must hold Motion's code, and none may keep a bare `import("motion/react")`.
+ *   static export. Without Motion that proves three things: Turbopack compiles the client and
+ *   server graphs of chunks-ui, the server module (with Turbopack's stub for `motion/react`)
+ *   evaluates without throwing, and out/index.html holds the Dialog and Tooltip triggers, so they
+ *   prerender. It runs no Motion code: loadMotion() runs only in the browser, and the popups sit
+ *   in closed client-only portals, so the server render reaches Root and Trigger only. The browser
+ *   path (the import() rejecting into the catch, the CSS fallback) is not exercised here. With
+ *   Motion a client chunk must hold Motion's code, out/index.html must not load that chunk up
+ *   front, and none may keep a bare `import("motion/react")`.
  * Fixtures: scripts/no-motion (recipe in scripts/README.md). Needs the network.
  * Run: bun run check:no-motion (builds first)
  */
