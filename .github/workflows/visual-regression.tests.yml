@@ -25,16 +25,19 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      # A pull request that touches none of the WATCH paths (docs, markdown) skips the suite: every
-      # later step has `if: steps.changes.outputs.run_full == 'true'`, and the job still succeeds, so
-      # the required check passes. Master pushes and manual runs always run the full suite.
+      # A pull request that touches none of the WATCH paths (docs, markdown) skips the suite: the
+      # setup and test steps have `if: steps.changes.outputs.run_full == 'true'`, and the job still
+      # succeeds, so the required check passes. Master pushes and manual runs always run the full
+      # suite. The steps that react to a failure or to master do not test run_full, so a failing
+      # checkout or decide step on master still posts the Slack failure message.
       - name: Decide whether the suite runs
         id: changes
         env:
           BASE_REF: ${{ github.base_ref }}
         run: |
-          # git pathspecs: a directory matches everything under it
-          WATCH='packages/ui bun.lock package.json turbo.json .github/workflows/visual-regression.tests.yml packages/typescript-config'
+          # git pathspecs: a directory matches everything under it. bunfig.toml sets the linker, so
+          # it changes what the suite installs.
+          WATCH='packages/ui bun.lock package.json turbo.json bunfig.toml .github/workflows/visual-regression.tests.yml packages/typescript-config'
           run_full=true
           if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
             git config --global --add safe.directory "$GITHUB_WORKSPACE"
@@ -85,12 +88,12 @@ jobs:
       #   cd packages/ui && bunx vitest run --config vitest.visual.config.ts --sequence.shuffle --sequence.seed=<seed>
       - name: Run Visual Regression Tests in shuffled order
         id: shuffled
-        if: steps.changes.outputs.run_full == 'true' && (github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch') && !cancelled() && steps.visual.outcome != 'skipped'
+        if: (github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch') && !cancelled() && steps.visual.outcome != 'skipped'
         run: cd packages/ui && bunx vitest run --config vitest.visual.config.ts --sequence.shuffle --sequence.seed=${{ github.run_number }}
 
       # Vitest writes each failed screenshot's actual and diff PNGs to <root>/.vitest-attachments
       - name: Upload diff screenshots on failure
-        if: steps.changes.outputs.run_full == 'true' && failure()
+        if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: visual-regression-diffs
@@ -101,7 +104,7 @@ jobs:
           retention-days: 7
 
       - name: Notify Slack on Success
-        if: steps.changes.outputs.run_full == 'true' && success() && github.ref == 'refs/heads/master'
+        if: success() && github.ref == 'refs/heads/master'
         uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
         with:
           method: chat.postMessage
@@ -113,7 +116,7 @@ jobs:
       # Names the suites that failed: Chromium visual and WebKit smoke are one job.
       - name: Name the failed suites
         id: failed
-        if: steps.changes.outputs.run_full == 'true' && failure() && github.ref == 'refs/heads/master'
+        if: failure() && github.ref == 'refs/heads/master'
         env:
           VISUAL: ${{ steps.visual.outcome }}
           WEBKIT: ${{ steps.webkit.outcome }}
@@ -129,7 +132,7 @@ jobs:
           echo "suites=${joined%, }" >> "$GITHUB_OUTPUT"
 
       - name: Notify Slack on Failure
-        if: steps.changes.outputs.run_full == 'true' && failure() && github.ref == 'refs/heads/master'
+        if: failure() && github.ref == 'refs/heads/master'
         uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
         with:
           method: chat.postMessage
@@ -140,4 +143,4 @@ jobs:
 
       - name: Report the skip
         if: steps.changes.outputs.run_full != 'true'
-        run: echo "docs-only change, visual suite skipped"
+        run: echo "no WATCH path changed, visual suite skipped"
