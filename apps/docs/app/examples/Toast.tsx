@@ -10,22 +10,22 @@ const TYPE_STYLES = {
   primary: {
     icon: Info,
     iconClassName: "text-primary-text",
-    className: "border-l-4 border-primary",
+    className: "border-s-4 border-primary",
   },
   success: {
     icon: CheckCircle2,
     iconClassName: "text-success-text",
-    className: "border-l-4 border-success",
+    className: "border-s-4 border-success",
   },
   destructive: {
     icon: XCircle,
     iconClassName: "text-destructive-text",
-    className: "border-l-4 border-destructive",
+    className: "border-s-4 border-destructive",
   },
   warning: {
     icon: AlertTriangle,
     iconClassName: "text-warning-text",
-    className: "border-l-4 border-warning",
+    className: "border-s-4 border-warning",
   },
 } as const satisfies Record<ToastType, { icon: unknown; iconClassName: string; className: string }>;
 
@@ -173,7 +173,7 @@ function ToastPromiseTrigger() {
             description: "Hold tight, this will only take a moment",
             icon: Loader,
             iconClassName: "text-primary-text animate-spin",
-            className: "border-l-4 border-primary",
+            className: "border-s-4 border-primary",
           },
           success: (result) => ({
             title: "Upload complete",

@@ -20,7 +20,7 @@ export function GetCodeDialog({
       <Dialog.Portal>
         <Dialog.Backdrop className="bg-[oklch(0_0_0/0.4)]" />
         <Dialog.Popup className="flex max-h-[calc(100vh-48px)] w-[calc(100%-48px)] max-w-[640px] flex-col overflow-hidden rounded-[14px] p-0 shadow-[0_24px_64px_-16px_oklch(0_0_0/0.3)]">
-          <div className="flex items-start justify-between gap-4 pt-5 pr-5 pb-4 pl-6">
+          <div className="flex items-start justify-between gap-4 pt-5 pe-5 pb-4 ps-6">
             <div className="flex flex-col gap-1">
               <Dialog.Title className="text-[17px] tracking-[-0.01em]">Theme CSS</Dialog.Title>
               <Dialog.Description className="text-[13px]">
@@ -45,7 +45,7 @@ export function GetCodeDialog({
           >
             {css}
           </pre>
-          <div className="flex items-center justify-between gap-3 py-3.5 pr-4 pl-6">
+          <div className="flex items-center justify-between gap-3 py-3.5 pe-4 ps-6">
             <span className="font-mono text-[11.5px] text-muted-foreground">
               {css.match(/--/g)?.length ?? 0} tokens
             </span>
