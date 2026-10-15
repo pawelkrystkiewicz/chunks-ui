@@ -543,12 +543,15 @@ describe("focus ring with no reduced-motion preference", () => {
     expect(getComputedStyle(drawn).transitionProperty).toContain(property);
   });
 
-  // The offset ring of Button, not the flush one these parts drew before
-  it.each(["Toast.Close", "Toast.Action", "ClearButton"])(
-    "%s draws the ring 2px outside the edge",
-    async (part) => {
-      const c = RING_CASES.find((r) => r.part === part);
-      if (!c) throw new Error(`No ring case for ${part}`);
+  // The offset ring of Button, not the flush one these parts drew before (#404, #415). Derived
+  // from RING_CASES, so a new part gets the check without a list to keep. Left out: parts whose
+  // container clips at the edge, so the ring is drawn inside it (Tabs.Content, Drawer.Popup);
+  // Menu.Content, which hides the ring on pointer focus; and the pseudo-element ring, which is
+  // drawn on `::after` instead of the part.
+  const INSET = new Set(["Tabs.Content", "Drawer.Popup", "Menu.Content"]);
+  it.each(RING_CASES.filter((c) => !INSET.has(c.part) && !c.pseudo))(
+    "$part draws the ring 2px outside the edge",
+    async (c) => {
       expect(getComputedStyle(await focusRing(c)).outlineOffset).toBe("2px");
     },
   );

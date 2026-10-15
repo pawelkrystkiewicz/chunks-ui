@@ -1,5 +1,5 @@
 import { describe, expect, it, onTestFinished } from "vitest";
-import { renderFixture } from "../../VisualTest.utils";
+import { focusVisible, renderFixture } from "../../VisualTest.utils";
 import { Dialog } from "../dialog";
 import { NumberField } from "./index";
 
@@ -94,6 +94,23 @@ describe("NumberField", () => {
         </NumberField.Group>
       </NumberField.Root>,
     );
+    await expect(fixture).toMatchScreenshot();
+  });
+
+  // Keyboard focus on the input shows the ring on the Group around it: 2px of --ring, 2px outside
+  // the border, as on Input. The input itself draws none.
+  it("focused input, ring on the Group", async () => {
+    const { fixture, getByRole } = await renderFixture(
+      <NumberField.Root defaultValue={42} max={100} min={0}>
+        <NumberField.Group>
+          <NumberField.Decrement />
+          <NumberField.Input />
+          <NumberField.Increment />
+        </NumberField.Group>
+      </NumberField.Root>,
+    );
+    const input = getByRole("textbox");
+    focusVisible(input);
     await expect(fixture).toMatchScreenshot();
   });
 });

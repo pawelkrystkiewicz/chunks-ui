@@ -3,6 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { axe } from "jest-axe";
 import type { ComponentProps } from "react";
 import { afterEach, describe, expect, expectTypeOf, it } from "vitest";
+import { FOCUS_RING, FOCUS_RING_WITHIN } from "../shared";
 import {
   Combobox,
   type ComboboxChipRemoveProps,
@@ -479,5 +480,22 @@ describe("Combobox icon buttons", () => {
     for (const name of names) {
       expect(screen.getByRole("button", { name })).toBeInTheDocument();
     }
+  });
+});
+
+describe("Combobox focus ring", () => {
+  it("draws the library focus ring on Input", () => {
+    render(
+      <Combobox.Root>
+        <Combobox.Input aria-label="Search" data-testid="input" />
+      </Combobox.Root>,
+    );
+    expect(screen.getByTestId("input")).toHaveClass(FOCUS_RING);
+  });
+
+  // The wrapper draws the ring while the input inside it has the focus
+  it("draws the focus-within ring classes on Control", () => {
+    render(<Combobox.Control data-testid="control" />);
+    expect(screen.getByTestId("control")).toHaveClass(FOCUS_RING_WITHIN);
   });
 });

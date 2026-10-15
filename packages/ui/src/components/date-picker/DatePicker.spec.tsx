@@ -3,7 +3,16 @@ import { cleanup, isInaccessible, render, screen, waitFor, within } from "@testi
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { createRef } from "react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  type MockInstance,
+  onTestFinished,
+  vi,
+} from "vitest";
 import { createDate } from "../calendar/date";
 import { Field } from "../field";
 import { DatePicker } from "./DatePicker";
@@ -475,6 +484,9 @@ describe("DatePicker in a form", () => {
   it("submits under the Field.Root name over its own, as onFormSubmit reports it", async () => {
     const user = userEvent.setup();
     const onFormSubmit = vi.fn();
+    // The two names warn in development; that is covered below
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    onTestFinished(() => warn.mockRestore());
     render(
       <Form aria-label="Task" onFormSubmit={onFormSubmit}>
         <Field.Root name="due">
@@ -489,6 +501,37 @@ describe("DatePicker in a form", () => {
     await user.click(screen.getByRole("button", { name: "Save" }));
     expect(onFormSubmit).toHaveBeenCalledOnce();
     expect(onFormSubmit.mock.calls[0]?.[0]).toEqual({ due: "2026-03-15" });
+  });
+
+  describe("with a name that differs from its Field.Root's", () => {
+    let warn: MockInstance<typeof console.warn>;
+    beforeEach(() => {
+      warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    });
+    afterEach(() => warn.mockRestore());
+
+    const picker = (names: { field?: string; picker?: string }, placeholder?: string) => (
+      <Field.Root name={names.field}>
+        <Field.Label>Due date</Field.Label>
+        <DatePicker name={names.picker} placeholder={placeholder} />
+      </Field.Root>
+    );
+
+    it("warns once in development that the field's name wins, naming both", () => {
+      const names = { field: "due", picker: "deadline" };
+      const { rerender } = render(picker(names));
+      rerender(picker(names, "Pick a day"));
+      expect(warn).toHaveBeenCalledOnce();
+      expect(warn.mock.calls[0]?.[0]).toMatch(/"deadline".*"due"/s);
+    });
+
+    it.each([
+      ["the names match", { field: "due", picker: "due" }],
+      ["the picker has no name", { field: "due" }],
+    ])("does not warn when %s", (_, names) => {
+      render(picker(names));
+      expect(warn).not.toHaveBeenCalled();
+    });
   });
 
   it("submits with the form named by `form` when it is outside that form", () => {

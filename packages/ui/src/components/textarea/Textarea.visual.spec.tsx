@@ -1,5 +1,6 @@
+import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { renderFixture } from "../../VisualTest.utils";
+import { focusVisible, renderFixture } from "../../VisualTest.utils";
 import { Field } from "../field";
 import { Input } from "../input";
 import { Textarea } from "./index";
@@ -26,6 +27,26 @@ describe("Textarea", () => {
     await expect(fixture).toMatchScreenshot();
   });
 
+  it("shows a not-allowed cursor and no resize grip on a disabled textarea", () => {
+    const { getByRole } = render(
+      <div>
+        <Textarea aria-label="Enabled" />
+        <Textarea aria-label="Disabled" disabled />
+      </div>,
+    );
+    const { cursor, pointerEvents, resize } = getComputedStyle(
+      getByRole("textbox", { name: "Disabled" }),
+    );
+    expect({ cursor, pointerEvents, resize }).toEqual({
+      cursor: "not-allowed",
+      pointerEvents: "auto",
+      resize: "none",
+    });
+    const enabled = getComputedStyle(getByRole("textbox", { name: "Enabled" }));
+    expect(enabled.cursor).not.toBe("not-allowed");
+    expect(enabled.resize).not.toBe("none");
+  });
+
   it("in an invalid Field, has the same border colour as an invalid Input", async () => {
     const { getByRole } = await renderFixture(
       <div>
@@ -46,5 +67,14 @@ describe("Textarea", () => {
     const borderOf = (name: string) => getComputedStyle(getByRole("textbox", { name })).borderColor;
     expect(borderOf("Bio")).toBe(borderOf("Email"));
     expect(borderOf("Bio")).not.toBe(borderOf("Notes"));
+  });
+
+  it("focus-visible", async () => {
+    const { fixture, getByRole } = await renderFixture(
+      <Textarea aria-label="Focused" placeholder="Enter text..." style={{ width: 300 }} />,
+    );
+    const textarea = getByRole("textbox");
+    focusVisible(textarea);
+    await expect(fixture).toMatchScreenshot();
   });
 });

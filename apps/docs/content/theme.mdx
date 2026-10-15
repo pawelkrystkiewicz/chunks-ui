@@ -97,6 +97,8 @@ Relative colour syntax needs Chrome 119+, Safari 18+ or Firefox 128+. Older brow
 
 Controls draw their keyboard focus ring in `--ring`, and so do the Popover, Menu and Dialog popups when they take focus themselves. By default it is 60% `--primary` and 40% `--background`, a softer shade of the primary: lighter in light mode, darker in dark mode. The mix is in OKLab, which has no hue to interpolate, so the ring keeps the primary's hue. Set `--ring` to use a colour of your choice.
 
+The ring is 2px wide and sits 2px outside the edge of the part, so it reaches 4px past it. `Tabs.Content`, whose container clips at the edge, draws it inside instead; so does `Drawer.Popup`, so that the border on its open side stays in view. To draw a part's ring flush with its edge, pass `focus-visible:outline-offset-0` in its `className`; on `Combobox.Control`, `NumberField.Group` and `Slider.Thumb`, which draw the ring while the control inside has focus, it is `has-[:focus-visible]:outline-offset-0`. On an `Input` with adornments, pass a function `className`: a string goes to the wrapper, not the input. `Radio.Item` and the `Calendar` buttons take no `className` for the control; to build a flush-ring radio, make the item from `Radio.Root` and `Radio.Indicator`.
+
 A custom property resolves its `var()` on the element that declares it, and its children inherit the result. `theme.css` declares `--ring` on `:root` and `.dark`, so a `--primary` or `--background` you set on `:root` changes the ring too. A nested element that sets `--primary` or `--background` keeps the ring of its parent: declare `--ring` on that element as well, as in the `.brand-section` example above.
 
 ## Tailwind Usage

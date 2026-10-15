@@ -49,19 +49,17 @@ export function NumberFieldMinMaxExample() {
 export function NumberFieldScrubExample() {
   return (
     <Container>
-      <div className="flex flex-col gap-1">
-        <NumberField.Root defaultValue={100}>
-          <NumberField.ScrubArea>
-            <span className="text-muted-foreground text-sm">Drag to adjust</span>
-            <NumberField.ScrubAreaCursor />
-          </NumberField.ScrubArea>
-          <NumberField.Group>
-            <NumberField.Decrement />
-            <NumberField.Input aria-label="Amount" />
-            <NumberField.Increment />
-          </NumberField.Group>
-        </NumberField.Root>
-      </div>
+      <NumberField.Root defaultValue={100} className="gap-2">
+        <NumberField.ScrubArea>
+          <span className="text-muted-foreground text-sm">Drag to adjust</span>
+          <NumberField.ScrubAreaCursor />
+        </NumberField.ScrubArea>
+        <NumberField.Group>
+          <NumberField.Decrement />
+          <NumberField.Input aria-label="Amount" />
+          <NumberField.Increment />
+        </NumberField.Group>
+      </NumberField.Root>
     </Container>
   );
 }

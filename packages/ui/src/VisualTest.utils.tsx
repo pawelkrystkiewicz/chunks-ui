@@ -192,6 +192,12 @@ export function outlineTransitions(el: Element) {
     .filter((property) => property?.startsWith("outline"));
 }
 
+/** Moves focus to `el` and asserts it shows as keyboard focus, so the ring is drawn */
+export function focusVisible(el: HTMLElement) {
+  el.focus();
+  expect(el.matches(":focus-visible")).toBe(true);
+}
+
 /** Pauses all CSS animations — use for components with loaders/spinners. */
 export function pauseAnimations() {
   for (const el of document.querySelectorAll("*")) {

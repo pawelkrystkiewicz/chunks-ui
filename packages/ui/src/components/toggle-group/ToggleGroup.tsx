@@ -18,7 +18,7 @@ import { springs } from "../../lib/motion";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { useReducedMotion } from "../../lib/use-motion";
 import { useHeldWhileDriving, useMotionAnimate } from "../../lib/use-motion-animate";
-import { RING_ANIMATION_CLASSES } from "../shared";
+import { FOCUS_RING, RING_ANIMATION_CLASSES } from "../shared";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -304,7 +304,10 @@ function ToggleGroupItem({ className, value, ref, ...props }: ToggleGroupItemPro
         ...RING_ANIMATION_CLASSES,
         "text-muted-foreground hover:text-foreground",
         "data-pressed:text-foreground",
-        "focus-visible:outline-2 focus-visible:outline-ring",
+        FOCUS_RING,
+        // The ring reaches 2px past the 2px gap, under a later sibling at the same z-index; in a
+        // `multiple` group a pressed one has an opaque background, which covered that side of it
+        "focus-visible:z-[2]",
         "disabled:pointer-events-none disabled:opacity-50",
         "[&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
         ctx?.multiple && "data-pressed:bg-background data-pressed:shadow-sm",

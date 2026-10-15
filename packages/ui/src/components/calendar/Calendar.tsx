@@ -13,7 +13,7 @@ import {
 import { flushSync } from "react-dom";
 import { cn } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
-import { RING_ANIMATION_CLASSES } from "../shared";
+import { FOCUS_RING, RING_ANIMATION_CLASSES } from "../shared";
 import { type CalendarLabels, DEFAULT_CALENDAR_LABELS } from "./Calendar.Labels";
 import {
   addDays,
@@ -243,7 +243,7 @@ export function Calendar({
             "inline-flex size-7 items-center justify-center rounded-sm",
             ...RING_ANIMATION_CLASSES,
             "text-foreground/70",
-            "focus-visible:outline-2 focus-visible:outline-ring",
+            FOCUS_RING,
             atFirstMonth
               ? "cursor-not-allowed opacity-40"
               : "hover:bg-accent hover:text-accent-foreground",
@@ -276,7 +276,7 @@ export function Calendar({
             ...RING_ANIMATION_CLASSES,
             "text-foreground/70",
             "hover:bg-accent hover:text-accent-foreground",
-            "focus-visible:outline-2 focus-visible:outline-ring",
+            FOCUS_RING,
           )}
         >
           <svg
@@ -354,9 +354,11 @@ export function Calendar({
                         className={cn(
                           "inline-flex size-8 items-center justify-center rounded-md text-sm",
                           ...RING_ANIMATION_CLASSES,
-                          "focus-visible:outline-2 focus-visible:outline-ring",
+                          FOCUS_RING,
                           !isSelected && !isToday && "hover:bg-accent hover:text-accent-foreground",
-                          isSelected && "bg-primary text-primary-foreground",
+                          // Forced colours drop author backgrounds: the system highlight stands in
+                          isSelected &&
+                            "bg-primary text-primary-foreground forced-colors:bg-[Highlight] forced-colors:text-[HighlightText]",
                           isToday &&
                             !isSelected &&
                             "font-medium text-primary-text ring-1 ring-primary",
@@ -364,10 +366,26 @@ export function Calendar({
                           !isCurrentMonth &&
                             !isSelected &&
                             "text-muted-foreground forced-colors:text-[GrayText]",
-                          disabled && "pointer-events-none opacity-40",
+                          // Forced colours keep the opacity, so a disabled day would look like an
+                          // outside day: there, GrayText at full opacity, struck through
+                          disabled &&
+                            "pointer-events-none opacity-40 forced-colors:line-through forced-colors:opacity-100",
+                          disabled && !isSelected && "forced-colors:text-[GrayText]",
                         )}
                       >
-                        {date.getDate()}
+                        {/* Forced colours paint a Canvas backplate behind the selected day's number:
+                            off for that span alone. Today's underline is on the span because the
+                            button carries the strike, and both set `text-decoration-line`. */}
+                        <span
+                          className={cn(
+                            isSelected && "forced-color-adjust-none",
+                            isToday &&
+                              !isSelected &&
+                              "forced-colors:underline forced-colors:decoration-2 forced-colors:underline-offset-2",
+                          )}
+                        >
+                          {date.getDate()}
+                        </span>
                       </button>
                     </td>
                   );

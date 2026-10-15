@@ -1,6 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { axe } from "jest-axe";
 import { afterEach, describe, expect, it } from "vitest";
+import { FOCUS_RING } from "../shared";
 import { Checkbox } from "./Checkbox";
 
 afterEach(cleanup);
@@ -41,5 +42,12 @@ describe("Checkbox", () => {
       </Checkbox.Root>,
     );
     expect(await axe(container)).toHaveNoViolations();
+  });
+});
+
+describe("Checkbox focus ring", () => {
+  it("draws the library focus ring on Root", () => {
+    render(<Checkbox.Root />);
+    expect(screen.getByRole("checkbox")).toHaveClass(FOCUS_RING);
   });
 });

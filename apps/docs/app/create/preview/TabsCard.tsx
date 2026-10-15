@@ -15,8 +15,7 @@ const ACTIVITY = [
 
 // min-w-0: in a narrow column a wide (e.g. monospace) label eats into its tab's padding
 // instead of pushing the tab list past the card's padding.
-const tabClass =
-  "h-[calc(var(--spacing-ui-height)-6px)] min-w-0 flex-1 rounded-md px-3 py-0 text-[0.9286em]";
+const tabClass = "h-[calc(var(--spacing-ui-height)-6px)] min-w-0 flex-1 px-3 py-0 text-[0.9286em]";
 
 export function TabsCard() {
   return (

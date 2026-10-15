@@ -4,6 +4,7 @@ import { axe } from "jest-axe";
 import { createRef } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Field } from "../field";
+import { FOCUS_RING } from "../shared";
 import { Textarea } from "./Textarea";
 
 afterEach(cleanup);
@@ -111,5 +112,12 @@ describe("Textarea inside Field", () => {
       </Field.Root>,
     );
     expect(screen.getByRole("textbox", { name: "Bio" })).toHaveClass("is-disabled");
+  });
+});
+
+describe("Textarea focus ring", () => {
+  it("draws the library focus ring", () => {
+    render(<Textarea data-testid="ta" />);
+    expect(screen.getByTestId("ta")).toHaveClass(FOCUS_RING);
   });
 });

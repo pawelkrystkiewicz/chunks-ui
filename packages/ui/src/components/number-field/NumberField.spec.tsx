@@ -3,6 +3,8 @@ import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import * as React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { PortalContainerProvider } from "../../lib/portal-container";
+import { FOCUS_RING_WITHIN } from "../shared";
 import { NumberField } from "./NumberField";
 import { DEFAULT_NUMBER_FIELD_LABELS } from "./NumberField.Labels";
 
@@ -163,6 +165,55 @@ describe("NumberField", () => {
       fireEvent.pointerUp(window);
       await waitFor(() => expect(screen.queryByTestId("cursor")).not.toBeInTheDocument());
     });
+
+    // Base UI portals the cursor to <body>, so a theme scoped to the provider's element would
+    // not reach it there
+    describe("inside a PortalContainerProvider", () => {
+      let container: HTMLElement;
+      beforeEach(() => {
+        container = document.createElement("div");
+        document.body.appendChild(container);
+      });
+      afterEach(() => container.remove());
+
+      it("renders inside the provider's element and leaves when the scrub ends", async () => {
+        render(
+          <PortalContainerProvider value={container}>
+            <ScrubField />
+          </PortalContainerProvider>,
+        );
+        startScrub();
+        const cursor = await screen.findByTestId("cursor");
+        expect(container.contains(cursor)).toBe(true);
+        // Base UI positions the cursor through its ref, which must reach the re-portalled element
+        expect(cursor.style.transform).toMatch(/translate3d/);
+        fireEvent.pointerUp(window);
+        await waitFor(() => expect(screen.queryByTestId("cursor")).not.toBeInTheDocument());
+      });
+
+      it("keeps a render element and its children inside the provider's element", async () => {
+        render(
+          <PortalContainerProvider value={container}>
+            <ScrubField cursor={<span>drag</span>} render={<em />} />
+          </PortalContainerProvider>,
+        );
+        startScrub();
+        const cursor = await screen.findByTestId("cursor");
+        expect(cursor.tagName).toBe("EM");
+        expect(cursor).toHaveTextContent("drag");
+        expect(container.contains(cursor)).toBe(true);
+      });
+
+      it("renders in <body> while the provider's element is still null", async () => {
+        render(
+          <PortalContainerProvider value={null}>
+            <ScrubField />
+          </PortalContainerProvider>,
+        );
+        startScrub();
+        expect((await screen.findByTestId("cursor")).parentElement).toBe(document.body);
+      });
+    });
   });
 
   it("respects max constraint (does not increment beyond max)", async () => {
@@ -251,5 +302,35 @@ describe("NumberField labels", () => {
     );
     expect(screen.getByRole("button", { name: "Add one" })).toBeInTheDocument();
     expect(screen.getByRole("textbox")).toHaveAttribute("aria-roledescription", "Counter");
+  });
+});
+
+describe("NumberField focus ring", () => {
+  const group = (className?: string) =>
+    render(
+      <NumberField.Root defaultValue={0}>
+        <NumberField.Group data-testid="group" className={className}>
+          <NumberField.Input aria-label="Quantity" />
+        </NumberField.Group>
+      </NumberField.Root>,
+    );
+
+  // The Group draws the ring while the input inside it has keyboard focus; the input draws none
+  it("draws the focus-within ring classes on Group", () => {
+    group();
+    expect(screen.getByTestId("group")).toHaveClass(FOCUS_RING_WITHIN);
+    expect(screen.getByRole("textbox")).toHaveClass("focus-visible:outline-none");
+  });
+
+  // Both offsets are in one tailwind-merge group under the same variant: the consumer's wins
+  it("keeps a flush ring with has-[:focus-visible]:outline-offset-0 in className", () => {
+    group("has-[:focus-visible]:outline-offset-0");
+    const el = screen.getByTestId("group");
+    expect(el).toHaveClass(
+      "has-[:focus-visible]:outline-offset-0",
+      "has-[:focus-visible]:outline-2",
+      "has-[:focus-visible]:outline-ring",
+    );
+    expect(el).not.toHaveClass("has-[:focus-visible]:outline-offset-2");
   });
 });

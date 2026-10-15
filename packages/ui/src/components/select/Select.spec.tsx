@@ -1,6 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { axe } from "jest-axe";
 import { afterEach, describe, expect, it } from "vitest";
+import { FOCUS_RING } from "../shared";
 import { Select } from "./Select";
 
 afterEach(cleanup);
@@ -102,5 +103,21 @@ describe("Select", () => {
       </Select.Root>,
     );
     expect(await axe(container)).toHaveNoViolations();
+  });
+});
+
+describe("Select focus ring", () => {
+  const trigger = () =>
+    render(
+      <Select.Root>
+        <Select.Trigger data-testid="trigger">
+          <Select.Value placeholder="Pick" />
+        </Select.Trigger>
+      </Select.Root>,
+    );
+
+  it("draws the library focus ring on the Trigger", () => {
+    trigger();
+    expect(screen.getByTestId("trigger")).toHaveClass(FOCUS_RING);
   });
 });

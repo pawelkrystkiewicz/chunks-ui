@@ -1,5 +1,5 @@
 import { describe, it } from "vitest";
-import { renderFixture } from "../../VisualTest.utils";
+import { focusVisible, renderFixture } from "../../VisualTest.utils";
 import { Input } from "./index";
 
 const searchIcon = (
@@ -38,6 +38,32 @@ describe("Input", () => {
         <Input placeholder="Clearable" defaultValue="Hello" onClear={() => {}} />
       </div>,
     );
+    await expect(fixture).toMatchScreenshot();
+  });
+
+  it("focus-visible", async () => {
+    const { fixture, getByRole } = await renderFixture(
+      <Input aria-label="Focused" defaultValue="Hello world" />,
+    );
+    const input = getByRole("textbox");
+    focusVisible(input);
+    await expect(fixture).toMatchScreenshot();
+  });
+
+  // The wrapper that positions the adornments sets no overflow, so the input's ring shows in full
+  it("with adornments focus-visible", async () => {
+    const { fixture, getByRole } = await renderFixture(
+      <div style={{ width: 300 }}>
+        <Input
+          aria-label="Focused"
+          startAdornment={searchIcon}
+          defaultValue="Hello"
+          onClear={() => {}}
+        />
+      </div>,
+    );
+    const input = getByRole("textbox");
+    focusVisible(input);
     await expect(fixture).toMatchScreenshot();
   });
 });

@@ -1,7 +1,8 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { page } from "vitest/browser";
-import { renderFixture } from "../../VisualTest.utils";
+import { focusVisible, renderFixture } from "../../VisualTest.utils";
+import { Field } from "../field";
 import { Radio } from "./index";
 
 /** The opacity the element is drawn with: its own times every ancestor's */
@@ -30,20 +31,33 @@ describe("Radio", () => {
   });
 
   // The radio and its text are each drawn at 0.5, never 0.25 from dimming both the item and its parts
-  it.each<[string, { group?: boolean; item?: boolean }]>([
+  it.each<[string, { field?: boolean; grouped?: boolean; group?: boolean; item?: boolean }]>([
     ["a disabled item", { item: true }],
     ["the items of a disabled group", { group: true }],
     ["a disabled item of a disabled group", { group: true, item: true }],
-  ])("dims %s once", (_, disabled) => {
+    // A Field.Root disables the radio through Base UI (`data-disabled`), not through the item's prop
+    ["an item of a disabled Field.Root", { field: true, grouped: false }],
+    ["an item in a group of a disabled Field.Root", { field: true }],
+  ])("dims %s once and shows a not-allowed cursor", (_, { field, grouped = true, group, item }) => {
+    const radio = (
+      <Radio.Item value="a" disabled={item}>
+        Option
+      </Radio.Item>
+    );
+    const content = grouped ? (
+      <Radio.Group aria-label="Plan" defaultValue="a" disabled={group}>
+        {radio}
+      </Radio.Group>
+    ) : (
+      radio
+    );
     const { getByRole, getByText } = render(
-      <Radio.Group defaultValue="a" disabled={disabled.group}>
-        <Radio.Item value="a" disabled={disabled.item}>
-          Option
-        </Radio.Item>
-      </Radio.Group>,
+      field ? <Field.Root disabled>{content}</Field.Root> : content,
     );
     expect(drawnOpacity(getByRole("radio", { name: "Option" }))).toBe(0.5);
     expect(drawnOpacity(getByText("Option"))).toBe(0.5);
+    const label = getByText("Option").closest("label");
+    expect(label && getComputedStyle(label).cursor).toBe("not-allowed");
   });
 
   // pointer-events: none would hide the not-allowed cursor; Base UI ignores the click anyway
@@ -133,5 +147,16 @@ describe("Radio", () => {
     );
     expect(drawnOpacity(getByRole("radio", { name: "Option" }))).toBe(1);
     expect(drawnOpacity(getByText("Option"))).toBe(1);
+  });
+
+  it("focus-visible", async () => {
+    const { fixture, getByRole } = await renderFixture(
+      <Radio.Group defaultValue="a">
+        <Radio.Item value="a">Option A</Radio.Item>
+      </Radio.Group>,
+    );
+    const radio = getByRole("radio");
+    focusVisible(radio);
+    await expect(fixture).toMatchScreenshot();
   });
 });
