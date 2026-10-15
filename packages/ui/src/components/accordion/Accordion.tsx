@@ -44,7 +44,7 @@ function AccordionTrigger({ className, children, ...props }: AccordionTriggerPro
     <BaseAccordion.Trigger
       className={cnState(
         // The trigger, not the item, gets data-panel-open, so the chevron rotates off it
-        "group/trigger flex flex-1 cursor-pointer items-center justify-between py-4 text-left font-medium text-sm",
+        "group/trigger flex flex-1 cursor-pointer items-center justify-between py-4 text-start font-medium text-sm",
         "hover:text-foreground/80",
         FOCUS_RING,
         RING_TRANSITION,
