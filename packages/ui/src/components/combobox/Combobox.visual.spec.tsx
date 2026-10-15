@@ -49,10 +49,10 @@ const combobox = ({
 );
 
 // The docs' multi-select: the Control draws the ring (`has-[:focus-visible]`) while the input
-// inside it has focus, and the input's own ring is off
+// inside it has focus, and turns the input's own ring off
 const chipsCombobox = () => (
   <Combobox.Root multiple items={options} defaultValue={options.slice(0, 2)}>
-    <Combobox.Control>
+    <Combobox.Control data-testid="control">
       <Combobox.Chips>
         {options.slice(0, 2).map((item) => (
           <Combobox.Chip key={item.value}>
@@ -62,7 +62,7 @@ const chipsCombobox = () => (
         ))}
       </Combobox.Chips>
       <Combobox.Input
-        className="h-7 min-w-20 flex-1 border-0 bg-transparent px-0 focus-visible:outline-none"
+        className="h-7 min-w-20 flex-1 border-0 bg-transparent px-0"
         placeholder="Select framework..."
         aria-label="Frameworks"
       />
@@ -109,6 +109,11 @@ const disabledChipsCombobox = () => (
   </Combobox.Root>
 );
 
+const ringOf = (el: Element) => {
+  const { outlineStyle, outlineColor } = getComputedStyle(el);
+  return { outlineStyle, outlineColor };
+};
+
 describe("Combobox", () => {
   it("closed", async () => {
     const { fixture } = await renderFixture(<div style={{ width: 250 }}>{combobox()}</div>);
@@ -122,17 +127,23 @@ describe("Combobox", () => {
     );
     const input = getByRole("combobox");
     focusVisible(input);
+    expect(ringOf(input)).toEqual({ outlineStyle: "solid", outlineColor: ringColor() });
     await expect(fixture).toMatchScreenshot();
   });
 
-  // The same ring on the Control, 2px outside the wrapper around the chips and the input
+  // The same ring on the Control, 2px outside the wrapper around the chips and the input, and
+  // none on the input: two rings showed before
   it("control focus-visible", async () => {
-    const { fixture, getByRole } = await renderFixture(
+    const { fixture, getByRole, getByTestId } = await renderFixture(
       <div style={{ width: 300 }}>{chipsCombobox()}</div>,
     );
     const input = getByRole("combobox");
     focusVisible(input);
-    expect(getComputedStyle(input).outlineStyle).toBe("none");
+    expect(ringOf(getByTestId("control"))).toEqual({
+      outlineStyle: "solid",
+      outlineColor: ringColor(),
+    });
+    expect(ringOf(input).outlineStyle).toBe("none");
     await expect(fixture).toMatchScreenshot();
   });
 

@@ -57,12 +57,15 @@ function ComboboxRoot<Value, Multiple extends boolean | undefined = false, Item 
   );
 }
 
+// The Control draws the one ring while the input inside it has keyboard focus, so it turns the
+// input's own ring (FOCUS_RING) off: `input:focus-visible` under the class outranks it
 function ComboboxControl({ className, ...props }: ComboboxControlProps) {
   return (
     <div
       className={cn(
         "relative flex flex-wrap items-center gap-1 rounded-md border border-input bg-background px-3 py-1.5",
         FOCUS_RING_WITHIN,
+        "[&_input:focus-visible]:outline-none",
         RING_TRANSITION,
         "has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50",
         className,

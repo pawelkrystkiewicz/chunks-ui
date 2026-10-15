@@ -241,7 +241,7 @@ The popup enters with a fade: the `popup` spring (`springs.popup`, with a scale-
 | Part | Description |
 |---|---|
 | `Combobox.Root` | State container. Manages open/close, filtering, and selected value(s). |
-| `Combobox.Control` | Bordered wrapper for multi-select (chips + input). Uses `has-[:focus-visible]` for focus ring. |
+| `Combobox.Control` | Bordered wrapper for multi-select (chips + input). Draws the focus ring (`has-[:focus-visible]`) while the input inside it has keyboard focus, and turns the input's own ring off. |
 | `Combobox.Input` | Text input with built-in filtering. |
 | `Combobox.Trigger` | Button that toggles the popup. Renders a default chevron icon. |
 | `Combobox.Icon` | Chevron icon, usable standalone outside the trigger. |
