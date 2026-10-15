@@ -36,6 +36,18 @@ describe("ClearButton", () => {
     expect(screen.getByRole("button")).toHaveAttribute("type", "button");
   });
 
+  // Both offsets are in one tailwind-merge group under the same variant: the consumer's wins
+  it("keeps a flush ring with focus-visible:outline-offset-0 in className", () => {
+    render(<ClearButton className="focus-visible:outline-offset-0" />);
+    const button = screen.getByRole("button");
+    expect(button).toHaveClass(
+      "focus-visible:outline-offset-0",
+      "focus-visible:outline-2",
+      "focus-visible:outline-ring",
+    );
+    expect(button).not.toHaveClass("focus-visible:outline-offset-2");
+  });
+
   it("has no a11y violations", async () => {
     const { container } = render(<ClearButton labels={{ clear: "Remove" }} onClick={() => {}} />);
     expect(await axe(container)).toHaveNoViolations();
