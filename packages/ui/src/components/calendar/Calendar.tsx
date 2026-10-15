@@ -356,18 +356,33 @@ export function Calendar({
                           ...RING_ANIMATION_CLASSES,
                           "focus-visible:outline-2 focus-visible:outline-ring",
                           !isSelected && !isToday && "hover:bg-accent hover:text-accent-foreground",
-                          isSelected && "bg-primary text-primary-foreground",
+                          // Forced colours drop author backgrounds: the system highlight stands in
+                          isSelected &&
+                            "bg-primary text-primary-foreground forced-colors:bg-[Highlight] forced-colors:text-[HighlightText]",
+                          // The ring is a box shadow, which forced colours drop: an underline marks
+                          // today there, a cue the focus outline does not use
                           isToday &&
                             !isSelected &&
-                            "font-medium text-primary-text ring-1 ring-primary",
+                            "font-medium text-primary-text ring-1 ring-primary forced-colors:underline forced-colors:decoration-2 forced-colors:underline-offset-2",
                           // Forced colours replace the muted colour, so name the system's dimmed one
                           !isCurrentMonth &&
                             !isSelected &&
                             "text-muted-foreground forced-colors:text-[GrayText]",
-                          disabled && "pointer-events-none opacity-40",
+                          // Forced colours keep the opacity, which dims GrayText below legibility and
+                          // makes a disabled day look like an outside day: there, the system's dimmed
+                          // colour at full opacity, struck through, tells the two apart
+                          disabled &&
+                            "pointer-events-none opacity-40 forced-colors:line-through forced-colors:opacity-100",
+                          disabled && !isSelected && "forced-colors:text-[GrayText]",
                         )}
                       >
-                        {date.getDate()}
+                        {/* Forced colours paint a Canvas backplate behind text over a non-Canvas
+                            background, which hides the selected day's HighlightText number. Off for
+                            that number alone: the button's outline stays forced, and so do the
+                            other days, whose text would otherwise inherit the author colour. */}
+                        <span className={isSelected ? "forced-color-adjust-none" : undefined}>
+                          {date.getDate()}
+                        </span>
                       </button>
                     </td>
                   );

@@ -57,4 +57,34 @@ describe("Calendar in forced-colors mode", () => {
     expect(outside).toBe(systemColour("GrayText"));
     expect(outside).not.toBe(colour("Monday, March 2, 2026"));
   });
+
+  // Forced colours drop author backgrounds and box shadows: the selected day's fill and today's
+  // ring go with them. System colours and text decorations survive.
+  it("keeps the selected day, today, outside days and disabled days apart", async () => {
+    await commands.emulateMedia({ forcedColors: "active" });
+    await expect.poll(() => matchMedia("(forced-colors: active)").matches).toBe(true);
+    const { fixture } = await renderFixture(
+      <Calendar
+        value={new Date(2026, 2, 18)}
+        weekStartsOn={1}
+        showOutsideDays
+        isDateDisabled={(date) => date.getMonth() === 2 && date.getDate() === 20}
+      />,
+    );
+    const style = (name: string) =>
+      getComputedStyle(screen.getByLabelText(name, { selector: "button" }));
+    const selected = style("Wednesday, March 18, 2026");
+    expect(selected.backgroundColor).toBe(systemColour("Highlight"));
+    expect(selected.color).toBe(systemColour("HighlightText"));
+    expect(style("Sunday, March 15, 2026").textDecorationLine).toBe("underline");
+    const outside = style("Monday, February 23, 2026");
+    expect(outside.color).toBe(systemColour("GrayText"));
+    expect(outside.textDecorationLine).toBe("none");
+    // Dimmed by colour alone and struck through, so it differs from an outside day at full contrast
+    const disabled = style("Friday, March 20, 2026");
+    expect(disabled.color).toBe(systemColour("GrayText"));
+    expect(disabled.textDecorationLine).toBe("line-through");
+    expect(disabled.opacity).toBe("1");
+    await expect(fixture).toMatchScreenshot();
+  });
 });

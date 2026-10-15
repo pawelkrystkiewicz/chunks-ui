@@ -953,3 +953,36 @@ describe("Calendar labels", () => {
     expect(getButton("Następny miesiąc")).toBeInTheDocument();
   });
 });
+
+describe("Calendar in forced-colors mode", () => {
+  // Today is March 10, 2026. The computed styles are measured in Calendar.visual.spec.
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 2, 10, 12));
+  });
+  afterEach(() => vi.useRealTimers());
+
+  it("gives the selected day, today and disabled days cues that survive forced colours", () => {
+    render(
+      <Calendar
+        value={new Date(2026, 2, 18)}
+        weekStartsOn={1}
+        showOutsideDays
+        isDateDisabled={(date) => date.getMonth() === 2 && date.getDate() === 20}
+      />,
+    );
+    expect(getButton("Wednesday, March 18, 2026")).toHaveClass(
+      "forced-colors:bg-[Highlight]",
+      "forced-colors:text-[HighlightText]",
+    );
+    expect(getButton("Tuesday, March 10, 2026")).toHaveClass("forced-colors:underline");
+    const outside = getButton("Monday, February 23, 2026");
+    expect(outside).toHaveClass("forced-colors:text-[GrayText]");
+    expect(outside).not.toHaveClass("forced-colors:line-through");
+    expect(getButton("Friday, March 20, 2026")).toHaveClass(
+      "forced-colors:text-[GrayText]",
+      "forced-colors:line-through",
+      "forced-colors:opacity-100",
+    );
+  });
+});
