@@ -105,6 +105,31 @@ describe("checkDist", () => {
     expect(await checkDist(dist(edits), EXPECTED)).toEqual(['index.js has no "export *"']);
   });
 
+  it("names an index entry that exports a name the source lacks or lacks one it exports", async () => {
+    // index.js gains a stray export, index.cjs loses Button; utils is left alone
+    const edits = {
+      "index.js": `${PASSING["index.js"]}export const stray = 1;\n`,
+      "index.cjs": `"use client";\n"use strict";\nconst utils = require("./utils.cjs");\nmodule.exports = { cn: utils.cn };\n${MOTION_IMPORT}`,
+    };
+    expect(await checkDist(dist(edits), EXPECTED)).toEqual([
+      "index.js exports the names src/index.ts exports",
+      "index.cjs exports the names src/index.ts exports",
+    ]);
+  });
+
+  it("fails an index entry that mentions webpackIgnore", async () => {
+    // Not on the motion import, which would also trip the try-block check: this isolates the check
+    const comment = "// import(/* webpackIgnore: true */ specifier)\n";
+    const edits = {
+      "index.js": `${PASSING["index.js"]}${comment}`,
+      "index.cjs": `${PASSING["index.cjs"]}${comment}`,
+    };
+    expect(await checkDist(dist(edits), EXPECTED)).toEqual([
+      "index.js has no webpackIgnore",
+      "index.cjs has no webpackIgnore",
+    ]);
+  });
+
   it("names an entry whose exports differ from the source and a helper that is a second copy", async () => {
     const edits = {
       "index.cjs": `"use client";\n"use strict";\nmodule.exports = { Button: () => null, cn: () => "" };\n${MOTION_IMPORT}`,
