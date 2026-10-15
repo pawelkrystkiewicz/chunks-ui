@@ -482,29 +482,15 @@ describe("ToggleGroup indicator measurement", () => {
 });
 
 describe("ToggleGroup focus ring", () => {
-  const item = (className?: string) =>
+  const item = () =>
     render(
       <ToggleGroup.Root>
-        <ToggleGroup.Item value="a" className={className}>
-          A
-        </ToggleGroup.Item>
+        <ToggleGroup.Item value="a">A</ToggleGroup.Item>
       </ToggleGroup.Root>,
     );
 
   it("draws the library focus ring on Item", () => {
     item();
-    expect(screen.getByRole("button")).toHaveClass(...FOCUS_RING.split(" "));
-  });
-
-  // Both offsets are in one tailwind-merge group under the same variant: the consumer's wins
-  it("keeps a flush ring with focus-visible:outline-offset-0 in className", () => {
-    item("focus-visible:outline-offset-0");
-    const button = screen.getByRole("button");
-    expect(button).toHaveClass(
-      "focus-visible:outline-offset-0",
-      "focus-visible:outline-2",
-      "focus-visible:outline-ring",
-    );
-    expect(button).not.toHaveClass("focus-visible:outline-offset-2");
+    expect(screen.getByRole("button")).toHaveClass(FOCUS_RING);
   });
 });

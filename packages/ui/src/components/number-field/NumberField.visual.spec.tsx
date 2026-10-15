@@ -1,5 +1,5 @@
 import { describe, expect, it, onTestFinished } from "vitest";
-import { renderFixture } from "../../VisualTest.utils";
+import { focusVisible, renderFixture } from "../../VisualTest.utils";
 import { Dialog } from "../dialog";
 import { NumberField } from "./index";
 
@@ -110,8 +110,7 @@ describe("NumberField", () => {
       </NumberField.Root>,
     );
     const input = getByRole("textbox");
-    input.focus();
-    expect(input.matches(":focus-visible")).toBe(true);
+    focusVisible(input);
     await expect(fixture).toMatchScreenshot();
   });
 });

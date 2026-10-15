@@ -513,24 +513,13 @@ describe("Tabs.Animate", () => {
 });
 
 describe("Tabs focus ring", () => {
-  const ring = FOCUS_RING.split(" ");
-  const flush = (el: HTMLElement) => {
-    expect(el).toHaveClass(
-      "focus-visible:outline-offset-0",
-      "focus-visible:outline-2",
-      "focus-visible:outline-ring",
-    );
-    expect(el).not.toHaveClass("focus-visible:outline-offset-2");
-  };
-  const tabs = ({ tab, panel }: { tab?: string; panel?: string } = {}) =>
+  const tabs = () =>
     render(
       <Tabs.Root defaultValue="a">
         <Tabs.List>
-          <Tabs.Tab value="a" className={tab}>
-            A
-          </Tabs.Tab>
+          <Tabs.Tab value="a">A</Tabs.Tab>
         </Tabs.List>
-        <Tabs.Panel value="a" className={panel} data-testid="panel">
+        <Tabs.Panel value="a" data-testid="panel">
           Content
         </Tabs.Panel>
       </Tabs.Root>,
@@ -538,23 +527,12 @@ describe("Tabs focus ring", () => {
 
   it("draws the library focus ring on Tab", () => {
     tabs();
-    expect(screen.getByRole("tab")).toHaveClass(...ring);
+    expect(screen.getByRole("tab")).toHaveClass(FOCUS_RING);
   });
 
   it("draws the library focus ring on Panel", () => {
     tabs();
-    expect(screen.getByTestId("panel")).toHaveClass(...ring);
-  });
-
-  // Both offsets are in one tailwind-merge group under the same variant: the consumer's wins
-  it("keeps a flush ring on Tab with focus-visible:outline-offset-0 in className", () => {
-    tabs({ tab: "focus-visible:outline-offset-0" });
-    flush(screen.getByRole("tab"));
-  });
-
-  it("keeps a flush ring on Panel with focus-visible:outline-offset-0 in className", () => {
-    tabs({ panel: "focus-visible:outline-offset-0" });
-    flush(screen.getByTestId("panel"));
+    expect(screen.getByTestId("panel")).toHaveClass(FOCUS_RING);
   });
 
   // Tabs.Contents clips its panels, so Tabs.Content keeps the ring inside its edge

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { page } from "vitest/browser";
-import { renderFixture, renderPage } from "../../VisualTest.utils";
+import { focusVisible, renderFixture, renderPage } from "../../VisualTest.utils";
 import { Combobox } from "./index";
 
 const options = [
@@ -69,8 +69,7 @@ describe("Combobox", () => {
       <div style={{ width: 250 }}>{combobox()}</div>,
     );
     const input = getByRole("combobox");
-    input.focus();
-    expect(input.matches(":focus-visible")).toBe(true);
+    focusVisible(input);
     await expect(fixture).toMatchScreenshot();
   });
 
@@ -80,8 +79,7 @@ describe("Combobox", () => {
       <div style={{ width: 300 }}>{chipsCombobox()}</div>,
     );
     const input = getByRole("combobox");
-    input.focus();
-    expect(input.matches(":focus-visible")).toBe(true);
+    focusVisible(input);
     expect(getComputedStyle(input).outlineStyle).toBe("none");
     await expect(fixture).toMatchScreenshot();
   });

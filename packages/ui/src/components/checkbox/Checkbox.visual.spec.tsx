@@ -1,5 +1,5 @@
 import { describe, it } from "vitest";
-import { renderFixture } from "../../VisualTest.utils";
+import { focusVisible, renderFixture } from "../../VisualTest.utils";
 import { Checkbox } from "./index";
 
 describe("Checkbox", () => {
@@ -35,7 +35,6 @@ describe("Checkbox", () => {
     await expect(fixture).toMatchScreenshot();
   });
 
-  // Keyboard focus shows the ring: 2px of --ring, 2px outside the edge
   it("focus-visible", async () => {
     const { fixture, getByRole } = await renderFixture(
       <Checkbox.Root aria-label="Focused">
@@ -43,8 +42,7 @@ describe("Checkbox", () => {
       </Checkbox.Root>,
     );
     const checkbox = getByRole("checkbox");
-    checkbox.focus();
-    expect(checkbox.matches(":focus-visible")).toBe(true);
+    focusVisible(checkbox);
     await expect(fixture).toMatchScreenshot();
   });
 });

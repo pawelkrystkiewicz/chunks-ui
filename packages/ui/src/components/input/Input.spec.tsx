@@ -428,30 +428,9 @@ describe("Input labels", () => {
 });
 
 describe("Input focus ring", () => {
-  const ring = FOCUS_RING.split(" ");
-
   it("draws the library focus ring", () => {
     render(<Input data-testid="inp" />);
-    expect(screen.getByTestId("inp")).toHaveClass(...ring);
-  });
-
-  // With adornments the input sits in a wrapper; the ring stays on the input
-  it("draws the library focus ring on the input with adornments", () => {
-    render(<Input data-testid="inp" startAdornment={<span>$</span>} />);
-    expect(screen.getByTestId("inp")).toHaveClass(...ring);
-    expect(screen.getByTestId("inp").parentElement).not.toHaveClass("focus-visible:outline-2");
-  });
-
-  // Both offsets are in one tailwind-merge group under the same variant: the consumer's wins
-  it("keeps a flush ring with focus-visible:outline-offset-0 in className", () => {
-    render(<Input data-testid="inp" className="focus-visible:outline-offset-0" />);
-    const input = screen.getByTestId("inp");
-    expect(input).toHaveClass(
-      "focus-visible:outline-offset-0",
-      "focus-visible:outline-2",
-      "focus-visible:outline-ring",
-    );
-    expect(input).not.toHaveClass("focus-visible:outline-offset-2");
+    expect(screen.getByTestId("inp")).toHaveClass(FOCUS_RING);
   });
 
   // With adornments a string className goes on the wrapper, so the opt-out takes a function

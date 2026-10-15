@@ -1,7 +1,13 @@
 import { DirectionProvider } from "@base-ui/react/direction-provider";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { commands, userEvent } from "vitest/browser";
-import { expectDimmed, offBy, renderFixture, waitForStable } from "../../VisualTest.utils";
+import {
+  expectDimmed,
+  focusVisible,
+  offBy,
+  renderFixture,
+  waitForStable,
+} from "../../VisualTest.utils";
 import { Tabs } from "./index";
 
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
@@ -116,8 +122,7 @@ describe("Tabs", () => {
     );
     await expectIndicatorOverActiveTab();
     const tab = activeTab() as HTMLElement;
-    tab.focus();
-    expect(tab.matches(":focus-visible")).toBe(true);
+    focusVisible(tab);
     await expect(fixture).toMatchScreenshot();
   });
 });

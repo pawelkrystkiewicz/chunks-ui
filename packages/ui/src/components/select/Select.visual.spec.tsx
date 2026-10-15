@@ -1,6 +1,6 @@
 import { describe, it } from "vitest";
 import { page } from "vitest/browser";
-import { renderFixture, renderPage } from "../../VisualTest.utils";
+import { focusVisible, renderFixture, renderPage } from "../../VisualTest.utils";
 import { Select } from "./index";
 
 const fruits = [
@@ -45,8 +45,7 @@ describe("Select", () => {
   it("trigger focus-visible", async () => {
     const { getByRole } = await renderFixture(closedSelect());
     const trigger = getByRole("combobox");
-    trigger.focus();
-    expect(trigger.matches(":focus-visible")).toBe(true);
+    focusVisible(trigger);
     await expect.poll(() => document.querySelectorAll("[data-base-ui-portal]").length).toBe(1);
     await expect(page.getByTestId("fixture")).toMatchScreenshot();
   });

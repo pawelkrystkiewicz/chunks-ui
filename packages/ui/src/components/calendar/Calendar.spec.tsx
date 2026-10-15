@@ -955,7 +955,6 @@ describe("Calendar labels", () => {
   });
 });
 
-// The buttons take no className of their own, so there is no flush-ring opt-out to check
 describe("Calendar focus ring", () => {
   it.each([
     ["the previous month button", () => getButton(DEFAULT_CALENDAR_LABELS.previousMonth)],
@@ -963,6 +962,6 @@ describe("Calendar focus ring", () => {
     ["a day", () => dayButton(MARCH_15_2026)],
   ])("draws the library focus ring on %s", (_, button) => {
     render(<Calendar value={MARCH_15_2026} />);
-    expect(button()).toHaveClass(...FOCUS_RING.split(" "));
+    expect(button()).toHaveClass(FOCUS_RING);
   });
 });

@@ -47,7 +47,6 @@ function NumberFieldGroup({ className, ...props }: NumberFieldGroupProps) {
     <BaseNumberField.Group
       className={cnState(
         "flex items-center rounded-md border border-input bg-background",
-        // Drawn while the input inside has keyboard focus; the input itself draws no ring
         FOCUS_RING_WITHIN,
         RING_TRANSITION,
         "has-[input:disabled]:pointer-events-none has-[input:disabled]:opacity-50",

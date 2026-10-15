@@ -1,7 +1,7 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { page } from "vitest/browser";
-import { renderFixture } from "../../VisualTest.utils";
+import { focusVisible, renderFixture } from "../../VisualTest.utils";
 import { Radio } from "./index";
 
 /** The opacity the element is drawn with: its own times every ancestor's */
@@ -135,7 +135,6 @@ describe("Radio", () => {
     expect(drawnOpacity(getByText("Option"))).toBe(1);
   });
 
-  // Keyboard focus shows the ring: 2px of --ring, 2px outside the edge
   it("focus-visible", async () => {
     const { fixture, getByRole } = await renderFixture(
       <Radio.Group defaultValue="a">
@@ -143,8 +142,7 @@ describe("Radio", () => {
       </Radio.Group>,
     );
     const radio = getByRole("radio");
-    radio.focus();
-    expect(radio.matches(":focus-visible")).toBe(true);
+    focusVisible(radio);
     await expect(fixture).toMatchScreenshot();
   });
 });

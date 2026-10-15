@@ -268,7 +268,7 @@ describe("NumberField focus ring", () => {
   // The Group draws the ring while the input inside it has keyboard focus; the input draws none
   it("draws the focus-within ring classes on Group", () => {
     group();
-    expect(screen.getByTestId("group")).toHaveClass(...FOCUS_RING_WITHIN.split(" "));
+    expect(screen.getByTestId("group")).toHaveClass(FOCUS_RING_WITHIN);
     expect(screen.getByRole("textbox")).toHaveClass("focus-visible:outline-none");
   });
 

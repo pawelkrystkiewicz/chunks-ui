@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, it, vi } from "vitest";
 import { commands } from "vitest/browser";
-import { renderFixture, systemColour } from "../../VisualTest.utils";
+import { focusVisible, renderFixture, systemColour } from "../../VisualTest.utils";
 import { Calendar } from "./index";
 
 // Freeze time for deterministic visual snapshots
@@ -47,8 +47,7 @@ describe("Calendar", () => {
   it("selected day focus-visible", async () => {
     const { fixture } = await renderFixture(<Calendar value={new Date(2026, 2, 15)} />);
     const day = screen.getByLabelText("Sunday, March 15, 2026", { selector: "button" });
-    day.focus();
-    expect(day.matches(":focus-visible")).toBe(true);
+    focusVisible(day);
     await expect(fixture).toMatchScreenshot();
   });
 });

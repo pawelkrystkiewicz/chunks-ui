@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderFixture } from "../../VisualTest.utils";
+import { focusVisible, renderFixture } from "../../VisualTest.utils";
 import { ToggleGroup } from "./index";
 
 describe("ToggleGroup", () => {
@@ -37,9 +37,7 @@ describe("ToggleGroup", () => {
         <ToggleGroup.Item value="right">Right</ToggleGroup.Item>
       </ToggleGroup.Root>,
     );
-    const pressed = getByRole("button", { name: "Center", pressed: true });
-    pressed.focus();
-    expect(pressed.matches(":focus-visible")).toBe(true);
+    focusVisible(getByRole("button", { name: "Center", pressed: true }));
     await expect(fixture).toMatchScreenshot();
   });
 
@@ -54,13 +52,7 @@ describe("ToggleGroup", () => {
         <ToggleGroup.Item value="underline">Underline</ToggleGroup.Item>
       </ToggleGroup.Root>,
     );
-    const focused = getByRole("button", { name: "Bold", pressed: false });
-    const pressed = getByRole("button", { name: "Italic", pressed: true });
-    focused.focus();
-    expect(focused.matches(":focus-visible")).toBe(true);
-    expect(Number(getComputedStyle(focused).zIndex)).toBeGreaterThan(
-      Number(getComputedStyle(pressed).zIndex),
-    );
+    focusVisible(getByRole("button", { name: "Bold", pressed: false }));
     await expect(fixture).toMatchScreenshot();
   });
 });

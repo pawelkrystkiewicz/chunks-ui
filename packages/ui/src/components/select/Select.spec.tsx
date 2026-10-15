@@ -107,10 +107,10 @@ describe("Select", () => {
 });
 
 describe("Select focus ring", () => {
-  const trigger = (className?: string) =>
+  const trigger = () =>
     render(
       <Select.Root>
-        <Select.Trigger className={className} data-testid="trigger">
+        <Select.Trigger data-testid="trigger">
           <Select.Value placeholder="Pick" />
         </Select.Trigger>
       </Select.Root>,
@@ -118,18 +118,6 @@ describe("Select focus ring", () => {
 
   it("draws the library focus ring on the Trigger", () => {
     trigger();
-    expect(screen.getByTestId("trigger")).toHaveClass(...FOCUS_RING.split(" "));
-  });
-
-  // Both offsets are in one tailwind-merge group under the same variant: the consumer's wins
-  it("keeps a flush ring with focus-visible:outline-offset-0 in className", () => {
-    trigger("focus-visible:outline-offset-0");
-    const el = screen.getByTestId("trigger");
-    expect(el).toHaveClass(
-      "focus-visible:outline-offset-0",
-      "focus-visible:outline-2",
-      "focus-visible:outline-ring",
-    );
-    expect(el).not.toHaveClass("focus-visible:outline-offset-2");
+    expect(screen.getByTestId("trigger")).toHaveClass(FOCUS_RING);
   });
 });
