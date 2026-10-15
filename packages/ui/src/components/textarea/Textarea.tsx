@@ -31,8 +31,10 @@ export function Textarea({ autoResize, className, ...props }: TextareaProps) {
         // Only the colours (`transition-colors` also lists `outline-color`: the ring would fade in; the utility sorts before this list)
         "micro-interactions [transition-property:color,background-color,border-color] duration-150",
         "focus-visible:outline-2 focus-visible:outline-ring",
-        // No pointer-events-none: it would hide the cursor, and a disabled textarea takes no input anyway
-        "disabled:cursor-not-allowed disabled:opacity-50",
+        // No pointer-events-none: it would hide the cursor, and a disabled textarea takes no input
+        // anyway. Without it the resize grip would still drag (Chromium resizes a disabled
+        // textarea), so the grip goes.
+        "disabled:cursor-not-allowed disabled:opacity-50 disabled:resize-none",
         "data-[invalid]:border-destructive",
         autoResize && "field-sizing-content",
         className,
