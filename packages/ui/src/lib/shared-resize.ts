@@ -6,10 +6,11 @@ import { flushSync } from "react-dom";
  * with the first element observed and dropped with the last, so the server creates none.
  */
 type Shared = { observer: ResizeObserver | null; callbacks: Map<Element, (() => void)[]> };
-const shared: Record<ResizeObserverBoxOptions, Shared> = {
+type Box = "border-box" | "content-box";
+
+const shared: Record<Box, Shared> = {
   "border-box": { observer: null, callbacks: new Map() },
   "content-box": { observer: null, callbacks: new Map() },
-  "device-pixel-content-box": { observer: null, callbacks: new Map() },
 };
 
 /** How many batches the shared observers have run, one `flushSync` each. For specs. */
@@ -42,11 +43,7 @@ function notify({ callbacks }: Shared, entries: ResizeObserverEntry[]) {
  * Only the first subscriber of a (target, box) is also notified when it starts. Does nothing
  * without ResizeObserver.
  */
-export function observeResize(
-  target: Element,
-  box: ResizeObserverBoxOptions,
-  onResize: () => void,
-): () => void {
+export function observeResize(target: Element, box: Box, onResize: () => void): () => void {
   if (typeof ResizeObserver === "undefined") return () => {};
   const state = shared[box];
   let callbacks = state.callbacks.get(target);
@@ -77,7 +74,7 @@ export function observeResize(
  * resize: for a change that moves what they measure without resizing `target`. Nothing happens
  * while `target`'s `box` isn't observed.
  */
-export function notifyResize(target: Element, box: ResizeObserverBoxOptions) {
+export function notifyResize(target: Element, box: Box) {
   const { observer, callbacks } = shared[box];
   if (!observer || !callbacks.has(target)) return;
   // A new observation is notified in the next resize observer step, whatever the size
