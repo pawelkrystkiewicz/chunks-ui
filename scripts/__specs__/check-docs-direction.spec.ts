@@ -188,6 +188,41 @@ describe("checkDocsDirection", () => {
     expect(await checkDocsDirection(dir)).toEqual(["apps/docs/app/x.tsx:8: left-4"]);
   });
 
+  it("does not let a marker in a comment after code, or before more code, exempt the next line", async () => {
+    const dir = tree({
+      "apps/docs/app/x.tsx": [
+        '/* direction: physical, a */ const A = "left-3";',
+        'const B = "left-0";',
+        '{/* x */} <i className="left-1" /> {/* direction: physical, a */}',
+        'const C = "left-2";',
+        "",
+      ].join("\n"),
+    });
+    expect(await checkDocsDirection(dir)).toEqual([
+      "apps/docs/app/x.tsx:2: left-0",
+      "apps/docs/app/x.tsx:4: left-2",
+    ]);
+  });
+
+  it("does not honour a marker on a continuation line of a multi-line comment", async () => {
+    const dir = tree({
+      "apps/docs/app/x.tsx": [
+        "/**",
+        " * direction: physical, the tiles compose one drawing",
+        " */",
+        'const A = "left-3";',
+        "/*",
+        " * direction: physical, same",
+        'const B = "left-0";',
+        "",
+      ].join("\n"),
+    });
+    expect(await checkDocsDirection(dir)).toEqual([
+      "apps/docs/app/x.tsx:4: left-3",
+      "apps/docs/app/x.tsx:7: left-0",
+    ]);
+  });
+
   it("needs a reason that starts with a word character", async () => {
     const dir = tree({
       "apps/docs/app/x.tsx": [

@@ -48,8 +48,8 @@ const PHYSICAL = new RegExp(
 );
 /** A reason has to start with a word character, so `direction: physical,` closed at once by `*\/` names none. */
 const MARKER = /direction:\s*physical,\s*\w/;
-/** A line that is only a comment: `//`, `/*` or `{/*` first. */
-const COMMENT_LINE = /^\s*(?:\/\/|\/\*|\{\/\*)/;
+/** A line that is only a comment: `//` to the end, or one whole `/* … *\/` or `{/* … *\/}` and nothing else. */
+const COMMENT_LINE = /^\s*(?:\/\/|\/\*(?:(?!\*\/).)*\*\/\s*$|\{\/\*(?:(?!\*\/).)*\*\/\}\s*$)/;
 
 /** `token` without the `;`, `,` or unmatched `)` of the code around it: `border-l-2;`, `(see rounded-l-lg)`. */
 function trimToken(token: string): string {
