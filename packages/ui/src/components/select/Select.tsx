@@ -94,6 +94,8 @@ function SelectItem({ className, ...props }: SelectItemProps) {
     <BaseSelect.Item
       className={cnState(
         "relative flex w-full cursor-default items-center rounded-sm py-1.5 ps-2 pe-8 text-sm outline-none",
+        // The popup is as wide as the trigger: a word longer than that breaks
+        "wrap-anywhere",
         "data-highlighted:bg-accent data-highlighted:text-accent-foreground",
         "data-disabled:pointer-events-none data-disabled:opacity-50",
         "cursor-pointer",
@@ -126,8 +128,14 @@ function SelectItemIndicator({ className, ...props }: SelectItemIndicatorProps) 
   );
 }
 
+// As wide as the trigger, aligned over it or below it (#506): Base UI sets --anchor-width in both
 function SelectPositioner({ className, ...props }: SelectPositionerProps) {
-  return <BaseSelect.Positioner className={cnState("z-dropdowns", className)} {...props} />;
+  return (
+    <BaseSelect.Positioner
+      className={cnState("z-dropdowns w-[var(--anchor-width)]", className)}
+      {...props}
+    />
+  );
 }
 
 function SelectGroupLabel({ className, ...props }: SelectGroupLabelProps) {
