@@ -152,7 +152,7 @@ Most of that state is also on the element as `data-*` attributes, so a plain str
 These put `className` on an element that has no Base UI state:
 
 - **Plain HTML components**, such as `Card`, `Empty`, `Skeleton` and `Table`, take a string.
-- **`Tabs.Content`, `Tabs.Contents`, `Tabs.Animate`, `Combobox.Control` and `DatePicker`** render or wrap a plain `<div>`, so they take a string.
+- **`Tabs.Content`, `Tabs.Contents`, `Tabs.Animate` and `DatePicker`** render or wrap a plain `<div>`, so they take a string.
 - **`Radio.Item`** puts it on its `<label>`, so it takes a string. Style the radio itself with `Radio.Root`.
 - **`Input`** with `startAdornment`, `endAdornment` or `onClear` (and `InputCopy`, which always has an end adornment) puts a string on the wrapper that positions the adornments, and a function on the input inside it:
 
