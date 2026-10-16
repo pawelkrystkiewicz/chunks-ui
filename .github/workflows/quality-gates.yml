@@ -59,6 +59,9 @@ jobs:
       - name: Check the bun version matches packageManager everywhere
         run: bun run check:bun
 
+      - name: Check the docs use logical direction classes
+        run: bun run check:docs-direction
+
   typecheck:
     timeout-minutes: 10
     runs-on: ubuntu-latest

@@ -22,6 +22,16 @@ bun run check:bun
 
 Runs in the `lint` job of `quality-gates.yml`. Tests: `scripts/__specs__/check-bun-version.spec.ts`.
 
+## check-docs-direction.ts
+
+Fails on a physical direction class (`ml-*`, `left-*`, `text-left` and the like) in the docs source, so the docs mirror in RTL. A deliberate one carries a `direction: physical, <reason>` marker. The full class list, marker rules and limits: `TESTING_STRATEGY.md` › CI › Docs direction.
+
+```bash
+bun run check:docs-direction
+```
+
+Runs in the `lint` job of `quality-gates.yml`. Tests: `scripts/__specs__/check-docs-direction.spec.ts`.
+
 ## check-tailwind-compat.ts
 
 Compiles `packages/ui/dist` with Tailwind 4.0.0 and with the installed version, and fails when 4.0.0 does not generate a class the installed version does. Tailwind does not scan CSS files, so both versions also scan a file that lists the utilities `theme.css` defines with `@utility` (such as `touch-target`, which no component uses). The installed version must generate all of them. The utility scan also follows the theme's quoted `@import`s with Bun's resolver and fails on one it cannot resolve; the limits are in `resolveImport` in `scripts/check-tailwind-compat.ts`. The installed version uses the Tailwind packages in `bun.lock`. 4.0.0 installs from the fixture in `tailwind-4.0/` with `bun install --frozen-lockfile` in a temporary directory. The fixture files are named `package.fixture.json` and `bun.fixture.lock` so that Renovate leaves them alone.
