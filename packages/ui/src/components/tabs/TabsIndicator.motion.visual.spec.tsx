@@ -68,6 +68,8 @@ async function renderTabs(withMotion: boolean, layout?: Layout) {
 
 const RESIZES: [string, Layout][] = [
   ["the font size of the tab", { tabStyle: { fontSize: 20 } }],
+  // Only the tab's border box grows: its content box doesn't, nor does the list's
+  ["the padding of the tab", { tabStyle: { paddingInline: 24 } }],
   ["the padding of the list", { listPadding: 16 }],
   ["the width of the box around the list", { width: 300 }],
 ];

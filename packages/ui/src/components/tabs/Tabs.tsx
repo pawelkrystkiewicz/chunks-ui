@@ -11,6 +11,7 @@ import {
   useContext,
   useEffect,
   useLayoutEffect,
+  useReducer,
   useRef,
   useState,
 } from "react";
@@ -155,6 +156,10 @@ function TabsIndicator({
   renderBeforeHydration = true,
   ...props
 }: TabsIndicatorProps) {
+  // Base UI measures the active tab when it renders, and renders again when the list or a tab
+  // changes content-box size. A padding change of the active tab changes only its border box:
+  // the element below watches that, and this render has Base UI measure the tab again.
+  const [, remeasure] = useReducer((count: number) => count + 1, 0);
   return (
     <BaseTabs.Indicator
       {...props}
@@ -165,6 +170,7 @@ function TabsIndicator({
           state={state}
           render={render}
           className={typeof className === "function" ? className(state) : className}
+          onActiveTabResize={remeasure}
         />
       )}
     />
@@ -200,10 +206,12 @@ function TabsIndicatorElement({
   render,
   className,
   ref,
+  onActiveTabResize,
   ...props
 }: ComponentProps<"span"> & {
   state: BaseTabs.Indicator.State;
   render: PartRenderProp<BaseTabs.Indicator.State>;
+  onActiveTabResize: () => void;
 }) {
   const { activeTabPosition: position, activeTabSize: size } = state;
   // While the tabs aren't rendered (display:none), Base UI measures the active tab as 0×0 and
@@ -225,6 +233,19 @@ function TabsIndicatorElement({
   }
 
   const element = useRef<HTMLElement | null>(null);
+  // The active tab's border box, which Base UI doesn't observe. Base UI itself skips the
+  // observer where there is none (jsdom).
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the active tab changes with `selected`
+  useEffect(() => {
+    if (typeof ResizeObserver === "undefined") return;
+    const tab = element.current
+      ?.closest('[role="tablist"]')
+      ?.querySelector('[role="tab"][aria-selected="true"]');
+    if (!tab) return;
+    const observer = new ResizeObserver(onActiveTabResize);
+    observer.observe(tab, { box: "border-box" });
+    return () => observer.disconnect();
+  }, [selected, onActiveTabResize]);
   const latestBox = useRef(box);
   useLayoutEffect(() => {
     latestBox.current = box;
