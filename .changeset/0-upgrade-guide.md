@@ -16,6 +16,8 @@ Upgrading from 0.1.4. Details are in the other entries, quoted by their first wo
   - Height caps: `Dialog.Popup` has `max-h-[calc(100dvh-2rem)]`, `Combobox.Popup` and `Menu.Content` are limited by `--available-height`, and a bottom `Drawer.Popup` by `80dvh`; each scrolls its content, and `max-h-none` removes the cap ("Fixed: long content ran off the screen").
   - `Dialog.Popup` is at most the viewport width less 2rem, so below 480px it is narrower than before ("Fixed: on a viewport narrower than about 456px").
   - `Menu.Content` opens 8px from its trigger, not 4px; the Tooltip gap is 8px, not 6px, set as a margin on `Tooltip.Popup`, and `Tooltip.Positioner` has no default `sideOffset` ("The keyboard focus ring", "Fixed: the `Tooltip` popup sat").
+  - `Combobox.Positioner` opens the popup 8px below the input, where it opened flush; `sideOffset={0}` restores it ("Fixed: the `Combobox` popup opened flush").
+  - `Select.Popup`'s CSS transition list is `opacity, scale` instead of `all`, and the CSS path now scales as well as fades; a `data-starting-style:translate-*` you add no longer animates until you list the property ("Changed: the CSS transition list").
   - `Dialog.Backdrop` and `Drawer.Backdrop` default `forceRender` to `true` ("Fixed: a `Drawer` opened from inside").
   - `Tabs.Indicator` renders an inline `<script>` in server HTML, which a strict CSP blocks ("`Tabs.Indicator` now shows on a server-rendered page").
   - `Pagination.Root` is named "Pagination", not "pagination"; the `Chip` remove button and `Combobox.ChipRemove` are named "Remove" plus the chip's text ("Changed: the default name", "Added: a `labels` prop").

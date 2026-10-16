@@ -498,4 +498,17 @@ describe("Combobox focus ring", () => {
     render(<Combobox.Control data-testid="control" />);
     expect(screen.getByTestId("control")).toHaveClass(FOCUS_RING_WITHIN);
   });
+
+  // The arrow keys move the focus from the input to a chip
+  it("draws the library focus ring on Chip", () => {
+    render(
+      <Combobox.Root multiple items={items} defaultValue={[items[0]]}>
+        <Combobox.Chips>
+          <Combobox.Chip data-testid="chip">Apple</Combobox.Chip>
+        </Combobox.Chips>
+        <Combobox.Input aria-label="Fruits" />
+      </Combobox.Root>,
+    );
+    expect(screen.getByTestId("chip")).toHaveClass(FOCUS_RING);
+  });
 });
