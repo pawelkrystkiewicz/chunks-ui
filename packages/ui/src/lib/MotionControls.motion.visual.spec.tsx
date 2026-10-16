@@ -3,13 +3,18 @@ import { render } from "@testing-library/react";
 import { frame, type HTMLMotionProps, motion } from "motion/react";
 import { Activity, Profiler, type ReactElement, type ReactNode, StrictMode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
-import { commands } from "vitest/browser";
 import { Checkbox } from "../components/checkbox";
 import { Radio } from "../components/radio";
 import { Switch } from "../components/switch";
 import { Tabs } from "../components/tabs";
 import { ToggleGroup } from "../components/toggle-group";
-import { offBy, SETTLE_TIMEOUT_MS, waitForStable } from "../VisualTest.utils";
+import {
+  emulateReducedMotion,
+  offBy,
+  SETTLE_TIMEOUT_MS,
+  untilChanged,
+  waitForStable,
+} from "../VisualTest.utils";
 import { reloadMotion } from "./use-motion";
 
 // Runs with reduced motion off. These controls stay mounted, so Motion must animate their
@@ -211,35 +216,7 @@ function snapshot({ element, measure }: Control) {
   };
 }
 
-/**
- * Emulates the preference and resolves on the query's change event. Motion and the components
- * read it from that event, which lands after `matches` flips. Change events dispatch oldest list
- * first, so this fresh list fires after every older listener.
- */
-const reducedMotion = async (reduce: boolean) => {
-  const query = "(prefers-reduced-motion: reduce)";
-  if (matchMedia(query).matches === reduce) return;
-  const mql = window.matchMedia(query);
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const changed = new Promise<void>((resolve, reject) => {
-    mql.addEventListener("change", () => resolve(), { once: true });
-    timer = setTimeout(
-      () =>
-        reject(
-          new Error(`reducedMotion(${reduce}): no change event within ${SETTLE_TIMEOUT_MS}ms`),
-        ),
-      SETTLE_TIMEOUT_MS,
-    );
-  });
-  await commands.emulateMedia({ reducedMotion: reduce ? "reduce" : "no-preference" });
-  try {
-    await changed;
-  } finally {
-    clearTimeout(timer);
-  }
-};
-
-afterEach(() => reducedMotion(false));
+afterEach(() => emulateReducedMotion(false));
 
 // Holds Motion back until the test lets it arrive
 function motionLoading() {
@@ -375,11 +352,11 @@ describe("controls once Motion has loaded", () => {
 
   it.each(names)("stops writing to a %s element unmounted mid-animation", async (name) => {
     const subject = control(name);
-    const { ui, element, change } = subject;
+    const { ui, element, change, measure } = subject;
     const { unmount } = await renderSettled(ui(), subject);
     change();
-    await nextFrame();
-    await nextFrame();
+    // Mid-animation: Motion has moved it from where it rested
+    await untilChanged(() => measure(element()));
     const moving = element() as HTMLElement;
     unmount();
     // Stopping may write the value it stopped at once; after that nothing changes
@@ -403,9 +380,9 @@ describe("controls once Motion has loaded", () => {
         await expect.poll(() => opacity(subject.element()), { timeout: SETTLE_TIMEOUT_MS }).toBe(0);
         subject.toChecked();
       }
-      await nextFrame();
-      await nextFrame();
-      await reducedMotion(true);
+      // Mid-animation: Motion has moved it from where it rested
+      await untilChanged(() => subject.measure(subject.element()));
+      await emulateReducedMotion(true);
       await expect.poll(() => handedBack(subject), { timeout: SETTLE_TIMEOUT_MS }).toBe(true);
       const finished = snapshot(subject);
       expect(finished.present).toBe(true);
@@ -433,7 +410,7 @@ describe("controls once Motion has loaded", () => {
       await expect.poll(() => measure(element()), { timeout: SETTLE_TIMEOUT_MS }).not.toBe(start);
       await settled(() => measure(element()));
       rerender(ui("hidden"));
-      await reducedMotion(true);
+      await emulateReducedMotion(true);
       rerender(ui("visible"));
       await expect.poll(() => handedBack(subject), { timeout: SETTLE_TIMEOUT_MS }).toBe(true);
       const shown = await waitForStable(() => snapshot(subject));
@@ -456,10 +433,10 @@ describe("controls once Motion has loaded", () => {
       // Motion fades the indicator out and keeps it mounted at opacity 0 (NaN once unmounted)
       await expect.poll(() => opacity(element()), { timeout: SETTLE_TIMEOUT_MS }).toBe(0);
 
-      await reducedMotion(true);
+      await emulateReducedMotion(true);
       await expect.poll(element, { timeout: SETTLE_TIMEOUT_MS }).toBeNull();
 
-      await reducedMotion(false);
+      await emulateReducedMotion(false);
       await expect.poll(element, { timeout: SETTLE_TIMEOUT_MS }).not.toBeNull();
       expect(await waitForStable(() => opacity(element()))).toBe(0);
     },
@@ -527,10 +504,10 @@ describe("controls once Motion has loaded", () => {
       // To the pixel: a spring at rest can be a fraction short
       const before = Math.round(await settled(() => measure(element())));
 
-      await reducedMotion(true);
+      await emulateReducedMotion(true);
       await expect.poll(element, { timeout: SETTLE_TIMEOUT_MS }).toHaveClass(fallbackClass);
       expectOver(subject);
-      await reducedMotion(false);
+      await emulateReducedMotion(false);
       await expect.poll(element, { timeout: SETTLE_TIMEOUT_MS }).not.toHaveClass(fallbackClass);
       expect(Math.round(await settled(() => measure(element())))).toBe(before);
     },
@@ -557,9 +534,9 @@ describe("controls once Motion has loaded", () => {
     const { rerender } = await renderSettled(ui(false), subject);
     const before = left(byTestId());
 
-    await reducedMotion(true);
+    await emulateReducedMotion(true);
     await expect.poll(() => handedBack(subject), { timeout: SETTLE_TIMEOUT_MS }).toBe(true);
-    await reducedMotion(false);
+    await emulateReducedMotion(false);
     await expect.poll(() => driven(subject), { timeout: SETTLE_TIMEOUT_MS }).toBe(true);
     expect(left(byTestId())).toBe(before);
     rerender(ui(true));
