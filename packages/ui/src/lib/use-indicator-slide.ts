@@ -29,15 +29,8 @@ function isSliding(node: HTMLElement, box: IndicatorBox | null) {
 }
 
 /**
- * Whether an indicator (the pill behind the selected tab or the pressed item) slides to `box`,
- * and the transition for `useMotionAnimate`: a spring while it slides, a jump otherwise. Only a
- * change of `target` (the selected value) slides it. A resize of what it covers (a font or
- * padding change, a narrower container) moves it at once instead of trailing behind, and a
- * resize during a slide retargets the slide. The slide ends once the CSS fallback's transition
- * is over, or Motion has written `box`.
- *
- * `element` is the ref for the indicator's element: pass it on to `useMotionAnimate`. `endSlide`
- * ends a slide at once, for an indicator shown again while it slid.
+ * Slides only when `target` changes; a resize of `box` jumps. Pass `element` and `transition` to
+ * `useMotionAnimate`. `endSlide` ends a slide at once.
  */
 export function useIndicatorSlide<E extends HTMLElement>(
   target: unknown,
