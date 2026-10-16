@@ -99,6 +99,17 @@ describe("typesProblem", () => {
     expect(problem).toContain(subpath);
   });
 
+  it("warns against esModuleInterop when a default import of React gives TS1259 (#463)", () => {
+    const output =
+      "node_modules/chunks-ui/dist/index.d.ts(1,8): error TS1259: Module '\"node_modules/@types/react/index\"' can only be default-imported using the 'esModuleInterop' flag\n";
+    const problem = typesProblem(2, output, "node10");
+    expect(problem).toContain("default-imports React");
+    expect(problem).toContain("#463");
+    expect(problem).toContain("do not turn on esModuleInterop");
+    expect(problem).toContain(output);
+    expect(typesProblem(2, "x.ts(1,1): error TS2305: nope\n", "node10")).not.toContain("#463");
+  });
+
   it("gives no subpath hint for a relative specifier", () => {
     const relative =
       "node_modules/chunks-ui/dist/index.d.ts(2,20): error TS2307: Cannot find module './x/y' or its corresponding type declarations.\n";
