@@ -14,7 +14,7 @@ import {
 } from "react";
 import { flushSync } from "react-dom";
 import { cn, cnState } from "../../lib/cn";
-import { springs } from "../../lib/motion";
+import { BOX_EDGES, type IndicatorBox, useIndicatorSlide } from "../../lib/use-indicator-slide";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { useReducedMotion } from "../../lib/use-motion";
 import { useHeldWhileDriving, useMotionAnimate } from "../../lib/use-motion-animate";
@@ -166,9 +166,6 @@ function ToggleGroupRoot<Value extends string = string>({
 // Indicator
 // ---------------------------------------------------------------------------
 
-const BOX_EDGES = ["left", "top", "width", "height"] as const;
-type IndicatorBox = Record<(typeof BOX_EDGES)[number], number>;
-
 /**
  * The box of `item` within `container`. Null while the item measures 0×0, as it does while the
  * group or the item isn't rendered (display:none): no box to show. The indicator then unmounts,
@@ -184,66 +181,19 @@ function boxWithin(container: HTMLElement, item: HTMLElement): IndicatorBox | nu
 const sameBox = (a: IndicatorBox | null, b: IndicatorBox | null) =>
   a === b || (a !== null && b !== null && BOX_EDGES.every((edge) => a[edge] === b[edge]));
 
-/** Moves the indicator at once: Motion writes the values in its next frame */
-const SNAP = { duration: 0 };
-
-/**
- * Whether the indicator is still sliding: the CSS fallback runs a transition, or Motion has not
- * written `box` inline yet. A Motion spring ends exactly on its target.
- */
-function isSliding(node: HTMLElement, box: IndicatorBox) {
-  if (typeof node.getAnimations === "function" && typeof CSSTransition !== "undefined") {
-    if (node.getAnimations().some((animation) => animation instanceof CSSTransition)) return true;
-  }
-  return BOX_EDGES.some((edge) => {
-    const written = node.style[edge];
-    return written !== "" && Math.abs(Number.parseFloat(written) - box[edge]) > 0.5;
-  });
-}
-
 /**
  * The pill behind the pressed item, at `box`. The same span with and without Motion, so it isn't
  * remounted when Motion loads.
  */
 function ToggleGroupIndicator({ box, value }: { box: IndicatorBox; value: string | null }) {
-  // Only pressing another item slides the indicator. A resize of the group or of an item (a font
-  // or padding change, a narrower container) moves it at once instead of trailing behind. A
-  // resize during a slide retargets the slide.
-  const [slideTarget, setSlideTarget] = useState(value);
-  const [sliding, setSliding] = useState(false);
-  if (value !== slideTarget) {
-    setSlideTarget(value);
-    setSliding(true);
-  }
-  const element = useRef<HTMLSpanElement | null>(null);
-  const latestBox = useRef(box);
-  const latestSliding = useRef(sliding);
-  useLayoutEffect(() => {
-    latestBox.current = box;
-    latestSliding.current = sliding;
-  });
+  // Only pressing another item slides the indicator; a resize of the group or of an item moves
+  // it at once
+  const { element, sliding, transition, endSlide } = useIndicatorSlide<HTMLSpanElement>(value, box);
   // Runs again when <Activity> shows the group: like a group shown after display:none, the
-  // indicator jumps to the item, also to one pressed while the group was hidden. Only while it
-  // slides: at mount, setSliding(false) changes nothing, yet React applied that update again
-  // after the first press and cancelled its slide.
-  useLayoutEffect(() => {
-    if (latestSliding.current) setSliding(false);
-  }, []);
-  useEffect(() => {
-    if (!sliding) return;
-    let frame = requestAnimationFrame(function settle() {
-      const node = element.current;
-      if (node && isSliding(node, latestBox.current)) frame = requestAnimationFrame(settle);
-      else setSliding(false);
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [sliding]);
+  // indicator jumps to the item, also to one pressed while the group was hidden
+  useLayoutEffect(() => endSlide(), [endSlide]);
 
-  const [indicatorRef, driven] = useMotionAnimate<HTMLSpanElement>(
-    box,
-    { transition: sliding ? springs.indicator : SNAP },
-    element,
-  );
+  const [indicatorRef, driven] = useMotionAnimate<HTMLSpanElement>(box, { transition }, element);
   // Motion writes a jump in its next frame. A change committed after this frame's animation
   // callbacks (a group resized, or shown again by <Activity>) would paint the old box first, so
   // the jump is written now too, and Motion writes the same values.
@@ -251,7 +201,7 @@ function ToggleGroupIndicator({ box, value }: { box: IndicatorBox; value: string
     const node = element.current;
     if (!node || !driven || sliding) return;
     for (const edge of BOX_EDGES) node.style[edge] = `${box[edge]}px`;
-  }, [box, driven, sliding]);
+  }, [box, driven, sliding, element]);
   // While Motion drives it, the box it mounted with: a span mounted as the group shows again
   // paints over the item before Motion writes anything
   const style = useHeldWhileDriving(driven, box);
