@@ -148,22 +148,29 @@ const fixtures: Record<
     ),
   },
   "Combobox (chips)": {
-    parts: { Chip: "state-disabled-true", ChipRemove: "state-disabled-true" },
+    parts: {
+      Control: "state-disabled-true",
+      Chips: null,
+      Chip: "state-disabled-true",
+      ChipRemove: "state-disabled-true",
+    },
     ui: (p) => (
       <Combobox.Root multiple items={items} defaultValue={["apple"]} disabled>
-        <Combobox.Chips>
-          <Combobox.Value>
-            {(value: string[]) =>
-              value.map((item) => (
-                <Combobox.Chip key={item} {...p("Chip")}>
-                  {item}
-                  <Combobox.ChipRemove aria-label="Remove" {...p("ChipRemove")} />
-                </Combobox.Chip>
-              ))
-            }
-          </Combobox.Value>
-          <Combobox.Input aria-label="Fruit" />
-        </Combobox.Chips>
+        <Combobox.Control {...p("Control")}>
+          <Combobox.Chips {...p("Chips")}>
+            <Combobox.Value>
+              {(value: string[]) =>
+                value.map((item) => (
+                  <Combobox.Chip key={item} {...p("Chip")}>
+                    {item}
+                    <Combobox.ChipRemove aria-label="Remove" {...p("ChipRemove")} />
+                  </Combobox.Chip>
+                ))
+              }
+            </Combobox.Value>
+            <Combobox.Input aria-label="Fruit" />
+          </Combobox.Chips>
+        </Combobox.Control>
       </Combobox.Root>
     ),
   },

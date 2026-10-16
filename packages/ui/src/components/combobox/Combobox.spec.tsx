@@ -1,5 +1,5 @@
 import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { axe } from "jest-axe";
 import { type ComponentProps, createRef } from "react";
 import { afterEach, describe, expect, expectTypeOf, it } from "vitest";
@@ -58,6 +58,43 @@ describe("Combobox", () => {
     const control = screen.getByTestId("control");
     expect(ref.current).toBe(control);
     expect(control).toHaveClass("is-disabled", FOCUS_RING_WITHIN);
+  });
+
+  // Base UI's handler on the InputGroup: a press on the padding focuses the input and opens the popup
+  it("focuses the input and opens the popup on a press on the Control's padding", () => {
+    render(
+      <Combobox.Root items={items}>
+        <Combobox.Control data-testid="control">
+          <Combobox.Input aria-label="Fruits" />
+        </Combobox.Control>
+      </Combobox.Root>,
+    );
+    const control = screen.getByTestId("control");
+    expect(control).not.toHaveAttribute("data-popup-open");
+    fireEvent.mouseDown(control);
+    expect(screen.getByRole("combobox")).toHaveFocus();
+    expect(control).toHaveAttribute("data-popup-open");
+  });
+
+  it("does not open the popup on a press on Clear or ChipRemove", () => {
+    render(
+      <Combobox.Root multiple items={items} defaultValue={[items[0]]}>
+        <Combobox.Control data-testid="control">
+          <Combobox.Chips>
+            <Combobox.Chip>
+              Apple
+              <Combobox.ChipRemove />
+            </Combobox.Chip>
+          </Combobox.Chips>
+          <Combobox.Input aria-label="Fruits" />
+          <Combobox.Clear />
+        </Combobox.Control>
+      </Combobox.Root>,
+    );
+    const control = screen.getByTestId("control");
+    fireEvent.mouseDown(screen.getByRole("button", { name: DEFAULT_COMBOBOX_LABELS.clear }));
+    fireEvent.mouseDown(screen.getByRole("button", { name: /Remove/ }));
+    expect(control).not.toHaveAttribute("data-popup-open");
   });
 
   it("renders Chips with the default gap, merged with a custom className", () => {
