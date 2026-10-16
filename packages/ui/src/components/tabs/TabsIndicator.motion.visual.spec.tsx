@@ -1,6 +1,6 @@
 import { render } from "@testing-library/react";
-import type { CSSProperties } from "react";
-import { describe, expect, it } from "vitest";
+import { type CSSProperties, Profiler } from "react";
+import { describe, expect, it, vi } from "vitest";
 import {
   eachPaintedFrame,
   enterMotionPath,
@@ -283,6 +283,49 @@ describe.each(MOTION_PATHS)("Tabs.Indicator, $path", ({ withMotion }) => {
     rerender(tabs({ tabKey: "remounted", tabStyle: { paddingInline: 24 } }));
     await waitForStable(() => offBy(tab("Alpha"), indicator));
     expect(offBy(tab("Alpha"), indicator)).toBeLessThanOrEqual(1);
+  });
+
+  // Every indicator on the page shares one ResizeObserver, whose callback commits every notified
+  // indicator's measure in one synchronous render: a resize that reaches every list costs one
+  // render per frame, not one per list
+  it("commits every list on the page once when the padding of their tabs changes", async () => {
+    await enterMotionPath(withMotion);
+    const onRender = vi.fn();
+    const lists = (paddingInline?: number) => (
+      <Profiler id="lists" onRender={onRender}>
+        {["one", "two", "three"].map((name) => (
+          <Tabs.Root key={name} value="a">
+            {/* Only the tabs' border boxes change: the lists keep their size */}
+            <Tabs.List className="justify-center" style={FIXED.listStyle}>
+              <Tabs.Tab value="a" style={{ transition: "none", paddingInline }}>
+                Alpha
+              </Tabs.Tab>
+              <Tabs.Tab value="b" style={{ transition: "none", paddingInline }}>
+                Beta
+              </Tabs.Tab>
+              <Tabs.Indicator data-testid="indicator" />
+            </Tabs.List>
+          </Tabs.Root>
+        ))}
+      </Profiler>
+    );
+    const { rerender, getAllByRole } = render(lists());
+    /** How far each list's indicator is off its active tab */
+    const offsets = () =>
+      getAllByRole("tablist").map((list) => {
+        const indicator = list.querySelector('[data-testid="indicator"]');
+        const active = list.querySelector('[aria-selected="true"]');
+        return indicator && active ? offBy(active, indicator) : null;
+      });
+    await waitForStable(offsets);
+    expect(offsets().every((off) => off !== null && off <= 1)).toBe(true);
+
+    rerender(lists(24));
+    // The render above committed in act(); what follows comes from the ResizeObserver
+    onRender.mockClear();
+    await waitForStable(offsets);
+    expect(offsets().every((off) => off !== null && off <= 1)).toBe(true);
+    expect(onRender).toHaveBeenCalledTimes(1);
   });
 });
 

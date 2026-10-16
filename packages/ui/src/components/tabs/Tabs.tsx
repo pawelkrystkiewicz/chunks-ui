@@ -15,10 +15,10 @@ import {
   useRef,
   useState,
 } from "react";
-import { flushSync } from "react-dom";
 import { cn, cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { renderNow } from "../../lib/render-now";
+import { notifyResize, observeResize } from "../../lib/shared-resize";
 import { BOX_EDGES, useIndicatorSlide } from "../../lib/use-indicator-slide";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { type MotionOptions, useMotion, useReducedMotion } from "../../lib/use-motion";
@@ -206,31 +206,36 @@ function TabsIndicatorElement({
   // it or the list resizes, and the indicator then jumps to it
   const selected = useContext(TabsContext)?.value;
   const { element, sliding, transition } = useIndicatorSlide<HTMLElement>(selected, box);
-  // Observes every tab's border box, and the list's border and content boxes: Base UI watches
-  // content boxes only, and padding on one tab moves the others. Re-observes on aria-selected
-  // and child-list changes; a new observation's first notification measures every tab, which
-  // catches padding gained on selection and tabs that mount or remount. Skipped where there is no
-  // ResizeObserver (jsdom).
+  // Observes every tab's border box, and the list's border and content boxes, with the
+  // ResizeObserver every indicator shares: Base UI watches content boxes only, and padding on one
+  // tab moves the others. The observer runs after layout and before paint, and commits every
+  // notified indicator's measure in one synchronous render, so the indicator renders in the
+  // frame the resize happens in. Skipped where there is no ResizeObserver (jsdom).
   useEffect(() => {
     if (typeof ResizeObserver === "undefined") return;
     const list = element.current?.closest('[role="tablist"]');
     if (!list) return;
-    // ResizeObserver callbacks run after layout and before paint, so flushSync renders the
-    // indicator in the frame the resize happens in.
-    const remeasure = () => flushSync(onTabResize);
-    const resize = new ResizeObserver(remeasure);
+    let stops: (() => void)[] = [];
+    // A new observation's first notification measures every tab: this catches tabs that mount
+    // or remount
     const observeTabs = () => {
-      resize.disconnect();
-      resize.observe(list, { box: "border-box" });
-      for (const tab of list.querySelectorAll('[role="tab"]')) {
-        resize.observe(tab, { box: "border-box" });
-      }
+      for (const stop of stops) stop();
+      stops = [
+        observeResize(list, "border-box", onTabResize),
+        // Padding on a list sized from outside changes its content box alone
+        observeResize(list, "content-box", onTabResize),
+        ...Array.from(list.querySelectorAll('[role="tab"]'), (tab) =>
+          observeResize(tab, "border-box", onTabResize),
+        ),
+      ];
     };
     observeTabs();
-    // Padding on a list sized from outside changes its content box alone
-    const contentBox = new ResizeObserver(remeasure);
-    contentBox.observe(list);
-    const mutation = new MutationObserver(observeTabs);
+    // A selection measures again too: Base UI measured the newly active tab before the commit
+    // that selected it, which can give it padding
+    const mutation = new MutationObserver((records) => {
+      if (records.some((record) => record.type === "childList")) observeTabs();
+      else notifyResize(list, "border-box");
+    });
     mutation.observe(list, {
       childList: true,
       subtree: true,
@@ -238,9 +243,8 @@ function TabsIndicatorElement({
       attributeFilter: ["aria-selected"],
     });
     return () => {
-      resize.disconnect();
-      contentBox.disconnect();
       mutation.disconnect();
+      for (const stop of stops) stop();
     };
   }, [onTabResize, element]);
 

@@ -25,7 +25,7 @@ const observers = new Map<ResizeObserver, Watched>();
 function resize(target: Element, only?: ResizeObserverBoxOptions) {
   for (const [observer, { callback, targets }] of observers) {
     const box = targets.get(target);
-    if (box && (!only || box === only)) callback([], observer);
+    if (box && (!only || box === only)) callback([{ target } as ResizeObserverEntry], observer);
   }
 }
 

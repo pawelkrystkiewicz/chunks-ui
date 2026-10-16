@@ -1,5 +1,5 @@
 import { render } from "@testing-library/react";
-import { Activity, type CSSProperties, createRef, type RefObject } from "react";
+import { Activity, type CSSProperties, createRef, Profiler, type RefObject } from "react";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { commands, userEvent } from "vitest/browser";
 import { reloadMotion } from "../../lib/use-motion";
@@ -609,6 +609,51 @@ describe.each(MOTION_PATHS)("ToggleGroup indicator on a resize, $path", ({ withM
     expect(first.indicator, JSON.stringify(first)).toBeLessThan(first.beta - 1);
     await waitForStable(() => offBy(beta, indicator()));
     expect(offBy(beta, indicator())).toBeLessThanOrEqual(1);
+  });
+
+  // Every group on the page shares one ResizeObserver, whose callback commits every notified
+  // group's measure in one synchronous render: a resize that reaches every group costs one
+  // render per frame, not one per group
+  it("commits every group on the page once when the padding of their items changes", async () => {
+    await enterMotionPath(withMotion);
+    const onRender = vi.fn();
+    const groups = (paddingInline?: number) => (
+      <Profiler id="groups" onRender={onRender}>
+        {["one", "two", "three"].map((name) => (
+          <ToggleGroup.Root
+            key={name}
+            value={["a"]}
+            className="justify-center"
+            style={FIXED.groupSize}
+          >
+            {/* Only the items' border boxes change: the groups keep their size */}
+            <ToggleGroup.Item value="a" style={{ transition: "none", paddingInline }}>
+              Alpha
+            </ToggleGroup.Item>
+            <ToggleGroup.Item value="b" style={{ transition: "none", paddingInline }}>
+              Beta
+            </ToggleGroup.Item>
+          </ToggleGroup.Root>
+        ))}
+      </Profiler>
+    );
+    const { rerender, getAllByRole } = render(groups());
+    /** How far each group's indicator is off its pressed item; null without an indicator */
+    const offsets = () =>
+      getAllByRole("group").map((group) => {
+        const indicator = group.querySelector(":scope > span");
+        const pressed = group.querySelector('[aria-pressed="true"]');
+        return indicator && pressed ? offBy(pressed, indicator) : null;
+      });
+    await waitForStable(offsets);
+    expect(offsets().every((off) => off !== null && off <= 1)).toBe(true);
+
+    rerender(groups(24));
+    // The render above committed in act(); what follows comes from the ResizeObserver
+    onRender.mockClear();
+    await waitForStable(offsets);
+    expect(offsets().every((off) => off !== null && off <= 1)).toBe(true);
+    expect(onRender).toHaveBeenCalledTimes(1);
   });
 });
 
