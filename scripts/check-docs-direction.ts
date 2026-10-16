@@ -9,17 +9,14 @@
  *
  * Run: bun run check:docs-direction
  */
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
-/** What is scanned, relative to the repo root: the app and content trees, and the files directly in apps/docs. */
-const SCANS = [
-  { dir: "apps/docs/app", glob: new Bun.Glob("**/*.{ts,tsx,mdx}") },
-  { dir: "apps/docs/content", glob: new Bun.Glob("**/*.{ts,tsx,mdx}") },
-  { dir: "apps/docs", glob: new Bun.Glob("*.{ts,tsx,mdx}") },
-];
-/** The directories scanned, relative to the repo root. */
-export const DIRS = SCANS.map(({ dir }) => dir);
+/** What is scanned, relative to the repo root. */
+const DIR = "apps/docs";
+/** The build output, relative to DIR; `node_modules` is skipped at any depth. */
+const SKIP = new Set([".next", ".turbo", "out", "public/_pagefind"]);
+const SCANNED = /\.(?:ts|tsx|mdx)$/;
 
 /** A spacing or inset value: `4`, `0.5`, `1/2`, `px`, `auto`, `full`, `[calc(…)]`, `(--var)`. */
 const VALUE = /\d+(?:\.\d+)?(?:\/\d+)?|px|auto|full|\[[^\]\s]*\]|\([^)\s]*\)/.source;
@@ -60,30 +57,31 @@ function commentAbove(lines: string[], index: number): string {
   return "";
 }
 
-/** One `file:line: token` per unmarked physical class, in path then line order; a missing directory is a problem too. */
+/** The scanned files under `dir`, relative to DIR. */
+function sourceFiles(root: string, dir = ""): string[] {
+  return readdirSync(join(root, DIR, dir), { withFileTypes: true }).flatMap((entry) => {
+    const path = dir ? `${dir}/${entry.name}` : entry.name;
+    if (entry.isDirectory()) {
+      return entry.name === "node_modules" || SKIP.has(path) ? [] : sourceFiles(root, path);
+    }
+    return entry.isFile() && SCANNED.test(entry.name) ? [path] : [];
+  });
+}
+
+/** One `file:line: token` per unmarked physical class, in path then line order; an empty scan is a problem too. */
 export async function checkDocsDirection(root: string): Promise<string[]> {
+  if (!existsSync(join(root, DIR))) return [`${DIR}: not found, nothing to scan`];
+  const files = sourceFiles(root).sort();
+  if (files.length === 0) return [`${DIR}: no .ts, .tsx or .mdx file, nothing to scan`];
   const problems: string[] = [];
-  for (const { dir, glob } of SCANS) {
-    if (!existsSync(join(root, dir))) {
-      problems.push(`${dir}: not found, nothing to scan`);
-      continue;
-    }
-    const files = [...glob.scanSync({ cwd: join(root, dir) })].sort();
-    if (files.length === 0) {
-      problems.push(`${dir}: no .ts, .tsx or .mdx file, nothing to scan`);
-      continue;
-    }
-    for (const file of files) {
-      const lines = (await Bun.file(join(root, dir, file)).text()).split("\n");
-      for (const [index, line] of lines.entries()) {
-        const tokens = physicalTokens(line);
-        if (tokens.length === 0 || MARKER.test(line) || MARKER.test(commentAbove(lines, index))) {
-          continue;
-        }
-        for (const token of tokens) {
-          problems.push(`${dir}/${file}:${index + 1}: ${token}`);
-        }
+  for (const file of files) {
+    const lines = (await Bun.file(join(root, DIR, file)).text()).split("\n");
+    for (const [index, line] of lines.entries()) {
+      const tokens = physicalTokens(line);
+      if (tokens.length === 0 || MARKER.test(line) || MARKER.test(commentAbove(lines, index))) {
+        continue;
       }
+      for (const token of tokens) problems.push(`${DIR}/${file}:${index + 1}: ${token}`);
     }
   }
   return problems;
