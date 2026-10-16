@@ -20,8 +20,8 @@ type Layout = {
   tabStyle?: CSSProperties;
   /** Key of tab "a": a new key remounts it */
   tabKey?: string;
-  /** Padding of the list, as a spacing slider would set it */
-  listPadding?: number;
+  /** Style of the list, as a spacing slider would set its padding; by default it fits its tabs */
+  listStyle?: CSSProperties;
   /** Width of the box around the list, which centres its tabs */
   width?: number;
   /** Classes of tab "b" */
@@ -32,13 +32,13 @@ const tabs = ({
   value = "a",
   tabStyle,
   tabKey,
-  listPadding,
+  listStyle,
   width = 400,
   tabClassName,
 }: Layout = {}) => (
   <div style={{ width }}>
     <Tabs.Root value={value}>
-      <Tabs.List className="justify-center" style={{ padding: listPadding }}>
+      <Tabs.List className="justify-center" style={listStyle}>
         {/* No transition of its own, so the tab takes its new size at once */}
         <Tabs.Tab key={tabKey} value="a" style={{ transition: "none", ...tabStyle }}>
           Alpha
@@ -77,28 +77,101 @@ async function renderTabs(withMotion: boolean, layout?: Layout) {
   const active = activeTab(layout);
   await waitForStable(() => offBy(tab(active), indicator));
   expect(offBy(tab(active), indicator)).toBeLessThanOrEqual(1);
-  return { ...result, indicator, tab };
+  return { ...result, indicator, tab, list: result.getByRole("tablist") };
 }
 
-const RESIZES: [string, Layout][] = [
-  ["the font size of the tab", { tabStyle: { fontSize: 20 } }],
+type BoxSize = { inlineSize: number; blockSize: number };
+
+/** The content box of `el`, as a ResizeObserver reports it: its border box less padding and border */
+function contentBoxOf(el: Element): BoxSize {
+  const { width, height } = el.getBoundingClientRect();
+  const style = getComputedStyle(el);
+  const sum = (...lengths: string[]) =>
+    lengths.reduce((total, length) => total + Number.parseFloat(length), 0);
+  return {
+    inlineSize:
+      width -
+      sum(style.paddingLeft, style.paddingRight, style.borderLeftWidth, style.borderRightWidth),
+    blockSize:
+      height -
+      sum(style.paddingTop, style.paddingBottom, style.borderTopWidth, style.borderBottomWidth),
+  };
+}
+
+const sameSize = (a: BoxSize | undefined, b: BoxSize) =>
+  a?.inlineSize === b.inlineSize && a.blockSize === b.blockSize;
+
+/**
+ * Reads `read` in the first frame in which a tab's border box or the list's content box, the
+ * boxes the indicator follows, differs from its size now, after the tabs' ResizeObservers and
+ * before that frame paints: an observer created after the tabs' gets its callback after theirs,
+ * in the same frame. A new observer is also notified in its first frame when nothing changed;
+ * that notification is skipped.
+ */
+function beforePaintOnceResized<T>(
+  { tabs, list }: { tabs: Element[]; list: Element },
+  read: () => T,
+) {
+  const borderBoxes = new Map(
+    tabs.map((tab) => {
+      const { width, height } = tab.getBoundingClientRect();
+      return [tab, { inlineSize: width, blockSize: height }];
+    }),
+  );
+  const listContentBox = contentBoxOf(list);
+  return new Promise<T>((resolve) => {
+    const observer = new ResizeObserver((entries) => {
+      const changed = entries.some(({ target, borderBoxSize, contentBoxSize }) =>
+        target === list
+          ? !sameSize(contentBoxSize[0], listContentBox)
+          : !sameSize(borderBoxSize[0], borderBoxes.get(target) ?? { inlineSize: 0, blockSize: 0 }),
+      );
+      if (!changed) return;
+      observer.disconnect();
+      resolve(read());
+    });
+    for (const tab of tabs) observer.observe(tab, { box: "border-box" });
+    observer.observe(list, { box: "content-box" });
+  });
+}
+
+/** A list that keeps its size whatever its tabs do; `justify-center` centres them in it */
+const FIXED: Layout = { listStyle: { width: 360, height: 48 } };
+
+/** Each resize: its name, the layout before it, and the layout after it */
+const RESIZES: [string, Layout, Layout][] = [
+  ["the font size of the tab", {}, { tabStyle: { fontSize: 20 } }],
   // Only the tab's border box grows: its content box doesn't, nor does the list's
-  ["the padding of the tab", { tabStyle: { paddingInline: 24 } }],
+  ["the padding of the tab", {}, { tabStyle: { paddingInline: 24 } }],
   // Only that tab's border box grows: the active tab moves in the centred list, at its size
-  ["the padding of a tab before the active one", { value: "b", tabStyle: { paddingInline: 24 } }],
-  ["the padding of the list", { listPadding: 16 }],
-  ["the width of the box around the list", { width: 300 }],
+  [
+    "the padding of a tab before the active one",
+    { value: "b" },
+    { value: "b", tabStyle: { paddingInline: 24 } },
+  ],
+  // No tab changes size: the list's border box grows and its content box shrinks
+  ["the padding of the list", {}, { listStyle: { padding: 16 } }],
+  // Only the list's content box changes, and the centred tabs move within it
+  [
+    "the start padding of a list of fixed size",
+    FIXED,
+    { listStyle: { ...FIXED.listStyle, paddingLeft: 40 } },
+  ],
+  ["the width of the box around the list", {}, { width: 300 }],
 ];
 
 describe.each(MOTION_PATHS)("Tabs.Indicator, $path", ({ withMotion }) => {
   it.each(RESIZES)(
-    "follows a change to %s at once, with no frames in between",
-    async (_, resized) => {
-      const { indicator, tab, rerender } = await renderTabs(withMotion, { value: resized.value });
-      const active = activeTab(resized);
+    "follows a change to %s in the frame it changes in, with no frames in between",
+    async (_, before, after) => {
+      const { indicator, tab, list, rerender } = await renderTabs(withMotion, before);
+      const active = activeTab(after);
       const start = boxOf(indicator);
+      const firstPaint = beforePaintOnceResized({ tabs: [tab("Alpha"), tab("Beta")], list }, () =>
+        offBy(tab(active), indicator),
+      );
 
-      rerender(tabs(resized));
+      rerender(tabs(after));
       const frames = await eachPaintedFrame(
         () => ({ indicator: boxOf(indicator), off: offBy(tab(active), indicator) }),
         20,
@@ -106,14 +179,17 @@ describe.each(MOTION_PATHS)("Tabs.Indicator, $path", ({ withMotion }) => {
       const end = frames.at(-1)?.indicator ?? start;
       const log = JSON.stringify(frames);
       expect(near(start, end), log).toBe(false);
+      // Over the tab in the frame the tab or the list changes in: the tabs' ResizeObservers
+      // measure the tab there, and the indicator is rendered before that frame paints
+      expect(await firstPaint, log).toBeLessThanOrEqual(1);
       expect(frames.at(-1)?.off, log).toBeLessThanOrEqual(1);
       // Each frame shows the indicator where it was or where it goes, never between
       expect(
         frames.every((frame) => near(frame.indicator, start) || near(frame.indicator, end)),
         log,
       ).toBe(true);
-      // Base UI measures the tab after a resize in a ResizeObserver, so the indicator may show
-      // its old box for one frame after the tab changes, and no longer
+      // The first frame is read before the ResizeObservers measure the tab: it may show the old
+      // box, and no more
       expect(frames.filter((frame) => frame.off > 1).length, log).toBeLessThanOrEqual(1);
     },
   );
