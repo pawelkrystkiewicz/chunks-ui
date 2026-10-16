@@ -364,7 +364,9 @@ describe("checkDocsDirection", () => {
     const dir = tree({ "apps/docs/node_modules/x.ts": "export {};\n", "apps/docs/x.md": "# X\n" });
     rmSync(join(dir, "apps/docs/seed.ts"));
     rmSync(join(dir, "apps/docs/seed.mdx"));
-    expect(await checkDocsDirection(dir)).toEqual([expect.stringMatching(/^apps\/docs: no /)]);
+    expect(await checkDocsDirection(dir)).toEqual([
+      expect.stringMatching(/^apps\/docs: no \.ts, /),
+    ]);
   });
 
   it("fails when apps/docs holds no .mdx file, so a moved content folder cannot pass", async () => {
