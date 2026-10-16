@@ -1,13 +1,12 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Activity, createRef, type ReactNode, type Ref } from "react";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { Combobox } from "../components/combobox";
 import { DatePicker } from "../components/date-picker";
 import { Dialog } from "../components/dialog";
 import { Drawer } from "../components/drawer";
 import { Menu } from "../components/menu";
-import { NumberField } from "../components/number-field";
 import { Popover } from "../components/popover";
 import { Select } from "../components/select";
 import { Tooltip } from "../components/tooltip";
@@ -162,31 +161,15 @@ describe("PortalContainerProvider", () => {
 });
 
 // Like Dialog, Drawer, Popover and Combobox, these parts provide their own portal node to what
-// opens inside them: a nested popup lands there also under a provider, and so does the scrub
-// cursor, which has no fallback of its own
+// opens inside them: a nested popup lands there also under a provider. (The scrub cursor, which has
+// no fallback of its own, is proven in the NumberField overlay table.)
 describe("a popup's own portal node", () => {
-  // jsdom has no Pointer Lock API. Base UI drops the scrub cursor when the lock request fails.
-  beforeEach(() => {
-    document.body.requestPointerLock = () => Promise.resolve();
-    document.exitPointerLock = () => {};
-  });
-  afterEach(() => {
-    Reflect.deleteProperty(document.body, "requestPointerLock");
-    Reflect.deleteProperty(document, "exitPointerLock");
-  });
-
   const content = (
     <>
       <Popover.Root open>
         <Popover.Trigger>Nested</Popover.Trigger>
         <Popover.Content data-testid="nested">Nested</Popover.Content>
       </Popover.Root>
-      <NumberField.Root defaultValue={0}>
-        <NumberField.ScrubArea>
-          <span>Amount</span>
-          <NumberField.ScrubAreaCursor data-testid="cursor" />
-        </NumberField.ScrubArea>
-      </NumberField.Root>
     </>
   );
 
@@ -230,22 +213,20 @@ describe("a popup's own portal node", () => {
     },
   ];
 
-  it.each(parents)("$name: holds the popups and the scrub cursor opened inside it", async (c) => {
+  it.each(parents)("$name: holds the popup opened inside it", async (c) => {
     const container = makeContainer();
     render(<PortalContainerProvider value={container}>{c.ui}</PortalContainerProvider>);
     const portalNode = (await screen.findByTestId("popup")).closest("[data-base-ui-portal]");
     // The part's own node, which still renders in the provider's element
     expect(portalNode?.parentElement).toBe(container);
     expect(portalNode).toContainElement(await screen.findByTestId("nested"));
-
-    fireEvent.pointerDown(screen.getByText("Amount"), { pointerType: "mouse", button: 0 });
-    expect((await screen.findByTestId("cursor")).parentElement).toBe(portalNode);
   });
 });
 
 // Each Portal merges the consumer's `ref` with the one that feeds the node to its
 // PortalContainerProvider. Dropping the consumer's side leaves `ref.current` null. (Dropping ours
-// is covered by the NumberField overlay table, which needs the provided node.)
+// is covered by the NumberField overlay table for the cursor and by "a popup's own portal node"
+// above for the nested popup, which both need the provided node.)
 describe("a Portal's consumer ref", () => {
   const portals: { name: string; ui: (ref: Ref<HTMLDivElement>) => ReactNode }[] = [
     {

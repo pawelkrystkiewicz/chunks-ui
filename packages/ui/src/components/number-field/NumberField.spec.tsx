@@ -7,8 +7,11 @@ import { PortalContainerProvider } from "../../lib/portal-container";
 import { Combobox } from "../combobox";
 import { Dialog } from "../dialog";
 import { Drawer } from "../drawer";
+import { Menu } from "../menu";
 import { Popover } from "../popover";
+import { Select } from "../select";
 import { FOCUS_RING_WITHIN } from "../shared";
+import { Tooltip } from "../tooltip";
 import { NumberField } from "./NumberField";
 import { DEFAULT_NUMBER_FIELD_LABELS } from "./NumberField.Labels";
 
@@ -272,6 +275,49 @@ describe("NumberField", () => {
                 </Combobox.Positioner>
               </Combobox.Portal>
             </Combobox.Root>
+          ),
+        },
+        {
+          name: "Menu",
+          ui: (
+            <Menu.Root open>
+              <Menu.Trigger>Open</Menu.Trigger>
+              <Menu.Content data-testid="popup">
+                <ScrubField />
+              </Menu.Content>
+            </Menu.Root>
+          ),
+        },
+        {
+          name: "Select",
+          ui: (
+            <Select.Root open>
+              <Select.Trigger>
+                <Select.Value />
+              </Select.Trigger>
+              <Select.Portal>
+                <Select.Positioner>
+                  <Select.Popup data-testid="popup">
+                    <ScrubField />
+                  </Select.Popup>
+                </Select.Positioner>
+              </Select.Portal>
+            </Select.Root>
+          ),
+        },
+        {
+          name: "Tooltip",
+          ui: (
+            <Tooltip.Root open>
+              <Tooltip.Trigger>Hover</Tooltip.Trigger>
+              <Tooltip.Portal>
+                <Tooltip.Positioner>
+                  <Tooltip.Popup data-testid="popup">
+                    <ScrubField />
+                  </Tooltip.Popup>
+                </Tooltip.Positioner>
+              </Tooltip.Portal>
+            </Tooltip.Root>
           ),
         },
       ];
