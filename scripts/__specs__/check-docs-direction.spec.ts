@@ -7,12 +7,13 @@ import { checkDocsDirection, physicalTokens } from "../check-docs-direction";
 const ROOT = join(import.meta.dirname, "../..");
 const dirs: string[] = [];
 
-/** A throwaway repo root with a clean `apps/docs/seed.ts`, and `files` (path -> text) beside it. */
+/** A throwaway repo root with a clean `apps/docs/seed.ts` and `seed.mdx`, and `files` (path -> text) beside it. */
 function tree(files: Record<string, string> = {}): string {
   const dir = mkdtempSync(join(tmpdir(), "docs-direction-"));
   dirs.push(dir);
   mkdirSync(join(dir, "apps/docs"), { recursive: true });
   writeFileSync(join(dir, "apps/docs/seed.ts"), "export {};\n");
+  writeFileSync(join(dir, "apps/docs/seed.mdx"), "# Seed\n");
   for (const [path, text] of Object.entries(files)) {
     mkdirSync(dirname(join(dir, path)), { recursive: true });
     writeFileSync(join(dir, path), text);
@@ -258,6 +259,18 @@ describe("checkDocsDirection", () => {
       ["4: left-3", "8: left-0", "13: left-1", "16: left-2"],
     ],
     [
+      "honours a marker in a JSDoc whose later line holds a /* inside text",
+      [
+        "/**",
+        " * direction: physical, art",
+        " * (see content/*.mdx)",
+        " */",
+        'const A = "left-3";',
+      ],
+      {},
+      [],
+    ],
+    [
       "needs a reason that starts with a word character",
       [
         "{/* direction: physical, */}",
@@ -350,6 +363,7 @@ describe("checkDocsDirection", () => {
   it("fails when apps/docs holds no scanned file outside the skipped folders, so an empty scan cannot pass", async () => {
     const dir = tree({ "apps/docs/node_modules/x.ts": "export {};\n", "apps/docs/x.md": "# X\n" });
     rmSync(join(dir, "apps/docs/seed.ts"));
+    rmSync(join(dir, "apps/docs/seed.mdx"));
     expect(await checkDocsDirection(dir)).toEqual([expect.stringMatching(/^apps\/docs: no /)]);
   });
 });

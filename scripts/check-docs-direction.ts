@@ -51,10 +51,13 @@ function commentAbove(lines: string[], index: number): string {
   if (/^\s*\/\//.test(above)) return above;
   if (!/\*\/\}?\s*$/.test(above)) return "";
   for (let start = index - 1; start >= 0; start--) {
-    if (lines[start]?.includes("/*")) {
+    const text = lines[start] ?? "";
+    if (/^\s*\{?\/\*/.test(text)) {
       const comment = lines.slice(start, index).join("\n");
       return COMMENT.test(comment) ? comment : "";
     }
+    // The end of an earlier comment: the one above has no opener of its own.
+    if (start < index - 1 && text.includes("*/")) return "";
   }
   return "";
 }
