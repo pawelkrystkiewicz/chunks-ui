@@ -11,12 +11,14 @@ import {
   useContext,
   useEffect,
   useLayoutEffect,
+  useReducer,
   useRef,
   useState,
 } from "react";
 import { cn, cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { renderNow } from "../../lib/render-now";
+import { BOX_EDGES, useIndicatorSlide } from "../../lib/use-indicator-slide";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { type MotionOptions, useMotion, useReducedMotion } from "../../lib/use-motion";
 import { useMotionAnimate } from "../../lib/use-motion-animate";
@@ -155,6 +157,10 @@ function TabsIndicator({
   renderBeforeHydration = true,
   ...props
 }: TabsIndicatorProps) {
+  // Base UI measures the active tab when it renders, and renders again when the list or a tab
+  // changes content-box size. A padding change of the active tab changes only its border box:
+  // the element below watches that, and this render has Base UI measure the tab again.
+  const [, remeasure] = useReducer((count: number) => count + 1, 0);
   return (
     <BaseTabs.Indicator
       {...props}
@@ -165,32 +171,10 @@ function TabsIndicator({
           state={state}
           render={render}
           className={typeof className === "function" ? className(state) : className}
+          onActiveTabResize={remeasure}
         />
       )}
     />
-  );
-}
-
-const BOX_EDGES = ["left", "top", "width", "height"] as const;
-type IndicatorBox = Record<(typeof BOX_EDGES)[number], number>;
-
-/** Moves the indicator at once: Motion writes the values in its next frame */
-const SNAP = { duration: 0 };
-
-/**
- * Whether the indicator is still sliding: the CSS fallback runs a transition, or Motion has not
- * written `box` inline yet. A Motion spring ends exactly on its target.
- */
-function isSliding(node: HTMLElement, box: IndicatorBox | null) {
-  if (typeof node.getAnimations === "function" && typeof CSSTransition !== "undefined") {
-    if (node.getAnimations().some((animation) => animation instanceof CSSTransition)) return true;
-  }
-  return (
-    box !== null &&
-    BOX_EDGES.some((edge) => {
-      const written = node.style[edge];
-      return written !== "" && Math.abs(Number.parseFloat(written) - box[edge]) > 0.5;
-    })
   );
 }
 
@@ -200,10 +184,12 @@ function TabsIndicatorElement({
   render,
   className,
   ref,
+  onActiveTabResize,
   ...props
 }: ComponentProps<"span"> & {
   state: BaseTabs.Indicator.State;
   render: PartRenderProp<BaseTabs.Indicator.State>;
+  onActiveTabResize: () => void;
 }) {
   const { activeTabPosition: position, activeTabSize: size } = state;
   // While the tabs aren't rendered (display:none), Base UI measures the active tab as 0×0 and
@@ -213,35 +199,28 @@ function TabsIndicatorElement({
       ? { left: position.left, top: position.top, width: size.width, height: size.height }
       : null;
 
-  // Only a change of the selected tab slides the indicator. Base UI measures the tab again when
-  // it or the list resizes (a font or padding change, a narrower container), and the indicator
-  // then jumps to it instead of trailing behind. A resize during a slide retargets the slide.
+  // Only a change of the selected tab slides the indicator; Base UI measures the tab again when
+  // it or the list resizes, and the indicator then jumps to it
   const selected = useContext(TabsContext)?.value;
-  const [slideTarget, setSlideTarget] = useState(selected);
-  const [sliding, setSliding] = useState(false);
-  if (selected !== slideTarget) {
-    setSlideTarget(selected);
-    setSliding(true);
-  }
-
-  const element = useRef<HTMLElement | null>(null);
-  const latestBox = useRef(box);
-  useLayoutEffect(() => {
-    latestBox.current = box;
-  });
+  const { element, sliding, transition } = useIndicatorSlide<HTMLElement>(selected, box);
+  // The active tab's border box, which Base UI doesn't observe. Base UI itself skips the
+  // observer where there is none (jsdom). Its first notification is load-bearing: it re-measures
+  // padding the tab gains on becoming active, which Base UI measured before that commit.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the active tab changes with `selected`
   useEffect(() => {
-    if (!sliding) return;
-    let frame = requestAnimationFrame(function settle() {
-      const node = element.current;
-      if (node && isSliding(node, latestBox.current)) frame = requestAnimationFrame(settle);
-      else setSliding(false);
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [sliding]);
+    if (typeof ResizeObserver === "undefined") return;
+    const tab = element.current
+      ?.closest('[role="tablist"]')
+      ?.querySelector('[role="tab"][aria-selected="true"]');
+    if (!tab) return;
+    const observer = new ResizeObserver(onActiveTabResize);
+    observer.observe(tab, { box: "border-box" });
+    return () => observer.disconnect();
+  }, [selected, onActiveTabResize, element]);
 
   const [indicatorRef, driven] = useMotionAnimate<HTMLElement>(
     box,
-    { transition: sliding ? springs.indicator : SNAP, clear: [...BOX_EDGES] },
+    { transition, clear: [...BOX_EDGES] },
     useMergedRef(element, ref),
   );
   return useRenderPart(render, state, indicatorRef, {
