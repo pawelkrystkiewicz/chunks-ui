@@ -8,7 +8,7 @@ import {
   expectJumpedAtOnce,
   MOTION_PATHS,
   offBy,
-  SETTLE_TIMEOUT_MS,
+  untilChanged,
   waitForStable,
 } from "../../VisualTest.utils";
 import { Tabs } from "./index";
@@ -386,15 +386,3 @@ describe.each(MOTION_PATHS)("Tabs.Indicator, $path", ({ withMotion }) => {
     expect(onRender).toHaveBeenCalledTimes(1);
   });
 });
-
-/** Resolves in the first frame in which `read` returns something other than it returns now */
-async function untilChanged(read: () => string) {
-  const before = read();
-  const deadline = performance.now() + SETTLE_TIMEOUT_MS;
-  while (read() === before) {
-    if (performance.now() > deadline) {
-      throw new Error(`Still ${JSON.stringify(before)} after ${SETTLE_TIMEOUT_MS}ms`);
-    }
-    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-  }
-}

@@ -8,7 +8,13 @@ import { Radio } from "../components/radio";
 import { Switch } from "../components/switch";
 import { Tabs } from "../components/tabs";
 import { ToggleGroup } from "../components/toggle-group";
-import { emulateReducedMotion, offBy, SETTLE_TIMEOUT_MS, waitForStable } from "../VisualTest.utils";
+import {
+  emulateReducedMotion,
+  offBy,
+  SETTLE_TIMEOUT_MS,
+  untilChanged,
+  waitForStable,
+} from "../VisualTest.utils";
 import { reloadMotion } from "./use-motion";
 
 // Runs with reduced motion off. These controls stay mounted, so Motion must animate their
@@ -346,11 +352,11 @@ describe("controls once Motion has loaded", () => {
 
   it.each(names)("stops writing to a %s element unmounted mid-animation", async (name) => {
     const subject = control(name);
-    const { ui, element, change } = subject;
+    const { ui, element, change, measure } = subject;
     const { unmount } = await renderSettled(ui(), subject);
     change();
-    await nextFrame();
-    await nextFrame();
+    // Mid-animation: Motion has moved it from where it rested
+    await untilChanged(() => measure(element()));
     const moving = element() as HTMLElement;
     unmount();
     // Stopping may write the value it stopped at once; after that nothing changes
@@ -374,8 +380,8 @@ describe("controls once Motion has loaded", () => {
         await expect.poll(() => opacity(subject.element()), { timeout: SETTLE_TIMEOUT_MS }).toBe(0);
         subject.toChecked();
       }
-      await nextFrame();
-      await nextFrame();
+      // Mid-animation: Motion has moved it from where it rested
+      await untilChanged(() => subject.measure(subject.element()));
       await emulateReducedMotion(true);
       await expect.poll(() => handedBack(subject), { timeout: SETTLE_TIMEOUT_MS }).toBe(true);
       const finished = snapshot(subject);

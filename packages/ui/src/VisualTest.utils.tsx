@@ -405,6 +405,18 @@ export async function waitForStable<T>(
   return value;
 }
 
+/** Resolves in the first frame in which `read` returns something other than it returns now */
+export async function untilChanged<T>(read: () => T) {
+  const before = JSON.stringify(read());
+  const deadline = performance.now() + SETTLE_TIMEOUT_MS;
+  while (JSON.stringify(read()) === before) {
+    if (performance.now() > deadline) {
+      throw new Error(`Still ${before} after ${SETTLE_TIMEOUT_MS}ms`);
+    }
+    await nextFrame();
+  }
+}
+
 /**
  * Calls `read` once a frame for `frames` frames, after Motion's render step: the values that
  * frame paints, Motion's writes for it included
