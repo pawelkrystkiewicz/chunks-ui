@@ -43,9 +43,9 @@ export type PopoverContentProps = ComponentProps<typeof BasePopover.Popup> & {
    */
   alignOffset?: ComponentProps<typeof BasePopover.Positioner>["alignOffset"];
   /**
-   * How close the arrow may come to the popup's ends, in pixels. The default, read when the popup or
-   * its arrow mounts, keeps the arrow's foot off the popup's rounded corner at any `--radius` and
-   * `--spacing`.
+   * How close the arrow may come to the popup's ends, in pixels. The default, read when the popup
+   * mounts and when its arrow mounts or unmounts, keeps the arrow's foot off the popup's rounded
+   * corner at any `--radius` and `--spacing`.
    * @default corner radius + 0.21 × arrow size (≈ 10.07)
    */
   arrowPadding?: ComponentProps<typeof BasePopover.Positioner>["arrowPadding"];
