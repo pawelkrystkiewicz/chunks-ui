@@ -10,7 +10,7 @@ import {
   usePortalContainer,
   usePortalNode,
 } from "../../lib/portal-container";
-import { useArrowPadding } from "../../lib/use-arrow-padding";
+import { ArrowChangeProvider, useArrowChange, useArrowPadding } from "../../lib/use-arrow-padding";
 import { usePopupRender } from "../../lib/use-popup-render";
 import { RING_TRANSITION_MOTION } from "../shared";
 
@@ -44,7 +44,8 @@ export type PopoverContentProps = ComponentProps<typeof BasePopover.Popup> & {
   alignOffset?: ComponentProps<typeof BasePopover.Positioner>["alignOffset"];
   /**
    * How close the arrow may come to the popup's ends, in pixels. The default, read when the popup
-   * mounts, keeps the arrow's foot off the popup's rounded corner at any `--radius` and `--spacing`.
+   * mounts and when its arrow mounts or unmounts, keeps the arrow's foot off the popup's rounded
+   * corner at any `--radius` and `--spacing`.
    * @default corner radius + 0.21 × arrow size (≈ 10.07)
    */
   arrowPadding?: ComponentProps<typeof BasePopover.Positioner>["arrowPadding"];
@@ -73,7 +74,7 @@ function PopoverContentPopup({
   render: renderProp,
   ...props
 }: PopoverContentProps) {
-  const [positioner, arrowPaddingByDefault] = useArrowPadding();
+  const [positioner, arrowPaddingByDefault, arrowChanged] = useArrowPadding();
   const { useSpring, render } = usePopupRender(renderProp, {
     spring: springs.popup,
     from: { opacity: 0, scale: 0.95 },
@@ -81,36 +82,39 @@ function PopoverContentPopup({
   });
 
   return (
-    <BasePopover.Positioner
-      ref={positioner}
-      className="z-dropdowns"
-      sideOffset={sideOffset}
-      side={side}
-      align={align}
-      alignOffset={alignOffset}
-      arrowPadding={arrowPadding ?? arrowPaddingByDefault}
-    >
-      <BasePopover.Popup
-        render={render}
-        className={cnState(
-          "rounded-md border border-border bg-popover p-4 text-popover-foreground shadow-md",
-          arrowPopupClasses,
-          "origin-(--transform-origin)",
-          !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
-          !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
-          // Only the fade and scale: `all` would also slide an arrow's margin when the side flips
-          !useSpring && "micro-interactions [transition-property:opacity,scale] duration-300",
-          // Motion animates the popup: a list with no outline keeps a timing utility off the ring
-          useSpring && RING_TRANSITION_MOTION,
-          className,
-        )}
-        {...props}
-      />
-    </BasePopover.Positioner>
+    <ArrowChangeProvider value={arrowChanged}>
+      <BasePopover.Positioner
+        ref={positioner}
+        className="z-dropdowns"
+        sideOffset={sideOffset}
+        side={side}
+        align={align}
+        alignOffset={alignOffset}
+        arrowPadding={arrowPadding ?? arrowPaddingByDefault}
+      >
+        <BasePopover.Popup
+          render={render}
+          className={cnState(
+            "rounded-md border border-border bg-popover p-4 text-popover-foreground shadow-md",
+            arrowPopupClasses,
+            "origin-(--transform-origin)",
+            !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
+            !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
+            // Only the fade and scale: `all` would also slide an arrow's margin when the side flips
+            !useSpring && "micro-interactions [transition-property:opacity,scale] duration-300",
+            // Motion animates the popup: a list with no outline keeps a timing utility off the ring
+            useSpring && RING_TRANSITION_MOTION,
+            className,
+          )}
+          {...props}
+        />
+      </BasePopover.Positioner>
+    </ArrowChangeProvider>
   );
 }
 
 function PopoverArrow({ className, ...props }: PopoverArrowProps) {
+  useArrowChange();
   return <BasePopover.Arrow className={cnState(arrowClasses, className)} {...props} />;
 }
 

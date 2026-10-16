@@ -237,13 +237,26 @@ describe.each(KINDS)("%s.Arrow colours", (kind) => {
 
 type Align = "start" | "end";
 
+type NearCornerOptions = {
+  /** Passed to the popup's `Content` */
+  arrowPadding?: number;
+  /** The arrow mounts once the open popup has settled without it */
+  lateArrow?: boolean;
+};
+
 /**
  * A popup of `kind` on `side` of a 20px trigger, aligned to its `align` edge. The trigger's centre
  * is nearer that end of the popup than the arrow may come, so Base UI holds the arrow
  * `arrowPadding` from the end. A fixed popup width, so no fraction of a pixel moves the arrow, in
  * px, so it still fits beside the trigger at a larger `--spacing`.
  */
-function nearCorner(kind: Kind, side: PhysicalSide, align: Align, arrowPadding?: number) {
+function nearCorner(
+  kind: Kind,
+  side: PhysicalSide,
+  align: Align,
+  arrowPadding: number | undefined,
+  withArrow: boolean,
+) {
   const trigger = { width: 20, height: 20, padding: 0 };
   const content = { side, align, arrowPadding, "data-testid": "popup" };
   const popup =
@@ -251,7 +264,7 @@ function nearCorner(kind: Kind, side: PhysicalSide, align: Align, arrowPadding?:
       <Popover.Root defaultOpen>
         <Popover.Trigger aria-label="Trigger" style={trigger} />
         <Popover.Content {...content} className="w-[160px]">
-          <Popover.Arrow data-testid="arrow" />
+          {withArrow && <Popover.Arrow data-testid="arrow" />}
           Popover
         </Popover.Content>
       </Popover.Root>
@@ -259,7 +272,7 @@ function nearCorner(kind: Kind, side: PhysicalSide, align: Align, arrowPadding?:
       <Menu.Root defaultOpen>
         <Menu.Trigger aria-label="Trigger" style={trigger} />
         <Menu.Content {...content}>
-          <Menu.Arrow data-testid="arrow" />
+          {withArrow && <Menu.Arrow data-testid="arrow" />}
           <Menu.Item>Item</Menu.Item>
         </Menu.Content>
       </Menu.Root>
@@ -272,8 +285,18 @@ function nearCorner(kind: Kind, side: PhysicalSide, align: Align, arrowPadding?:
  * popup's `align` end to the nearer corner of the arrow's foot (its widest point, on the inner edge
  * of the popup's border). Also returns the popup's corner radius and the arrow's overhang.
  */
-async function footNearCorner(kind: Kind, side: PhysicalSide, align: Align, arrowPadding?: number) {
-  const { unmount } = render(nearCorner(kind, side, align, arrowPadding));
+async function footNearCorner(
+  kind: Kind,
+  side: PhysicalSide,
+  align: Align,
+  { arrowPadding, lateArrow = false }: NearCornerOptions = {},
+) {
+  const { rerender, unmount } = render(nearCorner(kind, side, align, arrowPadding, !lateArrow));
+  if (lateArrow) {
+    const popup = await screen.findByTestId("popup");
+    await waitForStable(() => JSON.stringify(popup.getBoundingClientRect()));
+    rerender(nearCorner(kind, side, align, arrowPadding, true));
+  }
   const arrow = await screen.findByTestId("arrow");
   const popup = screen.getByTestId("popup");
   const foot = await waitForStable(() => {
@@ -319,10 +342,27 @@ describe.each(NEAR_CORNER)(
 
 describe.each(KINDS)("%s.Content arrowPadding", (kind) => {
   it("holds an arrow near the corner the padding it is given from the popup's end", async () => {
-    const { foot, overhang } = await footNearCorner(kind, "bottom", "start", 16);
+    const { foot, overhang } = await footNearCorner(kind, "bottom", "start", { arrowPadding: 16 });
     expect(Math.abs(foot - (16 - overhang))).toBeLessThanOrEqual(LAYOUT_ROUNDING_PX);
   });
 });
+
+const LATE_ARROW = KINDS.flatMap((kind) => THEMES.map((theme) => ({ kind, ...theme })));
+
+describe.each(LATE_ARROW)(
+  "$kind arrow mounted after the popup opened, $theme",
+  ({ kind, vars }) => {
+    afterEach(() => resetTheme(vars));
+
+    // The positioner reads the default padding again when an Arrow mounts in it later
+    it("gets the same default padding as one mounted with the popup", async () => {
+      applyTheme(vars);
+      const withPopup = await footNearCorner(kind, "bottom", "start");
+      const late = await footNearCorner(kind, "bottom", "start", { lateArrow: true });
+      expect(Math.abs(late.foot - withPopup.foot)).toBeLessThanOrEqual(LAYOUT_ROUNDING_PX);
+    });
+  },
+);
 
 type Ring = Pick<
   CSSStyleDeclaration,

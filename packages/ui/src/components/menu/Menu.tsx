@@ -6,7 +6,7 @@ import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { arrowClasses, arrowPopupClasses } from "../../lib/popup-arrow";
 import { usePortalContainer } from "../../lib/portal-container";
-import { useArrowPadding } from "../../lib/use-arrow-padding";
+import { ArrowChangeProvider, useArrowChange, useArrowPadding } from "../../lib/use-arrow-padding";
 import { usePopupRender } from "../../lib/use-popup-render";
 import { RING_TRANSITION_MOTION } from "../shared";
 
@@ -41,7 +41,8 @@ export type MenuContentProps = ComponentProps<typeof BaseMenu.Popup> & {
   alignOffset?: ComponentProps<typeof BaseMenu.Positioner>["alignOffset"];
   /**
    * How close the arrow may come to the popup's ends, in pixels. The default, read when the popup
-   * mounts, keeps the arrow's foot off the popup's rounded corner at any `--radius` and `--spacing`.
+   * mounts and when its arrow mounts or unmounts, keeps the arrow's foot off the popup's rounded
+   * corner at any `--radius` and `--spacing`.
    * @default corner radius + 0.21 × arrow size (≈ 10.07)
    */
   arrowPadding?: ComponentProps<typeof BaseMenu.Positioner>["arrowPadding"];
@@ -75,7 +76,7 @@ function MenuContentPopup({
   render: renderProp,
   ...props
 }: MenuContentProps) {
-  const [positioner, arrowPaddingByDefault] = useArrowPadding();
+  const [positioner, arrowPaddingByDefault, arrowChanged] = useArrowPadding();
   // Pointer over the popup until the next key press keeps its ring off (W151); a reopen during the
   // exit animation keeps a stale flag until the next key press (accepted).
   const [pointer, setPointer] = useState(false);
@@ -86,50 +87,52 @@ function MenuContentPopup({
   });
 
   return (
-    <BaseMenu.Positioner
-      ref={positioner}
-      className="z-dropdowns"
-      sideOffset={sideOffset}
-      side={side}
-      align={align}
-      alignOffset={alignOffset}
-      arrowPadding={arrowPadding ?? arrowPaddingByDefault}
-    >
-      <BaseMenu.Popup
-        render={render}
-        data-pointer={pointer || undefined}
-        onPointerMove={(event) => {
-          onPointerMove?.(event);
-          // WebKit fires a move with no movement when the layout shifts under a still pointer;
-          // Base UI ignores those too (isStationaryWebKitPointer)
-          if (event.movementX !== 0 || event.movementY !== 0) setPointer(true);
-        }}
-        onKeyDown={(event) => {
-          onKeyDown?.(event);
-          setPointer(false);
-        }}
-        className={cnState(
-          "flex min-w-[8rem] flex-col rounded-md border border-border bg-popover text-popover-foreground shadow-md",
-          arrowPopupClasses,
-          "data-pointer:focus-visible:outline-none data-pointer:focus-visible:after:hidden",
-          "max-h-[calc(var(--available-height)-var(--popup-arrow-reach))]",
-          "origin-(--transform-origin)",
-          !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
-          !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
-          // Only the fade and scale: `all` would also animate the max-height that --available-height drives
-          !useSpring && "micro-interactions [transition-property:opacity,scale] duration-300",
-          // Motion animates the popup: a list with no outline keeps a timing utility off the ring
-          useSpring && RING_TRANSITION_MOTION,
-          className,
-        )}
-        {...props}
+    <ArrowChangeProvider value={arrowChanged}>
+      <BaseMenu.Positioner
+        ref={positioner}
+        className="z-dropdowns"
+        sideOffset={sideOffset}
+        side={side}
+        align={align}
+        alignOffset={alignOffset}
+        arrowPadding={arrowPadding ?? arrowPaddingByDefault}
       >
-        {/* The items scroll in here, so the popup clips nothing: Menu.Arrow sits outside its box */}
-        <div className="min-h-0 overflow-y-auto overscroll-contain scroll-py-1 rounded-[inherit] p-1">
-          {children}
-        </div>
-      </BaseMenu.Popup>
-    </BaseMenu.Positioner>
+        <BaseMenu.Popup
+          render={render}
+          data-pointer={pointer || undefined}
+          onPointerMove={(event) => {
+            onPointerMove?.(event);
+            // WebKit fires a move with no movement when the layout shifts under a still pointer;
+            // Base UI ignores those too (isStationaryWebKitPointer)
+            if (event.movementX !== 0 || event.movementY !== 0) setPointer(true);
+          }}
+          onKeyDown={(event) => {
+            onKeyDown?.(event);
+            setPointer(false);
+          }}
+          className={cnState(
+            "flex min-w-[8rem] flex-col rounded-md border border-border bg-popover text-popover-foreground shadow-md",
+            arrowPopupClasses,
+            "data-pointer:focus-visible:outline-none data-pointer:focus-visible:after:hidden",
+            "max-h-[calc(var(--available-height)-var(--popup-arrow-reach))]",
+            "origin-(--transform-origin)",
+            !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
+            !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
+            // Only the fade and scale: `all` would also animate the max-height that --available-height drives
+            !useSpring && "micro-interactions [transition-property:opacity,scale] duration-300",
+            // Motion animates the popup: a list with no outline keeps a timing utility off the ring
+            useSpring && RING_TRANSITION_MOTION,
+            className,
+          )}
+          {...props}
+        >
+          {/* The items scroll in here, so the popup clips nothing: Menu.Arrow sits outside its box */}
+          <div className="min-h-0 overflow-y-auto overscroll-contain scroll-py-1 rounded-[inherit] p-1">
+            {children}
+          </div>
+        </BaseMenu.Popup>
+      </BaseMenu.Positioner>
+    </ArrowChangeProvider>
   );
 }
 
@@ -216,6 +219,7 @@ function MenuGroupLabel({ className, ...props }: MenuGroupLabelProps) {
 }
 
 function MenuArrow({ className, ...props }: MenuArrowProps) {
+  useArrowChange();
   return <BaseMenu.Arrow className={cnState(arrowClasses, className)} {...props} />;
 }
 
