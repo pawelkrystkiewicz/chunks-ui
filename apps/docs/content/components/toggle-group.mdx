@@ -62,11 +62,13 @@ import { BoldIcon, ItalicIcon, UnderlineIcon } from 'lucide-react'
 
 ## Controlled
 
+`ToggleGroup.Root` infers the type of an item's value from `value` or `defaultValue`, so a typed `useState` setter is an `onValueChange`:
+
 ```tsx
 import { AlignLeftIcon, AlignCenterIcon, AlignRightIcon } from 'lucide-react'
 
 function ControlledToggleGroup() {
-  const [value, setValue] = useState(["left"]);
+  const [value, setValue] = useState<("left" | "center" | "right")[]>(["left"]);
 
   return (
     <ToggleGroup.Root aria-label="Text alignment" value={value} onValueChange={setValue}>

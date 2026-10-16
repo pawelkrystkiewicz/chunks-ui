@@ -11,8 +11,10 @@ const CORNERS = [
  * The default `arrowPadding` for the popup in `positioner`, or `undefined` while it holds no
  * `.PopupArrow` (POPUP_ARROW_CLASS): the largest of the four corner radii (the larger component of
  * an elliptical corner; a percentage counts as 0) plus the arrow's overhang, (√2 − 1)/2 of its
- * size, so the foot starts on the straight edge. Read from the open popup, as `--radius` and
- * `--spacing` are CSS variables.
+ * size, so the foot starts on the straight edge. Read from computed styles, as `--radius` and
+ * `--spacing` are CSS variables; they also resolve while the popup is hidden. The arrow's width
+ * there is its computed value: pixels for a fixed size, `auto` or a percentage otherwise, which
+ * yields `undefined`.
  */
 export function arrowPaddingIn(positioner: Element): number | undefined {
   const arrow = positioner.querySelector(`.${POPUP_ARROW_CLASS}`);

@@ -18,7 +18,7 @@ export function PlanCard() {
   return (
     <PreviewCard>
       <PreviewCardHeading title="Choose a plan" description="Billed monthly. Cancel any time." />
-      <Radio.Group value={plan} onValueChange={(v) => setPlan(String(v))}>
+      <Radio.Group value={plan} onValueChange={setPlan}>
         {PLANS.map((p) => (
           // biome-ignore lint/a11y/noLabelWithoutControl: wraps Base UI Radio (button-based control)
           <label

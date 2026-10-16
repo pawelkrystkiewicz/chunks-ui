@@ -34,7 +34,7 @@ export function ConnectRepoDialog() {
             <Radio.Group
               aria-labelledby={providerLabel}
               value={provider}
-              onValueChange={(v) => setProvider(String(v))}
+              onValueChange={setProvider}
               className="flex-row flex-wrap gap-x-5 text-sm"
             >
               {PROVIDERS.map((p) => (
