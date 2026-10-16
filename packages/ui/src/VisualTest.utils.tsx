@@ -399,6 +399,29 @@ export const eachPaintedFrame = <T,>(read: () => T, frames: number) =>
     frame.postRender(step, true);
   });
 
+/**
+ * Asserts `frames`, painted after a change, show an indicator jump from `start` to over its
+ * target at once. `near` compares two boxes, within 1px.
+ */
+export function expectJumpedAtOnce<Box>(
+  frames: { indicator: Box; off: number }[],
+  start: Box,
+  near: (a: Box, b: Box) => boolean,
+) {
+  const end = frames.at(-1)?.indicator ?? start;
+  const log = JSON.stringify(frames);
+  expect(near(start, end), log).toBe(false);
+  expect(frames.at(-1)?.off, log).toBeLessThanOrEqual(1);
+  // Each frame shows the indicator where it was or where it goes, never between
+  expect(
+    frames.every((frame) => near(frame.indicator, start) || near(frame.indicator, end)),
+    log,
+  ).toBe(true);
+  // The first frame is read before the ResizeObserver measures the target, and with Motion the
+  // jump is written in the frame after it: one frame may show the old box, and no more
+  expect(frames.filter((frame) => frame.off > 1).length, log).toBeLessThanOrEqual(1);
+}
+
 export type Dir = "ltr" | "rtl";
 
 /**

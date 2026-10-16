@@ -1,9 +1,11 @@
 import { render } from "@testing-library/react";
-import type { CSSProperties } from "react";
-import { describe, expect, it } from "vitest";
+import { type CSSProperties, Profiler } from "react";
+import { describe, expect, it, vi } from "vitest";
+import { resizeBatches } from "../../lib/shared-resize";
 import {
   eachPaintedFrame,
   enterMotionPath,
+  expectJumpedAtOnce,
   MOTION_PATHS,
   offBy,
   SETTLE_TIMEOUT_MS,
@@ -25,10 +27,14 @@ type Layout = {
    * height
    */
   listStyle?: CSSProperties;
+  /** Classes of the list, besides `justify-center` */
+  listClassName?: string;
   /** Width of the box around the list, which centres its tabs */
   width?: number;
   /** Classes of tab "b" */
   tabClassName?: string;
+  /** Content inside tab "a": an empty span of fixed size, e.g. an animated badge */
+  badge?: boolean;
 };
 
 const tabs = ({
@@ -36,15 +42,18 @@ const tabs = ({
   tabStyle,
   tabKey,
   listStyle,
+  listClassName,
   width = 400,
   tabClassName,
+  badge,
 }: Layout = {}) => (
   <div style={{ width }}>
     <Tabs.Root value={value}>
-      <Tabs.List className="justify-center" style={listStyle}>
+      <Tabs.List className={`justify-center ${listClassName ?? ""}`} style={listStyle}>
         {/* No transition of its own, so the tab takes its new size at once */}
         <Tabs.Tab key={tabKey} value="a" style={{ transition: "none", ...tabStyle }}>
           Alpha
+          {badge && <span data-testid="badge" style={{ display: "inline-block", width: 4 }} />}
         </Tabs.Tab>
         <Tabs.Tab value="b" className={tabClassName}>
           Beta
@@ -172,6 +181,21 @@ const RESIZES: [string, Layout, Layout][] = [
   ["the width of the box around the list", {}, { width: 300 }],
 ];
 
+/**
+ * Each move: its name, the layout before it, and the layout after it. Nothing resizes: a class
+ * or inline style change on the list or a tab moves the tabs within the list's fixed size.
+ */
+const MOVES: [string, Layout, Layout][] = [
+  [
+    "the gap of a list of fixed size, by its style",
+    FIXED,
+    { ...FIXED, listStyle: { ...FIXED.listStyle, gap: 24 } },
+  ],
+  ["the gap of a list of fixed size, by its class", FIXED, { ...FIXED, listClassName: "gap-6" }],
+  ["the order of the tab, by its style", FIXED, { ...FIXED, tabStyle: { order: 1 } }],
+  ["the order of the other tab, by its class", FIXED, { ...FIXED, tabClassName: "order-first" }],
+];
+
 describe.each(MOTION_PATHS)("Tabs.Indicator, $path", ({ withMotion }) => {
   it.each(RESIZES)(
     "follows a change to %s in the frame it changes in, with no frames in between",
@@ -188,23 +212,57 @@ describe.each(MOTION_PATHS)("Tabs.Indicator, $path", ({ withMotion }) => {
         () => ({ indicator: boxOf(indicator), off: offBy(tab(active), indicator) }),
         20,
       );
-      const end = frames.at(-1)?.indicator ?? start;
-      const log = JSON.stringify(frames);
-      expect(near(start, end), log).toBe(false);
       // Over the tab in the frame the tab or the list changes in: the tabs' ResizeObservers
       // measure the tab there, and the indicator is rendered before that frame paints
-      expect(await firstPaint, log).toBeLessThanOrEqual(1);
-      expect(frames.at(-1)?.off, log).toBeLessThanOrEqual(1);
-      // Each frame shows the indicator where it was or where it goes, never between
-      expect(
-        frames.every((frame) => near(frame.indicator, start) || near(frame.indicator, end)),
-        log,
-      ).toBe(true);
-      // The first frame is read before the ResizeObservers measure the tab: it may show the old
-      // box, and no more
-      expect(frames.filter((frame) => frame.off > 1).length, log).toBeLessThanOrEqual(1);
+      expect(await firstPaint, JSON.stringify(frames)).toBeLessThanOrEqual(1);
+      expectJumpedAtOnce(frames, start, near);
     },
   );
+
+  it.each(MOVES)(
+    "follows a change to %s at once, which moves the tab without resizing anything",
+    async (_, before, after) => {
+      const { indicator, tab, rerender } = await renderTabs(withMotion, before);
+      const start = boxOf(indicator);
+
+      rerender(tabs(after));
+      const frames = await eachPaintedFrame(
+        () => ({ indicator: boxOf(indicator), off: offBy(tab("Alpha"), indicator) }),
+        20,
+      );
+      expectJumpedAtOnce(frames, start, near);
+    },
+  );
+
+  // A selection measures again once, for padding the newly active tab gains on selection, and so
+  // does a move. The indicator's own writes (its box; with Motion, a spring's many frames of
+  // them) never do.
+  it("measures again once on a selection or a move, and never for the indicator's own writes", async () => {
+    const { indicator, tab, rerender } = await renderTabs(withMotion, FIXED);
+    let batches = resizeBatches.count;
+    rerender(tabs({ ...FIXED, value: "b" }));
+    await waitForStable(() => offBy(tab("Beta"), indicator));
+    expect(resizeBatches.count).toBe(batches + 1);
+
+    batches = resizeBatches.count;
+    rerender(tabs({ ...FIXED, value: "b", listStyle: { ...FIXED.listStyle, gap: 24 } }));
+    await waitForStable(() => offBy(tab("Beta"), indicator));
+    expect(offBy(tab("Beta"), indicator)).toBeLessThanOrEqual(1);
+    expect(resizeBatches.count).toBe(batches + 1);
+  });
+
+  // A write inside a tab can only move the tabs by resizing that tab, which the tabs' border-box
+  // observers catch. A Motion-animated badge writes style every frame and must not cost a render.
+  it("does not measure again for a style change inside a tab", async () => {
+    const { getByTestId } = await renderTabs(withMotion, { ...FIXED, badge: true });
+    const badge = getByTestId("badge");
+    const batches = resizeBatches.count;
+    for (const opacity of ["0.2", "0.4", "0.6", "0.8"]) {
+      badge.style.opacity = opacity;
+      await eachPaintedFrame(() => 0, 2);
+    }
+    expect(resizeBatches.count).toBe(batches);
+  });
 
   it("still slides to a newly selected tab", async () => {
     const { indicator, tab, rerender } = await renderTabs(withMotion);
@@ -283,6 +341,49 @@ describe.each(MOTION_PATHS)("Tabs.Indicator, $path", ({ withMotion }) => {
     rerender(tabs({ tabKey: "remounted", tabStyle: { paddingInline: 24 } }));
     await waitForStable(() => offBy(tab("Alpha"), indicator));
     expect(offBy(tab("Alpha"), indicator)).toBeLessThanOrEqual(1);
+  });
+
+  // Every indicator on the page shares one ResizeObserver, whose callback commits every notified
+  // indicator's measure in one synchronous render: a resize that reaches every list costs one
+  // render per frame, not one per list
+  it("commits every list on the page once when the padding of their tabs changes", async () => {
+    await enterMotionPath(withMotion);
+    const onRender = vi.fn();
+    const lists = (paddingInline?: number) => (
+      <Profiler id="lists" onRender={onRender}>
+        {["one", "two", "three"].map((name) => (
+          <Tabs.Root key={name} value="a">
+            {/* Only the tabs' border boxes change: the lists keep their size */}
+            <Tabs.List className="justify-center" style={FIXED.listStyle}>
+              <Tabs.Tab value="a" style={{ transition: "none", paddingInline }}>
+                Alpha
+              </Tabs.Tab>
+              <Tabs.Tab value="b" style={{ transition: "none", paddingInline }}>
+                Beta
+              </Tabs.Tab>
+              <Tabs.Indicator data-testid="indicator" />
+            </Tabs.List>
+          </Tabs.Root>
+        ))}
+      </Profiler>
+    );
+    const { rerender, getAllByRole } = render(lists());
+    /** How far each list's indicator is off its active tab */
+    const offsets = () =>
+      getAllByRole("tablist").map((list) => {
+        const indicator = list.querySelector('[data-testid="indicator"]');
+        const active = list.querySelector('[aria-selected="true"]');
+        return indicator && active ? offBy(active, indicator) : null;
+      });
+    await waitForStable(offsets);
+    expect(offsets().every((off) => off !== null && off <= 1)).toBe(true);
+
+    rerender(lists(24));
+    // The render above committed in act(); what follows comes from the ResizeObserver
+    onRender.mockClear();
+    await waitForStable(offsets);
+    expect(offsets().every((off) => off !== null && off <= 1)).toBe(true);
+    expect(onRender).toHaveBeenCalledTimes(1);
   });
 });
 

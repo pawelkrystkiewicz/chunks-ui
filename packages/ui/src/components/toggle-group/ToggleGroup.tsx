@@ -12,8 +12,8 @@ import {
   useRef,
   useState,
 } from "react";
-import { flushSync } from "react-dom";
 import { cn, cnState } from "../../lib/cn";
+import { notifyResize, observeResize } from "../../lib/shared-resize";
 import { BOX_EDGES, type IndicatorBox, useIndicatorSlide } from "../../lib/use-indicator-slide";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { useReducedMotion } from "../../lib/use-motion";
@@ -39,11 +39,8 @@ type ToggleGroupCtx = {
 
 const ToggleGroupContext = createContext<ToggleGroupCtx | null>(null);
 
-/**
- * The indicator covers an item's border box. A padding change resizes that box alone, and in a
- * group that keeps its size it moves the other items too.
- */
-const ITEM_BOX: ResizeObserverOptions = { box: "border-box" };
+/** Watches an item, and stops, while the group shows an indicator */
+type ItemWatcher = { watch: (item: HTMLElement) => void; unwatch: (item: HTMLElement) => void };
 
 // ---------------------------------------------------------------------------
 // Root
@@ -63,8 +60,8 @@ function ToggleGroupRoot<Value extends string = string>({
   // The indicator measures against the container, so a consumer's ref must not replace this one
   const mergedRef = useMergedRef(containerRef, ref);
   const itemsRef = useRef(new Map<string, HTMLElement>());
-  // Watches the container and the items while the group shows an indicator
-  const observerRef = useRef<ResizeObserver | null>(null);
+  // Set by the effect that watches the group while it shows an indicator
+  const watcherRef = useRef<ItemWatcher | null>(null);
   const [trackedValue, setTrackedValue] = useState<readonly Value[]>(value ?? defaultValue ?? []);
 
   const handleValueChange = useCallback(
@@ -84,10 +81,10 @@ function ToggleGroupRoot<Value extends string = string>({
     const items = itemsRef.current;
     const previous = items.get(val);
     if (previous === el) return;
-    if (previous) observerRef.current?.unobserve(previous);
+    if (previous) watcherRef.current?.unwatch(previous);
     if (el) {
       items.set(val, el);
-      observerRef.current?.observe(el, ITEM_BOX);
+      watcherRef.current?.watch(el);
     } else {
       items.delete(val);
     }
@@ -119,23 +116,44 @@ function ToggleGroupRoot<Value extends string = string>({
   useEffect(() => {
     const container = containerRef.current;
     if (multiple || !container) return;
-    // The browser runs ResizeObserver callbacks after layout and before it paints. Measuring
-    // there, and committing at once rather than in React's next task, paints the indicator in
-    // the frame the group or item changes in: a group shown again has it in its first frame.
-    const measureNow = () => flushSync(() => latestMeasure.current());
+    // The shared ResizeObserver runs this before paint, so the indicator is right in the frame
+    // the group or an item changes in: a group shown again has it in its first frame.
+    const measure = () => latestMeasure.current();
     // Padding moves the items without resizing them. It changes the content box of a group sized
     // from outside, and the border box of a group sized by its items: watch both.
-    const observer = new ResizeObserver(measureNow);
-    const borderBox = new ResizeObserver(measureNow);
-    observer.observe(container);
-    borderBox.observe(container, { box: "border-box" });
-    // The items too: in a group that keeps its size, an item can resize or show again alone
-    for (const item of itemsRef.current.values()) observer.observe(item, ITEM_BOX);
-    observerRef.current = observer;
+    const stopContainer = [
+      observeResize(container, "content-box", measure),
+      observeResize(container, "border-box", measure),
+    ];
+    // The items too, by border box: the indicator covers it, and a padding change resizes that
+    // box alone. In a group that keeps its size, an item can resize or show again alone.
+    const stopItem = new Map<HTMLElement, () => void>();
+    const watcher: ItemWatcher = {
+      watch: (item) => stopItem.set(item, observeResize(item, "border-box", measure)),
+      unwatch: (item) => {
+        stopItem.get(item)?.();
+        stopItem.delete(item);
+      },
+    };
+    for (const item of itemsRef.current.values()) watcher.watch(item);
+    watcherRef.current = watcher;
+    // A class/style change on an element holding an item can move the items (gap, order), so the
+    // group measures again. Not the indicator's own inline writes, which hold no item.
+    const items = itemsRef.current;
+    const holdsItem = (node: Node) => [...items.values()].some((item) => node.contains(item));
+    const mutation = new MutationObserver((records) => {
+      if (records.some(({ target }) => holdsItem(target))) notifyResize(container, "border-box");
+    });
+    mutation.observe(container, {
+      attributes: true,
+      attributeFilter: ["class", "style"],
+      subtree: true,
+    });
     return () => {
-      observer.disconnect();
-      borderBox.disconnect();
-      observerRef.current = null;
+      mutation.disconnect();
+      for (const stop of stopContainer) stop();
+      for (const stop of stopItem.values()) stop();
+      watcherRef.current = null;
     };
   }, [multiple]);
 
