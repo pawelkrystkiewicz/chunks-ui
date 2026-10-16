@@ -23,7 +23,8 @@ import {
 /*
  * WebKit smoke set (vitest.webkit.config.ts): geometry and paint checks, no screenshot
  * baselines. "Painted" is read from a screenshot: the pixels in an element's box that change
- * when the element is hidden. 0 means WebKit laid the element out but painted none of it.
+ * when the element is hidden. 0 means WebKit laid the element out but painted none of it in its
+ * box.
  */
 
 type PixelBox = { x: number; y: number; width: number; height: number };
@@ -174,10 +175,10 @@ describe("Tabs.Contents in WebKit", () => {
   });
 
   /*
-   * W80 (#341): WebKit paints nothing of a panel in a CSS column after the first when the slid
-   * track reaches over a composited layer that paints before it. Slid to its third panel, the
-   * track reaches two panels to the left, over the sidebar. On /create that is the sticky theme
-   * sidebar, composited while the page scrolls; `will-change` composites this one.
+   * W80 (#341, https://bugs.webkit.org/show_bug.cgi?id=327820): WebKit paints a composited
+   * element in a later CSS column at column 1's x, below the grid, not in its own box. Here the
+   * slid track reaches over the sidebar (two panels to the left), and `will-change` composites the
+   * sidebar. Full detail: TESTING_STRATEGY.md, WebKit Smoke Tests.
    */
   const masonry = (columns: CSSProperties) => (
     <div style={{ display: "flex", gap: 24, padding: 24, alignItems: "flex-start" }}>
@@ -222,14 +223,14 @@ describe("Tabs.Contents in WebKit", () => {
   }
 
   describe("in the second CSS column, next to an earlier composited layer (W80)", () => {
-    // A WebKit bug: Chromium paints the panel. The bug spec and the workaround spec below form a
-    // pair: `toBe(0)` proves a bug only because the workaround spec uses the same layout and
-    // paints more than 0. Change them together. If the bug spec fails, WebKit paints the panel
-    // now: flip it to `toBeGreaterThan(0)` and rename it. Keep the workaround spec: users'
-    // Safari lags behind, and #295 depends on it.
-    it("paints none of the panel: WebKit bug (W80); when this fails, WebKit is fixed", async () => {
+    // A WebKit bug: Chromium paints the panel in place. The bug spec and the workaround spec below
+    // form a pair: `toBe(0)` proves a bug only because the workaround spec uses the same layout
+    // and paints more than 0. Change them together. If the bug spec fails, WebKit paints the panel
+    // in place now: flip it to `toBeGreaterThan(0)` and rename it. Keep the workaround spec:
+    // users' Safari lags behind, and #295 depends on it.
+    it("paints nothing in the Note field's box: WebKit bug (W80); when this fails, WebKit is fixed", async () => {
       const note = await openNotes();
-      // Preconditions: the panel is laid out in place, so 0 painted pixels means a bug
+      // Preconditions: the panel is laid out in place, so 0 pixels painted there means a bug
       const columns = screen.getByTestId("columns").getBoundingClientRect();
       const card = screen.getByTestId("card").getBoundingClientRect();
       expect(card.left, "the card is in the second column").toBeGreaterThan(
@@ -248,9 +249,9 @@ describe("Tabs.Contents in WebKit", () => {
       expect(await paintedPixels(note)).toBe(0);
     });
 
-    // With the columns container on its own composited layer WebKit paints the panel, so a page
-    // with columns can work around the bug (#295)
-    it("paints the panel when the columns container is composited", async () => {
+    // With the columns container on its own composited layer the track needs none of its own, and
+    // WebKit paints the panel in place: a page with columns can work around the bug (#295).
+    it("paints the panel in place when the columns container is composited", async () => {
       const note = await openNotes({ willChange: "opacity" });
       expect(await paintedPixels(note)).toBeGreaterThan(0);
     });

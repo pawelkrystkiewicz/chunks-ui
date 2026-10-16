@@ -1,8 +1,7 @@
 "use client";
 
 import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
-import type React from "react";
-import { type ComponentProps, createContext, useContext, useId } from "react";
+import { type ComponentProps, createContext, type ReactNode, useContext, useId } from "react";
 import { cn, cnState } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
 import { springs } from "../../lib/motion";
@@ -57,7 +56,7 @@ export type ComboboxListProps = ComponentProps<typeof BaseCombobox.List>;
 export type ComboboxChipsProps = ComponentProps<typeof BaseCombobox.Chips>;
 export type ComboboxChipProps = ComponentProps<typeof BaseCombobox.Chip>;
 export type ComboboxChipRemoveProps = ComponentProps<typeof BaseCombobox.ChipRemove>;
-export type ComboboxControlProps = React.ComponentProps<"div">;
+export type ComboboxControlProps = ComponentProps<"div">;
 
 function ComboboxRoot<Value, Multiple extends boolean | undefined = false, Item = Value>({
   labels,
@@ -111,10 +110,10 @@ function ComboboxInput({ className, ...props }: ComboboxInputProps) {
 // A consumer's aria-label replaces the default; inside Field.Root, Base UI's aria-labelledby on
 // the Trigger still takes precedence over any aria-label.
 function ownContent(
-  children: React.ReactNode,
+  children: ReactNode,
   render: unknown,
   name: { "aria-label"?: string; "aria-labelledby"?: string },
-  icon: React.ReactNode,
+  icon: ReactNode,
 ) {
   const hasOwnContent = children != null || render != null;
   return hasOwnContent ? { children } : { ...name, children: icon };
