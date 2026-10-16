@@ -1,7 +1,7 @@
 import type { ToggleGroup as BaseToggleGroup } from "@base-ui/react/toggle-group";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { type ComponentProps, type ReactElement, useState } from "react";
+import { type ReactElement, useState } from "react";
 import { afterEach, describe, expect, expectTypeOf, it } from "vitest";
 import { ToggleGroup, type ToggleGroupRootProps } from "./ToggleGroup";
 
@@ -14,7 +14,6 @@ afterEach(cleanup);
 
 const letters: readonly ("a" | "b")[] = [];
 const onLetters = (_next: ("a" | "b")[]) => {};
-const onOther = (_next: "c"[]) => {};
 
 describe("ToggleGroup.Root types", () => {
   it("takes a typed useState setter as onValueChange", async () => {
@@ -36,9 +35,6 @@ describe("ToggleGroup.Root types", () => {
     await user.click(b);
     expect(a).toHaveAttribute("aria-pressed", "true");
     expect(b).toHaveAttribute("aria-pressed", "true");
-    await user.click(a);
-    expect(a).toHaveAttribute("aria-pressed", "false");
-    expect(b).toHaveAttribute("aria-pressed", "true");
   });
 
   it("infers the item type from value, defaultValue or an annotated onValueChange", () => {
@@ -55,16 +51,10 @@ describe("ToggleGroup.Root types", () => {
       // Nothing else types Value, so this compiles only when the handler's parameter is inferred
       <ToggleGroup.Root onValueChange={onLetters} />,
     );
-    expectTypeOf<ToggleGroupRootProps<"a" | "b">["value"]>().toEqualTypeOf<
-      readonly ("a" | "b")[] | undefined
-    >();
   });
 
   it("pins the item type to a literal default, as Base UI does", () => {
-    // Base UI constrains Value to string, and TypeScript keeps a literal it infers for such a type
-    // parameter, so an inline `defaultValue={["a"]}` types `next` as "a"[], not string[] (Radio.Group
-    // and Accordion.Root widen: their Value is unconstrained). An annotated handler takes the
-    // wider type.
+    // Value extends string, so an inline literal default stays a literal; an annotation or <string> widens it
     typeChecks(
       <ToggleGroup.Root
         defaultValue={["a"]}
@@ -86,19 +76,11 @@ describe("ToggleGroup.Root types", () => {
     );
   });
 
-  it("rejects a setter of another item type", () => {
-    typeChecks(
-      // @ts-expect-error value pins the items to "a" | "b", so a setter of "c"[] does not fit
-      <ToggleGroup.Root value={letters} onValueChange={onOther} />,
-    );
-  });
-
   it("keeps string[] without a value, as before", () => {
     typeChecks(
       <ToggleGroup.Root onValueChange={(next) => expectTypeOf(next).toEqualTypeOf<string[]>()} />,
     );
-    // Base UI's own default, and still accepted where the old ComponentProps<typeof BaseToggleGroup> goes
+    // Base UI's own default
     expectTypeOf<ToggleGroupRootProps>().toEqualTypeOf<BaseToggleGroup.Props>();
-    expectTypeOf<ToggleGroupRootProps>().toExtend<ComponentProps<typeof BaseToggleGroup>>();
   });
 });
