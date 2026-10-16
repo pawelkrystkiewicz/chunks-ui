@@ -1,5 +1,12 @@
 import { render } from "@testing-library/react";
-import { Activity, type CSSProperties, createRef, type RefObject, StrictMode } from "react";
+import {
+  Activity,
+  type CSSProperties,
+  createRef,
+  type ReactElement,
+  type RefObject,
+  StrictMode,
+} from "react";
 import { hydrateRoot, type Root } from "react-dom/client";
 import { renderToString } from "react-dom/server";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
@@ -15,11 +22,8 @@ import {
 } from "../../VisualTest.utils";
 import { ToggleGroup, type ToggleGroupRootProps } from "./index";
 
-// Runs with reduced motion off, so Motion drives the indicator once it loads. The CSS fallback
-// drives it in the cases that turn reduced motion on, and in those that hold Motion back with
-// reduced motion still off (MOTION_PATHS, and the re-shows without Motion). A consumer's ref must
-// not replace the refs the indicator relies on: the Root's (it measures against the container)
-// and an Item's (how the Root finds the item).
+// Reduced motion is off, so Motion drives the indicator; the cases that turn it on or hold Motion back use the CSS fallback.
+// A consumer's ref must not replace the Root's (the container) or an Item's (how the Root finds it).
 
 type Part = "Root" | "Item";
 type RefKind = "object" | "callback" | "undefined";
@@ -478,10 +482,10 @@ type Edges = ReturnType<typeof edgesOf>;
 const near = (a: Edges, b: Edges) =>
   (["left", "top", "width", "height"] as const).every((edge) => Math.abs(a[edge] - b[edge]) <= 1);
 
-/** Renders `layout` and returns the group's parts once the indicator rests over item "a" */
-async function renderSized(withMotion: boolean, layout?: Layout) {
+/** Renders `ui` on a motion path and returns the group and its indicator getter once the path drives it */
+async function renderGroup(ui: ReactElement, withMotion: boolean) {
   await enterMotionPath(withMotion);
-  const result = render(sized(layout));
+  const result = render(ui);
   const group = result.getByRole("group");
   const indicator = () => {
     const span = group.querySelector<HTMLElement>(":scope > span");
@@ -494,6 +498,12 @@ async function renderSized(withMotion: boolean, layout?: Layout) {
       timeout: 5000,
     })
     .toBe(!withMotion);
+  return { ...result, group, indicator };
+}
+
+/** Renders `layout` and returns the group's parts once the indicator rests over item "a" */
+async function renderSized(withMotion: boolean, layout?: Layout) {
+  const { group, indicator, ...result } = await renderGroup(sized(layout), withMotion);
   const item = (name: "Alpha" | "Beta") => result.getByRole("button", { name });
   await waitForStable(() => offBy(item("Alpha"), indicator()));
   expect(offBy(item("Alpha"), indicator())).toBeLessThanOrEqual(1);
@@ -613,6 +623,113 @@ describe.each(MOTION_PATHS)("ToggleGroup indicator on a resize, $path", ({ withM
     expect(offBy(beta, indicator())).toBeLessThanOrEqual(1);
   });
 });
+
+// A transform on an ancestor scales the boxes on screen, not the layout, and ending it fires no ResizeObserver (a Dialog opens from scale(0.95)).
+describe.each(MOTION_PATHS)("ToggleGroup indicator under a transform, $path", ({ withMotion }) => {
+  const transformed = (transform?: string, zoom?: number) => (
+    <div style={{ transform, zoom }}>
+      <ToggleGroup.Root value={["b"]}>
+        <ToggleGroup.Item value="a">Alpha</ToggleGroup.Item>
+        <ToggleGroup.Item value="b">Beta, a longer item</ToggleGroup.Item>
+      </ToggleGroup.Root>
+    </div>
+  );
+
+  it.each([
+    ["scaled down, as a Dialog is while it opens", "scale(0.95)"],
+    // The rects are mirrored: they disagree with the layout offsets, which place the indicator
+    ["turned around", "rotate(180deg)"],
+    // The scale is 0 and divides nothing: the layout offsets place the pill, once it is back too
+    ["collapsed to nothing", "scale(0)"],
+    // CSS zoom scales the rects and the layout alike, without a transform
+    ["zoomed in", undefined, 1.25],
+  ] as [string, string | undefined, number?][])(
+    "covers the pressed item while the ancestor is %s, and once it isn't",
+    async (_, transform, zoom) => {
+      const { getByRole, rerender, indicator } = await renderGroup(
+        transformed(transform, zoom),
+        withMotion,
+      );
+      const beta = getByRole("button", { name: "Beta, a longer item" });
+      await waitForStable(() => offBy(beta, indicator()));
+      // Nothing on screen to compare while the scale is 0
+      if (transform !== "scale(0)") {
+        expect(offBy(beta, indicator()), "under the transform").toBeLessThanOrEqual(1);
+      }
+
+      rerender(transformed(undefined));
+      await waitForStable(() => offBy(beta, indicator()));
+      expect(offBy(beta, indicator()), "without the transform").toBeLessThanOrEqual(1);
+    },
+  );
+});
+
+// Chromium reports computed sizes to 6 significant digits, and writes lengths in 1/64 px: a
+// scale or size read from them must not leave the pill a step off the item of a plain group.
+describe.each(MOTION_PATHS)("ToggleGroup indicator measured exactly, $path", ({ withMotion }) => {
+  const framed = (props: { className?: string; itemWidth?: string; transform?: string }) => (
+    <div style={{ transform: props.transform }}>
+      <ToggleGroup.Root value={["b"]} className={props.className}>
+        <ToggleGroup.Item value="a">Alpha</ToggleGroup.Item>
+        <ToggleGroup.Item
+          value="b"
+          style={{ marginInline: "0.37px", width: props.itemWidth, flexShrink: 0 }}
+        >
+          Beta, a longer item
+        </ToggleGroup.Item>
+      </ToggleGroup.Root>
+    </div>
+  );
+
+  async function renderFramed(props: Parameters<typeof framed>[0]) {
+    const { getByRole, indicator } = await renderGroup(framed(props), withMotion);
+    const beta = getByRole("button", { name: "Beta, a longer item" });
+    await waitForStable(() => offBy(beta, indicator()));
+    return { beta, indicator };
+  }
+
+  // Sizes on the 1/64 grid that need more than 6 significant digits, so the computed value is
+  // a hair under: 333.328125 is read as 333.328, which Blink writes back as 333.3125
+  it("keeps the pill on the item's edges in a group of fractional sizes", async () => {
+    const { beta, indicator } = await renderFramed({ itemWidth: "333.328125px" });
+    // The premise: the item is that wide, not shrunk by the group
+    expect(beta.getBoundingClientRect().width).toBe(333.328125);
+    expect(offBy(beta, indicator())).toBeLessThanOrEqual(0.001);
+  });
+
+  it.each([
+    ["untransformed", undefined],
+    ["scaled down", "scale(0.95)"],
+  ])("keeps the pill on the item in a group with a border, %s", async (_, transform) => {
+    const { beta, indicator } = await renderFramed({ className: "border-4", transform });
+    expect(offBy(beta, indicator())).toBeLessThanOrEqual(1);
+  });
+});
+
+// The container's scroll moves the item's rect, not its layout slot, where the pill sits
+describe.each(MOTION_PATHS)(
+  "ToggleGroup indicator in a scrolled group, $path",
+  ({ withMotion }) => {
+    it("covers the pressed item once the group is scrolled to the end", async () => {
+      const { getByRole, group, indicator } = await renderGroup(
+        <ToggleGroup.Root value={["f"]} className="w-40 overflow-x-auto">
+          {["a", "b", "c", "d", "e", "f"].map((value) => (
+            <ToggleGroup.Item key={value} value={value}>
+              {`Item ${value}`}
+            </ToggleGroup.Item>
+          ))}
+        </ToggleGroup.Root>,
+        withMotion,
+      );
+      const last = getByRole("button", { name: "Item f" });
+      expect(group.scrollWidth, "the group overflows").toBeGreaterThan(group.clientWidth);
+      group.scrollLeft = group.scrollWidth;
+      expect(group.scrollLeft, "the group is scrolled").toBeGreaterThan(0);
+      await waitForStable(() => offBy(last, indicator()));
+      expect(offBy(last, indicator())).toBeLessThanOrEqual(1);
+    });
+  },
+);
 
 describe("ToggleGroup indicator with reduced motion", () => {
   beforeAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));

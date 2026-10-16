@@ -56,10 +56,28 @@ beforeAll(() => {
     }
   };
   // jsdom has no layout, so every element measures 0×0, as in a group hidden with display:none,
-  // where the indicator unmounts. Give elements a box, as a browser shows them.
+  // where the indicator unmounts. Give elements a box, as a browser shows them, and derive the
+  // layout reads from it as a browser without transforms does: the offset parent is the parent,
+  // the offsets are the box's edges from the parent's, and the offset size is the box's size in
+  // whole px. The indicator measures from both, and they must agree.
+  const boxOf = (el: Element) => boxes.get(el) ?? new DOMRect(0, 0, 40, 24);
   HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement) {
-    return boxes.get(this) ?? new DOMRect(0, 0, 40, 24);
+    return boxOf(this);
   };
+  const offsetOf = (el: HTMLElement, axis: "left" | "top") =>
+    Math.round(boxOf(el)[axis] - (el.parentElement ? boxOf(el.parentElement)[axis] : 0));
+  const define = (name: string, get: (el: HTMLElement) => unknown) =>
+    Object.defineProperty(HTMLElement.prototype, name, {
+      configurable: true,
+      get(this: HTMLElement) {
+        return get(this);
+      },
+    });
+  define("offsetParent", (el) => el.parentElement);
+  define("offsetLeft", (el) => offsetOf(el, "left"));
+  define("offsetTop", (el) => offsetOf(el, "top"));
+  define("offsetWidth", (el) => Math.round(boxOf(el).width));
+  define("offsetHeight", (el) => Math.round(boxOf(el).height));
 });
 
 afterEach(() => {
