@@ -255,6 +255,29 @@ function TabsIndicatorElement({
 }
 
 // ---------------------------------------------------------------------------
+// Keys for tab values
+// ---------------------------------------------------------------------------
+
+// Base UI compares tab values with ===, so any value is a tab value. Contents and Animate key
+// elements by the value, and two values must not share a key: two objects or two functions can
+// have the same String() text, and 1 and "1" do. A primitive keys by its type and text; an object
+// or function by an id for its identity, held weakly, so a value the consumer drops is collected.
+const identityKeys = new WeakMap<object, number>();
+let nextIdentityKey = 0;
+
+function keyOf(value: unknown): string {
+  if ((typeof value === "object" && value !== null) || typeof value === "function") {
+    let id = identityKeys.get(value);
+    if (id === undefined) {
+      id = nextIdentityKey++;
+      identityKeys.set(value, id);
+    }
+    return `id:${id}`;
+  }
+  return `${typeof value}:${String(value)}`;
+}
+
+// ---------------------------------------------------------------------------
 // Animated content container  –  slides between panels + animates height
 // ---------------------------------------------------------------------------
 
@@ -410,7 +433,8 @@ function TabsContents({ className, children, transition, ref, ...props }: TabsCo
       <div ref={trackRef} className={motion ? "-mx-1 flex items-start" : undefined}>
         {childrenArray.map((child, i) => (
           <div
-            key={String(childValue(child) ?? i)}
+            // A child without a value keys by its index, which Base UI makes its value
+            key={keyOf(childValue(child) ?? i)}
             ref={(el) => {
               itemRefs.current[i] = el;
             }}
@@ -484,7 +508,7 @@ function TabsAnimate({
 
   return (
     <TabsAnimatePane
-      key={String(value ?? "")}
+      key={keyOf(value)}
       enter={enter}
       reduced={reduced}
       className={cn(className)}

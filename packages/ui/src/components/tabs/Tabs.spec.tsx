@@ -1,7 +1,7 @@
 import { act, cleanup, render, renderHook, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
-import { type ReactNode, StrictMode, useEffect, useState } from "react";
+import { type ReactNode, StrictMode, useEffect, useRef, useState } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { renderToString } from "react-dom/server";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -403,7 +403,7 @@ describe("cancelling a change in onValueChange", () => {
 });
 
 describe("function tab values", () => {
-  // Plain closures, not vi.fn(): two mocks share a String() text and duplicate Tabs.Contents keys.
+  // `calls` counts calls of either value: no part may call a tab value
   let calls = 0;
   function first() {
     calls++;
@@ -485,6 +485,122 @@ describe("function tab values", () => {
     rerender({ target: second });
     expect(result.current.sliding).toBe(true);
     expect(calls).toBe(0);
+  });
+});
+
+// Base UI compares tab values with ===, so any value is a tab value. Contents and Animate key
+// elements by the value: two values with the same String() text must still get distinct keys,
+// and a value must keep its key from one render to the next
+describe("tab values with the same String() text", () => {
+  const first = { id: 1 };
+  const second = { id: 2 };
+  const sameSource = () => () => null;
+  const pairs = [
+    ["two objects", first, second],
+    ["two functions with the same source", sameSource(), sameSource()],
+    ['1 and "1"', 1, "1"],
+  ] as const;
+
+  // StrictMode runs a mount's effects twice on one instance; a remount is a new instance
+  function MountedChild({ instances }: { instances: Set<object> }) {
+    const instance = useRef({});
+    useEffect(() => {
+      instances.add(instance.current);
+    }, [instances]);
+    return null;
+  }
+
+  function Contents({
+    value,
+    a,
+    b,
+    children,
+  }: {
+    value: unknown;
+    a: unknown;
+    b: unknown;
+    children?: ReactNode;
+  }) {
+    return (
+      <Tabs.Root value={value}>
+        <Tabs.Contents>
+          <Tabs.Content value={a} data-testid="content-a">
+            Content A{children}
+          </Tabs.Content>
+          <Tabs.Content value={b} data-testid="content-b">
+            Content B
+          </Tabs.Content>
+        </Tabs.Contents>
+      </Tabs.Root>
+    );
+  }
+
+  function Animate({ value, instances }: { value: unknown; instances: Set<object> }) {
+    return (
+      <Tabs.Root value={value}>
+        <Tabs.Animate data-testid="animate">
+          <MountedChild instances={instances} />
+        </Tabs.Animate>
+      </Tabs.Root>
+    );
+  }
+
+  function expectShown(shown: "a" | "b") {
+    const hidden = shown === "a" ? "b" : "a";
+    expect(isHiddenPanel(screen.getByTestId(`content-${shown}`).parentElement!)).toBe(false);
+    expect(isHiddenPanel(screen.getByTestId(`content-${hidden}`).parentElement!)).toBe(true);
+  }
+
+  it.each(pairs)("Tabs.Contents shows the pane of each of %s, with no duplicate key", (_, a, b) => {
+    // React reports two children with the same key through console.error
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const { rerender } = render(<Contents value={a} a={a} b={b} />);
+      expectShown("a");
+      rerender(<Contents value={b} a={a} b={b} />);
+      expectShown("b");
+      expect(consoleError).not.toHaveBeenCalled();
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
+
+  it.each(pairs)(
+    "Tabs.Animate remounts its pane, so its entry plays, for a switch between %s",
+    (_, a, b) => {
+      const instances = new Set<object>();
+      const { rerender } = render(<Animate value={a} instances={instances} />);
+      const pane = screen.getByTestId("animate");
+      expect(instances.size).toBe(1);
+      rerender(<Animate value={b} instances={instances} />);
+      expect(screen.getByTestId("animate")).not.toBe(pane);
+      expect(instances.size).toBe(2);
+    },
+  );
+
+  // A value keeps its key, so a re-render with the same values does not remount a pane
+  it("keeps a Tabs.Contents pane mounted across a re-render with the same object values", () => {
+    const instances = new Set<object>();
+    // A new element each time, or React would skip the unchanged subtree
+    const ui = () => (
+      <Contents value={first} a={first} b={second}>
+        <MountedChild instances={instances} />
+      </Contents>
+    );
+    const { rerender } = render(ui());
+    const pane = screen.getByTestId("content-a");
+    rerender(ui());
+    expect(screen.getByTestId("content-a")).toBe(pane);
+    expect(instances.size).toBe(1);
+  });
+
+  it("keeps a Tabs.Animate pane mounted across a re-render with the same object value", () => {
+    const instances = new Set<object>();
+    const { rerender } = render(<Animate value={first} instances={instances} />);
+    const pane = screen.getByTestId("animate");
+    rerender(<Animate value={first} instances={instances} />);
+    expect(screen.getByTestId("animate")).toBe(pane);
+    expect(instances.size).toBe(1);
   });
 });
 
