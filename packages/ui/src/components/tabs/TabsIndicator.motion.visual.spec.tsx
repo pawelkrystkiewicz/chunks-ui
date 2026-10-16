@@ -6,6 +6,7 @@ import {
   enterMotionPath,
   MOTION_PATHS,
   offBy,
+  SETTLE_TIMEOUT_MS,
   waitForStable,
 } from "../../VisualTest.utils";
 import { Tabs } from "./index";
@@ -101,28 +102,56 @@ describe.each(MOTION_PATHS)("Tabs.Indicator, $path", ({ withMotion }) => {
     },
   );
 
-  /** The indicator's left edge for 40 painted frames after `value` becomes "b" */
-  async function slideToBeta(layout: Layout = {}) {
-    const { indicator, tab, rerender } = await renderTabs(withMotion, layout);
+  it("still slides to a newly selected tab", async () => {
+    const { indicator, tab, rerender } = await renderTabs(withMotion);
     const start = indicator.getBoundingClientRect().left;
-    rerender(tabs({ ...layout, value: "b" }));
+    rerender(tabs({ value: "b" }));
     const lefts = await eachPaintedFrame(() => indicator.getBoundingClientRect().left, 40);
     await waitForStable(() => offBy(tab("Beta"), indicator));
     const end = indicator.getBoundingClientRect().left;
     expect(offBy(tab("Beta"), indicator)).toBeLessThanOrEqual(1);
     expect(end).toBeGreaterThan(start + 1);
-    return lefts.filter((left) => left > start + 1 && left < end - 1);
-  }
-
-  it("still slides to a newly selected tab", async () => {
-    const between = await slideToBeta();
-    expect(between.length).toBeGreaterThan(0);
+    // In-between frames: it slides rather than jumping
+    expect(
+      lefts.some((left) => left > start + 1 && left < end - 1),
+      JSON.stringify(lefts),
+    ).toBe(true);
   });
 
-  // The selected tab grows once it is active, so Base UI measures it again mid-slide. That
-  // resize must not cut the slide short by jumping to the end.
+  // The selected tab grows once it is active, so Base UI measures it again mid-slide and renders
+  // the indicator with the tab's new size, in the task after the frame that observes the growth.
+  // That resize must not cut the slide short: a slide cut short jumps to the tab in the frames
+  // right after that render, which this reads.
   it("still slides to a tab that grows when it is selected", async () => {
-    const between = await slideToBeta({ tabClassName: "data-active:text-xl" });
-    expect(between.length).toBeGreaterThanOrEqual(5);
+    const layout = { tabClassName: "data-active:text-xl" };
+    const { indicator, tab, rerender } = await renderTabs(withMotion, layout);
+    const beta = tab("Beta");
+    const left = (el: Element) => el.getBoundingClientRect().left;
+
+    rerender(tabs({ ...layout, value: "b" }));
+    // Rendered from the tab's size before it grew: the render that starts the slide measures
+    // the tab before the commit that makes it active
+    await untilChanged(() => indicator.style.getPropertyValue("--active-tab-width"));
+    const frames = await eachPaintedFrame(
+      () => ({ indicator: left(indicator), beta: left(beta) }),
+      2,
+    );
+    for (const frame of frames) {
+      expect(frame.indicator, JSON.stringify(frames)).toBeLessThan(frame.beta - 1);
+    }
+    await waitForStable(() => offBy(beta, indicator));
+    expect(offBy(beta, indicator)).toBeLessThanOrEqual(1);
   });
 });
+
+/** Resolves in the first frame in which `read` returns something other than it returns now */
+async function untilChanged(read: () => string) {
+  const before = read();
+  const deadline = performance.now() + SETTLE_TIMEOUT_MS;
+  while (read() === before) {
+    if (performance.now() > deadline) {
+      throw new Error(`Still ${JSON.stringify(before)} after ${SETTLE_TIMEOUT_MS}ms`);
+    }
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+  }
+}
