@@ -36,10 +36,11 @@ export function useIndicatorSlide<E extends HTMLElement>(
   target: unknown,
   box: IndicatorBox | null,
 ) {
-  const [slideTarget, setSlideTarget] = useState(target);
+  // Stored as is: React would call a function target (see TabsRoot).
+  const [slideTarget, setSlideTarget] = useState(() => target);
   const [sliding, setSliding] = useState(false);
   if (target !== slideTarget) {
-    setSlideTarget(target);
+    setSlideTarget(() => target);
     setSliding(true);
   }
   const element = useRef<E | null>(null);
