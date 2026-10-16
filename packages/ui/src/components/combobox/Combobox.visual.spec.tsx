@@ -106,12 +106,12 @@ const openChipsCombobox = () => (
   </Combobox.Root>
 );
 
-// Base UI hands the focus from the input to the chips (ArrowLeft at the start of the input) only
+// The chips sit flush (gap-0), the consumer case the focus lift is for. Base UI hands the focus from the input to the chips (ArrowLeft at the start of the input) only
 // when the input is inside Combobox.Chips
 const chipsAroundInput = () => (
   <Combobox.Root multiple items={options} defaultValue={options.slice(0, 2)}>
     <Combobox.Control>
-      <Combobox.Chips>
+      <Combobox.Chips className="gap-0">
         {options.slice(0, 2).map((item) => (
           <Combobox.Chip key={item.value}>
             {item.label}
@@ -174,8 +174,8 @@ describe("Combobox", () => {
     await expect(fixture).toMatchScreenshot();
   });
 
-  // The arrow keys focus a chip, which draws the library ring; the screenshot shows the whole
-  // ring beside the next chip
+  // The arrow keys focus a chip, which draws the library ring; with flush chips the ring paints
+  // over the next chip only while the focused chip is lifted (z-index 1)
   it("chip focus-visible, above the next chip", async () => {
     const { fixture, getByRole, getByText } = await renderFixture(
       <div style={{ width: 300 }}>{chipsAroundInput()}</div>,
@@ -193,6 +193,7 @@ describe("Combobox", () => {
       outlineOffset: "2px",
       outlineColor: ringColor(),
     });
+    expect(getComputedStyle(chip).zIndex).toBe("1");
     await expect(fixture).toMatchScreenshot();
   });
 
