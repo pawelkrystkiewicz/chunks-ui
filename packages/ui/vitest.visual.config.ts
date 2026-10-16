@@ -98,6 +98,13 @@ export default defineConfig({
       plugins: [(await import("@tailwindcss/postcss")).default()],
     },
   },
+  optimizeDeps: {
+    // Dependencies that only specs import, never the package source. A dependency cache built
+    // while no scanned spec imported one (a narrower run, or a spec that gained the import later)
+    // is still valid, so Vite found it mid-run, re-bundled, and reloaded the page: the SSR specs
+    // then failed with two copies of React (#488).
+    include: ["react-dom/client", "react-dom/server", "@testing-library/user-event"],
+  },
   test: {
     globals: true,
     include: ["src/**/*.visual.spec.tsx"],
