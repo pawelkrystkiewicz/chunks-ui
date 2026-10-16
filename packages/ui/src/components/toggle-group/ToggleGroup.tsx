@@ -158,13 +158,10 @@ function ToggleGroupRoot<Value extends string = string>({
       if (indicators.has(target)) return false;
       if (insideItem(target)) return false;
       if (type !== "childList") return holdsItem(target);
-      // A removed item has unregistered by now, so a change of children counts unless it is an
-      // item's (its resize is observed) or only adds or removes the indicator
+      // A change of children counts unless it is an item's (its resize is observed) or only adds
+      // or removes the indicator. A removal's target is the parent, so a removed item counts.
       if (stopItem.has(target)) return false;
-      for (const nodes of [addedNodes, removedNodes]) {
-        for (const node of nodes) if (!indicators.has(node)) return true;
-      }
-      return false;
+      return holdsNonIndicator(addedNodes) || holdsNonIndicator(removedNodes);
     };
     const mutation = new MutationObserver((records) => {
       if (records.some(moves)) notifyResize(container, "border-box");
@@ -312,6 +309,10 @@ const sameBox = (a: IndicatorBox | null, b: IndicatorBox | null) =>
 const indicators = new WeakSet<Node>();
 const markIndicator = (node: HTMLSpanElement | null) => {
   if (node) indicators.add(node);
+};
+const holdsNonIndicator = (nodes: NodeList) => {
+  for (const node of nodes) if (!indicators.has(node)) return true;
+  return false;
 };
 
 /**
