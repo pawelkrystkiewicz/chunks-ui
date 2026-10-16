@@ -181,8 +181,6 @@ describe("Combobox", () => {
     await expect(fixture).toMatchScreenshot();
   });
 
-  // Clear and Trigger sit over the end of the Control, so its end padding keeps the text out
-  // from under them: a long placeholder ran under the clear button (#484)
   it("ends the input's text box before the clear button, with a long placeholder", () => {
     const { getByRole } = render(
       <div style={{ width: 300 }}>
