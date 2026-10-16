@@ -52,14 +52,12 @@ const COMPILER_OPTIONS = {
 /**
  * How the strict consumer resolves modules, one tsc run each. `bundler` is what Next, Vite and
  * tsup use. `node10` is the pre-`exports` algorithm of older CommonJS projects: it needs
- * `module: commonjs`, and `esModuleInterop` as `tsc --init` writes it, because dist/index.d.ts
- * has a default import of React (from `import type React` in Combobox.tsx) and fails with
- * TS1259 without the flag before anything else is checked. Drop esModuleInterop once that is
- * gone.
+ * `module: commonjs`, and runs without `esModuleInterop`, so a default import of React in the
+ * dist typings (`import type React` in a component) fails it with TS1259 (#463).
  */
 const RESOLUTIONS = {
   bundler: { moduleResolution: "bundler", module: "esnext" },
-  node10: { moduleResolution: "node10", module: "commonjs", esModuleInterop: true },
+  node10: { moduleResolution: "node10", module: "commonjs" },
 };
 export type Resolution = keyof typeof RESOLUTIONS;
 /**
