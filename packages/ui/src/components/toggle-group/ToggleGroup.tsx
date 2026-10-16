@@ -137,10 +137,11 @@ function ToggleGroupRoot<Value extends string = string>({
     };
     for (const item of itemsRef.current.values()) watcher.watch(item);
     watcherRef.current = watcher;
-    // A class/style change on an element holding an item can move the items (gap, order), so the
-    // group measures again. Not the indicator's own inline writes, which hold no item, nor a
-    // change inside an item (a Motion-animated icon writes every frame): its resize is observed.
-    // `stopItem` holds every item.
+    // A change that moves the items without resizing them has the group measure again: a
+    // class/style change on an element holding an item (gap, order), or a node added, removed or
+    // moved beside them (an item unmounted, keyed items re-sorted). Not a change inside an item
+    // (a Motion-animated icon writes every frame), whose resize is observed, nor the indicator's
+    // own writes, mount or unmount. `stopItem` holds every item.
     const insideItem = (node: Node) => {
       if (node === container) return false;
       for (let up = node.parentNode; up && up !== container; up = up.parentNode) {
@@ -152,14 +153,21 @@ function ToggleGroupRoot<Value extends string = string>({
       for (const item of stopItem.keys()) if (node.contains(item)) return true;
       return false;
     };
+    const moves = ({ target, type, addedNodes, removedNodes }: MutationRecord) => {
+      if (insideItem(target)) return false;
+      if (type !== "childList") return holdsItem(target);
+      // A removed item has unregistered by now, so a change of children counts unless it is an
+      // item's (its resize is observed) or only adds or removes the indicator
+      const changed = [...addedNodes, ...removedNodes];
+      return !stopItem.has(target) && !changed.every((node) => indicators.has(node));
+    };
     const mutation = new MutationObserver((records) => {
-      if (records.some(({ target }) => !insideItem(target) && holdsItem(target))) {
-        notifyResize(container, "border-box");
-      }
+      if (records.some(moves)) notifyResize(container, "border-box");
     });
     mutation.observe(container, {
       attributes: true,
       attributeFilter: ["class", "style"],
+      childList: true,
       subtree: true,
     });
     return () => {
@@ -295,6 +303,12 @@ function boxWithin(container: HTMLElement, item: HTMLElement): IndicatorBox | nu
 const sameBox = (a: IndicatorBox | null, b: IndicatorBox | null) =>
   a === b || (a !== null && b !== null && BOX_EDGES.every((edge) => a[edge] === b[edge]));
 
+/** Every indicator element mounted: a group doesn't measure again when one mounts or unmounts */
+const indicators = new WeakSet<Node>();
+const markIndicator = (node: HTMLSpanElement | null) => {
+  if (node) indicators.add(node);
+};
+
 /**
  * The pill behind the pressed item, at `box`. The same span with and without Motion, so it isn't
  * remounted when Motion loads.
@@ -307,7 +321,11 @@ function ToggleGroupIndicator({ box, value }: { box: IndicatorBox; value: string
   // indicator jumps to the item, also to one pressed while the group was hidden
   useLayoutEffect(() => endSlide(), [endSlide]);
 
-  const [indicatorRef, driven] = useMotionAnimate<HTMLSpanElement>(box, { transition }, element);
+  const [indicatorRef, driven] = useMotionAnimate<HTMLSpanElement>(
+    box,
+    { transition },
+    useMergedRef(element, markIndicator),
+  );
   // Motion writes a jump in its next frame. A change committed after this frame's animation
   // callbacks (a group resized, or shown again by <Activity>) would paint the old box first, so
   // the jump is written now too, and Motion writes the same values.

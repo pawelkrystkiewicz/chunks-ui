@@ -453,6 +453,10 @@ type Layout = {
   width?: number;
   /** Classes of item "b" */
   itemClassName?: string;
+  /** An item before the others, which a change can remove */
+  lead?: boolean;
+  /** Item "b" before item "a": the same keyed items, re-sorted */
+  reversed?: boolean;
 };
 
 const sized = ({
@@ -464,24 +468,32 @@ const sized = ({
   groupSize,
   width = 400,
   itemClassName,
-}: Layout = {}) => (
-  <div style={{ width, display: "flex", justifyContent: "center" }}>
-    <ToggleGroup.Root
-      value={[value]}
-      className={`justify-center ${groupClassName ?? ""}`}
-      style={{ padding: groupPadding, gap: groupGap, ...groupSize }}
-    >
-      {/* No transition of its own, so the item takes its new size at once */}
-      <ToggleGroup.Item value="a" style={{ transition: "none", ...itemStyle }}>
-        Alpha
-      </ToggleGroup.Item>
-      {/* The label in an element of its own, for a spec to write as Motion would an icon */}
-      <ToggleGroup.Item value="b" className={itemClassName}>
-        <span>Beta</span>
-      </ToggleGroup.Item>
-    </ToggleGroup.Root>
-  </div>
-);
+  lead,
+  reversed,
+}: Layout = {}) => {
+  const items = [
+    // No transition of its own, so the item takes its new size at once
+    <ToggleGroup.Item key="a" value="a" style={{ transition: "none", ...itemStyle }}>
+      Alpha
+    </ToggleGroup.Item>,
+    // The label in an element of its own, for a spec to write as Motion would an icon
+    <ToggleGroup.Item key="b" value="b" className={itemClassName}>
+      <span>Beta</span>
+    </ToggleGroup.Item>,
+  ];
+  return (
+    <div style={{ width, display: "flex", justifyContent: "center" }}>
+      <ToggleGroup.Root
+        value={[value]}
+        className={`justify-center ${groupClassName ?? ""}`}
+        style={{ padding: groupPadding, gap: groupGap, ...groupSize }}
+      >
+        {lead && <ToggleGroup.Item value="lead">Lead</ToggleGroup.Item>}
+        {reversed ? items.reverse() : items}
+      </ToggleGroup.Root>
+    </div>
+  );
+};
 
 const edgesOf = (el: Element) => {
   const { left, top, width, height } = el.getBoundingClientRect();
@@ -554,13 +566,16 @@ const RESIZES: [string, Layout, Layout][] = [
 
 /**
  * Each move: its name, the layout before it, and the layout after it. Nothing resizes: a class
- * or inline style change on the group or an item moves the items within the group's fixed size.
+ * or inline style change on the group or an item, or an item removed or moved, moves the items
+ * within the group's fixed size.
  */
 const MOVES: [string, Layout, Layout][] = [
   ["the gap of a group of fixed size, by its style", FIXED, { ...FIXED, groupGap: 24 }],
   ["the gap of a group of fixed size, by its class", FIXED, { ...FIXED, groupClassName: "gap-6" }],
   ["the order of the item, by its style", FIXED, { ...FIXED, itemStyle: { order: 1 } }],
   ["the order of the other item, by its class", FIXED, { ...FIXED, itemClassName: "order-first" }],
+  ["the items before it, by removing one", { ...FIXED, lead: true }, FIXED],
+  ["the order of the items, by re-sorting them", FIXED, { ...FIXED, reversed: true }],
 ];
 
 /**

@@ -529,7 +529,8 @@ describe("ToggleGroup indicator measurement", () => {
     expect(indicator()).toEqual(px(20, 4, 40, 24));
   });
 
-  it("is not observed again for the indicator's own style", async () => {
+  // The press in renderPressed mounted the indicator: that record arrives with the style's
+  it("is not observed again for the indicator's own mount or style", async () => {
     const { group, press, indicator } = renderPressed();
     const count = observeCount(group);
     press("b");
