@@ -1,7 +1,13 @@
 import { render, screen } from "@testing-library/react";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { commands } from "vitest/browser";
-import { enterMotionPath, renderPage, ringColor, withViewport } from "../../VisualTest.utils";
+import {
+  emulateReducedMotion,
+  enterMotionPath,
+  renderPage,
+  ringColor,
+  withViewport,
+} from "../../VisualTest.utils";
 import { Drawer } from "./index";
 
 describe("Drawer", () => {
@@ -59,13 +65,6 @@ function ringOf(element: Element) {
   return { outlineStyle, outlineWidth, outlineOffset, outlineColor };
 }
 
-async function emulateReducedMotion(reducedMotion: "reduce" | "no-preference") {
-  await commands.emulateMedia({ reducedMotion });
-  await expect
-    .poll(() => matchMedia("(prefers-reduced-motion: reduce)").matches)
-    .toBe(reducedMotion === "reduce");
-}
-
 /**
  * Reduced motion uses the CSS variants with no transition. With no preference, Motion slides the
  * popup, or, when Motion never arrives, the CSS variants' transition does.
@@ -78,7 +77,7 @@ const PATHS = [
 
 describe.each(PATHS)("Drawer.Popup focus ring, $path", ({ reducedMotion, withMotion }) => {
   beforeAll(() => enterMotionPath(withMotion));
-  beforeEach(() => emulateReducedMotion(reducedMotion));
+  beforeEach(() => emulateReducedMotion(reducedMotion === "reduce"));
   afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
 
   // One side: the sides share one ring class
@@ -125,7 +124,7 @@ describe.each(PATHS)("Drawer.Popup focus ring, $path", ({ reducedMotion, withMot
 
 describe("Drawer.Popup CSS fallback with no reduced-motion preference", () => {
   beforeAll(() => enterMotionPath(false));
-  beforeEach(() => emulateReducedMotion("no-preference"));
+  beforeEach(() => emulateReducedMotion(false));
   afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
 
   it("slides the popup with a CSS transition", async () => {
