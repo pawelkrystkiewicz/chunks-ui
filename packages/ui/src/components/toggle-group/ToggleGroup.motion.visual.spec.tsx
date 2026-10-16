@@ -15,6 +15,7 @@ import { commands, userEvent } from "vitest/browser";
 import { resizeBatches } from "../../lib/shared-resize";
 import { reloadMotion } from "../../lib/use-motion";
 import {
+  beforePaintOnceResized,
   eachPaintedFrame,
   emulateReducedMotion,
   enterMotionPath,
@@ -248,24 +249,6 @@ function beforePaint<T>(target: Element, read: () => T) {
       resolve(read());
     });
     observer.observe(target);
-  });
-}
-
-/**
- * As `beforePaint`, for a `target` shown now: reads `read` in the first frame in which its border
- * box differs from its size now. A new observer is also notified in its first frame when nothing
- * changed; that notification is skipped.
- */
-function beforePaintOnceResized<T>(target: Element, read: () => T) {
-  const { width, height } = target.getBoundingClientRect();
-  return new Promise<T>((resolve) => {
-    const observer = new ResizeObserver(([entry]) => {
-      const size = entry?.borderBoxSize[0];
-      if (size?.inlineSize === width && size.blockSize === height) return;
-      observer.disconnect();
-      resolve(read());
-    });
-    observer.observe(target, { box: "border-box" });
   });
 }
 
@@ -577,6 +560,32 @@ const MOVES: [string, Layout, Layout][] = [
 ];
 
 /**
+ * Renders `before`, changes it to `after`, which resizes the group or an item, and asserts the
+ * indicator is over item "a" in every frame from the one the resize lands in, which is read
+ * after the group's ResizeObserver, before it paints
+ */
+async function expectFollowsBeforePaint(withMotion: boolean, before: Layout, after: Layout) {
+  const { group, indicator, item, rerender } = await renderSized(withMotion, before);
+  const start = edgesOf(indicator());
+  const read = () => ({ indicator: edgesOf(indicator()), off: offBy(item("Alpha"), indicator()) });
+  const resized = beforePaintOnceResized(
+    { items: [item("Alpha"), item("Beta")], container: group },
+    read,
+  );
+
+  rerender(sized(after));
+  const frames = [await resized, ...(await eachPaintedFrame(read, 20))];
+  const log = JSON.stringify(frames);
+  // The change moves or resizes the item, and the indicator with it
+  expect(near(start, frames.at(-1)?.indicator ?? start), log).toBe(false);
+  // Over the item in every frame, the first one painted included
+  expect(
+    frames.every((frame) => frame.off <= 1),
+    log,
+  ).toBe(true);
+}
+
+/**
  * Renders `before`, changes it to `after`, and asserts the indicator is over item "a" at once,
  * without sliding there
  */
@@ -596,8 +605,8 @@ async function expectFollowsAtOnce(withMotion: boolean, before: Layout, after: L
 // fallback slides it with a transition
 describe.each(MOTION_PATHS)("ToggleGroup indicator on a resize, $path", ({ withMotion }) => {
   it.each(RESIZES)(
-    "follows a change to %s at once, with no frames in between",
-    (_, before, after) => expectFollowsAtOnce(withMotion, before, after),
+    "follows a change to %s in the frame it changes in, with no frames in between",
+    (_, before, after) => expectFollowsBeforePaint(withMotion, before, after),
   );
 
   it.each(MOVES)(
@@ -680,10 +689,10 @@ describe.each(MOTION_PATHS)("ToggleGroup indicator on a resize, $path", ({ withM
   // is measured in, which this reads after the group's ResizeObserver, before that frame paints.
   it("still slides to an item that grows when it is pressed", async () => {
     const layout = { itemClassName: "data-pressed:text-xl" };
-    const { indicator, item, rerender } = await renderSized(withMotion, layout);
+    const { group, indicator, item, rerender } = await renderSized(withMotion, layout);
     const beta = item("Beta");
     const left = (el: Element) => el.getBoundingClientRect().left;
-    const grown = beforePaintOnceResized(beta, () => ({
+    const grown = beforePaintOnceResized({ items: [beta], container: group }, () => ({
       indicator: left(indicator()),
       beta: left(beta),
     }));

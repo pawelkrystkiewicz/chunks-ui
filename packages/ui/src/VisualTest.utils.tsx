@@ -433,6 +433,64 @@ export const eachPaintedFrame = <T,>(read: () => T, frames: number) =>
     frame.postRender(step, true);
   });
 
+type BoxSize = { inlineSize: number; blockSize: number };
+
+const borderBoxOf = (el: Element): BoxSize => {
+  const { width, height } = el.getBoundingClientRect();
+  return { inlineSize: width, blockSize: height };
+};
+
+/** The content box of `el`, as a ResizeObserver reports it: its border box less padding and border */
+function contentBoxOf(el: Element): BoxSize {
+  const { inlineSize, blockSize } = borderBoxOf(el);
+  const style = getComputedStyle(el);
+  const sum = (...lengths: string[]) =>
+    lengths.reduce((total, length) => total + Number.parseFloat(length), 0);
+  return {
+    inlineSize:
+      inlineSize -
+      sum(style.paddingLeft, style.paddingRight, style.borderLeftWidth, style.borderRightWidth),
+    blockSize:
+      blockSize -
+      sum(style.paddingTop, style.paddingBottom, style.borderTopWidth, style.borderBottomWidth),
+  };
+}
+
+const sameSize = (a: BoxSize | undefined, b: BoxSize | undefined) =>
+  a?.inlineSize === b?.inlineSize && a?.blockSize === b?.blockSize;
+
+/**
+ * Reads `read` in the first frame in which a box an indicator follows changes size: the border
+ * box of one of `items`, or the border or content box of `container`. It reads after the
+ * component's ResizeObservers and before that frame paints, as these observers are created after
+ * the component's. A first notification that reports no change is skipped.
+ */
+export function beforePaintOnceResized<T>(
+  { items, container }: { items: Element[]; container: Element },
+  read: () => T,
+) {
+  const borderBoxes = new Map([...items, container].map((el) => [el, borderBoxOf(el)]));
+  const containerContentBox = contentBoxOf(container);
+  return new Promise<T>((resolve) => {
+    const onResize = (entries: ResizeObserverEntry[]) => {
+      const changed = entries.some(
+        ({ target, borderBoxSize, contentBoxSize }) =>
+          !sameSize(borderBoxSize[0], borderBoxes.get(target)) ||
+          (target === container && !sameSize(contentBoxSize[0], containerContentBox)),
+      );
+      if (!changed) return;
+      borderBoxObserver.disconnect();
+      contentBoxObserver.disconnect();
+      resolve(read());
+    };
+    // One observer can't observe an element by two boxes: the container's content box has its own
+    const borderBoxObserver = new ResizeObserver(onResize);
+    const contentBoxObserver = new ResizeObserver(onResize);
+    for (const el of borderBoxes.keys()) borderBoxObserver.observe(el, { box: "border-box" });
+    contentBoxObserver.observe(container, { box: "content-box" });
+  });
+}
+
 /**
  * Asserts `frames`, painted after a change, show an indicator jump from `start` to over its
  * target at once. `near` compares two boxes, within 1px.

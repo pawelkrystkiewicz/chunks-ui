@@ -3,6 +3,7 @@ import { type CSSProperties, Profiler } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { resizeBatches } from "../../lib/shared-resize";
 import {
+  beforePaintOnceResized,
   eachPaintedFrame,
   enterMotionPath,
   expectJumpedAtOnce,
@@ -92,68 +93,6 @@ async function renderTabs(withMotion: boolean, layout?: Layout) {
   return { ...result, indicator, tab, list: result.getByRole("tablist") };
 }
 
-type BoxSize = { inlineSize: number; blockSize: number };
-
-/** The content box of `el`, as a ResizeObserver reports it: its border box less padding and border */
-function contentBoxOf(el: Element): BoxSize {
-  const { width, height } = el.getBoundingClientRect();
-  const style = getComputedStyle(el);
-  const sum = (...lengths: string[]) =>
-    lengths.reduce((total, length) => total + Number.parseFloat(length), 0);
-  return {
-    inlineSize:
-      width -
-      sum(style.paddingLeft, style.paddingRight, style.borderLeftWidth, style.borderRightWidth),
-    blockSize:
-      height -
-      sum(style.paddingTop, style.paddingBottom, style.borderTopWidth, style.borderBottomWidth),
-  };
-}
-
-const sameSize = (a: BoxSize | undefined, b: BoxSize) =>
-  a?.inlineSize === b.inlineSize && a.blockSize === b.blockSize;
-
-/**
- * Reads `read` in the first frame in which a followed box (the tabs' border boxes, the list's
- * border and content boxes) changes size. It reads after the component's ResizeObservers and
- * before paint, as these observers are created after theirs. A first notification that reports
- * no change is skipped.
- */
-function beforePaintOnceResized<T>(
-  { tabs, list }: { tabs: Element[]; list: Element },
-  read: () => T,
-) {
-  const borderBoxes = new Map(
-    tabs.map((tab) => {
-      const { width, height } = tab.getBoundingClientRect();
-      return [tab, { inlineSize: width, blockSize: height }];
-    }),
-  );
-  const listContentBox = contentBoxOf(list);
-  const { width, height } = list.getBoundingClientRect();
-  const listBorderBox = { inlineSize: width, blockSize: height };
-  return new Promise<T>((resolve) => {
-    // One observer can't observe an element twice: the list's content box has its own
-    const onResize = (entries: ResizeObserverEntry[]) => {
-      const changed = entries.some(({ target, borderBoxSize, contentBoxSize }) =>
-        target === list
-          ? !sameSize(contentBoxSize[0], listContentBox) ||
-            !sameSize(borderBoxSize[0], listBorderBox)
-          : !sameSize(borderBoxSize[0], borderBoxes.get(target) ?? { inlineSize: 0, blockSize: 0 }),
-      );
-      if (!changed) return;
-      observer.disconnect();
-      listObserver.disconnect();
-      resolve(read());
-    };
-    const observer = new ResizeObserver(onResize);
-    const listObserver = new ResizeObserver(onResize);
-    for (const tab of tabs) observer.observe(tab, { box: "border-box" });
-    observer.observe(list, { box: "content-box" });
-    listObserver.observe(list, { box: "border-box" });
-  });
-}
-
 /** A list that keeps its size whatever its tabs do; `justify-center` centres them in it */
 const FIXED: Layout = { listStyle: { width: 360, height: 48 } };
 
@@ -203,8 +142,9 @@ describe.each(MOTION_PATHS)("Tabs.Indicator, $path", ({ withMotion }) => {
       const { indicator, tab, list, rerender } = await renderTabs(withMotion, before);
       const active = activeTab(after);
       const start = boxOf(indicator);
-      const firstPaint = beforePaintOnceResized({ tabs: [tab("Alpha"), tab("Beta")], list }, () =>
-        offBy(tab(active), indicator),
+      const firstPaint = beforePaintOnceResized(
+        { items: [tab("Alpha"), tab("Beta")], container: list },
+        () => offBy(tab(active), indicator),
       );
 
       rerender(tabs(after));
