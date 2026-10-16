@@ -287,25 +287,28 @@ describe("Popups in WebKit", () => {
 
   it("opens a Select with the selected item over the trigger's value, and paints it", async () => {
     render(
-      <div style={{ padding: 160, width: 200 }}>
-        <Select.Root defaultValue="cherry">
-          <Select.Trigger aria-label="Fruit">
-            <Select.Value data-testid="value" />
-            <Select.Icon />
-          </Select.Trigger>
-          <Select.Portal>
-            <Select.Positioner>
-              <Select.Popup data-testid="popup">
-                {["Apple", "Banana", "Cherry", "Date"].map((fruit) => (
-                  <Select.Item key={fruit} value={fruit.toLowerCase()}>
-                    <Select.ItemIndicator />
-                    <Select.ItemText>{fruit}</Select.ItemText>
-                  </Select.Item>
-                ))}
-              </Select.Popup>
-            </Select.Positioner>
-          </Select.Portal>
-        </Select.Root>
+      // The padding leaves room around the popup; the inner div gives the trigger its width
+      <div style={{ padding: 160 }}>
+        <div style={{ width: 200 }}>
+          <Select.Root defaultValue="cherry">
+            <Select.Trigger aria-label="Fruit">
+              <Select.Value data-testid="value" />
+              <Select.Icon />
+            </Select.Trigger>
+            <Select.Portal>
+              <Select.Positioner>
+                <Select.Popup data-testid="popup">
+                  {["Apple", "Banana", "Cherry", "Date"].map((fruit) => (
+                    <Select.Item key={fruit} value={fruit.toLowerCase()}>
+                      <Select.ItemIndicator />
+                      <Select.ItemText>{fruit}</Select.ItemText>
+                    </Select.Item>
+                  ))}
+                </Select.Popup>
+              </Select.Positioner>
+            </Select.Portal>
+          </Select.Root>
+        </div>
       </div>,
     );
     await userEvent.click(screen.getByRole("combobox", { name: "Fruit" }));

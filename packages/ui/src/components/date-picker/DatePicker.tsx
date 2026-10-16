@@ -292,7 +292,11 @@ export function DatePicker({
           }}
         />
         <BasePopover.Portal container={container}>
-          <BasePopover.Positioner className="z-dropdowns" sideOffset={8}>
+          {/* At least as wide as the trigger (#506); the calendar keeps its own width, centred */}
+          <BasePopover.Positioner
+            className="z-dropdowns min-w-[var(--anchor-width)]"
+            sideOffset={8}
+          >
             <BasePopover.Popup
               ref={popupRef}
               // Open on the calendar's tab-stop day (selected, else today), as in the APG date picker.
@@ -312,6 +316,7 @@ export function DatePicker({
               )}
             >
               <Calendar
+                className="mx-auto"
                 value={selectedDate}
                 onValueChange={handleDateSelect}
                 min={min}

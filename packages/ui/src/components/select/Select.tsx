@@ -104,6 +104,17 @@ function SelectItem({ className, ...props }: SelectItemProps) {
   );
 }
 
+// The popup is as wide as the trigger: a word longer than that breaks. Only the text wraps, since
+// overflow-wrap is inherited and would squeeze a badge or shortcut beside it.
+function SelectItemText({ className, ...props }: SelectItemTextProps) {
+  return (
+    <BaseSelect.ItemText
+      className={cnState("min-w-0 [overflow-wrap:anywhere]", className)}
+      {...props}
+    />
+  );
+}
+
 function SelectItemIndicator({ className, ...props }: SelectItemIndicatorProps) {
   return (
     <BaseSelect.ItemIndicator
@@ -126,8 +137,14 @@ function SelectItemIndicator({ className, ...props }: SelectItemIndicatorProps) 
   );
 }
 
+// As wide as the trigger, aligned over it or below it (#506): Base UI sets --anchor-width in both
 function SelectPositioner({ className, ...props }: SelectPositionerProps) {
-  return <BaseSelect.Positioner className={cnState("z-dropdowns", className)} {...props} />;
+  return (
+    <BaseSelect.Positioner
+      className={cnState("z-dropdowns w-[var(--anchor-width)]", className)}
+      {...props}
+    />
+  );
 }
 
 function SelectGroupLabel({ className, ...props }: SelectGroupLabelProps) {
@@ -155,7 +172,7 @@ export const Select = {
   Icon: SelectIcon,
   Item: SelectItem,
   ItemIndicator: SelectItemIndicator,
-  ItemText: BaseSelect.ItemText,
+  ItemText: SelectItemText,
   Popup: SelectPopup,
   Portal: SelectPortal,
   Positioner: SelectPositioner,
