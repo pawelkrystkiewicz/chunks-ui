@@ -108,6 +108,26 @@ describe("observeResize", () => {
     expect(resizeBatches.count).toBe(batches + 1);
   });
 
+  it("runs the other callbacks of a batch when one throws, and reports the error", () => {
+    const error = new Error("boom");
+    // jsdom has no reportError
+    const reported = vi.fn();
+    vi.stubGlobal("reportError", reported);
+    try {
+      const second = vi.fn();
+      const [a, b] = [element(), element()];
+      observe(a, "border-box", () => {
+        throw error;
+      });
+      observe(b, "border-box", second);
+      expect(() => resize(a, b)).not.toThrow();
+      expect(second).toHaveBeenCalledTimes(1);
+      expect(reported).toHaveBeenCalledWith(error);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("runs no batch for a target that nothing observes any more", () => {
     const onResize = vi.fn();
     const target = element();

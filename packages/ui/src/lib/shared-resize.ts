@@ -6,7 +6,8 @@ export type ResizeBox = "border-box" | "content-box";
 type Callback = () => void;
 
 /**
- * One ResizeObserver per box, shared by every indicator on the page. An observer can't watch an
+ * One ResizeObserver per box (border-box, content-box), shared by every indicator on the page:
+ * at most one synchronous render per box per frame for all groups. An observer can't watch an
  * element by two boxes at once, hence one per box. Created when the first element is observed and
  * dropped when the last stops, so nothing is created where this module loads on the server.
  */
@@ -28,17 +29,29 @@ function notify({ callbacks }: Shared, entries: ResizeObserverEntry[]) {
   if (batch.size === 0) return;
   resizeBatches.count++;
   // The browser runs this after layout and before it paints. One synchronous render commits
-  // every notified group's update in this frame, rather than one render per group.
+  // every notified group's update in this frame, rather than one render per group. A callback
+  // that throws is reported and doesn't stop the others.
   flushSync(() => {
-    for (const callback of batch) callback();
+    for (const callback of batch) {
+      try {
+        callback();
+      } catch (error) {
+        if (typeof reportError === "function") reportError(error);
+        else
+          setTimeout(() => {
+            throw error;
+          });
+      }
+    }
   });
 }
 
 /**
  * Observes `target`'s `box` with the observer every indicator shares. `onResize` runs when the
- * box changes size, and once when the observation starts, as a ResizeObserver's callback does:
- * after layout, before paint, in one `flushSync` with every other callback the observer notifies
- * in that step. Returns a function that stops observing. Does nothing where there is no
+ * box changes size: after layout, before paint, in one `flushSync` with every other callback the
+ * observer notifies in that step. It also runs once when the observation starts, but only for
+ * the first subscriber of a (target, box): a later one joins an observation already running, and
+ * waits for the next resize or `notifyResize`. Returns a function that stops observing. Does nothing where there is no
  * ResizeObserver (the server, jsdom).
  */
 export function observeResize(target: Element, box: ResizeBox, onResize: Callback): () => void {
