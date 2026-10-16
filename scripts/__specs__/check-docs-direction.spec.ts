@@ -66,6 +66,12 @@ describe("physicalTokens", () => {
     ).toEqual(["border-r-2", "rounded-l-lg", "border-l-4", "border-l-(--l-ill)"]);
   });
 
+  it("ends a rounded or border class at its value, not at the junk after it", () => {
+    expect(
+      physicalTokens("a](border-l-2](url) b: rounded-l-lg} c: border-l-2,border-r-2 d: border-l-2"),
+    ).toEqual(["border-l-2", "rounded-l-lg", "border-l-2", "border-r-2", "border-l-2"]);
+  });
+
   it("finds one behind a variant, a negative one, a fraction and an arbitrary value", () => {
     expect(
       physicalTokens(

@@ -40,7 +40,7 @@ const PHYSICAL = new RegExp(
   `(?<![\\w-])(?:${[
     `-?(?:scroll-)?(?:ml|mr|pl|pr)-(?:${VALUE})`,
     `-?(?:left|right)-(?:${VALUE})`,
-    "(?:rounded-[lr]|rounded-[tb][lr]|border-[lr])(?:-[^\\s\"'`]+)?",
+    "(?:rounded-[lr]|rounded-[tb][lr]|border-[lr])(?:-(?:[\\w.]+|\\[[^\\]\\s]*\\]|\\([^)\\s]*\\)))?",
     "text-(?:left|right)",
     "(?:float|clear)-(?:left|right)",
   ].join("|")})(?![\\w-])`,
@@ -51,16 +51,9 @@ const MARKER = /direction:\s*physical,\s*\w/;
 /** A line that is only a comment: `//` to the end, or one whole `/* … *\/` or `{/* … *\/}` and nothing else. */
 const COMMENT_LINE = /^\s*(?:\/\/|\/\*(?:(?!\*\/).)*\*\/\s*$|\{\/\*(?:(?!\*\/).)*\*\/\}\s*$)/;
 
-/** `token` without the `;`, `,` or unmatched `)` of the code around it: `border-l-2;`, `(see rounded-l-lg)`. */
-function trimToken(token: string): string {
-  const trimmed = token.replace(/[;,]+$/, "");
-  const unmatched = trimmed.endsWith(")") && trimmed.split(")").length > trimmed.split("(").length;
-  return unmatched ? trimToken(trimmed.slice(0, -1)) : trimmed;
-}
-
 /** The physical direction classes in `line`, in order. */
 export function physicalTokens(line: string): string[] {
-  return [...line.matchAll(PHYSICAL)].map(([token]) => trimToken(token));
+  return [...line.matchAll(PHYSICAL)].map(([token]) => token);
 }
 
 /** One `file:line: token` per unmarked physical class, in path then line order; a missing directory is a problem too. */
