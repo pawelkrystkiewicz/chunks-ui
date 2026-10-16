@@ -9,9 +9,9 @@ const sources = import.meta.glob<string>(["../**/*.{ts,tsx}", "!../**/*.spec.{ts
 });
 
 // A call belongs to the part of the file's compound export (`Popover = { Content: PopoverContent }`)
-// whose function name begins the calling function's name, the longest one winning, so
-// PopoverContentPopup, which PopoverContent renders, is Popover.Content. A call no part owns keeps
-// its function's name, which no row has.
+// whose function name begins the name of the top-level function or const around the call, the
+// longest one winning, so PopoverContentPopup, which PopoverContent renders, is Popover.Content. A
+// call no part owns keeps that name, which no row has.
 const callSites = Object.entries(sources).flatMap(([file, src]) => {
   const component = file.split("/").at(-1)?.split(".")[0] ?? file;
   const compound = src.split(`export const ${component} = {`)[1] ?? "";
@@ -19,8 +19,11 @@ const callSites = Object.entries(sources).flatMap(([file, src]) => {
     key,
     fn,
   }));
-  return [...src.matchAll(/usePopupRender\(/g)].map(({ index }) => {
-    const caller = [...src.slice(0, index).matchAll(/function (\w+)/g)].at(-1)?.[1] ?? "";
+  // With or without a type argument; not the hook's own declaration
+  return [...src.matchAll(/(?<!function )usePopupRender(?:<[^>()]*>)?\(/g)].map(({ index }) => {
+    const caller =
+      [...src.slice(0, index).matchAll(/^(?:export )?(?:function|const) (\w+)/gm)].at(-1)?.[1] ??
+      "";
     const owner = members
       .filter(({ fn }) => caller.startsWith(fn))
       .sort((a, b) => b.fn.length - a.fn.length)[0];
@@ -29,6 +32,10 @@ const callSites = Object.entries(sources).flatMap(([file, src]) => {
 });
 
 const tabled = new Set<string>(popupParts.map(({ part }) => part));
+
+it("tables each part once", () => {
+  expect(tabled.size).toBe(popupParts.length);
+});
 
 it("tables every part that calls usePopupRender", () => {
   const missing = callSites.filter(({ part }) => !tabled.has(part));
