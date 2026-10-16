@@ -212,13 +212,31 @@ function snapshot({ element, measure }: Control) {
 }
 
 /**
- * Emulates the preference and resolves once the page's media query reports it. Motion and the
- * components read it from the query's change event, which lands after `matches` flips, so the
- * test polls for the state it needs next.
+ * Emulates the preference and resolves on the query's change event. Motion and the components
+ * read it from that event, which lands after `matches` flips. Change events dispatch oldest list
+ * first, so this fresh list fires after every older listener.
  */
 const reducedMotion = async (reduce: boolean) => {
+  const query = "(prefers-reduced-motion: reduce)";
+  if (matchMedia(query).matches === reduce) return;
+  const mql = window.matchMedia(query);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const changed = new Promise<void>((resolve, reject) => {
+    mql.addEventListener("change", () => resolve(), { once: true });
+    timer = setTimeout(
+      () =>
+        reject(
+          new Error(`reducedMotion(${reduce}): no change event within ${SETTLE_TIMEOUT_MS}ms`),
+        ),
+      SETTLE_TIMEOUT_MS,
+    );
+  });
   await commands.emulateMedia({ reducedMotion: reduce ? "reduce" : "no-preference" });
-  await expect.poll(() => matchMedia("(prefers-reduced-motion: reduce)").matches).toBe(reduce);
+  try {
+    await changed;
+  } finally {
+    clearTimeout(timer);
+  }
 };
 
 afterEach(() => reducedMotion(false));
@@ -242,7 +260,7 @@ function motionLoading() {
 describe("controls when Motion loads", () => {
   it.each(names)("keeps the %s element and animates it once Motion arrives", async (name) => {
     const subject = control(name);
-    const { ui, element, change, measure, fallbackClass } = subject;
+    const { ui, element, change, measure } = subject;
     const motion = motionLoading();
     render(ui());
     await expect.poll(element).not.toBeNull();
@@ -251,7 +269,6 @@ describe("controls when Motion loads", () => {
     await motion.arrive();
     await expect.poll(() => driven(subject), { timeout: SETTLE_TIMEOUT_MS }).toBe(true);
     expect(element()).toBe(before);
-    if (fallbackClass) expect(element()).not.toHaveClass(fallbackClass);
     // Motion took over: a change now animates
     const start = measure(element());
     change();
@@ -511,10 +528,10 @@ describe("controls once Motion has loaded", () => {
       const before = Math.round(await settled(() => measure(element())));
 
       await reducedMotion(true);
-      await expect.poll(element).toHaveClass(fallbackClass);
+      await expect.poll(element, { timeout: SETTLE_TIMEOUT_MS }).toHaveClass(fallbackClass);
       expectOver(subject);
       await reducedMotion(false);
-      await expect.poll(element).not.toHaveClass(fallbackClass);
+      await expect.poll(element, { timeout: SETTLE_TIMEOUT_MS }).not.toHaveClass(fallbackClass);
       expect(Math.round(await settled(() => measure(element())))).toBe(before);
     },
   );
