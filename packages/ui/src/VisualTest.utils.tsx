@@ -1,7 +1,7 @@
 import { type RenderResult, render } from "@testing-library/react";
 import { cancelFrame, frame } from "motion/react";
-import type { ReactNode } from "react";
-import { afterAll, beforeAll, beforeEach, describe, expect } from "vitest";
+import type { ReactElement, ReactNode } from "react";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { commands, page } from "vitest/browser";
 import { reloadMotion } from "./lib/use-motion";
 
@@ -184,12 +184,14 @@ export function systemColour(keyword: string) {
   return colour;
 }
 
+/** The properties `el` is transitioning */
+export function transitionsOf(el: Element) {
+  return el.getAnimations().map((animation) => (animation as CSSTransition).transitionProperty);
+}
+
 /** The outline properties `el` is transitioning */
 export function outlineTransitions(el: Element) {
-  return el
-    .getAnimations()
-    .map((animation) => (animation as CSSTransition).transitionProperty)
-    .filter((property) => property?.startsWith("outline"));
+  return transitionsOf(el).filter((property) => property?.startsWith("outline"));
 }
 
 /** Moves focus to `el` and asserts it shows as keyboard focus, so the ring is drawn */
@@ -309,6 +311,48 @@ export function describeMotionPaths(
       define(reducedMotion);
     },
   );
+}
+
+/**
+ * The CSS path of a popup with no reduced-motion preference: Motion never arrives, so the popup
+ * scales and fades by CSS transition, as the spring does. `ui(open)` renders the popup, with
+ * `data-testid="popup"`, open or closed.
+ */
+export function describePopupCssPath(name: string, ui: (open: boolean) => ReactElement) {
+  describe(`${name} on the CSS path`, () => {
+    beforeAll(() => enterMotionPath(false));
+    beforeEach(async () => {
+      await commands.emulateMedia({ reducedMotion: "no-preference" });
+      await expect.poll(() => matchMedia("(prefers-reduced-motion: reduce)").matches).toBe(false);
+    });
+    afterAll(async () => {
+      await commands.emulateMedia({ reducedMotion: "reduce" });
+      await enterMotionPath(true);
+    });
+
+    // The start is read in the task that opens it: Base UI clears `data-starting-style` on the
+    // next frame.
+    it("enters from scale-95 and opacity-0", () => {
+      const { rerender, getByTestId } = render(ui(false));
+      rerender(ui(true));
+      const popup = getByTestId("popup");
+      expect(popup).toHaveAttribute("data-starting-style");
+      const { scale, opacity } = getComputedStyle(popup);
+      expect({ scale, opacity }).toEqual({ scale: "0.95", opacity: "0" });
+    });
+
+    it("leaves to scale-95 and opacity-0", async () => {
+      const { rerender, getByTestId } = render(ui(false));
+      rerender(ui(true));
+      const popup = getByTestId("popup");
+      // Wait out the enter, so the leave is the only transition running
+      await expect.poll(() => popup.hasAttribute("data-starting-style")).toBe(false);
+      await expect.poll(() => transitionsOf(popup)).toEqual([]);
+      rerender(ui(false));
+      expect(popup).toHaveAttribute("data-ending-style");
+      expect(transitionsOf(popup).sort()).toEqual(["opacity", "scale"]);
+    });
+  });
 }
 
 /** How long a poll or `waitForStable` waits for a value to settle, in ms. */
