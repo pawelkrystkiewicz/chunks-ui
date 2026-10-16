@@ -3,7 +3,7 @@
  * Fails on a physical margin, padding, inset, text-align, rounded, border, float, clear, scroll,
  * object, background or transform-origin class in apps/docs. It needs a Tailwind value (`ml-4`,
  * `left-1/2`), so prose like `left-to-right` passes. A marker `direction: physical, <reason>` on
- * the same line, or in a single-line comment alone on the line above, exempts a deliberate one. An
+ * the same line, or in a comment alone on its lines directly above, exempts a deliberate one. An
  * empty scan fails.
  * Full list and limits: TESTING_STRATEGY.md
  *
@@ -38,12 +38,26 @@ const PHYSICAL = new RegExp(
 );
 /** A reason has to start with a word character, so `direction: physical,` closed at once by `*\/` names none. */
 const MARKER = /direction:\s*physical,\s*\w/;
-/** A line that is only a comment: `//` to the end, or one whole `/* … *\/` or `{/* … *\/}` and nothing else. */
-const COMMENT_LINE = /^\s*(?:\/\/|\/\*(?:(?!\*\/).)*\*\/\s*$|\{\/\*(?:(?!\*\/).)*\*\/\}\s*$)/;
+/** One `/* … *\/` or `{/* … *\/}`, on one line or several, and nothing else. */
+const COMMENT = /^\s*(?:\/\*(?:(?!\*\/)[\s\S])*\*\/|\{\/\*(?:(?!\*\/)[\s\S])*\*\/\})\s*$/;
 
 /** The physical direction classes in `line`, in order. */
 export function physicalTokens(line: string): string[] {
   return [...line.matchAll(PHYSICAL)].map(([token]) => token);
+}
+
+/** The comment that ends on the line above `index` and is alone on its lines, or "". */
+function commentAbove(lines: string[], index: number): string {
+  const above = lines[index - 1] ?? "";
+  if (/^\s*\/\//.test(above)) return above;
+  if (!/\*\/\}?\s*$/.test(above)) return "";
+  for (let start = index - 1; start >= 0; start--) {
+    if (lines[start]?.includes("/*")) {
+      const comment = lines.slice(start, index).join("\n");
+      return COMMENT.test(comment) ? comment : "";
+    }
+  }
+  return "";
 }
 
 /** One `file:line: token` per unmarked physical class, in path then line order; a missing directory is a problem too. */
@@ -62,9 +76,11 @@ export async function checkDocsDirection(root: string): Promise<string[]> {
     for (const file of files) {
       const lines = (await Bun.file(join(root, dir, file)).text()).split("\n");
       for (const [index, line] of lines.entries()) {
-        const above = lines[index - 1] ?? "";
-        if (MARKER.test(line) || (COMMENT_LINE.test(above) && MARKER.test(above))) continue;
-        for (const token of physicalTokens(line)) {
+        const tokens = physicalTokens(line);
+        if (tokens.length === 0 || MARKER.test(line) || MARKER.test(commentAbove(lines, index))) {
+          continue;
+        }
+        for (const token of tokens) {
           problems.push(`${dir}/${file}:${index + 1}: ${token}`);
         }
       }
@@ -78,7 +94,7 @@ if (import.meta.main) {
   for (const problem of problems) console.error(problem);
   if (problems.length > 0) {
     console.error(
-      `\n${problems.length} physical direction ${problems.length === 1 ? "class" : "classes"} in the docs. Use the logical class (ms-/me-, ps-/pe-, start-/end-, text-start/text-end, rounded-s-/rounded-e-/rounded-ss-…, border-s-/border-e-) so the page mirrors in RTL, or mark a deliberate one with \`direction: physical, <reason>\` in a comment on its line or the line above. object-, bg- and origin- positions have no logical class: mirror one with an rtl: twin and mark the line.`,
+      `\n${problems.length} physical direction ${problems.length === 1 ? "class" : "classes"} in the docs. Use the logical class (ms-/me-, ps-/pe-, start-/end-, text-start/text-end, rounded-s-/rounded-e-/rounded-ss-…, border-s-/border-e-) so the page mirrors in RTL, or mark a deliberate one with \`direction: physical, <reason>\` in a comment on its line or directly above it. object-, bg- and origin- positions have no logical class: mirror one with an rtl: twin and mark the line.`,
     );
     process.exit(1);
   }
