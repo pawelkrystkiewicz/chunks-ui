@@ -71,6 +71,9 @@ function SelectPopup({ className, render: renderProp, ...props }: SelectPopupPro
         "origin-(--transform-origin)",
         !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
         !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
+        // Aligned over its trigger (`data-side="none"`), it only fades: no side to grow from
+        !useSpring &&
+          "data-[side=none]:data-starting-style:scale-100 data-[side=none]:data-ending-style:scale-100",
         // The fade and scale of the spring path, so both paths match
         !useSpring && "micro-interactions [transition-property:opacity,scale] duration-300",
         className,
