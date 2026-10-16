@@ -301,12 +301,7 @@ export function describeMotionPaths(
     `${name}, reduced motion: %s`,
     (reducedMotion) => {
       beforeAll(() => reloadMotion());
-      beforeEach(async () => {
-        await commands.emulateMedia({ reducedMotion });
-        await expect
-          .poll(() => matchMedia("(prefers-reduced-motion: reduce)").matches)
-          .toBe(reducedMotion === "reduce");
-      });
+      beforeEach(() => emulateReducedMotion(reducedMotion === "reduce"));
       afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
       define(reducedMotion);
     },
@@ -321,10 +316,7 @@ export function describeMotionPaths(
 export function describePopupCssPath(name: string, ui: (open: boolean) => ReactElement) {
   describe(`${name} on the CSS path`, () => {
     beforeAll(() => enterMotionPath(false));
-    beforeEach(async () => {
-      await commands.emulateMedia({ reducedMotion: "no-preference" });
-      await expect.poll(() => matchMedia("(prefers-reduced-motion: reduce)").matches).toBe(false);
-    });
+    beforeEach(() => emulateReducedMotion(false));
     afterAll(async () => {
       await commands.emulateMedia({ reducedMotion: "reduce" });
       await enterMotionPath(true);
@@ -357,6 +349,36 @@ export function describePopupCssPath(name: string, ui: (open: boolean) => ReactE
 
 /** How long a poll or `waitForStable` waits for a value to settle, in ms. */
 export const SETTLE_TIMEOUT_MS = 5000;
+
+/**
+ * Emulates the reduced-motion preference and resolves on the media query's change event. Motion
+ * and the components read the preference from that event, which lands after `matches` flips.
+ * Change events dispatch to the oldest list first, so this fresh list hears it after every older
+ * listener. Resolves at once when the preference already matches `reduce`.
+ */
+export async function emulateReducedMotion(reduce: boolean) {
+  const query = matchMedia("(prefers-reduced-motion: reduce)");
+  if (query.matches === reduce) return;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const changed = new Promise<void>((resolve, reject) => {
+    query.addEventListener("change", () => resolve(), { once: true });
+    timer = setTimeout(
+      () =>
+        reject(
+          new Error(
+            `emulateReducedMotion(${reduce}): no change event within ${SETTLE_TIMEOUT_MS}ms`,
+          ),
+        ),
+      SETTLE_TIMEOUT_MS,
+    );
+  });
+  await commands.emulateMedia({ reducedMotion: reduce ? "reduce" : "no-preference" });
+  try {
+    await changed;
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 const nextFrame = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 

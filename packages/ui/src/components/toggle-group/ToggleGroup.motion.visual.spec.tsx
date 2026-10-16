@@ -16,6 +16,7 @@ import { resizeBatches } from "../../lib/shared-resize";
 import { reloadMotion } from "../../lib/use-motion";
 import {
   eachPaintedFrame,
+  emulateReducedMotion,
   enterMotionPath,
   expectJumpedAtOnce,
   insetsWithin,
@@ -399,10 +400,7 @@ describe("ToggleGroup indicator after the group was hidden", () => {
   });
 
   describe("and reduced motion toggled while hidden", () => {
-    afterEach(async () => {
-      await commands.emulateMedia({ reducedMotion: "no-preference" });
-      await new Promise((resolve) => requestAnimationFrame(resolve));
-    });
+    afterEach(() => emulateReducedMotion(false));
 
     it.each([
       ["turned on and off while hidden", ["hide", "reduce", "normal"]],
