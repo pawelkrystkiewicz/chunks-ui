@@ -2,7 +2,8 @@
 
 // A client component: a server component cannot reach into `Dialog.Root` of a "use client"
 // module. check-no-motion.ts looks for the trigger texts below in the exported HTML
-// (NEXT_TRIGGERS there).
+// (NEXT_TRIGGERS there), then clicks the first one in Chromium and waits for the dialog's title
+// (DIALOG_TITLE there).
 import { Dialog, Tooltip } from "chunks-ui";
 
 export default function Page() {
@@ -13,7 +14,7 @@ export default function Page() {
         <Dialog.Portal>
           <Dialog.Backdrop />
           <Dialog.Popup>
-            <Dialog.Title>Built without Motion</Dialog.Title>
+            <Dialog.Title>The dialog is open</Dialog.Title>
             <Dialog.Close>Close</Dialog.Close>
           </Dialog.Popup>
         </Dialog.Portal>

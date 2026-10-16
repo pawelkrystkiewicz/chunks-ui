@@ -6,11 +6,14 @@
  *   and Vite build either way, so webpack is the bundler. Both sides matter: a bare import fails
  *   the build without Motion, and `webpackIgnore` builds but leaves `import("motion/react")` in
  *   the bundle, so every app with Motion loses the animations. The consumer without Motion also
- *   type-checks an import of chunks-ui with `skipLibCheck: false`, so the package types must not
- *   reference `motion/react` (see MotionLike in use-motion.ts).
+ *   type-checks an import of chunks-ui with `skipLibCheck: false`, under `bundler` and `node10`
+ *   resolution, so the package types must reference neither `motion/react` (see MotionLike in
+ *   use-motion.ts) nor a dependency's exports-only subpath (#405).
  * - `next build` with Turbopack (Next 16's default) builds the minimal static-export app in
- *   no-motion/next in both consumers; what each build must show is in scripts/README.md.
- * Fixtures: scripts/no-motion (recipe in scripts/README.md). Needs the network.
+ *   no-motion/next in both consumers, then Chromium opens each export from a local server and
+ *   clicks its dialog open; what each build and page must show is in scripts/README.md.
+ * Fixtures: scripts/no-motion (recipe in scripts/README.md). Needs the network and Playwright's
+ * Chromium (`bunx playwright install chromium`, or the Playwright image in CI).
  * Run: bun run check:no-motion (builds first)
  */
 import {
@@ -22,11 +25,39 @@ import {
   readFileSync,
   rmSync,
 } from "node:fs";
+import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 const UI = join(import.meta.dirname, "../packages/ui");
 const FIXTURES = join(import.meta.dirname, "no-motion");
+
+// ponytail: playwright is a devDependency of apps/docs only (check:a11y; check:playwright keeps
+// its version equal to the CI image's), and tsc cannot reach its types from scripts/ (bun's
+// isolated node_modules), so this borrows the module from apps/docs at run time and types the
+// slice drive() uses by hand instead of adding playwright to the root. Ceiling: a change in that
+// slice surfaces when the script runs, not in check-types:scripts. The day apps/docs drops
+// playwright, or the slice grows, add playwright to the root package.json and replace all of this
+// with `import { chromium, type Browser } from "playwright"`.
+interface Locator {
+  click(options: { timeout: number }): Promise<void>;
+  getByText(text: string, options: { exact: boolean }): Locator;
+  waitFor(options: { timeout: number }): Promise<void>;
+}
+interface Page {
+  on(event: "pageerror", listener: (error: Error) => void): void;
+  on(event: "console", listener: (message: { type(): string; text(): string }) => void): void;
+  on(event: "request" | "requestfinished", listener: (request: { url(): string }) => void): void;
+  goto(url: string, options: { timeout: number }): Promise<unknown>;
+  getByRole(role: "button" | "dialog", options?: { name: string; exact: boolean }): Locator;
+}
+interface Browser {
+  newContext(): Promise<{ newPage(): Promise<Page>; close(): Promise<void> }>;
+  close(): Promise<void>;
+}
+const { chromium }: { chromium: { launch(): Promise<Browser> } } = createRequire(
+  join(import.meta.dirname, "../apps/docs/package.json"),
+)("playwright");
 const ENTRY = 'import * as ui from "chunks-ui";\nconsole.log(Object.keys(ui).length);\n';
 // What a strict consumer compiles, with the utils entry so dist/utils.d.ts is in the program
 const TYPES_ENTRY = [
@@ -37,18 +68,25 @@ const TYPES_ENTRY = [
   "export { Button };",
   "",
 ].join("\n");
-const TSCONFIG = {
-  compilerOptions: {
-    strict: true,
-    skipLibCheck: false,
-    moduleResolution: "bundler",
-    module: "esnext",
-    target: "es2022",
-    jsx: "react-jsx",
-    noEmit: true,
-  },
-  files: ["types.ts"],
+const COMPILER_OPTIONS = {
+  strict: true,
+  skipLibCheck: false,
+  target: "es2022",
+  jsx: "react-jsx",
+  noEmit: true,
 };
+/**
+ * How the strict consumer resolves modules, one tsc run each. `bundler` is what Next, Vite and
+ * tsup use. `node10` is the pre-`exports` algorithm of older CommonJS projects: it needs
+ * `module: commonjs`, and `esModuleInterop` as `tsc --init` writes it, because dist/index.d.ts
+ * default-imports React (from `import React from "react"` in the Combobox source) and fails with
+ * TS1259 without the flag before anything else is checked.
+ */
+const RESOLUTIONS = {
+  bundler: { moduleResolution: "bundler", module: "esnext" },
+  node10: { moduleResolution: "node10", module: "commonjs", esModuleInterop: true },
+};
+export type Resolution = keyof typeof RESOLUTIONS;
 /**
  * A name only Motion's own code contains: an export of `motion/react`, so it survives minification
  * as a key of the imported namespace (verified in webpack's async chunk and Turbopack's Motion
@@ -61,6 +99,12 @@ const MARKER_HINT = `if the motion pin moved, confirm ${MOTION_MARKER} is still 
 const CHUNK_REF = /static\/chunks\/([^\s"'\\<>?#]+\.js)/g;
 /** The trigger texts in no-motion/next/app/page.jsx; the first one marks the page's own chunk. */
 export const NEXT_TRIGGERS = ["Open the dialog", "Hover for a tip"] as const;
+/** The dialog's title in no-motion/next/app/page.jsx: visible once the dialog has opened. */
+export const DIALOG_TITLE = "The dialog is open";
+const MISSING_MODULE = /TS2307: Cannot find module '([^']+)'/;
+const MISSING_MOTION_TYPES = /TS2307: Cannot find module 'motion\/react'/;
+/** `pkg/sub` or `@scope/pkg/sub`: a path into a package, which node10 resolves without its exports map. */
+const isSubpath = (name: string) => name.split("/").length > (name.startsWith("@") ? 2 : 1);
 
 const ANSI = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, "g");
 const MOTION_WARNING = /WARNING in [\s\S]*?Can't resolve 'motion\/react'/g;
@@ -80,13 +124,25 @@ export function withoutMotionProblem(exitCode: number, output: string): string |
   }
 }
 
-/** Why the types of chunks-ui fail without Motion, or undefined when they compile. */
-export function typesProblem(exitCode: number, output: string): string | undefined {
+/**
+ * Why the types of chunks-ui fail without Motion under `resolution`, or undefined when they
+ * compile.
+ */
+export function typesProblem(
+  exitCode: number,
+  output: string,
+  resolution: Resolution,
+): string | undefined {
   if (exitCode === 0) return;
-  const hint = /TS2307: Cannot find module 'motion\/react'/.test(output)
-    ? 'dist/index.d.ts references motion/react: the types must describe Motion through MotionLike in packages/ui/src/lib/use-motion.ts, never through typeof import("motion/react").\n'
-    : "";
-  return `${hint}tsc failed on an import of chunks-ui without motion, with skipLibCheck: false (exit ${exitCode}):\n${output}`;
+  const unfound = MISSING_MODULE.exec(output)?.[1];
+  let hint = "";
+  if (MISSING_MOTION_TYPES.test(output)) {
+    hint =
+      'dist/index.d.ts references motion/react: the types must describe Motion through MotionLike in packages/ui/src/lib/use-motion.ts, never through typeof import("motion/react").\n';
+  } else if (resolution === "node10" && unfound && isSubpath(unfound)) {
+    hint = `node10 resolves ${unfound} through a directory or typesVersions of its package, never its exports map, and the chunks-ui typings reach it: import the type from a path node10 resolves (#405 did this for class-variance-authority/types).\n`;
+  }
+  return `${hint}tsc (moduleResolution: ${resolution}) failed on an import of chunks-ui in the consumer without motion, with skipLibCheck: false (exit ${exitCode}):\n${output}`;
 }
 
 export interface OutputFile {
@@ -184,6 +240,73 @@ export function nextWithMotionProblem(
   }
 }
 
+/** The consumers check:no-motion builds, as the messages name them. */
+export type Consumer = "without motion" | "with motion";
+
+/** What Chromium did with an exported page, as drive() records it. */
+export interface BrowserRun {
+  /** The pageerror messages and console errors, in order. */
+  errors: string[];
+  /** Every request's start and end in order, each with the URL's path (`/_next/static/chunks/x.js`). */
+  network: { event: "start" | "end"; path: string }[];
+  /** Why loading the page, clicking the dialog's trigger or waiting for its title failed; undefined when the title showed. */
+  failure?: string;
+}
+
+const chunkPath = (name: string) => `/_next/static/chunks/${name}`;
+
+/**
+ * Why the exported page misbehaved in Chromium for `consumer`, or undefined when it opened the
+ * dialog without an error and treated Motion's chunk right: never requested without Motion, and
+ * with it requested only after the chunk with the page's own code had arrived, so the page's code
+ * (the import() in use-motion.ts) asked for it, not the HTML. `files` are the chunks under
+ * out/_next/static/chunks, as for nextWithMotionProblem.
+ */
+export function browserProblem(
+  consumer: Consumer,
+  run: BrowserRun,
+  files: OutputFile[],
+): string | undefined {
+  const where = `Chromium, in the consumer ${consumer}:`;
+  if (run.errors.length > 0) {
+    return `${where} the exported page raised errors:\n${run.errors.join("\n")}`;
+  }
+  if (run.failure !== undefined) {
+    return `${where} the page did not load, open the dialog on "${NEXT_TRIGGERS[0]}" and show its title "${DIALOG_TITLE}":\n${run.failure}`;
+  }
+  const motion = files
+    .filter(({ code }) => code.includes(MOTION_MARKER))
+    .map(({ name }) => chunkPath(name));
+  const started = run.network.findIndex(
+    ({ event, path }) => event === "start" && motion.includes(path),
+  );
+  const request = run.network[started];
+  if (consumer === "without motion") {
+    if (request) {
+      return `${where} the page requested ${request.path}, a chunk holding Motion's code (${MOTION_MARKER}), although Motion is not installed.`;
+    }
+    return;
+  }
+  // No chunk holds Motion's code: nextWithMotionProblem reports that
+  if (motion.length === 0) return;
+  if (!request) {
+    return `${where} the page never requested Motion's chunk (${motion.join(", ")}; ${run.network.length} network events): the import() in packages/ui/src/lib/use-motion.ts did not run in the browser, or asked for another URL.`;
+  }
+  const page = files
+    .filter(({ code }) => code.includes(NEXT_TRIGGERS[0]))
+    .map(({ name }) => chunkPath(name));
+  const arrived = run.network.findLastIndex(
+    ({ event, path }) => event === "end" && page.includes(path),
+  );
+  const pageRequest = run.network[arrived];
+  if (!pageRequest) {
+    return `${where} no request for a chunk with the page's own code ended (looked for "${NEXT_TRIGGERS[0]}" in ${files.length} chunks, found it in ${page.join(", ") || "none"}), so the check cannot tell when the page's code ran.`;
+  }
+  if (started < arrived) {
+    return `${where} Motion's chunk ${request.path} was requested before the page's own chunk ${pageRequest.path} had arrived, so the HTML or the Turbopack bootstrap asked for it, not the import() in packages/ui/src/lib/use-motion.ts: it is part of the initial load.`;
+  }
+}
+
 function run(cmd: string[], cwd: string) {
   const { exitCode, stdout, stderr } = Bun.spawnSync(cmd, { cwd, stdout: "pipe", stderr: "pipe" });
   // webpack-cli and Next colour their output on CI runners too, which splits "WARNING in" with escape codes
@@ -247,18 +370,28 @@ async function bundle(fixture: string, dir: string, tarball: string) {
   return { ...result, files };
 }
 
-/** Type-checks TYPES_ENTRY in `dir`, where bundle() installed the fixture and the tarball. */
-async function typecheck(dir: string) {
+/**
+ * Type-checks TYPES_ENTRY in `dir` under `resolution`, where bundle() installed the fixture and
+ * the tarball.
+ */
+async function typecheck(dir: string, resolution: Resolution) {
+  const config = `tsconfig.${resolution}.json`;
   await Bun.write(join(dir, "types.ts"), TYPES_ENTRY);
-  await Bun.write(join(dir, "tsconfig.json"), JSON.stringify(TSCONFIG));
-  return run([join(dir, "node_modules/.bin/tsc"), "-p", "tsconfig.json"], dir);
+  await Bun.write(
+    join(dir, config),
+    JSON.stringify({
+      compilerOptions: { ...COMPILER_OPTIONS, ...RESOLUTIONS[resolution] },
+      files: ["types.ts"],
+    }),
+  );
+  return run([join(dir, "node_modules/.bin/tsc"), "-p", config], dir);
 }
 
 /**
  * Builds the Next app of the fixture with Turbopack in `dir`/next, where bundle() installed the
  * fixture and the tarball (the app resolves them from `dir`/node_modules). A subdirectory, so
  * Next's tsconfig.json and out/ stay apart from those of typecheck() and webpack. Returns the
- * exported page and the client chunks.
+ * exported page, the client chunks and the out/ directory.
  */
 function nextBuild(dir: string) {
   const app = join(dir, "next");
@@ -270,41 +403,106 @@ function nextBuild(dir: string) {
     ["env", "NEXT_TELEMETRY_DISABLED=1", join(dir, "node_modules/.bin/next"), "build"],
     app,
   );
-  const page = join(app, "out/index.html");
+  const out = join(app, "out");
+  const page = join(out, "index.html");
   const html = existsSync(page) ? readFileSync(page, "utf8") : undefined;
-  const chunks = join(app, "out/_next/static/chunks");
+  const chunks = join(out, "_next/static/chunks");
   const files = (existsSync(chunks) ? readdirSync(chunks, { recursive: true }) : [])
     .map(String)
     .filter((name) => name.endsWith(".js"))
     .map((name) => ({ name, code: readFileSync(join(chunks, name), "utf8") }));
-  return { ...result, html, files };
+  return { ...result, html, files, out };
+}
+
+/** Serves the static export in `out` on a free port; `server.url` is its origin. */
+function serve(out: string) {
+  return Bun.serve({
+    port: 0,
+    async fetch(request) {
+      const { pathname } = new URL(request.url);
+      const file = Bun.file(
+        join(out, pathname === "/" ? "index.html" : decodeURIComponent(pathname)),
+      );
+      return (await file.exists())
+        ? new Response(file)
+        : new Response("Not found", { status: 404 });
+    },
+  });
+}
+
+const BROWSER_MS = 10_000;
+
+/**
+ * Opens the export in `out` in Chromium (served by serve()), waits for its load event, clicks the
+ * dialog's trigger and waits for the title, recording what browserProblem() decides on.
+ */
+async function drive(browser: Browser, out: string): Promise<BrowserRun> {
+  const server = serve(out);
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const run: BrowserRun = { errors: [], network: [] };
+  const path = (url: string) => new URL(url).pathname;
+  page.on("pageerror", (error) => run.errors.push(`pageerror: ${error.message}`));
+  page.on("console", (message) => {
+    if (message.type() === "error") run.errors.push(`console.error: ${message.text()}`);
+  });
+  page.on("request", (request) => run.network.push({ event: "start", path: path(request.url()) }));
+  page.on("requestfinished", (request) =>
+    run.network.push({ event: "end", path: path(request.url()) }),
+  );
+  try {
+    await page.goto(server.url.href, { timeout: BROWSER_MS });
+    await page
+      .getByRole("button", { name: NEXT_TRIGGERS[0], exact: true })
+      .click({ timeout: BROWSER_MS });
+    await page
+      .getByRole("dialog")
+      .getByText(DIALOG_TITLE, { exact: true })
+      .waitFor({ timeout: BROWSER_MS });
+  } catch (error) {
+    run.failure = String(error);
+  } finally {
+    await context.close();
+    server.stop(true);
+  }
+  return run;
 }
 
 if (import.meta.main) {
+  // Before the builds, so a missing Chromium fails in seconds
+  const browser = await chromium.launch();
   const dir = mkdtempSync(join(tmpdir(), "chunks-ui-no-motion-"));
   try {
     const tarball = pack(dir);
     const without = await bundle(FIXTURES, join(dir, "without"), tarball);
-    const types = await typecheck(join(dir, "without"));
+    const types = await typecheck(join(dir, "without"), "bundler");
+    const node10 = await typecheck(join(dir, "without"), "node10");
     const nextWithout = nextBuild(join(dir, "without"));
+    const pageWithout =
+      nextWithout.html === undefined ? undefined : await drive(browser, nextWithout.out);
     const withMotion = await bundle(join(FIXTURES, "with-motion"), join(dir, "with"), tarball);
     const nextWith = nextBuild(join(dir, "with"));
+    const pageWith = nextWith.html === undefined ? undefined : await drive(browser, nextWith.out);
     const problems = [
       withoutMotionProblem(without.exitCode, without.output),
-      typesProblem(types.exitCode, types.output),
+      typesProblem(types.exitCode, types.output, "bundler"),
+      typesProblem(node10.exitCode, node10.output, "node10"),
       nextWithoutMotionProblem(nextWithout.exitCode, nextWithout.output, nextWithout.html),
+      pageWithout && browserProblem("without motion", pageWithout, nextWithout.files),
       withMotionProblem(withMotion.exitCode, withMotion.output, withMotion.files),
       nextWithMotionProblem(nextWith.exitCode, nextWith.output, nextWith.files, nextWith.html),
+      pageWith && browserProblem("with motion", pageWith, nextWith.files),
     ].filter((problem) => problem !== undefined);
     if (problems.length > 0) {
       console.error(problems.join("\n\n"));
       process.exitCode = 1;
     } else {
       console.log(
-        "webpack and next build (Turbopack) build chunks-ui without motion (types compile with skipLibCheck: false) and with motion (an async chunk, no bare import).",
+        "webpack and next build (Turbopack) build chunks-ui without motion (types compile with skipLibCheck: false under bundler and node10 resolution) and with motion (an async chunk, no bare import); Chromium opens the dialog of both exports without an error and requests Motion's chunk only with Motion, after the page's own code.",
       );
     }
   } finally {
+    await browser.close();
     rmSync(dir, { recursive: true, force: true });
   }
 }
