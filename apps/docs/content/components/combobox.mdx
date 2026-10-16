@@ -249,7 +249,7 @@ The popup enters with a scale-up and fade (from `scale-95` and `opacity-0`): the
 | `Combobox.Icon` | Chevron icon, usable standalone outside the trigger. |
 | `Combobox.Portal` | Renders the popup in a portal. |
 | `Combobox.Positioner` | Handles Floating UI positioning. Default `sideOffset={8}`, as on `Popover.Content` and `Menu.Content`: the input's focus ring, 4px outside its edge, stays clear of the popup. A `sideOffset` you pass replaces it, so `sideOffset={0}` opens the popup flush against the input. Inside a `Combobox.Control` the popup anchors to the Control: it is as wide as the Control and opens 8px below the Control's border. |
-| `Combobox.Popup` | The dropdown panel containing items. Scrolls when the items need more than the space between the input and the viewport edge. |
+| `Combobox.Popup` | The dropdown panel containing items. It is as wide as the input, or as the `Combobox.Control` in a multi-select. Item text wraps to that width, and a word longer than the popup breaks. Scrolls when the items need more than the space between the input and the viewport edge. |
 | `Combobox.List` | List container. Takes a function child that renders each matching item (or each group, when `items` holds groups). |
 | `Combobox.Item` | An individual selectable option. |
 | `Combobox.ItemIndicator` | Checkmark shown for the selected item. |

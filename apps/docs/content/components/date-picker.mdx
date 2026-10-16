@@ -183,6 +183,8 @@ export default Props
 
 `className` goes on the `<div>` that wraps the trigger, and `style` on the trigger `<button>`. The trigger fills the wrapper, so set the width with `className`.
 
+The calendar popup is at least as wide as the trigger. Below the calendar's own width (about 280px), the popup keeps that width. A wider trigger widens the popup, and the calendar sits in its centre.
+
 ## Labels
 
 `labels` replaces the built-in English text, for example to translate it. Keys you leave out keep their default from `DEFAULT_DATE_PICKER_LABELS`. They include every [Calendar key](/components/calendar#labels), which the picker passes to its calendar. The `placeholder` prop takes precedence over `labels.placeholder`. See [Labels](/labels).
