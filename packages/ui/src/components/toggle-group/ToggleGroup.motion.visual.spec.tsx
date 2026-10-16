@@ -453,6 +453,10 @@ type Layout = {
   width?: number;
   /** Classes of item "b" */
   itemClassName?: string;
+  /** An item before the others, which a change can remove */
+  lead?: boolean;
+  /** Item "b" before item "a": the same keyed items, re-sorted */
+  reversed?: boolean;
 };
 
 const sized = ({
@@ -464,23 +468,32 @@ const sized = ({
   groupSize,
   width = 400,
   itemClassName,
-}: Layout = {}) => (
-  <div style={{ width, display: "flex", justifyContent: "center" }}>
-    <ToggleGroup.Root
-      value={[value]}
-      className={`justify-center ${groupClassName ?? ""}`}
-      style={{ padding: groupPadding, gap: groupGap, ...groupSize }}
-    >
-      {/* No transition of its own, so the item takes its new size at once */}
-      <ToggleGroup.Item value="a" style={{ transition: "none", ...itemStyle }}>
-        Alpha
-      </ToggleGroup.Item>
-      <ToggleGroup.Item value="b" className={itemClassName}>
-        Beta
-      </ToggleGroup.Item>
-    </ToggleGroup.Root>
-  </div>
-);
+  lead,
+  reversed,
+}: Layout = {}) => {
+  const items = [
+    // No transition of its own, so the item takes its new size at once
+    <ToggleGroup.Item key="a" value="a" style={{ transition: "none", ...itemStyle }}>
+      Alpha
+    </ToggleGroup.Item>,
+    // The label in an element of its own, for a spec to write as Motion would an icon
+    <ToggleGroup.Item key="b" value="b" className={itemClassName}>
+      <span>Beta</span>
+    </ToggleGroup.Item>,
+  ];
+  return (
+    <div style={{ width, display: "flex", justifyContent: "center" }}>
+      <ToggleGroup.Root
+        value={[value]}
+        className={`justify-center ${groupClassName ?? ""}`}
+        style={{ padding: groupPadding, gap: groupGap, ...groupSize }}
+      >
+        {lead && <ToggleGroup.Item value="lead">Lead</ToggleGroup.Item>}
+        {reversed ? items.reverse() : items}
+      </ToggleGroup.Root>
+    </div>
+  );
+};
 
 const edgesOf = (el: Element) => {
   const { left, top, width, height } = el.getBoundingClientRect();
@@ -553,13 +566,16 @@ const RESIZES: [string, Layout, Layout][] = [
 
 /**
  * Each move: its name, the layout before it, and the layout after it. Nothing resizes: a class
- * or inline style change on the group or an item moves the items within the group's fixed size.
+ * or inline style change on the group or an item, or an item removed or moved, moves the items
+ * within the group's fixed size.
  */
 const MOVES: [string, Layout, Layout][] = [
   ["the gap of a group of fixed size, by its style", FIXED, { ...FIXED, groupGap: 24 }],
   ["the gap of a group of fixed size, by its class", FIXED, { ...FIXED, groupClassName: "gap-6" }],
   ["the order of the item, by its style", FIXED, { ...FIXED, itemStyle: { order: 1 } }],
   ["the order of the other item, by its class", FIXED, { ...FIXED, itemClassName: "order-first" }],
+  ["the items before it, by removing one", { ...FIXED, lead: true }, FIXED],
+  ["the order of the items, by re-sorting them", FIXED, { ...FIXED, reversed: true }],
 ];
 
 /**
@@ -591,12 +607,34 @@ describe.each(MOTION_PATHS)("ToggleGroup indicator on a resize, $path", ({ withM
     (_, before, after) => expectFollowsAtOnce(withMotion, before, after),
   );
 
-  // The indicator's own writes (its box; with Motion, a spring's many frames of them) never have
-  // the group measure again. A move has it measure once.
-  it("measures again once on a move, and never for the indicator's own writes", async () => {
-    const { indicator, item, rerender } = await renderSized(withMotion, FIXED);
+  // The indicator's own writes (its box; with Motion, a spring's many frames of them) and a child
+  // of an item that Motion animates never have the group measure again. A move has it measure once.
+  it("measures again once on a move, and never for the indicator's writes or inside an item", async () => {
+    const { indicator, item, rerender, getByText } = await renderSized(withMotion, FIXED);
     let batches = resizeBatches.count;
     rerender(sized({ ...FIXED, value: "b" }));
+    await waitForStable(() => offBy(item("Beta"), indicator()));
+    expect(resizeBatches.count).toBe(batches);
+
+    // A style write in each frame, as Motion's to an icon in the item
+    const label = getByText("Beta");
+    for (const opacity of [0.8, 0.6, 0.4, 0.6, 0.8]) {
+      label.style.opacity = `${opacity}`;
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+    }
+    await waitForStable(() => offBy(item("Beta"), indicator()));
+    expect(resizeBatches.count).toBe(batches);
+
+    // A node added to and removed from an item, and from its label, as a swapped icon would be
+    for (const parent of [item("Beta"), label]) {
+      // Out of flow, so the item keeps its size (a flex item would add a gap)
+      const extra = document.createElement("i");
+      extra.style.position = "absolute";
+      parent.append(extra);
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      extra.remove();
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+    }
     await waitForStable(() => offBy(item("Beta"), indicator()));
     expect(resizeBatches.count).toBe(batches);
 
@@ -832,11 +870,13 @@ describe("ToggleGroup indicator with reduced motion", () => {
 // Server HTML has no indicator: the pressed item draws the pill, then hands over to the measured
 // indicator in one commit. Also with reduced motion off, where a background hand-over would fade.
 describe("ToggleGroup pill from server HTML to the measured indicator", () => {
-  const ui = (
+  const ui = ({ groupDisabled = false, itemDisabled = false } = {}) => (
     <StrictMode>
-      <ToggleGroup.Root defaultValue={["b"]}>
+      <ToggleGroup.Root defaultValue={["b"]} disabled={groupDisabled}>
         <ToggleGroup.Item value="a">Alpha</ToggleGroup.Item>
-        <ToggleGroup.Item value="b">Beta, a longer item</ToggleGroup.Item>
+        <ToggleGroup.Item value="b" disabled={itemDisabled}>
+          Beta, a longer item
+        </ToggleGroup.Item>
       </ToggleGroup.Root>
     </StrictMode>
   );
@@ -850,6 +890,15 @@ describe("ToggleGroup pill from server HTML to the measured indicator", () => {
     return !transparent(getComputedStyle(item)) || (beforeShown && !transparent(before));
   }
 
+  /** The opacity `el`, or its ::before, paints with in `group`: its own times each up to it */
+  function opacityIn(group: Element, el: Element, pseudo?: "::before") {
+    let opacity = pseudo ? Number(getComputedStyle(el, pseudo).opacity) : 1;
+    for (let node: Element | null = el; node && node !== group; node = node.parentElement) {
+      opacity *= Number(getComputedStyle(node).opacity);
+    }
+    return opacity;
+  }
+
   let container: HTMLDivElement | null = null;
   let app: Root | null = null;
   afterEach(async () => {
@@ -860,6 +909,23 @@ describe("ToggleGroup pill from server HTML to the measured indicator", () => {
     await commands.emulateMedia({ reducedMotion: "no-preference" });
   });
 
+  /** Puts `page`'s server HTML in the document; returns its host, group and pressed item */
+  function serverRendered(page: ReactElement) {
+    const host = document.createElement("div");
+    container = host;
+    host.innerHTML = renderToString(page);
+    document.body.append(host);
+    const group = host.querySelector<HTMLElement>('[role="group"]');
+    const pressed = host.querySelector<HTMLElement>("[data-pressed]");
+    if (!group || !pressed) throw new Error("No pressed item in the server HTML");
+    return {
+      host,
+      group,
+      pressed,
+      indicator: () => group.querySelector<HTMLElement>(":scope > span"),
+    };
+  }
+
   it.each([
     { path: "Motion", withMotion: true, reducedMotion: "no-preference" },
     { path: "the CSS fallback", withMotion: false, reducedMotion: "no-preference" },
@@ -869,13 +935,8 @@ describe("ToggleGroup pill from server HTML to the measured indicator", () => {
     async ({ withMotion, reducedMotion }) => {
       await commands.emulateMedia({ reducedMotion });
       await enterMotionPath(withMotion);
-      container = document.createElement("div");
-      container.innerHTML = renderToString(ui);
-      document.body.append(container);
-      const group = container.querySelector<HTMLElement>('[role="group"]');
-      const pressed = container.querySelector<HTMLElement>("[data-pressed]");
-      if (!group || !pressed) throw new Error("No pressed item in the server HTML");
-      const indicator = () => group.querySelector<HTMLElement>(":scope > span");
+      const page = ui();
+      const { host, pressed, indicator } = serverRendered(page);
       // Before hydration: the item's own pill, and no indicator
       expect(indicator()).toBeNull();
       expect(ownSurface(pressed)).toBe(true);
@@ -885,7 +946,7 @@ describe("ToggleGroup pill from server HTML to the measured indicator", () => {
       expect(Number.parseFloat(pill.height)).toBeCloseTo(pressed.offsetHeight, 0);
       expect(Number.parseFloat(pill.zIndex)).toBeLessThan(0);
 
-      app = hydrateRoot(container, ui);
+      app = hydrateRoot(host, page);
       const frames = await eachPaintedFrame(
         () => ({ indicator: indicator() !== null, own: ownSurface(pressed) }),
         30,
@@ -903,6 +964,28 @@ describe("ToggleGroup pill from server HTML to the measured indicator", () => {
       const shown = indicator();
       if (!shown) throw new Error("No indicator after hydration");
       expect(offBy(pressed, shown)).toBeLessThanOrEqual(1);
+    },
+  );
+
+  // Disabled, the pressed item dims the pill it draws: the indicator dims too, or the pill would
+  // brighten as it hands over
+  it.each([
+    ["a disabled group", { groupDisabled: true }],
+    ["a disabled pressed item", { itemDisabled: true }],
+  ] as const)(
+    "paints the pill at one opacity before and after hydration, in %s",
+    async (_, disabled) => {
+      await enterMotionPath(false);
+      const page = ui(disabled);
+      const { host, group, pressed, indicator } = serverRendered(page);
+      const before = opacityIn(group, pressed, "::before");
+      expect(before, "the item dims its own pill").toBe(0.5);
+
+      app = hydrateRoot(host, page);
+      await expect.poll(indicator).not.toBeNull();
+      const shown = indicator();
+      if (!shown) throw new Error("No indicator after hydration");
+      expect(opacityIn(group, shown)).toBe(before);
     },
   );
 
