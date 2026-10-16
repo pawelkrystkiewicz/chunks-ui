@@ -27,7 +27,7 @@ const PHYSICAL = new RegExp(
   `(?<![\\w-])(?:${[
     `-?(?:scroll-)?(?:ml|mr|pl|pr)-(?:${VALUE})`,
     `-?(?:left|right)-(?:${VALUE})`,
-    "(?:rounded-[lr]|rounded-[tb][lr]|border-[lr])(?:-(?:[\\w.]+|\\[[^\\]\\s]*\\]|\\([^)\\s]*\\)))?",
+    "(?:rounded-[lr]|rounded-[tb][lr]|border-[lr])(?:-(?:\\w+(?:\\.\\w+)*|\\[[^\\]\\s]*\\]|\\([^)\\s]*\\)))?",
     "text-(?:left|right)",
     "(?:float|clear)-(?:left|right)",
   ].join("|")})(?![\\w-])`,

@@ -27,87 +27,81 @@ afterEach(() => {
 });
 
 describe("physicalTokens", () => {
-  it("finds a physical margin, padding, inset, text alignment, radius and border", () => {
-    expect(
-      physicalTokens(
-        'className="ml-4 pr-2 left-0 text-right rounded-l-lg rounded-tl-sm border-r-2 float-left clear-right"',
-      ),
-    ).toEqual([
-      "ml-4",
-      "pr-2",
-      "left-0",
-      "text-right",
-      "rounded-l-lg",
-      "rounded-tl-sm",
-      "border-r-2",
-      "float-left",
-      "clear-right",
-    ]);
-  });
-
-  it("finds the scroll margin and padding, the float and the clear, behind a variant too", () => {
-    expect(
-      physicalTokens(
-        "scroll-ml-4 md:scroll-pr-2 -scroll-mr-1 scroll-pl-[10px] sm:float-right clear-left",
-      ),
-    ).toEqual([
-      "scroll-ml-4",
-      "scroll-pr-2",
-      "-scroll-mr-1",
-      "scroll-pl-[10px]",
-      "float-right",
-      "clear-left",
-    ]);
-  });
-
-  it("reports the class, not the ;, , or ) that follows it", () => {
-    expect(
-      physicalTokens("a: border-r-2; b: rounded-l-lg, c: (see border-l-4) d: border-l-(--l-ill)"),
-    ).toEqual(["border-r-2", "rounded-l-lg", "border-l-4", "border-l-(--l-ill)"]);
-  });
-
-  it("ends a rounded or border class at its value, not at the junk after it", () => {
-    expect(
-      physicalTokens("a](border-l-2](url) b: rounded-l-lg} c: border-l-2,border-r-2 d: border-l-2"),
-    ).toEqual(["border-l-2", "rounded-l-lg", "border-l-2", "border-r-2", "border-l-2"]);
-  });
-
-  it("finds one behind a variant, a negative one, a fraction and an arbitrary value", () => {
-    expect(
-      physicalTokens(
-        "md:ml-4 -left-2 hover:-mr-px data-[open]:left-0 [&>svg]:-ml-1 left-[calc(50%-126px)] left-(--x) left-1/2 pl-0.5 rounded-br-[4px] border-l-(--l-ill) border-l rounded-l",
-      ),
-    ).toEqual([
-      "ml-4",
-      "-left-2",
-      "-mr-px",
-      "left-0",
-      "-ml-1",
-      "left-[calc(50%-126px)]",
-      "left-(--x)",
-      "left-1/2",
-      "pl-0.5",
-      "rounded-br-[4px]",
-      "border-l-(--l-ill)",
-      "border-l",
-      "rounded-l",
-    ]);
-  });
-
-  it("leaves the logical classes and the look-alikes alone", () => {
-    expect(
-      physicalTokens(
-        "ms-4 pe-2 start-0 -end-2 text-start rounded-s-lg rounded-ee-sm border-e-2 inset-x-0 rounded-lg border-left translate-x-2 float-none clear-both scroll-ms-4 scroll-mx-2 overfloat-left",
-      ),
-    ).toEqual([]);
-  });
-
-  it("leaves prose and other words with left, right, ml, pl or pr in them alone", () => {
-    expect(
-      physicalTokens(
-        "Toasts stack left-to-right or right-to-left; the `pl-PL` locale; left-right arrows; html-2; `left-*` offsets",
-      ),
-    ).toEqual([]);
+  it.each<[string, string, string[]]>([
+    [
+      "a physical margin, padding, inset, text alignment, radius, border, float and clear",
+      'className="ml-4 pr-2 left-0 text-right rounded-l-lg rounded-tl-sm border-r-2 float-left clear-right"',
+      [
+        "ml-4",
+        "pr-2",
+        "left-0",
+        "text-right",
+        "rounded-l-lg",
+        "rounded-tl-sm",
+        "border-r-2",
+        "float-left",
+        "clear-right",
+      ],
+    ],
+    [
+      "the scroll margin and padding, the float and the clear, behind a variant too",
+      "scroll-ml-4 md:scroll-pr-2 -scroll-mr-1 scroll-pl-[10px] sm:float-right clear-left",
+      [
+        "scroll-ml-4",
+        "scroll-pr-2",
+        "-scroll-mr-1",
+        "scroll-pl-[10px]",
+        "float-right",
+        "clear-left",
+      ],
+    ],
+    [
+      "one behind a variant, a negative one, a fraction and an arbitrary value, and a bare border-l or rounded-l",
+      "md:ml-4 -left-2 hover:-mr-px data-[open]:left-0 [&>svg]:-ml-1 left-[calc(50%-126px)] left-(--x) left-1/2 pl-0.5 rounded-br-[4px] border-l-(--l-ill) border-l rounded-l",
+      [
+        "ml-4",
+        "-left-2",
+        "-mr-px",
+        "left-0",
+        "-ml-1",
+        "left-[calc(50%-126px)]",
+        "left-(--x)",
+        "left-1/2",
+        "pl-0.5",
+        "rounded-br-[4px]",
+        "border-l-(--l-ill)",
+        "border-l",
+        "rounded-l",
+      ],
+    ],
+    [
+      "the class, not the ; , ) ] } or . that follows it",
+      "a: border-r-2; b: rounded-l-lg, c: (see border-l-4) d: border-l-(--l-ill) a](border-l-2](url) b: rounded-l-lg} c: border-l-2,border-r-2 d: border-l-2 e: see border-l-2.",
+      [
+        "border-r-2",
+        "rounded-l-lg",
+        "border-l-4",
+        "border-l-(--l-ill)",
+        "border-l-2",
+        "rounded-l-lg",
+        "border-l-2",
+        "border-r-2",
+        "border-l-2",
+        "border-l-2",
+      ],
+    ],
+    [
+      "nothing for the logical classes and the look-alikes",
+      "ms-4 pe-2 start-0 -end-2 text-start rounded-s-lg rounded-ee-sm border-e-2 inset-x-0 rounded-lg border-left translate-x-2 float-none clear-both scroll-ms-4 scroll-mx-2 overfloat-left",
+      [],
+    ],
+    [
+      "nothing for prose and other words with left, right, ml, pl or pr in them",
+      "Toasts stack left-to-right or right-to-left; the `pl-PL` locale; left-right arrows; html-2; `left-*` offsets. Toasts stack left-to-right, or right-to-left in RTL. The label is on the left.",
+      [],
+    ],
+  ])("finds %s", (_name, line, expected) => {
+    expect(physicalTokens(line)).toEqual(expected);
   });
 });
 
@@ -130,9 +124,11 @@ describe("checkDocsDirection", () => {
     ]);
   });
 
-  it("passes a hit marked with a reason on its line or on the line above", async () => {
-    const dir = tree({
-      "apps/docs/app/x.tsx": [
+  // [name, lines of apps/docs/app/x.tsx, extra files, expected "line: token" problems]
+  it.each<[string, string[], Record<string, string>, string[]]>([
+    [
+      "passes a hit marked with a reason on its line or on the line above",
+      [
         'const A = "left-3"; // direction: physical, a corner of the rotated plate',
         "// direction: physical, the tiles compose one drawing",
         'const B = "left-[calc(50%-30px)]";',
@@ -142,44 +138,33 @@ describe("checkDocsDirection", () => {
         '    <span className="ml-2">{A + B}</span>',
         "  </div>",
         ");",
-        "",
-      ].join("\n"),
-      "apps/docs/content/y.mdx":
-        '{/* direction: physical, the diagram is a map */}\n<Map className="right-0" />\n',
-    });
-    expect(await checkDocsDirection(dir)).toEqual([]);
-  });
-
-  it("reports a hit whose marker names no reason, or sits two lines above", async () => {
-    const dir = tree({
-      "apps/docs/app/x.tsx": [
+      ],
+      {
+        "apps/docs/content/y.mdx":
+          '{/* direction: physical, the diagram is a map */}\n<Map className="right-0" />\n',
+      },
+      [],
+    ],
+    [
+      "reports a hit whose marker names no reason, or sits two lines above",
+      [
         'const A = "left-3"; // direction: physical',
         "// direction: physical, too far up",
         "",
         'const B = "left-0";',
-        "",
-      ].join("\n"),
-    });
-    expect(await checkDocsDirection(dir)).toEqual([
-      "apps/docs/app/x.tsx:1: left-3",
-      "apps/docs/app/x.tsx:4: left-0",
-    ]);
-  });
-
-  it("exempts the line a marker is on, not the line below it", async () => {
-    const dir = tree({
-      "apps/docs/app/x.tsx": [
-        'const A = "left-3"; // direction: physical, the first one',
-        'const B = "left-0";',
-        "",
-      ].join("\n"),
-    });
-    expect(await checkDocsDirection(dir)).toEqual(["apps/docs/app/x.tsx:2: left-0"]);
-  });
-
-  it("counts the line above only when it holds nothing but the comment", async () => {
-    const dir = tree({
-      "apps/docs/app/x.tsx": [
+      ],
+      {},
+      ["1: left-3", "4: left-0"],
+    ],
+    [
+      "exempts the line a marker is on, not the line below it",
+      ['const A = "left-3"; // direction: physical, the first one', 'const B = "left-0";'],
+      {},
+      ["2: left-0"],
+    ],
+    [
+      "counts the line above only when it holds nothing but the comment",
+      [
         "// direction: physical, the tiles compose one drawing",
         'const A = "left-3";',
         "  /* direction: physical, same */",
@@ -188,31 +173,24 @@ describe("checkDocsDirection", () => {
         'const C = "left-1";',
         'const D = "left-2"; /* direction: physical, on its own line only */',
         'const E = "left-4";',
-        "",
-      ].join("\n"),
-    });
-    expect(await checkDocsDirection(dir)).toEqual(["apps/docs/app/x.tsx:8: left-4"]);
-  });
-
-  it("does not let a marker in a comment after code, or before more code, exempt the next line", async () => {
-    const dir = tree({
-      "apps/docs/app/x.tsx": [
+      ],
+      {},
+      ["8: left-4"],
+    ],
+    [
+      "does not let a marker in a comment after code, or before more code, exempt the next line",
+      [
         '/* direction: physical, a */ const A = "left-3";',
         'const B = "left-0";',
         '{/* x */} <i className="left-1" /> {/* direction: physical, a */}',
         'const C = "left-2";',
-        "",
-      ].join("\n"),
-    });
-    expect(await checkDocsDirection(dir)).toEqual([
-      "apps/docs/app/x.tsx:2: left-0",
-      "apps/docs/app/x.tsx:4: left-2",
-    ]);
-  });
-
-  it("does not honour a marker on a continuation line of a multi-line comment", async () => {
-    const dir = tree({
-      "apps/docs/app/x.tsx": [
+      ],
+      {},
+      ["2: left-0", "4: left-2"],
+    ],
+    [
+      "does not honour a marker on a continuation line of a multi-line comment",
+      [
         "/**",
         " * direction: physical, the tiles compose one drawing",
         " */",
@@ -220,38 +198,24 @@ describe("checkDocsDirection", () => {
         "/*",
         " * direction: physical, same",
         'const B = "left-0";',
-        "",
-      ].join("\n"),
-    });
-    expect(await checkDocsDirection(dir)).toEqual([
-      "apps/docs/app/x.tsx:4: left-3",
-      "apps/docs/app/x.tsx:7: left-0",
-    ]);
-  });
-
-  it("needs a reason that starts with a word character", async () => {
-    const dir = tree({
-      "apps/docs/app/x.tsx": [
+      ],
+      {},
+      ["4: left-3", "7: left-0"],
+    ],
+    [
+      "needs a reason that starts with a word character",
+      [
         "{/* direction: physical, */}",
         'const A = "left-3";',
         "{/* direction: physical, art */}",
         'const B = "left-0";',
-        "",
-      ].join("\n"),
-    });
-    expect(await checkDocsDirection(dir)).toEqual(["apps/docs/app/x.tsx:2: left-3"]);
-  });
-
-  it("flags a float, a clear and a scroll margin", async () => {
-    const dir = tree({
-      "apps/docs/content/y.mdx":
-        '<div className="float-left clear-right" />\n<div className="scroll-ml-4" />\n',
-    });
-    expect(await checkDocsDirection(dir)).toEqual([
-      "apps/docs/content/y.mdx:1: float-left",
-      "apps/docs/content/y.mdx:1: clear-right",
-      "apps/docs/content/y.mdx:2: scroll-ml-4",
-    ]);
+      ],
+      {},
+      ["2: left-3"],
+    ],
+  ])("%s", async (_name, lines, files, expected) => {
+    const dir = tree({ "apps/docs/app/x.tsx": `${lines.join("\n")}\n`, ...files });
+    expect(await checkDocsDirection(dir)).toEqual(expected.map((p) => `apps/docs/app/x.tsx:${p}`));
   });
 
   it("scans the files directly in apps/docs, mdx-components.tsx among them", async () => {
@@ -266,14 +230,6 @@ describe("checkDocsDirection", () => {
     const dir = tree({
       "apps/docs/app/x.tsx":
         'export const X = () => <div className="ms-4 pe-2 start-0 text-end" />;\n',
-    });
-    expect(await checkDocsDirection(dir)).toEqual([]);
-  });
-
-  it("does not trip on prose with left or right in it", async () => {
-    const dir = tree({
-      "apps/docs/content/y.mdx":
-        "Toasts stack left-to-right, or right-to-left in RTL. The label is on the left.\n\nThe `pl-PL` locale.\n",
     });
     expect(await checkDocsDirection(dir)).toEqual([]);
   });
