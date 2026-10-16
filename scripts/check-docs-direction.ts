@@ -1,25 +1,10 @@
 #!/usr/bin/env bun
 /**
- * Fails on a physical direction class in the docs (`.ts`, `.tsx` and `.mdx` under apps/docs/app
- * and apps/docs/content, and directly in apps/docs, such as `mdx-components.tsx`): `ml-*`, `mr-*`,
- * `pl-*`, `pr-*`, `left-*`, `right-*`, `text-left`, `text-right`, `rounded-l-*`, `rounded-r-*`, the
- * four `rounded-tl-*` corners, `border-l-*`, `border-r-*`, `float-left`, `float-right`,
- * `clear-left`, `clear-right` and `scroll-ml-*`, `scroll-mr-*`, `scroll-pl-*`, `scroll-pr-*`,
- * negative (`-ml-*`) and behind a variant (`md:ml-*`, `data-[open]:left-0`) too.
- * The logical classes (`ms-*`, `ps-*`, `start-*`, `text-start`, `rounded-s-*`, `border-s-*`,
- * `float-start`, `clear-start`, `scroll-ms-*` and their `e` twins) mirror in RTL; a physical one
- * does not, and the page breaks there.
- *
- * It matches class tokens, not prose: the spacing and inset classes need a Tailwind value
- * (`4`, `0.5`, `1/2`, `px`, `auto`, `full`, `[…]`, `(…)`), so `left-to-right`, `pl-PL` and
- * `left-*` in a sentence do not count. Inline code in MDX prose and tables is flagged like any
- * other text. A deliberate physical class (art that must not mirror) carries a marker with a
- * reason: `// direction: physical, <reason>` in TS, `{/* direction: physical, <reason> *\/}` in
- * TSX and MDX. The marker goes on the same line as the class, or in a single-line comment alone
- * on the line above. A marker without a reason (one that does not start with an ASCII letter,
- * digit or underscore) does not count, and a marker at the end of a code line exempts that line
- * only. A scanned directory with no file in it fails the run, so an empty scan cannot pass. It
- * makes no network calls.
+ * Fails on a physical margin, padding, inset, text-align, rounded, border, float, clear or scroll
+ * class in apps/docs. It needs a Tailwind value (`ml-4`, `left-1/2`), so prose like `left-to-right`
+ * passes. A marker `direction: physical, <reason>` on the same line, or in a single-line comment
+ * alone on the line above, exempts a deliberate one. An empty scan fails.
+ * Full list and limits: TESTING_STRATEGY.md
  *
  * Run: bun run check:docs-direction
  */
