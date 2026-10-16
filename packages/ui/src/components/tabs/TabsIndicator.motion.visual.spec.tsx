@@ -32,6 +32,8 @@ type Layout = {
   width?: number;
   /** Classes of tab "b" */
   tabClassName?: string;
+  /** Content inside tab "a": an empty span of fixed size, e.g. an animated badge */
+  badge?: boolean;
 };
 
 const tabs = ({
@@ -42,6 +44,7 @@ const tabs = ({
   listClassName,
   width = 400,
   tabClassName,
+  badge,
 }: Layout = {}) => (
   <div style={{ width }}>
     <Tabs.Root value={value}>
@@ -49,6 +52,7 @@ const tabs = ({
         {/* No transition of its own, so the tab takes its new size at once */}
         <Tabs.Tab key={tabKey} value="a" style={{ transition: "none", ...tabStyle }}>
           Alpha
+          {badge && <span data-testid="badge" style={{ display: "inline-block", width: 4 }} />}
         </Tabs.Tab>
         <Tabs.Tab value="b" className={tabClassName}>
           Beta
@@ -262,6 +266,19 @@ describe.each(MOTION_PATHS)("Tabs.Indicator, $path", ({ withMotion }) => {
     await waitForStable(() => offBy(tab("Beta"), indicator));
     expect(offBy(tab("Beta"), indicator)).toBeLessThanOrEqual(1);
     expect(resizeBatches.count).toBe(batches + 1);
+  });
+
+  // A write inside a tab can only move the tabs by resizing that tab, which the tabs' border-box
+  // observers catch. A Motion-animated badge writes style every frame and must not cost a render.
+  it("does not measure again for a style change inside a tab", async () => {
+    const { getByTestId } = await renderTabs(withMotion, { ...FIXED, badge: true });
+    const badge = getByTestId("badge");
+    const batches = resizeBatches.count;
+    for (const opacity of ["0.2", "0.4", "0.6", "0.8"]) {
+      badge.style.opacity = opacity;
+      await eachPaintedFrame(() => 0, 2);
+    }
+    expect(resizeBatches.count).toBe(batches);
   });
 
   it("still slides to a newly selected tab", async () => {

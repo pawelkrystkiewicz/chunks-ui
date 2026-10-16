@@ -207,10 +207,10 @@ function TabsIndicatorElement({
   const selected = useContext(TabsContext)?.value;
   const { element, sliding, transition } = useIndicatorSlide<HTMLElement>(selected, box);
   // Observes every tab's border box, and the list's border and content boxes, with the
-  // ResizeObserver every indicator shares: Base UI watches content boxes only, and padding on one
-  // tab moves the others. The observer runs after layout and before paint, and commits every
-  // notified indicator's measure in one synchronous render, so the indicator renders in the
-  // frame the resize happens in. Skipped where there is no ResizeObserver (jsdom).
+  // ResizeObservers every indicator shares (one per box): Base UI watches content boxes only, and
+  // padding on one tab moves the others. They run after layout and before paint, and each commits
+  // every indicator it notifies in one synchronous render, so the indicator renders in the frame
+  // the resize happens in. Skipped where there is no ResizeObserver (jsdom).
   useEffect(() => {
     if (typeof ResizeObserver === "undefined") return;
     const indicator = element.current;
@@ -233,10 +233,19 @@ function TabsIndicatorElement({
     observeTabs();
     // A selection measures again too: Base UI measured the newly active tab before the commit
     // that selected it, which can give it padding. So does a class or inline style change on
-    // the list or a tab, which can move the tabs without resizing anything (gap, order). Changes
-    // to the indicator don't count: Base UI and Motion write its box as inline style.
+    // the list, a tab or an element holding a tab, which can move the tabs without resizing
+    // anything (gap, order). A change inside a tab doesn't count: it moves the tabs only by
+    // resizing that tab, which its border-box observer catches, and an animated badge writes
+    // style every frame. Nor do changes to the indicator: Base UI and Motion write its box as
+    // inline style.
+    const holdsTab = (node: Node) =>
+      node === list ||
+      (node instanceof Element &&
+        (node.matches('[role="tab"]') || node.querySelector('[role="tab"]') !== null));
     const mutation = new MutationObserver((records) => {
-      const outside = records.filter(({ target }) => !indicator.contains(target));
+      const outside = records.filter(({ target, type }) =>
+        type === "childList" ? !indicator.contains(target) : holdsTab(target),
+      );
       if (outside.length === 0) return;
       if (outside.some((record) => record.type === "childList")) observeTabs();
       else notifyResize(list, "border-box");
