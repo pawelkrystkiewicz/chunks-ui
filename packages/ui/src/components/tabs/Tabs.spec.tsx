@@ -4,7 +4,16 @@ import { axe } from "jest-axe";
 import { type ReactNode, StrictMode, useEffect, useRef, useState } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { renderToString } from "react-dom/server";
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  type MockInstance,
+  vi,
+} from "vitest";
 import { useIndicatorSlide } from "../../lib/use-indicator-slide";
 import { FOCUS_RING } from "../shared";
 import { Tabs, type TabsRootProps, useTabsValue } from "./Tabs";
@@ -488,9 +497,7 @@ describe("function tab values", () => {
   });
 });
 
-// Base UI compares tab values with ===, so any value is a tab value. Contents and Animate key
-// elements by the value: two values with the same String() text must still get distinct keys,
-// and a value must keep its key from one render to the next
+// Contents and Animate key by value; distinct values need distinct, stable keys.
 describe("tab values with the same String() text", () => {
   const first = { id: 1 };
   const second = { id: 2 };
@@ -500,6 +507,15 @@ describe("tab values with the same String() text", () => {
     ["two functions with the same source", sameSource(), sameSource()],
     ['1 and "1"', 1, "1"],
   ] as const;
+
+  // React reports two children with the same key through console.error
+  let consoleError: MockInstance<typeof console.error>;
+  beforeEach(() => {
+    consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+  });
+  afterEach(() => {
+    consoleError.mockRestore();
+  });
 
   // StrictMode runs a mount's effects twice on one instance; a remount is a new instance
   function MountedChild({ instances }: { instances: Set<object> }) {
@@ -552,17 +568,11 @@ describe("tab values with the same String() text", () => {
   }
 
   it.each(pairs)("Tabs.Contents shows the pane of each of %s, with no duplicate key", (_, a, b) => {
-    // React reports two children with the same key through console.error
-    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
-    try {
-      const { rerender } = render(<Contents value={a} a={a} b={b} />);
-      expectShown("a");
-      rerender(<Contents value={b} a={a} b={b} />);
-      expectShown("b");
-      expect(consoleError).not.toHaveBeenCalled();
-    } finally {
-      consoleError.mockRestore();
-    }
+    const { rerender } = render(<Contents value={a} a={a} b={b} />);
+    expectShown("a");
+    rerender(<Contents value={b} a={a} b={b} />);
+    expectShown("b");
+    expect(consoleError).not.toHaveBeenCalled();
   });
 
   it.each(pairs)(
@@ -625,22 +635,19 @@ describe("tab values with the same String() text", () => {
   });
 
   it("keys a Tabs.Contents child without a value apart from a sibling with value={1}", () => {
-    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
-    try {
-      render(
-        <Tabs.Root value={1}>
-          <Tabs.Contents>
-            <Tabs.Content value={0}>Zero</Tabs.Content>
-            {/* @ts-expect-error value is required by the types, but a child can lack it */}
-            <Tabs.Content>No value</Tabs.Content>
-            <Tabs.Content value={1}>One</Tabs.Content>
-          </Tabs.Contents>
-        </Tabs.Root>,
-      );
-      expect(consoleError).not.toHaveBeenCalled();
-    } finally {
-      consoleError.mockRestore();
-    }
+    render(
+      <Tabs.Root value={1}>
+        <Tabs.Contents>
+          <Tabs.Content value={0}>Zero</Tabs.Content>
+          {/* @ts-expect-error value is required by the types, but a child can lack it */}
+          <Tabs.Content>No value</Tabs.Content>
+          <Tabs.Content value={1}>One</Tabs.Content>
+        </Tabs.Contents>
+      </Tabs.Root>,
+    );
+    expect(consoleError).not.toHaveBeenCalled();
+    expect(screen.getByText("No value")).toBeInTheDocument();
+    expect(screen.getByText("One")).toBeInTheDocument();
   });
 });
 
