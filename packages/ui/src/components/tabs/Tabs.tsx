@@ -204,7 +204,8 @@ function TabsIndicatorElement({
   const selected = useContext(TabsContext)?.value;
   const { element, sliding, transition } = useIndicatorSlide<HTMLElement>(selected, box);
   // The active tab's border box, which Base UI doesn't observe. Base UI itself skips the
-  // observer where there is none (jsdom).
+  // observer where there is none (jsdom). Its first notification is load-bearing: it re-measures
+  // padding the tab gains on becoming active, which Base UI measured before that commit.
   // biome-ignore lint/correctness/useExhaustiveDependencies: the active tab changes with `selected`
   useEffect(() => {
     if (typeof ResizeObserver === "undefined") return;
@@ -215,7 +216,7 @@ function TabsIndicatorElement({
     const observer = new ResizeObserver(onActiveTabResize);
     observer.observe(tab, { box: "border-box" });
     return () => observer.disconnect();
-  }, [selected, onActiveTabResize]);
+  }, [selected, onActiveTabResize, element]);
 
   const [indicatorRef, driven] = useMotionAnimate<HTMLElement>(
     box,
