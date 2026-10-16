@@ -166,12 +166,23 @@ function ToggleGroupRoot<Value extends string = string>({
 // Indicator
 // ---------------------------------------------------------------------------
 
-/** `offsetLeft`/`offsetTop` are whole px, and the error can add up along the offset parent chain */
+/**
+ * `offsetLeft`/`offsetTop` are whole px. Terms of the offset chains above the container cancel;
+ * only positioned elements between the item and the container add rounding, at most 0.5px each
+ * for direct-child items. 2 keeps parity with Base UI's `MAX_LAYOUT_ROUNDING_ERROR`.
+ */
 const OFFSET_ROUNDING_PX = 2;
 
+/** Chromium gives computed sizes to 6 significant digits: a size within this of its rect is it */
+const COMPUTED_STYLE_PRECISION_PX = 0.01;
+
+/** A rect size within this of the layout size is the layout size, scaled; further, a warped box */
+const RECT_SIZE_TOLERANCE_PX = 1;
+
 /**
- * The layout size of `el`'s border box: its computed size, which keeps sub-pixel precision, or
- * its offset size (whole px) where the two differ, as with content-box sizing.
+ * The layout size of the border box of `el`: its computed size, or its offset size (whole px)
+ * where the two differ, as with content-box sizing. Chromium gives the computed size to 6
+ * significant digits only, so it can sit a hair off the true size.
  */
 function layoutSize(el: HTMLElement) {
   const css = getComputedStyle(el);
@@ -213,13 +224,15 @@ function layoutOrigin(el: HTMLElement) {
  * more than rounding, as a rotation, skew or flip warps the rects past what the scale undoes.
  */
 function boxWithin(container: HTMLElement, item: HTMLElement): IndicatorBox | null {
-  const { width, height } = layoutSize(item);
-  if (width === 0 || height === 0) return null;
+  const layout = layoutSize(item);
+  if (layout.width === 0 || layout.height === 0) return null;
   const r = item.getBoundingClientRect();
   const c = container.getBoundingClientRect();
   const outer = layoutSize(container);
-  const scaleX = outer.width > 0 ? c.width / outer.width : 1;
-  const scaleY = outer.height > 0 ? c.height / outer.height : 1;
+  const scaleOf = (rect: number, layoutPx: number) =>
+    layoutPx <= 0 || Math.abs(rect - layoutPx) <= COMPUTED_STYLE_PRECISION_PX ? 1 : rect / layoutPx;
+  const scaleX = scaleOf(c.width, outer.width);
+  const scaleY = scaleOf(c.height, outer.height);
   // The container's scroll moves the item's rect, not its layout slot, where the indicator sits
   const rectLeft = (r.left - c.left) / scaleX + container.scrollLeft - container.clientLeft;
   const rectTop = (r.top - c.top) / scaleY + container.scrollTop - container.clientTop;
@@ -230,7 +243,16 @@ function boxWithin(container: HTMLElement, item: HTMLElement): IndicatorBox | nu
   const agree =
     Math.abs(rectLeft - left) <= OFFSET_ROUNDING_PX &&
     Math.abs(rectTop - top) <= OFFSET_ROUNDING_PX;
-  return agree ? { left: rectLeft, top: rectTop, width, height } : { left, top, width, height };
+  if (!agree) return { left, top, ...layout };
+  // Where the rect agrees with the layout, its size is the precise one, unless a rotation warped it
+  const fromRect = (rectPx: number, scale: number, layoutPx: number) =>
+    Math.abs(rectPx / scale - layoutPx) <= RECT_SIZE_TOLERANCE_PX ? rectPx / scale : layoutPx;
+  return {
+    left: rectLeft,
+    top: rectTop,
+    width: fromRect(r.width, scaleX, layout.width),
+    height: fromRect(r.height, scaleY, layout.height),
+  };
 }
 
 const sameBox = (a: IndicatorBox | null, b: IndicatorBox | null) =>

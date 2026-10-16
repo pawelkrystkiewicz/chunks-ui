@@ -655,6 +655,53 @@ describe.each(MOTION_PATHS)("ToggleGroup indicator under a transform, $path", ({
   );
 });
 
+// Chromium reports computed sizes to 6 significant digits, and writes lengths in 1/64 px: a
+// scale or size read from them must not leave the pill a step off the item of a plain group.
+describe.each(MOTION_PATHS)("ToggleGroup indicator measured exactly, $path", ({ withMotion }) => {
+  const framed = (props: { className?: string; itemWidth?: string; transform?: string }) => (
+    <div style={{ transform: props.transform }}>
+      <ToggleGroup.Root value={["b"]} className={props.className}>
+        <ToggleGroup.Item value="a">Alpha</ToggleGroup.Item>
+        <ToggleGroup.Item value="b" style={{ marginInline: "0.37px", width: props.itemWidth }}>
+          Beta, a longer item
+        </ToggleGroup.Item>
+      </ToggleGroup.Root>
+    </div>
+  );
+
+  async function renderFramed(props: Parameters<typeof framed>[0]) {
+    await enterMotionPath(withMotion);
+    const { getByRole } = render(framed(props));
+    const group = getByRole("group");
+    const beta = getByRole("button", { name: "Beta, a longer item" });
+    const indicator = () => {
+      const span = group.querySelector<HTMLElement>(":scope > span");
+      if (!span) throw new Error("No indicator");
+      return span;
+    };
+    await expect
+      .poll(() => group.querySelector(":scope > span")?.classList.contains("micro-interactions"))
+      .toBe(!withMotion);
+    await waitForStable(() => offBy(beta, indicator()));
+    return { beta, indicator };
+  }
+
+  // Sizes on the 1/64 grid that need more than 6 significant digits, so the computed value is
+  // a hair under: 333.328125 is read as 333.328, which Blink writes back as 333.3125
+  it("keeps the pill on the item's edges in a group of fractional sizes", async () => {
+    const { beta, indicator } = await renderFramed({ itemWidth: "333.328125px" });
+    expect(offBy(beta, indicator())).toBeLessThanOrEqual(0.001);
+  });
+
+  it.each([
+    ["untransformed", undefined],
+    ["scaled down", "scale(0.95)"],
+  ])("keeps the pill on the item in a group with a border, %s", async (_, transform) => {
+    const { beta, indicator } = await renderFramed({ className: "border-4", transform });
+    expect(offBy(beta, indicator())).toBeLessThanOrEqual(1);
+  });
+});
+
 describe("ToggleGroup indicator with reduced motion", () => {
   beforeAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
   afterAll(() => commands.emulateMedia({ reducedMotion: "no-preference" }));
