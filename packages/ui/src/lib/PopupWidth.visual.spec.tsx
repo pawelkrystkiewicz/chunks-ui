@@ -113,6 +113,50 @@ describe("Select.Item with a badge beside its text", () => {
   });
 });
 
+describe("Select.Positioner opt-outs", () => {
+  const items = ["Strawberry", "Apple"];
+  const select = (positionerClass: string, triggerClass?: string) => (
+    <Select.Root defaultValue="Strawberry" defaultOpen>
+      <Select.Trigger aria-label="Item" className={triggerClass}>
+        <Select.Value />
+        <Select.Icon />
+      </Select.Trigger>
+      <Select.Portal>
+        <Select.Positioner className={positionerClass} alignItemWithTrigger={false}>
+          <Select.Popup data-testid="popup">
+            {items.map((label) => (
+              <Select.Item key={label} value={label}>
+                <Select.ItemText>{label}</Select.ItemText>
+                <Select.ItemIndicator />
+              </Select.Item>
+            ))}
+          </Select.Popup>
+        </Select.Positioner>
+      </Select.Portal>
+    </Select.Root>
+  );
+
+  it("w-auto sizes the popup by its items, narrower than a 360 px trigger", async () => {
+    const { getByRole, getByTestId } = inColumn(360, select("w-auto"));
+    const popup = await settled(getByTestId("popup"));
+    expect(widthOf(popup)).toBeLessThan(widthOf(getByRole("combobox")));
+  });
+
+  it("w-auto min-w-[var(--anchor-width)] suits a trigger sized by its value", async () => {
+    const { getAllByRole, getByRole, getByTestId } = inColumn(
+      360,
+      select("w-auto min-w-[var(--anchor-width)]", "w-auto"),
+    );
+    const popup = await settled(getByTestId("popup"));
+    expect(widthOf(getByRole("combobox")), "the trigger fits its value").toBeLessThan(200);
+    expect(widthOf(popup)).toBeGreaterThanOrEqual(widthOf(getByRole("combobox")));
+    // A one-line item is its line (20px) plus py-1.5 (12px)
+    for (const option of getAllByRole("option")) {
+      expect(option.getBoundingClientRect().height, "an item on one line").toBeLessThanOrEqual(33);
+    }
+  });
+});
+
 const comboboxPopup = (
   <Combobox.Portal>
     <Combobox.Positioner>
