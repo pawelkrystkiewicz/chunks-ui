@@ -497,6 +497,25 @@ describe("function tab values", () => {
   });
 });
 
+// StrictMode runs a mount's effects twice on one instance; a remount is a new instance
+function MountedChild({ instances }: { instances: Set<object> }) {
+  const instance = useRef({});
+  useEffect(() => {
+    instances.add(instance.current);
+  }, [instances]);
+  return null;
+}
+
+function Animate({ value, instances }: { value: unknown; instances: Set<object> }) {
+  return (
+    <Tabs.Root value={value}>
+      <Tabs.Animate data-testid="animate">
+        <MountedChild instances={instances} />
+      </Tabs.Animate>
+    </Tabs.Root>
+  );
+}
+
 // Contents and Animate key by value; distinct values need distinct, stable keys.
 describe("tab values with the same String() text", () => {
   const first = { id: 1 };
@@ -516,15 +535,6 @@ describe("tab values with the same String() text", () => {
   afterEach(() => {
     consoleError.mockRestore();
   });
-
-  // StrictMode runs a mount's effects twice on one instance; a remount is a new instance
-  function MountedChild({ instances }: { instances: Set<object> }) {
-    const instance = useRef({});
-    useEffect(() => {
-      instances.add(instance.current);
-    }, [instances]);
-    return null;
-  }
 
   function Contents({
     value,
@@ -547,16 +557,6 @@ describe("tab values with the same String() text", () => {
             Content B
           </Tabs.Content>
         </Tabs.Contents>
-      </Tabs.Root>
-    );
-  }
-
-  function Animate({ value, instances }: { value: unknown; instances: Set<object> }) {
-    return (
-      <Tabs.Root value={value}>
-        <Tabs.Animate data-testid="animate">
-          <MountedChild instances={instances} />
-        </Tabs.Animate>
       </Tabs.Root>
     );
   }
@@ -697,26 +697,11 @@ describe("Tabs.Animate", () => {
   });
 
   it("re-keys on tab value change (forces remount)", () => {
-    // StrictMode runs a mount's effects twice on one instance; a remount is a new instance
     const instances = new Set<object>();
-    function MountedChild() {
-      const instance = useRef({});
-      useEffect(() => {
-        instances.add(instance.current);
-      }, []);
-      return null;
-    }
-    const ui = (value: string) => (
-      <Tabs.Root value={value}>
-        <Tabs.Animate data-testid="animate">
-          <MountedChild />
-        </Tabs.Animate>
-      </Tabs.Root>
-    );
-    const { rerender } = render(ui("a"));
+    const { rerender } = render(<Animate value="a" instances={instances} />);
     const pane = screen.getByTestId("animate");
     expect(instances.size).toBe(1);
-    rerender(ui("b"));
+    rerender(<Animate value="b" instances={instances} />);
     // The key changes with the value, so the pane is a new element with a new child instance
     expect(screen.getByTestId("animate")).not.toBe(pane);
     expect(instances.size).toBe(2);
