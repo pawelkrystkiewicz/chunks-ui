@@ -2,7 +2,7 @@ import { DirectionProvider } from "@base-ui/react/direction-provider";
 import { render, screen, within } from "@testing-library/react";
 import { type ReactNode, useEffect, useRef } from "react";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { commands, userEvent } from "vitest/browser";
+import { userEvent } from "vitest/browser";
 import { Accordion } from "./components/accordion";
 import { Combobox } from "./components/combobox";
 import { Input } from "./components/input";
@@ -16,6 +16,7 @@ import {
   contentSpan,
   type Dir,
   eachPaintedFrame,
+  emulateReducedMotion,
   inlineSpan,
   insetsWithin,
   px,
@@ -91,10 +92,8 @@ describe("Switch in both directions", () => {
   }
 
   describe.each(PATHS)("$path", ({ reducedMotion }) => {
-    beforeAll(() =>
-      commands.emulateMedia({ reducedMotion: reducedMotion ? "reduce" : "no-preference" }),
-    );
-    afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
+    beforeAll(() => emulateReducedMotion(reducedMotion));
+    afterAll(() => emulateReducedMotion(true));
 
     const LAYOUTS = [
       { layout: "ltr", dir: "ltr", page: "ltr" },
@@ -135,8 +134,8 @@ describe("Switch in both directions", () => {
   });
 
   describe("Motion spring, from the first frame", () => {
-    beforeAll(() => commands.emulateMedia({ reducedMotion: "no-preference" }));
-    afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
+    beforeAll(() => emulateReducedMotion(false));
+    afterAll(() => emulateReducedMotion(true));
 
     // Mounted after Motion loaded, Motion drives the thumb from its first render. It must jump
     // to its place there, not spring there from the LTR side.

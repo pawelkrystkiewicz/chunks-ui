@@ -1,9 +1,10 @@
 import { render } from "@testing-library/react";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { commands, page, userEvent } from "vitest/browser";
+import { page, userEvent } from "vitest/browser";
 import {
   boxOf,
   describePopupCssPath,
+  emulateReducedMotion,
   enterMotionPath,
   expectNotAllowed,
   focusVisible,
@@ -271,12 +272,9 @@ const DEFAULT_SIDE_OFFSET = 8;
 // motion paths.
 describe.each(MOTION_PATHS)("Combobox.Popup under Combobox.Control, $path", ({ withMotion }) => {
   beforeAll(() => enterMotionPath(withMotion));
-  beforeEach(async () => {
-    await commands.emulateMedia({ reducedMotion: "no-preference" });
-    await expect.poll(() => matchMedia("(prefers-reduced-motion: reduce)").matches).toBe(false);
-  });
+  beforeEach(() => emulateReducedMotion(false));
   afterAll(async () => {
-    await commands.emulateMedia({ reducedMotion: "reduce" });
+    await emulateReducedMotion(true);
     await enterMotionPath(true);
   });
 

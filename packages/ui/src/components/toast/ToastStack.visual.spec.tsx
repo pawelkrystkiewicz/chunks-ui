@@ -1,7 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { commands } from "vitest/browser";
-import { waitForStable } from "../../VisualTest.utils";
+import { emulateReducedMotion, waitForStable } from "../../VisualTest.utils";
 import { Toast } from "./index";
 
 /*
@@ -11,8 +10,8 @@ import { Toast } from "./index";
  * the inline end at once, as `translate` was in no transition list, and its slide was lost.
  */
 describe("Toast stack with motion allowed", () => {
-  beforeAll(() => commands.emulateMedia({ reducedMotion: "no-preference" }));
-  afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
+  beforeAll(() => emulateReducedMotion(false));
+  afterAll(() => emulateReducedMotion(true));
 
   it("slides a closing toast out instead of dropping it at once", async () => {
     const manager = Toast.createToastManager();

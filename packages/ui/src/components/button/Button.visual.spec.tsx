@@ -1,8 +1,13 @@
 import { render, screen } from "@testing-library/react";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { commands, page, userEvent } from "vitest/browser";
+import { page, userEvent } from "vitest/browser";
 import { ELEMENT_COLOR, ELEMENT_VARIANTS } from "../../types";
-import { pauseAnimations, renderFixture, ringColor } from "../../VisualTest.utils";
+import {
+  emulateReducedMotion,
+  pauseAnimations,
+  renderFixture,
+  ringColor,
+} from "../../VisualTest.utils";
 import { Button } from "./index";
 
 const variants = ELEMENT_VARIANTS;
@@ -93,8 +98,8 @@ describe("Button focus-visible", () => {
 });
 
 describe("Button focus ring with no reduced-motion preference", () => {
-  beforeAll(() => commands.emulateMedia({ reducedMotion: "no-preference" }));
-  afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
+  beforeAll(() => emulateReducedMotion(false));
+  afterAll(() => emulateReducedMotion(true));
 
   // Contained: the ring used to fade from the white text colour, most visibly there
   it("has the ring colour from the moment it takes keyboard focus", async () => {

@@ -1,11 +1,17 @@
 import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
-import { commands, userEvent } from "vitest/browser";
+import { userEvent } from "vitest/browser";
 import { Combobox } from "./components/combobox";
 import { Menu } from "./components/menu";
 import { reloadMotion } from "./lib/use-motion";
-import { boxOf, describeMotionPaths, eachPaintedFrame, waitForStable } from "./VisualTest.utils";
+import {
+  boxOf,
+  describeMotionPaths,
+  eachPaintedFrame,
+  emulateReducedMotion,
+  waitForStable,
+} from "./VisualTest.utils";
 
 // More items than fit below the trigger in the test viewport. No screenshots are taken.
 const items = Array.from({ length: 80 }, (_, i) => `Item ${i + 1}`);
@@ -101,15 +107,14 @@ describe.each(CASES)("$name with many items", ({ name, node, trigger, itemRole, 
 
   describe("without Motion", () => {
     afterEach(async () => {
-      await commands.emulateMedia({ reducedMotion: "reduce" });
+      await emulateReducedMotion(true);
       await reloadMotion();
     });
 
     it("keeps its height from the first painted frame", async () => {
       // CSS transition fallback: Motion never arrives, and reduced motion is off
       void reloadMotion(new Promise(() => {}));
-      await commands.emulateMedia({ reducedMotion: "no-preference" });
-      await expect.poll(() => matchMedia("(prefers-reduced-motion: reduce)").matches).toBe(false);
+      await emulateReducedMotion(false);
       render(node);
 
       const heights = eachPaintedFrame(

@@ -1,9 +1,10 @@
 import { render } from "@testing-library/react";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { commands, page } from "vitest/browser";
+import { page } from "vitest/browser";
 import {
   describePopupCssPath,
   eachPaintedFrame,
+  emulateReducedMotion,
   enterMotionPath,
   expectNotAllowed,
   focusVisible,
@@ -113,12 +114,9 @@ const renderedScale = (el: Element) =>
 // assume: it fades in place at full size, on both paths
 describe.each(MOTION_PATHS)("Select.Popup aligned with its trigger, $path", ({ withMotion }) => {
   beforeAll(() => enterMotionPath(withMotion));
-  beforeEach(async () => {
-    await commands.emulateMedia({ reducedMotion: "no-preference" });
-    await expect.poll(() => matchMedia("(prefers-reduced-motion: reduce)").matches).toBe(false);
-  });
+  beforeEach(() => emulateReducedMotion(false));
   afterAll(async () => {
-    await commands.emulateMedia({ reducedMotion: "reduce" });
+    await emulateReducedMotion(true);
     await enterMotionPath(true);
   });
 

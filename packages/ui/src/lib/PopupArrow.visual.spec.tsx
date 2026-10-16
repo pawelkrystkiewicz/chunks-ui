@@ -11,6 +11,7 @@ import {
   arrowOverhang,
   describeMotionPaths,
   eachPaintedFrame,
+  emulateReducedMotion,
   LAYOUT_ROUNDING_PX,
   resetTheme,
   ringColor,
@@ -586,15 +587,14 @@ describe.each(KINDS)("%s.Arrow while the popup opens", (kind) => {
 
   describe("without Motion", () => {
     afterEach(async () => {
-      await commands.emulateMedia({ reducedMotion: "reduce" });
+      await emulateReducedMotion(true);
       await reloadMotion();
     });
 
     it("shows the tip on every frame of the CSS transition", async () => {
       // Motion never arrives, and reduced motion is off
       void reloadMotion(new Promise(() => {}));
-      await commands.emulateMedia({ reducedMotion: "no-preference" });
-      await expect.poll(() => matchMedia("(prefers-reduced-motion: reduce)").matches).toBe(false);
+      await emulateReducedMotion(false);
       const shows = await tipOnEachFrame(kind);
       expect(shows.length).toBeGreaterThan(0);
       expect(shows).not.toContain(false);
@@ -605,15 +605,14 @@ describe.each(KINDS)("%s.Arrow while the popup opens", (kind) => {
 // Menu already transitioned only its fade and scale
 describe("Popover with an arrow, without Motion", () => {
   afterEach(async () => {
-    await commands.emulateMedia({ reducedMotion: "reduce" });
+    await emulateReducedMotion(true);
     await reloadMotion();
   });
 
   it("moves straight to a new side, without sliding its margin across", async () => {
     // CSS transition fallback: Motion never arrives, and reduced motion is off
     void reloadMotion(new Promise(() => {}));
-    await commands.emulateMedia({ reducedMotion: "no-preference" });
-    await expect.poll(() => matchMedia("(prefers-reduced-motion: reduce)").matches).toBe(false);
+    await emulateReducedMotion(false);
     const { rerender } = render(arrowed("Popover", "bottom", "ltr", true));
     const popup = await screen.findByTestId("popup");
     // The opening fade and scale have finished

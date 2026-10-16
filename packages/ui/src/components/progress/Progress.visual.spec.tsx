@@ -1,7 +1,6 @@
 import { render } from "@testing-library/react";
 import { afterAll, describe, it } from "vitest";
-import { commands } from "vitest/browser";
-import { pauseAnimations, renderFixture } from "../../VisualTest.utils";
+import { emulateReducedMotion, pauseAnimations, renderFixture } from "../../VisualTest.utils";
 import { Progress } from "./index";
 
 describe("Progress", () => {
@@ -44,7 +43,7 @@ const renderIndeterminate = (className?: string) =>
  * replaces it; an `animate-*` class without that prefix does not.
  */
 describe("Progress.Indicator indeterminate animation", () => {
-  afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
+  afterAll(() => emulateReducedMotion(true));
 
   // Full class names, so Tailwind generates them
   it.each([
@@ -80,7 +79,7 @@ describe("Progress.Indicator indeterminate animation", () => {
   ] as const)(
     "animates as $animation with $reducedMotion and $className",
     async ({ reducedMotion, className, animation }) => {
-      await commands.emulateMedia({ reducedMotion });
+      await emulateReducedMotion(reducedMotion === "reduce");
       expect(getComputedStyle(renderIndeterminate(className)).animationName).toBe(animation);
     },
   );

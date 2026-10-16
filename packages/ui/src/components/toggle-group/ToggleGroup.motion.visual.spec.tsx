@@ -11,7 +11,7 @@ import {
 import { hydrateRoot, type Root } from "react-dom/client";
 import { renderToString } from "react-dom/server";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { commands, userEvent } from "vitest/browser";
+import { userEvent } from "vitest/browser";
 import { resizeBatches } from "../../lib/shared-resize";
 import { reloadMotion } from "../../lib/use-motion";
 import {
@@ -125,8 +125,8 @@ async function expectRefAndIndicator(part: Part, kind: RefKind, path: "css" | "m
 const KINDS = ["object", "callback", "undefined"] as const;
 
 describe("ToggleGroup with a consumer ref, CSS path", () => {
-  beforeAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
-  afterAll(() => commands.emulateMedia({ reducedMotion: "no-preference" }));
+  beforeAll(() => emulateReducedMotion(true));
+  afterAll(() => emulateReducedMotion(false));
 
   it.each(KINDS.flatMap((kind) => [["Root", kind] as const, ["Item", kind] as const]))(
     "%s, %s ref: the ref gets the element and the indicator follows",
@@ -157,8 +157,8 @@ describe.each([
   { path: "CSS", reducedMotion: "reduce" },
   { path: "Motion", reducedMotion: "no-preference" },
 ] as const)("ToggleGroup onValueChange, $path path", ({ reducedMotion }) => {
-  beforeAll(() => commands.emulateMedia({ reducedMotion }));
-  afterAll(() => commands.emulateMedia({ reducedMotion: "no-preference" }));
+  beforeAll(() => emulateReducedMotion(reducedMotion === "reduce"));
+  afterAll(() => emulateReducedMotion(false));
 
   /** An uncontrolled group on Alpha: checks the indicator is there, then clicks Beta */
   async function clickBeta(onValueChange: ToggleGroupRootProps["onValueChange"]) {
@@ -198,8 +198,8 @@ describe.each([
 });
 
 describe("ToggleGroup.Root with a consumer render, CSS path", () => {
-  beforeAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
-  afterAll(() => commands.emulateMedia({ reducedMotion: "no-preference" }));
+  beforeAll(() => emulateReducedMotion(true));
+  afterAll(() => emulateReducedMotion(false));
 
   it.each([
     ["an element", <nav key="element" data-probe="element" />, "element"],
@@ -823,8 +823,8 @@ describe.each(MOTION_PATHS)(
 );
 
 describe("ToggleGroup indicator with reduced motion", () => {
-  beforeAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
-  afterAll(() => commands.emulateMedia({ reducedMotion: "no-preference" }));
+  beforeAll(() => emulateReducedMotion(true));
+  afterAll(() => emulateReducedMotion(false));
 
   it("moves to a newly pressed item at once", async () => {
     const { indicator, item, rerender } = await renderSized(false);
@@ -878,7 +878,7 @@ describe("ToggleGroup pill from server HTML to the measured indicator", () => {
     container?.remove();
     app = null;
     container = null;
-    await commands.emulateMedia({ reducedMotion: "no-preference" });
+    await emulateReducedMotion(false);
   });
 
   /** Puts `page`'s server HTML in the document; returns its host, group and pressed item */
@@ -905,7 +905,7 @@ describe("ToggleGroup pill from server HTML to the measured indicator", () => {
   ] as const)(
     "paints one pressed surface in every frame, with $path",
     async ({ withMotion, reducedMotion }) => {
-      await commands.emulateMedia({ reducedMotion });
+      await emulateReducedMotion(reducedMotion === "reduce");
       await enterMotionPath(withMotion);
       const page = ui();
       const { host, pressed, indicator } = serverRendered(page);
