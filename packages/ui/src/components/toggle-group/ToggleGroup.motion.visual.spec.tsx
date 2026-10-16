@@ -617,8 +617,8 @@ describe.each(MOTION_PATHS)("ToggleGroup indicator on a resize, $path", ({ withM
 // indicator is the item's layout box, so the two coincide on screen under the transform and after
 // it is removed, which also doesn't measure again.
 describe.each(MOTION_PATHS)("ToggleGroup indicator under a transform, $path", ({ withMotion }) => {
-  const transformed = (transform?: string) => (
-    <div style={{ transform }}>
+  const transformed = (transform?: string, zoom?: number) => (
+    <div style={{ transform, zoom }}>
       <ToggleGroup.Root value={["b"]}>
         <ToggleGroup.Item value="a">Alpha</ToggleGroup.Item>
         <ToggleGroup.Item value="b">Beta, a longer item</ToggleGroup.Item>
@@ -630,11 +630,15 @@ describe.each(MOTION_PATHS)("ToggleGroup indicator under a transform, $path", ({
     ["scaled down, as a Dialog is while it opens", "scale(0.95)"],
     // The rects are mirrored: they disagree with the layout offsets, which place the indicator
     ["turned around", "rotate(180deg)"],
-  ])(
+    // The scale is 0 and divides nothing: the layout offsets place the pill, once it is back too
+    ["collapsed to nothing", "scale(0)"],
+    // CSS zoom scales the rects and the layout alike, without a transform
+    ["zoomed in", undefined, 1.25],
+  ] as [string, string | undefined, number?][])(
     "covers the pressed item while the ancestor is %s, and once it isn't",
-    async (_, transform) => {
+    async (_, transform, zoom) => {
       await enterMotionPath(withMotion);
-      const { getByRole, rerender } = render(transformed(transform));
+      const { getByRole, rerender } = render(transformed(transform, zoom));
       const group = getByRole("group");
       const beta = getByRole("button", { name: "Beta, a longer item" });
       const indicator = () => {
@@ -646,7 +650,10 @@ describe.each(MOTION_PATHS)("ToggleGroup indicator under a transform, $path", ({
         .poll(() => group.querySelector(":scope > span")?.classList.contains("micro-interactions"))
         .toBe(!withMotion);
       await waitForStable(() => offBy(beta, indicator()));
-      expect(offBy(beta, indicator()), "under the transform").toBeLessThanOrEqual(1);
+      // Nothing on screen to compare while the scale is 0
+      if (transform !== "scale(0)") {
+        expect(offBy(beta, indicator()), "under the transform").toBeLessThanOrEqual(1);
+      }
 
       rerender(transformed(undefined));
       await waitForStable(() => offBy(beta, indicator()));
@@ -662,7 +669,10 @@ describe.each(MOTION_PATHS)("ToggleGroup indicator measured exactly, $path", ({ 
     <div style={{ transform: props.transform }}>
       <ToggleGroup.Root value={["b"]} className={props.className}>
         <ToggleGroup.Item value="a">Alpha</ToggleGroup.Item>
-        <ToggleGroup.Item value="b" style={{ marginInline: "0.37px", width: props.itemWidth }}>
+        <ToggleGroup.Item
+          value="b"
+          style={{ marginInline: "0.37px", width: props.itemWidth, flexShrink: 0 }}
+        >
           Beta, a longer item
         </ToggleGroup.Item>
       </ToggleGroup.Root>
@@ -690,6 +700,8 @@ describe.each(MOTION_PATHS)("ToggleGroup indicator measured exactly, $path", ({ 
   // a hair under: 333.328125 is read as 333.328, which Blink writes back as 333.3125
   it("keeps the pill on the item's edges in a group of fractional sizes", async () => {
     const { beta, indicator } = await renderFramed({ itemWidth: "333.328125px" });
+    // The premise: the item is that wide, not shrunk by the group
+    expect(beta.getBoundingClientRect().width).toBe(333.328125);
     expect(offBy(beta, indicator())).toBeLessThanOrEqual(0.001);
   });
 
@@ -701,6 +713,37 @@ describe.each(MOTION_PATHS)("ToggleGroup indicator measured exactly, $path", ({ 
     expect(offBy(beta, indicator())).toBeLessThanOrEqual(1);
   });
 });
+
+// The container's scroll moves the item's rect, not its layout slot, where the pill sits
+describe.each(MOTION_PATHS)(
+  "ToggleGroup indicator in a scrolled group, $path",
+  ({ withMotion }) => {
+    it("covers the pressed item once the group is scrolled to the end", async () => {
+      await enterMotionPath(withMotion);
+      const { getByRole } = render(
+        <ToggleGroup.Root value={["f"]} className="w-40 overflow-x-auto">
+          {["a", "b", "c", "d", "e", "f"].map((value) => (
+            <ToggleGroup.Item key={value} value={value}>
+              {`Item ${value}`}
+            </ToggleGroup.Item>
+          ))}
+        </ToggleGroup.Root>,
+      );
+      const group = getByRole("group");
+      const last = getByRole("button", { name: "Item f" });
+      const indicator = () => {
+        const span = group.querySelector<HTMLElement>(":scope > span");
+        if (!span) throw new Error("No indicator");
+        return span;
+      };
+      expect(group.scrollWidth, "the group overflows").toBeGreaterThan(group.clientWidth);
+      group.scrollLeft = group.scrollWidth;
+      expect(group.scrollLeft, "the group is scrolled").toBeGreaterThan(0);
+      await waitForStable(() => offBy(last, indicator()));
+      expect(offBy(last, indicator())).toBeLessThanOrEqual(1);
+    });
+  },
+);
 
 describe("ToggleGroup indicator with reduced motion", () => {
   beforeAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
