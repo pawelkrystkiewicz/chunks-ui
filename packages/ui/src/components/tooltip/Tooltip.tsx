@@ -4,7 +4,11 @@ import { Tooltip as BaseTooltip } from "@base-ui/react/tooltip";
 import { type ComponentProps, createContext, useContext } from "react";
 import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
-import { usePortalContainer } from "../../lib/portal-container";
+import {
+  PortalContainerProvider,
+  usePortalContainer,
+  usePortalNode,
+} from "../../lib/portal-container";
 import { ArrowChangeProvider, useArrowChange, useArrowPadding } from "../../lib/use-arrow-padding";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { usePopupRender } from "../../lib/use-popup-render";
@@ -26,8 +30,15 @@ export type TooltipPositionerProps = ComponentProps<typeof BaseTooltip.Positione
 export type TooltipPopupProps = ComponentProps<typeof BaseTooltip.Popup>;
 export type TooltipArrowProps = ComponentProps<typeof BaseTooltip.Arrow>;
 
-function TooltipPortal(props: TooltipPortalProps) {
-  return <BaseTooltip.Portal container={usePortalContainer()} {...props} />;
+function TooltipPortal({ children, ref, ...props }: TooltipPortalProps) {
+  const [portalRef, portalNode] = usePortalNode(ref);
+  return (
+    <BaseTooltip.Portal ref={portalRef} container={usePortalContainer()} {...props}>
+      {/* Popups opened inside portal in here, and the scrub cursor with them, as in Popover.
+          Base UI's tooltip portal, unlike the others, hands nested popups no node of its own. */}
+      <PortalContainerProvider value={portalNode}>{children}</PortalContainerProvider>
+    </BaseTooltip.Portal>
+  );
 }
 
 function TooltipPopup({ className, render: renderProp, ...props }: TooltipPopupProps) {
