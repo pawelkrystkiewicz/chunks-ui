@@ -16,7 +16,6 @@ import { reloadMotion } from "./use-motion";
 // element in place: swapping in a motion.* element when Motion loads would remount it.
 
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
-const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const byTestId = () => document.querySelector<HTMLElement>('[data-testid="moving"]');
 const click = (selector: string) => document.querySelector<HTMLElement>(selector)?.click();
 const left = (element: HTMLElement | null) => element?.getBoundingClientRect().left ?? Number.NaN;
@@ -35,6 +34,11 @@ type Control = {
   measure: (element: HTMLElement | null) => number;
   /** A class the CSS fallback adds for its transition and Motion's path drops */
   fallbackClass?: string;
+  /**
+   * An inline property Motion writes when it takes the element and the CSS fallback removes.
+   * None for ToggleGroup: React writes its box inline on both paths.
+   */
+  motionStyle?: string;
   /** The CSS fallback animates the change with a transition */
   cssTransition?: boolean;
   /** A class the element always has, also under a consumer's `render` */
@@ -59,6 +63,7 @@ const controls: Record<string, Control> = {
     change: () => click('[role="switch"]'),
     measure: left,
     fallbackClass: "micro-interactions",
+    motionStyle: "transform",
     cssTransition: true,
     baseClass: "rounded-full",
   },
@@ -90,6 +95,7 @@ const controls: Record<string, Control> = {
     change: () => click('[role="tab"]:last-of-type'),
     measure: left,
     fallbackClass: "micro-interactions",
+    motionStyle: "left",
     cssTransition: true,
     baseClass: "rounded-md",
     over: () => document.querySelector('[role="tab"][aria-selected="true"]'),
@@ -108,6 +114,7 @@ const controls: Record<string, Control> = {
     element: byTestId,
     change: () => click('[aria-label="B"]'),
     measure: opacity,
+    motionStyle: "opacity",
     baseClass: "justify-center",
     toChecked: () => click('[aria-label="A"]'),
   },
@@ -120,6 +127,7 @@ const controls: Record<string, Control> = {
     element: byTestId,
     change: () => click('[role="checkbox"]'),
     measure: opacity,
+    motionStyle: "opacity",
     baseClass: "justify-center",
     toChecked: () => click('[role="checkbox"]'),
   },
@@ -173,6 +181,18 @@ function handedBack({ element, fallbackClass }: Control) {
   return fallbackClass ? node.classList.contains(fallbackClass) : node.style.opacity === "";
 }
 
+/**
+ * Motion drives the element and has written its values: the fallback class is gone and the
+ * inline property Motion sets is there. A control mounted after Motion loaded drops the class
+ * on its first render; Motion's first write lands a frame later.
+ */
+function driven({ element, fallbackClass, motionStyle }: Control) {
+  const node = element();
+  if (!node) return false;
+  if (fallbackClass && node.classList.contains(fallbackClass)) return false;
+  return !motionStyle || node.style.getPropertyValue(motionStyle) !== "";
+}
+
 /** The element covers the one it sits over, every edge within a pixel */
 function expectOver({ element, over }: Control) {
   if (!over) return;
@@ -191,11 +211,14 @@ function snapshot({ element, measure }: Control) {
   };
 }
 
+/**
+ * Emulates the preference and resolves once the page's media query reports it. Motion and the
+ * components read it from the query's change event, which lands after `matches` flips, so the
+ * test polls for the state it needs next.
+ */
 const reducedMotion = async (reduce: boolean) => {
   await commands.emulateMedia({ reducedMotion: reduce ? "reduce" : "no-preference" });
-  // Motion and the components read the preference from the media query's change event
-  await nextFrame();
-  await nextFrame();
+  await expect.poll(() => matchMedia("(prefers-reduced-motion: reduce)").matches).toBe(reduce);
 };
 
 afterEach(() => reducedMotion(false));
@@ -218,14 +241,15 @@ function motionLoading() {
 
 describe("controls when Motion loads", () => {
   it.each(names)("keeps the %s element and animates it once Motion arrives", async (name) => {
-    const { ui, element, change, measure, fallbackClass } = control(name);
+    const subject = control(name);
+    const { ui, element, change, measure, fallbackClass } = subject;
     const motion = motionLoading();
     render(ui());
     await expect.poll(element).not.toBeNull();
     const before = element();
 
     await motion.arrive();
-    await wait(100);
+    await expect.poll(() => driven(subject), { timeout: SETTLE_TIMEOUT_MS }).toBe(true);
     expect(element()).toBe(before);
     if (fallbackClass) expect(element()).not.toHaveClass(fallbackClass);
     // Motion took over: a change now animates
@@ -240,8 +264,8 @@ describe("controls when Motion loads", () => {
     const motion = motionLoading();
     render(ui());
     await expect.poll(element).not.toBeNull();
-    await wait(100);
-    const start = measure(element());
+    // At rest on the CSS fallback before the change
+    const start = await settled(() => measure(element()));
     change();
     await nextFrame();
     await motion.arrive();
@@ -272,6 +296,8 @@ describe("controls when Motion loads", () => {
 
   it("hands N controls over to Motion in one commit", async () => {
     const motion = motionLoading();
+    const onFallback = () =>
+      document.querySelectorAll('[data-testid="thumb"].micro-interactions').length;
     let commits = 0;
     render(
       <Profiler id="switches" onRender={() => commits++}>
@@ -283,27 +309,31 @@ describe("controls when Motion loads", () => {
         ))}
       </Profiler>,
     );
-    await wait(100);
+    // All mounted on the CSS fallback, and their mount commits done
+    await expect.poll(onFallback).toBe(20);
+    await settled(() => commits);
     commits = 0;
     await motion.arrive();
-    await wait(100);
+    await expect.poll(onFallback, { timeout: SETTLE_TIMEOUT_MS }).toBe(0);
     // Every switch handed over, in one commit for Motion arriving and one for the hand-off
-    expect(document.querySelectorAll('[data-testid="thumb"].micro-interactions')).toHaveLength(0);
-    expect(commits).toBeLessThanOrEqual(2);
+    expect(await settled(() => commits)).toBeLessThanOrEqual(2);
   });
 });
 
 describe("controls once Motion has loaded", () => {
-  async function renderSettled(ui: ReactNode) {
+  /** Renders `ui` with Motion loaded; resolves once Motion drives `subject` and it rests */
+  async function renderSettled(ui: ReactNode, subject: Control) {
     await reloadMotion();
     const result = render(ui);
-    await wait(300);
+    await expect.poll(() => driven(subject), { timeout: SETTLE_TIMEOUT_MS }).toBe(true);
+    await settled(() => subject.measure(subject.element()));
     return result;
   }
 
   it.each(names)("animates a %s change through in-between values", async (name) => {
-    const { ui, element, change, measure } = control(name);
-    await renderSettled(ui());
+    const subject = control(name);
+    const { ui, element, change, measure } = subject;
+    await renderSettled(ui(), subject);
     const start = measure(element());
     change();
     expectInBetween(start, await sample(() => measure(element()), 40));
@@ -312,8 +342,12 @@ describe("controls once Motion has loaded", () => {
   it.each(withRenderProp)(
     "keeps the %s classes and animation under a consumer's render prop",
     async (name) => {
-      const { ui, element, change, measure, baseClass } = control(name);
-      await renderSettled(ui((props) => <span {...props} data-consumer="" />));
+      const subject = control(name);
+      const { ui, element, change, measure, baseClass } = subject;
+      await renderSettled(
+        ui((props) => <span {...props} data-consumer="" />),
+        subject,
+      );
       expect(element()).toHaveAttribute("data-consumer");
       expect(element()).toHaveClass(baseClass);
       const start = measure(element());
@@ -323,8 +357,9 @@ describe("controls once Motion has loaded", () => {
   );
 
   it.each(names)("stops writing to a %s element unmounted mid-animation", async (name) => {
-    const { ui, element, change } = control(name);
-    const { unmount } = await renderSettled(ui());
+    const subject = control(name);
+    const { ui, element, change } = subject;
+    const { unmount } = await renderSettled(ui(), subject);
     change();
     await nextFrame();
     await nextFrame();
@@ -343,11 +378,12 @@ describe("controls once Motion has loaded", () => {
     "finishes a %s animation when reduced motion turns on, as the CSS fallback renders it",
     async (name) => {
       const subject = control(name);
-      const { unmount } = await renderSettled(subject.ui());
+      const { unmount } = await renderSettled(subject.ui(), subject);
       subject.change();
       if (subject.toChecked) {
-        // Radio and Checkbox: animate the indicator in, so it is still there at the end
-        await wait(300);
+        // Radio and Checkbox: once faded out, animate the indicator in, so it is still there
+        // at the end
+        await expect.poll(() => opacity(subject.element()), { timeout: SETTLE_TIMEOUT_MS }).toBe(0);
         subject.toChecked();
       }
       await nextFrame();
@@ -373,7 +409,7 @@ describe("controls once Motion has loaded", () => {
       const subject = control(name);
       const { element, measure } = subject;
       const ui = (mode: "visible" | "hidden") => <Activity mode={mode}>{subject.ui()}</Activity>;
-      const { rerender, unmount } = await renderSettled(ui("visible"));
+      const { rerender, unmount } = await renderSettled(ui("visible"), subject);
       const start = measure(element());
       subject.change();
       // Hidden only once Motion has moved it and come to rest
@@ -396,8 +432,9 @@ describe("controls once Motion has loaded", () => {
   it.each(["Radio", "Checkbox"])(
     "keeps an unchecked %s indicator mounted only while Motion drives it",
     async (name) => {
-      const { ui, element, change } = control(name);
-      await renderSettled(ui());
+      const subject = control(name);
+      const { ui, element, change } = subject;
+      await renderSettled(ui(), subject);
       change();
       // Motion fades the indicator out and keeps it mounted at opacity 0 (NaN once unmounted)
       await expect.poll(() => opacity(element()), { timeout: SETTLE_TIMEOUT_MS }).toBe(0);
@@ -414,10 +451,10 @@ describe("controls once Motion has loaded", () => {
   it("morphs the Checkbox mark between check and minus", async () => {
     const checkbox = (indeterminate: boolean) => (
       <Checkbox.Root aria-label="Subscribe" checked indeterminate={indeterminate}>
-        <Checkbox.Indicator />
+        <Checkbox.Indicator data-testid="moving" />
       </Checkbox.Root>
     );
-    const { rerender } = await renderSettled(checkbox(false));
+    const { rerender } = await renderSettled(checkbox(false), control("Checkbox"));
     const path = document.querySelector("path") as SVGPathElement;
     const check = path.getAttribute("d");
 
@@ -466,7 +503,7 @@ describe("controls once Motion has loaded", () => {
     async (name) => {
       const subject = control(name);
       const { ui, element, change, measure, fallbackClass = "" } = subject;
-      await renderSettled(ui());
+      await renderSettled(ui(), subject);
       const start = measure(element());
       change();
       await expect.poll(() => measure(element())).not.toBe(start);
@@ -499,12 +536,14 @@ describe("controls once Motion has loaded", () => {
         />
       </Switch.Root>
     );
-    const { rerender } = await renderSettled(ui(false));
+    const subject = control("Switch");
+    const { rerender } = await renderSettled(ui(false), subject);
     const before = left(byTestId());
 
     await reducedMotion(true);
+    await expect.poll(() => handedBack(subject), { timeout: SETTLE_TIMEOUT_MS }).toBe(true);
     await reducedMotion(false);
-    await wait(100);
+    await expect.poll(() => driven(subject), { timeout: SETTLE_TIMEOUT_MS }).toBe(true);
     expect(left(byTestId())).toBe(before);
     rerender(ui(true));
     await expect.poll(() => opacity(byTestId())).toBe(0.3);
@@ -522,15 +561,16 @@ describe("controls once Motion has loaded", () => {
       </Activity>
     );
     const { rerender } = render(ui("visible"));
-    await wait(100);
-    const resting = left(byTestId());
+    await expect.poll(byTestId).not.toBeNull();
+    const resting = await settled(() => left(byTestId()));
 
     await motion.arrive();
     rerender(ui("hidden"));
     rerender(ui("visible"));
-    await wait(300);
-    expect(byTestId()).not.toHaveClass("micro-interactions");
-    expect(left(byTestId())).toBe(resting);
+    await expect
+      .poll(byTestId, { timeout: SETTLE_TIMEOUT_MS })
+      .not.toHaveClass("micro-interactions");
+    expect(await settled(() => left(byTestId()))).toBe(resting);
   });
 
   // Shown again from a post-render callback that runs before the cancelled hand-off's undo in
@@ -545,8 +585,8 @@ describe("controls once Motion has loaded", () => {
       </Activity>
     );
     const { rerender } = render(ui("visible"));
-    await wait(100);
-    const resting = left(byTestId());
+    await expect.poll(byTestId).not.toBeNull();
+    const resting = await settled(() => left(byTestId()));
 
     await motion.arrive();
     frame.postRender(() => rerender(ui("visible")));
