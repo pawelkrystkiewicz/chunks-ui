@@ -311,9 +311,30 @@ describe("checkDocsDirection", () => {
     expect(await checkDocsDirection(dir)).toEqual([]);
   });
 
-  it("scans only .ts, .tsx and .mdx files, not .css, .js or .md", async () => {
+  it("scans the classes of each @apply in a .css file, and no other part of it", async () => {
     const dir = tree({
-      "apps/docs/globals.css": ".x { @apply ml-4; }\n",
+      "apps/docs/app/x.css": [
+        '@import "tailwindcss";',
+        ".a { @apply ml-4 text-start; }",
+        ".text-left { margin-left: 4px; }",
+        ".left-0 { @apply ms-2; }",
+        ".b {",
+        "  @apply pr-2;",
+        "}",
+        "/* direction: physical, the arrow points at the clock */",
+        ".c { @apply float-left; }",
+        ".d { @apply ms-1; left: 0; } .e { @apply rounded-r; }",
+      ].join("\n"),
+    });
+    expect(await checkDocsDirection(dir)).toEqual([
+      "apps/docs/app/x.css:2: ml-4",
+      "apps/docs/app/x.css:6: pr-2",
+      "apps/docs/app/x.css:10: rounded-r",
+    ]);
+  });
+
+  it("scans only .ts, .tsx, .mdx and .css files, not .js or .md", async () => {
+    const dir = tree({
       "apps/docs/x.js": 'export const X = "ml-4";\n',
       "apps/docs/x.md": "`ml-4`\n",
     });

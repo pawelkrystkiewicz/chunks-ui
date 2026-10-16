@@ -2,9 +2,9 @@
 /**
  * Fails on a physical margin, padding, inset, text-align, rounded, border, float, clear, scroll,
  * object, background or transform-origin class in apps/docs. It needs a Tailwind value (`ml-4`,
- * `left-1/2`), so prose like `left-to-right` passes. A marker `direction: physical, <reason>` on
- * the same line, or in a comment alone on its lines directly above, exempts a deliberate one. An
- * empty scan fails.
+ * `left-1/2`), so prose like `left-to-right` passes. In a .css file it reads the `@apply` classes
+ * only. A marker `direction: physical, <reason>` on the same line, or in a comment alone on its
+ * lines directly above, exempts a deliberate one. An empty scan fails.
  * Full list and limits: TESTING_STRATEGY.md
  *
  * Run: bun run check:docs-direction
@@ -16,7 +16,7 @@ import { join } from "node:path";
 const DIR = "apps/docs";
 /** The build output, relative to DIR; `node_modules` is skipped at any depth. */
 const SKIP = new Set([".next", ".turbo", "out", "public/_pagefind"]);
-const SCANNED = /\.(?:ts|tsx|mdx)$/;
+const SCANNED = /\.(?:ts|tsx|mdx|css)$/;
 
 /** A spacing or inset value: `4`, `0.5`, `1/2`, `px`, `auto`, `full`, `[calc(…)]`, `(--var)`. */
 const VALUE = /\d+(?:\.\d+)?(?:\/\d+)?|px|auto|full|\[[^\]\s]*\]|\([^)\s]*\)/.source;
@@ -33,6 +33,8 @@ const PHYSICAL = new RegExp(
   ].join("|")})(?![\\w-])`,
   "g",
 );
+/** The classes Tailwind reads from a stylesheet line: each `@apply` up to its `;` or `}`. */
+const APPLY = /@apply\b[^;}]*/g;
 /** A reason has to start with a word character, so `direction: physical,` closed at once by `*\/` names none. */
 const MARKER = /direction:\s*physical,\s*\w/;
 /** One `/* … *\/` or `{/* … *\/}`, on one line or several, and nothing else. */
@@ -72,12 +74,13 @@ function sourceFiles(root: string, dir = ""): string[] {
 export async function checkDocsDirection(root: string): Promise<string[]> {
   if (!existsSync(join(root, DIR))) return [`${DIR}: not found, nothing to scan`];
   const files = sourceFiles(root).sort();
-  if (files.length === 0) return [`${DIR}: no .ts, .tsx or .mdx file, nothing to scan`];
+  if (files.length === 0) return [`${DIR}: no .ts, .tsx, .mdx or .css file, nothing to scan`];
   const problems: string[] = [];
   for (const file of files) {
+    const css = file.endsWith(".css");
     const lines = (await Bun.file(join(root, DIR, file)).text()).split("\n");
     for (const [index, line] of lines.entries()) {
-      const tokens = physicalTokens(line);
+      const tokens = physicalTokens(css ? (line.match(APPLY) ?? []).join(" ") : line);
       if (tokens.length === 0 || MARKER.test(line) || MARKER.test(commentAbove(lines, index))) {
         continue;
       }
