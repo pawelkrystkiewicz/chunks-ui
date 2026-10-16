@@ -139,12 +139,17 @@ function ToggleGroupRoot<Value extends string = string>({
     };
   }, [multiple]);
 
+  // The single-select sliding indicator, once measured; until then the pressed item draws the pill
+  const indicator = !multiple && bounds && (
+    <ToggleGroupIndicator box={bounds} value={activeValue} />
+  );
+
   return (
     <ToggleGroupContext.Provider value={{ registerItem, multiple }}>
       <BaseToggleGroup
         ref={mergedRef}
         className={cnState(
-          "relative inline-flex items-center gap-0.5 rounded-lg bg-muted p-1",
+          "group/toggle-group relative inline-flex items-center gap-0.5 rounded-lg bg-muted p-1",
           "data-[orientation=vertical]:flex-col",
           className,
         )}
@@ -153,9 +158,10 @@ function ToggleGroupRoot<Value extends string = string>({
         defaultValue={defaultValue}
         onValueChange={handleValueChange}
         {...props}
+        // After the props so a consumer cannot override it.
+        data-indicator={indicator ? "" : undefined}
       >
-        {/* Single-select sliding indicator */}
-        {!multiple && bounds && <ToggleGroupIndicator box={bounds} value={activeValue} />}
+        {indicator}
         {children}
       </BaseToggleGroup>
     </ToggleGroupContext.Provider>
@@ -262,6 +268,17 @@ function ToggleGroupItem({ className, value, ref, ...props }: ToggleGroupItemPro
         "disabled:cursor-not-allowed disabled:opacity-50",
         "[&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
         ctx?.multiple && "data-pressed:bg-background data-pressed:shadow-sm",
+        // Until the group has an indicator the pressed item draws the pill in a ::before: the
+        // item's own background transitions, so it would fade. Disabled, it takes the item's 50%
+        // opacity and the indicator does not. A consumer ::before merges with it before hydration.
+        ctx?.multiple === false && [
+          "group-not-data-indicator/toggle-group:data-pressed:before:absolute",
+          "group-not-data-indicator/toggle-group:data-pressed:before:inset-0",
+          "group-not-data-indicator/toggle-group:data-pressed:before:-z-10",
+          "group-not-data-indicator/toggle-group:data-pressed:before:rounded-md",
+          "group-not-data-indicator/toggle-group:data-pressed:before:bg-background",
+          "group-not-data-indicator/toggle-group:data-pressed:before:shadow-sm",
+        ],
         className,
       )}
       {...props}
