@@ -15,6 +15,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { flushSync } from "react-dom";
 import { cn, cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { renderNow } from "../../lib/render-now";
@@ -205,22 +206,30 @@ function TabsIndicatorElement({
   // it or the list resizes, and the indicator then jumps to it
   const selected = useContext(TabsContext)?.value;
   const { element, sliding, transition } = useIndicatorSlide<HTMLElement>(selected, box);
-  // Observes every tab's border box: Base UI watches content boxes only, and padding on one tab
-  // moves the others. Re-observes on aria-selected and child-list changes; a new observation's
-  // first notification measures every tab, which catches padding gained on selection and tabs
-  // that mount or remount. Skipped where there is no ResizeObserver (jsdom).
+  // Observes every tab's border box, and the list's border and content boxes: Base UI watches
+  // content boxes only, and padding on one tab moves the others. Re-observes on aria-selected
+  // and child-list changes; a new observation's first notification measures every tab, which
+  // catches padding gained on selection and tabs that mount or remount. Skipped where there is no
+  // ResizeObserver (jsdom).
   useEffect(() => {
     if (typeof ResizeObserver === "undefined") return;
     const list = element.current?.closest('[role="tablist"]');
     if (!list) return;
-    const resize = new ResizeObserver(onTabResize);
+    // ResizeObserver callbacks run after layout and before paint, so flushSync renders the
+    // indicator in the frame the resize happens in.
+    const remeasure = () => flushSync(onTabResize);
+    const resize = new ResizeObserver(remeasure);
     const observeTabs = () => {
       resize.disconnect();
+      resize.observe(list, { box: "border-box" });
       for (const tab of list.querySelectorAll('[role="tab"]')) {
         resize.observe(tab, { box: "border-box" });
       }
     };
     observeTabs();
+    // Padding on a list sized from outside changes its content box alone
+    const contentBox = new ResizeObserver(remeasure);
+    contentBox.observe(list);
     const mutation = new MutationObserver(observeTabs);
     mutation.observe(list, {
       childList: true,
@@ -230,6 +239,7 @@ function TabsIndicatorElement({
     });
     return () => {
       resize.disconnect();
+      contentBox.disconnect();
       mutation.disconnect();
     };
   }, [onTabResize, element]);
@@ -239,6 +249,13 @@ function TabsIndicatorElement({
     { transition, clear: [...BOX_EDGES] },
     useMergedRef(element, ref),
   );
+  // Motion applies a jump a frame late from a ResizeObserver callback; write the box now so the
+  // frame doesn't paint the old one.
+  useLayoutEffect(() => {
+    const node = element.current;
+    if (!node || !box || !driven || sliding) return;
+    for (const edge of BOX_EDGES) node.style[edge] = `${box[edge]}px`;
+  }, [box, driven, sliding, element]);
   return useRenderPart(render, state, indicatorRef, {
     ...props,
     className: cn(
