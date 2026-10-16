@@ -183,6 +183,26 @@ describe("DatePicker", () => {
       }),
     ).toHaveNoViolations();
   });
+
+  it("has no a11y violations with the calendar open", async () => {
+    const { container } = render(
+      <DatePicker aria-label="Due date" value={new Date(2026, 2, 15)} />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Due date March 15, 2026" }));
+    // The popup is portalled out of the container RTL hands back, so audit the body. It is a
+    // dialog, which the region rule exempts, so the rule stays on.
+    expect(container).not.toContainElement(screen.getByRole("dialog"));
+    // Known gap: the calendar dialog has no accessible name yet. This pin fails once DatePicker
+    // names it: then remove the pin and the rule override below.
+    expect(screen.getByRole("dialog")).not.toHaveAccessibleName();
+    expect(
+      await axe(document.body, {
+        rules: {
+          "aria-dialog-name": { enabled: false },
+        },
+      }),
+    ).toHaveNoViolations();
+  });
 });
 
 describe("DatePicker labelling", () => {
