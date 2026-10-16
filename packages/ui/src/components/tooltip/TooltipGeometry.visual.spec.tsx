@@ -156,18 +156,30 @@ type Align = "start" | "end";
 /**
  * Opens a one-line tooltip on `side` of a 20px trigger, aligned to its `align` edge. The trigger's
  * centre is nearer that end of the popup than the arrow may come, so Base UI holds the arrow
- * `arrowPadding` from the end, or as near the middle as the popup's length lets it. Returns the
+ * `arrowPadding` from the end, or as near the middle as the popup's length lets it. With
+ * `keepMounted`, the positioner is in the page, hidden, before the tooltip opens. Returns the
  * open popup and its arrow, once settled.
  */
-async function openNearCorner(side: Side, align: Align, dir: Direction, arrowPadding?: number) {
+async function openNearCorner(
+  side: Side,
+  align: Align,
+  dir: Direction,
+  arrowPadding?: number,
+  keepMounted = false,
+) {
   document.documentElement.dir = dir;
-  const result = render(
+  const tooltip = (open: boolean) => (
     <DirectionProvider direction={dir}>
       <div style={{ padding: 120, display: "flex", justifyContent: "center" }}>
-        <Tooltip.Root defaultOpen>
+        <Tooltip.Root open={open}>
           <Tooltip.Trigger aria-label="Trigger" style={{ width: 20, height: 20, padding: 0 }} />
-          <Tooltip.Portal>
-            <Tooltip.Positioner side={side} align={align} arrowPadding={arrowPadding}>
+          <Tooltip.Portal keepMounted={keepMounted}>
+            <Tooltip.Positioner
+              side={side}
+              align={align}
+              arrowPadding={arrowPadding}
+              data-testid="positioner"
+            >
               <Tooltip.Popup data-testid="popup">
                 <Tooltip.Arrow data-testid="arrow" />
                 Tooltip content
@@ -176,8 +188,16 @@ async function openNearCorner(side: Side, align: Align, dir: Direction, arrowPad
           </Tooltip.Portal>
         </Tooltip.Root>
       </div>
-    </DirectionProvider>,
+    </DirectionProvider>
   );
+  const result = render(tooltip(!keepMounted));
+  if (keepMounted) {
+    const hidden = result.getByTestId("positioner");
+    expect(hidden.hidden).toBe(true);
+    result.rerender(tooltip(true));
+    // The one that was measured hidden is the one that shows
+    expect(result.getByTestId("positioner")).toBe(hidden);
+  }
   const arrow = result.getByTestId("arrow");
   const popup = result.getByTestId("popup");
   await waitForStable(() => JSON.stringify([arrow, popup].map((el) => el.getBoundingClientRect())));
@@ -190,8 +210,19 @@ async function openNearCorner(side: Side, align: Align, dir: Direction, arrowPad
  * from the popup's `align` end to the nearer end of the arrow's foot (its widest point). Also
  * returns the popup's corner radius and the arrow's overhang.
  */
-async function footNearCorner(side: "top" | "bottom", align: Align, arrowPadding?: number) {
-  const { arrow, popup, unmount } = await openNearCorner(side, align, "ltr", arrowPadding);
+async function footNearCorner(
+  side: "top" | "bottom",
+  align: Align,
+  arrowPadding?: number,
+  keepMounted = false,
+) {
+  const { arrow, popup, unmount } = await openNearCorner(
+    side,
+    align,
+    "ltr",
+    arrowPadding,
+    keepMounted,
+  );
   const a = arrow.getBoundingClientRect();
   const p = popup.getBoundingClientRect();
   const foot = align === "start" ? a.left - p.left : p.right - a.right;
@@ -229,6 +260,15 @@ describe("Tooltip.Positioner arrowPadding", () => {
   it("holds an arrow near the corner the padding it is given from the popup's end", async () => {
     const { foot, overhang } = await footNearCorner("bottom", "start", 16);
     expect(Math.abs(foot - (16 - overhang))).toBeLessThanOrEqual(LAYOUT_ROUNDING_PX);
+  });
+
+  // The default is read from computed styles (the popup's radii, the arrow's width), which resolve
+  // while hidden: with `keepMounted` the hook reads them once at the hidden mount, and the arrow
+  // must land where it does in a popup mounted on open
+  it("defaults the same in a keepMounted portal as in one mounted on open", async () => {
+    const onOpen = await footNearCorner("bottom", "start");
+    const kept = await footNearCorner("bottom", "start", undefined, true);
+    expect(Math.abs(kept.foot - onOpen.foot)).toBeLessThanOrEqual(LAYOUT_ROUNDING_PX);
   });
 });
 

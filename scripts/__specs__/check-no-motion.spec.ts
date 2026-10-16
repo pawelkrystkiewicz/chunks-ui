@@ -2,9 +2,13 @@ import { describe, expect, it } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
+  type BrowserRun,
+  browserProblem,
+  DIALOG_TITLE,
   NEXT_TRIGGERS,
   nextWithMotionProblem,
   nextWithoutMotionProblem,
+  servedPath,
   typesProblem,
   withMotionProblem,
   withoutMotionProblem,
@@ -62,12 +66,17 @@ describe("typesProblem", () => {
   const missing =
     "node_modules/chunks-ui/dist/index.d.ts(31,31): error TS2307: Cannot find module 'motion/react' or its corresponding type declarations.\n";
 
-  it("accepts a clean type-check", () => {
-    expect(typesProblem(0, "")).toBeUndefined();
+  // The error a dependency's exports-only subpath gives under node10 (#405)
+  const subpath =
+    "node_modules/chunks-ui/dist/index.d.ts(6,30): error TS2307: Cannot find module 'class-variance-authority/types' or its corresponding type declarations.\n";
+
+  it("accepts a clean type-check under either resolution", () => {
+    expect(typesProblem(0, "", "bundler")).toBeUndefined();
+    expect(typesProblem(0, "", "node10")).toBeUndefined();
   });
 
   it("names MotionLike when the types reference motion/react, and keeps the output", () => {
-    const problem = typesProblem(2, missing);
+    const problem = typesProblem(2, missing, "bundler");
     expect(problem).toContain("MotionLike");
     expect(problem).toContain(missing);
   });
@@ -75,9 +84,26 @@ describe("typesProblem", () => {
   it("rejects any other type error without the motion/react hint", () => {
     const output =
       "types.ts(1,10): error TS2305: Module 'chunks-ui' has no exported member 'Button'.\n";
-    const problem = typesProblem(2, output);
+    const problem = typesProblem(2, output, "bundler");
     expect(problem).not.toContain("MotionLike");
     expect(problem).toContain(output);
+  });
+
+  it("gives a node10 subpath one hint, and names the consumer and the resolution", () => {
+    const problem = typesProblem(2, subpath, "node10");
+    expect(problem).toContain("without motion");
+    expect(problem).toContain("node10");
+    expect(problem).toContain("typesVersions");
+    expect(problem).toContain("packages/ui/package.json");
+    expect(problem).toContain("#405");
+    expect(problem).toContain(subpath);
+  });
+
+  it("gives no subpath hint for a relative specifier", () => {
+    const relative =
+      "node_modules/chunks-ui/dist/index.d.ts(2,20): error TS2307: Cannot find module './x/y' or its corresponding type declarations.\n";
+    expect(typesProblem(2, relative, "node10")).not.toContain("typesVersions");
+    expect(typesProblem(2, relative, "node10")).not.toContain("#405");
   });
 });
 
@@ -205,14 +231,86 @@ describe("nextWithMotionProblem", () => {
   });
 });
 
+describe("browserProblem", () => {
+  const chunk = (name: string) => `/_next/static/chunks/${name}`;
+  const PAGE_CHUNK = "245lujbzn6avk.js";
+  const MOTION_CHUNK = "3s70qt748849t.js";
+  const page = file(PAGE_CHUNK, `${DIALOG} DialogBody`);
+  const motion = file(MOTION_CHUNK, "MotionGlobalConfig");
+  const start = (name: string) => ({ event: "start" as const, path: chunk(name) });
+  const end = (name: string) => ({ event: "end" as const, path: chunk(name) });
+  // The order Chromium shows: the page's chunk arrives, its code runs and requests Motion's
+  const LAZY = [start(PAGE_CHUNK), end(PAGE_CHUNK), start(MOTION_CHUNK), end(MOTION_CHUNK)];
+  const run = (overrides: Partial<BrowserRun> = {}): BrowserRun => ({
+    errors: [],
+    network: LAZY,
+    ...overrides,
+  });
+
+  it("accepts a clean run with Motion requested after the page's own chunk arrived", () => {
+    expect(browserProblem("with motion", run(), [page, motion])).toBeUndefined();
+  });
+
+  it("accepts a clean run without Motion that requested no Motion chunk", () => {
+    const network = [start(PAGE_CHUNK), end(PAGE_CHUNK)];
+    expect(browserProblem("without motion", run({ network }), [page])).toBeUndefined();
+  });
+
+  it("names the consumer, lists the page's errors and keeps the failed step", () => {
+    const errors = ["pageerror: TypeError: x is not a function", "console.error: boom"];
+    const failure = "TimeoutError: waitFor";
+    const problem = browserProblem("without motion", run({ errors, failure }), [page]);
+    expect(problem).toContain("without motion");
+    for (const error of errors) expect(problem).toContain(error);
+    expect(problem).toContain(failure);
+  });
+
+  it("names the trigger and the title when the dialog did not open", () => {
+    const failure = "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.";
+    const problem = browserProblem("with motion", run({ failure }), [page, motion]);
+    expect(problem).toContain("with motion");
+    expect(problem).toContain(`"${DIALOG}"`);
+    expect(problem).toContain(`"${DIALOG_TITLE}"`);
+    expect(problem).toContain(failure);
+  });
+
+  it("rejects a run with Motion that never requested Motion's chunk, and names use-motion.ts", () => {
+    const network = [start(PAGE_CHUNK), end(PAGE_CHUNK)];
+    const problem = browserProblem("with motion", run({ network }), [page, motion]);
+    expect(problem).toContain("with motion");
+    expect(problem).toContain(MOTION_CHUNK);
+    expect(problem).toContain("use-motion.ts");
+  });
+
+  it("rejects Motion's chunk requested before the page's own chunk arrived", () => {
+    const network = [start(MOTION_CHUNK), start(PAGE_CHUNK), end(PAGE_CHUNK), end(MOTION_CHUNK)];
+    const problem = browserProblem("with motion", run({ network }), [page, motion]);
+    expect(problem).toContain(MOTION_CHUNK);
+    expect(problem).toContain(PAGE_CHUNK);
+    expect(problem).toContain("initial load");
+  });
+
+  it("rejects a run where the page's own chunk never arrived, instead of passing vacuously", () => {
+    const network = [start(PAGE_CHUNK), start(MOTION_CHUNK), end(MOTION_CHUNK)];
+    const problem = browserProblem("with motion", run({ network }), [page, motion]);
+    expect(problem).toContain(PAGE_CHUNK);
+    expect(problem).toContain("cannot tell");
+  });
+
+  it("leaves a build with no Motion chunk to nextWithMotionProblem", () => {
+    expect(browserProblem("with motion", run(), [page])).toBeUndefined();
+  });
+});
+
 describe("the fixture app", () => {
   const dir = join(import.meta.dirname, "../no-motion");
   const read = (path: string) => readFileSync(join(dir, path), "utf8");
   const pins = (path: string): Record<string, string> => JSON.parse(read(path)).dependencies;
 
-  it("holds every trigger text of NEXT_TRIGGERS in its page", () => {
+  it("holds every trigger text of NEXT_TRIGGERS and the dialog's title in its page", () => {
     const page = read("next/app/page.jsx");
     for (const text of NEXT_TRIGGERS) expect(page).toContain(text);
+    expect(page).toContain(`<Dialog.Title>${DIALOG_TITLE}</Dialog.Title>`);
   });
 
   it("pins the next version of the docs app", () => {
@@ -227,5 +325,27 @@ describe("the fixture app", () => {
     const shared = Object.keys(without).filter((name) => name in withMotion);
     expect(shared.length).toBeGreaterThan(5);
     for (const name of shared) expect([name, withMotion[name]]).toEqual([name, without[name]]);
+  });
+});
+
+describe("servedPath", () => {
+  const out = "/tmp/site/out";
+
+  it("serves index.html for the root and files under out", () => {
+    expect(servedPath(out, "/")).toBe("/tmp/site/out/index.html");
+    expect(servedPath(out, "/_next/static/chunks/a.js")).toBe(
+      "/tmp/site/out/_next/static/chunks/a.js",
+    );
+  });
+
+  it("refuses a path that leaves out, however it is encoded", () => {
+    expect(servedPath(out, "/..%2Fx")).toBeUndefined();
+    expect(servedPath(out, "/%2e%2e/x")).toBeUndefined();
+    expect(servedPath(out, "/a/../../x")).toBeUndefined();
+    expect(servedPath(out, "/..%2Fout-secret/x")).toBeUndefined();
+  });
+
+  it("refuses a malformed escape instead of throwing", () => {
+    expect(servedPath(out, "/%E0%A4%A")).toBeUndefined();
   });
 });
