@@ -463,7 +463,9 @@ const sameSize = (a: BoxSize | undefined, b: BoxSize | undefined) =>
  * Reads `read` in the first frame in which a box an indicator follows changes size: the border
  * box of one of `items`, or the border or content box of `container`. It reads after the
  * component's ResizeObservers and before that frame paints, as these observers are created after
- * the component's. A first notification that reports no change is skipped.
+ * the component's. A first notification that reports no change is skipped. The component must keep
+ * its shared observer through the change: Tabs subscribes again on a childList change, and as the
+ * only Tabs on the page it then gets a new observer, which this one precedes (a false stale frame).
  */
 export function beforePaintOnceResized<T>(
   { items, container }: { items: Element[]; container: Element },
@@ -505,26 +507,58 @@ export function beforePaintOnceResized<T>(
 }
 
 /**
- * Asserts `frames`, painted after a change, show an indicator jump from `start` to over its
- * target at once. `near` compares two boxes, within 1px.
+ * Reads `read` in the first frame in which a new ResizeObserver of `target` is notified: the next
+ * frame, or, while `target` measures 0×0 (hidden), the first frame it shows in. Call it once the
+ * component has mounted, in the task of a change: this observer, created after the component's,
+ * reads after them and before the frame that change paints in. That holds for a move too, which
+ * resizes nothing: the component's MutationObserver hears of it in that task, and its
+ * `notifyResize` has the shared ResizeObserver run in the same frame. As with
+ * `beforePaintOnceResized`, the component must keep its shared observer through the change.
  */
-export function expectJumpedAtOnce<Box>(
-  frames: { indicator: Box; off: number }[],
+export function beforePaint<T>(target: Element, read: () => T) {
+  return new Promise<T>((resolve, reject) => {
+    const observer = new ResizeObserver(() => {
+      clearTimeout(timer);
+      observer.disconnect();
+      resolve(read());
+    });
+    // A target that never shows fails here, not as a later test's error
+    const timer = setTimeout(() => {
+      observer.disconnect();
+      reject(
+        new Error(`beforePaint: no ResizeObserver notification within ${SETTLE_TIMEOUT_MS}ms`),
+      );
+    }, SETTLE_TIMEOUT_MS);
+    observer.observe(target);
+  });
+}
+
+/** An indicator spec's read of a frame: the indicator's box, and how far it is off its target */
+type IndicatorFrame<Box> = { indicator: Box; off: number };
+
+/**
+ * Asserts an indicator follows a change to its target with no stale frame. `firstFrame` reads the
+ * frame the change paints in, before it paints (`beforePaint` or `beforePaintOnceResized`, set up
+ * in the task of the change); `read` then reads each of the 20 frames painted after it. The
+ * indicator is over its target in every frame and ends away from `start`. `near` compares two
+ * boxes, within 1px.
+ */
+export async function expectFollowsFromFirstFrame<Box>(
+  firstFrame: Promise<IndicatorFrame<Box>>,
+  read: () => IndicatorFrame<Box>,
   start: Box,
   near: (a: Box, b: Box) => boolean,
 ) {
-  const end = frames.at(-1)?.indicator ?? start;
+  // Started once the first frame is read, so it reads the frames after it
+  const frames = [await firstFrame, ...(await eachPaintedFrame(read, 20))];
   const log = JSON.stringify(frames);
-  expect(near(start, end), log).toBe(false);
-  expect(frames.at(-1)?.off, log).toBeLessThanOrEqual(1);
-  // Each frame shows the indicator where it was or where it goes, never between
+  // The change moves or resizes the target, and the indicator with it
+  expect(near(start, frames.at(-1)?.indicator ?? start), log).toBe(false);
+  // Over the target in every frame, the first one painted included
   expect(
-    frames.every((frame) => near(frame.indicator, start) || near(frame.indicator, end)),
+    frames.every((frame) => frame.off <= 1),
     log,
   ).toBe(true);
-  // The first frame is read before the ResizeObserver measures the target, and with Motion the
-  // jump is written in the frame after it: one frame may show the old box, and no more
-  expect(frames.filter((frame) => frame.off > 1).length, log).toBeLessThanOrEqual(1);
 }
 
 export type Dir = "ltr" | "rtl";
