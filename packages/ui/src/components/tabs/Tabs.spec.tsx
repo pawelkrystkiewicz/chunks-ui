@@ -1,10 +1,12 @@
-import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, render, renderHook, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { type ReactNode, StrictMode, useEffect, useState } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { renderToString } from "react-dom/server";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { springs } from "../../lib/motion";
+import { useIndicatorSlide } from "../../lib/use-indicator-slide";
 import { FOCUS_RING } from "../shared";
 import { Tabs, type TabsRootProps, useTabsValue } from "./Tabs";
 
@@ -398,6 +400,88 @@ describe("cancelling a change in onValueChange", () => {
     const { rerender } = render(<Harness cancel />);
     rerender(<Harness cancel disableA />);
     expectSelected("b");
+  });
+});
+
+// Base UI accepts any tab value, a function included. React calls a function passed to useState
+// or a state setter as an initializer or updater, so the value must be stored as `() => value`.
+describe("function tab values", () => {
+  function first() {
+    return "first";
+  }
+  function second() {
+    return "second";
+  }
+
+  function IsSecondProbe() {
+    return <span data-testid="is-second">{String(useTabsValue() === second)}</span>;
+  }
+
+  function Harness({
+    controlled,
+    onValueChange,
+  }: {
+    controlled: boolean;
+    onValueChange: NonNullable<TabsRootProps["onValueChange"]>;
+  }) {
+    // The consumer's own state needs the same guard, on both sides
+    const [value, setValue] = useState<unknown>(() => first);
+    return (
+      <Tabs.Root
+        {...(controlled ? { value } : { defaultValue: first })}
+        onValueChange={(next, details) => {
+          onValueChange(next, details);
+          setValue(() => next);
+        }}
+      >
+        <Tabs.List>
+          <Tabs.Tab value={first}>A</Tabs.Tab>
+          <Tabs.Tab value={second}>B</Tabs.Tab>
+          <Tabs.Indicator data-testid="indicator" />
+        </Tabs.List>
+        <IsSecondProbe />
+        <Tabs.Contents>
+          <Tabs.Content value={first} data-testid="content-a">
+            Content A
+          </Tabs.Content>
+          <Tabs.Content value={second} data-testid="content-b">
+            Content B
+          </Tabs.Content>
+        </Tabs.Contents>
+      </Tabs.Root>
+    );
+  }
+
+  it.each([
+    ["uncontrolled", false],
+    ["controlled", true],
+  ])("selects the clicked tab, with its value as is (%s)", async (_mode, controlled) => {
+    const user = userEvent.setup();
+    const onValueChange = vi.fn();
+    render(<Harness controlled={controlled} onValueChange={onValueChange} />);
+    expect(screen.getByRole("tab", { name: "A" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByTestId("is-second")).toHaveTextContent("false");
+
+    await user.click(screen.getByRole("tab", { name: "B" }));
+    expect(screen.getByRole("tab", { name: "B" })).toHaveAttribute("aria-selected", "true");
+    expect(onValueChange).toHaveBeenCalledTimes(1);
+    expect(onValueChange.mock.calls[0]?.[0]).toBe(second);
+    // Every part that follows the value gets the function, not what it returns
+    expect(screen.getByTestId("is-second")).toHaveTextContent("true");
+    expect(isHiddenPanel(screen.getByTestId("content-a").parentElement!)).toBe(true);
+    expect(isHiddenPanel(screen.getByTestId("content-b").parentElement!)).toBe(false);
+  });
+
+  // The indicator slides when its target changes, so the hook must keep a function target as is
+  it("useIndicatorSlide slides to a function target", () => {
+    const { result, rerender } = renderHook(
+      ({ target }: { target: unknown }) => useIndicatorSlide<HTMLElement>(target, null),
+      { initialProps: { target: first } },
+    );
+    expect(result.current.sliding).toBe(false);
+    rerender({ target: second });
+    expect(result.current.sliding).toBe(true);
+    expect(result.current.transition).toBe(springs.indicator);
   });
 });
 

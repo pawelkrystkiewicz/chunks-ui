@@ -36,10 +36,12 @@ export function useIndicatorSlide<E extends HTMLElement>(
   target: unknown,
   box: IndicatorBox | null,
 ) {
-  const [slideTarget, setSlideTarget] = useState(target);
+  // The target is stored as is: a tab value can be a function, which React would call as a state
+  // initializer or updater, and the mismatch would then re-render without end
+  const [slideTarget, setSlideTarget] = useState(() => target);
   const [sliding, setSliding] = useState(false);
   if (target !== slideTarget) {
-    setSlideTarget(target);
+    setSlideTarget(() => target);
     setSliding(true);
   }
   const element = useRef<E | null>(null);
