@@ -161,8 +161,8 @@ describe.each(MOTION_PATHS)("Tabs.Indicator, $path", ({ withMotion }) => {
   });
 
   // Only the tab's border box grows once it is active. Base UI measures it before the commit
-  // that adds data-active, and its own observer watches the content box, so only the first
-  // notification of the observer created after that commit measures the grown tab.
+  // that adds data-active, and its own observer watches the content box, so only the observation
+  // made after that commit (a re-observe on the aria-selected change) measures the grown tab.
   it("ends on a tab that grows by padding when it is selected", async () => {
     const layout = { tabClassName: "data-active:px-8" };
     const { indicator, tab, rerender } = await renderTabs(withMotion, layout);
@@ -171,6 +171,18 @@ describe.each(MOTION_PATHS)("Tabs.Indicator, $path", ({ withMotion }) => {
     rerender(tabs({ ...layout, value: "b" }));
     await waitForStable(() => offBy(beta, indicator));
     expect(offBy(beta, indicator)).toBeLessThanOrEqual(1);
+  });
+
+  // Two selections commit before a frame: Base UI's last render measures the padded tab while it
+  // is still inactive, and the tab is as large at the next frame as when it was last observed, so
+  // only an observation made after the second commit can see that the indicator is off.
+  it("ends on a padded tab selected again before a frame", async () => {
+    const layout = { tabClassName: "data-active:px-8", value: "b" as const };
+    const { indicator, tab, rerender } = await renderTabs(withMotion, layout);
+    rerender(tabs({ ...layout, value: "a" }));
+    rerender(tabs(layout));
+    await waitForStable(() => offBy(tab("Beta"), indicator));
+    expect(offBy(tab("Beta"), indicator)).toBeLessThanOrEqual(1);
   });
 
   // A new key replaces the active tab's element while the value stays the same, as a tab that

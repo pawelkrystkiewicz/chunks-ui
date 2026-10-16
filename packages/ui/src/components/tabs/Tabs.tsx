@@ -204,11 +204,13 @@ function TabsIndicatorElement({
   const selected = useContext(TabsContext)?.value;
   const { element, sliding, transition } = useIndicatorSlide<HTMLElement>(selected, box);
   // The border box of every tab, which Base UI doesn't observe: padding resizes the tab it is on
-  // and moves the tabs after it. The tab that becomes active grows after Base UI measured it, in
-  // the commit that marks it active, and the observer sees that too. Base UI itself skips the
-  // observer where there is none (jsdom). The tabs are observed again when the list's content
-  // changes, so a tab that remounts, or renders after the indicator, is observed in place of a
-  // detached one.
+  // and moves the other tabs. The tab that becomes active grows after Base UI measured it, in the
+  // commit that marks it active. The tabs are observed again when that commit changes
+  // aria-selected, because the first notification of a new observation measures every tab: it
+  // sees the growth even when the tab is as large as the observer last saw it (selected again
+  // before a frame). They are observed again too when the list's content changes, so a tab that
+  // mounts later or remounts is observed, and a detached one is dropped. Base UI itself skips
+  // the observer where there is none (jsdom).
   useEffect(() => {
     if (typeof ResizeObserver === "undefined") return;
     const list = element.current?.closest('[role="tablist"]');
@@ -222,7 +224,12 @@ function TabsIndicatorElement({
     };
     observeTabs();
     const mutation = new MutationObserver(observeTabs);
-    mutation.observe(list, { childList: true, subtree: true });
+    mutation.observe(list, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["aria-selected"],
+    });
     return () => {
       resize.disconnect();
       mutation.disconnect();
