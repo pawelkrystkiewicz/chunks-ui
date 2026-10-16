@@ -149,7 +149,8 @@ describe("Select.Positioner opt-outs", () => {
     );
     const popup = await settled(getByTestId("popup"));
     expect(widthOf(getByRole("combobox")), "the trigger fits its value").toBeLessThan(200);
-    expect(widthOf(popup)).toBeGreaterThanOrEqual(widthOf(getByRole("combobox")));
+    // --anchor-width carries the trigger's width rounded to whole pixels
+    expect(widthOf(popup)).toBeGreaterThanOrEqual(widthOf(getByRole("combobox")) - 1);
     // A one-line item is its line (20px) plus py-1.5 (12px)
     for (const option of getAllByRole("option")) {
       expect(option.getBoundingClientRect().height, "an item on one line").toBeLessThanOrEqual(33);
