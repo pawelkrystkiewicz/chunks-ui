@@ -17,6 +17,8 @@ type Row = {
   ui: (renderProp?: ReactElement) => ReactNode;
   /** The computed `transition-property` of the part's CSS path, from its component file. */
   transitions: string;
+  /** The computed `transition-duration`, one entry per property in `transitions` */
+  duration: string;
   /** The style Motion writes inline on the default element, from the part's `from` values. */
   inline: "opacity" | "transform";
 };
@@ -25,14 +27,15 @@ type Row = {
 const FADE_SCALE = "opacity, scale";
 
 /** Bare `micro-interactions`: `all`, then the outline entries the theme adds so rings show at once */
-const ALL = "all, outline, outline-offset";
+const MICRO_INTERACTIONS_LIST = "all, outline, outline-offset";
 
 // The nine popup parts that pick Motion or CSS through usePopupRender; the JSX shapes are those of
 // the jsdom table in UsePopupRender.spec.tsx, which proves the class list this spec sees run
 const parts: Row[] = [
   {
     part: "Dialog.Backdrop",
-    transitions: ALL,
+    transitions: MICRO_INTERACTIONS_LIST,
+    duration: "0.3s, 0s, 0s",
     inline: "opacity",
     ui: (r) => (
       <Dialog.Root open>
@@ -46,6 +49,7 @@ const parts: Row[] = [
   {
     part: "Dialog.Popup",
     transitions: FADE_SCALE,
+    duration: "0.3s",
     inline: "transform",
     ui: (r) => (
       <Dialog.Root open>
@@ -59,7 +63,8 @@ const parts: Row[] = [
   },
   {
     part: "Drawer.Backdrop",
-    transitions: ALL,
+    transitions: MICRO_INTERACTIONS_LIST,
+    duration: "0.3s, 0s, 0s",
     inline: "opacity",
     ui: (r) => (
       <Drawer.Root open>
@@ -74,6 +79,7 @@ const parts: Row[] = [
     // One side: `cssSlide` in Drawer.Variants.ts is on the base, shared by the three sides
     part: "Drawer.Popup",
     transitions: "translate",
+    duration: "0.3s",
     inline: "transform",
     ui: (r) => (
       <Drawer.Root open>
@@ -88,6 +94,7 @@ const parts: Row[] = [
   {
     part: "Popover.Content",
     transitions: FADE_SCALE,
+    duration: "0.3s",
     inline: "transform",
     ui: (r) => (
       <Popover.Root open>
@@ -101,6 +108,7 @@ const parts: Row[] = [
   {
     part: "Menu.Content",
     transitions: FADE_SCALE,
+    duration: "0.3s",
     inline: "transform",
     ui: (r) => (
       <Menu.Root open>
@@ -114,6 +122,7 @@ const parts: Row[] = [
   {
     part: "Tooltip.Popup",
     transitions: FADE_SCALE,
+    duration: "0.3s",
     inline: "transform",
     ui: (r) => (
       <Tooltip.Root open>
@@ -131,6 +140,7 @@ const parts: Row[] = [
   {
     part: "Select.Popup",
     transitions: FADE_SCALE,
+    duration: "0.3s",
     inline: "transform",
     ui: (r) => (
       <Select.Root open>
@@ -146,6 +156,7 @@ const parts: Row[] = [
   {
     part: "Combobox.Popup",
     transitions: FADE_SCALE,
+    duration: "0.3s",
     inline: "transform",
     ui: (r) => (
       <Combobox.Root open items={["apple"]}>
@@ -162,20 +173,7 @@ const parts: Row[] = [
   },
 ];
 
-/**
- * Parts whose default element PopupMotion.motion.visual.spec.tsx already shows Motion animating
- * ("mounts a %s when it opens": an inline transform from the motion.div). The rest get that
- * proof here, so each of the nine has both halves of the contract in a browser.
- */
-const DEFAULT_PROVEN_ELSEWHERE = new Set([
-  "Dialog.Popup",
-  "Drawer.Popup",
-  "Popover.Content",
-  "Menu.Content",
-  "Tooltip.Popup",
-]);
-
-const transitionOf = (el: Element) => {
+const computedTransition = (el: Element) => {
   const { transitionProperty, transitionDuration } = getComputedStyle(el);
   return { transitionProperty, transitionDuration };
 };
@@ -190,8 +188,8 @@ describe("popup parts with Motion loaded, no reduced-motion preference", () => {
 
   // The element `render` gives the part replaces the one the spring would animate
   it.each(parts)(
-    "$part runs the CSS transition on the element a render prop gives it",
-    async ({ ui, transitions }) => {
+    "$part has the CSS transition on the element a render prop gives it",
+    async ({ ui, transitions, duration }) => {
       render(ui(<section />));
       const el = await screen.findByTestId("popup");
       expect(el.tagName).toBe("SECTION");
@@ -200,14 +198,14 @@ describe("popup parts with Motion loaded, no reduced-motion preference", () => {
         transform: "",
         opacity: "",
       });
-      // A positioned popup carries `transition: none` inline for its starting frame (Base UI's
-      // getDisabledMountTransitionStyles), so the list reads `none` until the next frame
-      await expect.poll(() => transitionOf(el).transitionProperty).toBe(transitions);
-      expect(transitionOf(el).transitionDuration).not.toBe("0s");
+      expect(computedTransition(el)).toEqual({
+        transitionProperty: transitions,
+        transitionDuration: duration,
+      });
     },
   );
 
-  it.each(parts.filter(({ part }) => !DEFAULT_PROVEN_ELSEWHERE.has(part)))(
+  it.each(parts)(
     "$part animates its default element with Motion, not CSS",
     async ({ ui, inline }) => {
       render(ui());
@@ -215,7 +213,7 @@ describe("popup parts with Motion loaded, no reduced-motion preference", () => {
       // A motion.div renders the part's `from` values inline
       expect(el.style[inline]).not.toBe("");
       // No CSS transition is left to run alongside the spring
-      await expect.poll(() => transitionOf(el).transitionDuration).toBe("0s");
+      expect(computedTransition(el).transitionDuration).toBe("0s");
     },
   );
 });
