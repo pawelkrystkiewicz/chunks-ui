@@ -192,9 +192,11 @@ async function openNearCorner(
   );
   const result = render(tooltip(!keepMounted));
   if (keepMounted) {
-    const positioner = result.getByTestId("positioner");
-    expect(positioner.hidden).toBe(true);
+    const hidden = result.getByTestId("positioner");
+    expect(hidden.hidden).toBe(true);
     result.rerender(tooltip(true));
+    // The one that was measured hidden is the one that shows
+    expect(result.getByTestId("positioner")).toBe(hidden);
   }
   const arrow = result.getByTestId("arrow");
   const popup = result.getByTestId("popup");
@@ -260,8 +262,9 @@ describe("Tooltip.Positioner arrowPadding", () => {
     expect(Math.abs(foot - (16 - overhang))).toBeLessThanOrEqual(LAYOUT_ROUNDING_PX);
   });
 
-  // The default is read from the popup's computed styles, which a hidden popup also has; the
-  // positioner mounts hidden with `keepMounted`, and the hook must still read it when it shows
+  // The default is read from computed styles (the popup's radii, the arrow's width), which resolve
+  // while hidden: with `keepMounted` the hook reads them once at the hidden mount, and the arrow
+  // must land where it does in a popup mounted on open
   it("defaults the same in a keepMounted portal as in one mounted on open", async () => {
     const onOpen = await footNearCorner("bottom", "start");
     const kept = await footNearCorner("bottom", "start", undefined, true);
