@@ -602,6 +602,46 @@ describe("tab values with the same String() text", () => {
     expect(screen.getByTestId("animate")).toBe(pane);
     expect(instances.size).toBe(1);
   });
+
+  // undefined (nothing tracked yet) and null (Base UI: no enabled tab) both mean no selection
+  it("mounts a Tabs.Animate pane once when every tab is disabled", () => {
+    const instances = new Set<object>();
+    render(
+      <Tabs.Root>
+        <Tabs.List>
+          <Tabs.Tab value="a" disabled>
+            A
+          </Tabs.Tab>
+          <Tabs.Tab value="b" disabled>
+            B
+          </Tabs.Tab>
+        </Tabs.List>
+        <Tabs.Animate>
+          <MountedChild instances={instances} />
+        </Tabs.Animate>
+      </Tabs.Root>,
+    );
+    expect(instances.size).toBe(1);
+  });
+
+  it("keys a Tabs.Contents child without a value apart from a sibling with value={1}", () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      render(
+        <Tabs.Root value={1}>
+          <Tabs.Contents>
+            <Tabs.Content value={0}>Zero</Tabs.Content>
+            {/* @ts-expect-error value is required by the types, but a child can lack it */}
+            <Tabs.Content>No value</Tabs.Content>
+            <Tabs.Content value={1}>One</Tabs.Content>
+          </Tabs.Contents>
+        </Tabs.Root>,
+      );
+      expect(consoleError).not.toHaveBeenCalled();
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
 });
 
 describe("useTabsValue", () => {

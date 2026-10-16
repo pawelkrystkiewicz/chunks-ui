@@ -262,6 +262,7 @@ function TabsIndicatorElement({
 // elements by the value, and two values must not share a key: two objects or two functions can
 // have the same String() text, and 1 and "1" do. A primitive keys by its type and text; an object
 // or function by an id for its identity, held weakly, so a value the consumer drops is collected.
+// A symbol keys by its description, so two symbols with the same description share a key.
 const identityKeys = new WeakMap<object, number>();
 let nextIdentityKey = 0;
 
@@ -433,8 +434,8 @@ function TabsContents({ className, children, transition, ref, ...props }: TabsCo
       <div ref={trackRef} className={motion ? "-mx-1 flex items-start" : undefined}>
         {childrenArray.map((child, i) => (
           <div
-            // A child without a value keys by its index, which Base UI makes its value
-            key={keyOf(childValue(child) ?? i)}
+            // A child without a value keys by its position
+            key={childValue(child) == null ? `index:${i}` : keyOf(childValue(child))}
             ref={(el) => {
               itemRefs.current[i] = el;
             }}
@@ -508,7 +509,7 @@ function TabsAnimate({
 
   return (
     <TabsAnimatePane
-      key={keyOf(value)}
+      key={keyOf(value ?? null)}
       enter={enter}
       reduced={reduced}
       className={cn(className)}
