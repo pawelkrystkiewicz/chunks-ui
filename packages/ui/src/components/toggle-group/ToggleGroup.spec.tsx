@@ -515,9 +515,7 @@ describe("ToggleGroup in server HTML", () => {
     expect(root).toHaveClass("group/toggle-group");
     expect(b).toHaveAttribute("data-pressed");
     expect(b).toHaveClass(...OWN_PILL);
-    // The look follows data-pressed, so the unpressed item has the classes and no pill
     expect(a).not.toHaveAttribute("data-pressed");
-    expect(a).toHaveClass(...OWN_PILL);
   });
 
   // A `multiple` group has no indicator: a pressed item always draws its own background

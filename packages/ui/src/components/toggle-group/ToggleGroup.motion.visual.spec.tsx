@@ -731,4 +731,28 @@ describe("ToggleGroup pill from server HTML to the measured indicator", () => {
     await expect.poll(() => host.querySelector("[role='group'] > span")).not.toBeNull();
     expect(getComputedStyle(alpha, "::before").display).toBe("block");
   });
+
+  // The case that exercises the gate: the pill's classes apply to the pressed item, so a consumer
+  // ::before there must stay the consumer's once the indicator exists
+  it("keeps a consumer's ::before on the pressed item after the indicator is measured", async () => {
+    await enterMotionPath(false);
+    const { getByRole, container: host } = render(
+      <ToggleGroup.Root defaultValue={["b"]}>
+        <ToggleGroup.Item value="a">Alpha</ToggleGroup.Item>
+        <ToggleGroup.Item
+          value="b"
+          className="before:block before:h-1 before:w-1 before:content-['']"
+        >
+          Beta
+        </ToggleGroup.Item>
+      </ToggleGroup.Root>,
+    );
+    const beta = getByRole("button", { name: "Beta" });
+    await expect.poll(() => host.querySelector("[role='group'] > span")).not.toBeNull();
+    const before = getComputedStyle(beta, "::before");
+    expect(before.display).toBe("block");
+    expect(before.width).toBe("4px");
+    expect(before.position).not.toBe("absolute");
+    expect(before.backgroundColor).toBe("rgba(0, 0, 0, 0)");
+  });
 });
