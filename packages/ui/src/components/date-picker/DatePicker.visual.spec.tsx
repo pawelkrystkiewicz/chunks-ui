@@ -29,6 +29,25 @@ describe("DatePicker", () => {
     const { getByRole } = render(<DatePicker disabled />);
     expectNotAllowed(getByRole("button", { name: "Pick a date" }));
   });
+
+  // Base UI publishes `--transform-origin` on the Positioner once it has placed the popup: the
+  // point on the trigger's side, so the popup grows out of its trigger
+  it("scales the popup from its Positioner's --transform-origin", async () => {
+    render(<DatePicker />);
+    await page.getByRole("button", { name: "Pick a date" }).click();
+    await expect.element(page.getByRole("dialog")).toBeInTheDocument();
+    const popup = page.getByRole("dialog").element() as HTMLElement;
+    const positioner = popup.parentElement as HTMLElement;
+    const origin = () => positioner.style.getPropertyValue("--transform-origin");
+    await expect.poll(origin).not.toBe("");
+
+    const computed = getComputedStyle(popup).transformOrigin;
+    // The Positioner's value set on the popup, so its percentages resolve against the same box
+    popup.style.transformOrigin = origin();
+    const fromPositioner = getComputedStyle(popup).transformOrigin;
+    popup.style.removeProperty("transform-origin");
+    expect(computed).toBe(fromPositioner);
+  });
 });
 
 // Lives in the browser suite, not jsdom: only a real browser runs the popup's exit transition,

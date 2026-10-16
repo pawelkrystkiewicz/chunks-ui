@@ -67,8 +67,15 @@ function SelectPopup({ className, render: renderProp, ...props }: SelectPopupPro
       render={render}
       className={cnState(
         "rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md",
+        "origin-(--transform-origin)",
         !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
         !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
+        // Aligned over its trigger (`data-side="none"`), it only fades, as in Base UI's own reference
+        // styles: the popup lands with the selected item over the trigger's value, so a scale would
+        // move it. If a Select falls back to below-the-trigger after mount, this path still scales
+        // (its starting style is on when `data-side` flips) while Motion has already taken scale 1.
+        !useSpring &&
+          "data-[side=none]:data-starting-style:scale-100 data-[side=none]:data-ending-style:scale-100",
         // The fade and scale of the spring path, so both paths match
         !useSpring && "micro-interactions [transition-property:opacity,scale] duration-300",
         className,

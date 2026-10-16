@@ -304,6 +304,7 @@ export function DatePicker({
                 // The popup takes focus when `initialFocus` finds no day: the library ring, as
                 // on Popover.Content
                 FOCUS_RING,
+                "origin-(--transform-origin)",
                 "data-starting-style:scale-95 data-starting-style:opacity-0",
                 "data-ending-style:scale-95 data-ending-style:opacity-0",
                 // Only the fade and scale, not the ring
