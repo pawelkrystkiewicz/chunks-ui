@@ -158,9 +158,10 @@ function ToggleGroupRoot<Value extends string = string>({
         value={value}
         defaultValue={defaultValue}
         onValueChange={handleValueChange}
-        // Hides the pressed item's own pill, in the commit the indicator mounts in
-        data-indicator={indicator ? "" : undefined}
         {...props}
+        // Hides the pressed item's own pill, in the commit the indicator mounts in. After the
+        // props, so a consumer cannot override it
+        data-indicator={indicator ? "" : undefined}
       >
         {indicator}
         {children}
@@ -277,7 +278,8 @@ function ToggleGroupItem({ className, value, ref, ...props }: ToggleGroupItemPro
         // any item is untouched. It goes away rather than fading: the item transitions its own
         // background and shadow. In a disabled group it takes the item's 50% opacity, and the
         // indicator (a sibling) does not, so the pill brightens at hydration: a pseudo-element
-        // cannot escape its parent's opacity.
+        // cannot escape its parent's opacity. Known limit: before the indicator exists, a
+        // consumer's own before:* classes on the pressed item merge with the pill's ::before.
         ctx?.multiple === false && [
           "group-not-data-indicator/toggle-group:data-pressed:before:absolute",
           "group-not-data-indicator/toggle-group:data-pressed:before:inset-0",
