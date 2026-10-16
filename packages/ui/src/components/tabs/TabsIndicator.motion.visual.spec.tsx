@@ -80,7 +80,6 @@ async function renderTabs(withMotion: boolean, layout?: Layout) {
   return { ...result, indicator, tab };
 }
 
-/** Each from a layout with the same `value` and nothing else changed */
 const RESIZES: [string, Layout][] = [
   ["the font size of the tab", { tabStyle: { fontSize: 20 } }],
   // Only the tab's border box grows: its content box doesn't, nor does the list's
@@ -173,9 +172,7 @@ describe.each(MOTION_PATHS)("Tabs.Indicator, $path", ({ withMotion }) => {
     expect(offBy(beta, indicator)).toBeLessThanOrEqual(1);
   });
 
-  // Two selections commit before a frame: Base UI's last render measures the padded tab while it
-  // is still inactive, and the tab is as large at the next frame as when it was last observed, so
-  // only an observation made after the second commit can see that the indicator is off.
+  // The tab gains its padding on selection; nothing resizes between the two commits.
   it("ends on a padded tab selected again before a frame", async () => {
     const layout = { tabClassName: "data-active:px-8", value: "b" as const };
     const { indicator, tab, rerender } = await renderTabs(withMotion, layout);
@@ -185,8 +182,7 @@ describe.each(MOTION_PATHS)("Tabs.Indicator, $path", ({ withMotion }) => {
     expect(offBy(tab("Beta"), indicator)).toBeLessThanOrEqual(1);
   });
 
-  // A new key replaces the active tab's element while the value stays the same, as a tab that
-  // renders after the indicator does: the indicator must follow the new element, not the old
+  // A new key remounts the active tab; the value stays the same.
   it("follows a padding change of the active tab after it remounts", async () => {
     const { indicator, tab, rerender } = await renderTabs(withMotion);
     const mounted = tab("Alpha");
