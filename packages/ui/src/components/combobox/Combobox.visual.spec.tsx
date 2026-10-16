@@ -1,11 +1,13 @@
 import { render } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
-import { page, userEvent } from "vitest/browser";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { commands, page, userEvent } from "vitest/browser";
 import {
   boxOf,
   describePopupCssPath,
+  enterMotionPath,
   expectNotAllowed,
   focusVisible,
+  MOTION_PATHS,
   renderFixture,
   renderPage,
   ringColor,
@@ -20,6 +22,24 @@ const options = [
   { value: "svelte", label: "Svelte" },
 ];
 
+const popup = (positionerProps?: ComboboxPositionerProps) => (
+  <Combobox.Portal>
+    <Combobox.Positioner {...positionerProps}>
+      <Combobox.Popup data-testid="popup">
+        <Combobox.List>
+          {(item: (typeof options)[number]) => (
+            <Combobox.Item key={item.value} value={item}>
+              <Combobox.ItemIndicator />
+              {item.label}
+            </Combobox.Item>
+          )}
+        </Combobox.List>
+        <Combobox.Empty>No results found</Combobox.Empty>
+      </Combobox.Popup>
+    </Combobox.Positioner>
+  </Combobox.Portal>
+);
+
 // Combobox.Empty reads the filtered `items` on Root: without them it counts no matches and
 // shows its message under the items
 const combobox = ({
@@ -33,21 +53,7 @@ const combobox = ({
 } = {}) => (
   <Combobox.Root items={options} defaultOpen={defaultOpen} open={open}>
     <Combobox.Input placeholder="Search framework..." />
-    <Combobox.Portal>
-      <Combobox.Positioner {...positionerProps}>
-        <Combobox.Popup data-testid="popup">
-          <Combobox.List>
-            {(item: (typeof options)[number]) => (
-              <Combobox.Item key={item.value} value={item}>
-                <Combobox.ItemIndicator />
-                {item.label}
-              </Combobox.Item>
-            )}
-          </Combobox.List>
-          <Combobox.Empty>No results found</Combobox.Empty>
-        </Combobox.Popup>
-      </Combobox.Positioner>
-    </Combobox.Portal>
+    {popup(positionerProps)}
   </Combobox.Root>
 );
 
@@ -72,6 +78,31 @@ const chipsCombobox = () => (
       <Combobox.Clear />
       <Combobox.Trigger />
     </Combobox.Control>
+  </Combobox.Root>
+);
+
+// The docs' multi-select with its popup open from the start, to measure the popup against the
+// Control
+const openChipsCombobox = () => (
+  <Combobox.Root multiple items={options} defaultValue={options.slice(0, 2)} defaultOpen>
+    <Combobox.Control data-testid="control">
+      <Combobox.Chips>
+        {options.slice(0, 2).map((item) => (
+          <Combobox.Chip key={item.value}>
+            {item.label}
+            <Combobox.ChipRemove />
+          </Combobox.Chip>
+        ))}
+      </Combobox.Chips>
+      <Combobox.Input
+        className="h-7 min-w-20 flex-1 border-0 bg-transparent px-0"
+        placeholder="Select framework..."
+        aria-label="Frameworks"
+      />
+      <Combobox.Clear />
+      <Combobox.Trigger />
+    </Combobox.Control>
+    {popup()}
   </Combobox.Root>
 );
 
@@ -165,6 +196,14 @@ describe("Combobox", () => {
     await expect(fixture).toMatchScreenshot();
   });
 
+  // The chips sat flush against each other: Combobox.Chips had no gap (#478)
+  it("leaves at least 4px between the chips", () => {
+    const { getByText } = render(<div style={{ width: 300 }}>{chipsCombobox()}</div>);
+    const react = getByText("React").getBoundingClientRect();
+    const vue = getByText("Vue").getBoundingClientRect();
+    expect(vue.left).toBeGreaterThanOrEqual(react.right + 4);
+  });
+
   it("open", async () => {
     const body = await renderPage(
       <div style={{ padding: 40 }}>{combobox({ defaultOpen: true })}</div>,
@@ -225,3 +264,38 @@ describe("Combobox", () => {
 });
 
 describePopupCssPath("Combobox.Popup", (open) => combobox({ open }));
+
+// The docs' multi-select popup sat at the input's left edge, at the input's width, and closer
+// to the Control's border than the single-select popup sits to its input: the Control was a
+// plain <div>, so the popup anchored to the input inside the Control's padding (#478). The
+// Control is now Base UI's Combobox.InputGroup, the part the popup anchors to. Both paths, as
+// the spring and the CSS transition each scale the popup before it comes to rest.
+describe.each(MOTION_PATHS)("Combobox.Popup under Combobox.Control, $path", ({ withMotion }) => {
+  beforeAll(() => enterMotionPath(withMotion));
+  beforeEach(async () => {
+    await commands.emulateMedia({ reducedMotion: "no-preference" });
+    await expect.poll(() => matchMedia("(prefers-reduced-motion: reduce)").matches).toBe(false);
+  });
+  afterAll(async () => {
+    await commands.emulateMedia({ reducedMotion: "reduce" });
+    await enterMotionPath(true);
+  });
+
+  it("anchors the popup to the Control: its left edge, its width, and the single-select gap below its border", async () => {
+    const single = render(<div style={{ padding: 40 }}>{combobox({ defaultOpen: true })}</div>);
+    const singlePopup = await waitForStable(() => boxOf(single.getByTestId("popup")));
+    const singleGap = singlePopup.top - single.getByRole("combobox").getBoundingClientRect().bottom;
+    single.unmount();
+
+    const { getByTestId } = render(<div style={{ padding: 40 }}>{openChipsCombobox()}</div>);
+    const multiPopup = await waitForStable(() => boxOf(getByTestId("popup")));
+    const control = boxOf(getByTestId("control"));
+    const width = (box: ReturnType<typeof boxOf>) => box.right - box.left;
+    expect(Math.abs(multiPopup.left - control.left), "left edge").toBeLessThanOrEqual(1);
+    expect(Math.abs(width(multiPopup) - width(control)), "width").toBeLessThanOrEqual(1);
+    expect(
+      Math.abs(multiPopup.top - control.bottom - singleGap),
+      `gap below the Control's border, single-select gap ${singleGap}px`,
+    ).toBeLessThanOrEqual(1);
+  });
+});

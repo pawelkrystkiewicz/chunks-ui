@@ -241,12 +241,12 @@ The popup enters with a scale-up and fade (from `scale-95` and `opacity-0`): the
 | Part | Description |
 |---|---|
 | `Combobox.Root` | State container. Manages open/close, filtering, and selected value(s). |
-| `Combobox.Control` | Bordered wrapper for multi-select (chips + input). Draws the focus ring (`has-[:focus-visible]`) while the input or a chip inside it has keyboard focus, and turns off the ring of its combobox input, so one ring shows; a focused chip also draws its own. |
+| `Combobox.Control` | Bordered wrapper for multi-select (chips + input), Base UI's `Combobox.InputGroup`: the popup anchors to it, and a press on its padding focuses the input and opens the popup. Draws the focus ring (`has-[:focus-visible]`) while the input or a chip inside it has keyboard focus, and turns off the ring of its combobox input, so one ring shows; a focused chip also draws its own. |
 | `Combobox.Input` | Text input with built-in filtering. |
 | `Combobox.Trigger` | Button that toggles the popup. Renders a default chevron icon. |
 | `Combobox.Icon` | Chevron icon, usable standalone outside the trigger. |
 | `Combobox.Portal` | Renders the popup in a portal. |
-| `Combobox.Positioner` | Handles Floating UI positioning. Default `sideOffset={8}`, as on `Popover.Content` and `Menu.Content`: the input's focus ring, 4px outside its edge, stays clear of the popup. A `sideOffset` you pass replaces it, so `sideOffset={0}` opens the popup flush against the input. Inside a `Combobox.Control` with chips the popup anchors to the input, so the gap below the Control's border is the 8px plus the Control's padding. |
+| `Combobox.Positioner` | Handles Floating UI positioning. Default `sideOffset={8}`, as on `Popover.Content` and `Menu.Content`: the input's focus ring, 4px outside its edge, stays clear of the popup. A `sideOffset` you pass replaces it, so `sideOffset={0}` opens the popup flush against the input. Inside a `Combobox.Control` the popup anchors to the Control: it is as wide as the Control and opens 8px below the Control's border. |
 | `Combobox.Popup` | The dropdown panel containing items. Scrolls when the items need more than the space between the input and the viewport edge. |
 | `Combobox.List` | List container. Takes a function child that renders each matching item (or each group, when `items` holds groups). |
 | `Combobox.Item` | An individual selectable option. |
@@ -255,7 +255,7 @@ The popup enters with a scale-up and fade (from `scale-95` and `opacity-0`): the
 | `Combobox.Clear` | Button that clears the current value. Renders a default X icon. |
 | `Combobox.Group` | Groups related items together. |
 | `Combobox.GroupLabel` | Label for a group of items. |
-| `Combobox.Chips` | Container for selected chips in multi-select mode. Takes ordinary children: map the selected values to `Combobox.Chip`s. |
+| `Combobox.Chips` | Container for selected chips in multi-select mode: a wrapping row with a 4px gap between the chips (`gap-1`; `className` merges with it). Takes ordinary children: map the selected values to `Combobox.Chip`s. |
 | `Combobox.Chip` | A styled chip representing a selected value. Draws the focus ring when the arrow keys focus it. Arrow keys move focus from the input to a chip only when the input is inside `Combobox.Chips`. |
 | `Combobox.ChipRemove` | Button to remove a chip. Renders a default X icon. |
 | `Combobox.Value` | Displays the selected value. |
@@ -293,7 +293,7 @@ Add `touch-target` to `Combobox.Trigger` only when there is no `Combobox.Clear` 
 
 ## Props
 
-All compound parts accept the same props as their underlying Base UI [`Combobox`](https://base-ui.com/react/components/combobox#api-reference) counterparts. `Combobox.Control` is a plain `<div>` wrapper and accepts all standard HTML div props. `Combobox.Root` also takes `labels`:
+All compound parts accept the same props as their underlying Base UI [`Combobox`](https://base-ui.com/react/components/combobox#api-reference) counterparts. `Combobox.Control` is Base UI's `Combobox.InputGroup` and accepts its props. `Combobox.Root` also takes `labels`:
 
 <TSDoc
   definition={generateDefinition({

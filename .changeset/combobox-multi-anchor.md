@@ -1,0 +1,5 @@
+---
+"chunks-ui": patch
+---
+
+Fixed: a multi-select `Combobox` popup anchors to the whole `Combobox.Control`, like single-select, and `Combobox.Chips` spaces its chips. The popup sat at the input's left edge, at the input's width, and closer to the Control's border than the single-select popup sits to its input, because `Combobox.Control` was a plain `<div>` and the popup anchored to the input inside its padding. `Combobox.Control` is now Base UI's `Combobox.InputGroup`: the popup takes the Control's left edge and width and opens `sideOffset` (8px) below its border. The Control renders `role="group"` and Base UI's input-group data attributes (`data-popup-open`, `data-disabled`, `data-popup-side`, the field states), and a press on its padding focuses the input and opens the popup. `ComboboxControlProps` are now the InputGroup's props, so `className` may also be a function of the group state. `Combobox.Chips` now has `flex flex-wrap items-center gap-1`, merged with your `className`; the chips sat flush before.
