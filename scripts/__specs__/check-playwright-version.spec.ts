@@ -5,7 +5,12 @@ import { join } from "node:path";
 import { checkPlaywrightVersions } from "../check-playwright-version";
 
 const ROOT = join(import.meta.dirname, "../..");
-const READ = ["packages/ui/package.json", "apps/docs/package.json", "TESTING_STRATEGY.md"];
+const READ = [
+  "packages/ui/package.json",
+  "apps/docs/package.json",
+  "package.json",
+  "TESTING_STRATEGY.md",
+];
 const dirs: string[] = [];
 
 /** A copy of the files the check reads. */
@@ -49,6 +54,15 @@ describe("checkPlaywrightVersions", () => {
     );
     expect(await checkPlaywrightVersions(dir)).toEqual([
       expect.stringMatching(/^apps\/docs\/package\.json \(playwright\) has \^0\.0\.1, /),
+    ]);
+  });
+
+  it("names the root package.json when its playwright (for check-no-motion.ts) differs", async () => {
+    const dir = copyWith("package.json", (text) =>
+      text.replace(/"playwright": "[^"]+"/, '"playwright": "0.0.1"'),
+    );
+    expect(await checkPlaywrightVersions(dir)).toEqual([
+      expect.stringMatching(/^package\.json \(playwright\) has 0\.0\.1, /),
     ]);
   });
 
