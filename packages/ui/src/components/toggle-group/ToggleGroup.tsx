@@ -166,16 +166,71 @@ function ToggleGroupRoot<Value extends string = string>({
 // Indicator
 // ---------------------------------------------------------------------------
 
+/** `offsetLeft`/`offsetTop` are whole px, and the error can add up along the offset parent chain */
+const OFFSET_ROUNDING_PX = 2;
+
 /**
- * The box of `item` within `container`. Null while the item measures 0×0, as it does while the
- * group or the item isn't rendered (display:none): no box to show. The indicator then unmounts,
- * and the one that mounts once the item is measured again starts over it.
+ * The layout size of `el`'s border box: its computed size, which keeps sub-pixel precision, or
+ * its offset size (whole px) where the two differ, as with content-box sizing.
+ */
+function layoutSize(el: HTMLElement) {
+  const css = getComputedStyle(el);
+  const width = Number.parseFloat(css.width) || 0;
+  const height = Number.parseFloat(css.height) || 0;
+  if (Math.round(width) !== el.offsetWidth || Math.round(height) !== el.offsetHeight) {
+    return { width: el.offsetWidth, height: el.offsetHeight };
+  }
+  return { width, height };
+}
+
+/** `el`'s border edges in layout px, summed up its offset parent chain: no transform moves them */
+function layoutOrigin(el: HTMLElement) {
+  let left = 0;
+  let top = 0;
+  for (let node: Element | null = el; node instanceof HTMLElement; node = node.offsetParent) {
+    left += node.offsetLeft;
+    top += node.offsetTop;
+    const parent = node.offsetParent;
+    if (parent instanceof HTMLElement) {
+      left += parent.clientLeft;
+      top += parent.clientTop;
+    }
+  }
+  return { left, top };
+}
+
+/**
+ * The layout box of `item` within `container`'s padding box, from which the indicator's
+ * `left`/`top` run. Null while the item has no size, as while the group or the item isn't
+ * rendered (display:none): no box to show. The indicator then unmounts, and the one that mounts
+ * once the item has a size again starts over it.
+ *
+ * Layout px, not the rects as they are: a transform on an ancestor scales the rects, not the
+ * layout, and fires no ResizeObserver when it ends. A Dialog opens from scale(0.95) with the
+ * group inside it. The rects over the container's layout size give that scale, and their deltas
+ * divided by it are layout px with sub-pixel precision. The offset parent chain gives layout px
+ * too, immune to any transform, but whole px: it places the indicator where the two disagree by
+ * more than rounding, as a rotation, skew or flip warps the rects past what the scale undoes.
  */
 function boxWithin(container: HTMLElement, item: HTMLElement): IndicatorBox | null {
+  const { width, height } = layoutSize(item);
+  if (width === 0 || height === 0) return null;
   const r = item.getBoundingClientRect();
-  if (r.width === 0 || r.height === 0) return null;
   const c = container.getBoundingClientRect();
-  return { left: r.left - c.left, top: r.top - c.top, width: r.width, height: r.height };
+  const outer = layoutSize(container);
+  const scaleX = outer.width > 0 ? c.width / outer.width : 1;
+  const scaleY = outer.height > 0 ? c.height / outer.height : 1;
+  // The container's scroll moves the item's rect, not its layout slot, where the indicator sits
+  const rectLeft = (r.left - c.left) / scaleX + container.scrollLeft - container.clientLeft;
+  const rectTop = (r.top - c.top) / scaleY + container.scrollTop - container.clientTop;
+  const origin = layoutOrigin(item);
+  const base = layoutOrigin(container);
+  const left = origin.left - base.left - container.clientLeft;
+  const top = origin.top - base.top - container.clientTop;
+  const agree =
+    Math.abs(rectLeft - left) <= OFFSET_ROUNDING_PX &&
+    Math.abs(rectTop - top) <= OFFSET_ROUNDING_PX;
+  return agree ? { left: rectLeft, top: rectTop, width, height } : { left, top, width, height };
 }
 
 const sameBox = (a: IndicatorBox | null, b: IndicatorBox | null) =>

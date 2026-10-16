@@ -612,6 +612,49 @@ describe.each(MOTION_PATHS)("ToggleGroup indicator on a resize, $path", ({ withM
   });
 });
 
+// A transform on an ancestor changes the boxes on screen, not the layout, and fires no
+// ResizeObserver when it ends: a Dialog opens from scale(0.95) with a ToggleGroup inside it. The
+// indicator is the item's layout box, so the two coincide on screen under the transform and after
+// it is removed, which also doesn't measure again.
+describe.each(MOTION_PATHS)("ToggleGroup indicator under a transform, $path", ({ withMotion }) => {
+  const transformed = (transform?: string) => (
+    <div style={{ transform }}>
+      <ToggleGroup.Root value={["b"]}>
+        <ToggleGroup.Item value="a">Alpha</ToggleGroup.Item>
+        <ToggleGroup.Item value="b">Beta, a longer item</ToggleGroup.Item>
+      </ToggleGroup.Root>
+    </div>
+  );
+
+  it.each([
+    ["scaled down, as a Dialog is while it opens", "scale(0.95)"],
+    // The rects are mirrored: they disagree with the layout offsets, which place the indicator
+    ["turned around", "rotate(180deg)"],
+  ])(
+    "covers the pressed item while the ancestor is %s, and once it isn't",
+    async (_, transform) => {
+      await enterMotionPath(withMotion);
+      const { getByRole, rerender } = render(transformed(transform));
+      const group = getByRole("group");
+      const beta = getByRole("button", { name: "Beta, a longer item" });
+      const indicator = () => {
+        const span = group.querySelector<HTMLElement>(":scope > span");
+        if (!span) throw new Error("No indicator");
+        return span;
+      };
+      await expect
+        .poll(() => group.querySelector(":scope > span")?.classList.contains("micro-interactions"))
+        .toBe(!withMotion);
+      await waitForStable(() => offBy(beta, indicator()));
+      expect(offBy(beta, indicator()), "under the transform").toBeLessThanOrEqual(1);
+
+      rerender(transformed(undefined));
+      await waitForStable(() => offBy(beta, indicator()));
+      expect(offBy(beta, indicator()), "without the transform").toBeLessThanOrEqual(1);
+    },
+  );
+});
+
 describe("ToggleGroup indicator with reduced motion", () => {
   beforeAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
   afterAll(() => commands.emulateMedia({ reducedMotion: "no-preference" }));
