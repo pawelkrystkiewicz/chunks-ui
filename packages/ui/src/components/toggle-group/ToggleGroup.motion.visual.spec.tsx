@@ -15,11 +15,12 @@ import { commands, userEvent } from "vitest/browser";
 import { resizeBatches } from "../../lib/shared-resize";
 import { reloadMotion } from "../../lib/use-motion";
 import {
+  beforePaint,
   beforePaintOnceResized,
   eachPaintedFrame,
   emulateReducedMotion,
   enterMotionPath,
-  expectJumpedAtOnce,
+  expectFollowsFromFirstFrame,
   insetsWithin,
   MOTION_PATHS,
   offBy,
@@ -236,21 +237,6 @@ describe("ToggleGroup.Root with a consumer render, CSS path", () => {
     },
   );
 });
-
-/**
- * Reads `read` in the next frame in which `target` changes size, after the group's
- * ResizeObserver callbacks and before that frame paints. An observer created after the group's
- * gets its callback after the group's, in the same frame.
- */
-function beforePaint<T>(target: Element, read: () => T) {
-  return new Promise<T>((resolve) => {
-    const observer = new ResizeObserver(() => {
-      observer.disconnect();
-      resolve(read());
-    });
-    observer.observe(target);
-  });
-}
 
 describe("ToggleGroup indicator after the group was hidden", () => {
   /** How the group hides: display:none on a wrapper, or React's <Activity> */
@@ -558,45 +544,26 @@ const MOVES: [string, Layout, Layout][] = [
 ];
 
 /**
- * Renders `before`, changes it to `after`, which resizes the group or an item, and asserts the
- * indicator is over item "a" in every frame from the one the resize lands in, which is read
- * after the group's ResizeObserver, before it paints
+ * Renders `before`, changes it to `after`, and asserts the indicator is over item "a" in every
+ * frame from the one the change paints in. That frame is read after the group's ResizeObserver,
+ * before it paints: once a box resizes, or for a move, which resizes nothing, in the next frame.
  */
-async function expectFollowsBeforePaint(withMotion: boolean, before: Layout, after: Layout) {
+async function expectFollowsBeforePaint(
+  withMotion: boolean,
+  change: "resize" | "move",
+  before: Layout,
+  after: Layout,
+) {
   const { group, indicator, item, rerender } = await renderSized(withMotion, before);
   const start = edgesOf(indicator());
   const read = () => ({ indicator: edgesOf(indicator()), off: offBy(item("Alpha"), indicator()) });
-  const resized = beforePaintOnceResized(
-    { items: [item("Alpha"), item("Beta")], container: group },
-    read,
-  );
+  const firstFrame =
+    change === "resize"
+      ? beforePaintOnceResized({ items: [item("Alpha"), item("Beta")], container: group }, read)
+      : beforePaint(group, read);
 
   rerender(sized(after));
-  const frames = [await resized, ...(await eachPaintedFrame(read, 20))];
-  const log = JSON.stringify(frames);
-  // The change moves or resizes the item, and the indicator with it
-  expect(near(start, frames.at(-1)?.indicator ?? start), log).toBe(false);
-  // Over the item in every frame, the first one painted included
-  expect(
-    frames.every((frame) => frame.off <= 1),
-    log,
-  ).toBe(true);
-}
-
-/**
- * Renders `before`, changes it to `after`, and asserts the indicator is over item "a" at once,
- * without sliding there
- */
-async function expectFollowsAtOnce(withMotion: boolean, before: Layout, after: Layout) {
-  const { indicator, item, rerender } = await renderSized(withMotion, before);
-  const start = edgesOf(indicator());
-
-  rerender(sized(after));
-  const frames = await eachPaintedFrame(
-    () => ({ indicator: edgesOf(indicator()), off: offBy(item("Alpha"), indicator()) }),
-    20,
-  );
-  expectJumpedAtOnce(frames, start, near);
+  await expectFollowsFromFirstFrame(firstFrame, read, start, near);
 }
 
 // Runs with reduced motion off: Motion springs the indicator, or without Motion the CSS
@@ -604,12 +571,12 @@ async function expectFollowsAtOnce(withMotion: boolean, before: Layout, after: L
 describe.each(MOTION_PATHS)("ToggleGroup indicator on a resize, $path", ({ withMotion }) => {
   it.each(RESIZES)(
     "follows a change to %s in the frame it changes in, with no frames in between",
-    (_, before, after) => expectFollowsBeforePaint(withMotion, before, after),
+    (_, before, after) => expectFollowsBeforePaint(withMotion, "resize", before, after),
   );
 
   it.each(MOVES)(
-    "follows a change to %s at once, which moves the item without resizing anything",
-    (_, before, after) => expectFollowsAtOnce(withMotion, before, after),
+    "follows a change to %s in the frame it changes in, which moves the item without resizing anything",
+    (_, before, after) => expectFollowsBeforePaint(withMotion, "move", before, after),
   );
 
   // The indicator's own writes (its box; with Motion, a spring's many frames of them) and a child

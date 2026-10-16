@@ -399,6 +399,86 @@ describe("Combobox", () => {
     );
     expect(await axe(container)).toHaveNoViolations();
   });
+
+  // The popup of the documented single and multi-select patterns
+  function Popup() {
+    return (
+      <Combobox.Portal>
+        <Combobox.Positioner>
+          <Combobox.Popup>
+            <Combobox.List>
+              {(item: (typeof items)[number]) => (
+                <Combobox.Item key={item.value} value={item}>
+                  {item.label}
+                  <Combobox.ItemIndicator />
+                </Combobox.Item>
+              )}
+            </Combobox.List>
+            <Combobox.Empty>No results found.</Combobox.Empty>
+          </Combobox.Popup>
+        </Combobox.Positioner>
+      </Combobox.Portal>
+    );
+  }
+
+  // A portalled listbox sits outside any landmark, on a real page too, and the region rule
+  // exempts dialogs, not listboxes
+  const auditBody = () => axe(document.body, { rules: { region: { enabled: false } } });
+
+  it("has no a11y violations with the popup open", async () => {
+    const { container } = render(
+      <Combobox.Root open items={items} defaultValue={items[0]}>
+        <Combobox.Control>
+          <Combobox.Input aria-label="Fruit" />
+          <Combobox.Clear />
+          <Combobox.Trigger />
+        </Combobox.Control>
+        <Popup />
+      </Combobox.Root>,
+    );
+    // The popup is portalled out of the container RTL hands back, so audit the body
+    expect(container).not.toContainElement(screen.getByRole("listbox"));
+    expect(await auditBody()).toHaveNoViolations();
+  });
+
+  it("has no a11y violations with the popup open in multi-select", async () => {
+    const { container } = render(
+      <Combobox.Root open multiple items={items} defaultValue={[items[0]]}>
+        <Combobox.Control>
+          <Combobox.Chips>
+            <Combobox.Chip>
+              Apple
+              <Combobox.ChipRemove />
+            </Combobox.Chip>
+            <Combobox.Input aria-label="Fruits" />
+          </Combobox.Chips>
+          <Combobox.Clear />
+          <Combobox.Trigger />
+        </Combobox.Control>
+        <Popup />
+      </Combobox.Root>,
+    );
+    // The popup is portalled out of the container RTL hands back, so audit the body. While it is
+    // open, Base UI hides the chips, Clear and Trigger from assistive tech, so this audit covers the
+    // input, the Chips toolbar and the listbox; "passes axe with every icon button named" covers
+    // the chips.
+    expect(container).not.toContainElement(screen.getByRole("listbox"));
+    expect(screen.getByRole("listbox")).toHaveAttribute("aria-multiselectable", "true");
+    expect(await auditBody()).toHaveNoViolations();
+  });
+
+  it("has no a11y violations with the popup open and nothing matching", async () => {
+    const { container } = render(
+      <Combobox.Root open items={items} defaultInputValue="zzz">
+        <Combobox.Control>
+          <Combobox.Input aria-label="Fruit" />
+        </Combobox.Control>
+        <Popup />
+      </Combobox.Root>,
+    );
+    expect(container).not.toContainElement(await screen.findByText("No results found."));
+    expect(await auditBody()).toHaveNoViolations();
+  });
 });
 
 describe("Combobox icon buttons", () => {
