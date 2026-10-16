@@ -115,7 +115,7 @@ function ControlledSelect() {
 
 ## Animation
 
-The popup enters with a scale-up and fade (from `scale-95` and `opacity-0`): the `popup` spring (`springs.popup`) with Motion installed, a CSS transition of `opacity` and `scale` without it; reduced motion turns off both.
+The popup enters with a scale-up and fade (from `scale-95` and `opacity-0`): the `popup` spring (`springs.popup`) with Motion installed, a CSS transition of `opacity` and `scale` without it; reduced motion turns off both. Aligned over its trigger (the default), the popup only fades; below the trigger (`alignItemWithTrigger={false}`), it grows out of the trigger (`origin-(--transform-origin)`), and a `className` such as `origin-top` replaces that origin. On the CSS path, `data-[side=none]:data-starting-style:scale-95` and its `data-ending-style` pair bring the scale back to an aligned popup.
 
 `render` on `Select.Popup` replaces the element the spring animates, so a popup with `render` uses the CSS transition even with Motion installed. To restyle the popup, pass `className`.
 
