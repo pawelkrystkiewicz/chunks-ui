@@ -165,12 +165,10 @@ describe("PortalContainerProvider", () => {
 // no fallback of its own, is proven in the NumberField overlay table.)
 describe("a popup's own portal node", () => {
   const content = (
-    <>
-      <Popover.Root open>
-        <Popover.Trigger>Nested</Popover.Trigger>
-        <Popover.Content data-testid="nested">Nested</Popover.Content>
-      </Popover.Root>
-    </>
+    <Popover.Root open>
+      <Popover.Trigger>Nested</Popover.Trigger>
+      <Popover.Content data-testid="nested">Nested</Popover.Content>
+    </Popover.Root>
   );
 
   const parents: Case[] = [

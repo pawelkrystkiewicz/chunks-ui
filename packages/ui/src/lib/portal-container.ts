@@ -27,8 +27,8 @@ export function usePortalContainer() {
 /**
  * For a popup's Portal: the ref to give Base UI's Portal, and the portal node it renders, for the
  * `PortalContainerProvider` around the Portal's children. Base UI gives a nested popup with no
- * `container` the parent's portal node anyway (not a Tooltip's: its portal provides none), but the scrub cursor has no such fallback, so the
- * node is provided outright.
+ * `container` the parent's portal node anyway (not a Tooltip's: its portal provides none), but the
+ * scrub cursor has no such fallback, so the node is provided outright.
  */
 export function usePortalNode(
   consumer?: Ref<HTMLDivElement>,
