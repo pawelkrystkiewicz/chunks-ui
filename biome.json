@@ -55,6 +55,42 @@
           }
         }
       }
+    },
+    {
+      "includes": ["packages/ui/src/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "react": {
+                    "importNames": ["default"],
+                    "message": "Import React by name or as a namespace: a default import makes the typings fail on moduleResolution node10 without esModuleInterop (#463)."
+                  },
+                  "react-dom": {
+                    "importNames": ["default"],
+                    "message": "Import React by name or as a namespace: a default import makes the typings fail on moduleResolution node10 without esModuleInterop (#463)."
+                  },
+                  "react/jsx-runtime": {
+                    "importNames": ["default"],
+                    "message": "Import React by name or as a namespace: a default import makes the typings fail on moduleResolution node10 without esModuleInterop (#463)."
+                  },
+                  "react-dom/client": {
+                    "importNames": ["default"],
+                    "message": "Import React by name or as a namespace: a default import makes the typings fail on moduleResolution node10 without esModuleInterop (#463)."
+                  },
+                  "react-dom/server": {
+                    "importNames": ["default"],
+                    "message": "Import React by name or as a namespace: a default import makes the typings fail on moduleResolution node10 without esModuleInterop (#463)."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   ],
   "javascript": {
