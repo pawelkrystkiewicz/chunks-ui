@@ -55,6 +55,7 @@ function TooltipPopup({ className, render: renderProp, ...props }: TooltipPopupP
         "has-[.PopupArrow]:data-[side=right]:rounded-l-(--tooltip-arrow-corner)",
         "has-[.PopupArrow]:data-[side=inline-start]:rounded-e-(--tooltip-arrow-corner)",
         "has-[.PopupArrow]:data-[side=inline-end]:rounded-s-(--tooltip-arrow-corner)",
+        "origin-(--transform-origin)",
         !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
         !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
         // Only the fade and scale: `all` would also slide the side margin when the side flips

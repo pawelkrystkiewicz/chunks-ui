@@ -70,11 +70,13 @@ function ComboboxRoot<Value, Multiple extends boolean | undefined = false, Item 
 }
 
 // Base UI's InputGroup, so the popup anchors to the whole Control (#478).
+// Clear and Trigger sit over its end, 42px of it: pe-12 keeps its content out from under them,
+// with room for a chip's focus ring (#484).
 function ComboboxControl({ className, ...props }: ComboboxControlProps) {
   return (
     <BaseCombobox.InputGroup
       className={cnState(
-        "relative flex flex-wrap items-center gap-1 rounded-md border border-input bg-background px-3 py-1.5",
+        "relative flex flex-wrap items-center gap-1 rounded-md border border-input bg-background px-3 pe-12 py-1.5",
         FOCUS_RING_WITHIN,
         "[&_[role=combobox]:focus-visible]:outline-none",
         RING_TRANSITION,
@@ -192,6 +194,7 @@ function ComboboxPopup({ className, render: renderProp, ...props }: ComboboxPopu
       className={cnState(
         "rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md",
         "max-h-[var(--available-height)] overflow-y-auto overscroll-contain scroll-py-1",
+        "origin-(--transform-origin)",
         !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
         !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
         // Only the fade and scale: `all` would also animate the max-height that
