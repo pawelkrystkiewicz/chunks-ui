@@ -1,6 +1,5 @@
 import { render, screen } from "@testing-library/react";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { commands } from "vitest/browser";
 import {
   emulateReducedMotion,
   enterMotionPath,
@@ -78,7 +77,7 @@ const PATHS = [
 describe.each(PATHS)("Drawer.Popup focus ring, $path", ({ reducedMotion, withMotion }) => {
   beforeAll(() => enterMotionPath(withMotion));
   beforeEach(() => emulateReducedMotion(reducedMotion === "reduce"));
-  afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
+  afterAll(() => emulateReducedMotion(true));
 
   // One side: the sides share one ring class
   it("draws the whole inset ring from the moment the popup takes focus, clear of the border", async () => {
@@ -125,7 +124,7 @@ describe.each(PATHS)("Drawer.Popup focus ring, $path", ({ reducedMotion, withMot
 describe("Drawer.Popup CSS fallback with no reduced-motion preference", () => {
   beforeAll(() => enterMotionPath(false));
   beforeEach(() => emulateReducedMotion(false));
-  afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
+  afterAll(() => emulateReducedMotion(true));
 
   it("slides the popup with a CSS transition", async () => {
     render(

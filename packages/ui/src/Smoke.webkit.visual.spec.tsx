@@ -1,7 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import type { CSSProperties } from "react";
 import { beforeEach, describe, expect, it } from "vitest";
-import { commands, page, userEvent } from "vitest/browser";
+import { page, userEvent } from "vitest/browser";
 import { Button } from "./components/button";
 import { Card } from "./components/card";
 import { Checkbox } from "./components/checkbox";
@@ -13,6 +13,7 @@ import { Tabs } from "./components/tabs";
 import { Textarea } from "./components/textarea";
 import { Tooltip } from "./components/tooltip";
 import {
+  emulateReducedMotion,
   enterMotionPath,
   insetsWithin,
   outlineTransitions,
@@ -507,7 +508,9 @@ describe("Focus rings in WebKit", () => {
   it.each(["", "duration-500", "transition-all"])(
     "shows a Tabs.Tab's ring at once with motion on, with '%s' in className",
     async (utility) => {
-      await commands.emulateMedia({ reducedMotion: "no-preference" });
+      // The project's own preference, put back after the test
+      const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      await emulateReducedMotion(false);
       try {
         render(
           <>
@@ -522,7 +525,6 @@ describe("Focus rings in WebKit", () => {
             </Tabs.Root>
           </>,
         );
-        await expect.poll(() => matchMedia("(prefers-reduced-motion: reduce)").matches).toBe(false);
         await userEvent.tab();
         const tab = screen.getByRole("tab", { name: "Target" });
         tab.focus();
@@ -531,7 +533,7 @@ describe("Focus rings in WebKit", () => {
         expect(getComputedStyle(tab).outlineColor).toBe(ringColor());
         expect(outlineTransitions(tab)).toEqual([]);
       } finally {
-        await commands.emulateMedia({ reducedMotion: "reduce" });
+        await emulateReducedMotion(reduced);
       }
     },
   );

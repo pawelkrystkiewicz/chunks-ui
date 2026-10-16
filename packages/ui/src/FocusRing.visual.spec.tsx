@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { type ReactNode, useEffect, useRef } from "react";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { commands, userEvent } from "vitest/browser";
+import { userEvent } from "vitest/browser";
 import { Accordion } from "./components/accordion";
 import { Breadcrumb } from "./components/breadcrumb";
 import { Button } from "./components/button";
@@ -28,7 +28,12 @@ import { ThemeToggle } from "./components/theme-toggle";
 import { DEFAULT_TOAST_LABELS, Toast } from "./components/toast";
 import { ToggleGroup } from "./components/toggle-group";
 import { Tooltip } from "./components/tooltip";
-import { enterMotionPath, outlineTransitions, ringColor } from "./VisualTest.utils";
+import {
+  emulateReducedMotion,
+  enterMotionPath,
+  outlineTransitions,
+  ringColor,
+} from "./VisualTest.utils";
 
 /*
  * With motion on, a keyboard focus ring shows in the ring colour, width and offset in the same
@@ -43,11 +48,8 @@ import { enterMotionPath, outlineTransitions, ringColor } from "./VisualTest.uti
  * (Base UI).
  */
 
-beforeEach(async () => {
-  await commands.emulateMedia({ reducedMotion: "no-preference" });
-  await expect.poll(() => matchMedia("(prefers-reduced-motion: reduce)").matches).toBe(false);
-});
-afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
+beforeEach(() => emulateReducedMotion(false));
+afterAll(() => emulateReducedMotion(true));
 
 /** Each property `el` transitions, with its duration (the durations repeat over the list) */
 function durationsOf(el: Element) {

@@ -2,7 +2,6 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { commands } from "vitest/browser";
 import { Accordion } from "./components/accordion";
 import { Button } from "./components/button";
 import { Progress } from "./components/progress";
@@ -11,6 +10,7 @@ import { Slider } from "./components/slider";
 import { Table } from "./components/table";
 import { Textarea } from "./components/textarea";
 import { ThemeToggle } from "./components/theme-toggle";
+import { emulateReducedMotion } from "./VisualTest.utils";
 
 /*
  * `.micro-interactions` (theme.css) gives components their default transition. Timing
@@ -123,8 +123,8 @@ const OWN_TRANSITIONS = [
 ] as const;
 
 describe(".micro-interactions with no reduced-motion preference", () => {
-  beforeAll(() => commands.emulateMedia({ reducedMotion: "no-preference" }));
-  afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
+  beforeAll(() => emulateReducedMotion(false));
+  afterAll(() => emulateReducedMotion(true));
 
   // All but the focus ring, which changes at once (FocusRing.visual.spec.tsx)
   it("transitions with its own defaults when nothing overrides them", () => {
@@ -184,7 +184,7 @@ describe(".micro-interactions with no reduced-motion preference", () => {
 });
 
 describe(".micro-interactions with reduced motion", () => {
-  beforeAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
+  beforeAll(() => emulateReducedMotion(true));
 
   it("does not transition", () => {
     expect(transitionOf(renderTarget(plain())).property).toBe("none");
@@ -203,8 +203,8 @@ describe(".micro-interactions with reduced motion", () => {
 });
 
 describe("component motion with no reduced-motion preference", () => {
-  beforeAll(() => commands.emulateMedia({ reducedMotion: "no-preference" }));
-  afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
+  beforeAll(() => emulateReducedMotion(false));
+  afterAll(() => emulateReducedMotion(true));
 
   it.each(OWN_TRANSITIONS)("transitions $property on $part", ({ renderPart, property }) => {
     // The chevron uses `transition-transform`, which Tailwind expands to several properties
@@ -222,7 +222,7 @@ describe("component motion with no reduced-motion preference", () => {
 });
 
 describe("component motion with reduced motion", () => {
-  beforeAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
+  beforeAll(() => emulateReducedMotion(true));
 
   it.each(OWN_TRANSITIONS)("does not transition $part", ({ renderPart }) => {
     expect(transitionOf(renderPart()).property).toBe("none");

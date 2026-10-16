@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { commands, page, userEvent } from "vitest/browser";
+import { page, userEvent } from "vitest/browser";
 import { ELEMENT_COLOR, ELEMENT_VARIANTS } from "../../types";
-import { renderFixture, ringColor } from "../../VisualTest.utils";
+import { emulateReducedMotion, renderFixture, ringColor } from "../../VisualTest.utils";
 import { IconButton } from "./index";
 
 const variants = ELEMENT_VARIANTS;
@@ -79,8 +79,8 @@ describe("IconButton focus-visible", () => {
 });
 
 describe("IconButton focus ring with no reduced-motion preference", () => {
-  beforeAll(() => commands.emulateMedia({ reducedMotion: "no-preference" }));
-  afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
+  beforeAll(() => emulateReducedMotion(false));
+  afterAll(() => emulateReducedMotion(true));
 
   // One variant: the ring colour does not depend on it
   it("has the ring colour from the moment it takes keyboard focus", async () => {

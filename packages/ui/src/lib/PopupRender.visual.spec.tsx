@@ -1,7 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { commands } from "vitest/browser";
-import { enterMotionPath, MOTION_PATHS } from "../VisualTest.utils";
+import { emulateReducedMotion, enterMotionPath, MOTION_PATHS } from "../VisualTest.utils";
 import { type PopupPartName, popupParts } from "./PopupRender.fixtures";
 
 type Css = {
@@ -84,11 +83,8 @@ const computedTransition = (el: Element) => {
 
 describe("popup parts with Motion loaded, no reduced-motion preference", () => {
   beforeAll(() => enterMotionPath(true));
-  beforeEach(async () => {
-    await commands.emulateMedia({ reducedMotion: "no-preference" });
-    await expect.poll(() => matchMedia("(prefers-reduced-motion: reduce)").matches).toBe(false);
-  });
-  afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
+  beforeEach(() => emulateReducedMotion(false));
+  afterAll(() => emulateReducedMotion(true));
 
   // The element `render` gives the part replaces the one the spring would animate
   it.each(parts)(
@@ -126,12 +122,9 @@ describe("popup parts with Motion loaded, no reduced-motion preference", () => {
 // on the trigger's side, so the popup grows out of its trigger. Dialog and Drawer have no anchor.
 describe.each(MOTION_PATHS)("anchored popup parts, $path", ({ withMotion }) => {
   beforeAll(() => enterMotionPath(withMotion));
-  beforeEach(async () => {
-    await commands.emulateMedia({ reducedMotion: "no-preference" });
-    await expect.poll(() => matchMedia("(prefers-reduced-motion: reduce)").matches).toBe(false);
-  });
+  beforeEach(() => emulateReducedMotion(false));
   afterAll(async () => {
-    await commands.emulateMedia({ reducedMotion: "reduce" });
+    await emulateReducedMotion(true);
     await enterMotionPath(true);
   });
 

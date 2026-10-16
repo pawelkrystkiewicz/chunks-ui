@@ -302,7 +302,7 @@ export function describeMotionPaths(
     (reducedMotion) => {
       beforeAll(() => reloadMotion());
       beforeEach(() => emulateReducedMotion(reducedMotion === "reduce"));
-      afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
+      afterAll(() => emulateReducedMotion(true));
       define(reducedMotion);
     },
   );
@@ -318,7 +318,7 @@ export function describePopupCssPath(name: string, ui: (open: boolean) => ReactE
     beforeAll(() => enterMotionPath(false));
     beforeEach(() => emulateReducedMotion(false));
     afterAll(async () => {
-      await commands.emulateMedia({ reducedMotion: "reduce" });
+      await emulateReducedMotion(true);
       await enterMotionPath(true);
     });
 

@@ -2,8 +2,8 @@ import { Toast as BaseToast } from "@base-ui/react/toast";
 import { render, screen, within } from "@testing-library/react";
 import { type ComponentPropsWithoutRef, type ReactNode, useEffect } from "react";
 import { afterAll, beforeAll, describe, expect, it, onTestFinished } from "vitest";
-import { commands, page, userEvent } from "vitest/browser";
-import { type Dir, withViewport } from "../../VisualTest.utils";
+import { page, userEvent } from "vitest/browser";
+import { type Dir, emulateReducedMotion, withViewport } from "../../VisualTest.utils";
 import { Toast } from "./index";
 import { AddToasts } from "./Toast.TestUtils";
 
@@ -185,8 +185,8 @@ describe("Toast.Action placed directly in Toast.Root", () => {
 });
 
 describe("Toast with motion allowed", () => {
-  beforeAll(() => commands.emulateMedia({ reducedMotion: "no-preference" }));
-  afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
+  beforeAll(() => emulateReducedMotion(false));
+  afterAll(() => emulateReducedMotion(true));
 
   // The `translate-x-*` slide sets the `translate` property, not `transform`
   it("slides and fades in", async () => {

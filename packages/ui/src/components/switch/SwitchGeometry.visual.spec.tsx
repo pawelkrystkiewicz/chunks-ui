@@ -2,7 +2,12 @@ import { render } from "@testing-library/react";
 import type { CSSProperties } from "react";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { commands, userEvent } from "vitest/browser";
-import { type Insets, insetsWithin, waitForStable } from "../../VisualTest.utils";
+import {
+  emulateReducedMotion,
+  type Insets,
+  insetsWithin,
+  waitForStable,
+} from "../../VisualTest.utils";
 import { Switch } from "./index";
 
 /*
@@ -97,10 +102,8 @@ async function expectThumbGeometry({
 }
 
 describe.each(PATHS)("Switch thumb geometry, $path", ({ reducedMotion }) => {
-  beforeAll(() =>
-    commands.emulateMedia({ reducedMotion: reducedMotion ? "reduce" : "no-preference" }),
-  );
-  afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
+  beforeAll(() => emulateReducedMotion(reducedMotion));
+  afterAll(() => emulateReducedMotion(true));
 
   describe.each(SIZES)("$size", ({ root, thumb }) => {
     describe.each(STARTS)("starting $start", ({ defaultChecked }) => {
@@ -114,13 +117,14 @@ describe.each(PATHS)("Switch thumb geometry, $path", ({ reducedMotion }) => {
 // Forced-colors mode (e.g. Windows contrast themes) draws the track edge and the thumb with
 // system colours. The thumb must rest in the same places there.
 describe.each(PATHS)("Switch thumb geometry in forced-colors mode, $path", ({ reducedMotion }) => {
-  beforeAll(() =>
-    commands.emulateMedia({
-      reducedMotion: reducedMotion ? "reduce" : "no-preference",
-      forcedColors: "active",
-    }),
-  );
-  afterAll(() => commands.emulateMedia({ reducedMotion: "reduce", forcedColors: "none" }));
+  beforeAll(async () => {
+    await commands.emulateMedia({ forcedColors: "active" });
+    await emulateReducedMotion(reducedMotion);
+  });
+  afterAll(async () => {
+    await commands.emulateMedia({ forcedColors: "none" });
+    await emulateReducedMotion(true);
+  });
 
   it.each(SPACINGS_PX)("rests one gap from the edges at --spacing: %spx", (spacing) =>
     expectThumbGeometry({ spacing, reducedMotion, defaultChecked: false }),

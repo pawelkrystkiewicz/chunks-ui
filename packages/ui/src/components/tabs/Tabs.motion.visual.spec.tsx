@@ -1,9 +1,15 @@
 import { render } from "@testing-library/react";
 import { Activity, createRef, useEffect, useRef } from "react";
 import { afterEach, describe, expect, it } from "vitest";
-import { commands, page } from "vitest/browser";
+import { page } from "vitest/browser";
 import { reloadMotion } from "../../lib/use-motion";
-import { eachPaintedFrame, offBy, waitForStable } from "../../VisualTest.utils";
+import {
+  eachPaintedFrame,
+  emulateReducedMotion,
+  offBy,
+  untilChanged,
+  waitForStable,
+} from "../../VisualTest.utils";
 import { Tabs, type TabsContentsProps } from "./index";
 
 // Runs with reduced motion off, so Tabs.Contents slides and resizes with Motion
@@ -68,6 +74,13 @@ const passedThrough = (heights: number[], from: number, to: number) =>
 // frames can take seconds
 const slow = { type: "tween", ease: "linear", duration: 10 } as const;
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+
+/** A Tabs.Animate pane's opacity and vertical offset, as painted */
+const poseOf = (pane: Element) => {
+  const { opacity, transform } = getComputedStyle(pane);
+  return { opacity, y: new DOMMatrix(transform).m42 };
+};
+const AT_REST = { opacity: "1", y: 0 };
 
 describe("Tabs with Motion", () => {
   it("mounts a panel's children once when Motion has already loaded", async () => {
@@ -179,11 +192,7 @@ describe("Tabs with Motion", () => {
 });
 
 describe("Tabs animations that must stop", () => {
-  afterEach(async () => {
-    await commands.emulateMedia({ reducedMotion: "no-preference" });
-    // Motion reads the preference from the media query's change event
-    await nextFrame();
-  });
+  afterEach(() => emulateReducedMotion(false));
 
   async function enterPane() {
     await reloadMotion();
@@ -197,22 +206,25 @@ describe("Tabs animations that must stop", () => {
     const result = render(tabs("a"));
     result.rerender(tabs("b"));
     const pane = page.getByText("Panel b").element().parentElement as HTMLElement;
-    await nextFrame();
-    const transform = pane.style.transform;
-    await nextFrame();
-    // Mid-entry: still fading in and still moving
-    expect(Number(getComputedStyle(pane).opacity)).toBeLessThan(1);
-    expect(pane.style.transform).not.toBe(transform);
+    // Mid-entry: fading in and still moving. Waits for Motion to start the entry rather than for
+    // a set number of frames, as it can start a frame or two later under load
+    await expect
+      .poll(() => pane.style.transform !== "" && Number(poseOf(pane).opacity) < 1, {
+        timeout: 5000,
+      })
+      .toBe(true);
+    await untilChanged(() => pane.style.transform);
+    expect(Number(poseOf(pane).opacity)).toBeLessThan(1);
     return { ...result, pane };
   }
 
   it("finishes a Tabs.Animate entry when reduced motion turns on, and does not replay it", async () => {
     const { pane } = await enterPane();
-    await commands.emulateMedia({ reducedMotion: "reduce" });
-    await expect.poll(() => getComputedStyle(pane).opacity, { timeout: 200 }).toBe("1");
-    expect(new DOMMatrix(getComputedStyle(pane).transform).m42).toBe(0);
+    await emulateReducedMotion(true);
+    // Finished at once, not 10s later. Motion writes the offset in its next frame.
+    await expect.poll(() => poseOf(pane), { timeout: 1000 }).toEqual(AT_REST);
 
-    await commands.emulateMedia({ reducedMotion: "no-preference" });
+    await emulateReducedMotion(false);
     for (let frame = 0; frame < 5; frame++) {
       await nextFrame();
       expect(getComputedStyle(pane).opacity).toBe("1");
@@ -253,9 +265,7 @@ describe("Tabs animations that must stop", () => {
     await expect.poll(x, { timeout: 5000 }).toBeLessThan(-1);
     expect(x()).toBeGreaterThan(-width + 1);
     // Still moving, so an animation left running would go on writing below
-    const moving = track.style.transform;
-    await nextFrame();
-    expect(track.style.transform).not.toBe(moving);
+    await untilChanged(() => track.style.transform);
     unmount();
     // Stopping may write the value it stopped at once; after that nothing moves
     await nextFrame();
@@ -296,7 +306,7 @@ describe("Tabs animations that must stop", () => {
   it("drops a Tabs.Contents slide and resize when reduced motion turns on", async () => {
     const { contents } = await resizeMidway();
     const track = contents.firstElementChild as HTMLElement;
-    await commands.emulateMedia({ reducedMotion: "reduce" });
+    await emulateReducedMotion(true);
     // The inline styles are cleared, so the CSS layout shows the tall panel unshifted, full height
     await expect.poll(() => contents.style.height, { timeout: 1000 }).toBe("");
     for (let frame = 0; frame < 5; frame++) {
@@ -345,19 +355,13 @@ describe("Tabs in <Activity> with Motion", () => {
     expect(place().height).toBeLessThan(HEIGHTS.tall - 1);
 
     rerender(ui("hidden", "tall"));
-    await nextFrame();
-    await nextFrame();
+    // Hidden until the hide has stopped the slide and the resize
+    const track = contents.firstElementChild as HTMLElement;
+    await waitForStable(() => [contents.getAttribute("style"), track.getAttribute("style")]);
     rerender(ui("visible", "tall"));
     const frames = await eachPaintedFrame(place, 20);
     expect(frames).toEqual(frames.map(() => ({ offset: 0, height: HEIGHTS.tall })));
   });
-
-  /** The pane's opacity and vertical offset, as painted */
-  const poseOf = (pane: Element) => {
-    const { opacity, transform } = getComputedStyle(pane);
-    return { opacity, y: new DOMMatrix(transform).m42 };
-  };
-  const AT_REST = { opacity: "1", y: 0 };
 
   // The entry plays once, for a change of tab. A pane hidden mid-entry shows at rest, as reduced
   // motion turned on mid-entry finishes it.
@@ -365,7 +369,7 @@ describe("Tabs in <Activity> with Motion", () => {
     [
       "mid-entry",
       slow,
-      async (pane: Element) => {
+      async (pane: HTMLElement) => {
         // Fading in. Before Motion's first frame the pane is still at full opacity.
         const fading = () => Number(poseOf(pane).opacity);
         await expect.poll(() => fading() > 0 && fading() < 1, { timeout: 5000 }).toBe(true);
@@ -374,9 +378,10 @@ describe("Tabs in <Activity> with Motion", () => {
     [
       "after its entry",
       { type: "tween", duration: 0.1 },
-      async (pane: Element) => {
-        // At rest before the first frame too, so wait for the pose to be at rest after a frame
-        await nextFrame();
+      async (pane: HTMLElement) => {
+        // At rest before Motion's first frame too, so wait for Motion to write the entry's
+        // offset, then for the pose to come to rest
+        await expect.poll(() => pane.style.transform, { timeout: 5000 }).not.toBe("");
         await expect.poll(() => poseOf(pane), { timeout: 5000 }).toEqual(AT_REST);
       },
     ],
@@ -399,8 +404,8 @@ describe("Tabs in <Activity> with Motion", () => {
       await settle(pane);
 
       rerender(ui("hidden", "b"));
-      await nextFrame();
-      await nextFrame();
+      // Hidden until the hide has stopped the entry
+      await waitForStable(() => pane.getAttribute("style"));
       rerender(ui("visible", "b"));
       const frames = await eachPaintedFrame(() => poseOf(pane), 20);
       expect(frames).toEqual(frames.map(() => AT_REST));
@@ -409,10 +414,7 @@ describe("Tabs in <Activity> with Motion", () => {
 });
 
 describe("Tabs.Contents when reduced motion turns off at rest", () => {
-  afterEach(async () => {
-    await commands.emulateMedia({ reducedMotion: "no-preference" });
-    await nextFrame();
-  });
+  afterEach(() => emulateReducedMotion(false));
 
   // The CSS fallback removes Motion's inline transform and height, while Motion still holds
   // them. Back with Motion, they must be written again: the active panel here is the second and
@@ -438,13 +440,13 @@ describe("Tabs.Contents when reduced motion turns off at rest", () => {
     await expect.poll(() => contents.style.height).not.toBe("");
     expect(await waitForStable(place)).toEqual(inPlace);
 
-    await commands.emulateMedia({ reducedMotion: "reduce" });
+    await emulateReducedMotion(true);
     await expect.poll(() => contents.style.height).toBe("");
     expect(await waitForStable(place)).toEqual(inPlace);
 
     // Recorded from before the switch, so a frame between the two paths counts too
     const recording = eachPaintedFrame(place, 30);
-    await commands.emulateMedia({ reducedMotion: "no-preference" });
+    await emulateReducedMotion(false);
     const frames = await recording;
     // The switch may land after the recorded frames: wait for it, then record frames on the
     // Motion path too, so the spec never checks only frames from before the switch
@@ -623,10 +625,7 @@ describe("Tabs.Indicator with Motion", () => {
   });
 
   describe("and reduced motion toggled while hidden", () => {
-    afterEach(async () => {
-      await commands.emulateMedia({ reducedMotion: "no-preference" });
-      await new Promise((resolve) => requestAnimationFrame(resolve));
-    });
+    afterEach(() => emulateReducedMotion(false));
 
     /** Waits until the CSS fallback or Motion has finished handing the indicator over */
     const handedOver = (indicator: Element) =>
@@ -648,16 +647,16 @@ describe("Tabs.Indicator with Motion", () => {
         expect(offBy(tab, indicator)).toBeLessThanOrEqual(1);
 
         if (!onWhileHidden) {
-          await commands.emulateMedia({ reducedMotion: "reduce" });
+          await emulateReducedMotion(true);
           await handedOver(indicator);
         }
         rerender(tabs({ hidden: true, value: "a" }));
         await waitForStable(() => indicator.getAttribute("style"));
         if (onWhileHidden) {
-          await commands.emulateMedia({ reducedMotion: "reduce" });
+          await emulateReducedMotion(true);
           await handedOver(indicator);
         }
-        await commands.emulateMedia({ reducedMotion: "no-preference" });
+        await emulateReducedMotion(false);
         await handedOver(indicator);
 
         rerender(tabs({ hidden: false, value: "a" }));

@@ -1,7 +1,9 @@
 import { DirectionProvider } from "@base-ui/react/direction-provider";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { commands, userEvent } from "vitest/browser";
+import { userEvent } from "vitest/browser";
 import {
+  boxOf,
+  emulateReducedMotion,
   expectDimmed,
   focusVisible,
   offBy,
@@ -10,7 +12,6 @@ import {
 } from "../../VisualTest.utils";
 import { Tabs } from "./index";
 
-const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
 const activeTab = () => document.querySelector('[role="tab"][aria-selected="true"]') as Element;
 const indicator = () => document.querySelector('[data-testid="indicator"]') as Element;
 /** The largest distance between an edge of the indicator and the same edge of the active tab */
@@ -85,8 +86,10 @@ describe("Tabs", () => {
       await expect.poll(offset).toBeLessThanOrEqual(1);
 
       const clicked = document.querySelector('[role="tab"]:last-of-type') as HTMLElement;
+      const before = boxOf(indicator());
       clicked.click();
-      await nextFrame();
+      // The indicator has moved. A transition would still be running at the checks below
+      await expect.poll(() => boxOf(indicator())).not.toEqual(before);
       expect(clicked).toHaveAttribute("aria-selected", "true");
       expect(indicator().getAnimations()).toHaveLength(0);
       expect(offset()).toBeLessThanOrEqual(1);
@@ -168,10 +171,8 @@ async function expectUnderlineBelowActiveTab() {
 // The underline recipe in tabs.mdx. Motion's inline values override position and size classes
 // on the indicator, so the recipe keeps the indicator box and draws the line inside it.
 describe.each(PATHS)("Tabs.Indicator restyled as an underline, $path", ({ reducedMotion }) => {
-  beforeAll(() =>
-    commands.emulateMedia({ reducedMotion: reducedMotion ? "reduce" : "no-preference" }),
-  );
-  afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
+  beforeAll(() => emulateReducedMotion(reducedMotion));
+  afterAll(() => emulateReducedMotion(true));
 
   it("draws a line along the bottom of the active tab", async () => {
     await renderFixture(
@@ -199,10 +200,8 @@ describe.each(PATHS)("Tabs.Indicator restyled as an underline, $path", ({ reduce
 const MANY_TABS = ["Overview", "Analytics", "Reports", "Notifications", "Integrations", "Billing"];
 
 describe.each(PATHS)("Tabs.Indicator over the active tab, $path", ({ reducedMotion }) => {
-  beforeAll(() =>
-    commands.emulateMedia({ reducedMotion: reducedMotion ? "reduce" : "no-preference" }),
-  );
-  afterAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
+  beforeAll(() => emulateReducedMotion(reducedMotion));
+  afterAll(() => emulateReducedMotion(true));
 
   // Base UI measures `--active-tab-left` from physical rects. Placing the indicator with an
   // inline-start property, or from `--active-tab-right`, would mirror it here.
