@@ -24,12 +24,7 @@ import { FOCUS_RING, RING_ANIMATION_CLASSES } from "../shared";
 // Types
 // ---------------------------------------------------------------------------
 
-/**
- * `Value` is the type of one item's value: `value` and `defaultValue` are read-only arrays of it,
- * and `onValueChange` receives an array of it. It is inferred from `value`, `defaultValue` or an
- * annotated `onValueChange`, so a typed `useState` setter is an `onValueChange`. Without either
- * it is `string`.
- */
+/** `Value` is one item's value, inferred from `value`, `defaultValue` or an annotated `onValueChange`; `string` otherwise. */
 export type ToggleGroupRootProps<Value extends string = string> = BaseToggleGroup.Props<Value>;
 export type ToggleGroupItemProps = ComponentProps<typeof BaseToggle>;
 
