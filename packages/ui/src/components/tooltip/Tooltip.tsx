@@ -5,7 +5,7 @@ import { type ComponentProps, createContext, useContext } from "react";
 import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { usePortalContainer } from "../../lib/portal-container";
-import { useArrowPadding } from "../../lib/use-arrow-padding";
+import { ArrowChangeProvider, useArrowChange, useArrowPadding } from "../../lib/use-arrow-padding";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { usePopupRender } from "../../lib/use-popup-render";
 import { POPUP_ARROW_CLASS } from "../shared";
@@ -16,8 +16,9 @@ export type TooltipTriggerProps = ComponentProps<typeof BaseTooltip.Trigger>;
 export type TooltipPortalProps = ComponentProps<typeof BaseTooltip.Portal>;
 export type TooltipPositionerProps = ComponentProps<typeof BaseTooltip.Positioner> & {
   /**
-   * How close the arrow may come to the popup's ends, in pixels. The default, read when the popup
-   * mounts, keeps the arrow's foot off the popup's rounded corner at any `--radius` and `--spacing`.
+   * How close the arrow may come to the popup's ends, in pixels. The default, read when the popup or
+   * its arrow mounts, keeps the arrow's foot off the popup's rounded corner at any `--radius` and
+   * `--spacing`.
    * @default corner radius + 0.21 × arrow size (≈ 10.07)
    */
   arrowPadding?: ComponentProps<typeof BaseTooltip.Positioner>["arrowPadding"];
@@ -66,6 +67,7 @@ function TooltipPopup({ className, render: renderProp, ...props }: TooltipPopupP
 }
 
 function TooltipArrow({ className, ...props }: TooltipArrowProps) {
+  useArrowChange();
   return (
     <BaseTooltip.Arrow
       className={cnState(
@@ -88,15 +90,17 @@ function TooltipArrow({ className, ...props }: TooltipArrowProps) {
 }
 
 function TooltipPositioner({ className, arrowPadding, ref, ...props }: TooltipPositionerProps) {
-  const [positioner, arrowPaddingByDefault] = useArrowPadding();
+  const [positioner, arrowPaddingByDefault, arrowChanged] = useArrowPadding();
   const mergedRef = useMergedRef(positioner, ref);
   return (
-    <BaseTooltip.Positioner
-      ref={mergedRef}
-      className={cnState("z-tooltips", className)}
-      arrowPadding={arrowPadding ?? arrowPaddingByDefault}
-      {...props}
-    />
+    <ArrowChangeProvider value={arrowChanged}>
+      <BaseTooltip.Positioner
+        ref={mergedRef}
+        className={cnState("z-tooltips", className)}
+        arrowPadding={arrowPadding ?? arrowPaddingByDefault}
+        {...props}
+      />
+    </ArrowChangeProvider>
   );
 }
 
