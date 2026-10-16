@@ -366,4 +366,10 @@ describe("checkDocsDirection", () => {
     rmSync(join(dir, "apps/docs/seed.mdx"));
     expect(await checkDocsDirection(dir)).toEqual([expect.stringMatching(/^apps\/docs: no /)]);
   });
+
+  it("fails when apps/docs holds no .mdx file, so a moved content folder cannot pass", async () => {
+    const dir = tree();
+    rmSync(join(dir, "apps/docs/seed.mdx"));
+    expect(await checkDocsDirection(dir)).toEqual([expect.stringMatching(/^apps\/docs: no \.mdx/)]);
+  });
 });

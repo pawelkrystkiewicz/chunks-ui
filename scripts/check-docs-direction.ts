@@ -4,7 +4,7 @@
  * object, background or transform-origin class in apps/docs. It needs a Tailwind value (`ml-4`,
  * `left-1/2`), so prose like `left-to-right` passes. In a .css file it reads the `@apply` classes
  * only. A marker `direction: physical, <reason>` on the same line, or in a comment alone on its
- * lines directly above, exempts a deliberate one. An empty scan fails.
+ * lines directly above, exempts a deliberate one. An empty scan, or one with no .mdx file, fails.
  * Full list and limits: TESTING_STRATEGY.md
  *
  * Run: bun run check:docs-direction
@@ -78,6 +78,9 @@ export async function checkDocsDirection(root: string): Promise<string[]> {
   if (!existsSync(join(root, DIR))) return [`${DIR}: not found, nothing to scan`];
   const files = sourceFiles(root).sort();
   if (files.length === 0) return [`${DIR}: no .ts, .tsx, .mdx or .css file, nothing to scan`];
+  if (!files.some((file) => file.endsWith(".mdx"))) {
+    return [`${DIR}: no .mdx file, nothing to scan in the content`];
+  }
   const problems: string[] = [];
   for (const file of files) {
     const css = file.endsWith(".css");
