@@ -13,7 +13,7 @@
  *   no-motion/next in both consumers, then Chromium opens each export from a local server and
  *   clicks its dialog open; what each build and page must show is in scripts/README.md.
  * Fixtures: scripts/no-motion (recipe in scripts/README.md). Needs the network and Playwright's
- * Chromium (`bunx playwright install chromium`, or the Playwright image in CI).
+ * Chromium (`cd apps/docs && bunx playwright install chromium`, or the Playwright image in CI).
  * Run: bun run check:no-motion (builds first)
  */
 import {
@@ -46,7 +46,10 @@ interface Locator {
 }
 interface Page {
   on(event: "pageerror", listener: (error: Error) => void): void;
-  on(event: "console", listener: (message: { type(): string; text(): string }) => void): void;
+  on(
+    event: "console",
+    listener: (message: { type(): string; text(): string; location(): { url: string } }) => void,
+  ): void;
   on(event: "request" | "requestfinished", listener: (request: { url(): string }) => void): void;
   goto(url: string, options: { timeout: number }): Promise<unknown>;
   getByRole(role: "button" | "dialog", options?: { name: string; exact: boolean }): Locator;
@@ -55,9 +58,6 @@ interface Browser {
   newContext(): Promise<{ newPage(): Promise<Page>; close(): Promise<void> }>;
   close(): Promise<void>;
 }
-const { chromium }: { chromium: { launch(): Promise<Browser> } } = createRequire(
-  join(import.meta.dirname, "../apps/docs/package.json"),
-)("playwright");
 const ENTRY = 'import * as ui from "chunks-ui";\nconsole.log(Object.keys(ui).length);\n';
 // What a strict consumer compiles, with the utils entry so dist/utils.d.ts is in the program
 const TYPES_ENTRY = [
@@ -80,7 +80,8 @@ const COMPILER_OPTIONS = {
  * tsup use. `node10` is the pre-`exports` algorithm of older CommonJS projects: it needs
  * `module: commonjs`, and `esModuleInterop` as `tsc --init` writes it, because dist/index.d.ts
  * default-imports React (from `import React from "react"` in the Combobox source) and fails with
- * TS1259 without the flag before anything else is checked.
+ * TS1259 without the flag before anything else is checked. Drop esModuleInterop once
+ * dist/index.d.ts no longer default-imports React (Combobox's `import React from "react"`).
  */
 const RESOLUTIONS = {
   bundler: { moduleResolution: "bundler", module: "esnext" },
@@ -454,20 +455,26 @@ const BROWSER_MS = 10_000;
  * dialog's trigger and waits for the title, recording what browserProblem() decides on.
  */
 async function drive(browser: Browser, out: string): Promise<BrowserRun> {
-  const server = serve(out);
-  const context = await browser.newContext();
-  const page = await context.newPage();
   const run: BrowserRun = { errors: [], network: [] };
   const path = (url: string) => new URL(url).pathname;
-  page.on("pageerror", (error) => run.errors.push(`pageerror: ${error.message}`));
-  page.on("console", (message) => {
-    if (message.type() === "error") run.errors.push(`console.error: ${message.text()}`);
-  });
-  page.on("request", (request) => run.network.push({ event: "start", path: path(request.url()) }));
-  page.on("requestfinished", (request) =>
-    run.network.push({ event: "end", path: path(request.url()) }),
-  );
+  const server = serve(out);
+  let context: Awaited<ReturnType<Browser["newContext"]>> | undefined;
   try {
+    context = await browser.newContext();
+    const page = await context.newPage();
+    page.on("pageerror", (error) => run.errors.push(`pageerror: ${error.message}`));
+    page.on("console", (message) => {
+      // "Failed to load resource: … 404" names no URL on its own
+      if (message.type() === "error") {
+        run.errors.push(`console.error: ${message.text()} (${message.location().url})`);
+      }
+    });
+    page.on("request", (request) =>
+      run.network.push({ event: "start", path: path(request.url()) }),
+    );
+    page.on("requestfinished", (request) =>
+      run.network.push({ event: "end", path: path(request.url()) }),
+    );
     await page.goto(server.url.href, { timeout: BROWSER_MS });
     await page
       .getByRole("button", { name: NEXT_TRIGGERS[0], exact: true })
@@ -479,14 +486,22 @@ async function drive(browser: Browser, out: string): Promise<BrowserRun> {
   } catch (error) {
     run.failure = String(error);
   } finally {
-    await context.close();
-    server.stop(true);
+    // The server stops even when closing the context throws
+    try {
+      await context?.close();
+    } finally {
+      server.stop(true);
+    }
   }
   return run;
 }
 
 if (import.meta.main) {
   // Before the builds, so a missing Chromium fails in seconds
+  // Not on import, so the spec can test the pure functions above without Playwright
+  const { chromium }: { chromium: { launch(): Promise<Browser> } } = createRequire(
+    join(import.meta.dirname, "../apps/docs/package.json"),
+  )("playwright");
   const browser = await chromium.launch();
   const dir = mkdtempSync(join(tmpdir(), "chunks-ui-no-motion-"));
   try {
@@ -519,7 +534,7 @@ if (import.meta.main) {
       );
     }
   } finally {
-    await browser.close();
     rmSync(dir, { recursive: true, force: true });
+    await browser.close();
   }
 }
