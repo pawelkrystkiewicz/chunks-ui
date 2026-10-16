@@ -117,7 +117,7 @@ describe("Drawer", () => {
   });
 
   it("has no a11y violations", async () => {
-    render(
+    const { container } = render(
       <Drawer.Root open>
         <Drawer.Portal>
           <Drawer.Popup>
@@ -126,8 +126,8 @@ describe("Drawer", () => {
         </Drawer.Portal>
       </Drawer.Root>,
     );
-    // The popup is portalled into the body, outside the container RTL hands back
-    expect(document.body).toContainElement(screen.getByRole("dialog"));
+    // The popup is portalled out of the container RTL hands back, so audit the body
+    expect(container).not.toContainElement(screen.getByRole("dialog"));
     expect(await axe(document.body)).toHaveNoViolations();
   });
 });

@@ -72,7 +72,7 @@ describe("Tooltip", () => {
   });
 
   it("has no a11y violations", async () => {
-    render(
+    const { container } = render(
       <Tooltip.Root open>
         <Tooltip.Trigger>Hover</Tooltip.Trigger>
         <Tooltip.Portal>
@@ -82,13 +82,11 @@ describe("Tooltip", () => {
         </Tooltip.Portal>
       </Tooltip.Root>,
     );
-    // The popup is portalled into the body, outside the container RTL hands back
-    expect(document.body).toContainElement(screen.getByText("Tip"));
+    // The popup is portalled out of the container RTL hands back, so audit the body
+    expect(container).not.toContainElement(screen.getByText("Tip"));
     expect(
       await axe(document.body, {
         rules: {
-          // Base UI focus-guard spans with role="button" are internal implementation details
-          "aria-command-name": { enabled: false },
           // A portalled tooltip sits outside any landmark, on a real page too, and the
           // region rule exempts dialogs, not tooltips
           region: { enabled: false },

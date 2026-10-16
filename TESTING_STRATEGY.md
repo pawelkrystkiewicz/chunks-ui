@@ -100,7 +100,7 @@ A popup (Combobox, DatePicker, Dialog, Drawer, Menu, Popover, Select, Tooltip) r
 
 ```tsx
 it("has no a11y violations", async () => {
-  render(
+  const { container } = render(
     <Menu.Root open>
       <Menu.Trigger>Open</Menu.Trigger>
       <Menu.Content>
@@ -108,9 +108,11 @@ it("has no a11y violations", async () => {
       </Menu.Content>
     </Menu.Root>,
   );
-  // The popup is portalled into the body, outside the container RTL hands back
-  expect(document.body).toContainElement(screen.getByRole("menu"));
-  expect(await axe(document.body, { rules: { region: { enabled: false } } })).toHaveNoViolations();
+  // The popup is portalled out of the container RTL hands back, so audit the body
+  expect(container).not.toContainElement(screen.getByRole("menu"));
+  expect(
+    await axe(document.body, { rules: { region: { enabled: false } } }),
+  ).toHaveNoViolations();
 });
 ```
 
