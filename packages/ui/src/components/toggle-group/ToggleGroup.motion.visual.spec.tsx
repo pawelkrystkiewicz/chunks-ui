@@ -857,11 +857,13 @@ describe("ToggleGroup indicator with reduced motion", () => {
 // Server HTML has no indicator: the pressed item draws the pill, then hands over to the measured
 // indicator in one commit. Also with reduced motion off, where a background hand-over would fade.
 describe("ToggleGroup pill from server HTML to the measured indicator", () => {
-  const ui = (
+  const ui = ({ groupDisabled = false, itemDisabled = false } = {}) => (
     <StrictMode>
-      <ToggleGroup.Root defaultValue={["b"]}>
+      <ToggleGroup.Root defaultValue={["b"]} disabled={groupDisabled}>
         <ToggleGroup.Item value="a">Alpha</ToggleGroup.Item>
-        <ToggleGroup.Item value="b">Beta, a longer item</ToggleGroup.Item>
+        <ToggleGroup.Item value="b" disabled={itemDisabled}>
+          Beta, a longer item
+        </ToggleGroup.Item>
       </ToggleGroup.Root>
     </StrictMode>
   );
@@ -875,6 +877,15 @@ describe("ToggleGroup pill from server HTML to the measured indicator", () => {
     return !transparent(getComputedStyle(item)) || (beforeShown && !transparent(before));
   }
 
+  /** The opacity `el`, or its ::before, paints with in `group`: its own times each up to it */
+  function opacityIn(group: Element, el: Element, pseudo?: "::before") {
+    let opacity = pseudo ? Number(getComputedStyle(el, pseudo).opacity) : 1;
+    for (let node: Element | null = el; node && node !== group; node = node.parentElement) {
+      opacity *= Number(getComputedStyle(node).opacity);
+    }
+    return opacity;
+  }
+
   let container: HTMLDivElement | null = null;
   let app: Root | null = null;
   afterEach(async () => {
@@ -885,6 +896,23 @@ describe("ToggleGroup pill from server HTML to the measured indicator", () => {
     await commands.emulateMedia({ reducedMotion: "no-preference" });
   });
 
+  /** Puts `page`'s server HTML in the document; returns its host, group and pressed item */
+  function serverRendered(page: ReactElement) {
+    const host = document.createElement("div");
+    container = host;
+    host.innerHTML = renderToString(page);
+    document.body.append(host);
+    const group = host.querySelector<HTMLElement>('[role="group"]');
+    const pressed = host.querySelector<HTMLElement>("[data-pressed]");
+    if (!group || !pressed) throw new Error("No pressed item in the server HTML");
+    return {
+      host,
+      group,
+      pressed,
+      indicator: () => group.querySelector<HTMLElement>(":scope > span"),
+    };
+  }
+
   it.each([
     { path: "Motion", withMotion: true, reducedMotion: "no-preference" },
     { path: "the CSS fallback", withMotion: false, reducedMotion: "no-preference" },
@@ -894,13 +922,8 @@ describe("ToggleGroup pill from server HTML to the measured indicator", () => {
     async ({ withMotion, reducedMotion }) => {
       await commands.emulateMedia({ reducedMotion });
       await enterMotionPath(withMotion);
-      container = document.createElement("div");
-      container.innerHTML = renderToString(ui);
-      document.body.append(container);
-      const group = container.querySelector<HTMLElement>('[role="group"]');
-      const pressed = container.querySelector<HTMLElement>("[data-pressed]");
-      if (!group || !pressed) throw new Error("No pressed item in the server HTML");
-      const indicator = () => group.querySelector<HTMLElement>(":scope > span");
+      const page = ui();
+      const { host, pressed, indicator } = serverRendered(page);
       // Before hydration: the item's own pill, and no indicator
       expect(indicator()).toBeNull();
       expect(ownSurface(pressed)).toBe(true);
@@ -910,7 +933,7 @@ describe("ToggleGroup pill from server HTML to the measured indicator", () => {
       expect(Number.parseFloat(pill.height)).toBeCloseTo(pressed.offsetHeight, 0);
       expect(Number.parseFloat(pill.zIndex)).toBeLessThan(0);
 
-      app = hydrateRoot(container, ui);
+      app = hydrateRoot(host, page);
       const frames = await eachPaintedFrame(
         () => ({ indicator: indicator() !== null, own: ownSurface(pressed) }),
         30,
@@ -928,6 +951,28 @@ describe("ToggleGroup pill from server HTML to the measured indicator", () => {
       const shown = indicator();
       if (!shown) throw new Error("No indicator after hydration");
       expect(offBy(pressed, shown)).toBeLessThanOrEqual(1);
+    },
+  );
+
+  // Disabled, the pressed item dims the pill it draws: the indicator dims too, or the pill would
+  // brighten as it hands over
+  it.each([
+    ["a disabled group", { groupDisabled: true }],
+    ["a disabled pressed item", { itemDisabled: true }],
+  ] as const)(
+    "paints the pill at one opacity before and after hydration, in %s",
+    async (_, disabled) => {
+      await enterMotionPath(false);
+      const page = ui(disabled);
+      const { host, group, pressed, indicator } = serverRendered(page);
+      const before = opacityIn(group, pressed, "::before");
+      expect(before, "the item dims its own pill").toBe(0.5);
+
+      app = hydrateRoot(host, page);
+      await expect.poll(indicator).not.toBeNull();
+      const shown = indicator();
+      if (!shown) throw new Error("No indicator after hydration");
+      expect(opacityIn(group, shown)).toBe(before);
     },
   );
 

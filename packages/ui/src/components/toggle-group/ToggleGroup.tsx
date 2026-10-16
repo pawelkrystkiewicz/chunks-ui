@@ -348,6 +348,8 @@ function ToggleGroupIndicator({ box, value }: { box: IndicatorBox; value: string
       ref={indicatorRef}
       className={cn(
         "absolute z-0 rounded-md bg-background shadow-sm",
+        // Dimmed as the pressed item is, and the pill it draws before hydration with it
+        "group-has-[[data-pressed]:disabled]/toggle-group:opacity-50",
         // The CSS fallback slides with a transition, which is off unless the indicator slides to
         // another item
         !driven && "micro-interactions duration-200 ease-snappy",
@@ -396,7 +398,7 @@ function ToggleGroupItem({ className, value, ref, ...props }: ToggleGroupItemPro
         ctx?.multiple && "data-pressed:bg-background data-pressed:shadow-sm",
         // Until the group has an indicator the pressed item draws the pill in a ::before: the
         // item's own background transitions, so it would fade. Disabled, it takes the item's 50%
-        // opacity and the indicator does not. A consumer ::before merges with it before hydration.
+        // opacity, as the indicator does. A consumer ::before merges with it before hydration.
         ctx?.multiple === false && [
           "group-not-data-indicator/toggle-group:data-pressed:before:absolute",
           "group-not-data-indicator/toggle-group:data-pressed:before:inset-0",
