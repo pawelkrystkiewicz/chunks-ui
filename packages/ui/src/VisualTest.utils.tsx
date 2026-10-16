@@ -463,7 +463,9 @@ const sameSize = (a: BoxSize | undefined, b: BoxSize | undefined) =>
  * Reads `read` in the first frame in which a box an indicator follows changes size: the border
  * box of one of `items`, or the border or content box of `container`. It reads after the
  * component's ResizeObservers and before that frame paints, as these observers are created after
- * the component's. A first notification that reports no change is skipped.
+ * the component's. A first notification that reports no change is skipped. The component must keep
+ * its shared observer through the change: Tabs subscribes again on a childList change, and as the
+ * only Tabs on the page it then gets a new observer, which this one precedes (a false stale frame).
  */
 export function beforePaintOnceResized<T>(
   { items, container }: { items: Element[]; container: Element },
@@ -510,14 +512,23 @@ export function beforePaintOnceResized<T>(
  * component has mounted, in the task of a change: this observer, created after the component's,
  * reads after them and before the frame that change paints in. That holds for a move too, which
  * resizes nothing: the component's MutationObserver hears of it in that task, and its
- * `notifyResize` has the shared ResizeObserver run in the same frame.
+ * `notifyResize` has the shared ResizeObserver run in the same frame. As with
+ * `beforePaintOnceResized`, the component must keep its shared observer through the change.
  */
 export function beforePaint<T>(target: Element, read: () => T) {
-  return new Promise<T>((resolve) => {
+  return new Promise<T>((resolve, reject) => {
     const observer = new ResizeObserver(() => {
+      clearTimeout(timer);
       observer.disconnect();
       resolve(read());
     });
+    // A target that never shows fails here, not as a later test's error
+    const timer = setTimeout(() => {
+      observer.disconnect();
+      reject(
+        new Error(`beforePaint: no ResizeObserver notification within ${SETTLE_TIMEOUT_MS}ms`),
+      );
+    }, SETTLE_TIMEOUT_MS);
     observer.observe(target);
   });
 }
