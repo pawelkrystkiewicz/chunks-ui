@@ -34,8 +34,7 @@ function TooltipPortal({ children, ref, ...props }: TooltipPortalProps) {
   const [portalRef, portalNode] = usePortalNode(ref);
   return (
     <BaseTooltip.Portal ref={portalRef} container={usePortalContainer()} {...props}>
-      {/* Popups opened inside portal in here, and the scrub cursor with them, as in Popover.
-          Base UI's tooltip portal, unlike the others, hands nested popups no node of its own. */}
+      {/* Popups opened inside portal in here, and the scrub cursor with them, as in Popover */}
       <PortalContainerProvider value={portalNode}>{children}</PortalContainerProvider>
     </BaseTooltip.Portal>
   );
