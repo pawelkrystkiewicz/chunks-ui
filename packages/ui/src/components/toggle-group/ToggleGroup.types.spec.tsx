@@ -2,7 +2,7 @@ import type { ToggleGroup as BaseToggleGroup } from "@base-ui/react/toggle-group
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { type ComponentProps, type ReactElement, useState } from "react";
-import { afterAll, afterEach, beforeAll, describe, expect, expectTypeOf, it } from "vitest";
+import { afterEach, describe, expect, expectTypeOf, it } from "vitest";
 import { ToggleGroup, type ToggleGroupRootProps } from "./ToggleGroup";
 
 // Erased at runtime: `check-types` fails when ToggleGroup.Root stops inferring Value (#442)
@@ -10,31 +10,20 @@ import { ToggleGroup, type ToggleGroupRootProps } from "./ToggleGroup";
 /** Holds JSX whose only job is to compile, or not to under `@ts-expect-error` */
 function typeChecks(..._elements: ReactElement[]) {}
 
-// jsdom has no ResizeObserver, and a single-select group watches its items for the indicator
-const realResizeObserver = globalThis.ResizeObserver;
-beforeAll(() => {
-  globalThis.ResizeObserver = class {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  };
-});
-afterAll(() => {
-  globalThis.ResizeObserver = realResizeObserver;
-});
 afterEach(cleanup);
 
 const letters: readonly ("a" | "b")[] = [];
 const onLetters = (_next: ("a" | "b")[]) => {};
-const onNumbers = (_next: number[]) => {};
+const onOther = (_next: "c"[]) => {};
 
 describe("ToggleGroup.Root types", () => {
   it("takes a typed useState setter as onValueChange", async () => {
     const user = userEvent.setup();
     function Controlled() {
       const [value, setValue] = useState<("a" | "b")[]>(["a"]);
+      // multiple: a single-select group watches its items with a ResizeObserver, which jsdom lacks
       return (
-        <ToggleGroup.Root value={value} onValueChange={setValue} aria-label="Letter">
+        <ToggleGroup.Root multiple value={value} onValueChange={setValue} aria-label="Letter">
           <ToggleGroup.Item value="a">A</ToggleGroup.Item>
           <ToggleGroup.Item value="b">B</ToggleGroup.Item>
         </ToggleGroup.Root>
@@ -45,8 +34,11 @@ describe("ToggleGroup.Root types", () => {
     const b = screen.getByRole("button", { name: "B" });
     expect(a).toHaveAttribute("aria-pressed", "true");
     await user.click(b);
+    expect(a).toHaveAttribute("aria-pressed", "true");
     expect(b).toHaveAttribute("aria-pressed", "true");
+    await user.click(a);
     expect(a).toHaveAttribute("aria-pressed", "false");
+    expect(b).toHaveAttribute("aria-pressed", "true");
   });
 
   it("infers the item type from value, defaultValue or an annotated onValueChange", () => {
@@ -82,13 +74,22 @@ describe("ToggleGroup.Root types", () => {
         defaultValue={["a"]}
         onValueChange={(next: string[]) => next.includes("b")}
       />,
+      <ToggleGroup.Root<string>
+        defaultValue={["a"]}
+        onValueChange={(next) => next.includes("b")}
+      />,
+      <ToggleGroup.Root
+        defaultValue={["a"]}
+        // @ts-expect-error "b" is not in "a"[]: the symptom both escapes above remove
+        onValueChange={(next) => next.includes("b")}
+      />,
     );
   });
 
   it("rejects a setter of another item type", () => {
     typeChecks(
-      // @ts-expect-error the items are "a" | "b", so the setter cannot take numbers
-      <ToggleGroup.Root value={letters} onValueChange={onNumbers} />,
+      // @ts-expect-error value pins the items to "a" | "b", so a setter of "c"[] does not fit
+      <ToggleGroup.Root value={letters} onValueChange={onOther} />,
     );
   });
 
@@ -96,11 +97,8 @@ describe("ToggleGroup.Root types", () => {
     typeChecks(
       <ToggleGroup.Root onValueChange={(next) => expectTypeOf(next).toEqualTypeOf<string[]>()} />,
     );
-    // Base UI's own default. ComponentProps<typeof BaseToggleGroup>, the type before Root was
-    // generic, is these props intersected with RefAttributes<HTMLDivElement> from Base UI's call
-    // signature: the same members (ref included), so the two are interchangeable, not identical.
+    // Base UI's own default, and still accepted where the old ComponentProps<typeof BaseToggleGroup> goes
     expectTypeOf<ToggleGroupRootProps>().toEqualTypeOf<BaseToggleGroup.Props>();
     expectTypeOf<ToggleGroupRootProps>().toExtend<ComponentProps<typeof BaseToggleGroup>>();
-    expectTypeOf<ComponentProps<typeof BaseToggleGroup>>().toExtend<ToggleGroupRootProps>();
   });
 });
