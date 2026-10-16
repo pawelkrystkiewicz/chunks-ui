@@ -95,6 +95,8 @@ function PopoverContentPopup({
         className={cnState(
           "rounded-md border border-border bg-popover p-4 text-popover-foreground shadow-md",
           arrowPopupClasses,
+          // Grows out of the trigger, from the point Base UI sets as --transform-origin
+          "origin-(--transform-origin)",
           !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
           !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
           // Only the fade and scale: `all` would also slide an arrow's margin when the side flips
