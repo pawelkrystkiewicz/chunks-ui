@@ -13,7 +13,7 @@
  *   no-motion/next in both consumers, then Chromium opens each export from a local server and
  *   clicks its dialog open; what each build and page must show is in scripts/README.md.
  * Fixtures: scripts/no-motion (recipe in scripts/README.md). Needs the network and Playwright's
- * Chromium (`cd apps/docs && bunx playwright install chromium`, or the Playwright image in CI).
+ * Chromium (`bunx playwright install chromium`, or the Playwright image in CI).
  * Run: bun run check:no-motion (builds first)
  */
 import {
@@ -25,36 +25,13 @@ import {
   readFileSync,
   rmSync,
 } from "node:fs";
-import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join, resolve, sep } from "node:path";
+import type { Browser } from "playwright";
 
 const UI = join(import.meta.dirname, "../packages/ui");
 const FIXTURES = join(import.meta.dirname, "no-motion");
 
-// ponytail: playwright lives in apps/docs only and tsc cannot reach its types from scripts/, so this
-// types the slice drive() uses by hand. Ceiling: a change in that slice surfaces at run time, not in
-// check-types:scripts. Upgrade: add playwright to the root and `import { chromium, type Browser }`.
-interface Locator {
-  click(options: { timeout: number }): Promise<void>;
-  getByText(text: string, options: { exact: boolean }): Locator;
-  waitFor(options: { timeout: number; state?: "attached" }): Promise<void>;
-}
-interface Page {
-  on(event: "pageerror", listener: (error: Error) => void): void;
-  on(
-    event: "console",
-    listener: (message: { type(): string; text(): string; location(): { url: string } }) => void,
-  ): void;
-  on(event: "request" | "requestfinished", listener: (request: { url(): string }) => void): void;
-  goto(url: string, options: { timeout: number }): Promise<unknown>;
-  locator(selector: string): Locator;
-  getByRole(role: "button" | "dialog", options?: { name: string; exact: boolean }): Locator;
-}
-interface Browser {
-  newContext(): Promise<{ newPage(): Promise<Page>; close(): Promise<void> }>;
-  close(): Promise<void>;
-}
 const ENTRY = 'import * as ui from "chunks-ui";\nconsole.log(Object.keys(ui).length);\n';
 // What a strict consumer compiles, with the utils entry so dist/utils.d.ts is in the program
 const TYPES_ENTRY = [
@@ -488,10 +465,8 @@ async function drive(browser: Browser, out: string): Promise<BrowserRun> {
 }
 
 if (import.meta.main) {
-  // Before the builds, so a missing Chromium fails in seconds; not on import, so the spec runs without Playwright
-  const { chromium }: { chromium: { launch(): Promise<Browser> } } = createRequire(
-    join(import.meta.dirname, "../apps/docs/package.json"),
-  )("playwright");
+  // Before the builds, so a missing Chromium fails in seconds; not on import, so the spec loads no Playwright
+  const { chromium } = await import("playwright");
   const browser = await chromium.launch();
   try {
     const dir = mkdtempSync(join(tmpdir(), "chunks-ui-no-motion-"));

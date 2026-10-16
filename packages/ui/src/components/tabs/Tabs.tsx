@@ -78,7 +78,9 @@ const TabsContext = createContext<TabsContextValue | null>(null);
 // ---------------------------------------------------------------------------
 
 function TabsRoot({ className, value, defaultValue, onValueChange, ...props }: TabsRootProps) {
-  const [trackedValue, setTrackedValue] = useState(value ?? defaultValue);
+  // A tab value can be a function, which React would call as a state initializer or updater,
+  // so it is stored as is, as Base UI stores it
+  const [trackedValue, setTrackedValue] = useState(() => value ?? defaultValue);
 
   const handleValueChange = useCallback(
     (...args: Parameters<NonNullable<TabsRootProps["onValueChange"]>>) => {
@@ -86,7 +88,7 @@ function TabsRoot({ className, value, defaultValue, onValueChange, ...props }: T
       const [next, details] = args;
       // Base UI drops a cancelled change from a tab. Its automatic fallbacks (initial, disabled,
       // missing tab) go through even when cancelled, so the tracked value follows them too.
-      if (!details.isCanceled || details.reason !== "none") setTrackedValue(next);
+      if (!details.isCanceled || details.reason !== "none") setTrackedValue(() => next);
     },
     [onValueChange],
   );
