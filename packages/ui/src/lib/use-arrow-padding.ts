@@ -31,8 +31,8 @@ export function useArrowPadding() {
 
 /**
  * For an Arrow part: the positioner around it reads its default `arrowPadding` again once the arrow
- * mounts, and once it unmounts. Its layout effect runs before the arrow leaves the page, so it only
- * calls back, and the positioner reads after the commit.
+ * mounts, and once it unmounts. On unmount its cleanup runs while the arrow is still in the page, so
+ * it only calls back, and the positioner reads after the commit.
  */
 export function useArrowChange() {
   const arrowChanged = useContext(ArrowChangeContext);
