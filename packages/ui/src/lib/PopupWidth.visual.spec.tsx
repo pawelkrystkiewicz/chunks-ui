@@ -1,4 +1,4 @@
-import { render } from "@testing-library/react";
+import { render, within } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it } from "vitest";
 import { page } from "vitest/browser";
@@ -21,6 +21,9 @@ const WIDTHS = [
 const NO_OVERFLOW = { top: 0, right: 0, bottom: 0, left: 0 };
 
 const widthOf = (el: Element) => el.getBoundingClientRect().width;
+// --anchor-width carries the anchor's width rounded to whole pixels
+const expectWidthOf = (popup: Element, anchor: Element) =>
+  expect(Math.abs(widthOf(popup) - widthOf(anchor))).toBeLessThanOrEqual(1);
 
 /**
  * Renders `ui` in a column `width` px wide, 40px clear of the page's sides. 160px clear of its
@@ -68,12 +71,12 @@ describe.each([
     );
     const popup = await settled(getByTestId("popup"));
     expect(popup.getAttribute("data-side"), "the positioning mode under test").toBe(side);
-    expect(widthOf(popup)).toBe(widthOf(getByRole("combobox")));
+    expectWidthOf(popup, getByRole("combobox"));
     expect(overflowPast(popup), "item text past the popup's edges").toEqual(NO_OVERFLOW);
 
     // The selected item's check mark keeps its room at the item's end, clear of the wrapped text
     const option = getByRole("option", { name: LONG_WORD });
-    const text = (option.firstElementChild as HTMLElement).getBoundingClientRect();
+    const text = within(option).getByText(LONG_WORD).getBoundingClientRect();
     const indicator = getByTestId("indicator").getBoundingClientRect();
     expect(text.right, "text end, before the check mark").toBeLessThanOrEqual(indicator.left);
     expect(indicator.right, "check mark end, inside the item").toBeLessThanOrEqual(
@@ -185,7 +188,7 @@ describe("Combobox.Popup", () => {
       </Combobox.Root>,
     );
     const popup = await settled(getByTestId("popup"));
-    expect(widthOf(popup)).toBe(widthOf(getByRole("combobox")));
+    expectWidthOf(popup, getByRole("combobox"));
     expect(overflowPast(popup), "item text past the popup's edges").toEqual(NO_OVERFLOW);
   });
 
@@ -214,7 +217,7 @@ describe("Combobox.Popup", () => {
         </Combobox.Root>,
       );
       const popup = await settled(getByTestId("popup"));
-      expect(widthOf(popup)).toBe(widthOf(getByTestId("control")));
+      expectWidthOf(popup, getByTestId("control"));
       expect(overflowPast(popup), "item text past the popup's edges").toEqual(NO_OVERFLOW);
     },
   );
@@ -234,7 +237,7 @@ describe("DatePicker popup", () => {
   // The calendar is about 280px wide, and centred in a wider popup
   it("takes the trigger's width when the trigger is wider than the calendar", async () => {
     const { trigger, popup } = await open(360);
-    expect(widthOf(popup)).toBe(widthOf(trigger));
+    expectWidthOf(popup, trigger);
     const calendar = (popup.firstElementChild as HTMLElement).getBoundingClientRect();
     const box = popup.getBoundingClientRect();
     expect(

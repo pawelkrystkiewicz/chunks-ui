@@ -472,7 +472,7 @@ function FontPicker({
         </Select.Trigger>
         <Select.Portal>
           <Select.Positioner sideOffset={6} alignItemWithTrigger={false}>
-            <Select.Popup className="max-h-[268px] w-(--anchor-width) overflow-y-auto rounded-[10px] p-1 shadow-[0_12px_32px_-8px_oklch(0_0_0/0.18),0_2px_6px_oklch(0_0_0/0.06)]">
+            <Select.Popup className="max-h-[268px] overflow-y-auto rounded-[10px] p-1 shadow-[0_12px_32px_-8px_oklch(0_0_0/0.18),0_2px_6px_oklch(0_0_0/0.06)]">
               {FONTS.map((f) => (
                 <Select.Item
                   key={f.name}
