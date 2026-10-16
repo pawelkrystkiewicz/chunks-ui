@@ -120,8 +120,8 @@ jobs:
     permissions:
       contents: read
       issues: read
-    # The axe check drives Chromium; this image has the browser for the pinned playwright.
-    # Same image as the visual tests; check:playwright keeps the tag equal to apps/docs' playwright.
+    # The axe check and check:no-motion drive Chromium; this image has the browser for the pinned playwright.
+    # Same image as the visual tests; check:playwright keeps the tag equal to the docs' and the root's playwright.
     container:
       image: mcr.microsoft.com/playwright:v1.64.0-noble@sha256:06a9939e57531807f8d5fd76ce44b53165ffb7d7501d87ab10e285c20b1e971f
     steps:
