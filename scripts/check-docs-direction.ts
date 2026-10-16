@@ -12,12 +12,14 @@
  *
  * It matches class tokens, not prose: the spacing and inset classes need a Tailwind value
  * (`4`, `0.5`, `1/2`, `px`, `auto`, `full`, `[…]`, `(…)`), so `left-to-right`, `pl-PL` and
- * `left-*` in a sentence do not count. A deliberate physical class (art that must not mirror)
- * carries a marker in a comment on its own line, or in a comment that is alone on the line above,
- * with the reason: `// direction: physical, <reason>` in TS, `{/* direction: physical, <reason> *\/}`
- * in TSX and MDX. A marker without a reason (one that starts with a word character) does not
- * count, and a marker at the end of a code line exempts that line only. A scanned directory with
- * no file in it fails the run, so an empty scan cannot pass. It makes no network calls.
+ * `left-*` in a sentence do not count. Inline code in MDX prose and tables is flagged like any
+ * other text. A deliberate physical class (art that must not mirror) carries a marker with a
+ * reason: `// direction: physical, <reason>` in TS, `{/* direction: physical, <reason> *\/}` in
+ * TSX and MDX. The marker goes on the same line as the class, or in a single-line comment alone
+ * on the line above. A marker without a reason (one that does not start with an ASCII letter,
+ * digit or underscore) does not count, and a marker at the end of a code line exempts that line
+ * only. A scanned directory with no file in it fails the run, so an empty scan cannot pass. It
+ * makes no network calls.
  *
  * Run: bun run check:docs-direction
  */

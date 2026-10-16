@@ -24,7 +24,7 @@ Runs in the `lint` job of `quality-gates.yml`. Tests: `scripts/__specs__/check-b
 
 ## check-docs-direction.ts
 
-Fails on a physical direction class (`ml-*`, `left-*`, `text-left`, `float-left` and the like) in the `.ts`, `.tsx` and `.mdx` files of the docs, so the docs use the logical classes and mirror in RTL. A deliberate one carries `direction: physical, <reason>` in a comment. It makes no network calls.
+Fails on a physical direction class (`ml-*`, `left-*`, `text-left`, `float-left` and the like) in the `.ts`, `.tsx` and `.mdx` files of the docs, so the docs use the logical classes and mirror in RTL. A deliberate one carries `direction: physical, <reason>` in a comment on the same line, or in a single-line comment alone on the line above. Inline code in MDX prose and tables is flagged too. Limits: only `.ts`, `.tsx` and `.mdx` are scanned (no CSS `@apply`); class names built dynamically, inline styles and arbitrary properties such as `[margin-left:4px]` are not caught; a `/left-4/` URL path is flagged. It makes no network calls.
 
 ```bash
 bun run check:docs-direction
