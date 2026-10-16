@@ -70,11 +70,13 @@ function ComboboxRoot<Value, Multiple extends boolean | undefined = false, Item 
 }
 
 // Base UI's InputGroup, so the popup anchors to the whole Control (#478).
+// Clear and Trigger sit over its end, 42px of it: pe-12 keeps its content out from under them,
+// with room for a chip's focus ring (#484).
 function ComboboxControl({ className, ...props }: ComboboxControlProps) {
   return (
     <BaseCombobox.InputGroup
       className={cnState(
-        "relative flex flex-wrap items-center gap-1 rounded-md border border-input bg-background px-3 py-1.5",
+        "relative flex flex-wrap items-center gap-1 rounded-md border border-input bg-background px-3 pe-12 py-1.5",
         FOCUS_RING_WITHIN,
         "[&_[role=combobox]:focus-visible]:outline-none",
         RING_TRANSITION,
