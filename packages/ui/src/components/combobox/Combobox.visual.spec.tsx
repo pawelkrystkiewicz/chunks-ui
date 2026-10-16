@@ -1,11 +1,13 @@
 import { render } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
-import { page, userEvent } from "vitest/browser";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { commands, page, userEvent } from "vitest/browser";
 import {
   boxOf,
   describePopupCssPath,
+  enterMotionPath,
   expectNotAllowed,
   focusVisible,
+  MOTION_PATHS,
   renderFixture,
   renderPage,
   ringColor,
@@ -20,6 +22,24 @@ const options = [
   { value: "svelte", label: "Svelte" },
 ];
 
+const popup = (positionerProps?: ComboboxPositionerProps) => (
+  <Combobox.Portal>
+    <Combobox.Positioner {...positionerProps}>
+      <Combobox.Popup data-testid="popup">
+        <Combobox.List>
+          {(item: (typeof options)[number]) => (
+            <Combobox.Item key={item.value} value={item}>
+              <Combobox.ItemIndicator />
+              {item.label}
+            </Combobox.Item>
+          )}
+        </Combobox.List>
+        <Combobox.Empty>No results found</Combobox.Empty>
+      </Combobox.Popup>
+    </Combobox.Positioner>
+  </Combobox.Portal>
+);
+
 // Combobox.Empty reads the filtered `items` on Root: without them it counts no matches and
 // shows its message under the items
 const combobox = ({
@@ -33,29 +53,16 @@ const combobox = ({
 } = {}) => (
   <Combobox.Root items={options} defaultOpen={defaultOpen} open={open}>
     <Combobox.Input placeholder="Search framework..." />
-    <Combobox.Portal>
-      <Combobox.Positioner {...positionerProps}>
-        <Combobox.Popup data-testid="popup">
-          <Combobox.List>
-            {(item: (typeof options)[number]) => (
-              <Combobox.Item key={item.value} value={item}>
-                <Combobox.ItemIndicator />
-                {item.label}
-              </Combobox.Item>
-            )}
-          </Combobox.List>
-          <Combobox.Empty>No results found</Combobox.Empty>
-        </Combobox.Popup>
-      </Combobox.Positioner>
-    </Combobox.Portal>
+    {popup(positionerProps)}
   </Combobox.Root>
 );
 
 // The docs' multi-select: the Control draws the ring (`has-[:focus-visible]`) while the input
 // inside it has focus, and turns the input's own ring off
-const chipsCombobox = () => (
-  <Combobox.Root multiple items={options} defaultValue={options.slice(0, 2)}>
-    <Combobox.Control>
+// `open` starts the popup open, to measure it against the Control (`data-testid="control"`)
+const chipsCombobox = ({ open = false }: { open?: boolean } = {}) => (
+  <Combobox.Root multiple items={options} defaultValue={options.slice(0, 2)} defaultOpen={open}>
+    <Combobox.Control data-testid="control">
       <Combobox.Chips>
         {options.slice(0, 2).map((item) => (
           <Combobox.Chip key={item.value}>
@@ -72,15 +79,17 @@ const chipsCombobox = () => (
       <Combobox.Clear />
       <Combobox.Trigger />
     </Combobox.Control>
+    {open && popup()}
   </Combobox.Root>
 );
 
-// Base UI hands the focus from the input to the chips (ArrowLeft at the start of the input) only
-// when the input is inside Combobox.Chips
+// The chips sit flush (gap-0), the consumer case the focus lift is for. Base UI hands the focus
+// from the input to the chips (ArrowLeft at the start of the input) only when the input is inside
+// Combobox.Chips
 const chipsAroundInput = () => (
   <Combobox.Root multiple items={options} defaultValue={options.slice(0, 2)}>
     <Combobox.Control>
-      <Combobox.Chips>
+      <Combobox.Chips className="gap-0">
         {options.slice(0, 2).map((item) => (
           <Combobox.Chip key={item.value}>
             {item.label}
@@ -143,8 +152,8 @@ describe("Combobox", () => {
     await expect(fixture).toMatchScreenshot();
   });
 
-  // The arrow keys focus a chip, which draws the library ring; the screenshot shows the whole
-  // ring beside the next chip
+  // The arrow keys focus a chip, which draws the library ring; with flush chips the ring paints
+  // over the next chip only while the focused chip is lifted (z-index 1)
   it("chip focus-visible, above the next chip", async () => {
     const { fixture, getByRole, getByText } = await renderFixture(
       <div style={{ width: 300 }}>{chipsAroundInput()}</div>,
@@ -162,7 +171,16 @@ describe("Combobox", () => {
       outlineOffset: "2px",
       outlineColor: ringColor(),
     });
+    expect(getComputedStyle(chip).zIndex).toBe("1");
     await expect(fixture).toMatchScreenshot();
+  });
+
+  // The chips sat flush against each other: Combobox.Chips had no gap (#478)
+  it("leaves at least 4px between the chips", () => {
+    const { getByText } = render(<div style={{ width: 300 }}>{chipsCombobox()}</div>);
+    const react = getByText("React").getBoundingClientRect();
+    const vue = getByText("Vue").getBoundingClientRect();
+    expect(vue.left).toBeGreaterThanOrEqual(react.right + 4);
   });
 
   it("open", async () => {
@@ -225,3 +243,35 @@ describe("Combobox", () => {
 });
 
 describePopupCssPath("Combobox.Popup", (open) => combobox({ open }));
+
+// ComboboxPositioner's default sideOffset, the gap a single-select popup keeps below its input
+const DEFAULT_SIDE_OFFSET = 8;
+
+// The multi-select popup anchors to the Control, not the input in its padding (#478), on both
+// motion paths.
+describe.each(MOTION_PATHS)("Combobox.Popup under Combobox.Control, $path", ({ withMotion }) => {
+  beforeAll(() => enterMotionPath(withMotion));
+  beforeEach(async () => {
+    await commands.emulateMedia({ reducedMotion: "no-preference" });
+    await expect.poll(() => matchMedia("(prefers-reduced-motion: reduce)").matches).toBe(false);
+  });
+  afterAll(async () => {
+    await commands.emulateMedia({ reducedMotion: "reduce" });
+    await enterMotionPath(true);
+  });
+
+  it("anchors the popup to the Control: its left edge, its width, and the default gap below its border", async () => {
+    const { getByTestId } = render(
+      <div style={{ padding: 40 }}>{chipsCombobox({ open: true })}</div>,
+    );
+    const multiPopup = await waitForStable(() => boxOf(getByTestId("popup")));
+    const control = boxOf(getByTestId("control"));
+    const width = (box: ReturnType<typeof boxOf>) => box.right - box.left;
+    expect(Math.abs(multiPopup.left - control.left), "left edge").toBeLessThanOrEqual(1);
+    expect(Math.abs(width(multiPopup) - width(control)), "width").toBeLessThanOrEqual(1);
+    expect(
+      Math.abs(multiPopup.top - control.bottom - DEFAULT_SIDE_OFFSET),
+      `gap below the Control's border, ${DEFAULT_SIDE_OFFSET}px`,
+    ).toBeLessThanOrEqual(1);
+  });
+});

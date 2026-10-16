@@ -2,7 +2,7 @@
 
 import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
 import { type ComponentProps, createContext, type ReactNode, useContext, useId } from "react";
-import { cn, cnState } from "../../lib/cn";
+import { cnState } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
 import { springs } from "../../lib/motion";
 import {
@@ -46,7 +46,7 @@ export type ComboboxPositionerProps = Omit<
   "sideOffset"
 > & {
   /**
-   * Distance from the input element in pixels.
+   * Distance from the anchor in pixels: the input, or the `Combobox.Control` around it.
    * @default 8
    */
   sideOffset?: ComponentProps<typeof BaseCombobox.Positioner>["sideOffset"];
@@ -56,7 +56,7 @@ export type ComboboxListProps = ComponentProps<typeof BaseCombobox.List>;
 export type ComboboxChipsProps = ComponentProps<typeof BaseCombobox.Chips>;
 export type ComboboxChipProps = ComponentProps<typeof BaseCombobox.Chip>;
 export type ComboboxChipRemoveProps = ComponentProps<typeof BaseCombobox.ChipRemove>;
-export type ComboboxControlProps = ComponentProps<"div">;
+export type ComboboxControlProps = ComponentProps<typeof BaseCombobox.InputGroup>;
 
 function ComboboxRoot<Value, Multiple extends boolean | undefined = false, Item = Value>({
   labels,
@@ -69,13 +69,11 @@ function ComboboxRoot<Value, Multiple extends boolean | undefined = false, Item 
   );
 }
 
-// The Control draws the one ring while the combobox input inside it has keyboard focus, so it turns
-// the input's own ring (FOCUS_RING) off: `[role=combobox]:focus-visible` under the class (0,3,0)
-// outranks it. Another input inside the Control keeps its ring.
+// Base UI's InputGroup, so the popup anchors to the whole Control (#478).
 function ComboboxControl({ className, ...props }: ComboboxControlProps) {
   return (
-    <div
-      className={cn(
+    <BaseCombobox.InputGroup
+      className={cnState(
         "relative flex flex-wrap items-center gap-1 rounded-md border border-input bg-background px-3 py-1.5",
         FOCUS_RING_WITHIN,
         "[&_[role=combobox]:focus-visible]:outline-none",
@@ -287,6 +285,15 @@ function ComboboxGroupLabel({ className, ...props }: ComboboxGroupLabelProps) {
   );
 }
 
+function ComboboxChips({ className, ...props }: ComboboxChipsProps) {
+  return (
+    <BaseCombobox.Chips
+      className={cnState("flex flex-wrap items-center gap-1", className)}
+      {...props}
+    />
+  );
+}
+
 function ComboboxChip({ className, id, ...props }: ComboboxChipProps) {
   const generatedId = useId();
   const chipId = id ?? generatedId;
@@ -363,7 +370,7 @@ export const Combobox = {
   Clear: ComboboxClear,
   Group: BaseCombobox.Group,
   GroupLabel: ComboboxGroupLabel,
-  Chips: BaseCombobox.Chips,
+  Chips: ComboboxChips,
   Chip: ComboboxChip,
   ChipRemove: ComboboxChipRemove,
   Value: BaseCombobox.Value,

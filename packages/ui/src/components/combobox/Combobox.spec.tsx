@@ -1,7 +1,7 @@
 import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { axe } from "jest-axe";
-import type { ComponentProps } from "react";
+import { type ComponentProps, createRef } from "react";
 import { afterEach, describe, expect, expectTypeOf, it } from "vitest";
 import { FOCUS_RING, FOCUS_RING_WITHIN } from "../shared";
 import {
@@ -22,8 +22,100 @@ const items = [
 
 describe("Combobox", () => {
   it("renders Control with custom className", () => {
-    render(<Combobox.Control className="custom" data-testid="control" />);
+    render(
+      <Combobox.Root>
+        <Combobox.Control className="custom" data-testid="control" />
+      </Combobox.Root>,
+    );
     expect(screen.getByTestId("control")).toHaveClass("custom");
+  });
+
+  // Base UI's InputGroup: the part the popup anchors to, so the popup lines up with the Control
+  it("renders Control as Base UI's InputGroup, a group with the popup state", () => {
+    const ref = createRef<HTMLDivElement>();
+    render(
+      <Combobox.Root open disabled>
+        <Combobox.Control
+          ref={ref}
+          data-testid="control"
+          className={(state) => (state.disabled ? "is-disabled" : "is-enabled")}
+        >
+          <Combobox.Input aria-label="Fruits" />
+        </Combobox.Control>
+      </Combobox.Root>,
+    );
+    const control = screen.getByTestId("control");
+    expect(ref.current).toBe(control);
+    expect(control).toHaveAttribute("role", "group");
+    expect(control).toHaveAttribute("data-popup-open");
+    expect(control).toHaveClass("is-disabled", FOCUS_RING_WITHIN);
+  });
+
+  // Base UI's handler on the InputGroup: a press on the padding focuses the input, opens the popup
+  it("focuses the input and opens the popup on a press on the Control's padding", () => {
+    render(
+      <Combobox.Root items={items}>
+        <Combobox.Control data-testid="control">
+          <Combobox.Input aria-label="Fruits" />
+        </Combobox.Control>
+      </Combobox.Root>,
+    );
+    const control = screen.getByTestId("control");
+    expect(control).not.toHaveAttribute("data-popup-open");
+    fireEvent.mouseDown(control);
+    expect(screen.getByRole("combobox")).toHaveFocus();
+    expect(control).toHaveAttribute("data-popup-open");
+  });
+
+  it("focuses the input but leaves the popup closed on a press on the Control when openOnInputClick is false", () => {
+    render(
+      <Combobox.Root items={items} openOnInputClick={false}>
+        <Combobox.Control data-testid="control">
+          <Combobox.Input aria-label="Fruits" />
+        </Combobox.Control>
+      </Combobox.Root>,
+    );
+    const control = screen.getByTestId("control");
+    fireEvent.mouseDown(control);
+    expect(screen.getByRole("combobox")).toHaveFocus();
+    expect(control).not.toHaveAttribute("data-popup-open");
+  });
+
+  it("does not open the popup on a press on Clear or ChipRemove", () => {
+    render(
+      <Combobox.Root multiple items={items} defaultValue={[items[0]]}>
+        <Combobox.Control data-testid="control">
+          <Combobox.Chips>
+            <Combobox.Chip>
+              Apple
+              <Combobox.ChipRemove />
+            </Combobox.Chip>
+          </Combobox.Chips>
+          <Combobox.Input aria-label="Fruits" />
+          <Combobox.Clear />
+        </Combobox.Control>
+      </Combobox.Root>,
+    );
+    const control = screen.getByTestId("control");
+    fireEvent.mouseDown(screen.getByRole("button", { name: DEFAULT_COMBOBOX_LABELS.clear }));
+    fireEvent.mouseDown(screen.getByRole("button", { name: /Remove/ }));
+    expect(control).not.toHaveAttribute("data-popup-open");
+  });
+
+  it("renders Chips with the default gap, merged with a custom className", () => {
+    const ref = createRef<HTMLDivElement>();
+    render(
+      <Combobox.Root multiple items={items} defaultValue={[items[0]]}>
+        <Combobox.Chips ref={ref} className="custom gap-2" data-testid="chips">
+          <Combobox.Chip>Apple</Combobox.Chip>
+        </Combobox.Chips>
+        <Combobox.Input aria-label="Fruits" />
+      </Combobox.Root>,
+    );
+    const chips = screen.getByTestId("chips");
+    expect(ref.current).toBe(chips);
+    expect(chips).toHaveClass("custom", "flex", "flex-wrap", "items-center", "gap-2");
+    expect(chips).not.toHaveClass("gap-1");
   });
 
   it("renders Input with custom className", () => {
@@ -495,7 +587,11 @@ describe("Combobox focus ring", () => {
 
   // The wrapper draws the ring while the input inside it has the focus
   it("draws the focus-within ring classes on Control", () => {
-    render(<Combobox.Control data-testid="control" />);
+    render(
+      <Combobox.Root>
+        <Combobox.Control data-testid="control" />
+      </Combobox.Root>,
+    );
     expect(screen.getByTestId("control")).toHaveClass(FOCUS_RING_WITHIN);
   });
 
