@@ -1,6 +1,7 @@
 import { render } from "@testing-library/react";
 import { type CSSProperties, Profiler } from "react";
 import { describe, expect, it, vi } from "vitest";
+import { resizeBatches } from "../../lib/shared-resize";
 import {
   eachPaintedFrame,
   enterMotionPath,
@@ -25,6 +26,8 @@ type Layout = {
    * height
    */
   listStyle?: CSSProperties;
+  /** Classes of the list, besides `justify-center` */
+  listClassName?: string;
   /** Width of the box around the list, which centres its tabs */
   width?: number;
   /** Classes of tab "b" */
@@ -36,12 +39,13 @@ const tabs = ({
   tabStyle,
   tabKey,
   listStyle,
+  listClassName,
   width = 400,
   tabClassName,
 }: Layout = {}) => (
   <div style={{ width }}>
     <Tabs.Root value={value}>
-      <Tabs.List className="justify-center" style={listStyle}>
+      <Tabs.List className={`justify-center ${listClassName ?? ""}`} style={listStyle}>
         {/* No transition of its own, so the tab takes its new size at once */}
         <Tabs.Tab key={tabKey} value="a" style={{ transition: "none", ...tabStyle }}>
           Alpha
@@ -172,6 +176,39 @@ const RESIZES: [string, Layout, Layout][] = [
   ["the width of the box around the list", {}, { width: 300 }],
 ];
 
+/**
+ * Each move: its name, the layout before it, and the layout after it. Nothing resizes: a class
+ * or inline style change on the list or a tab moves the tabs within the list's fixed size.
+ */
+const MOVES: [string, Layout, Layout][] = [
+  [
+    "the gap of a list of fixed size, by its style",
+    FIXED,
+    { ...FIXED, listStyle: { ...FIXED.listStyle, gap: 24 } },
+  ],
+  ["the gap of a list of fixed size, by its class", FIXED, { ...FIXED, listClassName: "gap-6" }],
+  ["the order of the tab, by its style", FIXED, { ...FIXED, tabStyle: { order: 1 } }],
+  ["the order of the other tab, by its class", FIXED, { ...FIXED, tabClassName: "order-first" }],
+];
+
+type Frame = { indicator: Box; off: number };
+
+/** Asserts `frames`, painted after a change, show the indicator jump from `start` to over the tab */
+function expectJumpedAtOnce(frames: Frame[], start: Box) {
+  const end = frames.at(-1)?.indicator ?? start;
+  const log = JSON.stringify(frames);
+  expect(near(start, end), log).toBe(false);
+  expect(frames.at(-1)?.off, log).toBeLessThanOrEqual(1);
+  // Each frame shows the indicator where it was or where it goes, never between
+  expect(
+    frames.every((frame) => near(frame.indicator, start) || near(frame.indicator, end)),
+    log,
+  ).toBe(true);
+  // The first frame is read before the ResizeObservers measure the tab: it may show the old
+  // box, and no more
+  expect(frames.filter((frame) => frame.off > 1).length, log).toBeLessThanOrEqual(1);
+}
+
 describe.each(MOTION_PATHS)("Tabs.Indicator, $path", ({ withMotion }) => {
   it.each(RESIZES)(
     "follows a change to %s in the frame it changes in, with no frames in between",
@@ -188,23 +225,44 @@ describe.each(MOTION_PATHS)("Tabs.Indicator, $path", ({ withMotion }) => {
         () => ({ indicator: boxOf(indicator), off: offBy(tab(active), indicator) }),
         20,
       );
-      const end = frames.at(-1)?.indicator ?? start;
-      const log = JSON.stringify(frames);
-      expect(near(start, end), log).toBe(false);
       // Over the tab in the frame the tab or the list changes in: the tabs' ResizeObservers
       // measure the tab there, and the indicator is rendered before that frame paints
-      expect(await firstPaint, log).toBeLessThanOrEqual(1);
-      expect(frames.at(-1)?.off, log).toBeLessThanOrEqual(1);
-      // Each frame shows the indicator where it was or where it goes, never between
-      expect(
-        frames.every((frame) => near(frame.indicator, start) || near(frame.indicator, end)),
-        log,
-      ).toBe(true);
-      // The first frame is read before the ResizeObservers measure the tab: it may show the old
-      // box, and no more
-      expect(frames.filter((frame) => frame.off > 1).length, log).toBeLessThanOrEqual(1);
+      expect(await firstPaint, JSON.stringify(frames)).toBeLessThanOrEqual(1);
+      expectJumpedAtOnce(frames, start);
     },
   );
+
+  it.each(MOVES)(
+    "follows a change to %s at once, which moves the tab without resizing anything",
+    async (_, before, after) => {
+      const { indicator, tab, rerender } = await renderTabs(withMotion, before);
+      const start = boxOf(indicator);
+
+      rerender(tabs(after));
+      const frames = await eachPaintedFrame(
+        () => ({ indicator: boxOf(indicator), off: offBy(tab("Alpha"), indicator) }),
+        20,
+      );
+      expectJumpedAtOnce(frames, start);
+    },
+  );
+
+  // A selection measures again once, for padding the newly active tab gains on selection, and so
+  // does a move. The indicator's own writes (its box; with Motion, a spring's many frames of
+  // them) never do.
+  it("measures again once on a selection or a move, and never for the indicator's own writes", async () => {
+    const { indicator, tab, rerender } = await renderTabs(withMotion, FIXED);
+    let batches = resizeBatches.count;
+    rerender(tabs({ ...FIXED, value: "b" }));
+    await waitForStable(() => offBy(tab("Beta"), indicator));
+    expect(resizeBatches.count).toBe(batches + 1);
+
+    batches = resizeBatches.count;
+    rerender(tabs({ ...FIXED, value: "b", listStyle: { ...FIXED.listStyle, gap: 24 } }));
+    await waitForStable(() => offBy(tab("Beta"), indicator));
+    expect(offBy(tab("Beta"), indicator)).toBeLessThanOrEqual(1);
+    expect(resizeBatches.count).toBe(batches + 1);
+  });
 
   it("still slides to a newly selected tab", async () => {
     const { indicator, tab, rerender } = await renderTabs(withMotion);

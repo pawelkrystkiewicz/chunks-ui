@@ -13,7 +13,7 @@ import {
   useState,
 } from "react";
 import { cn, cnState } from "../../lib/cn";
-import { observeResize } from "../../lib/shared-resize";
+import { notifyResize, observeResize } from "../../lib/shared-resize";
 import { BOX_EDGES, type IndicatorBox, useIndicatorSlide } from "../../lib/use-indicator-slide";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { useReducedMotion } from "../../lib/use-motion";
@@ -138,7 +138,22 @@ function ToggleGroupRoot<Value extends string = string>({
     };
     for (const item of itemsRef.current.values()) watcher.watch(item);
     watcherRef.current = watcher;
+    // A class or inline style change on the group or an item can move the items without
+    // resizing anything (gap, order). The observer then notifies the container again before the
+    // next paint, and the group measures. Only a change to an element that holds an item counts:
+    // the indicator holds none, and its box and Motion's values are written as inline style.
+    const items = itemsRef.current;
+    const holdsItem = (node: Node) => [...items.values()].some((item) => node.contains(item));
+    const mutation = new MutationObserver((records) => {
+      if (records.some(({ target }) => holdsItem(target))) notifyResize(container, "border-box");
+    });
+    mutation.observe(container, {
+      attributes: true,
+      attributeFilter: ["class", "style"],
+      subtree: true,
+    });
     return () => {
+      mutation.disconnect();
       for (const stop of stopContainer) stop();
       for (const stop of stopItem.values()) stop();
       watcherRef.current = null;

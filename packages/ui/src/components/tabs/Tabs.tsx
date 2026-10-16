@@ -213,8 +213,9 @@ function TabsIndicatorElement({
   // frame the resize happens in. Skipped where there is no ResizeObserver (jsdom).
   useEffect(() => {
     if (typeof ResizeObserver === "undefined") return;
-    const list = element.current?.closest('[role="tablist"]');
-    if (!list) return;
+    const indicator = element.current;
+    const list = indicator?.closest('[role="tablist"]');
+    if (!indicator || !list) return;
     let stops: (() => void)[] = [];
     // A new observation's first notification measures every tab: this catches tabs that mount
     // or remount
@@ -231,16 +232,20 @@ function TabsIndicatorElement({
     };
     observeTabs();
     // A selection measures again too: Base UI measured the newly active tab before the commit
-    // that selected it, which can give it padding
+    // that selected it, which can give it padding. So does a class or inline style change on
+    // the list or a tab, which can move the tabs without resizing anything (gap, order). Changes
+    // to the indicator don't count: Base UI and Motion write its box as inline style.
     const mutation = new MutationObserver((records) => {
-      if (records.some((record) => record.type === "childList")) observeTabs();
+      const outside = records.filter(({ target }) => !indicator.contains(target));
+      if (outside.length === 0) return;
+      if (outside.some((record) => record.type === "childList")) observeTabs();
       else notifyResize(list, "border-box");
     });
     mutation.observe(list, {
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ["aria-selected"],
+      attributeFilter: ["aria-selected", "class", "style"],
     });
     return () => {
       mutation.disconnect();

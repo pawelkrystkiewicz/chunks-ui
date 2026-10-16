@@ -2,6 +2,7 @@ import { render } from "@testing-library/react";
 import { Activity, type CSSProperties, createRef, Profiler, type RefObject } from "react";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { commands, userEvent } from "vitest/browser";
+import { resizeBatches } from "../../lib/shared-resize";
 import { reloadMotion } from "../../lib/use-motion";
 import {
   eachPaintedFrame,
@@ -434,6 +435,10 @@ type Layout = {
   itemStyle?: CSSProperties;
   /** Padding of the group, as a spacing slider would set it */
   groupPadding?: number;
+  /** Gap between the items, as a spacing slider would set it */
+  groupGap?: number;
+  /** Classes of the group, besides `justify-center` */
+  groupClassName?: string;
   /** Size of the group, which centres its items; by default it fits them */
   groupSize?: { width: number | string; height?: number };
   /** Width of the box around the group, which centres it */
@@ -446,6 +451,8 @@ const sized = ({
   value = "a",
   itemStyle,
   groupPadding,
+  groupGap,
+  groupClassName,
   groupSize,
   width = 400,
   itemClassName,
@@ -453,8 +460,8 @@ const sized = ({
   <div style={{ width, display: "flex", justifyContent: "center" }}>
     <ToggleGroup.Root
       value={[value]}
-      className="justify-center"
-      style={{ padding: groupPadding, ...groupSize }}
+      className={`justify-center ${groupClassName ?? ""}`}
+      style={{ padding: groupPadding, gap: groupGap, ...groupSize }}
     >
       {/* No transition of its own, so the item takes its new size at once */}
       <ToggleGroup.Item value="a" style={{ transition: "none", ...itemStyle }}>
@@ -530,34 +537,72 @@ const RESIZES: [string, Layout, Layout][] = [
   ["the width of the box around a group that fills it", FILLS, { ...FILLS, width: 300 }],
 ];
 
+/**
+ * Each move: its name, the layout before it, and the layout after it. Nothing resizes: a class
+ * or inline style change on the group or an item moves the items within the group's fixed size.
+ */
+const MOVES: [string, Layout, Layout][] = [
+  ["the gap of a group of fixed size, by its style", FIXED, { ...FIXED, groupGap: 24 }],
+  ["the gap of a group of fixed size, by its class", FIXED, { ...FIXED, groupClassName: "gap-6" }],
+  ["the order of the item, by its style", FIXED, { ...FIXED, itemStyle: { order: 1 } }],
+  ["the order of the other item, by its class", FIXED, { ...FIXED, itemClassName: "order-first" }],
+];
+
+/**
+ * Renders `before`, changes it to `after`, and asserts the indicator is over item "a" at once,
+ * without sliding there
+ */
+async function expectFollowsAtOnce(withMotion: boolean, before: Layout, after: Layout) {
+  const { indicator, item, rerender } = await renderSized(withMotion, before);
+  const start = edgesOf(indicator());
+
+  rerender(sized(after));
+  const frames = await eachPaintedFrame(
+    () => ({ indicator: edgesOf(indicator()), off: offBy(item("Alpha"), indicator()) }),
+    20,
+  );
+  const end = frames.at(-1)?.indicator ?? start;
+  const log = JSON.stringify(frames);
+  expect(near(start, end), log).toBe(false);
+  expect(frames.at(-1)?.off, log).toBeLessThanOrEqual(1);
+  // Each frame shows the indicator where it was or where it goes, never between
+  expect(
+    frames.every((frame) => near(frame.indicator, start) || near(frame.indicator, end)),
+    log,
+  ).toBe(true);
+  // The first frame is read before the ResizeObserver measures the item, and with Motion the
+  // jump is written in the frame after it: one frame may show the old box, and no more
+  expect(frames.filter((frame) => frame.off > 1).length, log).toBeLessThanOrEqual(1);
+}
+
 // Runs with reduced motion off: Motion springs the indicator, or without Motion the CSS
 // fallback slides it with a transition
 describe.each(MOTION_PATHS)("ToggleGroup indicator on a resize, $path", ({ withMotion }) => {
   it.each(RESIZES)(
     "follows a change to %s at once, with no frames in between",
-    async (_, before, after) => {
-      const { indicator, item, rerender } = await renderSized(withMotion, before);
-      const start = edgesOf(indicator());
-
-      rerender(sized(after));
-      const frames = await eachPaintedFrame(
-        () => ({ indicator: edgesOf(indicator()), off: offBy(item("Alpha"), indicator()) }),
-        20,
-      );
-      const end = frames.at(-1)?.indicator ?? start;
-      const log = JSON.stringify(frames);
-      expect(near(start, end), log).toBe(false);
-      expect(frames.at(-1)?.off, log).toBeLessThanOrEqual(1);
-      // Each frame shows the indicator where it was or where it goes, never between
-      expect(
-        frames.every((frame) => near(frame.indicator, start) || near(frame.indicator, end)),
-        log,
-      ).toBe(true);
-      // The first frame is read before the ResizeObserver measures the item, and with Motion the
-      // jump is written in the frame after it: one frame may show the old box, and no more
-      expect(frames.filter((frame) => frame.off > 1).length, log).toBeLessThanOrEqual(1);
-    },
+    (_, before, after) => expectFollowsAtOnce(withMotion, before, after),
   );
+
+  it.each(MOVES)(
+    "follows a change to %s at once, which moves the item without resizing anything",
+    (_, before, after) => expectFollowsAtOnce(withMotion, before, after),
+  );
+
+  // The indicator's own writes (its box; with Motion, a spring's many frames of them) never have
+  // the group measure again. A move has it measure once.
+  it("measures again once on a move, and never for the indicator's own writes", async () => {
+    const { indicator, item, rerender } = await renderSized(withMotion, FIXED);
+    let batches = resizeBatches.count;
+    rerender(sized({ ...FIXED, value: "b" }));
+    await waitForStable(() => offBy(item("Beta"), indicator()));
+    expect(resizeBatches.count).toBe(batches);
+
+    batches = resizeBatches.count;
+    rerender(sized({ ...FIXED, value: "b", groupGap: 24 }));
+    await waitForStable(() => offBy(item("Beta"), indicator()));
+    expect(offBy(item("Beta"), indicator())).toBeLessThanOrEqual(1);
+    expect(resizeBatches.count).toBe(batches + 1);
+  });
 
   it("shows the indicator once the pressed item is shown again, in a group of fixed size", async () => {
     await enterMotionPath(withMotion);

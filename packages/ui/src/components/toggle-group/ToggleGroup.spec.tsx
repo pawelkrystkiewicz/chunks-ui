@@ -1,7 +1,7 @@
 import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
-import { createRef, useState } from "react";
+import { type CSSProperties, createRef, useState } from "react";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { reloadMotion } from "../../lib/use-motion";
 import { FOCUS_RING } from "../shared";
@@ -33,6 +33,10 @@ function resize(target: Element, only?: ResizeObserverBoxOptions) {
 const watched = (target: Element) =>
   [...observers.values()].some(({ targets }) => targets.has(target));
 
+/** Every `observe` call so far, by target */
+const observed: Element[] = [];
+const observeCount = (target: Element) => observed.filter((el) => el === target).length;
+
 /** Boxes set by a test; any other element measures 40×24 at the origin */
 const boxes = new Map<Element, DOMRect>();
 
@@ -45,6 +49,7 @@ beforeAll(() => {
     observe(target: Element, options?: ResizeObserverOptions) {
       this.#watched.targets.set(target, options?.box ?? "content-box");
       observers.set(this, this.#watched);
+      observed.push(target);
     }
     unobserve(target: Element) {
       this.#watched.targets.delete(target);
@@ -63,6 +68,7 @@ beforeAll(() => {
 afterEach(() => {
   cleanup();
   boxes.clear();
+  observed.length = 0;
 });
 
 describe("ToggleGroup", () => {
@@ -334,14 +340,19 @@ describe("ToggleGroup indicator measurement", () => {
     return { left, top, width, height };
   };
 
+  /** A class on the group, or an inline style on item A, as a consumer could change at runtime */
+  type Styled = { groupClassName?: string; itemStyle?: CSSProperties };
+
   /**
    * A controlled group of items A and B with nothing pressed, then A pressed. The group is at
    * (10, 0) and A at (14, 4), so the indicator is at (4, 4) within the group.
    */
   function renderPressed() {
-    const ui = (value: string[]) => (
-      <ToggleGroup.Root value={value}>
-        <ToggleGroup.Item value="a">A</ToggleGroup.Item>
+    const ui = (value: string[], { groupClassName, itemStyle }: Styled = {}) => (
+      <ToggleGroup.Root value={value} className={groupClassName}>
+        <ToggleGroup.Item value="a" style={itemStyle}>
+          A
+        </ToggleGroup.Item>
         <ToggleGroup.Item value="b">B</ToggleGroup.Item>
       </ToggleGroup.Root>
     );
@@ -354,7 +365,7 @@ describe("ToggleGroup indicator measurement", () => {
     boxes.set(group, new DOMRect(10, 0, 100, 32));
     boxes.set(items.a, new DOMRect(14, 4, 40, 24));
     boxes.set(items.b, new DOMRect(56, 4, 50, 24));
-    const press = (value: "a" | "b") => rerender(ui([value]));
+    const press = (value: "a" | "b", styled?: Styled) => rerender(ui([value], styled));
     press("a");
     const indicator = () => indicatorOf(group);
     expect(indicator()).toEqual(px(4, 4, 40, 24));
@@ -478,6 +489,33 @@ describe("ToggleGroup indicator measurement", () => {
     expect(watched(c)).toBe(true);
     rerender(withLateItem(["a"], false));
     expect(watched(c)).toBe(false);
+  });
+
+  // A class or inline style change on the group or an item can move the items without resizing
+  // anything (gap, order). The group is then observed again, so the observer notifies it before
+  // the next paint, and the group measures. The stub's notification stands in for the browser's.
+  it.each([
+    ["a class on the group", { groupClassName: "gap-4" }],
+    ["the style of an item", { itemStyle: { order: 1 } }],
+  ] as const)("measures again after a change to %s", async (_, styled) => {
+    const { group, items, press, indicator } = renderPressed();
+    const count = observeCount(group);
+    boxes.set(items.a, new DOMRect(30, 4, 40, 24));
+    press("a", styled);
+    // The mutation observer runs in a microtask after the commit
+    await act(async () => {});
+    expect(observeCount(group)).toBe(count + 1);
+    act(() => resize(group, "border-box"));
+    expect(indicator()).toEqual(px(20, 4, 40, 24));
+  });
+
+  it("is not observed again for the indicator's own style", async () => {
+    const { group, press, indicator } = renderPressed();
+    const count = observeCount(group);
+    press("b");
+    expect(indicator()).toEqual(px(46, 4, 50, 24));
+    await act(async () => {});
+    expect(observeCount(group)).toBe(count);
   });
 });
 
