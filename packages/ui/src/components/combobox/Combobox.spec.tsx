@@ -424,8 +424,8 @@ describe("Combobox icon buttons", () => {
               Apple
               <Combobox.ChipRemove {...chipRemoveProps} />
             </Combobox.Chip>
+            <Combobox.Input aria-label="Fruits" />
           </Combobox.Chips>
-          <Combobox.Input aria-label="Fruits" />
           <Combobox.Clear {...clearProps} />
           <Combobox.Trigger {...triggerProps} />
         </Combobox.Control>
