@@ -1,20 +1,15 @@
 import { flushSync } from "react-dom";
 
-/** The boxes an indicator watches */
-export type ResizeBox = "border-box" | "content-box";
-
-type Callback = () => void;
-
 /**
- * One ResizeObserver per box (border-box, content-box), shared by every indicator on the page:
- * at most one synchronous render per box per frame for all groups. An observer can't watch an
- * element by two boxes at once, hence one per box. Created when the first element is observed and
- * dropped when the last stops, so nothing is created where this module loads on the server.
+ * One ResizeObserver per box: one observer can't watch an element by two boxes. All indicators
+ * share them, so a resize reaching many groups costs one `flushSync` per box per frame. Created
+ * with the first element observed and dropped with the last, so the server creates none.
  */
-type Shared = { observer: ResizeObserver | null; callbacks: Map<Element, Callback[]> };
-const shared: Record<ResizeBox, Shared> = {
+type Shared = { observer: ResizeObserver | null; callbacks: Map<Element, (() => void)[]> };
+const shared: Record<ResizeObserverBoxOptions, Shared> = {
   "border-box": { observer: null, callbacks: new Map() },
   "content-box": { observer: null, callbacks: new Map() },
+  "device-pixel-content-box": { observer: null, callbacks: new Map() },
 };
 
 /** How many batches the shared observers have run, one `flushSync` each. For specs. */
@@ -22,7 +17,7 @@ export const resizeBatches = { count: 0 };
 
 function notify({ callbacks }: Shared, entries: ResizeObserverEntry[]) {
   // Once per callback: a group's container and items notified together measure the group once
-  const batch = new Set<Callback>();
+  const batch = new Set<() => void>();
   for (const { target } of entries) {
     for (const callback of callbacks.get(target) ?? []) batch.add(callback);
   }
@@ -36,25 +31,22 @@ function notify({ callbacks }: Shared, entries: ResizeObserverEntry[]) {
       try {
         callback();
       } catch (error) {
-        if (typeof reportError === "function") reportError(error);
-        else
-          setTimeout(() => {
-            throw error;
-          });
+        reportError(error);
       }
     }
   });
 }
 
 /**
- * Observes `target`'s `box` with the observer every indicator shares. `onResize` runs when the
- * box changes size: after layout, before paint, in one `flushSync` with every other callback the
- * observer notifies in that step. It also runs once when the observation starts, but only for
- * the first subscriber of a (target, box): a later one joins an observation already running, and
- * waits for the next resize or `notifyResize`. Returns a function that stops observing. Does nothing where there is no
- * ResizeObserver (the server, jsdom).
+ * Observes `target`'s `box` with the shared observer; `onResize` runs after layout, before paint.
+ * Only the first subscriber of a (target, box) is also notified when it starts. Does nothing
+ * without ResizeObserver.
  */
-export function observeResize(target: Element, box: ResizeBox, onResize: Callback): () => void {
+export function observeResize(
+  target: Element,
+  box: ResizeObserverBoxOptions,
+  onResize: () => void,
+): () => void {
   if (typeof ResizeObserver === "undefined") return () => {};
   const state = shared[box];
   let callbacks = state.callbacks.get(target);
@@ -85,7 +77,7 @@ export function observeResize(target: Element, box: ResizeBox, onResize: Callbac
  * resize: for a change that moves what they measure without resizing `target`. Nothing happens
  * while `target`'s `box` isn't observed.
  */
-export function notifyResize(target: Element, box: ResizeBox) {
+export function notifyResize(target: Element, box: ResizeObserverBoxOptions) {
   const { observer, callbacks } = shared[box];
   if (!observer || !callbacks.has(target)) return;
   // A new observation is notified in the next resize observer step, whatever the size

@@ -206,11 +206,8 @@ function TabsIndicatorElement({
   // it or the list resizes, and the indicator then jumps to it
   const selected = useContext(TabsContext)?.value;
   const { element, sliding, transition } = useIndicatorSlide<HTMLElement>(selected, box);
-  // Observes every tab's border box, and the list's border and content boxes, with the
-  // ResizeObservers every indicator shares (one per box): Base UI watches content boxes only, and
-  // padding on one tab moves the others. They run after layout and before paint, and each commits
-  // every indicator it notifies in one synchronous render, so the indicator renders in the frame
-  // the resize happens in. Skipped where there is no ResizeObserver (jsdom).
+  // Observes each tab's border box and the list's border and content boxes (Base UI watches
+  // content boxes only), so the indicator renders in the frame a resize happens in.
   useEffect(() => {
     if (typeof ResizeObserver === "undefined") return;
     const indicator = element.current;
@@ -231,13 +228,8 @@ function TabsIndicatorElement({
       ];
     };
     observeTabs();
-    // A selection measures again too: Base UI measured the newly active tab before the commit
-    // that selected it, which can give it padding. So does a class or inline style change on
-    // the list, a tab or an element holding a tab, which can move the tabs without resizing
-    // anything (gap, order). A change inside a tab doesn't count: it moves the tabs only by
-    // resizing that tab, which its border-box observer catches, and an animated badge writes
-    // style every frame. Nor do changes to the indicator: Base UI and Motion write its box as
-    // inline style.
+    // A selection or a class/style change on the list, a tab or an element holding one measures
+    // again (gap, order). Not a change inside a tab (its resize is observed) or to the indicator.
     const holdsTab = (node: Node) =>
       node === list ||
       (node instanceof Element &&

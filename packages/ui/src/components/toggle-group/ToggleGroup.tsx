@@ -116,8 +116,7 @@ function ToggleGroupRoot<Value extends string = string>({
   useEffect(() => {
     const container = containerRef.current;
     if (multiple || !container) return;
-    // The shared ResizeObserver runs this after layout and before paint, and commits every
-    // notified group's measure in one synchronous render, so the indicator paints in the frame
+    // The shared ResizeObserver runs this before paint, so the indicator is right in the frame
     // the group or an item changes in: a group shown again has it in its first frame.
     const measure = () => latestMeasure.current();
     // Padding moves the items without resizing them. It changes the content box of a group sized
@@ -138,10 +137,8 @@ function ToggleGroupRoot<Value extends string = string>({
     };
     for (const item of itemsRef.current.values()) watcher.watch(item);
     watcherRef.current = watcher;
-    // A class or inline style change on the group or an item can move the items without
-    // resizing anything (gap, order). The observer then notifies the container again before the
-    // next paint, and the group measures. Only a change to an element that holds an item counts:
-    // the indicator holds none, and its box and Motion's values are written as inline style.
+    // A class/style change on an element holding an item can move the items (gap, order), so the
+    // group measures again. Not the indicator's own inline writes, which hold no item.
     const items = itemsRef.current;
     const holdsItem = (node: Node) => [...items.values()].some((item) => node.contains(item));
     const mutation = new MutationObserver((records) => {

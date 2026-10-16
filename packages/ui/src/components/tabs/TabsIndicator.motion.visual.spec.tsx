@@ -5,6 +5,7 @@ import { resizeBatches } from "../../lib/shared-resize";
 import {
   eachPaintedFrame,
   enterMotionPath,
+  expectJumpedAtOnce,
   MOTION_PATHS,
   offBy,
   SETTLE_TIMEOUT_MS,
@@ -195,24 +196,6 @@ const MOVES: [string, Layout, Layout][] = [
   ["the order of the other tab, by its class", FIXED, { ...FIXED, tabClassName: "order-first" }],
 ];
 
-type Frame = { indicator: Box; off: number };
-
-/** Asserts `frames`, painted after a change, show the indicator jump from `start` to over the tab */
-function expectJumpedAtOnce(frames: Frame[], start: Box) {
-  const end = frames.at(-1)?.indicator ?? start;
-  const log = JSON.stringify(frames);
-  expect(near(start, end), log).toBe(false);
-  expect(frames.at(-1)?.off, log).toBeLessThanOrEqual(1);
-  // Each frame shows the indicator where it was or where it goes, never between
-  expect(
-    frames.every((frame) => near(frame.indicator, start) || near(frame.indicator, end)),
-    log,
-  ).toBe(true);
-  // The first frame is read before the ResizeObservers measure the tab: it may show the old
-  // box, and no more
-  expect(frames.filter((frame) => frame.off > 1).length, log).toBeLessThanOrEqual(1);
-}
-
 describe.each(MOTION_PATHS)("Tabs.Indicator, $path", ({ withMotion }) => {
   it.each(RESIZES)(
     "follows a change to %s in the frame it changes in, with no frames in between",
@@ -232,7 +215,7 @@ describe.each(MOTION_PATHS)("Tabs.Indicator, $path", ({ withMotion }) => {
       // Over the tab in the frame the tab or the list changes in: the tabs' ResizeObservers
       // measure the tab there, and the indicator is rendered before that frame paints
       expect(await firstPaint, JSON.stringify(frames)).toBeLessThanOrEqual(1);
-      expectJumpedAtOnce(frames, start);
+      expectJumpedAtOnce(frames, start, near);
     },
   );
 
@@ -247,7 +230,7 @@ describe.each(MOTION_PATHS)("Tabs.Indicator, $path", ({ withMotion }) => {
         () => ({ indicator: boxOf(indicator), off: offBy(tab("Alpha"), indicator) }),
         20,
       );
-      expectJumpedAtOnce(frames, start);
+      expectJumpedAtOnce(frames, start, near);
     },
   );
 

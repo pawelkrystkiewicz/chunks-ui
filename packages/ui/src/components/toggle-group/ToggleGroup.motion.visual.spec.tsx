@@ -16,6 +16,7 @@ import { reloadMotion } from "../../lib/use-motion";
 import {
   eachPaintedFrame,
   enterMotionPath,
+  expectJumpedAtOnce,
   insetsWithin,
   MOTION_PATHS,
   offBy,
@@ -570,18 +571,7 @@ async function expectFollowsAtOnce(withMotion: boolean, before: Layout, after: L
     () => ({ indicator: edgesOf(indicator()), off: offBy(item("Alpha"), indicator()) }),
     20,
   );
-  const end = frames.at(-1)?.indicator ?? start;
-  const log = JSON.stringify(frames);
-  expect(near(start, end), log).toBe(false);
-  expect(frames.at(-1)?.off, log).toBeLessThanOrEqual(1);
-  // Each frame shows the indicator where it was or where it goes, never between
-  expect(
-    frames.every((frame) => near(frame.indicator, start) || near(frame.indicator, end)),
-    log,
-  ).toBe(true);
-  // The first frame is read before the ResizeObserver measures the item, and with Motion the
-  // jump is written in the frame after it: one frame may show the old box, and no more
-  expect(frames.filter((frame) => frame.off > 1).length, log).toBeLessThanOrEqual(1);
+  expectJumpedAtOnce(frames, start, near);
 }
 
 // Runs with reduced motion off: Motion springs the indicator, or without Motion the CSS
