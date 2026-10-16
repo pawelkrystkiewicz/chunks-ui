@@ -1,5 +1,5 @@
 import { render } from "@testing-library/react";
-import { Activity, type CSSProperties, createRef, type RefObject } from "react";
+import { Activity, type CSSProperties, createRef, type ReactElement, type RefObject } from "react";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { commands, userEvent } from "vitest/browser";
 import { reloadMotion } from "../../lib/use-motion";
@@ -13,11 +13,8 @@ import {
 } from "../../VisualTest.utils";
 import { ToggleGroup, type ToggleGroupRootProps } from "./index";
 
-// Runs with reduced motion off, so Motion drives the indicator once it loads. The CSS fallback
-// drives it in the cases that turn reduced motion on, and in those that hold Motion back with
-// reduced motion still off (MOTION_PATHS, and the re-shows without Motion). A consumer's ref must
-// not replace the refs the indicator relies on: the Root's (it measures against the container)
-// and an Item's (how the Root finds the item).
+// Reduced motion is off, so Motion drives the indicator; the cases that turn it on or hold Motion back use the CSS fallback.
+// A consumer's ref must not replace the Root's (the container) or an Item's (how the Root finds it).
 
 type Part = "Root" | "Item";
 type RefKind = "object" | "callback" | "undefined";
@@ -476,10 +473,10 @@ type Edges = ReturnType<typeof edgesOf>;
 const near = (a: Edges, b: Edges) =>
   (["left", "top", "width", "height"] as const).every((edge) => Math.abs(a[edge] - b[edge]) <= 1);
 
-/** Renders `layout` and returns the group's parts once the indicator rests over item "a" */
-async function renderSized(withMotion: boolean, layout?: Layout) {
+/** Renders `ui` on a motion path and returns the group and its indicator getter once the path drives it */
+async function renderGroup(ui: ReactElement, withMotion: boolean) {
   await enterMotionPath(withMotion);
-  const result = render(sized(layout));
+  const result = render(ui);
   const group = result.getByRole("group");
   const indicator = () => {
     const span = group.querySelector<HTMLElement>(":scope > span");
@@ -492,6 +489,12 @@ async function renderSized(withMotion: boolean, layout?: Layout) {
       timeout: 5000,
     })
     .toBe(!withMotion);
+  return { ...result, group, indicator };
+}
+
+/** Renders `layout` and returns the group's parts once the indicator rests over item "a" */
+async function renderSized(withMotion: boolean, layout?: Layout) {
+  const { group, indicator, ...result } = await renderGroup(sized(layout), withMotion);
   const item = (name: "Alpha" | "Beta") => result.getByRole("button", { name });
   await waitForStable(() => offBy(item("Alpha"), indicator()));
   expect(offBy(item("Alpha"), indicator())).toBeLessThanOrEqual(1);
@@ -612,10 +615,7 @@ describe.each(MOTION_PATHS)("ToggleGroup indicator on a resize, $path", ({ withM
   });
 });
 
-// A transform on an ancestor changes the boxes on screen, not the layout, and fires no
-// ResizeObserver when it ends: a Dialog opens from scale(0.95) with a ToggleGroup inside it. The
-// indicator is the item's layout box, so the two coincide on screen under the transform and after
-// it is removed, which also doesn't measure again.
+// A transform on an ancestor scales the boxes on screen, not the layout, and ending it fires no ResizeObserver (a Dialog opens from scale(0.95)).
 describe.each(MOTION_PATHS)("ToggleGroup indicator under a transform, $path", ({ withMotion }) => {
   const transformed = (transform?: string, zoom?: number) => (
     <div style={{ transform, zoom }}>
@@ -637,18 +637,11 @@ describe.each(MOTION_PATHS)("ToggleGroup indicator under a transform, $path", ({
   ] as [string, string | undefined, number?][])(
     "covers the pressed item while the ancestor is %s, and once it isn't",
     async (_, transform, zoom) => {
-      await enterMotionPath(withMotion);
-      const { getByRole, rerender } = render(transformed(transform, zoom));
-      const group = getByRole("group");
+      const { getByRole, rerender, indicator } = await renderGroup(
+        transformed(transform, zoom),
+        withMotion,
+      );
       const beta = getByRole("button", { name: "Beta, a longer item" });
-      const indicator = () => {
-        const span = group.querySelector<HTMLElement>(":scope > span");
-        if (!span) throw new Error("No indicator");
-        return span;
-      };
-      await expect
-        .poll(() => group.querySelector(":scope > span")?.classList.contains("micro-interactions"))
-        .toBe(!withMotion);
       await waitForStable(() => offBy(beta, indicator()));
       // Nothing on screen to compare while the scale is 0
       if (transform !== "scale(0)") {
@@ -680,18 +673,8 @@ describe.each(MOTION_PATHS)("ToggleGroup indicator measured exactly, $path", ({ 
   );
 
   async function renderFramed(props: Parameters<typeof framed>[0]) {
-    await enterMotionPath(withMotion);
-    const { getByRole } = render(framed(props));
-    const group = getByRole("group");
+    const { getByRole, indicator } = await renderGroup(framed(props), withMotion);
     const beta = getByRole("button", { name: "Beta, a longer item" });
-    const indicator = () => {
-      const span = group.querySelector<HTMLElement>(":scope > span");
-      if (!span) throw new Error("No indicator");
-      return span;
-    };
-    await expect
-      .poll(() => group.querySelector(":scope > span")?.classList.contains("micro-interactions"))
-      .toBe(!withMotion);
     await waitForStable(() => offBy(beta, indicator()));
     return { beta, indicator };
   }
@@ -719,8 +702,7 @@ describe.each(MOTION_PATHS)(
   "ToggleGroup indicator in a scrolled group, $path",
   ({ withMotion }) => {
     it("covers the pressed item once the group is scrolled to the end", async () => {
-      await enterMotionPath(withMotion);
-      const { getByRole } = render(
+      const { getByRole, group, indicator } = await renderGroup(
         <ToggleGroup.Root value={["f"]} className="w-40 overflow-x-auto">
           {["a", "b", "c", "d", "e", "f"].map((value) => (
             <ToggleGroup.Item key={value} value={value}>
@@ -728,14 +710,9 @@ describe.each(MOTION_PATHS)(
             </ToggleGroup.Item>
           ))}
         </ToggleGroup.Root>,
+        withMotion,
       );
-      const group = getByRole("group");
       const last = getByRole("button", { name: "Item f" });
-      const indicator = () => {
-        const span = group.querySelector<HTMLElement>(":scope > span");
-        if (!span) throw new Error("No indicator");
-        return span;
-      };
       expect(group.scrollWidth, "the group overflows").toBeGreaterThan(group.clientWidth);
       group.scrollLeft = group.scrollWidth;
       expect(group.scrollLeft, "the group is scrolled").toBeGreaterThan(0);

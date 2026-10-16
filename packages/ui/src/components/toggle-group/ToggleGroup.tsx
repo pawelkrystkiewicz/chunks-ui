@@ -212,17 +212,11 @@ function layoutOrigin(el: HTMLElement) {
 }
 
 /**
- * The layout box of `item` within `container`'s padding box, from which the indicator's
- * `left`/`top` run. Null while the item has no size, as while the group or the item isn't
- * rendered (display:none): no box to show. The indicator then unmounts, and the one that mounts
- * once the item has a size again starts over it.
- *
- * Layout px, not the rects as they are: a transform on an ancestor scales the rects, not the
- * layout, and fires no ResizeObserver when it ends. A Dialog opens from scale(0.95) with the
- * group inside it. The rects over the container's layout size give that scale, and their deltas
- * divided by it are layout px with sub-pixel precision. The offset parent chain gives layout px
- * too, immune to any transform, but whole px: it places the indicator where the two disagree by
- * more than rounding, as a rotation, skew or flip warps the rects past what the scale undoes.
+ * The layout box of `item` within `container`'s padding box, or null while the item has no size.
+ * Layout px, not screen rects: a scaled or zoomed ancestor (a Dialog opening from scale(0.95))
+ * scales the rects but not the layout, and ends without a ResizeObserver callback. The rects
+ * give sub-pixel precision; the offset chain places the box where they disagree, as under a
+ * rotation. Base UI's TabsIndicator measures the same way.
  */
 function boxWithin(container: HTMLElement, item: HTMLElement): IndicatorBox | null {
   const layout = layoutSize(item);
@@ -232,9 +226,9 @@ function boxWithin(container: HTMLElement, item: HTMLElement): IndicatorBox | nu
   const outer = layoutSize(container);
   const scaleOf = (rect: number, layoutPx: number) => {
     if (layoutPx <= 0 || Math.abs(rect - layoutPx) <= COMPUTED_STYLE_PRECISION_PX) return 1;
-    // scale(0) gives 0 and a collapsed box can give NaN: not a divisor, so the offsets rule
+    // scale(0) gives 0, a collapsed box NaN: not divisors, so the offsets rule
     const scale = rect / layoutPx;
-    return Number.isFinite(scale) && scale > 0 ? scale : 1;
+    return scale > 0 && scale < Number.POSITIVE_INFINITY ? scale : 1;
   };
   const scaleX = scaleOf(c.width, outer.width);
   const scaleY = scaleOf(c.height, outer.height);
@@ -248,16 +242,16 @@ function boxWithin(container: HTMLElement, item: HTMLElement): IndicatorBox | nu
   const agree =
     Math.abs(rectLeft - left) <= OFFSET_ROUNDING_PX &&
     Math.abs(rectTop - top) <= OFFSET_ROUNDING_PX;
-  if (!agree) return { left, top, ...layout };
   // Where the rect agrees with the layout, its size is the precise one, unless a rotation warped it
   const fromRect = (rectPx: number, scale: number, layoutPx: number) =>
     Math.abs(rectPx / scale - layoutPx) <= RECT_SIZE_TOLERANCE_PX ? rectPx / scale : undefined;
-  const width = fromRect(r.width, scaleX, layout.width);
-  const height = fromRect(r.height, scaleY, layout.height);
+  const width = agree ? fromRect(r.width, scaleX, layout.width) : undefined;
+  const height = agree ? fromRect(r.height, scaleY, layout.height) : undefined;
   // A size that fell back to the layout one (an item with its own transform) is whole px, from
   // the offsets: take the position from them too, so the box doesn't mix the two
-  if (width === undefined || height === undefined)
+  if (width === undefined || height === undefined) {
     return { left, top, ...layout, width: width ?? layout.width, height: height ?? layout.height };
+  }
   return { left: rectLeft, top: rectTop, width, height };
 }
 

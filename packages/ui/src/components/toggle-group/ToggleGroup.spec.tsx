@@ -62,23 +62,20 @@ beforeAll(() => {
   HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement) {
     return boxOf(this);
   };
-  const layoutReads: Record<string, (el: HTMLElement) => unknown> = {
-    offsetParent: (el) => el.parentElement,
-    offsetLeft: (el) =>
-      Math.round(boxOf(el).left - (el.parentElement ? boxOf(el.parentElement).left : 0)),
-    offsetTop: (el) =>
-      Math.round(boxOf(el).top - (el.parentElement ? boxOf(el.parentElement).top : 0)),
-    offsetWidth: (el) => Math.round(boxOf(el).width),
-    offsetHeight: (el) => Math.round(boxOf(el).height),
-  };
-  for (const [name, read] of Object.entries(layoutReads)) {
+  const offsetOf = (el: HTMLElement, axis: "left" | "top") =>
+    Math.round(boxOf(el)[axis] - (el.parentElement ? boxOf(el.parentElement)[axis] : 0));
+  const define = (name: string, get: (el: HTMLElement) => unknown) =>
     Object.defineProperty(HTMLElement.prototype, name, {
       configurable: true,
       get(this: HTMLElement) {
-        return read(this);
+        return get(this);
       },
     });
-  }
+  define("offsetParent", (el) => el.parentElement);
+  define("offsetLeft", (el) => offsetOf(el, "left"));
+  define("offsetTop", (el) => offsetOf(el, "top"));
+  define("offsetWidth", (el) => Math.round(boxOf(el).width));
+  define("offsetHeight", (el) => Math.round(boxOf(el).height));
 });
 
 afterEach(() => {

@@ -2,4 +2,4 @@
 "chunks-ui": patch
 ---
 
-Fixed: the `ToggleGroup` pill kept the wrong size and position when the group was measured inside a scaled ancestor, such as a `Dialog` that opens from 95% scale, and inside an ancestor with CSS `zoom`. In a group with a border, it also sat the border's width off the pressed item.
+Fixed: the `ToggleGroup` pill is now sized and placed correctly inside a scaled or zoomed ancestor (such as a `Dialog` opening from 95%), and in a group with a border.
