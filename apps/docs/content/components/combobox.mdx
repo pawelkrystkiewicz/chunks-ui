@@ -257,7 +257,7 @@ The popup enters with a scale-up and fade (from `scale-95` and `opacity-0`): the
 | `Combobox.Clear` | Button that clears the current value. Renders a default X icon. |
 | `Combobox.Group` | Groups related items together. |
 | `Combobox.GroupLabel` | Label for a group of items. |
-| `Combobox.Chips` | Container for selected chips in multi-select mode: a wrapping row with a 4px gap between the chips (`gap-1`; `className` merges with it). Takes ordinary children: map the selected values to `Combobox.Chip`s, and put `Combobox.Input` after them. |
+| `Combobox.Chips` | Container for selected chips in multi-select mode: a wrapping row with a 4px gap between the chips (`gap-1`; `className` merges with it). Takes ordinary children: map the selected values to `Combobox.Chip`s, and put `Combobox.Input` after them. Add `flex-1`, as the example does: the row is only as wide as its chips, so without it the input shrinks to its minimum width. |
 | `Combobox.Chip` | A styled chip representing a selected value. Draws the focus ring when the arrow keys focus it. Arrow keys move focus from the input to a chip only when the input is inside `Combobox.Chips`. |
 | `Combobox.ChipRemove` | Button to remove a chip. Renders a default X icon. |
 | `Combobox.Value` | Displays the selected value. |
