@@ -50,7 +50,11 @@ export function TeamCard() {
                   <Select.Icon />
                 </Select.Trigger>
                 <Select.Portal>
-                  <Select.Positioner sideOffset={5} alignItemWithTrigger={false}>
+                  <Select.Positioner
+                    className="w-auto min-w-[var(--anchor-width)]"
+                    sideOffset={5}
+                    alignItemWithTrigger={false}
+                  >
                     <Select.Popup>
                       {ROLES.map((r) => (
                         <Select.Item key={r} value={r}>
