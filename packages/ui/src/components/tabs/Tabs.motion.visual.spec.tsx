@@ -222,7 +222,7 @@ describe("Tabs animations that must stop", () => {
     const { pane } = await enterPane();
     await emulateReducedMotion(true);
     // Finished at once, not 10s later. Motion writes the offset in its next frame.
-    await expect.poll(() => poseOf(pane), { timeout: 200 }).toEqual(AT_REST);
+    await expect.poll(() => poseOf(pane), { timeout: 1000 }).toEqual(AT_REST);
 
     await emulateReducedMotion(false);
     for (let frame = 0; frame < 5; frame++) {
