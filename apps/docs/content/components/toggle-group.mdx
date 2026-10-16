@@ -87,6 +87,10 @@ function ControlledToggleGroup() {
 | `ToggleGroup.Root` | Container that manages selection state. Renders a pill-shaped muted background with inline-flex layout. In single-select mode, renders a sliding indicator behind the active item. The indicator slides to an item when it is pressed, and follows a resize at once. |
 | `ToggleGroup.Item` | Individual toggle button. Shows muted text by default, foreground text when pressed. In multiple mode, each pressed item gets its own background highlight. |
 
+## Server rendering
+
+In server HTML the pressed item draws the pill itself until the indicator is measured; no script is involved. A `::before` of your own on the pressed item shows only after hydration.
+
 ## Props
 
 All compound parts are thin style wrappers. `ToggleGroup.Root` props are forwarded to the underlying Base UI [`ToggleGroup`](https://base-ui.com/react/components/toggle-group#api-reference) and `ToggleGroup.Item` props are forwarded to the underlying Base UI [`Toggle`](https://base-ui.com/react/components/toggle#api-reference).

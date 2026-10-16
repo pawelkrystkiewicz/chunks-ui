@@ -15,10 +15,10 @@ import {
   useRef,
   useState,
 } from "react";
-import { flushSync } from "react-dom";
 import { cn, cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { renderNow } from "../../lib/render-now";
+import { notifyResize, observeResize } from "../../lib/shared-resize";
 import { BOX_EDGES, useIndicatorSlide } from "../../lib/use-indicator-slide";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { type MotionOptions, useMotion, useReducedMotion } from "../../lib/use-motion";
@@ -206,41 +206,51 @@ function TabsIndicatorElement({
   // it or the list resizes, and the indicator then jumps to it
   const selected = useContext(TabsContext)?.value;
   const { element, sliding, transition } = useIndicatorSlide<HTMLElement>(selected, box);
-  // Observes every tab's border box, and the list's border and content boxes: Base UI watches
-  // content boxes only, and padding on one tab moves the others. Re-observes on aria-selected
-  // and child-list changes; a new observation's first notification measures every tab, which
-  // catches padding gained on selection and tabs that mount or remount. Skipped where there is no
-  // ResizeObserver (jsdom).
+  // Observes each tab's border box and the list's border and content boxes (Base UI watches
+  // content boxes only), so the indicator renders in the frame a resize happens in.
   useEffect(() => {
     if (typeof ResizeObserver === "undefined") return;
-    const list = element.current?.closest('[role="tablist"]');
-    if (!list) return;
-    // ResizeObserver callbacks run after layout and before paint, so flushSync renders the
-    // indicator in the frame the resize happens in.
-    const remeasure = () => flushSync(onTabResize);
-    const resize = new ResizeObserver(remeasure);
+    const indicator = element.current;
+    const list = indicator?.closest('[role="tablist"]');
+    if (!indicator || !list) return;
+    let stops: (() => void)[] = [];
+    // A new observation's first notification measures every tab: this catches tabs that mount
+    // or remount
     const observeTabs = () => {
-      resize.disconnect();
-      resize.observe(list, { box: "border-box" });
-      for (const tab of list.querySelectorAll('[role="tab"]')) {
-        resize.observe(tab, { box: "border-box" });
-      }
+      for (const stop of stops) stop();
+      stops = [
+        observeResize(list, "border-box", onTabResize),
+        // Padding on a list sized from outside changes its content box alone
+        observeResize(list, "content-box", onTabResize),
+        ...Array.from(list.querySelectorAll('[role="tab"]'), (tab) =>
+          observeResize(tab, "border-box", onTabResize),
+        ),
+      ];
     };
     observeTabs();
-    // Padding on a list sized from outside changes its content box alone
-    const contentBox = new ResizeObserver(remeasure);
-    contentBox.observe(list);
-    const mutation = new MutationObserver(observeTabs);
+    // A selection or a class/style change on the list, a tab or an element holding one measures
+    // again (gap, order). Not a change inside a tab (its resize is observed) or to the indicator.
+    const holdsTab = (node: Node) =>
+      node === list ||
+      (node instanceof Element &&
+        (node.matches('[role="tab"]') || node.querySelector('[role="tab"]') !== null));
+    const mutation = new MutationObserver((records) => {
+      const outside = records.filter(({ target, type }) =>
+        type === "childList" ? !indicator.contains(target) : holdsTab(target),
+      );
+      if (outside.length === 0) return;
+      if (outside.some((record) => record.type === "childList")) observeTabs();
+      else notifyResize(list, "border-box");
+    });
     mutation.observe(list, {
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ["aria-selected"],
+      attributeFilter: ["aria-selected", "class", "style"],
     });
     return () => {
-      resize.disconnect();
-      contentBox.disconnect();
       mutation.disconnect();
+      for (const stop of stops) stop();
     };
   }, [onTabResize, element]);
 

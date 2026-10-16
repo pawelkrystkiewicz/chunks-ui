@@ -1,11 +1,23 @@
 import { render } from "@testing-library/react";
-import { Activity, type CSSProperties, createRef, type RefObject } from "react";
+import {
+  Activity,
+  type CSSProperties,
+  createRef,
+  Profiler,
+  type ReactElement,
+  type RefObject,
+  StrictMode,
+} from "react";
+import { hydrateRoot, type Root } from "react-dom/client";
+import { renderToString } from "react-dom/server";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { commands, userEvent } from "vitest/browser";
+import { resizeBatches } from "../../lib/shared-resize";
 import { reloadMotion } from "../../lib/use-motion";
 import {
   eachPaintedFrame,
   enterMotionPath,
+  expectJumpedAtOnce,
   insetsWithin,
   MOTION_PATHS,
   offBy,
@@ -13,11 +25,8 @@ import {
 } from "../../VisualTest.utils";
 import { ToggleGroup, type ToggleGroupRootProps } from "./index";
 
-// Runs with reduced motion off, so Motion drives the indicator once it loads. The CSS fallback
-// drives it in the cases that turn reduced motion on, and in those that hold Motion back with
-// reduced motion still off (MOTION_PATHS, and the re-shows without Motion). A consumer's ref must
-// not replace the refs the indicator relies on: the Root's (it measures against the container)
-// and an Item's (how the Root finds the item).
+// Reduced motion is off, so Motion drives the indicator; the cases that turn it on or hold Motion back use the CSS fallback.
+// A consumer's ref must not replace the Root's (the container) or an Item's (how the Root finds it).
 
 type Part = "Root" | "Item";
 type RefKind = "object" | "callback" | "undefined";
@@ -434,6 +443,10 @@ type Layout = {
   itemStyle?: CSSProperties;
   /** Padding of the group, as a spacing slider would set it */
   groupPadding?: number;
+  /** Gap between the items, as a spacing slider would set it */
+  groupGap?: number;
+  /** Classes of the group, besides `justify-center` */
+  groupClassName?: string;
   /** Size of the group, which centres its items; by default it fits them */
   groupSize?: { width: number | string; height?: number };
   /** Width of the box around the group, which centres it */
@@ -446,6 +459,8 @@ const sized = ({
   value = "a",
   itemStyle,
   groupPadding,
+  groupGap,
+  groupClassName,
   groupSize,
   width = 400,
   itemClassName,
@@ -453,8 +468,8 @@ const sized = ({
   <div style={{ width, display: "flex", justifyContent: "center" }}>
     <ToggleGroup.Root
       value={[value]}
-      className="justify-center"
-      style={{ padding: groupPadding, ...groupSize }}
+      className={`justify-center ${groupClassName ?? ""}`}
+      style={{ padding: groupPadding, gap: groupGap, ...groupSize }}
     >
       {/* No transition of its own, so the item takes its new size at once */}
       <ToggleGroup.Item value="a" style={{ transition: "none", ...itemStyle }}>
@@ -476,10 +491,10 @@ type Edges = ReturnType<typeof edgesOf>;
 const near = (a: Edges, b: Edges) =>
   (["left", "top", "width", "height"] as const).every((edge) => Math.abs(a[edge] - b[edge]) <= 1);
 
-/** Renders `layout` and returns the group's parts once the indicator rests over item "a" */
-async function renderSized(withMotion: boolean, layout?: Layout) {
+/** Renders `ui` on a motion path and returns the group and its indicator getter once the path drives it */
+async function renderGroup(ui: ReactElement, withMotion: boolean) {
   await enterMotionPath(withMotion);
-  const result = render(sized(layout));
+  const result = render(ui);
   const group = result.getByRole("group");
   const indicator = () => {
     const span = group.querySelector<HTMLElement>(":scope > span");
@@ -492,6 +507,12 @@ async function renderSized(withMotion: boolean, layout?: Layout) {
       timeout: 5000,
     })
     .toBe(!withMotion);
+  return { ...result, group, indicator };
+}
+
+/** Renders `layout` and returns the group's parts once the indicator rests over item "a" */
+async function renderSized(withMotion: boolean, layout?: Layout) {
+  const { group, indicator, ...result } = await renderGroup(sized(layout), withMotion);
   const item = (name: "Alpha" | "Beta") => result.getByRole("button", { name });
   await waitForStable(() => offBy(item("Alpha"), indicator()));
   expect(offBy(item("Alpha"), indicator())).toBeLessThanOrEqual(1);
@@ -530,34 +551,61 @@ const RESIZES: [string, Layout, Layout][] = [
   ["the width of the box around a group that fills it", FILLS, { ...FILLS, width: 300 }],
 ];
 
+/**
+ * Each move: its name, the layout before it, and the layout after it. Nothing resizes: a class
+ * or inline style change on the group or an item moves the items within the group's fixed size.
+ */
+const MOVES: [string, Layout, Layout][] = [
+  ["the gap of a group of fixed size, by its style", FIXED, { ...FIXED, groupGap: 24 }],
+  ["the gap of a group of fixed size, by its class", FIXED, { ...FIXED, groupClassName: "gap-6" }],
+  ["the order of the item, by its style", FIXED, { ...FIXED, itemStyle: { order: 1 } }],
+  ["the order of the other item, by its class", FIXED, { ...FIXED, itemClassName: "order-first" }],
+];
+
+/**
+ * Renders `before`, changes it to `after`, and asserts the indicator is over item "a" at once,
+ * without sliding there
+ */
+async function expectFollowsAtOnce(withMotion: boolean, before: Layout, after: Layout) {
+  const { indicator, item, rerender } = await renderSized(withMotion, before);
+  const start = edgesOf(indicator());
+
+  rerender(sized(after));
+  const frames = await eachPaintedFrame(
+    () => ({ indicator: edgesOf(indicator()), off: offBy(item("Alpha"), indicator()) }),
+    20,
+  );
+  expectJumpedAtOnce(frames, start, near);
+}
+
 // Runs with reduced motion off: Motion springs the indicator, or without Motion the CSS
 // fallback slides it with a transition
 describe.each(MOTION_PATHS)("ToggleGroup indicator on a resize, $path", ({ withMotion }) => {
   it.each(RESIZES)(
     "follows a change to %s at once, with no frames in between",
-    async (_, before, after) => {
-      const { indicator, item, rerender } = await renderSized(withMotion, before);
-      const start = edgesOf(indicator());
-
-      rerender(sized(after));
-      const frames = await eachPaintedFrame(
-        () => ({ indicator: edgesOf(indicator()), off: offBy(item("Alpha"), indicator()) }),
-        20,
-      );
-      const end = frames.at(-1)?.indicator ?? start;
-      const log = JSON.stringify(frames);
-      expect(near(start, end), log).toBe(false);
-      expect(frames.at(-1)?.off, log).toBeLessThanOrEqual(1);
-      // Each frame shows the indicator where it was or where it goes, never between
-      expect(
-        frames.every((frame) => near(frame.indicator, start) || near(frame.indicator, end)),
-        log,
-      ).toBe(true);
-      // The first frame is read before the ResizeObserver measures the item, and with Motion the
-      // jump is written in the frame after it: one frame may show the old box, and no more
-      expect(frames.filter((frame) => frame.off > 1).length, log).toBeLessThanOrEqual(1);
-    },
+    (_, before, after) => expectFollowsAtOnce(withMotion, before, after),
   );
+
+  it.each(MOVES)(
+    "follows a change to %s at once, which moves the item without resizing anything",
+    (_, before, after) => expectFollowsAtOnce(withMotion, before, after),
+  );
+
+  // The indicator's own writes (its box; with Motion, a spring's many frames of them) never have
+  // the group measure again. A move has it measure once.
+  it("measures again once on a move, and never for the indicator's own writes", async () => {
+    const { indicator, item, rerender } = await renderSized(withMotion, FIXED);
+    let batches = resizeBatches.count;
+    rerender(sized({ ...FIXED, value: "b" }));
+    await waitForStable(() => offBy(item("Beta"), indicator()));
+    expect(resizeBatches.count).toBe(batches);
+
+    batches = resizeBatches.count;
+    rerender(sized({ ...FIXED, value: "b", groupGap: 24 }));
+    await waitForStable(() => offBy(item("Beta"), indicator()));
+    expect(offBy(item("Beta"), indicator())).toBeLessThanOrEqual(1);
+    expect(resizeBatches.count).toBe(batches + 1);
+  });
 
   it("shows the indicator once the pressed item is shown again, in a group of fixed size", async () => {
     await enterMotionPath(withMotion);
@@ -610,7 +658,159 @@ describe.each(MOTION_PATHS)("ToggleGroup indicator on a resize, $path", ({ withM
     await waitForStable(() => offBy(beta, indicator()));
     expect(offBy(beta, indicator())).toBeLessThanOrEqual(1);
   });
+
+  // Every group on the page shares one ResizeObserver, whose callback commits every notified
+  // group's measure in one synchronous render: a resize that reaches every group costs one
+  // render per frame, not one per group
+  it("commits every group on the page once when the padding of their items changes", async () => {
+    await enterMotionPath(withMotion);
+    const onRender = vi.fn();
+    const groups = (paddingInline?: number) => (
+      <Profiler id="groups" onRender={onRender}>
+        {["one", "two", "three"].map((name) => (
+          <ToggleGroup.Root
+            key={name}
+            value={["a"]}
+            className="justify-center"
+            style={FIXED.groupSize}
+          >
+            {/* Only the items' border boxes change: the groups keep their size */}
+            <ToggleGroup.Item value="a" style={{ transition: "none", paddingInline }}>
+              Alpha
+            </ToggleGroup.Item>
+            <ToggleGroup.Item value="b" style={{ transition: "none", paddingInline }}>
+              Beta
+            </ToggleGroup.Item>
+          </ToggleGroup.Root>
+        ))}
+      </Profiler>
+    );
+    const { rerender, getAllByRole } = render(groups());
+    /** How far each group's indicator is off its pressed item; null without an indicator */
+    const offsets = () =>
+      getAllByRole("group").map((group) => {
+        const indicator = group.querySelector(":scope > span");
+        const pressed = group.querySelector('[aria-pressed="true"]');
+        return indicator && pressed ? offBy(pressed, indicator) : null;
+      });
+    await waitForStable(offsets);
+    expect(offsets().every((off) => off !== null && off <= 1)).toBe(true);
+
+    rerender(groups(24));
+    // The render above committed in act(); what follows comes from the ResizeObserver
+    onRender.mockClear();
+    await waitForStable(offsets);
+    expect(offsets().every((off) => off !== null && off <= 1)).toBe(true);
+    expect(onRender).toHaveBeenCalledTimes(1);
+  });
 });
+
+// A transform on an ancestor scales the boxes on screen, not the layout, and ending it fires no ResizeObserver (a Dialog opens from scale(0.95)).
+describe.each(MOTION_PATHS)("ToggleGroup indicator under a transform, $path", ({ withMotion }) => {
+  const transformed = (transform?: string, zoom?: number) => (
+    <div style={{ transform, zoom }}>
+      <ToggleGroup.Root value={["b"]}>
+        <ToggleGroup.Item value="a">Alpha</ToggleGroup.Item>
+        <ToggleGroup.Item value="b">Beta, a longer item</ToggleGroup.Item>
+      </ToggleGroup.Root>
+    </div>
+  );
+
+  it.each([
+    ["scaled down, as a Dialog is while it opens", "scale(0.95)"],
+    // The rects are mirrored: they disagree with the layout offsets, which place the indicator
+    ["turned around", "rotate(180deg)"],
+    // The scale is 0 and divides nothing: the layout offsets place the pill, once it is back too
+    ["collapsed to nothing", "scale(0)"],
+    // CSS zoom scales the rects and the layout alike, without a transform
+    ["zoomed in", undefined, 1.25],
+  ] as [string, string | undefined, number?][])(
+    "covers the pressed item while the ancestor is %s, and once it isn't",
+    async (_, transform, zoom) => {
+      const { getByRole, rerender, indicator } = await renderGroup(
+        transformed(transform, zoom),
+        withMotion,
+      );
+      const beta = getByRole("button", { name: "Beta, a longer item" });
+      await waitForStable(() => offBy(beta, indicator()));
+      // Nothing on screen to compare while the scale is 0
+      if (transform !== "scale(0)") {
+        expect(offBy(beta, indicator()), "under the transform").toBeLessThanOrEqual(1);
+      }
+
+      rerender(transformed(undefined));
+      await waitForStable(() => offBy(beta, indicator()));
+      expect(offBy(beta, indicator()), "without the transform").toBeLessThanOrEqual(1);
+    },
+  );
+});
+
+// Chromium reports computed sizes to 6 significant digits, and writes lengths in 1/64 px: a
+// scale or size read from them must not leave the pill a step off the item of a plain group.
+describe.each(MOTION_PATHS)("ToggleGroup indicator measured exactly, $path", ({ withMotion }) => {
+  const framed = (props: { className?: string; itemWidth?: string; transform?: string }) => (
+    <div style={{ transform: props.transform }}>
+      <ToggleGroup.Root value={["b"]} className={props.className}>
+        <ToggleGroup.Item value="a">Alpha</ToggleGroup.Item>
+        <ToggleGroup.Item
+          value="b"
+          style={{ marginInline: "0.37px", width: props.itemWidth, flexShrink: 0 }}
+        >
+          Beta, a longer item
+        </ToggleGroup.Item>
+      </ToggleGroup.Root>
+    </div>
+  );
+
+  async function renderFramed(props: Parameters<typeof framed>[0]) {
+    const { getByRole, indicator } = await renderGroup(framed(props), withMotion);
+    const beta = getByRole("button", { name: "Beta, a longer item" });
+    await waitForStable(() => offBy(beta, indicator()));
+    return { beta, indicator };
+  }
+
+  // Sizes on the 1/64 grid that need more than 6 significant digits, so the computed value is
+  // a hair under: 333.328125 is read as 333.328, which Blink writes back as 333.3125
+  it("keeps the pill on the item's edges in a group of fractional sizes", async () => {
+    const { beta, indicator } = await renderFramed({ itemWidth: "333.328125px" });
+    // The premise: the item is that wide, not shrunk by the group
+    expect(beta.getBoundingClientRect().width).toBe(333.328125);
+    expect(offBy(beta, indicator())).toBeLessThanOrEqual(0.001);
+  });
+
+  it.each([
+    ["untransformed", undefined],
+    ["scaled down", "scale(0.95)"],
+  ])("keeps the pill on the item in a group with a border, %s", async (_, transform) => {
+    const { beta, indicator } = await renderFramed({ className: "border-4", transform });
+    expect(offBy(beta, indicator())).toBeLessThanOrEqual(1);
+  });
+});
+
+// The container's scroll moves the item's rect, not its layout slot, where the pill sits
+describe.each(MOTION_PATHS)(
+  "ToggleGroup indicator in a scrolled group, $path",
+  ({ withMotion }) => {
+    it("covers the pressed item once the group is scrolled to the end", async () => {
+      const { getByRole, group, indicator } = await renderGroup(
+        <ToggleGroup.Root value={["f"]} className="w-40 overflow-x-auto">
+          {["a", "b", "c", "d", "e", "f"].map((value) => (
+            <ToggleGroup.Item key={value} value={value}>
+              {`Item ${value}`}
+            </ToggleGroup.Item>
+          ))}
+        </ToggleGroup.Root>,
+        withMotion,
+      );
+      const last = getByRole("button", { name: "Item f" });
+      expect(group.scrollWidth, "the group overflows").toBeGreaterThan(group.clientWidth);
+      group.scrollLeft = group.scrollWidth;
+      expect(group.scrollLeft, "the group is scrolled").toBeGreaterThan(0);
+      await waitForStable(() => offBy(last, indicator()));
+      expect(offBy(last, indicator())).toBeLessThanOrEqual(1);
+    });
+  },
+);
 
 describe("ToggleGroup indicator with reduced motion", () => {
   beforeAll(() => commands.emulateMedia({ reducedMotion: "reduce" }));
@@ -627,4 +827,115 @@ describe("ToggleGroup indicator with reduced motion", () => {
       JSON.stringify(frames),
     ).toBe(true);
   });
+});
+
+// Server HTML has no indicator: the pressed item draws the pill, then hands over to the measured
+// indicator in one commit. Also with reduced motion off, where a background hand-over would fade.
+describe("ToggleGroup pill from server HTML to the measured indicator", () => {
+  const ui = (
+    <StrictMode>
+      <ToggleGroup.Root defaultValue={["b"]}>
+        <ToggleGroup.Item value="a">Alpha</ToggleGroup.Item>
+        <ToggleGroup.Item value="b">Beta, a longer item</ToggleGroup.Item>
+      </ToggleGroup.Root>
+    </StrictMode>
+  );
+
+  /** Whether `item` paints its own pressed surface: a background or shadow on it or its ::before */
+  function ownSurface(item: Element) {
+    const transparent = (style: CSSStyleDeclaration) =>
+      style.backgroundColor === "rgba(0, 0, 0, 0)" && style.boxShadow === "none";
+    const before = getComputedStyle(item, "::before");
+    const beforeShown = before.content !== "none" && before.display !== "none";
+    return !transparent(getComputedStyle(item)) || (beforeShown && !transparent(before));
+  }
+
+  let container: HTMLDivElement | null = null;
+  let app: Root | null = null;
+  afterEach(async () => {
+    app?.unmount();
+    container?.remove();
+    app = null;
+    container = null;
+    await commands.emulateMedia({ reducedMotion: "no-preference" });
+  });
+
+  it.each([
+    { path: "Motion", withMotion: true, reducedMotion: "no-preference" },
+    { path: "the CSS fallback", withMotion: false, reducedMotion: "no-preference" },
+    { path: "reduced motion", withMotion: false, reducedMotion: "reduce" },
+  ] as const)(
+    "paints one pressed surface in every frame, with $path",
+    async ({ withMotion, reducedMotion }) => {
+      await commands.emulateMedia({ reducedMotion });
+      await enterMotionPath(withMotion);
+      container = document.createElement("div");
+      container.innerHTML = renderToString(ui);
+      document.body.append(container);
+      const group = container.querySelector<HTMLElement>('[role="group"]');
+      const pressed = container.querySelector<HTMLElement>("[data-pressed]");
+      if (!group || !pressed) throw new Error("No pressed item in the server HTML");
+      const indicator = () => group.querySelector<HTMLElement>(":scope > span");
+      // Before hydration: the item's own pill, and no indicator
+      expect(indicator()).toBeNull();
+      expect(ownSurface(pressed)).toBe(true);
+      const pill = getComputedStyle(pressed, "::before");
+      expect(pill.position).toBe("absolute");
+      expect(Number.parseFloat(pill.width)).toBeCloseTo(pressed.offsetWidth, 0);
+      expect(Number.parseFloat(pill.height)).toBeCloseTo(pressed.offsetHeight, 0);
+      expect(Number.parseFloat(pill.zIndex)).toBeLessThan(0);
+
+      app = hydrateRoot(container, ui);
+      const frames = await eachPaintedFrame(
+        () => ({ indicator: indicator() !== null, own: ownSurface(pressed) }),
+        30,
+      );
+      const log = JSON.stringify(frames);
+      expect(
+        frames.some((frame) => frame.indicator),
+        log,
+      ).toBe(true);
+      // Each frame paints the item's own pill or the indicator: never both, never neither
+      expect(
+        frames.every((frame) => frame.indicator !== frame.own),
+        log,
+      ).toBe(true);
+      const shown = indicator();
+      if (!shown) throw new Error("No indicator after hydration");
+      expect(offBy(pressed, shown)).toBeLessThanOrEqual(1);
+    },
+  );
+
+  // The pill is gated on the group having no indicator: a consumer's ::before stays theirs
+  it.each([
+    ["an unpressed", "a"],
+    ["the pressed", "b"],
+  ] as const)(
+    "keeps a consumer's ::before on %s item after the indicator is measured",
+    async (_, own) => {
+      await enterMotionPath(false);
+      const { getByRole, container: host } = render(
+        <ToggleGroup.Root defaultValue={["b"]}>
+          {(["a", "b"] as const).map((value) => (
+            <ToggleGroup.Item
+              key={value}
+              value={value}
+              className={
+                value === own ? "before:block before:h-1 before:w-1 before:content-['']" : undefined
+              }
+            >
+              {value === "a" ? "Alpha" : "Beta"}
+            </ToggleGroup.Item>
+          ))}
+        </ToggleGroup.Root>,
+      );
+      const item = getByRole("button", { name: own === "a" ? "Alpha" : "Beta" });
+      await expect.poll(() => host.querySelector("[role='group'] > span")).not.toBeNull();
+      const before = getComputedStyle(item, "::before");
+      expect(before.display).toBe("block");
+      expect(before.width).toBe("4px");
+      expect(before.position).not.toBe("absolute");
+      expect(before.backgroundColor).toBe("rgba(0, 0, 0, 0)");
+    },
+  );
 });

@@ -12,8 +12,8 @@ import {
   useRef,
   useState,
 } from "react";
-import { flushSync } from "react-dom";
 import { cn, cnState } from "../../lib/cn";
+import { notifyResize, observeResize } from "../../lib/shared-resize";
 import { BOX_EDGES, type IndicatorBox, useIndicatorSlide } from "../../lib/use-indicator-slide";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { useReducedMotion } from "../../lib/use-motion";
@@ -39,11 +39,8 @@ type ToggleGroupCtx = {
 
 const ToggleGroupContext = createContext<ToggleGroupCtx | null>(null);
 
-/**
- * The indicator covers an item's border box. A padding change resizes that box alone, and in a
- * group that keeps its size it moves the other items too.
- */
-const ITEM_BOX: ResizeObserverOptions = { box: "border-box" };
+/** Watches an item, and stops, while the group shows an indicator */
+type ItemWatcher = { watch: (item: HTMLElement) => void; unwatch: (item: HTMLElement) => void };
 
 // ---------------------------------------------------------------------------
 // Root
@@ -63,8 +60,8 @@ function ToggleGroupRoot<Value extends string = string>({
   // The indicator measures against the container, so a consumer's ref must not replace this one
   const mergedRef = useMergedRef(containerRef, ref);
   const itemsRef = useRef(new Map<string, HTMLElement>());
-  // Watches the container and the items while the group shows an indicator
-  const observerRef = useRef<ResizeObserver | null>(null);
+  // Set by the effect that watches the group while it shows an indicator
+  const watcherRef = useRef<ItemWatcher | null>(null);
   const [trackedValue, setTrackedValue] = useState<readonly Value[]>(value ?? defaultValue ?? []);
 
   const handleValueChange = useCallback(
@@ -84,10 +81,10 @@ function ToggleGroupRoot<Value extends string = string>({
     const items = itemsRef.current;
     const previous = items.get(val);
     if (previous === el) return;
-    if (previous) observerRef.current?.unobserve(previous);
+    if (previous) watcherRef.current?.unwatch(previous);
     if (el) {
       items.set(val, el);
-      observerRef.current?.observe(el, ITEM_BOX);
+      watcherRef.current?.watch(el);
     } else {
       items.delete(val);
     }
@@ -119,32 +116,58 @@ function ToggleGroupRoot<Value extends string = string>({
   useEffect(() => {
     const container = containerRef.current;
     if (multiple || !container) return;
-    // The browser runs ResizeObserver callbacks after layout and before it paints. Measuring
-    // there, and committing at once rather than in React's next task, paints the indicator in
-    // the frame the group or item changes in: a group shown again has it in its first frame.
-    const measureNow = () => flushSync(() => latestMeasure.current());
+    // The shared ResizeObserver runs this before paint, so the indicator is right in the frame
+    // the group or an item changes in: a group shown again has it in its first frame.
+    const measure = () => latestMeasure.current();
     // Padding moves the items without resizing them. It changes the content box of a group sized
     // from outside, and the border box of a group sized by its items: watch both.
-    const observer = new ResizeObserver(measureNow);
-    const borderBox = new ResizeObserver(measureNow);
-    observer.observe(container);
-    borderBox.observe(container, { box: "border-box" });
-    // The items too: in a group that keeps its size, an item can resize or show again alone
-    for (const item of itemsRef.current.values()) observer.observe(item, ITEM_BOX);
-    observerRef.current = observer;
+    const stopContainer = [
+      observeResize(container, "content-box", measure),
+      observeResize(container, "border-box", measure),
+    ];
+    // The items too, by border box: the indicator covers it, and a padding change resizes that
+    // box alone. In a group that keeps its size, an item can resize or show again alone.
+    const stopItem = new Map<HTMLElement, () => void>();
+    const watcher: ItemWatcher = {
+      watch: (item) => stopItem.set(item, observeResize(item, "border-box", measure)),
+      unwatch: (item) => {
+        stopItem.get(item)?.();
+        stopItem.delete(item);
+      },
+    };
+    for (const item of itemsRef.current.values()) watcher.watch(item);
+    watcherRef.current = watcher;
+    // A class/style change on an element holding an item can move the items (gap, order), so the
+    // group measures again. Not the indicator's own inline writes, which hold no item.
+    const items = itemsRef.current;
+    const holdsItem = (node: Node) => [...items.values()].some((item) => node.contains(item));
+    const mutation = new MutationObserver((records) => {
+      if (records.some(({ target }) => holdsItem(target))) notifyResize(container, "border-box");
+    });
+    mutation.observe(container, {
+      attributes: true,
+      attributeFilter: ["class", "style"],
+      subtree: true,
+    });
     return () => {
-      observer.disconnect();
-      borderBox.disconnect();
-      observerRef.current = null;
+      mutation.disconnect();
+      for (const stop of stopContainer) stop();
+      for (const stop of stopItem.values()) stop();
+      watcherRef.current = null;
     };
   }, [multiple]);
+
+  // The single-select sliding indicator, once measured; until then the pressed item draws the pill
+  const indicator = !multiple && bounds && (
+    <ToggleGroupIndicator box={bounds} value={activeValue} />
+  );
 
   return (
     <ToggleGroupContext.Provider value={{ registerItem, multiple }}>
       <BaseToggleGroup
         ref={mergedRef}
         className={cnState(
-          "relative inline-flex items-center gap-0.5 rounded-lg bg-muted p-1",
+          "group/toggle-group relative inline-flex items-center gap-0.5 rounded-lg bg-muted p-1",
           "data-[orientation=vertical]:flex-col",
           className,
         )}
@@ -153,9 +176,10 @@ function ToggleGroupRoot<Value extends string = string>({
         defaultValue={defaultValue}
         onValueChange={handleValueChange}
         {...props}
+        // After the props so a consumer cannot override it.
+        data-indicator={indicator ? "" : undefined}
       >
-        {/* Single-select sliding indicator */}
-        {!multiple && bounds && <ToggleGroupIndicator box={bounds} value={activeValue} />}
+        {indicator}
         {children}
       </BaseToggleGroup>
     </ToggleGroupContext.Provider>
@@ -167,15 +191,92 @@ function ToggleGroupRoot<Value extends string = string>({
 // ---------------------------------------------------------------------------
 
 /**
- * The box of `item` within `container`. Null while the item measures 0×0, as it does while the
- * group or the item isn't rendered (display:none): no box to show. The indicator then unmounts,
- * and the one that mounts once the item is measured again starts over it.
+ * The most the rect position and the summed offsets differ by when both are right. It adds up
+ * to less than 2px: the item's rounded `offsetLeft`/`offsetTop` (at most 0.5px), the container's
+ * own rounded offset when it is static (at most 0.5px more), and the residue of the division by
+ * the scale. 2 keeps parity with Base UI's `MAX_LAYOUT_ROUNDING_ERROR`.
+ */
+const OFFSET_ROUNDING_PX = 2;
+
+/** Chromium gives computed sizes to 6 significant digits: a size within this of its rect is it */
+const COMPUTED_STYLE_PRECISION_PX = 0.01;
+
+/** A rect size within this of the layout size is the layout size, scaled; further, a warped box */
+const RECT_SIZE_TOLERANCE_PX = 1;
+
+/**
+ * The layout size of the border box of `el`: its computed size, or its offset size (whole px)
+ * where the two differ, as with content-box sizing. Chromium gives the computed size to 6
+ * significant digits only, so it can sit a hair off the true size.
+ */
+function layoutSize(el: HTMLElement) {
+  const css = getComputedStyle(el);
+  const width = Number.parseFloat(css.width) || 0;
+  const height = Number.parseFloat(css.height) || 0;
+  if (Math.round(width) !== el.offsetWidth || Math.round(height) !== el.offsetHeight) {
+    return { width: el.offsetWidth, height: el.offsetHeight };
+  }
+  return { width, height };
+}
+
+/** `el`'s border edges in layout px, summed up its offset parent chain: no transform moves them */
+function layoutOrigin(el: HTMLElement) {
+  let left = 0;
+  let top = 0;
+  for (let node: Element | null = el; node instanceof HTMLElement; node = node.offsetParent) {
+    left += node.offsetLeft;
+    top += node.offsetTop;
+    const parent = node.offsetParent;
+    if (parent instanceof HTMLElement) {
+      left += parent.clientLeft;
+      top += parent.clientTop;
+    }
+  }
+  return { left, top };
+}
+
+/**
+ * The layout box of `item` within `container`'s padding box, or null while the item has no size.
+ * Layout px, not screen rects: a scaled or zoomed ancestor (a Dialog opening from scale(0.95))
+ * scales the rects but not the layout, and ends without a ResizeObserver callback. The rects
+ * give sub-pixel precision; the offset chain places the box where they disagree, as under a
+ * rotation. Base UI's TabsIndicator measures the same way.
  */
 function boxWithin(container: HTMLElement, item: HTMLElement): IndicatorBox | null {
+  const layout = layoutSize(item);
+  if (layout.width === 0 || layout.height === 0) return null;
   const r = item.getBoundingClientRect();
-  if (r.width === 0 || r.height === 0) return null;
   const c = container.getBoundingClientRect();
-  return { left: r.left - c.left, top: r.top - c.top, width: r.width, height: r.height };
+  const outer = layoutSize(container);
+  const scaleOf = (rect: number, layoutPx: number) => {
+    if (layoutPx <= 0 || Math.abs(rect - layoutPx) <= COMPUTED_STYLE_PRECISION_PX) return 1;
+    // scale(0) gives 0, a collapsed box NaN: not divisors, so the offsets rule
+    const scale = rect / layoutPx;
+    return scale > 0 && scale < Number.POSITIVE_INFINITY ? scale : 1;
+  };
+  const scaleX = scaleOf(c.width, outer.width);
+  const scaleY = scaleOf(c.height, outer.height);
+  // The container's scroll moves the item's rect, not its layout slot, where the indicator sits
+  const rectLeft = (r.left - c.left) / scaleX + container.scrollLeft - container.clientLeft;
+  const rectTop = (r.top - c.top) / scaleY + container.scrollTop - container.clientTop;
+  const origin = layoutOrigin(item);
+  const base = layoutOrigin(container);
+  const left = origin.left - base.left - container.clientLeft;
+  const top = origin.top - base.top - container.clientTop;
+  const agree =
+    Math.abs(rectLeft - left) <= OFFSET_ROUNDING_PX &&
+    Math.abs(rectTop - top) <= OFFSET_ROUNDING_PX;
+  // Where the rect agrees with the layout, its size is the precise one, unless a rotation warped it
+  const fromRect = (rectPx: number, scale: number, layoutPx: number) =>
+    Math.abs(rectPx / scale - layoutPx) <= RECT_SIZE_TOLERANCE_PX ? rectPx / scale : undefined;
+  const width = agree ? fromRect(r.width, scaleX, layout.width) : undefined;
+  const height = agree ? fromRect(r.height, scaleY, layout.height) : undefined;
+  // A size that fell back to the layout one (an item with its own transform) is whole px, from
+  // the offsets: take the position from them too, so the box doesn't mix the two
+  if (width === undefined || height === undefined) {
+    return { left, top, ...layout, width: width ?? layout.width, height: height ?? layout.height };
+  }
+  return { left: rectLeft, top: rectTop, width, height };
 }
 
 const sameBox = (a: IndicatorBox | null, b: IndicatorBox | null) =>
@@ -262,6 +363,17 @@ function ToggleGroupItem({ className, value, ref, ...props }: ToggleGroupItemPro
         "disabled:cursor-not-allowed disabled:opacity-50",
         "[&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
         ctx?.multiple && "data-pressed:bg-background data-pressed:shadow-sm",
+        // Until the group has an indicator the pressed item draws the pill in a ::before: the
+        // item's own background transitions, so it would fade. Disabled, it takes the item's 50%
+        // opacity and the indicator does not. A consumer ::before merges with it before hydration.
+        ctx?.multiple === false && [
+          "group-not-data-indicator/toggle-group:data-pressed:before:absolute",
+          "group-not-data-indicator/toggle-group:data-pressed:before:inset-0",
+          "group-not-data-indicator/toggle-group:data-pressed:before:-z-10",
+          "group-not-data-indicator/toggle-group:data-pressed:before:rounded-md",
+          "group-not-data-indicator/toggle-group:data-pressed:before:bg-background",
+          "group-not-data-indicator/toggle-group:data-pressed:before:shadow-sm",
+        ],
         className,
       )}
       {...props}
