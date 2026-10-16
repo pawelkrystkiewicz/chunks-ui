@@ -192,7 +192,6 @@ function ComboboxPopup({ className, render: renderProp, ...props }: ComboboxPopu
       className={cnState(
         "rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md",
         "max-h-[var(--available-height)] overflow-y-auto overscroll-contain scroll-py-1",
-        // Grows out of the trigger, from the point Base UI sets as --transform-origin
         "origin-(--transform-origin)",
         !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
         !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",

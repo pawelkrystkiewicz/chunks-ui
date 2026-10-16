@@ -113,7 +113,6 @@ function MenuContentPopup({
           arrowPopupClasses,
           "data-pointer:focus-visible:outline-none data-pointer:focus-visible:after:hidden",
           "max-h-[calc(var(--available-height)-var(--popup-arrow-reach))]",
-          // Grows out of the trigger, from the point Base UI sets as --transform-origin
           "origin-(--transform-origin)",
           !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
           !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
