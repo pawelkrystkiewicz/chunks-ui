@@ -142,6 +142,19 @@ describe.each(MOTION_PATHS)("Tabs.Indicator, $path", ({ withMotion }) => {
     await waitForStable(() => offBy(beta, indicator));
     expect(offBy(beta, indicator)).toBeLessThanOrEqual(1);
   });
+
+  // Only the tab's border box grows once it is active. Base UI measures it before the commit
+  // that adds data-active, and its own observer watches the content box, so only the first
+  // notification of the observer created after that commit measures the grown tab.
+  it("ends on a tab that grows by padding when it is selected", async () => {
+    const layout = { tabClassName: "data-active:px-8" };
+    const { indicator, tab, rerender } = await renderTabs(withMotion, layout);
+    const beta = tab("Beta");
+
+    rerender(tabs({ ...layout, value: "b" }));
+    await waitForStable(() => offBy(beta, indicator));
+    expect(offBy(beta, indicator)).toBeLessThanOrEqual(1);
+  });
 });
 
 /** Resolves in the first frame in which `read` returns something other than it returns now */
