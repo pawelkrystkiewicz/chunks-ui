@@ -9,7 +9,7 @@ const LIFT = "transition-transform ease-fluid motion-reduce:transition-none";
 const LAYER = `absolute inset-0 border duration-600 ${LIFT}`;
 const GLASS = "border-white/55 bg-[rgb(120_160_255/.12)]";
 const LABEL =
-  "absolute left-3 whitespace-nowrap border bg-black/25 px-2 py-[3px] font-mono text-[11px] tracking-[.12em]";
+  "absolute left-3 whitespace-nowrap border bg-black/25 px-2 py-[3px] font-mono text-[11px] tracking-[.12em]"; // direction: physical, the drawing keeps its arrangement in RTL
 const LAYER_LABEL = `${LABEL} -bottom-[26px] border-white/40 text-white`;
 
 export function HeroStack({ total }: { total: number }) {
@@ -43,10 +43,10 @@ const MUTED = "border-(--l-ill) bg-(--l-card)";
 const ACCENT = "border-primary bg-primary/18";
 
 const SCOPE_TILES = [
-  { pos: "top-[calc(50%-76px)] left-[calc(50%-126px)]", lift: "", accent: true },
-  { pos: "top-[calc(50%-30px)] left-[calc(50%-30px)]", lift: "delay-60" },
-  { pos: "top-[calc(50%+16px)] left-[calc(50%+66px)]", lift: "delay-120" },
-  { pos: "top-[calc(50%+16px)] left-[calc(50%-126px)]", lift: "delay-180" },
+  { pos: "top-[calc(50%-76px)] left-[calc(50%-126px)]", lift: "", accent: true }, // direction: physical, the drawing keeps its arrangement in RTL
+  { pos: "top-[calc(50%-30px)] left-[calc(50%-30px)]", lift: "delay-60" }, // direction: physical, the drawing keeps its arrangement in RTL
+  { pos: "top-[calc(50%+16px)] left-[calc(50%+66px)]", lift: "delay-120" }, // direction: physical, the drawing keeps its arrangement in RTL
+  { pos: "top-[calc(50%+16px)] left-[calc(50%-126px)]", lift: "delay-180" }, // direction: physical, the drawing keeps its arrangement in RTL
 ];
 
 /** Separate tiles, one lifted per job. */
@@ -95,7 +95,7 @@ export function ApiArt() {
           className={`${PLATE} inset-0 ${MUTED} translate-z-px bg-(image:--l-grid) group-hover/pr:translate-z-[22px]`}
         />
         <span
-          className={`${PLATE} ${ACCENT} top-[42px] left-[63px] size-[21px] translate-z-[2px] group-hover/pr:translate-z-[46px]`}
+          className={`${PLATE} ${ACCENT} top-[42px] left-[63px] size-[21px] translate-z-[2px] group-hover/pr:translate-z-[46px]`} // direction: physical, the drawing keeps its arrangement in RTL
         />
       </div>
     </div>

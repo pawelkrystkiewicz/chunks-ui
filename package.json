@@ -26,6 +26,7 @@
     "update:screenshots": "sh scripts/update-screenshots.sh",
     "check:playwright": "bun scripts/check-playwright-version.ts",
     "check:bun": "bun scripts/check-bun-version.ts",
+    "check:docs-direction": "bun scripts/check-docs-direction.ts",
     "check:tailwind": "turbo run build --filter=chunks-ui && bun scripts/check-tailwind-compat.ts",
     "check:no-motion": "turbo run build --filter=chunks-ui && bun scripts/check-no-motion.ts",
     "generate:llm": "turbo run generate:llm --filter=@chunks-ui/docs"

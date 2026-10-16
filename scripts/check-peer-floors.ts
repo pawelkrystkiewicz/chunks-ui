@@ -13,7 +13,8 @@
  *   stay. A plain `bun install` then resolves every dependent of those packages at the floors,
  *   packages/ui's own devDependencies (motion, the types) included. It edits a tracked file and
  *   the install changes bun.lock: run it only in a throwaway checkout. It refuses to run unless
- *   `CI` is set (GitHub Actions sets it) or `--force` is passed.
+ *   `CI` is set to something other than empty, `false` or `0` (GitHub Actions sets `true`)
+ *   or `--force` is passed.
  * - `--check` (the default) fails unless every non-exempt peer resolves from packages/ui to its
  *   floor and each types package to a `<major>.<minor>.x` patch.
  *
@@ -27,6 +28,12 @@ export const EXEMPT: Record<string, string> = {
   "class-variance-authority": "bun.lock already holds its floor",
   tailwindcss: "check:tailwind covers it",
 };
+
+/** Whether `env` is a CI environment: `CI` set and not empty, `false` or `0` (`CI=false` opts out). */
+export function inCI(env: Record<string, string | undefined> = process.env): boolean {
+  const ci = env.CI?.trim().toLowerCase() ?? "";
+  return ci !== "" && ci !== "false" && ci !== "0";
+}
 
 /** The types package of each runtime peer whose floor it follows. */
 export const TYPES: Record<string, string> = {
@@ -120,7 +127,7 @@ if (import.meta.main) {
   );
   const typeFloors = typeFloorsOf(floors, TYPES);
   if (process.argv.includes("--overrides")) {
-    if (!process.env.CI && !process.argv.includes("--force")) {
+    if (!inCI() && !process.argv.includes("--force")) {
       console.error(
         "--overrides edits the tracked package.json (and the install after it bun.lock): run it in CI or in a throwaway copy of the repo, or pass --force",
       );
