@@ -497,6 +497,25 @@ describe("function tab values", () => {
   });
 });
 
+// StrictMode runs a mount's effects twice on one instance; a remount is a new instance
+function MountedChild({ instances }: { instances: Set<object> }) {
+  const instance = useRef({});
+  useEffect(() => {
+    instances.add(instance.current);
+  }, [instances]);
+  return null;
+}
+
+function Animate({ value, instances }: { value: unknown; instances: Set<object> }) {
+  return (
+    <Tabs.Root value={value}>
+      <Tabs.Animate data-testid="animate">
+        <MountedChild instances={instances} />
+      </Tabs.Animate>
+    </Tabs.Root>
+  );
+}
+
 // Contents and Animate key by value; distinct values need distinct, stable keys.
 describe("tab values with the same String() text", () => {
   const first = { id: 1 };
@@ -516,15 +535,6 @@ describe("tab values with the same String() text", () => {
   afterEach(() => {
     consoleError.mockRestore();
   });
-
-  // StrictMode runs a mount's effects twice on one instance; a remount is a new instance
-  function MountedChild({ instances }: { instances: Set<object> }) {
-    const instance = useRef({});
-    useEffect(() => {
-      instances.add(instance.current);
-    }, [instances]);
-    return null;
-  }
 
   function Contents({
     value,
@@ -547,16 +557,6 @@ describe("tab values with the same String() text", () => {
             Content B
           </Tabs.Content>
         </Tabs.Contents>
-      </Tabs.Root>
-    );
-  }
-
-  function Animate({ value, instances }: { value: unknown; instances: Set<object> }) {
-    return (
-      <Tabs.Root value={value}>
-        <Tabs.Animate data-testid="animate">
-          <MountedChild instances={instances} />
-        </Tabs.Animate>
       </Tabs.Root>
     );
   }
@@ -696,38 +696,15 @@ describe("Tabs.Animate", () => {
     expect(screen.getByTestId("kid")).toHaveTextContent("hello");
   });
 
-  it("re-keys on tab value change (forces remount)", async () => {
-    const onMount = vi.fn();
-    function MountedChild() {
-      useEffect(() => {
-        onMount();
-      }, []);
-      return null;
-    }
-    const { rerender } = render(
-      <Tabs.Root value="a">
-        <Tabs.Animate>
-          <MountedChild />
-        </Tabs.Animate>
-      </Tabs.Root>,
-    );
-    await waitFor(() => {
-      expect(onMount.mock.calls.length).toBeGreaterThanOrEqual(1);
-    });
-    // Capture the count after any post-mount upgrades (e.g. motion module
-    // load swapping the wrapper element type) settle.
-    const before = onMount.mock.calls.length;
-    rerender(
-      <Tabs.Root value="b">
-        <Tabs.Animate>
-          <MountedChild />
-        </Tabs.Animate>
-      </Tabs.Root>,
-    );
-    // A `key` change must cause at least one additional mount.
-    await waitFor(() => {
-      expect(onMount.mock.calls.length).toBeGreaterThan(before);
-    });
+  it("re-keys on tab value change (forces remount)", () => {
+    const instances = new Set<object>();
+    const { rerender } = render(<Animate value="a" instances={instances} />);
+    const pane = screen.getByTestId("animate");
+    expect(instances.size).toBe(1);
+    rerender(<Animate value="b" instances={instances} />);
+    // The key changes with the value, so the pane is a new element with a new child instance
+    expect(screen.getByTestId("animate")).not.toBe(pane);
+    expect(instances.size).toBe(2);
   });
 
   it("accepts custom initial / animate / transition without error", () => {
