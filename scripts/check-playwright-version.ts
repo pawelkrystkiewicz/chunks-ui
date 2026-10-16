@@ -1,10 +1,11 @@
 #!/usr/bin/env bun
 /**
  * Fails when the Playwright version differs between `@playwright/test` in packages/ui, `playwright`
- * in apps/docs, every `mcr.microsoft.com/playwright` image in the workflows and every one in
- * TESTING_STRATEGY.md (the Docker recipe). A mismatch renders screenshots with another browser, or
- * runs axe without the matching Chromium. Also fails on an image without a `v<version>` tag. It
- * checks no digest: they are bumped with the tag by hand or by Renovate.
+ * in apps/docs and at the root (check-no-motion.ts drives its Chromium), every
+ * `mcr.microsoft.com/playwright` image in the workflows and every one in TESTING_STRATEGY.md (the
+ * Docker recipe). A mismatch renders screenshots with another browser, or runs axe without the
+ * matching Chromium. Also fails on an image without a `v<version>` tag. It checks no digest: they
+ * are bumped with the tag by hand or by Renovate.
  *
  * Run: bun run check:playwright
  */
@@ -13,6 +14,7 @@ import { join } from "node:path";
 const PACKAGES = [
   ["packages/ui/package.json", "@playwright/test"],
   ["apps/docs/package.json", "playwright"],
+  ["package.json", "playwright"],
 ] as const;
 const RECIPE = "TESTING_STRATEGY.md";
 const IMAGE = /mcr\.microsoft\.com\/playwright(?<ref>[:@]\S*)/g;
@@ -70,7 +72,7 @@ if (import.meta.main) {
   console.log(
     problems.length > 0
       ? "Playwright versions differ: set the same version in every place above."
-      : "Playwright version matches in both package.json files, the workflows and the recipe.",
+      : "Playwright version matches in every package.json, the workflows and the recipe.",
   );
   process.exit(problems.length > 0 ? 1 : 0);
 }
