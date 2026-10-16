@@ -175,13 +175,10 @@ describe("Tabs.Contents in WebKit", () => {
   });
 
   /*
-   * W80 (#341, https://bugs.webkit.org/show_bug.cgi?id=327820): WebKit paints an element that
-   * has its own composited layer and is laid out in a CSS column after the first at its position
-   * in the unfragmented flow (column 1's x, the y before the split), so nothing lands in its own
-   * box. The slid track gets such a layer when it reaches over a composited layer that paints
-   * before it: slid to its third panel, it reaches two panels to the left, over the sidebar. On
-   * /create that is the sticky theme sidebar, composited while the page scrolls; `will-change`
-   * composites this one. Full detail in TESTING_STRATEGY.md, WebKit Smoke Tests.
+   * W80 (#341, https://bugs.webkit.org/show_bug.cgi?id=327820): WebKit paints a composited
+   * element in a later CSS column at column 1's x, below the grid, not in its own box. Here the
+   * slid track reaches over the sidebar (two panels to the left), and `will-change` composites the
+   * sidebar. Full detail: TESTING_STRATEGY.md, WebKit Smoke Tests.
    */
   const masonry = (columns: CSSProperties) => (
     <div style={{ display: "flex", gap: 24, padding: 24, alignItems: "flex-start" }}>
@@ -231,7 +228,7 @@ describe("Tabs.Contents in WebKit", () => {
     // and paints more than 0. Change them together. If the bug spec fails, WebKit paints the panel
     // in place now: flip it to `toBeGreaterThan(0)` and rename it. Keep the workaround spec:
     // users' Safari lags behind, and #295 depends on it.
-    it("paints nothing in the panel's box: WebKit bug (W80); when this fails, WebKit is fixed", async () => {
+    it("paints nothing in the Note field's box: WebKit bug (W80); when this fails, WebKit is fixed", async () => {
       const note = await openNotes();
       // Preconditions: the panel is laid out in place, so 0 pixels painted there means a bug
       const columns = screen.getByTestId("columns").getBoundingClientRect();
@@ -253,9 +250,7 @@ describe("Tabs.Contents in WebKit", () => {
     });
 
     // With the columns container on its own composited layer the track needs none of its own, and
-    // WebKit paints the panel in place: a page with columns can work around the bug (#295). Only
-    // while nothing inside the columns is composited explicitly: `will-change` or `translateZ(0)`
-    // on the track, a panel or any other descendant misplaces that element too.
+    // WebKit paints the panel in place: a page with columns can work around the bug (#295).
     it("paints the panel in place when the columns container is composited", async () => {
       const note = await openNotes({ willChange: "opacity" });
       expect(await paintedPixels(note)).toBeGreaterThan(0);
