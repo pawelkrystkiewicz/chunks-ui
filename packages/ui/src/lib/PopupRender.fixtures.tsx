@@ -8,7 +8,8 @@ import { Select } from "../components/select";
 import { Tooltip } from "../components/tooltip";
 
 // The popup parts that pick Motion or CSS through usePopupRender, for UsePopupRender.spec.tsx
-// (jsdom) and PopupRender.visual.spec.tsx (browser).
+// (jsdom) and PopupRender.visual.spec.tsx (browser). UsePopupRender.parts.spec.ts checks the rows
+// against the call sites.
 export const popupParts = table([
   {
     part: "Dialog.Backdrop",
