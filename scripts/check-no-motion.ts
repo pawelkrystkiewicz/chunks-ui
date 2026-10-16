@@ -51,15 +51,17 @@ const COMPILER_OPTIONS = {
 };
 /**
  * How the strict consumer resolves modules, one tsc run each. `bundler` is what Next, Vite and
- * tsup use. `node10` is the pre-`exports` algorithm of older CommonJS projects: it needs
- * `module: commonjs`, and `esModuleInterop` as `tsc --init` writes it, because dist/index.d.ts
- * has a default import of React (from `import type React` in Combobox.tsx) and fails with
- * TS1259 without the flag before anything else is checked. Drop esModuleInterop once that is
- * gone.
+ * tsup use.
+ * node10: commonjs, with esModuleInterop and allowSyntheticDefaultImports off so a default React import in dist fails with TS1259 (#463); keep both off if a TypeScript bump needs ignoreDeprecations.
  */
 const RESOLUTIONS = {
   bundler: { moduleResolution: "bundler", module: "esnext" },
-  node10: { moduleResolution: "node10", module: "commonjs", esModuleInterop: true },
+  node10: {
+    moduleResolution: "node10",
+    module: "commonjs",
+    esModuleInterop: false,
+    allowSyntheticDefaultImports: false,
+  },
 };
 export type Resolution = keyof typeof RESOLUTIONS;
 /**
@@ -77,6 +79,7 @@ export const NEXT_TRIGGERS = ["Open the dialog", "Hover for a tip"] as const;
 /** The dialog's title in no-motion/next/app/page.jsx: visible once the dialog has opened. */
 export const DIALOG_TITLE = "The dialog is open";
 const MISSING_MODULE = /TS2307: Cannot find module '([^']+)'/;
+const DEFAULT_IMPORT_WITHOUT_INTEROP = /TS1259:[^\n]*react/;
 const MISSING_MOTION_TYPES = /TS2307: Cannot find module 'motion\/react'/;
 const ANSI = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, "g");
 const MOTION_WARNING = /WARNING in [\s\S]*?Can't resolve 'motion\/react'/g;
@@ -118,6 +121,10 @@ export function typesProblem(
     unfound.split("/").length > (unfound.startsWith("@") ? 2 : 1)
   ) {
     hint = `node10 resolves ${unfound}, a package subpath, through typesVersions or a directory, never exports: for chunks-ui/... check typesVersions in packages/ui/package.json; for a dependency, import the type from a path node10 resolves (#405).\n`;
+  }
+  if (resolution === "node10" && DEFAULT_IMPORT_WITHOUT_INTEROP.test(output)) {
+    hint +=
+      "a component default-imports React: import its types by name (#463); keep esModuleInterop off, this pass guards it\n";
   }
   return `${hint}tsc (moduleResolution: ${resolution}) failed on an import of chunks-ui in the consumer without motion, with skipLibCheck: false (exit ${exitCode}):\n${output}`;
 }

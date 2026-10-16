@@ -275,6 +275,27 @@ function TabsIndicatorElement({
 }
 
 // ---------------------------------------------------------------------------
+// Keys for tab values
+// ---------------------------------------------------------------------------
+
+// A React key per tab value: primitives by type and text, objects and functions by identity.
+// Two symbols with the same description share a key.
+const identityKeys = new WeakMap<object, number>();
+let nextIdentityKey = 0;
+
+function keyOf(value: unknown): string {
+  if ((typeof value === "object" && value !== null) || typeof value === "function") {
+    let id = identityKeys.get(value);
+    if (id === undefined) {
+      id = nextIdentityKey++;
+      identityKeys.set(value, id);
+    }
+    return `id:${id}`;
+  }
+  return `${typeof value}:${String(value)}`;
+}
+
+// ---------------------------------------------------------------------------
 // Animated content container  –  slides between panels + animates height
 // ---------------------------------------------------------------------------
 
@@ -430,7 +451,7 @@ function TabsContents({ className, children, transition, ref, ...props }: TabsCo
       <div ref={trackRef} className={motion ? "-mx-1 flex items-start" : undefined}>
         {childrenArray.map((child, i) => (
           <div
-            key={String(childValue(child) ?? i)}
+            key={childValue(child) == null ? `index:${i}` : keyOf(childValue(child))}
             ref={(el) => {
               itemRefs.current[i] = el;
             }}
@@ -504,7 +525,7 @@ function TabsAnimate({
 
   return (
     <TabsAnimatePane
-      key={String(value ?? "")}
+      key={keyOf(value ?? null)}
       enter={enter}
       reduced={reduced}
       className={cn(className)}

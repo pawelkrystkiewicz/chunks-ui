@@ -1,10 +1,19 @@
 import { act, cleanup, render, renderHook, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
-import { type ReactNode, StrictMode, useEffect, useState } from "react";
+import { type ReactNode, StrictMode, useEffect, useRef, useState } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { renderToString } from "react-dom/server";
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  type MockInstance,
+  vi,
+} from "vitest";
 import { useIndicatorSlide } from "../../lib/use-indicator-slide";
 import { FOCUS_RING } from "../shared";
 import { Tabs, type TabsRootProps, useTabsValue } from "./Tabs";
@@ -403,7 +412,7 @@ describe("cancelling a change in onValueChange", () => {
 });
 
 describe("function tab values", () => {
-  // Plain closures, not vi.fn(): two mocks share a String() text and duplicate Tabs.Contents keys.
+  // `calls` counts calls of either value: no part may call a tab value
   let calls = 0;
   function first() {
     calls++;
@@ -485,6 +494,160 @@ describe("function tab values", () => {
     rerender({ target: second });
     expect(result.current.sliding).toBe(true);
     expect(calls).toBe(0);
+  });
+});
+
+// Contents and Animate key by value; distinct values need distinct, stable keys.
+describe("tab values with the same String() text", () => {
+  const first = { id: 1 };
+  const second = { id: 2 };
+  const sameSource = () => () => null;
+  const pairs = [
+    ["two objects", first, second],
+    ["two functions with the same source", sameSource(), sameSource()],
+    ['1 and "1"', 1, "1"],
+  ] as const;
+
+  // React reports two children with the same key through console.error
+  let consoleError: MockInstance<typeof console.error>;
+  beforeEach(() => {
+    consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+  });
+  afterEach(() => {
+    consoleError.mockRestore();
+  });
+
+  // StrictMode runs a mount's effects twice on one instance; a remount is a new instance
+  function MountedChild({ instances }: { instances: Set<object> }) {
+    const instance = useRef({});
+    useEffect(() => {
+      instances.add(instance.current);
+    }, [instances]);
+    return null;
+  }
+
+  function Contents({
+    value,
+    a,
+    b,
+    children,
+  }: {
+    value: unknown;
+    a: unknown;
+    b: unknown;
+    children?: ReactNode;
+  }) {
+    return (
+      <Tabs.Root value={value}>
+        <Tabs.Contents>
+          <Tabs.Content value={a} data-testid="content-a">
+            Content A{children}
+          </Tabs.Content>
+          <Tabs.Content value={b} data-testid="content-b">
+            Content B
+          </Tabs.Content>
+        </Tabs.Contents>
+      </Tabs.Root>
+    );
+  }
+
+  function Animate({ value, instances }: { value: unknown; instances: Set<object> }) {
+    return (
+      <Tabs.Root value={value}>
+        <Tabs.Animate data-testid="animate">
+          <MountedChild instances={instances} />
+        </Tabs.Animate>
+      </Tabs.Root>
+    );
+  }
+
+  function expectShown(shown: "a" | "b") {
+    const hidden = shown === "a" ? "b" : "a";
+    expect(isHiddenPanel(screen.getByTestId(`content-${shown}`).parentElement!)).toBe(false);
+    expect(isHiddenPanel(screen.getByTestId(`content-${hidden}`).parentElement!)).toBe(true);
+  }
+
+  it.each(pairs)("Tabs.Contents shows the pane of each of %s, with no duplicate key", (_, a, b) => {
+    const { rerender } = render(<Contents value={a} a={a} b={b} />);
+    expectShown("a");
+    rerender(<Contents value={b} a={a} b={b} />);
+    expectShown("b");
+    expect(consoleError).not.toHaveBeenCalled();
+  });
+
+  it.each(pairs)(
+    "Tabs.Animate remounts its pane, so its entry plays, for a switch between %s",
+    (_, a, b) => {
+      const instances = new Set<object>();
+      const { rerender } = render(<Animate value={a} instances={instances} />);
+      const pane = screen.getByTestId("animate");
+      expect(instances.size).toBe(1);
+      rerender(<Animate value={b} instances={instances} />);
+      expect(screen.getByTestId("animate")).not.toBe(pane);
+      expect(instances.size).toBe(2);
+    },
+  );
+
+  // A value keeps its key, so a re-render with the same values does not remount a pane
+  it("keeps a Tabs.Contents pane mounted across a re-render with the same object values", () => {
+    const instances = new Set<object>();
+    // A new element each time, or React would skip the unchanged subtree
+    const ui = () => (
+      <Contents value={first} a={first} b={second}>
+        <MountedChild instances={instances} />
+      </Contents>
+    );
+    const { rerender } = render(ui());
+    const pane = screen.getByTestId("content-a");
+    rerender(ui());
+    expect(screen.getByTestId("content-a")).toBe(pane);
+    expect(instances.size).toBe(1);
+  });
+
+  it("keeps a Tabs.Animate pane mounted across a re-render with the same object value", () => {
+    const instances = new Set<object>();
+    const { rerender } = render(<Animate value={first} instances={instances} />);
+    const pane = screen.getByTestId("animate");
+    rerender(<Animate value={first} instances={instances} />);
+    expect(screen.getByTestId("animate")).toBe(pane);
+    expect(instances.size).toBe(1);
+  });
+
+  // undefined (nothing tracked yet) and null (Base UI: no enabled tab) both mean no selection
+  it("mounts a Tabs.Animate pane once when every tab is disabled", () => {
+    const instances = new Set<object>();
+    render(
+      <Tabs.Root>
+        <Tabs.List>
+          <Tabs.Tab value="a" disabled>
+            A
+          </Tabs.Tab>
+          <Tabs.Tab value="b" disabled>
+            B
+          </Tabs.Tab>
+        </Tabs.List>
+        <Tabs.Animate>
+          <MountedChild instances={instances} />
+        </Tabs.Animate>
+      </Tabs.Root>,
+    );
+    expect(instances.size).toBe(1);
+  });
+
+  it("keys a Tabs.Contents child without a value apart from a sibling with value={1}", () => {
+    render(
+      <Tabs.Root value={1}>
+        <Tabs.Contents>
+          <Tabs.Content value={0}>Zero</Tabs.Content>
+          {/* @ts-expect-error value is required by the types, but a child can lack it */}
+          <Tabs.Content>No value</Tabs.Content>
+          <Tabs.Content value={1}>One</Tabs.Content>
+        </Tabs.Contents>
+      </Tabs.Root>,
+    );
+    expect(consoleError).not.toHaveBeenCalled();
+    expect(screen.getByText("No value")).toBeInTheDocument();
+    expect(screen.getByText("One")).toBeInTheDocument();
   });
 });
 
