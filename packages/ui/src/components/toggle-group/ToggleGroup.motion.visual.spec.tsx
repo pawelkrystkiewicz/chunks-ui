@@ -684,6 +684,12 @@ describe("ToggleGroup pill from server HTML to the measured indicator", () => {
       // Before hydration: the item's own pill, and no indicator
       expect(indicator()).toBeNull();
       expect(ownSurface(pressed)).toBe(true);
+      // The pill has the item's shape, and sits under the label
+      const pill = getComputedStyle(pressed, "::before");
+      expect(pill.position).toBe("absolute");
+      expect(Number.parseFloat(pill.width)).toBeCloseTo(pressed.offsetWidth, 0);
+      expect(Number.parseFloat(pill.height)).toBeCloseTo(pressed.offsetHeight, 0);
+      expect(Number.parseFloat(pill.zIndex)).toBeLessThan(0);
 
       app = hydrateRoot(container, ui);
       const frames = await eachPaintedFrame(
@@ -705,4 +711,24 @@ describe("ToggleGroup pill from server HTML to the measured indicator", () => {
       expect(offBy(pressed, shown)).toBeLessThanOrEqual(1);
     },
   );
+
+  // The item's pill is gated on the group having no indicator, and sets nothing after that: a
+  // consumer's own ::before (a separator, a dot badge) on any item keeps showing
+  it("keeps a consumer's ::before on an unpressed item after the indicator is measured", async () => {
+    await enterMotionPath(false);
+    const { getByRole, container: host } = render(
+      <ToggleGroup.Root defaultValue={["b"]}>
+        <ToggleGroup.Item
+          value="a"
+          className="before:block before:h-1 before:w-1 before:content-['']"
+        >
+          Alpha
+        </ToggleGroup.Item>
+        <ToggleGroup.Item value="b">Beta</ToggleGroup.Item>
+      </ToggleGroup.Root>,
+    );
+    const alpha = getByRole("button", { name: "Alpha" });
+    await expect.poll(() => host.querySelector("[role='group'] > span")).not.toBeNull();
+    expect(getComputedStyle(alpha, "::before").display).toBe("block");
+  });
 });

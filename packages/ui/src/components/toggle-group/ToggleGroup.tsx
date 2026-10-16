@@ -272,12 +272,19 @@ function ToggleGroupItem({ className, value, ref, ...props }: ToggleGroupItemPro
         ctx?.multiple && "data-pressed:bg-background data-pressed:shadow-sm",
         // In a single-select group the indicator is the pill, measured in the browser. Until the
         // group has it (server HTML, and a hydrating page before its layout effects run), the
-        // pressed item draws the same pill under its content. A pseudo-element, hidden rather than
-        // faded when the indicator mounts: the item transitions its own background and shadow
+        // pressed item draws the same pill under its content. A pseudo-element, styled only while
+        // the group has no indicator and left alone after that, so a consumer's own ::before on
+        // any item is untouched. It goes away rather than fading: the item transitions its own
+        // background and shadow. In a disabled group it takes the item's 50% opacity, and the
+        // indicator (a sibling) does not, so the pill brightens at hydration: a pseudo-element
+        // cannot escape its parent's opacity.
         ctx?.multiple === false && [
-          "data-pressed:before:absolute data-pressed:before:inset-0 data-pressed:before:-z-10",
-          "data-pressed:before:rounded-md data-pressed:before:bg-background data-pressed:before:shadow-sm",
-          "group-data-indicator/toggle-group:before:hidden",
+          "group-not-data-indicator/toggle-group:data-pressed:before:absolute",
+          "group-not-data-indicator/toggle-group:data-pressed:before:inset-0",
+          "group-not-data-indicator/toggle-group:data-pressed:before:-z-10",
+          "group-not-data-indicator/toggle-group:data-pressed:before:rounded-md",
+          "group-not-data-indicator/toggle-group:data-pressed:before:bg-background",
+          "group-not-data-indicator/toggle-group:data-pressed:before:shadow-sm",
         ],
         className,
       )}

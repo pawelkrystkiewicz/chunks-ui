@@ -503,8 +503,10 @@ describe("ToggleGroup in server HTML", () => {
   }
 
   /** The item's own pill: the indicator's look, under the item's content, until the group has one */
-  const OWN_PILL = ["data-pressed:before:bg-background", "data-pressed:before:shadow-sm"];
-  const HIDDEN_WITH_INDICATOR = "group-data-indicator/toggle-group:before:hidden";
+  const OWN_PILL = [
+    "group-not-data-indicator/toggle-group:data-pressed:before:bg-background",
+    "group-not-data-indicator/toggle-group:data-pressed:before:shadow-sm",
+  ];
 
   it("gives the pressed item the pill's look, with no indicator yet", () => {
     const { root, a, b, indicator } = serverHtml(group());
@@ -512,7 +514,7 @@ describe("ToggleGroup in server HTML", () => {
     expect(root).not.toHaveAttribute("data-indicator");
     expect(root).toHaveClass("group/toggle-group");
     expect(b).toHaveAttribute("data-pressed");
-    expect(b).toHaveClass(...OWN_PILL, HIDDEN_WITH_INDICATOR);
+    expect(b).toHaveClass(...OWN_PILL);
     // The look follows data-pressed, so the unpressed item has the classes and no pill
     expect(a).not.toHaveAttribute("data-pressed");
     expect(a).toHaveClass(...OWN_PILL);
