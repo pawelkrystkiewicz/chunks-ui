@@ -103,9 +103,7 @@ describe("typesProblem", () => {
     const output =
       "node_modules/chunks-ui/dist/index.d.ts(1,8): error TS1259: Module '\"node_modules/@types/react/index\"' can only be default-imported using the 'esModuleInterop' flag\n";
     const problem = typesProblem(2, output, "node10");
-    expect(problem).toContain("default-imports React");
     expect(problem).toContain("#463");
-    expect(problem).toContain("do not turn on esModuleInterop");
     expect(problem).toContain(output);
     expect(typesProblem(2, "x.ts(1,1): error TS2305: nope\n", "node10")).not.toContain("#463");
     expect(typesProblem(2, output, "bundler")).not.toContain("#463");

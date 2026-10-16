@@ -51,11 +51,8 @@ const COMPILER_OPTIONS = {
 };
 /**
  * How the strict consumer resolves modules, one tsc run each. `bundler` is what Next, Vite and
- * tsup use. `node10` is the pre-`exports` algorithm of older CommonJS projects: it needs
- * `module: commonjs`, and runs without `esModuleInterop` and `allowSyntheticDefaultImports`, so a
- * default import of React in the dist typings (`import type React` in a component) fails it with
- * TS1259 (#463). Both flags stay false on purpose: they are what this pass guards. A TypeScript 6
- * bump will need `ignoreDeprecations` here; keep both false then.
+ * tsup use.
+ * node10: commonjs, with esModuleInterop and allowSyntheticDefaultImports off so a default React import in dist fails with TS1259 (#463); keep both off if a TypeScript bump needs ignoreDeprecations.
  */
 const RESOLUTIONS = {
   bundler: { moduleResolution: "bundler", module: "esnext" },
@@ -127,7 +124,7 @@ export function typesProblem(
   }
   if (resolution === "node10" && DEFAULT_IMPORT_WITHOUT_INTEROP.test(output)) {
     hint +=
-      'a component default-imports React (e.g. `import type React from "react"`): import its types by name (#463); do not turn on esModuleInterop in the node10 pass, it is what this pass guards.\n';
+      "a component default-imports React: import its types by name (#463); keep esModuleInterop off, this pass guards it\n";
   }
   return `${hint}tsc (moduleResolution: ${resolution}) failed on an import of chunks-ui in the consumer without motion, with skipLibCheck: false (exit ${exitCode}):\n${output}`;
 }
