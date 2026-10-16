@@ -1,7 +1,9 @@
 import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
-import { createRef, useState } from "react";
+import { createRef, type ReactNode, StrictMode, useState } from "react";
+import { hydrateRoot } from "react-dom/client";
+import { renderToString } from "react-dom/server";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { reloadMotion } from "../../lib/use-motion";
 import { FOCUS_RING } from "../shared";
@@ -478,6 +480,70 @@ describe("ToggleGroup indicator measurement", () => {
     expect(watched(c)).toBe(true);
     rerender(withLateItem(["a"], false));
     expect(watched(c)).toBe(false);
+  });
+});
+
+// The group measures its indicator in the browser, so server HTML has none. The pressed item
+// draws the pill itself until the group has measured, then hands over in the same commit.
+describe("ToggleGroup in server HTML", () => {
+  const group = (props?: { multiple?: boolean }) => (
+    <ToggleGroup.Root defaultValue={["b"]} {...props}>
+      <ToggleGroup.Item value="a">A</ToggleGroup.Item>
+      <ToggleGroup.Item value="b">B</ToggleGroup.Item>
+    </ToggleGroup.Root>
+  );
+
+  function serverHtml(ui: ReactNode) {
+    const container = document.createElement("div");
+    container.innerHTML = renderToString(ui);
+    const root = container.querySelector<HTMLElement>('[role="group"]');
+    const [a, b] = container.querySelectorAll("button");
+    if (!root || !a || !b) throw new Error("No group with two items in the server HTML");
+    return { container, root, a, b, indicator: () => root.querySelector(":scope > span") };
+  }
+
+  /** The item's own pill: the indicator's look, under the item's content, until the group has one */
+  const OWN_PILL = ["data-pressed:before:bg-background", "data-pressed:before:shadow-sm"];
+  const HIDDEN_WITH_INDICATOR = "group-data-indicator/toggle-group:before:hidden";
+
+  it("gives the pressed item the pill's look, with no indicator yet", () => {
+    const { root, a, b, indicator } = serverHtml(group());
+    expect(indicator()).toBeNull();
+    expect(root).not.toHaveAttribute("data-indicator");
+    expect(root).toHaveClass("group/toggle-group");
+    expect(b).toHaveAttribute("data-pressed");
+    expect(b).toHaveClass(...OWN_PILL, HIDDEN_WITH_INDICATOR);
+    // The look follows data-pressed, so the unpressed item has the classes and no pill
+    expect(a).not.toHaveAttribute("data-pressed");
+    expect(a).toHaveClass(...OWN_PILL);
+  });
+
+  // A `multiple` group has no indicator: a pressed item always draws its own background
+  it("gives a pressed item of a multiple group its own background, as on the client", () => {
+    const { root, b } = serverHtml(group({ multiple: true }));
+    expect(root).not.toHaveAttribute("data-indicator");
+    expect(b).toHaveAttribute("data-pressed");
+    expect(b).toHaveClass("data-pressed:bg-background", "data-pressed:shadow-sm");
+    expect(b).not.toHaveClass(...OWN_PILL);
+  });
+
+  it("hydrates without errors, then marks the root once the indicator is measured", async () => {
+    const ui = group();
+    const { container, root, indicator } = serverHtml(ui);
+    document.body.append(container);
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const app = await act(async () => hydrateRoot(container, <StrictMode>{ui}</StrictMode>));
+      expect(consoleError).not.toHaveBeenCalled();
+      // Measured in the layout effect after hydration: the indicator and the attribute that hides
+      // the item's own pill come in the same commit
+      expect(indicator()).not.toBeNull();
+      expect(root).toHaveAttribute("data-indicator");
+      act(() => app.unmount());
+    } finally {
+      consoleError.mockRestore();
+      container.remove();
+    }
   });
 });
 

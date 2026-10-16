@@ -1,5 +1,7 @@
 import { render } from "@testing-library/react";
-import { Activity, type CSSProperties, createRef, type RefObject } from "react";
+import { Activity, type CSSProperties, createRef, type RefObject, StrictMode } from "react";
+import { hydrateRoot, type Root } from "react-dom/client";
+import { renderToString } from "react-dom/server";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { commands, userEvent } from "vitest/browser";
 import { reloadMotion } from "../../lib/use-motion";
@@ -627,4 +629,80 @@ describe("ToggleGroup indicator with reduced motion", () => {
       JSON.stringify(frames),
     ).toBe(true);
   });
+});
+
+// Server HTML has no indicator: the group measures it in the browser. Until then the pressed item
+// draws the pill itself, and hands over to the measured indicator in the same commit. Checked with
+// reduced motion off too, where a hand-over through the item's own background would fade out
+// under the indicator: the item transitions its background and shadow.
+describe("ToggleGroup pill from server HTML to the measured indicator", () => {
+  const ui = (
+    <StrictMode>
+      <ToggleGroup.Root defaultValue={["b"]}>
+        <ToggleGroup.Item value="a">Alpha</ToggleGroup.Item>
+        <ToggleGroup.Item value="b">Beta, a longer item</ToggleGroup.Item>
+      </ToggleGroup.Root>
+    </StrictMode>
+  );
+
+  const transparent = (style: CSSStyleDeclaration) =>
+    style.backgroundColor === "rgba(0, 0, 0, 0)" && style.boxShadow === "none";
+
+  /** Whether `item` paints its own pressed surface: a background or shadow on it or its ::before */
+  function ownSurface(item: Element) {
+    const before = getComputedStyle(item, "::before");
+    const beforeShown = before.content !== "none" && before.display !== "none";
+    return !transparent(getComputedStyle(item)) || (beforeShown && !transparent(before));
+  }
+
+  let container: HTMLDivElement | null = null;
+  let app: Root | null = null;
+  afterEach(async () => {
+    app?.unmount();
+    container?.remove();
+    app = null;
+    container = null;
+    await commands.emulateMedia({ reducedMotion: "no-preference" });
+  });
+
+  it.each([
+    { path: "Motion", withMotion: true, reducedMotion: "no-preference" },
+    { path: "the CSS fallback", withMotion: false, reducedMotion: "no-preference" },
+    { path: "reduced motion", withMotion: false, reducedMotion: "reduce" },
+  ] as const)(
+    "paints one pressed surface in every frame, with $path",
+    async ({ withMotion, reducedMotion }) => {
+      await commands.emulateMedia({ reducedMotion });
+      await enterMotionPath(withMotion);
+      container = document.createElement("div");
+      container.innerHTML = renderToString(ui);
+      document.body.append(container);
+      const group = container.querySelector<HTMLElement>('[role="group"]');
+      const pressed = container.querySelector<HTMLElement>("[data-pressed]");
+      if (!group || !pressed) throw new Error("No pressed item in the server HTML");
+      const indicator = () => group.querySelector<HTMLElement>(":scope > span");
+      // Before hydration: the item's own pill, and no indicator
+      expect(indicator()).toBeNull();
+      expect(ownSurface(pressed)).toBe(true);
+
+      app = hydrateRoot(container, ui);
+      const frames = await eachPaintedFrame(
+        () => ({ indicator: indicator() !== null, own: ownSurface(pressed) }),
+        30,
+      );
+      const log = JSON.stringify(frames);
+      expect(
+        frames.some((frame) => frame.indicator),
+        log,
+      ).toBe(true);
+      // Each frame paints the item's own pill or the indicator: never both, never neither
+      expect(
+        frames.every((frame) => frame.indicator !== frame.own),
+        log,
+      ).toBe(true);
+      const shown = indicator();
+      if (!shown) throw new Error("No indicator after hydration");
+      expect(offBy(pressed, shown)).toBeLessThanOrEqual(1);
+    },
+  );
 });

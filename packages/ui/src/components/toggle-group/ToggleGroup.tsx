@@ -139,12 +139,18 @@ function ToggleGroupRoot<Value extends string = string>({
     };
   }, [multiple]);
 
+  // The single-select sliding indicator, once measured. Until then (server HTML, and a hydrating
+  // page before its layout effects run) the pressed item draws the pill itself; see ToggleGroupItem
+  const indicator = !multiple && bounds && (
+    <ToggleGroupIndicator box={bounds} value={activeValue} />
+  );
+
   return (
     <ToggleGroupContext.Provider value={{ registerItem, multiple }}>
       <BaseToggleGroup
         ref={mergedRef}
         className={cnState(
-          "relative inline-flex items-center gap-0.5 rounded-lg bg-muted p-1",
+          "group/toggle-group relative inline-flex items-center gap-0.5 rounded-lg bg-muted p-1",
           "data-[orientation=vertical]:flex-col",
           className,
         )}
@@ -152,10 +158,11 @@ function ToggleGroupRoot<Value extends string = string>({
         value={value}
         defaultValue={defaultValue}
         onValueChange={handleValueChange}
+        // Hides the pressed item's own pill, in the commit the indicator mounts in
+        data-indicator={indicator ? "" : undefined}
         {...props}
       >
-        {/* Single-select sliding indicator */}
-        {!multiple && bounds && <ToggleGroupIndicator box={bounds} value={activeValue} />}
+        {indicator}
         {children}
       </BaseToggleGroup>
     </ToggleGroupContext.Provider>
@@ -215,6 +222,7 @@ function ToggleGroupIndicator({ box, value }: { box: IndicatorBox; value: string
     <span
       ref={indicatorRef}
       className={cn(
+        // The pill's look; ToggleGroupItem draws the same one until the indicator is measured
         "absolute z-0 rounded-md bg-background shadow-sm",
         // The CSS fallback slides with a transition, which is off unless the indicator slides to
         // another item
@@ -262,6 +270,15 @@ function ToggleGroupItem({ className, value, ref, ...props }: ToggleGroupItemPro
         "disabled:cursor-not-allowed disabled:opacity-50",
         "[&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
         ctx?.multiple && "data-pressed:bg-background data-pressed:shadow-sm",
+        // In a single-select group the indicator is the pill, measured in the browser. Until the
+        // group has it (server HTML, and a hydrating page before its layout effects run), the
+        // pressed item draws the same pill under its content. A pseudo-element, hidden rather than
+        // faded when the indicator mounts: the item transitions its own background and shadow
+        ctx?.multiple === false && [
+          "data-pressed:before:absolute data-pressed:before:inset-0 data-pressed:before:-z-10",
+          "data-pressed:before:rounded-md data-pressed:before:bg-background data-pressed:before:shadow-sm",
+          "group-data-indicator/toggle-group:before:hidden",
+        ],
         className,
       )}
       {...props}
