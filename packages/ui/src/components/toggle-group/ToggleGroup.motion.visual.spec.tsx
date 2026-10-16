@@ -475,8 +475,9 @@ const sized = ({
       <ToggleGroup.Item value="a" style={{ transition: "none", ...itemStyle }}>
         Alpha
       </ToggleGroup.Item>
+      {/* The label in an element of its own, for a spec to write as Motion would an icon */}
       <ToggleGroup.Item value="b" className={itemClassName}>
-        Beta
+        <span>Beta</span>
       </ToggleGroup.Item>
     </ToggleGroup.Root>
   </div>
@@ -591,12 +592,21 @@ describe.each(MOTION_PATHS)("ToggleGroup indicator on a resize, $path", ({ withM
     (_, before, after) => expectFollowsAtOnce(withMotion, before, after),
   );
 
-  // The indicator's own writes (its box; with Motion, a spring's many frames of them) never have
-  // the group measure again. A move has it measure once.
-  it("measures again once on a move, and never for the indicator's own writes", async () => {
-    const { indicator, item, rerender } = await renderSized(withMotion, FIXED);
+  // The indicator's own writes (its box; with Motion, a spring's many frames of them) and a child
+  // of an item that Motion animates never have the group measure again. A move has it measure once.
+  it("measures again once on a move, and never for the indicator's writes or inside an item", async () => {
+    const { indicator, item, rerender, getByText } = await renderSized(withMotion, FIXED);
     let batches = resizeBatches.count;
     rerender(sized({ ...FIXED, value: "b" }));
+    await waitForStable(() => offBy(item("Beta"), indicator()));
+    expect(resizeBatches.count).toBe(batches);
+
+    // A style write in each frame, as Motion's to an icon in the item
+    const label = getByText("Beta");
+    for (const opacity of [0.8, 0.6, 0.4, 0.6, 0.8]) {
+      label.style.opacity = `${opacity}`;
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+    }
     await waitForStable(() => offBy(item("Beta"), indicator()));
     expect(resizeBatches.count).toBe(batches);
 

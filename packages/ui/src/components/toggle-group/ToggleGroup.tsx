@@ -127,7 +127,7 @@ function ToggleGroupRoot<Value extends string = string>({
     ];
     // The items too, by border box: the indicator covers it, and a padding change resizes that
     // box alone. In a group that keeps its size, an item can resize or show again alone.
-    const stopItem = new Map<HTMLElement, () => void>();
+    const stopItem = new Map<Node, () => void>();
     const watcher: ItemWatcher = {
       watch: (item) => stopItem.set(item, observeResize(item, "border-box", measure)),
       unwatch: (item) => {
@@ -138,11 +138,24 @@ function ToggleGroupRoot<Value extends string = string>({
     for (const item of itemsRef.current.values()) watcher.watch(item);
     watcherRef.current = watcher;
     // A class/style change on an element holding an item can move the items (gap, order), so the
-    // group measures again. Not the indicator's own inline writes, which hold no item.
-    const items = itemsRef.current;
-    const holdsItem = (node: Node) => [...items.values()].some((item) => node.contains(item));
+    // group measures again. Not the indicator's own inline writes, which hold no item, nor a
+    // change inside an item (a Motion-animated icon writes every frame): its resize is observed.
+    // `stopItem` holds every item.
+    const insideItem = (node: Node) => {
+      if (node === container) return false;
+      for (let up = node.parentNode; up && up !== container; up = up.parentNode) {
+        if (stopItem.has(up)) return true;
+      }
+      return false;
+    };
+    const holdsItem = (node: Node) => {
+      for (const item of stopItem.keys()) if (node.contains(item)) return true;
+      return false;
+    };
     const mutation = new MutationObserver((records) => {
-      if (records.some(({ target }) => holdsItem(target))) notifyResize(container, "border-box");
+      if (records.some(({ target }) => !insideItem(target) && holdsItem(target))) {
+        notifyResize(container, "border-box");
+      }
     });
     mutation.observe(container, {
       attributes: true,

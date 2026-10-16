@@ -537,6 +537,31 @@ describe("ToggleGroup indicator measurement", () => {
     await act(async () => {});
     expect(observeCount(group)).toBe(count);
   });
+
+  // A child of an item that Motion animates writes its style every frame: the filter skips it
+  // before it scans the items
+  it("does not scan the items for a style change inside an item", async () => {
+    render(
+      <ToggleGroup.Root value={["a"]}>
+        <ToggleGroup.Item value="a">
+          <span data-testid="icon" />
+        </ToggleGroup.Item>
+        <ToggleGroup.Item value="b">B</ToggleGroup.Item>
+      </ToggleGroup.Root>,
+    );
+    const group = screen.getByRole("group");
+    const icon = screen.getByTestId("icon");
+    const count = observeCount(group);
+    const contains = vi.spyOn(Node.prototype, "contains");
+    try {
+      icon.style.opacity = "0.5";
+      await act(async () => {});
+      expect(contains.mock.contexts).not.toContain(icon);
+    } finally {
+      contains.mockRestore();
+    }
+    expect(observeCount(group)).toBe(count);
+  });
 });
 
 // The group measures its indicator in the browser, so server HTML has none. The pressed item
