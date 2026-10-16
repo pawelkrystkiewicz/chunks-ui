@@ -89,7 +89,7 @@ function ControlledToggleGroup() {
 
 ## Server rendering
 
-In a single-select group the pressed item shows the pill itself in the server-rendered page, drawn with its `::before`, so a `::before` of your own on that item shows only after hydration. It hands over to the measured indicator once the group has measured in the browser. No script is involved.
+In server HTML the pressed item draws the pill itself until the indicator is measured; no script is involved. A `::before` of your own on the pressed item shows only after hydration.
 
 ## Props
 

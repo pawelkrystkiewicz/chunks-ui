@@ -631,10 +631,8 @@ describe("ToggleGroup indicator with reduced motion", () => {
   });
 });
 
-// Server HTML has no indicator: the group measures it in the browser. Until then the pressed item
-// draws the pill itself, and hands over to the measured indicator in the same commit. Checked with
-// reduced motion off too, where a hand-over through the item's own background would fade out
-// under the indicator: the item transitions its background and shadow.
+// Server HTML has no indicator: the pressed item draws the pill, then hands over to the measured
+// indicator in one commit. Also with reduced motion off, where a background hand-over would fade.
 describe("ToggleGroup pill from server HTML to the measured indicator", () => {
   const ui = (
     <StrictMode>
@@ -645,11 +643,10 @@ describe("ToggleGroup pill from server HTML to the measured indicator", () => {
     </StrictMode>
   );
 
-  const transparent = (style: CSSStyleDeclaration) =>
-    style.backgroundColor === "rgba(0, 0, 0, 0)" && style.boxShadow === "none";
-
   /** Whether `item` paints its own pressed surface: a background or shadow on it or its ::before */
   function ownSurface(item: Element) {
+    const transparent = (style: CSSStyleDeclaration) =>
+      style.backgroundColor === "rgba(0, 0, 0, 0)" && style.boxShadow === "none";
     const before = getComputedStyle(item, "::before");
     const beforeShown = before.content !== "none" && before.display !== "none";
     return !transparent(getComputedStyle(item)) || (beforeShown && !transparent(before));
@@ -684,7 +681,6 @@ describe("ToggleGroup pill from server HTML to the measured indicator", () => {
       // Before hydration: the item's own pill, and no indicator
       expect(indicator()).toBeNull();
       expect(ownSurface(pressed)).toBe(true);
-      // The pill has the item's shape, and sits under the label
       const pill = getComputedStyle(pressed, "::before");
       expect(pill.position).toBe("absolute");
       expect(Number.parseFloat(pill.width)).toBeCloseTo(pressed.offsetWidth, 0);
@@ -712,47 +708,36 @@ describe("ToggleGroup pill from server HTML to the measured indicator", () => {
     },
   );
 
-  // The item's pill is gated on the group having no indicator, and sets nothing after that: a
-  // consumer's own ::before (a separator, a dot badge) on any item keeps showing
-  it("keeps a consumer's ::before on an unpressed item after the indicator is measured", async () => {
-    await enterMotionPath(false);
-    const { getByRole, container: host } = render(
-      <ToggleGroup.Root defaultValue={["b"]}>
-        <ToggleGroup.Item
-          value="a"
-          className="before:block before:h-1 before:w-1 before:content-['']"
-        >
-          Alpha
-        </ToggleGroup.Item>
-        <ToggleGroup.Item value="b">Beta</ToggleGroup.Item>
-      </ToggleGroup.Root>,
-    );
-    const alpha = getByRole("button", { name: "Alpha" });
-    await expect.poll(() => host.querySelector("[role='group'] > span")).not.toBeNull();
-    expect(getComputedStyle(alpha, "::before").display).toBe("block");
-  });
-
-  // The case that exercises the gate: the pill's classes apply to the pressed item, so a consumer
-  // ::before there must stay the consumer's once the indicator exists
-  it("keeps a consumer's ::before on the pressed item after the indicator is measured", async () => {
-    await enterMotionPath(false);
-    const { getByRole, container: host } = render(
-      <ToggleGroup.Root defaultValue={["b"]}>
-        <ToggleGroup.Item value="a">Alpha</ToggleGroup.Item>
-        <ToggleGroup.Item
-          value="b"
-          className="before:block before:h-1 before:w-1 before:content-['']"
-        >
-          Beta
-        </ToggleGroup.Item>
-      </ToggleGroup.Root>,
-    );
-    const beta = getByRole("button", { name: "Beta" });
-    await expect.poll(() => host.querySelector("[role='group'] > span")).not.toBeNull();
-    const before = getComputedStyle(beta, "::before");
-    expect(before.display).toBe("block");
-    expect(before.width).toBe("4px");
-    expect(before.position).not.toBe("absolute");
-    expect(before.backgroundColor).toBe("rgba(0, 0, 0, 0)");
-  });
+  // The pill is gated on the group having no indicator: a consumer's ::before stays theirs
+  it.each([
+    ["an unpressed", "a"],
+    ["the pressed", "b"],
+  ] as const)(
+    "keeps a consumer's ::before on %s item after the indicator is measured",
+    async (_, own) => {
+      await enterMotionPath(false);
+      const { getByRole, container: host } = render(
+        <ToggleGroup.Root defaultValue={["b"]}>
+          {(["a", "b"] as const).map((value) => (
+            <ToggleGroup.Item
+              key={value}
+              value={value}
+              className={
+                value === own ? "before:block before:h-1 before:w-1 before:content-['']" : undefined
+              }
+            >
+              {value === "a" ? "Alpha" : "Beta"}
+            </ToggleGroup.Item>
+          ))}
+        </ToggleGroup.Root>,
+      );
+      const item = getByRole("button", { name: own === "a" ? "Alpha" : "Beta" });
+      await expect.poll(() => host.querySelector("[role='group'] > span")).not.toBeNull();
+      const before = getComputedStyle(item, "::before");
+      expect(before.display).toBe("block");
+      expect(before.width).toBe("4px");
+      expect(before.position).not.toBe("absolute");
+      expect(before.backgroundColor).toBe("rgba(0, 0, 0, 0)");
+    },
+  );
 });

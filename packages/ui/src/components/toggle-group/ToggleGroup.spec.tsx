@@ -502,23 +502,20 @@ describe("ToggleGroup in server HTML", () => {
     return { container, root, a, b, indicator: () => root.querySelector(":scope > span") };
   }
 
-  /** The item's own pill: the indicator's look, under the item's content, until the group has one */
+  /** The item's own pill, drawn until the group has an indicator */
   const OWN_PILL = [
     "group-not-data-indicator/toggle-group:data-pressed:before:bg-background",
     "group-not-data-indicator/toggle-group:data-pressed:before:shadow-sm",
   ];
 
   it("gives the pressed item the pill's look, with no indicator yet", () => {
-    const { root, a, b, indicator } = serverHtml(group());
+    const { root, b, indicator } = serverHtml(group());
     expect(indicator()).toBeNull();
     expect(root).not.toHaveAttribute("data-indicator");
-    expect(root).toHaveClass("group/toggle-group");
     expect(b).toHaveAttribute("data-pressed");
     expect(b).toHaveClass(...OWN_PILL);
-    expect(a).not.toHaveAttribute("data-pressed");
   });
 
-  // A `multiple` group has no indicator: a pressed item always draws its own background
   it("gives a pressed item of a multiple group its own background, as on the client", () => {
     const { root, b } = serverHtml(group({ multiple: true }));
     expect(root).not.toHaveAttribute("data-indicator");

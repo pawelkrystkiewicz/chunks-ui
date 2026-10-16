@@ -139,8 +139,7 @@ function ToggleGroupRoot<Value extends string = string>({
     };
   }, [multiple]);
 
-  // The single-select sliding indicator, once measured. Until then (server HTML, and a hydrating
-  // page before its layout effects run) the pressed item draws the pill itself; see ToggleGroupItem
+  // The single-select sliding indicator, once measured; until then the pressed item draws the pill
   const indicator = !multiple && bounds && (
     <ToggleGroupIndicator box={bounds} value={activeValue} />
   );
@@ -159,8 +158,7 @@ function ToggleGroupRoot<Value extends string = string>({
         defaultValue={defaultValue}
         onValueChange={handleValueChange}
         {...props}
-        // Hides the pressed item's own pill, in the commit the indicator mounts in. After the
-        // props, so a consumer cannot override it
+        // After the props so a consumer cannot override it.
         data-indicator={indicator ? "" : undefined}
       >
         {indicator}
@@ -223,7 +221,6 @@ function ToggleGroupIndicator({ box, value }: { box: IndicatorBox; value: string
     <span
       ref={indicatorRef}
       className={cn(
-        // The pill's look; ToggleGroupItem draws the same one until the indicator is measured
         "absolute z-0 rounded-md bg-background shadow-sm",
         // The CSS fallback slides with a transition, which is off unless the indicator slides to
         // another item
@@ -271,15 +268,9 @@ function ToggleGroupItem({ className, value, ref, ...props }: ToggleGroupItemPro
         "disabled:cursor-not-allowed disabled:opacity-50",
         "[&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
         ctx?.multiple && "data-pressed:bg-background data-pressed:shadow-sm",
-        // In a single-select group the indicator is the pill, measured in the browser. Until the
-        // group has it (server HTML, and a hydrating page before its layout effects run), the
-        // pressed item draws the same pill under its content. A pseudo-element, styled only while
-        // the group has no indicator and left alone after that, so a consumer's own ::before on
-        // any item is untouched. It goes away rather than fading: the item transitions its own
-        // background and shadow. In a disabled group it takes the item's 50% opacity, and the
-        // indicator (a sibling) does not, so the pill brightens at hydration: a pseudo-element
-        // cannot escape its parent's opacity. Known limit: before the indicator exists, a
-        // consumer's own before:* classes on the pressed item merge with the pill's ::before.
+        // Until the group has an indicator the pressed item draws the pill in a ::before: the
+        // item's own background transitions, so it would fade. Disabled, it takes the item's 50%
+        // opacity and the indicator does not. A consumer ::before merges with it before hydration.
         ctx?.multiple === false && [
           "group-not-data-indicator/toggle-group:data-pressed:before:absolute",
           "group-not-data-indicator/toggle-group:data-pressed:before:inset-0",
