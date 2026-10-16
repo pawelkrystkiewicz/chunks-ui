@@ -45,4 +45,40 @@ describe("Combobox demos", () => {
     const chips = screen.getAllByText("Svelte").filter((el) => !el.closest("[role=option]"));
     expect(chips).toHaveLength(1);
   });
+
+  // Base UI hands the keys from the empty input to the chips only when the input is inside
+  // Combobox.Chips (#484)
+  describe("the multi-select demo, with React and Svelte picked", () => {
+    async function pickTwo() {
+      render(<ComboboxMultiDemo />);
+      const input = screen.getByRole("combobox", { name: "Frameworks" });
+      await pick(input, "React");
+      await pick(input, "Svelte");
+      act(() => input.focus());
+      return input;
+    }
+    // Combobox.Chips is a toolbar while it holds a chip; the open popup lists the same names
+    const chip = (name: string) => screen.queryByText(name, { selector: "[role=toolbar] *" });
+
+    it("focuses the last chip on ArrowLeft from the empty input", async () => {
+      const input = await pickTwo();
+
+      await act(async () => {
+        fireEvent.keyDown(input, { key: "ArrowLeft" });
+      });
+
+      expect(document.activeElement).toBe(chip("Svelte"));
+    });
+
+    it("removes the last chip on Backspace in the empty input", async () => {
+      const input = await pickTwo();
+
+      await act(async () => {
+        fireEvent.keyDown(input, { key: "Backspace" });
+      });
+
+      expect(chip("Svelte")).toBeNull();
+      expect(chip("React")).not.toBeNull();
+    });
+  });
 });
