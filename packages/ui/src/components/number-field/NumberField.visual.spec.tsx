@@ -1,8 +1,15 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it, onTestFinished } from "vitest";
 import { userEvent } from "vitest/browser";
-import { expectNotAllowed, focusVisible, renderFixture } from "../../VisualTest.utils";
+import { inside } from "../../VisualTest.overlays";
+import {
+  expectNotAllowed,
+  focusVisible,
+  renderFixture,
+  waitForStable,
+} from "../../VisualTest.utils";
 import { Dialog } from "../dialog";
+import { Toast } from "../toast";
 import { NumberField } from "./index";
 
 function ScrubField() {
@@ -38,9 +45,10 @@ function grantPointerLock() {
   document.body.requestPointerLock = () => Promise.resolve();
 }
 
-function startScrub(target: Element) {
+// Base UI centres the cursor on the pointerdown's client point
+function startScrub(target: Element, point: { clientX?: number; clientY?: number } = {}) {
   target.dispatchEvent(
-    new PointerEvent("pointerdown", { bubbles: true, button: 0, pointerType: "mouse" }),
+    new PointerEvent("pointerdown", { bubbles: true, button: 0, pointerType: "mouse", ...point }),
   );
 }
 
@@ -92,6 +100,40 @@ describe("NumberField", () => {
     expect(cursor.closest("[data-base-ui-portal]")).toContainElement(popup);
     const z = (element: Element) => Number(getComputedStyle(element).zIndex) || 0;
     expect(z(cursor)).toBeGreaterThan(z(popup));
+    window.dispatchEvent(new PointerEvent("pointerup"));
+  });
+
+  // The trade-off #440 accepted: in the dialog's portal the cursor stacks in the dialog's layer
+  // (z-modals), not at z-cursor, so a Toast at the root (z-toasts) paints over it
+  it("lets a root Toast paint over the scrub cursor in a Dialog", async () => {
+    grantPointerLock();
+    const manager = Toast.createToastManager();
+    const { getByText, findByText, findByTestId } = render(
+      <Toast.Provider toastManager={manager}>
+        <Dialog.Root defaultOpen>
+          <Dialog.Portal>
+            <Dialog.Backdrop />
+            <Dialog.Popup>
+              <Dialog.Title>Edit amount</Dialog.Title>
+              <ScrubField />
+            </Dialog.Popup>
+          </Dialog.Portal>
+        </Dialog.Root>
+        <Toast.Viewport />
+      </Toast.Provider>,
+    );
+    manager.add({ title: "Saved", timeout: 0 });
+    const toast = (await findByText("Saved")).closest(".Toast") as HTMLElement;
+    const box = await waitForStable(() => toast.getBoundingClientRect());
+    const point: [number, number] = [box.left + box.width / 2, box.top + box.height / 2];
+    startScrub(getByText("Amount"), { clientX: point[0], clientY: point[1] });
+    const cursor = await findByTestId("cursor");
+
+    // The cursor covers the toast's centre, or the check proves nothing
+    await expect.poll(() => inside(cursor.getBoundingClientRect(), point)).toBe(true);
+    // Base UI makes the cursor click-through; hit-test it like the toast
+    cursor.style.pointerEvents = "auto";
+    expect(toast.contains(document.elementFromPoint(...point))).toBe(true);
     window.dispatchEvent(new PointerEvent("pointerup"));
   });
 
