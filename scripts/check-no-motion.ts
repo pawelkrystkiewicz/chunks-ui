@@ -32,13 +32,9 @@ import { join, resolve, sep } from "node:path";
 const UI = join(import.meta.dirname, "../packages/ui");
 const FIXTURES = join(import.meta.dirname, "no-motion");
 
-// ponytail: playwright is a devDependency of apps/docs only (check:a11y; check:playwright keeps
-// its version equal to the CI image's), and tsc cannot reach its types from scripts/ (bun's
-// isolated node_modules), so this borrows the module from apps/docs at run time and types the
-// slice drive() uses by hand instead of adding playwright to the root. Ceiling: a change in that
-// slice surfaces when the script runs, not in check-types:scripts. The day apps/docs drops
-// playwright, or the slice grows, add playwright to the root package.json and replace all of this
-// with `import { chromium, type Browser } from "playwright"`.
+// ponytail: playwright lives in apps/docs only and tsc cannot reach its types from scripts/, so this
+// types the slice drive() uses by hand. Ceiling: a change in that slice surfaces at run time, not in
+// check-types:scripts. Upgrade: add playwright to the root and `import { chromium, type Browser }`.
 interface Locator {
   click(options: { timeout: number }): Promise<void>;
   getByText(text: string, options: { exact: boolean }): Locator;
@@ -105,12 +101,6 @@ export const NEXT_TRIGGERS = ["Open the dialog", "Hover for a tip"] as const;
 export const DIALOG_TITLE = "The dialog is open";
 const MISSING_MODULE = /TS2307: Cannot find module '([^']+)'/;
 const MISSING_MOTION_TYPES = /TS2307: Cannot find module 'motion\/react'/;
-/** `pkg/sub` or `@scope/pkg/sub`: a path into a package, which node10 resolves without its exports map. Not a relative or absolute specifier. */
-const isSubpath = (name: string) =>
-  !name.startsWith(".") &&
-  !name.startsWith("/") &&
-  name.split("/").length > (name.startsWith("@") ? 2 : 1);
-
 const ANSI = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, "g");
 const MOTION_WARNING = /WARNING in [\s\S]*?Can't resolve 'motion\/react'/g;
 const motionWarnings = (output: string) => (output.match(MOTION_WARNING) ?? []).length;
@@ -144,10 +134,13 @@ export function typesProblem(
   if (MISSING_MOTION_TYPES.test(output)) {
     hint =
       'dist/index.d.ts references motion/react: the types must describe Motion through MotionLike in packages/ui/src/lib/use-motion.ts, never through typeof import("motion/react").\n';
-  } else if (resolution === "node10" && unfound?.startsWith("chunks-ui/")) {
-    hint = `node10 resolves ${unfound} only through the typesVersions of packages/ui/package.json, never its exports map: an entry there is missing or no longer matches the files in dist.\n`;
-  } else if (resolution === "node10" && unfound && isSubpath(unfound)) {
-    hint = `node10 resolves ${unfound} through a directory or typesVersions of its package, never its exports map, and the chunks-ui typings reach it: import the type from a path node10 resolves (#405 did this for class-variance-authority/types).\n`;
+  } else if (
+    resolution === "node10" &&
+    unfound &&
+    !/^[./]/.test(unfound) &&
+    unfound.split("/").length > (unfound.startsWith("@") ? 2 : 1)
+  ) {
+    hint = `node10 resolves ${unfound}, a package subpath, through typesVersions or a directory, never exports: for chunks-ui/... check typesVersions in packages/ui/package.json; for a dependency, import the type from a path node10 resolves (#405).\n`;
   }
   return `${hint}tsc (moduleResolution: ${resolution}) failed on an import of chunks-ui in the consumer without motion, with skipLibCheck: false (exit ${exitCode}):\n${output}`;
 }
@@ -282,17 +275,16 @@ export function browserProblem(
   if (run.failure !== undefined) {
     return `${where} the page did not load, open the dialog on "${NEXT_TRIGGERS[0]}" and show its title "${DIALOG_TITLE}":\n${run.failure}`;
   }
+  if (consumer === "without motion") return;
   const motion = files
     .filter(({ code }) => code.includes(MOTION_MARKER))
     .map(({ name }) => chunkPath(name));
+  // No chunk holds Motion's code: nextWithMotionProblem reports that
+  if (motion.length === 0) return;
   const started = run.network.findIndex(
     ({ event, path }) => event === "start" && motion.includes(path),
   );
   const request = run.network[started];
-  // Without Motion no chunk can hold its code, so a clean run is all there is to check
-  if (consumer === "without motion") return;
-  // No chunk holds Motion's code: nextWithMotionProblem reports that
-  if (motion.length === 0) return;
   if (!request) {
     return `${where} the page never requested Motion's chunk (${motion.join(", ")}; ${run.network.length} network events): the import() in packages/ui/src/lib/use-motion.ts did not run in the browser, or asked for another URL.`;
   }
@@ -453,17 +445,15 @@ function serve(out: string) {
 const BROWSER_MS = 10_000;
 
 /**
- * Opens the export in `out` in Chromium (served by serve()), waits for its load event, clicks the
+ * Opens the export in `out` in Chromium (served by serve()), waits for hydration, clicks the
  * dialog's trigger and waits for the title, recording what browserProblem() decides on.
  */
 async function drive(browser: Browser, out: string): Promise<BrowserRun> {
   const run: BrowserRun = { errors: [], network: [] };
   const path = (url: string) => new URL(url).pathname;
   const server = serve(out);
-  let context: Awaited<ReturnType<Browser["newContext"]>> | undefined;
   try {
-    context = await browser.newContext();
-    const page = await context.newPage();
+    const page = await (await browser.newContext()).newPage();
     page.on("pageerror", (error) => run.errors.push(`pageerror: ${error.message}`));
     page.on("console", (message) => {
       // "Failed to load resource: … 404" names no URL on its own
@@ -478,17 +468,10 @@ async function drive(browser: Browser, out: string): Promise<BrowserRun> {
       run.network.push({ event: "end", path: path(request.url()) }),
     );
     await page.goto(server.url.href, { timeout: BROWSER_MS });
-    // The HTML is server-rendered, so the trigger exists before hydration, and a click before
-    // hydrateRoot has no handler. page.jsx sets the marker in an effect.
-    try {
-      await page
-        .locator('html[data-hydrated="true"]')
-        .waitFor({ timeout: BROWSER_MS, state: "attached" });
-    } catch (error) {
-      throw new Error(
-        `the page never hydrated (no html[data-hydrated="true"] in ${BROWSER_MS} ms): ${error}`,
-      );
-    }
+    // A click before hydration has no handler, so a timeout here means the page never hydrated
+    await page
+      .locator('html[data-hydrated="true"]')
+      .waitFor({ timeout: BROWSER_MS, state: "attached" });
     await page
       .getByRole("button", { name: NEXT_TRIGGERS[0], exact: true })
       .click({ timeout: BROWSER_MS });
@@ -499,19 +482,13 @@ async function drive(browser: Browser, out: string): Promise<BrowserRun> {
   } catch (error) {
     run.failure = String(error);
   } finally {
-    // The server stops even when closing the context throws
-    try {
-      await context?.close();
-    } finally {
-      server.stop(true);
-    }
+    server.stop(true);
   }
   return run;
 }
 
 if (import.meta.main) {
-  // Before the builds, so a missing Chromium fails in seconds
-  // Not on import, so the spec can test the pure functions above without Playwright
+  // Before the builds, so a missing Chromium fails in seconds; not on import, so the spec runs without Playwright
   const { chromium }: { chromium: { launch(): Promise<Browser> } } = createRequire(
     join(import.meta.dirname, "../apps/docs/package.json"),
   )("playwright");

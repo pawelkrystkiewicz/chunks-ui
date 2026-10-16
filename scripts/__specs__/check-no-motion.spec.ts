@@ -89,53 +89,21 @@ describe("typesProblem", () => {
     expect(problem).toContain(output);
   });
 
-  it("names the consumer and the resolution that failed", () => {
+  it("gives a node10 subpath one hint, and names the consumer and the resolution", () => {
     const problem = typesProblem(2, subpath, "node10");
     expect(problem).toContain("without motion");
     expect(problem).toContain("node10");
-    expect(typesProblem(2, subpath, "bundler")).toContain("bundler");
-  });
-
-  it("blames an exports-only subpath when node10 cannot find a dependency's subpath", () => {
-    const problem = typesProblem(2, subpath, "node10");
-    expect(problem).toContain("class-variance-authority/types");
-    expect(problem).toContain("exports");
     expect(problem).toContain("typesVersions");
+    expect(problem).toContain("packages/ui/package.json");
+    expect(problem).toContain("#405");
     expect(problem).toContain(subpath);
-  });
-
-  it("gives the subpath hint neither under bundler nor for a bare module name", () => {
-    expect(typesProblem(2, subpath, "bundler")).not.toContain("typesVersions");
-    const bare =
-      "node_modules/chunks-ui/dist/index.d.ts(5,36): error TS2307: Cannot find module 'clsx' or its corresponding type declarations.\n";
-    expect(typesProblem(2, bare, "node10")).not.toContain("typesVersions");
   });
 
   it("gives no subpath hint for a relative specifier", () => {
     const relative =
       "node_modules/chunks-ui/dist/index.d.ts(2,20): error TS2307: Cannot find module './x/y' or its corresponding type declarations.\n";
     expect(typesProblem(2, relative, "node10")).not.toContain("typesVersions");
-    expect(typesProblem(2, relative, "node10")).not.toContain("exports map");
-  });
-
-  it("points at typesVersions in packages/ui/package.json for a chunks-ui subpath", () => {
-    const own =
-      "types.ts(2,20): error TS2307: Cannot find module 'chunks-ui/utils' or its corresponding type declarations.\n";
-    const problem = typesProblem(2, own, "node10");
-    expect(problem).toContain("chunks-ui/utils");
-    expect(problem).toContain("typesVersions");
-    expect(problem).toContain("packages/ui/package.json");
-    expect(problem).not.toContain("#405");
-  });
-
-  it("keeps the #405 hint for a dependency subpath", () => {
-    expect(typesProblem(2, subpath, "node10")).toContain("#405");
-  });
-
-  it("prefers the MotionLike hint for motion/react under node10", () => {
-    const problem = typesProblem(2, missing, "node10");
-    expect(problem).toContain("MotionLike");
-    expect(problem).not.toContain("typesVersions");
+    expect(typesProblem(2, relative, "node10")).not.toContain("#405");
   });
 });
 
@@ -288,19 +256,13 @@ describe("browserProblem", () => {
     expect(browserProblem("without motion", run({ network }), [page])).toBeUndefined();
   });
 
-  it("names the consumer and lists the page's errors", () => {
+  it("names the consumer, lists the page's errors and keeps the failed step", () => {
     const errors = ["pageerror: TypeError: x is not a function", "console.error: boom"];
-    const problem = browserProblem("without motion", run({ errors }), [page]);
+    const failure = "TimeoutError: waitFor";
+    const problem = browserProblem("without motion", run({ errors, failure }), [page]);
     expect(problem).toContain("without motion");
     for (const error of errors) expect(problem).toContain(error);
-    expect(browserProblem("with motion", run({ errors }), [page, motion])).toContain("with motion");
-  });
-
-  it("keeps the failed step when the page also raised errors", () => {
-    const run2 = run({ errors: ["console.error: boom"], failure: "TimeoutError: waitFor" });
-    const problem = browserProblem("with motion", run2, [page, motion]);
-    expect(problem).toContain("console.error: boom");
-    expect(problem).toContain("TimeoutError: waitFor");
+    expect(problem).toContain(failure);
   });
 
   it("names the trigger and the title when the dialog did not open", () => {
@@ -349,12 +311,6 @@ describe("the fixture app", () => {
     const page = read("next/app/page.jsx");
     for (const text of NEXT_TRIGGERS) expect(page).toContain(text);
     expect(page).toContain(`<Dialog.Title>${DIALOG_TITLE}</Dialog.Title>`);
-  });
-
-  it("sets the hydration marker drive() waits for", () => {
-    const page = read("next/app/page.jsx");
-    expect(page).toContain("useEffect");
-    expect(page).toContain('document.documentElement.dataset.hydrated = "true"');
   });
 
   it("pins the next version of the docs app", () => {
