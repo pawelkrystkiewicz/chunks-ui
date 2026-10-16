@@ -27,7 +27,7 @@ import {
 } from "node:fs";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve, sep } from "node:path";
 
 const UI = join(import.meta.dirname, "../packages/ui");
 const FIXTURES = join(import.meta.dirname, "no-motion");
@@ -414,16 +414,32 @@ function nextBuild(dir: string) {
   return { ...result, html, files, out };
 }
 
-/** Serves the static export in `out` on a free port; `server.url` is its origin. */
+/**
+ * The file under `out` that `pathname` (a URL path, `/` for index.html) names, or undefined when
+ * it names one outside `out` or is not valid percent-encoding. The path is decoded before it is
+ * resolved, so `/..%2Fx` cannot climb out of `out`.
+ */
+export function servedPath(out: string, pathname: string): string | undefined {
+  const root = resolve(out);
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(pathname === "/" ? "/index.html" : pathname);
+  } catch {
+    return;
+  }
+  const file = resolve(root, `.${decoded}`);
+  if (file === root || file.startsWith(root + sep)) return file;
+}
+
+/** Serves the static export in `out` on a free port of the loopback interface; `server.url` is its origin. */
 function serve(out: string) {
   return Bun.serve({
+    hostname: "127.0.0.1",
     port: 0,
     async fetch(request) {
-      const { pathname } = new URL(request.url);
-      const file = Bun.file(
-        join(out, pathname === "/" ? "index.html" : decodeURIComponent(pathname)),
-      );
-      return (await file.exists())
+      const path = servedPath(out, new URL(request.url).pathname);
+      const file = path && Bun.file(path);
+      return file && (await file.exists())
         ? new Response(file)
         : new Response("Not found", { status: 404 });
     },

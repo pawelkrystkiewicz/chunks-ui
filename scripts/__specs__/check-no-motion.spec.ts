@@ -8,6 +8,7 @@ import {
   NEXT_TRIGGERS,
   nextWithMotionProblem,
   nextWithoutMotionProblem,
+  servedPath,
   typesProblem,
   withMotionProblem,
   withoutMotionProblem,
@@ -341,5 +342,27 @@ describe("the fixture app", () => {
     const shared = Object.keys(without).filter((name) => name in withMotion);
     expect(shared.length).toBeGreaterThan(5);
     for (const name of shared) expect([name, withMotion[name]]).toEqual([name, without[name]]);
+  });
+});
+
+describe("servedPath", () => {
+  const out = "/tmp/site/out";
+
+  it("serves index.html for the root and files under out", () => {
+    expect(servedPath(out, "/")).toBe("/tmp/site/out/index.html");
+    expect(servedPath(out, "/_next/static/chunks/a.js")).toBe(
+      "/tmp/site/out/_next/static/chunks/a.js",
+    );
+  });
+
+  it("refuses a path that leaves out, however it is encoded", () => {
+    expect(servedPath(out, "/..%2Fx")).toBeUndefined();
+    expect(servedPath(out, "/%2e%2e/x")).toBeUndefined();
+    expect(servedPath(out, "/a/../../x")).toBeUndefined();
+    expect(servedPath(out, "/..%2Fout-secret/x")).toBeUndefined();
+  });
+
+  it("refuses a malformed escape instead of throwing", () => {
+    expect(servedPath(out, "/%E0%A4%A")).toBeUndefined();
   });
 });
