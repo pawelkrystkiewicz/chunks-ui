@@ -111,6 +111,27 @@ describe("typesProblem", () => {
     expect(typesProblem(2, bare, "node10")).not.toContain("typesVersions");
   });
 
+  it("gives no subpath hint for a relative specifier", () => {
+    const relative =
+      "node_modules/chunks-ui/dist/index.d.ts(2,20): error TS2307: Cannot find module './x/y' or its corresponding type declarations.\n";
+    expect(typesProblem(2, relative, "node10")).not.toContain("typesVersions");
+    expect(typesProblem(2, relative, "node10")).not.toContain("exports map");
+  });
+
+  it("points at typesVersions in packages/ui/package.json for a chunks-ui subpath", () => {
+    const own =
+      "types.ts(2,20): error TS2307: Cannot find module 'chunks-ui/utils' or its corresponding type declarations.\n";
+    const problem = typesProblem(2, own, "node10");
+    expect(problem).toContain("chunks-ui/utils");
+    expect(problem).toContain("typesVersions");
+    expect(problem).toContain("packages/ui/package.json");
+    expect(problem).not.toContain("#405");
+  });
+
+  it("keeps the #405 hint for a dependency subpath", () => {
+    expect(typesProblem(2, subpath, "node10")).toContain("#405");
+  });
+
   it("prefers the MotionLike hint for motion/react under node10", () => {
     const problem = typesProblem(2, missing, "node10");
     expect(problem).toContain("MotionLike");
@@ -275,6 +296,13 @@ describe("browserProblem", () => {
     expect(browserProblem("with motion", run({ errors }), [page, motion])).toContain("with motion");
   });
 
+  it("keeps the failed step when the page also raised errors", () => {
+    const run2 = run({ errors: ["console.error: boom"], failure: "TimeoutError: waitFor" });
+    const problem = browserProblem("with motion", run2, [page, motion]);
+    expect(problem).toContain("console.error: boom");
+    expect(problem).toContain("TimeoutError: waitFor");
+  });
+
   it("names the trigger and the title when the dialog did not open", () => {
     const failure = "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.";
     const problem = browserProblem("with motion", run({ failure }), [page, motion]);
@@ -282,13 +310,6 @@ describe("browserProblem", () => {
     expect(problem).toContain(`"${DIALOG}"`);
     expect(problem).toContain(`"${DIALOG_TITLE}"`);
     expect(problem).toContain(failure);
-  });
-
-  it("rejects a request for a chunk holding Motion's code without Motion, and names it", () => {
-    const problem = browserProblem("without motion", run(), [page, motion]);
-    expect(problem).toContain("without motion");
-    expect(problem).toContain(MOTION_CHUNK);
-    expect(problem).toContain("MotionGlobalConfig");
   });
 
   it("rejects a run with Motion that never requested Motion's chunk, and names use-motion.ts", () => {

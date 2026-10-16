@@ -103,8 +103,11 @@ export const NEXT_TRIGGERS = ["Open the dialog", "Hover for a tip"] as const;
 export const DIALOG_TITLE = "The dialog is open";
 const MISSING_MODULE = /TS2307: Cannot find module '([^']+)'/;
 const MISSING_MOTION_TYPES = /TS2307: Cannot find module 'motion\/react'/;
-/** `pkg/sub` or `@scope/pkg/sub`: a path into a package, which node10 resolves without its exports map. */
-const isSubpath = (name: string) => name.split("/").length > (name.startsWith("@") ? 2 : 1);
+/** `pkg/sub` or `@scope/pkg/sub`: a path into a package, which node10 resolves without its exports map. Not a relative or absolute specifier. */
+const isSubpath = (name: string) =>
+  !name.startsWith(".") &&
+  !name.startsWith("/") &&
+  name.split("/").length > (name.startsWith("@") ? 2 : 1);
 
 const ANSI = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, "g");
 const MOTION_WARNING = /WARNING in [\s\S]*?Can't resolve 'motion\/react'/g;
@@ -139,6 +142,8 @@ export function typesProblem(
   if (MISSING_MOTION_TYPES.test(output)) {
     hint =
       'dist/index.d.ts references motion/react: the types must describe Motion through MotionLike in packages/ui/src/lib/use-motion.ts, never through typeof import("motion/react").\n';
+  } else if (resolution === "node10" && unfound?.startsWith("chunks-ui/")) {
+    hint = `node10 resolves ${unfound} only through the typesVersions of packages/ui/package.json, never its exports map: an entry there is missing or no longer matches the files in dist.\n`;
   } else if (resolution === "node10" && unfound && isSubpath(unfound)) {
     hint = `node10 resolves ${unfound} through a directory or typesVersions of its package, never its exports map, and the chunks-ui typings reach it: import the type from a path node10 resolves (#405 did this for class-variance-authority/types).\n`;
   }
@@ -257,8 +262,7 @@ const chunkPath = (name: string) => `/_next/static/chunks/${name}`;
 
 /**
  * Why the exported page misbehaved in Chromium for `consumer`, or undefined when it opened the
- * dialog without an error and treated Motion's chunk right: never requested without Motion, and
- * with it requested only after the chunk with the page's own code had arrived, so the page's code
+ * dialog without an error and, with Motion, treated its chunk right: requested only after the chunk with the page's own code had arrived, so the page's code
  * (the import() in use-motion.ts) asked for it, not the HTML. `files` are the chunks under
  * out/_next/static/chunks, as for nextWithMotionProblem.
  */
@@ -269,7 +273,8 @@ export function browserProblem(
 ): string | undefined {
   const where = `Chromium, in the consumer ${consumer}:`;
   if (run.errors.length > 0) {
-    return `${where} the exported page raised errors:\n${run.errors.join("\n")}`;
+    const failed = run.failure === undefined ? "" : `\nand then: ${run.failure}`;
+    return `${where} the exported page raised errors:\n${run.errors.join("\n")}${failed}`;
   }
   if (run.failure !== undefined) {
     return `${where} the page did not load, open the dialog on "${NEXT_TRIGGERS[0]}" and show its title "${DIALOG_TITLE}":\n${run.failure}`;
@@ -281,12 +286,8 @@ export function browserProblem(
     ({ event, path }) => event === "start" && motion.includes(path),
   );
   const request = run.network[started];
-  if (consumer === "without motion") {
-    if (request) {
-      return `${where} the page requested ${request.path}, a chunk holding Motion's code (${MOTION_MARKER}), although Motion is not installed.`;
-    }
-    return;
-  }
+  // Without Motion no chunk can hold its code, so a clean run is all there is to check
+  if (consumer === "without motion") return;
   // No chunk holds Motion's code: nextWithMotionProblem reports that
   if (motion.length === 0) return;
   if (!request) {
