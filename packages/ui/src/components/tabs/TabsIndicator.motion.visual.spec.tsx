@@ -3,10 +3,11 @@ import { type CSSProperties, Profiler } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { resizeBatches } from "../../lib/shared-resize";
 import {
+  beforePaint,
   beforePaintOnceResized,
   eachPaintedFrame,
   enterMotionPath,
-  expectJumpedAtOnce,
+  expectFollowsFromFirstFrame,
   MOTION_PATHS,
   offBy,
   untilChanged,
@@ -135,43 +136,40 @@ const MOVES: [string, Layout, Layout][] = [
   ["the order of the other tab, by its class", FIXED, { ...FIXED, tabClassName: "order-first" }],
 ];
 
+/**
+ * Renders `before`, changes it to `after`, and asserts the indicator is over the active tab in
+ * every frame from the one the change paints in. That frame is read after the tabs'
+ * ResizeObservers, before it paints: once a box resizes, or for a move, which resizes nothing,
+ * in the next frame.
+ */
+async function expectFollowsBeforePaint(
+  withMotion: boolean,
+  change: "resize" | "move",
+  before: Layout,
+  after: Layout,
+) {
+  const { indicator, tab, list, rerender } = await renderTabs(withMotion, before);
+  const active = activeTab(after);
+  const start = boxOf(indicator);
+  const read = () => ({ indicator: boxOf(indicator), off: offBy(tab(active), indicator) });
+  const firstFrame =
+    change === "resize"
+      ? beforePaintOnceResized({ items: [tab("Alpha"), tab("Beta")], container: list }, read)
+      : beforePaint(list, read);
+
+  rerender(tabs(after));
+  await expectFollowsFromFirstFrame(firstFrame, read, start, near);
+}
+
 describe.each(MOTION_PATHS)("Tabs.Indicator, $path", ({ withMotion }) => {
   it.each(RESIZES)(
     "follows a change to %s in the frame it changes in, with no frames in between",
-    async (_, before, after) => {
-      const { indicator, tab, list, rerender } = await renderTabs(withMotion, before);
-      const active = activeTab(after);
-      const start = boxOf(indicator);
-      const firstPaint = beforePaintOnceResized(
-        { items: [tab("Alpha"), tab("Beta")], container: list },
-        () => offBy(tab(active), indicator),
-      );
-
-      rerender(tabs(after));
-      const frames = await eachPaintedFrame(
-        () => ({ indicator: boxOf(indicator), off: offBy(tab(active), indicator) }),
-        20,
-      );
-      // Over the tab in the frame the tab or the list changes in: the tabs' ResizeObservers
-      // measure the tab there, and the indicator is rendered before that frame paints
-      expect(await firstPaint, JSON.stringify(frames)).toBeLessThanOrEqual(1);
-      expectJumpedAtOnce(frames, start, near);
-    },
+    (_, before, after) => expectFollowsBeforePaint(withMotion, "resize", before, after),
   );
 
   it.each(MOVES)(
-    "follows a change to %s at once, which moves the tab without resizing anything",
-    async (_, before, after) => {
-      const { indicator, tab, rerender } = await renderTabs(withMotion, before);
-      const start = boxOf(indicator);
-
-      rerender(tabs(after));
-      const frames = await eachPaintedFrame(
-        () => ({ indicator: boxOf(indicator), off: offBy(tab("Alpha"), indicator) }),
-        20,
-      );
-      expectJumpedAtOnce(frames, start, near);
-    },
+    "follows a change to %s in the frame it changes in, which moves the tab without resizing anything",
+    (_, before, after) => expectFollowsBeforePaint(withMotion, "move", before, after),
   );
 
   // A selection measures again once, for padding the newly active tab gains on selection, and so
