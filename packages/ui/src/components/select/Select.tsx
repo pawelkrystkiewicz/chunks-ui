@@ -4,7 +4,11 @@ import { Select as BaseSelect } from "@base-ui/react/select";
 import type { ComponentProps } from "react";
 import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
-import { usePortalContainer } from "../../lib/portal-container";
+import {
+  PortalContainerProvider,
+  usePortalContainer,
+  usePortalNode,
+} from "../../lib/portal-container";
 import { usePopupRender } from "../../lib/use-popup-render";
 import { FOCUS_RING, RING_TRANSITION } from "../shared";
 
@@ -135,8 +139,14 @@ function SelectGroupLabel({ className, ...props }: SelectGroupLabelProps) {
   );
 }
 
-function SelectPortal(props: ComponentProps<typeof BaseSelect.Portal>) {
-  return <BaseSelect.Portal container={usePortalContainer()} {...props} />;
+function SelectPortal({ children, ref, ...props }: ComponentProps<typeof BaseSelect.Portal>) {
+  const [portalRef, portalNode] = usePortalNode(ref);
+  return (
+    <BaseSelect.Portal ref={portalRef} container={usePortalContainer()} {...props}>
+      {/* Popups opened inside portal in here, and the scrub cursor with them, as in Popover */}
+      <PortalContainerProvider value={portalNode}>{children}</PortalContainerProvider>
+    </BaseSelect.Portal>
+  );
 }
 
 export const Select = {

@@ -5,7 +5,11 @@ import { type ComponentProps, useState } from "react";
 import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { arrowClasses, arrowPopupClasses } from "../../lib/popup-arrow";
-import { usePortalContainer } from "../../lib/portal-container";
+import {
+  PortalContainerProvider,
+  usePortalContainer,
+  usePortalNode,
+} from "../../lib/portal-container";
 import { ArrowChangeProvider, useArrowChange, useArrowPadding } from "../../lib/use-arrow-padding";
 import { usePopupRender } from "../../lib/use-popup-render";
 import { RING_TRANSITION_MOTION } from "../shared";
@@ -55,10 +59,14 @@ export type MenuRadioItemIndicatorProps = ComponentProps<typeof BaseMenu.RadioIt
 export type MenuCheckboxItemIndicatorProps = ComponentProps<typeof BaseMenu.CheckboxItemIndicator>;
 
 function MenuContent(props: MenuContentProps) {
+  const [portalRef, portalNode] = usePortalNode();
   return (
-    <BaseMenu.Portal container={usePortalContainer()}>
-      {/* Mounts only while open, so it picks Motion or CSS each time the menu opens */}
-      <MenuContentPopup {...props} />
+    <BaseMenu.Portal ref={portalRef} container={usePortalContainer()}>
+      {/* Popups opened inside portal in here, and the scrub cursor with them, as in Popover */}
+      <PortalContainerProvider value={portalNode}>
+        {/* Mounts only while open, so it picks Motion or CSS each time the menu opens */}
+        <MenuContentPopup {...props} />
+      </PortalContainerProvider>
     </BaseMenu.Portal>
   );
 }

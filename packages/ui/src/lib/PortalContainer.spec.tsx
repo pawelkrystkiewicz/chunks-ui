@@ -160,9 +160,71 @@ describe("PortalContainerProvider", () => {
   });
 });
 
+// Like Dialog, Drawer, Popover and Combobox, these parts provide their own portal node to what
+// opens inside them: a nested popup lands there also under a provider. (The scrub cursor, which has
+// no fallback of its own, is proven in the NumberField overlay table.)
+describe("a popup's own portal node", () => {
+  const content = (
+    <Popover.Root open>
+      <Popover.Trigger>Nested</Popover.Trigger>
+      <Popover.Content data-testid="nested">Nested</Popover.Content>
+    </Popover.Root>
+  );
+
+  const parents: Case[] = [
+    {
+      name: "Menu",
+      ui: (
+        <Menu.Root open>
+          <Menu.Trigger>Open</Menu.Trigger>
+          <Menu.Content data-testid="popup">{content}</Menu.Content>
+        </Menu.Root>
+      ),
+    },
+    {
+      name: "Select",
+      ui: (
+        <Select.Root open>
+          <Select.Trigger>
+            <Select.Value />
+          </Select.Trigger>
+          <Select.Portal>
+            <Select.Positioner>
+              <Select.Popup data-testid="popup">{content}</Select.Popup>
+            </Select.Positioner>
+          </Select.Portal>
+        </Select.Root>
+      ),
+    },
+    {
+      name: "Tooltip",
+      ui: (
+        <Tooltip.Root open>
+          <Tooltip.Trigger>Hover</Tooltip.Trigger>
+          <Tooltip.Portal>
+            <Tooltip.Positioner>
+              <Tooltip.Popup data-testid="popup">{content}</Tooltip.Popup>
+            </Tooltip.Positioner>
+          </Tooltip.Portal>
+        </Tooltip.Root>
+      ),
+    },
+  ];
+
+  it.each(parents)("$name: holds the popup opened inside it", async (c) => {
+    const container = makeContainer();
+    render(<PortalContainerProvider value={container}>{c.ui}</PortalContainerProvider>);
+    const portalNode = (await screen.findByTestId("popup")).closest("[data-base-ui-portal]");
+    // The part's own node, which still renders in the provider's element
+    expect(portalNode?.parentElement).toBe(container);
+    expect(portalNode).toContainElement(await screen.findByTestId("nested"));
+  });
+});
+
 // Each Portal merges the consumer's `ref` with the one that feeds the node to its
 // PortalContainerProvider. Dropping the consumer's side leaves `ref.current` null. (Dropping ours
-// is covered by the NumberField overlay table, which needs the provided node.)
+// is covered by the NumberField overlay table for the cursor and by "a popup's own portal node"
+// above for the nested popup, which both need the provided node.)
 describe("a Portal's consumer ref", () => {
   const portals: { name: string; ui: (ref: Ref<HTMLDivElement>) => ReactNode }[] = [
     {
@@ -196,6 +258,34 @@ describe("a Portal's consumer ref", () => {
             </Combobox.Positioner>
           </Combobox.Portal>
         </Combobox.Root>
+      ),
+    },
+    {
+      name: "Select.Portal",
+      ui: (ref) => (
+        <Select.Root open>
+          <Select.Trigger>
+            <Select.Value />
+          </Select.Trigger>
+          <Select.Portal ref={ref}>
+            <Select.Positioner>
+              <Select.Popup data-testid="popup">Content</Select.Popup>
+            </Select.Positioner>
+          </Select.Portal>
+        </Select.Root>
+      ),
+    },
+    {
+      name: "Tooltip.Portal",
+      ui: (ref) => (
+        <Tooltip.Root open>
+          <Tooltip.Trigger>Hover</Tooltip.Trigger>
+          <Tooltip.Portal ref={ref}>
+            <Tooltip.Positioner>
+              <Tooltip.Popup data-testid="popup">Content</Tooltip.Popup>
+            </Tooltip.Positioner>
+          </Tooltip.Portal>
+        </Tooltip.Root>
       ),
     },
   ];
