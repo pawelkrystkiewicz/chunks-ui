@@ -18,6 +18,8 @@ type Layout = {
   value?: "a" | "b";
   /** Style of tab "a", as a font size slider would set it */
   tabStyle?: CSSProperties;
+  /** Key of tab "a": a new key remounts it */
+  tabKey?: string;
   /** Padding of the list, as a spacing slider would set it */
   listPadding?: number;
   /** Width of the box around the list, which centres its tabs */
@@ -26,12 +28,19 @@ type Layout = {
   tabClassName?: string;
 };
 
-const tabs = ({ value = "a", tabStyle, listPadding, width = 400, tabClassName }: Layout = {}) => (
+const tabs = ({
+  value = "a",
+  tabStyle,
+  tabKey,
+  listPadding,
+  width = 400,
+  tabClassName,
+}: Layout = {}) => (
   <div style={{ width }}>
     <Tabs.Root value={value}>
       <Tabs.List className="justify-center" style={{ padding: listPadding }}>
         {/* No transition of its own, so the tab takes its new size at once */}
-        <Tabs.Tab value="a" style={{ transition: "none", ...tabStyle }}>
+        <Tabs.Tab key={tabKey} value="a" style={{ transition: "none", ...tabStyle }}>
           Alpha
         </Tabs.Tab>
         <Tabs.Tab value="b" className={tabClassName}>
@@ -52,6 +61,9 @@ type Box = ReturnType<typeof boxOf>;
 const near = (a: Box, b: Box) =>
   (["left", "top", "width", "height"] as const).every((edge) => Math.abs(a[edge] - b[edge]) <= 1);
 
+/** The name of the active tab of `layout` */
+const activeTab = (layout?: Layout) => (layout?.value === "b" ? "Beta" : "Alpha");
+
 async function renderTabs(withMotion: boolean, layout?: Layout) {
   await enterMotionPath(withMotion);
   const result = render(tabs(layout));
@@ -62,15 +74,19 @@ async function renderTabs(withMotion: boolean, layout?: Layout) {
     .poll(() => indicator.classList.contains("top-(--active-tab-top)"), { timeout: 5000 })
     .toBe(!withMotion);
   const tab = (name: "Alpha" | "Beta") => result.getByRole("tab", { name });
-  await waitForStable(() => offBy(tab("Alpha"), indicator));
-  expect(offBy(tab("Alpha"), indicator)).toBeLessThanOrEqual(1);
+  const active = activeTab(layout);
+  await waitForStable(() => offBy(tab(active), indicator));
+  expect(offBy(tab(active), indicator)).toBeLessThanOrEqual(1);
   return { ...result, indicator, tab };
 }
 
+/** Each from a layout with the same `value` and nothing else changed */
 const RESIZES: [string, Layout][] = [
   ["the font size of the tab", { tabStyle: { fontSize: 20 } }],
   // Only the tab's border box grows: its content box doesn't, nor does the list's
   ["the padding of the tab", { tabStyle: { paddingInline: 24 } }],
+  // Only that tab's border box grows: the active tab moves in the centred list, at its size
+  ["the padding of a tab before the active one", { value: "b", tabStyle: { paddingInline: 24 } }],
   ["the padding of the list", { listPadding: 16 }],
   ["the width of the box around the list", { width: 300 }],
 ];
@@ -79,12 +95,13 @@ describe.each(MOTION_PATHS)("Tabs.Indicator, $path", ({ withMotion }) => {
   it.each(RESIZES)(
     "follows a change to %s at once, with no frames in between",
     async (_, resized) => {
-      const { indicator, tab, rerender } = await renderTabs(withMotion);
+      const { indicator, tab, rerender } = await renderTabs(withMotion, { value: resized.value });
+      const active = activeTab(resized);
       const start = boxOf(indicator);
 
       rerender(tabs(resized));
       const frames = await eachPaintedFrame(
-        () => ({ indicator: boxOf(indicator), off: offBy(tab("Alpha"), indicator) }),
+        () => ({ indicator: boxOf(indicator), off: offBy(tab(active), indicator) }),
         20,
       );
       const end = frames.at(-1)?.indicator ?? start;
@@ -154,6 +171,22 @@ describe.each(MOTION_PATHS)("Tabs.Indicator, $path", ({ withMotion }) => {
     rerender(tabs({ ...layout, value: "b" }));
     await waitForStable(() => offBy(beta, indicator));
     expect(offBy(beta, indicator)).toBeLessThanOrEqual(1);
+  });
+
+  // A new key replaces the active tab's element while the value stays the same, as a tab that
+  // renders after the indicator does: the indicator must follow the new element, not the old
+  it("follows a padding change of the active tab after it remounts", async () => {
+    const { indicator, tab, rerender } = await renderTabs(withMotion);
+    const mounted = tab("Alpha");
+
+    rerender(tabs({ tabKey: "remounted" }));
+    expect(tab("Alpha")).not.toBe(mounted);
+    await waitForStable(() => offBy(tab("Alpha"), indicator));
+    expect(offBy(tab("Alpha"), indicator)).toBeLessThanOrEqual(1);
+
+    rerender(tabs({ tabKey: "remounted", tabStyle: { paddingInline: 24 } }));
+    await waitForStable(() => offBy(tab("Alpha"), indicator));
+    expect(offBy(tab("Alpha"), indicator)).toBeLessThanOrEqual(1);
   });
 });
 
