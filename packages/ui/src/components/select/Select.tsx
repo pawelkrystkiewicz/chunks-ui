@@ -67,9 +67,10 @@ function SelectPopup({ className, render: renderProp, ...props }: SelectPopupPro
       render={render}
       className={cnState(
         "rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md",
-        !useSpring && "data-starting-style:opacity-0",
-        !useSpring && "data-ending-style:opacity-0",
-        !useSpring && "micro-interactions",
+        !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
+        !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
+        // The fade and scale of the spring path, so both paths match
+        !useSpring && "micro-interactions [transition-property:opacity,scale] duration-300",
         className,
       )}
       {...props}

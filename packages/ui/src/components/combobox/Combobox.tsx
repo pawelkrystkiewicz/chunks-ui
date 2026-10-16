@@ -42,7 +42,16 @@ export type ComboboxEmptyProps = ComponentProps<typeof BaseCombobox.Empty>;
 export type ComboboxClearProps = ComponentProps<typeof BaseCombobox.Clear>;
 export type ComboboxGroupLabelProps = ComponentProps<typeof BaseCombobox.GroupLabel>;
 export type ComboboxIconProps = ComponentProps<typeof BaseCombobox.Icon>;
-export type ComboboxPositionerProps = ComponentProps<typeof BaseCombobox.Positioner>;
+export type ComboboxPositionerProps = Omit<
+  ComponentProps<typeof BaseCombobox.Positioner>,
+  "sideOffset"
+> & {
+  /**
+   * Distance from the input element in pixels.
+   * @default 8
+   */
+  sideOffset?: ComponentProps<typeof BaseCombobox.Positioner>["sideOffset"];
+};
 export type ComboboxGroupProps = ComponentProps<typeof BaseCombobox.Group>;
 export type ComboboxListProps = ComponentProps<typeof BaseCombobox.List>;
 export type ComboboxChipsProps = ComponentProps<typeof BaseCombobox.Chips>;
@@ -61,12 +70,16 @@ function ComboboxRoot<Value, Multiple extends boolean | undefined = false, Item 
   );
 }
 
+// The Control draws the one ring while the combobox input inside it has keyboard focus, so it turns
+// the input's own ring (FOCUS_RING) off: `[role=combobox]:focus-visible` under the class (0,3,0)
+// outranks it. Another input inside the Control keeps its ring.
 function ComboboxControl({ className, ...props }: ComboboxControlProps) {
   return (
     <div
       className={cn(
         "relative flex flex-wrap items-center gap-1 rounded-md border border-input bg-background px-3 py-1.5",
         FOCUS_RING_WITHIN,
+        "[&_[role=combobox]:focus-visible]:outline-none",
         RING_TRANSITION,
         "has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50",
         className,
@@ -157,10 +170,13 @@ function ComboboxIcon({ className, ...props }: ComboboxIconProps) {
   );
 }
 
-function ComboboxPositioner({ className, ...props }: ComboboxPositionerProps) {
+// 8px clears the input's focus ring (2px of --ring, 2px outside the input), as on Popover.Content
+// and Menu.Content
+function ComboboxPositioner({ className, sideOffset = 8, ...props }: ComboboxPositionerProps) {
   return (
     <BaseCombobox.Positioner
       className={cnState("z-dropdowns w-[var(--anchor-width)]", className)}
+      sideOffset={sideOffset}
       {...props}
     />
   );
@@ -179,10 +195,11 @@ function ComboboxPopup({ className, render: renderProp, ...props }: ComboboxPopu
       className={cnState(
         "rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md",
         "max-h-[var(--available-height)] overflow-y-auto overscroll-contain scroll-py-1",
-        !useSpring && "data-starting-style:opacity-0",
-        !useSpring && "data-ending-style:opacity-0",
-        // Only the fade: `all` would also animate the max-height that --available-height drives.
-        !useSpring && "micro-interactions [transition-property:opacity] duration-300",
+        !useSpring && "data-starting-style:scale-95 data-starting-style:opacity-0",
+        !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
+        // Only the fade and scale: `all` would also animate the max-height that
+        // --available-height drives.
+        !useSpring && "micro-interactions [transition-property:opacity,scale] duration-300",
         className,
       )}
       {...props}
@@ -278,8 +295,12 @@ function ComboboxChip({ className, id, ...props }: ComboboxChipProps) {
     <ComboboxChipIdContext.Provider value={chipId}>
       <BaseCombobox.Chip
         id={chipId}
+        // needs `relative` for `z-*`; lifts above the next flush chip
         className={cnState(
           "inline-flex items-center gap-1 rounded-sm border border-border bg-muted px-1.5 py-0.5 text-xs",
+          FOCUS_RING,
+          "focus-visible:relative focus-visible:z-[1]",
+          RING_TRANSITION,
           className,
         )}
         {...props}

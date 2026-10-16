@@ -1,7 +1,13 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { page } from "vitest/browser";
-import { expectNotAllowed, focusVisible, renderFixture, renderPage } from "../../VisualTest.utils";
+import {
+  describePopupCssPath,
+  expectNotAllowed,
+  focusVisible,
+  renderFixture,
+  renderPage,
+} from "../../VisualTest.utils";
 import { Select } from "./index";
 
 const fruits = [
@@ -11,16 +17,16 @@ const fruits = [
   { value: "date", label: "Date" },
 ];
 
-const closedSelect = () => (
+const closedSelect = (open?: boolean) => (
   <div style={{ width: 200 }}>
-    <Select.Root defaultValue="apple">
+    <Select.Root defaultValue="apple" open={open}>
       <Select.Trigger aria-label="Fruit">
         <Select.Value />
         <Select.Icon />
       </Select.Trigger>
       <Select.Portal>
         <Select.Positioner>
-          <Select.Popup>
+          <Select.Popup data-testid="popup">
             {fruits.map((f) => (
               <Select.Item key={f.value} value={f.value}>
                 <Select.ItemIndicator />
@@ -89,3 +95,5 @@ describe("Select", () => {
     expectNotAllowed(getByRole("combobox"));
   });
 });
+
+describePopupCssPath("Select.Popup", closedSelect);

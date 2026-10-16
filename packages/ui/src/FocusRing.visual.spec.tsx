@@ -615,6 +615,19 @@ const comboboxPopup = () => (
   </Combobox.Root>
 );
 
+const selectPopup = () => (
+  <Select.Root defaultOpen>
+    <Select.Trigger aria-label="Fruit" />
+    <Select.Portal>
+      <Select.Positioner>
+        <Select.Popup data-testid="target">
+          <Select.Item value="Apple">Apple</Select.Item>
+        </Select.Popup>
+      </Select.Positioner>
+    </Select.Portal>
+  </Select.Root>
+);
+
 /*
  * A part that sets its own `[transition-property:…]` list keeps one duration for all of it: the
  * class's list of durations would repeat over the part's list, and give some of its properties
@@ -670,9 +683,14 @@ describe("own transition lists with no reduced-motion preference", () => {
       properties: ["opacity", "scale"],
     },
     {
+      part: "Select.Popup",
+      ui: selectPopup(),
+      properties: ["opacity", "scale"],
+    },
+    {
       part: "Combobox.Popup",
       ui: comboboxPopup(),
-      properties: ["opacity"],
+      properties: ["opacity", "scale"],
     },
     {
       part: "Dialog.Popup",
