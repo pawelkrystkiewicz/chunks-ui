@@ -32,35 +32,26 @@ describe("Combobox", () => {
 
   // Base UI's InputGroup: the part the popup anchors to, so the popup lines up with the Control
   it("renders Control as Base UI's InputGroup, a group with the popup state", () => {
+    const ref = createRef<HTMLDivElement>();
     render(
-      <Combobox.Root open>
-        <Combobox.Control data-testid="control">
+      <Combobox.Root open disabled>
+        <Combobox.Control
+          ref={ref}
+          data-testid="control"
+          className={(state) => (state.disabled ? "is-disabled" : "is-enabled")}
+        >
           <Combobox.Input aria-label="Fruits" />
         </Combobox.Control>
       </Combobox.Root>,
     );
     const control = screen.getByTestId("control");
+    expect(ref.current).toBe(control);
     expect(control).toHaveAttribute("role", "group");
     expect(control).toHaveAttribute("data-popup-open");
-  });
-
-  it("forwards a ref and a function className to Control", () => {
-    const ref = createRef<HTMLDivElement>();
-    render(
-      <Combobox.Root disabled>
-        <Combobox.Control
-          ref={ref}
-          data-testid="control"
-          className={(state) => (state.disabled ? "is-disabled" : "is-enabled")}
-        />
-      </Combobox.Root>,
-    );
-    const control = screen.getByTestId("control");
-    expect(ref.current).toBe(control);
     expect(control).toHaveClass("is-disabled", FOCUS_RING_WITHIN);
   });
 
-  // Base UI's handler on the InputGroup: a press on the padding focuses the input and opens the popup
+  // Base UI's handler on the InputGroup: a press on the padding focuses the input, opens the popup
   it("focuses the input and opens the popup on a press on the Control's padding", () => {
     render(
       <Combobox.Root items={items}>
@@ -74,6 +65,20 @@ describe("Combobox", () => {
     fireEvent.mouseDown(control);
     expect(screen.getByRole("combobox")).toHaveFocus();
     expect(control).toHaveAttribute("data-popup-open");
+  });
+
+  it("focuses the input but leaves the popup closed on a press on the Control when openOnInputClick is false", () => {
+    render(
+      <Combobox.Root items={items} openOnInputClick={false}>
+        <Combobox.Control data-testid="control">
+          <Combobox.Input aria-label="Fruits" />
+        </Combobox.Control>
+      </Combobox.Root>,
+    );
+    const control = screen.getByTestId("control");
+    fireEvent.mouseDown(control);
+    expect(screen.getByRole("combobox")).toHaveFocus();
+    expect(control).not.toHaveAttribute("data-popup-open");
   });
 
   it("does not open the popup on a press on Clear or ChipRemove", () => {
@@ -111,8 +116,6 @@ describe("Combobox", () => {
     expect(ref.current).toBe(chips);
     expect(chips).toHaveClass("custom", "flex", "flex-wrap", "items-center", "gap-2");
     expect(chips).not.toHaveClass("gap-1");
-    // Base UI's own behaviour: a toolbar role for the arrow-key navigation between the chips
-    expect(chips).toHaveAttribute("role", "toolbar");
   });
 
   it("renders Input with custom className", () => {

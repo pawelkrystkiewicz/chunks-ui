@@ -69,12 +69,7 @@ function ComboboxRoot<Value, Multiple extends boolean | undefined = false, Item 
   );
 }
 
-// Base UI's InputGroup, the part the popup anchors to: the popup then takes the Control's left
-// edge and width, and sideOffset counts from the Control's border, as from a standalone input.
-// A plain <div> left the popup anchored to the input inside the Control's padding (#478).
-// The Control draws the one ring while the combobox input inside it has keyboard focus, so it turns
-// the input's own ring (FOCUS_RING) off: `[role=combobox]:focus-visible` under the class (0,3,0)
-// outranks it. Another input inside the Control keeps its ring.
+// Base UI's InputGroup, so the popup anchors to the whole Control (#478).
 function ComboboxControl({ className, ...props }: ComboboxControlProps) {
   return (
     <BaseCombobox.InputGroup
@@ -290,7 +285,6 @@ function ComboboxGroupLabel({ className, ...props }: ComboboxGroupLabelProps) {
   );
 }
 
-// Without a gap the chips sat flush against each other (#478)
 function ComboboxChips({ className, ...props }: ComboboxChipsProps) {
   return (
     <BaseCombobox.Chips
