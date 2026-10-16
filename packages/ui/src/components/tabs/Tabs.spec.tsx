@@ -4,7 +4,7 @@ import { axe } from "jest-axe";
 import { type ReactNode, StrictMode, useEffect, useState } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { renderToString } from "react-dom/server";
-import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { springs } from "../../lib/motion";
 import { useIndicatorSlide } from "../../lib/use-indicator-slide";
 import { FOCUS_RING } from "../shared";
@@ -406,12 +406,21 @@ describe("cancelling a change in onValueChange", () => {
 // Base UI accepts any tab value, a function included. React calls a function passed to useState
 // or a state setter as an initializer or updater, so the value must be stored as `() => value`.
 describe("function tab values", () => {
+  // Plain closures, not vi.fn(): two mocks share a String() text, which duplicates Tabs.Contents keys.
+  // Nothing may call a tab value, so every call (React as initializer or updater) is counted.
+  let calls = 0;
   function first() {
+    calls++;
     return "first";
   }
   function second() {
+    calls++;
     return "second";
   }
+
+  beforeEach(() => {
+    calls = 0;
+  });
 
   function IsSecondProbe() {
     return <span data-testid="is-second">{String(useTabsValue() === second)}</span>;
@@ -470,6 +479,7 @@ describe("function tab values", () => {
     expect(screen.getByTestId("is-second")).toHaveTextContent("true");
     expect(isHiddenPanel(screen.getByTestId("content-a").parentElement!)).toBe(true);
     expect(isHiddenPanel(screen.getByTestId("content-b").parentElement!)).toBe(false);
+    expect(calls).toBe(0);
   });
 
   // The indicator slides when its target changes, so the hook must keep a function target as is
@@ -482,6 +492,7 @@ describe("function tab values", () => {
     rerender({ target: second });
     expect(result.current.sliding).toBe(true);
     expect(result.current.transition).toBe(springs.indicator);
+    expect(calls).toBe(0);
   });
 });
 
