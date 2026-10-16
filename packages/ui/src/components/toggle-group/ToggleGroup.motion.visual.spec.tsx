@@ -625,6 +625,19 @@ describe.each(MOTION_PATHS)("ToggleGroup indicator on a resize, $path", ({ withM
     await waitForStable(() => offBy(item("Beta"), indicator()));
     expect(resizeBatches.count).toBe(batches);
 
+    // A node added to and removed from an item, and from its label, as a swapped icon would be
+    for (const parent of [item("Beta"), label]) {
+      // Out of flow, so the item keeps its size (a flex item would add a gap)
+      const extra = document.createElement("i");
+      extra.style.position = "absolute";
+      parent.append(extra);
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      extra.remove();
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+    }
+    await waitForStable(() => offBy(item("Beta"), indicator()));
+    expect(resizeBatches.count).toBe(batches);
+
     batches = resizeBatches.count;
     rerender(sized({ ...FIXED, value: "b", groupGap: 24 }));
     await waitForStable(() => offBy(item("Beta"), indicator()));
