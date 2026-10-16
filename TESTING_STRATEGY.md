@@ -96,6 +96,28 @@ it("has no a11y violations", async () => {
 });
 ```
 
+A popup (Combobox, DatePicker, Dialog, Drawer, Menu, Popover, Select, Tooltip) renders into a portal node in `document.body`, outside the `container` that `render` returns, so `axe(container)` does not see it. When the test opens a popup, audit `document.body`. Also assert that the popup is in the document, so that the audit cannot pass when the popup did not open:
+
+```tsx
+it("has no a11y violations", async () => {
+  const { container } = render(
+    <Menu.Root open>
+      <Menu.Trigger>Open</Menu.Trigger>
+      <Menu.Content>
+        <Menu.Item>Item</Menu.Item>
+      </Menu.Content>
+    </Menu.Root>,
+  );
+  // The popup is portalled out of the container RTL hands back, so audit the body
+  expect(container).not.toContainElement(screen.getByRole("menu"));
+  expect(
+    await axe(document.body, { rules: { region: { enabled: false } } }),
+  ).toHaveNoViolations();
+});
+```
+
+The audit of `document.body` also runs axe's `region` rule (best practice: all content is in a landmark). The test page has no landmarks, and a portalled popup is outside them on a real page too. The rule does not flag a dialog, so the Dialog, Drawer and Popover audits keep it. For a popup with a different role (a menu, a listbox, a tooltip), disable `region` in that audit only. With the popup closed, and for parts that render in place, such as `Toast.Viewport`, `axe(container)` is correct.
+
 Setup: `jest-axe` is globally configured in `vitest.setup.ts` — `toHaveNoViolations` is available on all `expect()` calls.
 
 ### Accessible names in Chromium

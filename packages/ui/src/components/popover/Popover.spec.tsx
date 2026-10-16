@@ -84,13 +84,8 @@ describe("Popover", () => {
         </Popover.Content>
       </Popover.Root>,
     );
-    expect(
-      await axe(container, {
-        rules: {
-          // Base UI focus-guard spans with role="button" are internal implementation details
-          "aria-command-name": { enabled: false },
-        },
-      }),
-    ).toHaveNoViolations();
+    // The popup is portalled out of the container RTL hands back, so audit the body
+    expect(container).not.toContainElement(screen.getByRole("dialog"));
+    expect(await axe(document.body)).toHaveNoViolations();
   });
 });

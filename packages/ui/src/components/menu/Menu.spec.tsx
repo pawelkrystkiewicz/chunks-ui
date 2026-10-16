@@ -241,11 +241,14 @@ describe("Menu", () => {
         </Menu.Content>
       </Menu.Root>,
     );
+    // The popup is portalled out of the container RTL hands back, so audit the body
+    expect(container).not.toContainElement(screen.getByRole("menu"));
     expect(
-      await axe(container, {
+      await axe(document.body, {
         rules: {
-          // Base UI focus-guard spans with role="button" are internal implementation details
-          "aria-command-name": { enabled: false },
+          // A portalled menu sits outside any landmark, on a real page too, and the
+          // region rule exempts dialogs, not menus
+          region: { enabled: false },
         },
       }),
     ).toHaveNoViolations();

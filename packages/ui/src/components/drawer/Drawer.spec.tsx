@@ -126,6 +126,8 @@ describe("Drawer", () => {
         </Drawer.Portal>
       </Drawer.Root>,
     );
-    expect(await axe(container)).toHaveNoViolations();
+    // The popup is portalled out of the container RTL hands back, so audit the body
+    expect(container).not.toContainElement(screen.getByRole("dialog"));
+    expect(await axe(document.body)).toHaveNoViolations();
   });
 });
