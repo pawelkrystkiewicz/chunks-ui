@@ -231,7 +231,7 @@ describe("Menu", () => {
   });
 
   it("has no a11y violations", async () => {
-    const { container } = render(
+    render(
       <Menu.Root open>
         <Menu.Trigger>Open Menu</Menu.Trigger>
         <Menu.Content>
@@ -241,11 +241,16 @@ describe("Menu", () => {
         </Menu.Content>
       </Menu.Root>,
     );
+    // The popup is portalled into the body, outside the container RTL hands back
+    expect(document.body).toContainElement(screen.getByRole("menu"));
     expect(
-      await axe(container, {
+      await axe(document.body, {
         rules: {
           // Base UI focus-guard spans with role="button" are internal implementation details
           "aria-command-name": { enabled: false },
+          // A portalled menu sits outside any landmark, on a real page too, and the
+          // region rule exempts dialogs, not menus
+          region: { enabled: false },
         },
       }),
     ).toHaveNoViolations();

@@ -74,7 +74,7 @@ describe("Dialog", () => {
   });
 
   it("has no a11y violations", async () => {
-    const { container } = render(
+    render(
       <Dialog.Root open>
         <Dialog.Portal>
           <Dialog.Backdrop />
@@ -85,6 +85,8 @@ describe("Dialog", () => {
         </Dialog.Portal>
       </Dialog.Root>,
     );
-    expect(await axe(container)).toHaveNoViolations();
+    // The popup is portalled into the body, outside the container RTL hands back
+    expect(document.body).toContainElement(screen.getByRole("dialog"));
+    expect(await axe(document.body)).toHaveNoViolations();
   });
 });

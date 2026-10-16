@@ -76,7 +76,7 @@ describe("Popover", () => {
   });
 
   it("has no a11y violations", async () => {
-    const { container } = render(
+    render(
       <Popover.Root open>
         <Popover.Trigger>Open</Popover.Trigger>
         <Popover.Content>
@@ -84,8 +84,10 @@ describe("Popover", () => {
         </Popover.Content>
       </Popover.Root>,
     );
+    // The popup is portalled into the body, outside the container RTL hands back
+    expect(document.body).toContainElement(screen.getByRole("dialog"));
     expect(
-      await axe(container, {
+      await axe(document.body, {
         rules: {
           // Base UI focus-guard spans with role="button" are internal implementation details
           "aria-command-name": { enabled: false },
