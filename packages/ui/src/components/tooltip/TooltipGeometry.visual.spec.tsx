@@ -1,5 +1,5 @@
 import { DirectionProvider } from "@base-ui/react/direction-provider";
-import { render } from "@testing-library/react";
+import { type RenderResult, render } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import {
   applyTheme,
@@ -153,22 +153,29 @@ describe.each(CASES)("Tooltip arrow geometry, side $side ($dir)", ({ side, dir }
 
 type Align = "start" | "end";
 
+type NearCornerOptions = {
+  /** Passed to `Tooltip.Positioner` */
+  arrowPadding?: number;
+  /** The positioner is in the page, hidden, before the tooltip opens */
+  keepMounted?: boolean;
+  /** The arrow mounts once the open popup has settled without it */
+  lateArrow?: boolean;
+};
+
 /**
- * Opens a one-line tooltip on `side` of a 20px trigger, aligned to its `align` edge. The trigger's
- * centre is nearer that end of the popup than the arrow may come, so Base UI holds the arrow
- * `arrowPadding` from the end, or as near the middle as the popup's length lets it. With
- * `keepMounted`, the positioner is in the page, hidden, before the tooltip opens. Returns the
- * open popup and its arrow, once settled.
+ * A one-line tooltip on `side` of a 20px trigger, aligned to its `align` edge. The trigger's centre
+ * is nearer that end of the popup than the arrow may come, so Base UI holds the arrow
+ * `arrowPadding` from the end, or as near the middle as the popup's length lets it.
  */
-async function openNearCorner(
+function nearCorner(
   side: Side,
   align: Align,
   dir: Direction,
-  arrowPadding?: number,
-  keepMounted = false,
+  open: boolean,
+  withArrow: boolean,
+  { arrowPadding, keepMounted = false }: NearCornerOptions = {},
 ) {
-  document.documentElement.dir = dir;
-  const tooltip = (open: boolean) => (
+  return (
     <DirectionProvider direction={dir}>
       <div style={{ padding: 120, display: "flex", justifyContent: "center" }}>
         <Tooltip.Root open={open}>
@@ -181,7 +188,7 @@ async function openNearCorner(
               data-testid="positioner"
             >
               <Tooltip.Popup data-testid="popup">
-                <Tooltip.Arrow data-testid="arrow" />
+                {withArrow && <Tooltip.Arrow data-testid="arrow" />}
                 Tooltip content
               </Tooltip.Popup>
             </Tooltip.Positioner>
@@ -190,13 +197,31 @@ async function openNearCorner(
       </div>
     </DirectionProvider>
   );
-  const result = render(tooltip(!keepMounted));
+}
+
+/** Renders `nearCorner` open, and returns the popup and its arrow once settled. */
+async function openNearCorner(
+  side: Side,
+  align: Align,
+  dir: Direction,
+  options: NearCornerOptions = {},
+) {
+  const { keepMounted = false, lateArrow = false } = options;
+  document.documentElement.dir = dir;
+  const tooltip = (open: boolean, withArrow: boolean) =>
+    nearCorner(side, align, dir, open, withArrow, options);
+  const result = render(tooltip(!keepMounted, !lateArrow));
   if (keepMounted) {
     const hidden = result.getByTestId("positioner");
     expect(hidden.hidden).toBe(true);
-    result.rerender(tooltip(true));
+    result.rerender(tooltip(true, !lateArrow));
     // The one that was measured hidden is the one that shows
     expect(result.getByTestId("positioner")).toBe(hidden);
+  }
+  if (lateArrow) {
+    const popup = result.getByTestId("popup");
+    await waitForStable(() => JSON.stringify(popup.getBoundingClientRect()));
+    result.rerender(tooltip(true, true));
   }
   const arrow = result.getByTestId("arrow");
   const popup = result.getByTestId("popup");
@@ -213,16 +238,9 @@ async function openNearCorner(
 async function footNearCorner(
   side: "top" | "bottom",
   align: Align,
-  arrowPadding?: number,
-  keepMounted = false,
+  options: NearCornerOptions = {},
 ) {
-  const { arrow, popup, unmount } = await openNearCorner(
-    side,
-    align,
-    "ltr",
-    arrowPadding,
-    keepMounted,
-  );
+  const { arrow, popup, unmount } = await openNearCorner(side, align, "ltr", options);
   const a = arrow.getBoundingClientRect();
   const p = popup.getBoundingClientRect();
   const foot = align === "start" ? a.left - p.left : p.right - a.right;
@@ -258,7 +276,7 @@ describe.each(NEAR_CORNER)(
 
 describe("Tooltip.Positioner arrowPadding", () => {
   it("holds an arrow near the corner the padding it is given from the popup's end", async () => {
-    const { foot, overhang } = await footNearCorner("bottom", "start", 16);
+    const { foot, overhang } = await footNearCorner("bottom", "start", { arrowPadding: 16 });
     expect(Math.abs(foot - (16 - overhang))).toBeLessThanOrEqual(LAYOUT_ROUNDING_PX);
   });
 
@@ -267,8 +285,46 @@ describe("Tooltip.Positioner arrowPadding", () => {
   // must land where it does in a popup mounted on open
   it("defaults the same in a keepMounted portal as in one mounted on open", async () => {
     const onOpen = await footNearCorner("bottom", "start");
-    const kept = await footNearCorner("bottom", "start", undefined, true);
+    const kept = await footNearCorner("bottom", "start", { keepMounted: true });
     expect(Math.abs(kept.foot - onOpen.foot)).toBeLessThanOrEqual(LAYOUT_ROUNDING_PX);
+  });
+});
+
+describe.each(THEMES)("Tooltip arrow mounted after the popup opened, $theme", ({ vars }) => {
+  afterEach(() => resetTheme(vars));
+
+  // The positioner reads the default padding again when an Arrow mounts in it later
+  it("gets the same default padding as one mounted with the popup", async () => {
+    applyTheme(vars);
+    const withPopup = await footNearCorner("bottom", "start");
+    const late = await footNearCorner("bottom", "start", { lateArrow: true });
+    expect(Math.abs(late.foot - withPopup.foot)).toBeLessThanOrEqual(LAYOUT_ROUNDING_PX);
+  });
+});
+
+describe("Tooltip arrow unmounted while the popup is open", () => {
+  // Base UI places the popup again when its options change or the popup resizes, and a tooltip's
+  // arrow resizes nothing: the padding read again after the arrow unmounts is that change
+  it("leaves the popup placed as one that never had an arrow", async () => {
+    const tooltip = (withArrow: boolean) => nearCorner("bottom", "start", "ltr", true, withArrow);
+    /** The popup's left edge, from the trigger's, once settled */
+    const placement = ({ getByTestId, getByRole }: RenderResult) =>
+      waitForStable(
+        () =>
+          getByTestId("popup").getBoundingClientRect().left -
+          getByRole("button", { name: "Trigger" }).getBoundingClientRect().left,
+      );
+    const never = render(tooltip(false));
+    const arrowless = await placement(never);
+    never.unmount();
+
+    const dropped = render(tooltip(true));
+    // The popup moves so the arrow, held off the corner, points at the trigger's centre
+    expect(Math.abs((await placement(dropped)) - arrowless)).toBeGreaterThan(1);
+    dropped.rerender(tooltip(false));
+    expect(Math.abs((await placement(dropped)) - arrowless)).toBeLessThanOrEqual(
+      LAYOUT_ROUNDING_PX,
+    );
   });
 });
 

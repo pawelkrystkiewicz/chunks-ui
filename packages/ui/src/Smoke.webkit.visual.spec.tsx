@@ -11,6 +11,7 @@ import { Select } from "./components/select";
 import { Switch } from "./components/switch";
 import { Tabs } from "./components/tabs";
 import { Textarea } from "./components/textarea";
+import { Tooltip } from "./components/tooltip";
 import {
   enterMotionPath,
   insetsWithin,
@@ -318,6 +319,47 @@ describe("Popups in WebKit", () => {
     expect(Math.abs(selected.left - value.left)).toBeLessThanOrEqual(1);
     expect(Math.abs(selected.top - value.top)).toBeLessThanOrEqual(1);
     expect(await paintedPixels(popup)).toBeGreaterThan(0);
+  });
+
+  /*
+   * The default `arrowPadding` is read from computed styles: the popup's corner radii and the
+   * arrow's width. A keepMounted tooltip reads them while its positioner is hidden, so WebKit must
+   * resolve them there, as Chromium does (TooltipGeometry.visual.spec.tsx). Unresolved, the arrow
+   * gets Base UI's 5px and its foot stands in the corner.
+   */
+  it("holds a keepMounted Tooltip's arrow foot off the popup's rounded corner", async () => {
+    // Below a 20px trigger, aligned to its start: the trigger's centre is nearer the popup's start
+    // than the padding lets the arrow come
+    const tooltip = (open: boolean) => (
+      <div style={{ padding: 120, display: "flex", justifyContent: "center" }}>
+        <Tooltip.Root open={open}>
+          <Tooltip.Trigger aria-label="Trigger" style={{ width: 20, height: 20, padding: 0 }} />
+          <Tooltip.Portal keepMounted>
+            <Tooltip.Positioner side="bottom" align="start" data-testid="positioner">
+              <Tooltip.Popup data-testid="popup">
+                <Tooltip.Arrow data-testid="arrow" />
+                Tooltip content
+              </Tooltip.Popup>
+            </Tooltip.Positioner>
+          </Tooltip.Portal>
+        </Tooltip.Root>
+      </div>
+    );
+    const { rerender } = render(tooltip(false));
+    expect(screen.getByTestId("positioner").hidden).toBe(true);
+    rerender(tooltip(true));
+    const popup = screen.getByTestId("popup");
+    const arrow = screen.getByTestId("arrow");
+    await settle(popup);
+
+    // From the popup's start to the arrow's foot (its widest point): the corner curves this far
+    // along the edge, and the padding starts the foot there
+    const foot = await waitForStable(
+      () => arrow.getBoundingClientRect().left - popup.getBoundingClientRect().left,
+    );
+    const radius = Number.parseFloat(getComputedStyle(popup).borderTopLeftRadius);
+    expect(radius).toBeGreaterThan(0);
+    expect(foot).toBeCloseTo(radius, 0);
   });
 });
 
