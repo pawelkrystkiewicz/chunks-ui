@@ -75,10 +75,16 @@ export function PreviewPanel({ theme }: { theme: Theme }) {
         theme={theme}
         className="min-h-[calc(100vh-200px)] bg-(--canvas) p-[28px] leading-[1.45] transition-[background] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] motion-reduce:transition-none"
       >
-        {/* will-change: opacity composites the columns to work around WebKit W80 (#341); not
-            transform, which would make the columns the containing block of Base UI's fixed
-            hidden inputs. Remove once the Safari versions we support ship the fix (the W80 bug
-            spec in Smoke.webkit.visual.spec.tsx fails first). */}
+        {/* will-change: opacity composites the columns to work around WebKit W80 (#341,
+            https://bugs.webkit.org/show_bug.cgi?id=327820): WebKit paints a composited element
+            in a column after the first at its unfragmented-flow position, over column 1 or below
+            the grid. With the columns on their own layer the slid Tabs track needs none of its
+            own to paint over the sticky sidebar. Not transform, which would make the columns the
+            containing block of Base UI's fixed hidden inputs. Keep every descendant off its own
+            layer (no will-change, translateZ(0) or translate3d, no Motion animation that promotes
+            one): a composited descendant in a later column is misplaced, workaround or not.
+            Remove once the Safari versions we support ship the fix (the W80 bug spec in
+            Smoke.webkit.visual.spec.tsx fails first). */}
         <div
           style={{
             maxWidth: VIEWPORTS.find((vp) => vp.id === viewport)?.width,
