@@ -104,6 +104,42 @@ describe("Select", () => {
     );
     expect(await axe(container)).toHaveNoViolations();
   });
+
+  it("has no a11y violations with the popup open", async () => {
+    const { container } = render(
+      <Select.Root open defaultValue="apple">
+        <Select.Trigger aria-label="Fruit">
+          <Select.Value placeholder="Choose a fruit" />
+          <Select.Icon />
+        </Select.Trigger>
+        <Select.Portal>
+          <Select.Positioner>
+            <Select.Popup>
+              <Select.Item value="apple">
+                <Select.ItemText>Apple</Select.ItemText>
+                <Select.ItemIndicator />
+              </Select.Item>
+              <Select.Item value="banana">
+                <Select.ItemText>Banana</Select.ItemText>
+                <Select.ItemIndicator />
+              </Select.Item>
+            </Select.Popup>
+          </Select.Positioner>
+        </Select.Portal>
+      </Select.Root>,
+    );
+    // The popup is portalled out of the container RTL hands back, so audit the body
+    expect(container).not.toContainElement(screen.getByRole("listbox"));
+    expect(
+      await axe(document.body, {
+        rules: {
+          // A portalled listbox sits outside any landmark, on a real page too, and the
+          // region rule exempts dialogs, not listboxes
+          region: { enabled: false },
+        },
+      }),
+    ).toHaveNoViolations();
+  });
 });
 
 describe("Select focus ring", () => {
