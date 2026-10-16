@@ -124,6 +124,7 @@ describe("inCI", () => {
     expect(inCI({ CI: "true" })).toBe(true);
     expect(inCI({ CI: "1" })).toBe(true);
     expect(inCI({ CI: "github" })).toBe(true);
+    expect(inCI({ CI: "TRUE" })).toBe(true);
   });
 
   it("is false when CI is unset, empty, false or 0, whatever the case", () => {
@@ -132,6 +133,7 @@ describe("inCI", () => {
     expect(inCI({ CI: "false" })).toBe(false);
     expect(inCI({ CI: "FALSE" })).toBe(false);
     expect(inCI({ CI: "0" })).toBe(false);
+    expect(inCI({ CI: " false " })).toBe(false);
   });
 });
 
