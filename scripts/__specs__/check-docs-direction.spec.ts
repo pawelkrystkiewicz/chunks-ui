@@ -2,19 +2,18 @@ import { afterEach, describe, expect, it } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { checkDocsDirection, DIRS, physicalTokens } from "../check-docs-direction";
+import { checkDocsDirection, physicalTokens } from "../check-docs-direction";
 
 const ROOT = join(import.meta.dirname, "../..");
 const dirs: string[] = [];
 
-/** A throwaway repo root with every scanned directory present, one clean `seed.ts` in each, and `files` (path -> text) beside them. */
+/** A throwaway repo root with a clean `apps/docs/seed.ts` and `seed.mdx`, and `files` (path -> text) beside it. */
 function tree(files: Record<string, string> = {}): string {
   const dir = mkdtempSync(join(tmpdir(), "docs-direction-"));
   dirs.push(dir);
-  for (const scanned of DIRS) {
-    mkdirSync(join(dir, scanned), { recursive: true });
-    writeFileSync(join(dir, scanned, "seed.ts"), "export {};\n");
-  }
+  mkdirSync(join(dir, "apps/docs"), { recursive: true });
+  writeFileSync(join(dir, "apps/docs/seed.ts"), "export {};\n");
+  writeFileSync(join(dir, "apps/docs/seed.mdx"), "# Seed\n");
   for (const [path, text] of Object.entries(files)) {
     mkdirSync(dirname(join(dir, path)), { recursive: true });
     writeFileSync(join(dir, path), text);
@@ -91,8 +90,36 @@ describe("physicalTokens", () => {
       ],
     ],
     [
+      "a physical object, background and transform-origin position, a corner too, behind a variant too",
+      "object-left object-right-bottom object-top-left bg-right bg-left-top bg-bottom-right origin-left origin-top-right md:object-right hover:bg-left-bottom data-[side=top]:origin-bottom-left [&>img]:object-left!",
+      [
+        "object-left",
+        "object-right-bottom",
+        "object-top-left",
+        "bg-right",
+        "bg-left-top",
+        "bg-bottom-right",
+        "origin-left",
+        "origin-top-right",
+        "object-right",
+        "bg-left-bottom",
+        "origin-bottom-left",
+        "object-left",
+      ],
+    ],
+    [
       "nothing for the logical classes and the look-alikes",
       "ms-4 pe-2 start-0 -end-2 text-start rounded-s-lg rounded-ee-sm border-e-2 inset-x-0 rounded-lg border-left translate-x-2 float-none clear-both scroll-ms-4 scroll-mx-2 overfloat-left",
+      [],
+    ],
+    [
+      "nothing for the other positions and the forms Tailwind does not generate",
+      "object-cover object-top object-center object-[25%_75%] bg-top bg-center bg-cover bg-left-4 origin-top origin-center origin-[33%_75%] origin-left-top -origin-left -object-left -bg-right",
+      [],
+    ],
+    [
+      "nothing for what is left out on purpose: a translate, the side Base UI sets, and the slides Tailwind does not have",
+      "-translate-x-1/2 translate-x-4 data-[side=left]:ms-2 slide-in-from-left slide-out-to-right",
       [],
     ],
     [
@@ -189,18 +216,59 @@ describe("checkDocsDirection", () => {
       ["2: left-0", "4: left-2"],
     ],
     [
-      "does not honour a marker on a continuation line of a multi-line comment",
+      "passes a hit right below a multi-line comment that holds the marker",
       [
         "/**",
+        " * The tiles compose one drawing.",
         " * direction: physical, the tiles compose one drawing",
         " */",
         'const A = "left-3";',
-        "/*",
-        " * direction: physical, same",
+        "  /*",
+        "   * direction: physical, same",
+        "   */",
         'const B = "left-0";',
+        "{/*",
+        "  direction: physical, same",
+        "*/}",
+        '<i className="left-1" />',
       ],
       {},
-      ["4: left-3", "7: left-0"],
+      [],
+    ],
+    [
+      "reports a hit below a multi-line marker comment that opens after code, has code after it, sits two lines up or has not closed",
+      [
+        "const A = 1; /*",
+        " * direction: physical, after code",
+        " */",
+        'const B = "left-3";',
+        "/*",
+        " * direction: physical, code after it",
+        " */ const C = 1;",
+        'const D = "left-0";',
+        "/*",
+        " * direction: physical, two lines up",
+        " */",
+        "",
+        'const E = "left-1";',
+        "/*",
+        " * direction: physical, not closed",
+        'const F = "left-2";',
+      ],
+      {},
+      ["4: left-3", "8: left-0", "13: left-1", "16: left-2"],
+    ],
+    [
+      "honours a marker in a JSDoc whose later line holds a /* inside text",
+      [
+        "/**",
+        " * direction: physical, art",
+        " * (see content/*.mdx)",
+        " */",
+        'const A = "left-3";',
+      ],
+      {},
+      [],
     ],
     [
       "needs a reason that starts with a word character",
@@ -218,12 +286,34 @@ describe("checkDocsDirection", () => {
     expect(await checkDocsDirection(dir)).toEqual(expected.map((p) => `apps/docs/app/x.tsx:${p}`));
   });
 
-  it("scans the files directly in apps/docs, mdx-components.tsx among them", async () => {
+  it("scans every folder of apps/docs, a new one too, and nothing outside it", async () => {
     const dir = tree({
       "apps/docs/mdx-components.tsx": 'export const C = () => <div className="ml-4" />;\n',
       "apps/docs/public/y.tsx": 'export const Y = "ml-4";\n',
+      "apps/docs/scripts/z.ts": 'export const Z = "ml-4";\n',
+      "apps/docs/new/deep/w.mdx": '<div className="ml-4" />\n',
+      "apps/docs/content/out/v.mdx": '<div className="ml-4" />\n',
+      "packages/ui/src/x.tsx": 'export const X = "ml-4";\n',
     });
-    expect(await checkDocsDirection(dir)).toEqual(["apps/docs/mdx-components.tsx:1: ml-4"]);
+    expect(await checkDocsDirection(dir)).toEqual([
+      "apps/docs/content/out/v.mdx:1: ml-4",
+      "apps/docs/mdx-components.tsx:1: ml-4",
+      "apps/docs/new/deep/w.mdx:1: ml-4",
+      "apps/docs/public/y.tsx:1: ml-4",
+      "apps/docs/scripts/z.ts:1: ml-4",
+    ]);
+  });
+
+  it("skips node_modules at any depth and the build output at the top of apps/docs", async () => {
+    const dir = tree({
+      "apps/docs/node_modules/x/y.tsx": 'export const Y = "ml-4";\n',
+      "apps/docs/app/node_modules/z.ts": 'export const Z = "ml-4";\n',
+      "apps/docs/.next/types/a.ts": 'export const A = "ml-4";\n',
+      "apps/docs/.turbo/b.ts": 'export const B = "ml-4";\n',
+      "apps/docs/out/c.tsx": 'export const C = "ml-4";\n',
+      "apps/docs/public/_pagefind/d.css": ".d { @apply ml-4; }\n",
+    });
+    expect(await checkDocsDirection(dir)).toEqual([]);
   });
 
   it("passes a clean tree", async () => {
@@ -234,32 +324,51 @@ describe("checkDocsDirection", () => {
     expect(await checkDocsDirection(dir)).toEqual([]);
   });
 
-  it("scans only .ts, .tsx and .mdx under the docs app and content", async () => {
+  it("scans the classes of each @apply in a .css file, and no other part of it", async () => {
     const dir = tree({
-      "apps/docs/globals.css": ".x { @apply ml-4; }\n",
-      "apps/docs/app/x.css": ".x { @apply ml-4; }\n",
-      "apps/docs/public/x.tsx": 'export const X = "ml-4";\n',
-      "packages/ui/src/x.tsx": 'export const X = "ml-4";\n',
+      "apps/docs/app/x.css": [
+        '@import "tailwindcss";',
+        ".a { @apply ml-4 text-start; }",
+        ".text-left { margin-left: 4px; }",
+        ".left-0 { @apply ms-2; }",
+        ".b {",
+        "  @apply pr-2;",
+        "}",
+        "/* direction: physical, the arrow points at the clock */",
+        ".c { @apply float-left; }",
+        ".d { @apply ms-1; left: 0; } .e { @apply rounded-r; }",
+      ].join("\n"),
     });
-    expect(await checkDocsDirection(dir)).toEqual([]);
-  });
-
-  it("fails when a scanned directory is missing, so an empty scan cannot pass", async () => {
-    const dir = tree();
-    rmSync(join(dir, "apps/docs/content"), { recursive: true });
     expect(await checkDocsDirection(dir)).toEqual([
-      expect.stringMatching(/^apps\/docs\/content: /),
+      "apps/docs/app/x.css:2: ml-4",
+      "apps/docs/app/x.css:6: pr-2",
+      "apps/docs/app/x.css:10: rounded-r",
     ]);
   });
 
-  it.each(DIRS)(
-    "fails when %s holds no .ts, .tsx or .mdx file, so an empty scan cannot pass",
-    async (scanned) => {
-      const dir = tree();
-      rmSync(join(dir, scanned, "seed.ts"));
-      expect(await checkDocsDirection(dir)).toEqual([
-        expect.stringMatching(new RegExp(`^${scanned}: no `)),
-      ]);
-    },
-  );
+  it("fails when apps/docs is missing, so an empty scan cannot pass", async () => {
+    const dir = tree();
+    rmSync(join(dir, "apps/docs"), { recursive: true });
+    expect(await checkDocsDirection(dir)).toEqual([expect.stringMatching(/^apps\/docs: not /)]);
+  });
+
+  it("fails when apps/docs holds no scanned file outside the skipped folders, so an empty scan cannot pass", async () => {
+    // .js and .md are not scanned, so a hit in them does not count as a scanned file
+    const dir = tree({
+      "apps/docs/node_modules/x.ts": "export {};\n",
+      "apps/docs/x.js": 'export const X = "ml-4";\n',
+      "apps/docs/x.md": "`ml-4`\n",
+    });
+    rmSync(join(dir, "apps/docs/seed.ts"));
+    rmSync(join(dir, "apps/docs/seed.mdx"));
+    expect(await checkDocsDirection(dir)).toEqual([
+      expect.stringMatching(/^apps\/docs: no \.ts, /),
+    ]);
+  });
+
+  it("fails when apps/docs holds no .mdx file, so a moved content folder cannot pass", async () => {
+    const dir = tree();
+    rmSync(join(dir, "apps/docs/seed.mdx"));
+    expect(await checkDocsDirection(dir)).toEqual([expect.stringMatching(/^apps\/docs: no \.mdx/)]);
+  });
 });

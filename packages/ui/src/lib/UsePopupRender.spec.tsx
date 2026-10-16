@@ -118,7 +118,8 @@ const parts: Row[] = [
     ui: (r) => (
       <Select.Root open>
         <Select.Trigger>Pick</Select.Trigger>
-        <Select.Positioner>
+        {/* Below its trigger: aligned over it, the popup fades without a scale */}
+        <Select.Positioner alignItemWithTrigger={false}>
           <Select.Popup render={r} data-testid="popup">
             <Select.Item value="a">A</Select.Item>
           </Select.Popup>

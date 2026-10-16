@@ -1,10 +1,13 @@
 import { render } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
-import { page } from "vitest/browser";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { commands, page } from "vitest/browser";
 import {
   describePopupCssPath,
+  eachPaintedFrame,
+  enterMotionPath,
   expectNotAllowed,
   focusVisible,
+  MOTION_PATHS,
   renderFixture,
   renderPage,
 } from "../../VisualTest.utils";
@@ -17,7 +20,7 @@ const fruits = [
   { value: "date", label: "Date" },
 ];
 
-const closedSelect = (open?: boolean) => (
+const closedSelect = (open?: boolean, alignItemWithTrigger?: boolean) => (
   <div style={{ width: 200 }}>
     <Select.Root defaultValue="apple" open={open}>
       <Select.Trigger aria-label="Fruit">
@@ -25,7 +28,7 @@ const closedSelect = (open?: boolean) => (
         <Select.Icon />
       </Select.Trigger>
       <Select.Portal>
-        <Select.Positioner>
+        <Select.Positioner alignItemWithTrigger={alignItemWithTrigger}>
           <Select.Popup data-testid="popup">
             {fruits.map((f) => (
               <Select.Item key={f.value} value={f.value}>
@@ -96,4 +99,69 @@ describe("Select", () => {
   });
 });
 
-describePopupCssPath("Select.Popup", closedSelect);
+// Below its trigger: aligned over it, the popup fades without a scale (below)
+describePopupCssPath("Select.Popup", (open) => closedSelect(open, false));
+
+/** The rendered width over the layout width: 1 while nothing scales `el` */
+const renderedScale = (el: Element) =>
+  Math.round(
+    (el.getBoundingClientRect().width / Number.parseFloat(getComputedStyle(el).width)) * 1000,
+  ) / 1000;
+
+// Aligned over its trigger (Base UI's default `alignItemWithTrigger`, `data-side="none"`), the
+// popup lands with the selected item over the trigger's value, as Base UI's own reference styles
+// assume: it fades in place at full size, on both paths
+describe.each(MOTION_PATHS)("Select.Popup aligned with its trigger, $path", ({ withMotion }) => {
+  beforeAll(() => enterMotionPath(withMotion));
+  beforeEach(async () => {
+    await commands.emulateMedia({ reducedMotion: "no-preference" });
+    await expect.poll(() => matchMedia("(prefers-reduced-motion: reduce)").matches).toBe(false);
+  });
+  afterAll(async () => {
+    await commands.emulateMedia({ reducedMotion: "reduce" });
+    await enterMotionPath(true);
+  });
+
+  // Clear of the page's top edge, where Base UI gives up the alignment
+  const aligned = (open: boolean) => <div style={{ padding: 40 }}>{closedSelect(open)}</div>;
+
+  /** The popup's side, rendered scale and opacity, once a painted frame while it is mounted */
+  const framesOf = async (popup: HTMLElement) => {
+    const frames = await eachPaintedFrame(
+      () =>
+        popup.isConnected && {
+          side: popup.getAttribute("data-side"),
+          scale: renderedScale(popup),
+          opacity: Number(getComputedStyle(popup).opacity),
+        },
+      40,
+    );
+    return frames.filter((frame) => frame !== false);
+  };
+
+  it("opens without a scale", async () => {
+    const { rerender, getByTestId } = render(aligned(false));
+    rerender(aligned(true));
+    const frames = await framesOf(getByTestId("popup"));
+    expect(new Set(frames.map(({ side }) => side))).toEqual(new Set(["none"]));
+    expect(frames.map(({ scale }) => scale)).toEqual(frames.map(() => 1));
+    // The frames cover the entry: the popup fades in over them
+    expect(frames.some(({ opacity }) => opacity > 0 && opacity < 1)).toBe(true);
+  });
+
+  // On the Motion path a Select has no exit to watch: Base UI unmounts it on the frame after it
+  // closes, before Motion starts the exit
+  if (!withMotion) {
+    it("closes without a scale", async () => {
+      const { rerender, getByTestId } = render(aligned(true));
+      const popup = getByTestId("popup");
+      await expect.poll(() => getComputedStyle(popup).opacity).toBe("1");
+      rerender(aligned(false));
+      const frames = await framesOf(popup);
+      expect(new Set(frames.map(({ side }) => side))).toEqual(new Set(["none"]));
+      expect(frames.map(({ scale }) => scale)).toEqual(frames.map(() => 1));
+      // The frames cover the exit: the popup fades out over them
+      expect(frames.some(({ opacity }) => opacity > 0 && opacity < 1)).toBe(true);
+    });
+  }
+});

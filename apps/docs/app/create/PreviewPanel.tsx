@@ -26,10 +26,12 @@ const VIEWPORTS = [
   { id: "desktop", label: "Desktop", width: "100%", Icon: Monitor },
   { id: "tablet", label: "Tablet", width: "768px", Icon: Tablet },
   { id: "mobile", label: "Mobile", width: "390px", Icon: Smartphone },
-];
+] as const;
+
+type ViewportId = (typeof VIEWPORTS)[number]["id"];
 
 export function PreviewPanel({ theme }: { theme: Theme }) {
-  const [viewport, setViewport] = useState("desktop");
+  const [viewport, setViewport] = useState<ViewportId>("desktop");
   const summary = [
     theme.fontHeading === theme.fontBody
       ? theme.fontHeading
@@ -54,7 +56,7 @@ export function PreviewPanel({ theme }: { theme: Theme }) {
         <ToggleGroup.Root
           aria-label="Preview width"
           value={[viewport]}
-          onValueChange={(v) => v[0] && setViewport(String(v[0]))}
+          onValueChange={(v) => v[0] && setViewport(v[0])}
           className="rounded-[9px] bg-secondary p-[3px]"
         >
           {VIEWPORTS.map(({ id, label, Icon }) => (

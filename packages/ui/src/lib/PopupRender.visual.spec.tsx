@@ -9,7 +9,7 @@ import { Menu } from "../components/menu";
 import { Popover } from "../components/popover";
 import { Select } from "../components/select";
 import { Tooltip } from "../components/tooltip";
-import { enterMotionPath } from "../VisualTest.utils";
+import { enterMotionPath, MOTION_PATHS } from "../VisualTest.utils";
 
 type Row = {
   part: string;
@@ -21,6 +21,8 @@ type Row = {
   duration: string;
   /** The style Motion writes inline on the default element, from the part's `from` values. */
   inline: "opacity" | "transform";
+  /** Anchored to a trigger, so it scales from its Positioner's `--transform-origin` */
+  anchored?: true;
 };
 
 /** `micro-interactions [transition-property:opacity,scale]`: the fade and scale of the spring path */
@@ -96,6 +98,7 @@ const parts: Row[] = [
     transitions: FADE_SCALE,
     duration: "0.3s",
     inline: "transform",
+    anchored: true,
     ui: (r) => (
       <Popover.Root open>
         <Popover.Trigger>Open</Popover.Trigger>
@@ -110,6 +113,7 @@ const parts: Row[] = [
     transitions: FADE_SCALE,
     duration: "0.3s",
     inline: "transform",
+    anchored: true,
     ui: (r) => (
       <Menu.Root open>
         <Menu.Trigger>Open</Menu.Trigger>
@@ -124,6 +128,7 @@ const parts: Row[] = [
     transitions: FADE_SCALE,
     duration: "0.3s",
     inline: "transform",
+    anchored: true,
     ui: (r) => (
       <Tooltip.Root open>
         <Tooltip.Trigger>Hover</Tooltip.Trigger>
@@ -142,10 +147,12 @@ const parts: Row[] = [
     transitions: FADE_SCALE,
     duration: "0.3s",
     inline: "transform",
+    anchored: true,
     ui: (r) => (
       <Select.Root open>
         <Select.Trigger>Pick</Select.Trigger>
-        <Select.Positioner>
+        {/* Below its trigger: aligned over it, the popup fades without a scale */}
+        <Select.Positioner alignItemWithTrigger={false}>
           <Select.Popup render={r} data-testid="popup">
             <Select.Item value="a">A</Select.Item>
           </Select.Popup>
@@ -158,6 +165,7 @@ const parts: Row[] = [
     transitions: FADE_SCALE,
     duration: "0.3s",
     inline: "transform",
+    anchored: true,
     ui: (r) => (
       <Combobox.Root open items={["apple"]}>
         <Combobox.Input />
@@ -214,6 +222,41 @@ describe("popup parts with Motion loaded, no reduced-motion preference", () => {
       expect(el.style[inline]).not.toBe("");
       // No CSS transition is left to run alongside the spring
       expect(computedTransition(el).transitionDuration).toBe("0s");
+    },
+  );
+});
+
+// Base UI publishes `--transform-origin` on the Positioner once it has placed the popup: the point
+// on the trigger's side, so the popup grows out of its trigger. Dialog and Drawer have no anchor.
+describe.each(MOTION_PATHS)("anchored popup parts, $path", ({ withMotion }) => {
+  beforeAll(() => enterMotionPath(withMotion));
+  beforeEach(async () => {
+    await commands.emulateMedia({ reducedMotion: "no-preference" });
+    await expect.poll(() => matchMedia("(prefers-reduced-motion: reduce)").matches).toBe(false);
+  });
+  afterAll(async () => {
+    await commands.emulateMedia({ reducedMotion: "reduce" });
+    await enterMotionPath(true);
+  });
+
+  it.each(parts.filter((row) => row.anchored))(
+    "$part scales from its Positioner's --transform-origin",
+    async ({ ui }) => {
+      render(ui());
+      const popup = await screen.findByTestId("popup");
+      const positioner = popup.parentElement as HTMLElement;
+      const origin = () => positioner.style.getPropertyValue("--transform-origin");
+      await expect.poll(origin).not.toBe("");
+      // Which path scales it: Motion writes the scale inline, and leaves the origin to the class
+      expect(popup.style.transform !== "").toBe(withMotion);
+      expect(popup.style.transformOrigin).toBe("");
+
+      const computed = getComputedStyle(popup).transformOrigin;
+      // The Positioner's value set on the popup, so its percentages resolve against the same box
+      popup.style.transformOrigin = origin();
+      const fromPositioner = getComputedStyle(popup).transformOrigin;
+      popup.style.removeProperty("transform-origin");
+      expect(computed).toBe(fromPositioner);
     },
   );
 });

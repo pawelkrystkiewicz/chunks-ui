@@ -131,19 +131,19 @@ export function ComboboxMultiDemo() {
   return (
     <Combobox.Root multiple items={frameworks} value={value} onValueChange={setValue}>
       <Combobox.Control>
-        <Combobox.Chips>
+        <Combobox.Chips className="flex-1">
           {value.map((item) => (
             <Combobox.Chip key={item.value}>
               {item.label}
               <Combobox.ChipRemove />
             </Combobox.Chip>
           ))}
+          <Combobox.Input
+            className="h-7 min-w-20 flex-1 border-0 bg-transparent px-0"
+            placeholder="Select frameworks..."
+            aria-label="Frameworks"
+          />
         </Combobox.Chips>
-        <Combobox.Input
-          className="h-7 min-w-20 flex-1 border-0 bg-transparent px-0"
-          placeholder="Select frameworks..."
-          aria-label="Frameworks"
-        />
         <Combobox.Clear />
         <Combobox.Trigger />
       </Combobox.Control>
