@@ -696,38 +696,30 @@ describe("Tabs.Animate", () => {
     expect(screen.getByTestId("kid")).toHaveTextContent("hello");
   });
 
-  it("re-keys on tab value change (forces remount)", async () => {
-    const onMount = vi.fn();
+  it("re-keys on tab value change (forces remount)", () => {
+    // StrictMode runs a mount's effects twice on one instance; a remount is a new instance
+    const instances = new Set<object>();
     function MountedChild() {
+      const instance = useRef({});
       useEffect(() => {
-        onMount();
+        instances.add(instance.current);
       }, []);
       return null;
     }
-    const { rerender } = render(
-      <Tabs.Root value="a">
-        <Tabs.Animate>
+    const ui = (value: string) => (
+      <Tabs.Root value={value}>
+        <Tabs.Animate data-testid="animate">
           <MountedChild />
         </Tabs.Animate>
-      </Tabs.Root>,
+      </Tabs.Root>
     );
-    await waitFor(() => {
-      expect(onMount.mock.calls.length).toBeGreaterThanOrEqual(1);
-    });
-    // Capture the count after any post-mount upgrades (e.g. motion module
-    // load swapping the wrapper element type) settle.
-    const before = onMount.mock.calls.length;
-    rerender(
-      <Tabs.Root value="b">
-        <Tabs.Animate>
-          <MountedChild />
-        </Tabs.Animate>
-      </Tabs.Root>,
-    );
-    // A `key` change must cause at least one additional mount.
-    await waitFor(() => {
-      expect(onMount.mock.calls.length).toBeGreaterThan(before);
-    });
+    const { rerender } = render(ui("a"));
+    const pane = screen.getByTestId("animate");
+    expect(instances.size).toBe(1);
+    rerender(ui("b"));
+    // The key changes with the value, so the pane is a new element with a new child instance
+    expect(screen.getByTestId("animate")).not.toBe(pane);
+    expect(instances.size).toBe(2);
   });
 
   it("accepts custom initial / animate / transition without error", () => {
