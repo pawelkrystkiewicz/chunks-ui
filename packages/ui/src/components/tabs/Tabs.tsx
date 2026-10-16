@@ -160,8 +160,8 @@ function TabsIndicator({
   ...props
 }: TabsIndicatorProps) {
   // Base UI measures the active tab when it renders, and renders again when the list or a tab
-  // changes content-box size. A padding change of the active tab changes only its border box:
-  // the element below watches that, and this render has Base UI measure the tab again.
+  // changes content-box size. A padding change of a tab changes only its border box: the element
+  // below watches that, and this render has Base UI measure the active tab again.
   const [, remeasure] = useReducer((count: number) => count + 1, 0);
   return (
     <BaseTabs.Indicator
@@ -173,7 +173,7 @@ function TabsIndicator({
           state={state}
           render={render}
           className={typeof className === "function" ? className(state) : className}
-          onActiveTabResize={remeasure}
+          onTabResize={remeasure}
         />
       )}
     />
@@ -186,12 +186,12 @@ function TabsIndicatorElement({
   render,
   className,
   ref,
-  onActiveTabResize,
+  onTabResize,
   ...props
 }: ComponentProps<"span"> & {
   state: BaseTabs.Indicator.State;
   render: PartRenderProp<BaseTabs.Indicator.State>;
-  onActiveTabResize: () => void;
+  onTabResize: () => void;
 }) {
   const { activeTabPosition: position, activeTabSize: size } = state;
   // While the tabs aren't rendered (display:none), Base UI measures the active tab as 0×0 and
@@ -205,20 +205,34 @@ function TabsIndicatorElement({
   // it or the list resizes, and the indicator then jumps to it
   const selected = useContext(TabsContext)?.value;
   const { element, sliding, transition } = useIndicatorSlide<HTMLElement>(selected, box);
-  // The active tab's border box, which Base UI doesn't observe. Base UI itself skips the
-  // observer where there is none (jsdom). Its first notification is load-bearing: it re-measures
-  // padding the tab gains on becoming active, which Base UI measured before that commit.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: the active tab changes with `selected`
+  // Observes every tab's border box: Base UI watches content boxes only, and padding on one tab
+  // moves the others. Re-observes on aria-selected and child-list changes; a new observation's
+  // first notification measures every tab, which catches padding gained on selection and tabs
+  // that mount or remount. Skipped where there is no ResizeObserver (jsdom).
   useEffect(() => {
     if (typeof ResizeObserver === "undefined") return;
-    const tab = element.current
-      ?.closest('[role="tablist"]')
-      ?.querySelector('[role="tab"][aria-selected="true"]');
-    if (!tab) return;
-    const observer = new ResizeObserver(onActiveTabResize);
-    observer.observe(tab, { box: "border-box" });
-    return () => observer.disconnect();
-  }, [selected, onActiveTabResize, element]);
+    const list = element.current?.closest('[role="tablist"]');
+    if (!list) return;
+    const resize = new ResizeObserver(onTabResize);
+    const observeTabs = () => {
+      resize.disconnect();
+      for (const tab of list.querySelectorAll('[role="tab"]')) {
+        resize.observe(tab, { box: "border-box" });
+      }
+    };
+    observeTabs();
+    const mutation = new MutationObserver(observeTabs);
+    mutation.observe(list, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["aria-selected"],
+    });
+    return () => {
+      resize.disconnect();
+      mutation.disconnect();
+    };
+  }, [onTabResize, element]);
 
   const [indicatorRef, driven] = useMotionAnimate<HTMLElement>(
     box,
