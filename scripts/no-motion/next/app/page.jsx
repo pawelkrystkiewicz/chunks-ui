@@ -8,8 +8,7 @@ import { Dialog, Tooltip } from "chunks-ui";
 import { useEffect } from "react";
 
 export default function Page() {
-  // The exported HTML is server-rendered, so the trigger exists before React attaches handlers.
-  // check-no-motion.ts waits for this marker before it clicks (same idea as apps/docs HydrationMarker).
+  // The HTML has the trigger before React attaches handlers; check-no-motion.ts waits for this marker.
   useEffect(() => {
     document.documentElement.dataset.hydrated = "true";
   }, []);
