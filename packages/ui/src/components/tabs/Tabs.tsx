@@ -207,18 +207,16 @@ function TabsIndicatorElement({
   const selected = useContext(TabsContext)?.value;
   const { element, sliding, transition } = useIndicatorSlide<HTMLElement>(selected, box);
   // Observes every tab's border box, and the list's border and content boxes: Base UI watches
-  // content boxes only, and padding on one tab moves the others, as padding on the list moves
-  // every tab. Re-observes on aria-selected and child-list changes; a new observation's first
-  // notification measures every tab, which catches padding gained on selection and tabs that
-  // mount or remount. Skipped where there is no ResizeObserver (jsdom).
+  // content boxes only, and padding on one tab moves the others. Re-observes on aria-selected
+  // and child-list changes; a new observation's first notification measures every tab, which
+  // catches padding gained on selection and tabs that mount or remount. Skipped where there is no
+  // ResizeObserver (jsdom).
   useEffect(() => {
     if (typeof ResizeObserver === "undefined") return;
     const list = element.current?.closest('[role="tablist"]');
     if (!list) return;
-    // The browser runs ResizeObserver callbacks after layout and before it paints. Rendering
-    // there, rather than in React's next task, has Base UI measure the tab in the frame the tab
-    // or the list changes in, so that frame paints the indicator over it. Base UI's own observer
-    // renders again in that task, to the same measurements.
+    // ResizeObserver callbacks run after layout and before paint, so flushSync renders the
+    // indicator in the frame the resize happens in.
     const remeasure = () => flushSync(onTabResize);
     const resize = new ResizeObserver(remeasure);
     const observeTabs = () => {
@@ -251,9 +249,8 @@ function TabsIndicatorElement({
     { transition, clear: [...BOX_EDGES] },
     useMergedRef(element, ref),
   );
-  // Motion writes a jump in its next frame. A box committed after this frame's animation
-  // callbacks (a resize rendered from the observer above, or the tabs shown again) would paint
-  // the old box first, so the jump is written now too, and Motion writes the same values.
+  // Motion applies a jump a frame late from a ResizeObserver callback; write the box now so the
+  // frame doesn't paint the old one.
   useLayoutEffect(() => {
     const node = element.current;
     if (!node || !box || !driven || sliding) return;

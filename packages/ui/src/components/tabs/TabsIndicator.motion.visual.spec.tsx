@@ -20,7 +20,10 @@ type Layout = {
   tabStyle?: CSSProperties;
   /** Key of tab "a": a new key remounts it */
   tabKey?: string;
-  /** Style of the list, as a spacing slider would set its padding; by default it fills the box's width and fits its tabs' height */
+  /**
+   * Style of the list, e.g. its padding; by default it fills the box's width and fits its tabs'
+   * height
+   */
   listStyle?: CSSProperties;
   /** Width of the box around the list, which centres its tabs */
   width?: number;
@@ -102,11 +105,10 @@ const sameSize = (a: BoxSize | undefined, b: BoxSize) =>
   a?.inlineSize === b.inlineSize && a.blockSize === b.blockSize;
 
 /**
- * Reads `read` in the first frame in which one of the boxes the indicator follows (the tabs'
- * border boxes, and the list's border and content boxes) differs from its size now, after the tabs' ResizeObservers and
- * before that frame paints: an observer created after the tabs' gets its callback after theirs,
- * in the same frame. A new observer is also notified in its first frame when nothing changed;
- * that notification is skipped.
+ * Reads `read` in the first frame in which a followed box (the tabs' border boxes, the list's
+ * border and content boxes) changes size. It reads after the component's ResizeObservers and
+ * before paint, as these observers are created after theirs. A first notification that reports
+ * no change is skipped.
  */
 function beforePaintOnceResized<T>(
   { tabs, list }: { tabs: Element[]; list: Element },
@@ -157,10 +159,9 @@ const RESIZES: [string, Layout, Layout][] = [
     { value: "b" },
     { value: "b", tabStyle: { paddingInline: 24 } },
   ],
-  // No tab changes size: the list's border box grows and its content box shrinks
+  // List padding: the border box grows and the content box shrinks.
   ["the padding of the list", {}, { listStyle: { padding: 16 } }],
-  // Only the list's border box changes: it has auto height and full width, and the tabs keep
-  // their sizes and the list's content box
+  // Top padding: only the list's border box changes.
   ["the top padding of the list", {}, { listStyle: { paddingTop: 16 } }],
   // Only the list's content box changes, and the centred tabs move within it
   [
