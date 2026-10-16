@@ -108,8 +108,9 @@ const renderedScale = (el: Element) =>
     (el.getBoundingClientRect().width / Number.parseFloat(getComputedStyle(el).width)) * 1000,
   ) / 1000;
 
-// Aligned over its trigger (Base UI's default `alignItemWithTrigger`), the popup has no side to
-// grow from (`data-side="none"`): it fades in place at full size, on both paths
+// Aligned over its trigger (Base UI's default `alignItemWithTrigger`, `data-side="none"`), the
+// popup lands with the selected item over the trigger's value, as Base UI's own reference styles
+// assume: it fades in place at full size, on both paths
 describe.each(MOTION_PATHS)("Select.Popup aligned with its trigger, $path", ({ withMotion }) => {
   beforeAll(() => enterMotionPath(withMotion));
   beforeEach(async () => {

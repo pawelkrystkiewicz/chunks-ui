@@ -29,7 +29,8 @@ export function createPopupRenderer({ m, spring, from, to }: PopupMotionConfig) 
       style.pointerEvents = "none";
     }
 
-    // A Select aligned over its trigger (`side: "none"`) has no side to grow from: it only fades.
+    // A Select aligned over its trigger (`side: "none"`) only fades, as in Base UI's own reference
+    // styles: it lands with the selected item over the trigger's value, so a scale would move it.
     // Motion reads `initial` at mount only, so a Select that Base UI moves off its trigger after
     // mount (too close to the viewport's edge to align) opens without the scale too.
     const closed = state.side === "none" ? { ...from, scale: 1 } : from;
