@@ -213,7 +213,7 @@ function ComboboxItem({ className, ...props }: ComboboxItemProps) {
       className={cnState(
         "relative flex w-full cursor-default items-center rounded-sm py-1.5 ps-2 pe-8 text-sm outline-none",
         // The popup is as wide as its anchor: a word longer than that breaks
-        "wrap-anywhere",
+        "[overflow-wrap:anywhere]",
         "data-highlighted:bg-accent data-highlighted:text-accent-foreground",
         "data-disabled:pointer-events-none data-disabled:opacity-50",
         className,

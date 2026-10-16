@@ -94,13 +94,22 @@ function SelectItem({ className, ...props }: SelectItemProps) {
     <BaseSelect.Item
       className={cnState(
         "relative flex w-full cursor-default items-center rounded-sm py-1.5 ps-2 pe-8 text-sm outline-none",
-        // The popup is as wide as the trigger: a word longer than that breaks
-        "wrap-anywhere",
         "data-highlighted:bg-accent data-highlighted:text-accent-foreground",
         "data-disabled:pointer-events-none data-disabled:opacity-50",
         "cursor-pointer",
         className,
       )}
+      {...props}
+    />
+  );
+}
+
+// The popup is as wide as the trigger: a word longer than that breaks. Only the text wraps, since
+// overflow-wrap is inherited and would squeeze a badge or shortcut beside it.
+function SelectItemText({ className, ...props }: SelectItemTextProps) {
+  return (
+    <BaseSelect.ItemText
+      className={cnState("min-w-0 [overflow-wrap:anywhere]", className)}
       {...props}
     />
   );
@@ -163,7 +172,7 @@ export const Select = {
   Icon: SelectIcon,
   Item: SelectItem,
   ItemIndicator: SelectItemIndicator,
-  ItemText: BaseSelect.ItemText,
+  ItemText: SelectItemText,
   Popup: SelectPopup,
   Portal: SelectPortal,
   Positioner: SelectPositioner,

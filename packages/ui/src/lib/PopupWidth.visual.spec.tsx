@@ -82,6 +82,37 @@ describe.each([
   });
 });
 
+describe("Select.Item with a badge beside its text", () => {
+  it("keeps the badge on one line while the text wraps (200 px trigger)", async () => {
+    const { getByTestId } = inColumn(
+      200,
+      <Select.Root defaultValue="tomatoes" defaultOpen>
+        <Select.Trigger aria-label="Item">
+          <Select.Value />
+          <Select.Icon />
+        </Select.Trigger>
+        <Select.Portal>
+          <Select.Positioner alignItemWithTrigger={false}>
+            <Select.Popup data-testid="popup">
+              <Select.Item value="tomatoes">
+                <Select.ItemText>Cherry tomatoes from the garden patch</Select.ItemText>
+                <span data-testid="badge">New</span>
+                <Select.ItemIndicator />
+              </Select.Item>
+            </Select.Popup>
+          </Select.Positioner>
+        </Select.Portal>
+      </Select.Root>,
+    );
+    await settled(getByTestId("popup"));
+    const badge = getByTestId("badge");
+    const lineHeight = Number.parseFloat(getComputedStyle(badge).lineHeight);
+    expect(badge.getBoundingClientRect().height, "badge height: one line").toBeLessThanOrEqual(
+      lineHeight + 1,
+    );
+  });
+});
+
 const comboboxPopup = (
   <Combobox.Portal>
     <Combobox.Positioner>
