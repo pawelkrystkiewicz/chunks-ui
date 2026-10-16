@@ -346,14 +346,6 @@ describe("checkDocsDirection", () => {
     ]);
   });
 
-  it("scans only .ts, .tsx, .mdx and .css files, not .js or .md", async () => {
-    const dir = tree({
-      "apps/docs/x.js": 'export const X = "ml-4";\n',
-      "apps/docs/x.md": "`ml-4`\n",
-    });
-    expect(await checkDocsDirection(dir)).toEqual([]);
-  });
-
   it("fails when apps/docs is missing, so an empty scan cannot pass", async () => {
     const dir = tree();
     rmSync(join(dir, "apps/docs"), { recursive: true });
@@ -361,7 +353,12 @@ describe("checkDocsDirection", () => {
   });
 
   it("fails when apps/docs holds no scanned file outside the skipped folders, so an empty scan cannot pass", async () => {
-    const dir = tree({ "apps/docs/node_modules/x.ts": "export {};\n", "apps/docs/x.md": "# X\n" });
+    // .js and .md are not scanned, so a hit in them does not count as a scanned file
+    const dir = tree({
+      "apps/docs/node_modules/x.ts": "export {};\n",
+      "apps/docs/x.js": 'export const X = "ml-4";\n',
+      "apps/docs/x.md": "`ml-4`\n",
+    });
     rmSync(join(dir, "apps/docs/seed.ts"));
     rmSync(join(dir, "apps/docs/seed.mdx"));
     expect(await checkDocsDirection(dir)).toEqual([
