@@ -372,8 +372,8 @@ export async function emulateReducedMotion(reduce: boolean) {
       SETTLE_TIMEOUT_MS,
     );
   });
-  await commands.emulateMedia({ reducedMotion: reduce ? "reduce" : "no-preference" });
   try {
+    await commands.emulateMedia({ reducedMotion: reduce ? "reduce" : "no-preference" });
     await changed;
   } finally {
     clearTimeout(timer);
@@ -471,7 +471,12 @@ export function beforePaintOnceResized<T>(
 ) {
   const borderBoxes = new Map([...items, container].map((el) => [el, borderBoxOf(el)]));
   const containerContentBox = contentBoxOf(container);
-  return new Promise<T>((resolve) => {
+  return new Promise<T>((resolve, reject) => {
+    const stop = () => {
+      clearTimeout(timer);
+      borderBoxObserver.disconnect();
+      contentBoxObserver.disconnect();
+    };
     const onResize = (entries: ResizeObserverEntry[]) => {
       const changed = entries.some(
         ({ target, borderBoxSize, contentBoxSize }) =>
@@ -479,10 +484,18 @@ export function beforePaintOnceResized<T>(
           (target === container && !sameSize(contentBoxSize[0], containerContentBox)),
       );
       if (!changed) return;
-      borderBoxObserver.disconnect();
-      contentBoxObserver.disconnect();
+      stop();
       resolve(read());
     };
+    // Stops watching, so a row that resizes nothing fails here and not as a later test's error
+    const timer = setTimeout(() => {
+      stop();
+      reject(
+        new Error(
+          `beforePaintOnceResized: no item's border box or the container's border or content box resized within ${SETTLE_TIMEOUT_MS}ms`,
+        ),
+      );
+    }, SETTLE_TIMEOUT_MS);
     // One observer can't observe an element by two boxes: the container's content box has its own
     const borderBoxObserver = new ResizeObserver(onResize);
     const contentBoxObserver = new ResizeObserver(onResize);

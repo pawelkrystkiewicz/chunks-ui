@@ -404,9 +404,7 @@ describe("ToggleGroup indicator after the group was hidden", () => {
             rerender(group({ hidden: true, value: "a" }));
             await settled();
           } else {
-            await commands.emulateMedia({
-              reducedMotion: step === "reduce" ? "reduce" : "no-preference",
-            });
+            await emulateReducedMotion(step === "reduce");
             await handedOver();
           }
         }
