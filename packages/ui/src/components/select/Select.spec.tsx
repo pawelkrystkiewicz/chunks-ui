@@ -115,14 +115,17 @@ describe("Select", () => {
         <Select.Portal>
           <Select.Positioner>
             <Select.Popup>
-              <Select.Item value="apple">
-                <Select.ItemText>Apple</Select.ItemText>
-                <Select.ItemIndicator />
-              </Select.Item>
-              <Select.Item value="banana">
-                <Select.ItemText>Banana</Select.ItemText>
-                <Select.ItemIndicator />
-              </Select.Item>
+              <Select.Group>
+                <Select.GroupLabel>Fruits</Select.GroupLabel>
+                <Select.Item value="apple">
+                  <Select.ItemText>Apple</Select.ItemText>
+                  <Select.ItemIndicator />
+                </Select.Item>
+                <Select.Item value="banana">
+                  <Select.ItemText>Banana</Select.ItemText>
+                  <Select.ItemIndicator />
+                </Select.Item>
+              </Select.Group>
             </Select.Popup>
           </Select.Positioner>
         </Select.Portal>

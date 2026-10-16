@@ -192,11 +192,12 @@ describe("DatePicker", () => {
     // The popup is portalled out of the container RTL hands back, so audit the body. It is a
     // dialog, which the region rule exempts, so the rule stays on.
     expect(container).not.toContainElement(screen.getByRole("dialog"));
+    // Known gap: the calendar dialog has no accessible name yet. This pin fails once DatePicker
+    // names it: then remove the pin and the rule override below.
+    expect(screen.getByRole("dialog")).not.toHaveAccessibleName();
     expect(
       await axe(document.body, {
         rules: {
-          // Known gap: the calendar dialog has no accessible name yet. Turn the rule on with the
-          // fix in DatePicker.
           "aria-dialog-name": { enabled: false },
         },
       }),
