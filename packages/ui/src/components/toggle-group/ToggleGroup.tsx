@@ -167,9 +167,10 @@ function ToggleGroupRoot<Value extends string = string>({
 // ---------------------------------------------------------------------------
 
 /**
- * `offsetLeft`/`offsetTop` are whole px. Terms of the offset chains above the container cancel;
- * only positioned elements between the item and the container add rounding, at most 0.5px each
- * for direct-child items. 2 keeps parity with Base UI's `MAX_LAYOUT_ROUNDING_ERROR`.
+ * The most the rect position and the summed offsets differ by when both are right. It adds up
+ * to less than 2px: the item's rounded `offsetLeft`/`offsetTop` (at most 0.5px), the container's
+ * own rounded offset when it is static (at most 0.5px more), and the residue of the division by
+ * the scale. 2 keeps parity with Base UI's `MAX_LAYOUT_ROUNDING_ERROR`.
  */
 const OFFSET_ROUNDING_PX = 2;
 
@@ -229,8 +230,12 @@ function boxWithin(container: HTMLElement, item: HTMLElement): IndicatorBox | nu
   const r = item.getBoundingClientRect();
   const c = container.getBoundingClientRect();
   const outer = layoutSize(container);
-  const scaleOf = (rect: number, layoutPx: number) =>
-    layoutPx <= 0 || Math.abs(rect - layoutPx) <= COMPUTED_STYLE_PRECISION_PX ? 1 : rect / layoutPx;
+  const scaleOf = (rect: number, layoutPx: number) => {
+    if (layoutPx <= 0 || Math.abs(rect - layoutPx) <= COMPUTED_STYLE_PRECISION_PX) return 1;
+    // scale(0) gives 0 and a collapsed box can give NaN: not a divisor, so the offsets rule
+    const scale = rect / layoutPx;
+    return Number.isFinite(scale) && scale > 0 ? scale : 1;
+  };
   const scaleX = scaleOf(c.width, outer.width);
   const scaleY = scaleOf(c.height, outer.height);
   // The container's scroll moves the item's rect, not its layout slot, where the indicator sits
@@ -246,13 +251,14 @@ function boxWithin(container: HTMLElement, item: HTMLElement): IndicatorBox | nu
   if (!agree) return { left, top, ...layout };
   // Where the rect agrees with the layout, its size is the precise one, unless a rotation warped it
   const fromRect = (rectPx: number, scale: number, layoutPx: number) =>
-    Math.abs(rectPx / scale - layoutPx) <= RECT_SIZE_TOLERANCE_PX ? rectPx / scale : layoutPx;
-  return {
-    left: rectLeft,
-    top: rectTop,
-    width: fromRect(r.width, scaleX, layout.width),
-    height: fromRect(r.height, scaleY, layout.height),
-  };
+    Math.abs(rectPx / scale - layoutPx) <= RECT_SIZE_TOLERANCE_PX ? rectPx / scale : undefined;
+  const width = fromRect(r.width, scaleX, layout.width);
+  const height = fromRect(r.height, scaleY, layout.height);
+  // A size that fell back to the layout one (an item with its own transform) is whole px, from
+  // the offsets: take the position from them too, so the box doesn't mix the two
+  if (width === undefined || height === undefined)
+    return { left, top, ...layout, width: width ?? layout.width, height: height ?? layout.height };
+  return { left: rectLeft, top: rectTop, width, height };
 }
 
 const sameBox = (a: IndicatorBox | null, b: IndicatorBox | null) =>
