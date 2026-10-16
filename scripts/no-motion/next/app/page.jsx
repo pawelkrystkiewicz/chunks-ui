@@ -5,8 +5,14 @@
 // (NEXT_TRIGGERS there), then clicks the first one in Chromium and waits for the dialog's title
 // (DIALOG_TITLE there).
 import { Dialog, Tooltip } from "chunks-ui";
+import { useEffect } from "react";
 
 export default function Page() {
+  // The exported HTML is server-rendered, so the trigger exists before React attaches handlers.
+  // check-no-motion.ts waits for this marker before it clicks (same idea as apps/docs HydrationMarker).
+  useEffect(() => {
+    document.documentElement.dataset.hydrated = "true";
+  }, []);
   return (
     <main>
       <Dialog.Root>

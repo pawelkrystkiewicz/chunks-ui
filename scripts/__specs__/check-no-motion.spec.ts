@@ -351,6 +351,12 @@ describe("the fixture app", () => {
     expect(page).toContain(`<Dialog.Title>${DIALOG_TITLE}</Dialog.Title>`);
   });
 
+  it("sets the hydration marker drive() waits for", () => {
+    const page = read("next/app/page.jsx");
+    expect(page).toContain("useEffect");
+    expect(page).toContain('document.documentElement.dataset.hydrated = "true"');
+  });
+
   it("pins the next version of the docs app", () => {
     const docs = JSON.parse(readFileSync(join(dir, "../../apps/docs/package.json"), "utf8"));
     const range: string = docs.dependencies.next;

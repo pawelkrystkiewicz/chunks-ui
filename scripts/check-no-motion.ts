@@ -42,7 +42,7 @@ const FIXTURES = join(import.meta.dirname, "no-motion");
 interface Locator {
   click(options: { timeout: number }): Promise<void>;
   getByText(text: string, options: { exact: boolean }): Locator;
-  waitFor(options: { timeout: number }): Promise<void>;
+  waitFor(options: { timeout: number; state?: "attached" }): Promise<void>;
 }
 interface Page {
   on(event: "pageerror", listener: (error: Error) => void): void;
@@ -52,6 +52,7 @@ interface Page {
   ): void;
   on(event: "request" | "requestfinished", listener: (request: { url(): string }) => void): void;
   goto(url: string, options: { timeout: number }): Promise<unknown>;
+  locator(selector: string): Locator;
   getByRole(role: "button" | "dialog", options?: { name: string; exact: boolean }): Locator;
 }
 interface Browser {
@@ -79,9 +80,9 @@ const COMPILER_OPTIONS = {
  * How the strict consumer resolves modules, one tsc run each. `bundler` is what Next, Vite and
  * tsup use. `node10` is the pre-`exports` algorithm of older CommonJS projects: it needs
  * `module: commonjs`, and `esModuleInterop` as `tsc --init` writes it, because dist/index.d.ts
- * default-imports React (from `import React from "react"` in the Combobox source) and fails with
- * TS1259 without the flag before anything else is checked. Drop esModuleInterop once
- * dist/index.d.ts no longer default-imports React (Combobox's `import React from "react"`).
+ * has a default import of React (from `import type React` in Combobox.tsx) and fails with
+ * TS1259 without the flag before anything else is checked. Drop esModuleInterop once that is
+ * gone.
  */
 const RESOLUTIONS = {
   bundler: { moduleResolution: "bundler", module: "esnext" },
@@ -263,8 +264,9 @@ const chunkPath = (name: string) => `/_next/static/chunks/${name}`;
 
 /**
  * Why the exported page misbehaved in Chromium for `consumer`, or undefined when it opened the
- * dialog without an error and, with Motion, treated its chunk right: requested only after the chunk with the page's own code had arrived, so the page's code
- * (the import() in use-motion.ts) asked for it, not the HTML. `files` are the chunks under
+ * dialog without an error and, with Motion, treated its chunk right: requested only after the
+ * chunk with the page's own code had arrived, so not from the HTML or the bootstrap
+ * (nextWithMotionProblem's static check that the HTML names no Motion chunk covers the rest). `files` are the chunks under
  * out/_next/static/chunks, as for nextWithMotionProblem.
  */
 export function browserProblem(
@@ -476,6 +478,17 @@ async function drive(browser: Browser, out: string): Promise<BrowserRun> {
       run.network.push({ event: "end", path: path(request.url()) }),
     );
     await page.goto(server.url.href, { timeout: BROWSER_MS });
+    // The HTML is server-rendered, so the trigger exists before hydration, and a click before
+    // hydrateRoot has no handler. page.jsx sets the marker in an effect.
+    try {
+      await page
+        .locator('html[data-hydrated="true"]')
+        .waitFor({ timeout: BROWSER_MS, state: "attached" });
+    } catch (error) {
+      throw new Error(
+        `the page never hydrated (no html[data-hydrated="true"] in ${BROWSER_MS} ms): ${error}`,
+      );
+    }
     await page
       .getByRole("button", { name: NEXT_TRIGGERS[0], exact: true })
       .click({ timeout: BROWSER_MS });
@@ -503,38 +516,41 @@ if (import.meta.main) {
     join(import.meta.dirname, "../apps/docs/package.json"),
   )("playwright");
   const browser = await chromium.launch();
-  const dir = mkdtempSync(join(tmpdir(), "chunks-ui-no-motion-"));
   try {
-    const tarball = pack(dir);
-    const without = await bundle(FIXTURES, join(dir, "without"), tarball);
-    const types = await typecheck(join(dir, "without"), "bundler");
-    const node10 = await typecheck(join(dir, "without"), "node10");
-    const nextWithout = nextBuild(join(dir, "without"));
-    const pageWithout =
-      nextWithout.html === undefined ? undefined : await drive(browser, nextWithout.out);
-    const withMotion = await bundle(join(FIXTURES, "with-motion"), join(dir, "with"), tarball);
-    const nextWith = nextBuild(join(dir, "with"));
-    const pageWith = nextWith.html === undefined ? undefined : await drive(browser, nextWith.out);
-    const problems = [
-      withoutMotionProblem(without.exitCode, without.output),
-      typesProblem(types.exitCode, types.output, "bundler"),
-      typesProblem(node10.exitCode, node10.output, "node10"),
-      nextWithoutMotionProblem(nextWithout.exitCode, nextWithout.output, nextWithout.html),
-      pageWithout && browserProblem("without motion", pageWithout, nextWithout.files),
-      withMotionProblem(withMotion.exitCode, withMotion.output, withMotion.files),
-      nextWithMotionProblem(nextWith.exitCode, nextWith.output, nextWith.files, nextWith.html),
-      pageWith && browserProblem("with motion", pageWith, nextWith.files),
-    ].filter((problem) => problem !== undefined);
-    if (problems.length > 0) {
-      console.error(problems.join("\n\n"));
-      process.exitCode = 1;
-    } else {
-      console.log(
-        "webpack and next build (Turbopack) build chunks-ui without motion (types compile with skipLibCheck: false under bundler and node10 resolution) and with motion (an async chunk, no bare import); Chromium opens the dialog of both exports without an error and requests Motion's chunk only with Motion, after the page's own code.",
-      );
+    const dir = mkdtempSync(join(tmpdir(), "chunks-ui-no-motion-"));
+    try {
+      const tarball = pack(dir);
+      const without = await bundle(FIXTURES, join(dir, "without"), tarball);
+      const types = await typecheck(join(dir, "without"), "bundler");
+      const node10 = await typecheck(join(dir, "without"), "node10");
+      const nextWithout = nextBuild(join(dir, "without"));
+      const pageWithout =
+        nextWithout.html === undefined ? undefined : await drive(browser, nextWithout.out);
+      const withMotion = await bundle(join(FIXTURES, "with-motion"), join(dir, "with"), tarball);
+      const nextWith = nextBuild(join(dir, "with"));
+      const pageWith = nextWith.html === undefined ? undefined : await drive(browser, nextWith.out);
+      const problems = [
+        withoutMotionProblem(without.exitCode, without.output),
+        typesProblem(types.exitCode, types.output, "bundler"),
+        typesProblem(node10.exitCode, node10.output, "node10"),
+        nextWithoutMotionProblem(nextWithout.exitCode, nextWithout.output, nextWithout.html),
+        pageWithout && browserProblem("without motion", pageWithout, nextWithout.files),
+        withMotionProblem(withMotion.exitCode, withMotion.output, withMotion.files),
+        nextWithMotionProblem(nextWith.exitCode, nextWith.output, nextWith.files, nextWith.html),
+        pageWith && browserProblem("with motion", pageWith, nextWith.files),
+      ].filter((problem) => problem !== undefined);
+      if (problems.length > 0) {
+        console.error(problems.join("\n\n"));
+        process.exitCode = 1;
+      } else {
+        console.log(
+          "webpack and next build (Turbopack) build chunks-ui without motion (types compile with skipLibCheck: false under bundler and node10 resolution) and with motion (an async chunk, no bare import); Chromium opens the dialog of both exports without an error and requests Motion's chunk only with Motion, after the page's own code.",
+        );
+      }
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
     }
   } finally {
-    rmSync(dir, { recursive: true, force: true });
     await browser.close();
   }
 }
