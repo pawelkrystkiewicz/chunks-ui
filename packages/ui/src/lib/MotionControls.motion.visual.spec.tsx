@@ -261,7 +261,8 @@ describe("controls when Motion loads", () => {
     // At rest on the CSS fallback before the change
     const start = await settled(() => measure(element()));
     change();
-    await nextFrame();
+    // The CSS transition has started, so Motion arrives mid-way through it
+    await untilChanged(() => measure(element()));
     await motion.arrive();
     const values = await sample(() => measure(element()), 40);
     const end = values.at(-1) ?? start;
@@ -469,6 +470,7 @@ describe("controls once Motion has loaded", () => {
     ["a checked Switch", "Switch", true, left],
     ["an unchecked Checkbox", "Checkbox", false, opacity],
   ] as const)("shows %s at rest under StrictMode", async (_, name, checked, measure) => {
+    const subject = control(name);
     await reloadMotion();
     render(
       <StrictMode>
@@ -483,7 +485,8 @@ describe("controls once Motion has loaded", () => {
         )}
       </StrictMode>,
     );
-    await nextFrame();
+    // Motion has written the values the re-run must keep
+    await expect.poll(() => driven(subject), { timeout: SETTLE_TIMEOUT_MS }).toBe(true);
     const values = await sample(() => measure(byTestId()), 10);
     expect(new Set(values).size).toBe(1);
   });

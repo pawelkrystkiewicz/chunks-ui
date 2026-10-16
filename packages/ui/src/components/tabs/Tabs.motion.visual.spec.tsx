@@ -7,6 +7,7 @@ import {
   eachPaintedFrame,
   emulateReducedMotion,
   offBy,
+  untilChanged,
   waitForStable,
 } from "../../VisualTest.utils";
 import { Tabs, type TabsContentsProps } from "./index";
@@ -205,12 +206,15 @@ describe("Tabs animations that must stop", () => {
     const result = render(tabs("a"));
     result.rerender(tabs("b"));
     const pane = page.getByText("Panel b").element().parentElement as HTMLElement;
-    await nextFrame();
-    const transform = pane.style.transform;
-    await nextFrame();
-    // Mid-entry: still fading in and still moving
-    expect(Number(getComputedStyle(pane).opacity)).toBeLessThan(1);
-    expect(pane.style.transform).not.toBe(transform);
+    // Mid-entry: fading in and still moving. Waits for Motion to start the entry rather than for
+    // a set number of frames, as it can start a frame or two later under load
+    await expect
+      .poll(() => pane.style.transform !== "" && Number(poseOf(pane).opacity) < 1, {
+        timeout: 5000,
+      })
+      .toBe(true);
+    await untilChanged(() => pane.style.transform);
+    expect(Number(poseOf(pane).opacity)).toBeLessThan(1);
     return { ...result, pane };
   }
 
@@ -261,9 +265,7 @@ describe("Tabs animations that must stop", () => {
     await expect.poll(x, { timeout: 5000 }).toBeLessThan(-1);
     expect(x()).toBeGreaterThan(-width + 1);
     // Still moving, so an animation left running would go on writing below
-    const moving = track.style.transform;
-    await nextFrame();
-    expect(track.style.transform).not.toBe(moving);
+    await untilChanged(() => track.style.transform);
     unmount();
     // Stopping may write the value it stopped at once; after that nothing moves
     await nextFrame();
@@ -353,8 +355,9 @@ describe("Tabs in <Activity> with Motion", () => {
     expect(place().height).toBeLessThan(HEIGHTS.tall - 1);
 
     rerender(ui("hidden", "tall"));
-    await nextFrame();
-    await nextFrame();
+    // Hidden until the hide has stopped the slide and the resize
+    const track = contents.firstElementChild as HTMLElement;
+    await waitForStable(() => [contents.getAttribute("style"), track.getAttribute("style")]);
     rerender(ui("visible", "tall"));
     const frames = await eachPaintedFrame(place, 20);
     expect(frames).toEqual(frames.map(() => ({ offset: 0, height: HEIGHTS.tall })));
@@ -366,7 +369,7 @@ describe("Tabs in <Activity> with Motion", () => {
     [
       "mid-entry",
       slow,
-      async (pane: Element) => {
+      async (pane: HTMLElement) => {
         // Fading in. Before Motion's first frame the pane is still at full opacity.
         const fading = () => Number(poseOf(pane).opacity);
         await expect.poll(() => fading() > 0 && fading() < 1, { timeout: 5000 }).toBe(true);
@@ -375,9 +378,10 @@ describe("Tabs in <Activity> with Motion", () => {
     [
       "after its entry",
       { type: "tween", duration: 0.1 },
-      async (pane: Element) => {
-        // At rest before the first frame too, so wait for the pose to be at rest after a frame
-        await nextFrame();
+      async (pane: HTMLElement) => {
+        // At rest before Motion's first frame too, so wait for Motion to write the entry's
+        // offset, then for the pose to come to rest
+        await expect.poll(() => pane.style.transform, { timeout: 5000 }).not.toBe("");
         await expect.poll(() => poseOf(pane), { timeout: 5000 }).toEqual(AT_REST);
       },
     ],
@@ -400,8 +404,8 @@ describe("Tabs in <Activity> with Motion", () => {
       await settle(pane);
 
       rerender(ui("hidden", "b"));
-      await nextFrame();
-      await nextFrame();
+      // Hidden until the hide has stopped the entry
+      await waitForStable(() => pane.getAttribute("style"));
       rerender(ui("visible", "b"));
       const frames = await eachPaintedFrame(() => poseOf(pane), 20);
       expect(frames).toEqual(frames.map(() => AT_REST));

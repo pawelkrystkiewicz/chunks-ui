@@ -2,6 +2,7 @@ import { DirectionProvider } from "@base-ui/react/direction-provider";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { userEvent } from "vitest/browser";
 import {
+  boxOf,
   emulateReducedMotion,
   expectDimmed,
   focusVisible,
@@ -11,7 +12,6 @@ import {
 } from "../../VisualTest.utils";
 import { Tabs } from "./index";
 
-const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
 const activeTab = () => document.querySelector('[role="tab"][aria-selected="true"]') as Element;
 const indicator = () => document.querySelector('[data-testid="indicator"]') as Element;
 /** The largest distance between an edge of the indicator and the same edge of the active tab */
@@ -86,8 +86,10 @@ describe("Tabs", () => {
       await expect.poll(offset).toBeLessThanOrEqual(1);
 
       const clicked = document.querySelector('[role="tab"]:last-of-type') as HTMLElement;
+      const before = boxOf(indicator());
       clicked.click();
-      await nextFrame();
+      // The indicator has moved. A transition would still be running at the checks below
+      await expect.poll(() => boxOf(indicator())).not.toEqual(before);
       expect(clicked).toHaveAttribute("aria-selected", "true");
       expect(indicator().getAnimations()).toHaveLength(0);
       expect(offset()).toBeLessThanOrEqual(1);
