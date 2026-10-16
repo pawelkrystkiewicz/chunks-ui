@@ -154,12 +154,17 @@ function ToggleGroupRoot<Value extends string = string>({
       return false;
     };
     const moves = ({ target, type, addedNodes, removedNodes }: MutationRecord) => {
+      // Motion writes the indicator's style every frame
+      if (indicators.has(target)) return false;
       if (insideItem(target)) return false;
       if (type !== "childList") return holdsItem(target);
       // A removed item has unregistered by now, so a change of children counts unless it is an
       // item's (its resize is observed) or only adds or removes the indicator
-      const changed = [...addedNodes, ...removedNodes];
-      return !stopItem.has(target) && !changed.every((node) => indicators.has(node));
+      if (stopItem.has(target)) return false;
+      for (const nodes of [addedNodes, removedNodes]) {
+        for (const node of nodes) if (!indicators.has(node)) return true;
+      }
+      return false;
     };
     const mutation = new MutationObserver((records) => {
       if (records.some(moves)) notifyResize(container, "border-box");
