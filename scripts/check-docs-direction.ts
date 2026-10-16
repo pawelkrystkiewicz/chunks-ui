@@ -1,9 +1,10 @@
 #!/usr/bin/env bun
 /**
- * Fails on a physical margin, padding, inset, text-align, rounded, border, float, clear or scroll
- * class in apps/docs. It needs a Tailwind value (`ml-4`, `left-1/2`), so prose like `left-to-right`
- * passes. A marker `direction: physical, <reason>` on the same line, or in a single-line comment
- * alone on the line above, exempts a deliberate one. An empty scan fails.
+ * Fails on a physical margin, padding, inset, text-align, rounded, border, float, clear, scroll,
+ * object, background or transform-origin class in apps/docs. It needs a Tailwind value (`ml-4`,
+ * `left-1/2`), so prose like `left-to-right` passes. A marker `direction: physical, <reason>` on
+ * the same line, or in a single-line comment alone on the line above, exempts a deliberate one. An
+ * empty scan fails.
  * Full list and limits: TESTING_STRATEGY.md
  *
  * Run: bun run check:docs-direction
@@ -30,6 +31,8 @@ const PHYSICAL = new RegExp(
     "(?:rounded-[lr]|rounded-[tb][lr]|border-[lr])(?:-(?:\\w+(?:\\.\\w+)*|\\[[^\\]\\s]*\\]|\\([^)\\s]*\\)))?",
     "text-(?:left|right)",
     "(?:float|clear)-(?:left|right)",
+    "(?:object|bg|origin)-(?:(?:top|bottom)-)?(?:left|right)",
+    "(?:object|bg)-(?:left|right)-(?:top|bottom)",
   ].join("|")})(?![\\w-])`,
   "g",
 );
@@ -75,7 +78,7 @@ if (import.meta.main) {
   for (const problem of problems) console.error(problem);
   if (problems.length > 0) {
     console.error(
-      `\n${problems.length} physical direction ${problems.length === 1 ? "class" : "classes"} in the docs. Use the logical class (ms-/me-, ps-/pe-, start-/end-, text-start/text-end, rounded-s-/rounded-e-/rounded-ss-…, border-s-/border-e-) so the page mirrors in RTL, or mark a deliberate one with \`direction: physical, <reason>\` in a comment on its line or the line above.`,
+      `\n${problems.length} physical direction ${problems.length === 1 ? "class" : "classes"} in the docs. Use the logical class (ms-/me-, ps-/pe-, start-/end-, text-start/text-end, rounded-s-/rounded-e-/rounded-ss-…, border-s-/border-e-) so the page mirrors in RTL, or mark a deliberate one with \`direction: physical, <reason>\` in a comment on its line or the line above. object-, bg- and origin- positions have no logical class: mirror one with an rtl: twin and mark the line.`,
     );
     process.exit(1);
   }

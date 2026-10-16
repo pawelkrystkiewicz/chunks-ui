@@ -91,8 +91,36 @@ describe("physicalTokens", () => {
       ],
     ],
     [
+      "a physical object, background and transform-origin position, a corner too, behind a variant too",
+      "object-left object-right-bottom object-top-left bg-right bg-left-top bg-bottom-right origin-left origin-top-right md:object-right hover:bg-left-bottom data-[side=top]:origin-bottom-left [&>img]:object-left!",
+      [
+        "object-left",
+        "object-right-bottom",
+        "object-top-left",
+        "bg-right",
+        "bg-left-top",
+        "bg-bottom-right",
+        "origin-left",
+        "origin-top-right",
+        "object-right",
+        "bg-left-bottom",
+        "origin-bottom-left",
+        "object-left",
+      ],
+    ],
+    [
       "nothing for the logical classes and the look-alikes",
       "ms-4 pe-2 start-0 -end-2 text-start rounded-s-lg rounded-ee-sm border-e-2 inset-x-0 rounded-lg border-left translate-x-2 float-none clear-both scroll-ms-4 scroll-mx-2 overfloat-left",
+      [],
+    ],
+    [
+      "nothing for the other positions and the forms Tailwind does not generate",
+      "object-cover object-top object-center object-[25%_75%] bg-top bg-center bg-cover bg-left-4 origin-top origin-center origin-[33%_75%] origin-left-top -origin-left -object-left -bg-right",
+      [],
+    ],
+    [
+      "nothing for what is left out on purpose: a translate, the side Base UI sets, and the slides Tailwind does not have",
+      "-translate-x-1/2 translate-x-4 data-[side=left]:ms-2 slide-in-from-left slide-out-to-right",
       [],
     ],
     [
