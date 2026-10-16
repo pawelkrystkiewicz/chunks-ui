@@ -60,22 +60,28 @@ const combobox = ({
 // The docs' multi-select: the Control draws the ring (`has-[:focus-visible]`) while the input
 // inside it has focus, and turns the input's own ring off
 // `open` starts the popup open, to measure it against the Control (`data-testid="control"`)
-const chipsCombobox = ({ open = false }: { open?: boolean } = {}) => (
+const chipsCombobox = ({
+  open = false,
+  placeholder = "Select framework...",
+}: {
+  open?: boolean;
+  placeholder?: string;
+} = {}) => (
   <Combobox.Root multiple items={options} defaultValue={options.slice(0, 2)} defaultOpen={open}>
     <Combobox.Control data-testid="control">
-      <Combobox.Chips>
+      <Combobox.Chips className="flex-1">
         {options.slice(0, 2).map((item) => (
           <Combobox.Chip key={item.value}>
             {item.label}
             <Combobox.ChipRemove />
           </Combobox.Chip>
         ))}
+        <Combobox.Input
+          className="h-7 min-w-20 flex-1 border-0 bg-transparent px-0"
+          placeholder={placeholder}
+          aria-label="Frameworks"
+        />
       </Combobox.Chips>
-      <Combobox.Input
-        className="h-7 min-w-20 flex-1 border-0 bg-transparent px-0"
-        placeholder="Select framework..."
-        aria-label="Frameworks"
-      />
       <Combobox.Clear />
       <Combobox.Trigger />
     </Combobox.Control>
@@ -173,6 +179,22 @@ describe("Combobox", () => {
     });
     expect(getComputedStyle(chip).zIndex).toBe("1");
     await expect(fixture).toMatchScreenshot();
+  });
+
+  // Clear and Trigger sit over the end of the Control, so its end padding keeps the text out
+  // from under them: a long placeholder ran under the clear button (#484)
+  it("ends the input's text box before the clear button, with a long placeholder", () => {
+    const { getByRole } = render(
+      <div style={{ width: 300 }}>
+        {chipsCombobox({ placeholder: "Select one or more frameworks from the list" })}
+      </div>,
+    );
+    const input = getByRole("combobox");
+    const { paddingRight, borderRightWidth } = getComputedStyle(input);
+    const textRight =
+      input.getBoundingClientRect().right - parseFloat(paddingRight) - parseFloat(borderRightWidth);
+    const clear = getByRole("button", { name: "Clear selection" }).getBoundingClientRect();
+    expect(textRight).toBeLessThanOrEqual(clear.left);
   });
 
   // The chips sat flush against each other: Combobox.Chips had no gap (#478)

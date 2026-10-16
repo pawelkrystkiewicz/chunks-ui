@@ -243,7 +243,7 @@ The popup enters with a scale-up and fade (from `scale-95` and `opacity-0`): the
 | Part | Description |
 |---|---|
 | `Combobox.Root` | State container. Manages open/close, filtering, and selected value(s). |
-| `Combobox.Control` | Bordered wrapper for multi-select (chips + input): Base UI's `Combobox.InputGroup`, a `role="group"` (pass `aria-label` to name it). The popup anchors to it, and a press on its padding focuses the input and opens the popup, unless `openOnInputClick` is false. Draws the focus ring (`has-[:focus-visible]`) while the input or a chip inside it has keyboard focus, and turns off the ring of its combobox input, so one ring shows; a focused chip also draws its own. |
+| `Combobox.Control` | Bordered wrapper for multi-select (chips + input): Base UI's `Combobox.InputGroup`, a `role="group"` (pass `aria-label` to name it). The popup anchors to it, and a press on its padding focuses the input and opens the popup, unless `openOnInputClick` is false. `Combobox.Clear` and `Combobox.Trigger` sit over its end: its end padding (`pe-12`) keeps the chips and the input's text out from under them, so keep it when you pass your own padding. Draws the focus ring (`has-[:focus-visible]`) while the input or a chip inside it has keyboard focus, and turns off the ring of its combobox input, so one ring shows; a focused chip also draws its own. |
 | `Combobox.Input` | Text input with built-in filtering. |
 | `Combobox.Trigger` | Button that toggles the popup. Renders a default chevron icon. |
 | `Combobox.Icon` | Chevron icon, usable standalone outside the trigger. |
