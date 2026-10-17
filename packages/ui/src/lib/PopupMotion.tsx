@@ -26,11 +26,10 @@ type PopupMotionConfig = {
 export function createPopupRenderer({ m, spring, from, to, exitAtOnce }: PopupMotionConfig) {
   // Motion starts an animation in its next frame, once it has resolved the keyframes. The effect
   // that starts the exit calls `onAnimationStart` first, so resolving them in a microtask after it
-  // starts the exit now. `MotionLike` has neither `flushKeyframeResolvers` nor this callback.
+  // starts the exit now. This needs Motion 12.8 or later, which exports `flushKeyframeResolvers`
+  // (`MotionLike` leaves it out). On an older Motion the exit still waits for the next frame.
   const { flushKeyframeResolvers } = m as MotionLike & { flushKeyframeResolvers?: () => void };
-  const startExit = exitAtOnce && {
-    onAnimationStart: () => queueMicrotask(() => flushKeyframeResolvers?.()),
-  };
+  const startExit = exitAtOnce ? () => queueMicrotask(() => flushKeyframeResolvers?.()) : undefined;
 
   return (renderProps: RenderProps, state: { open: boolean; side?: string }): JSX.Element => {
     const style: CSSProperties = { ...(renderProps.style ?? {}) };
@@ -53,7 +52,7 @@ export function createPopupRenderer({ m, spring, from, to, exitAtOnce }: PopupMo
         initial={closed}
         animate={state.open ? to : closed}
         transition={spring}
-        {...(!state.open && startExit)}
+        onAnimationStart={state.open ? undefined : startExit}
       />
     );
   };

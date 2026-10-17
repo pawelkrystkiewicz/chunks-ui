@@ -27,6 +27,7 @@ export type MotionElementProps = Omit<
   initial?: MotionValues;
   animate?: MotionValues;
   transition?: MotionOptions;
+  onAnimationStart?: () => void;
 };
 
 /** The controls of a running `animate()` that chunks-ui uses. */
