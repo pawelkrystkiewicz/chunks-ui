@@ -350,34 +350,57 @@ export function describePopupCssPath(name: string, ui: (open: boolean) => ReactE
 /** How long a poll or `waitForStable` waits for a value to settle, in ms. */
 export const SETTLE_TIMEOUT_MS = 5000;
 
+// Taken at import, before a spec's vi.useFakeTimers(), so the guard runs on real time
+const { setTimeout: realSetTimeout, clearTimeout: realClearTimeout } = globalThis;
+
 /**
- * Emulates the reduced-motion preference and resolves on the media query's change event. Motion
- * and the components read the preference from that event, which lands after `matches` flips.
- * Change events dispatch to the oldest list first, so this fresh list hears it after every older
- * listener. Resolves at once when the preference already matches `reduce`.
+ * Emulates `media` and resolves on the change event of `query`, once it matches `want`. Resolves
+ * at once when it already does. Fails when no change event comes within SETTLE_TIMEOUT_MS.
  */
-export async function emulateReducedMotion(reduce: boolean) {
-  const query = matchMedia("(prefers-reduced-motion: reduce)");
-  if (query.matches === reduce) return;
-  let timer: ReturnType<typeof setTimeout> | undefined;
+async function emulateAndWait(query: string, want: boolean, media: EmulatedMedia) {
+  const list = matchMedia(query);
+  if (list.matches === want) return;
+  let timer: ReturnType<typeof realSetTimeout> | undefined;
   const changed = new Promise<void>((resolve, reject) => {
-    query.addEventListener("change", () => resolve(), { once: true });
-    timer = setTimeout(
+    list.addEventListener("change", () => resolve(), { once: true });
+    timer = realSetTimeout(
       () =>
         reject(
           new Error(
-            `emulateReducedMotion(${reduce}): no change event within ${SETTLE_TIMEOUT_MS}ms`,
+            `emulateMedia(${JSON.stringify(media)}): no change event within ${SETTLE_TIMEOUT_MS}ms`,
           ),
         ),
       SETTLE_TIMEOUT_MS,
     );
   });
   try {
-    await commands.emulateMedia({ reducedMotion: reduce ? "reduce" : "no-preference" });
+    await commands.emulateMedia(media);
     await changed;
   } finally {
-    clearTimeout(timer);
+    realClearTimeout(timer);
   }
+}
+
+/**
+ * Emulates the reduced-motion preference and resolves on the media query's change event. Motion
+ * and the components read the preference from that event, which lands after `matches` flips.
+ * Change events dispatch to the oldest list first, so this fresh list hears it after every older
+ * listener. Resolves at once when the preference already matches `reduce`.
+ */
+export function emulateReducedMotion(reduce: boolean) {
+  return emulateAndWait("(prefers-reduced-motion: reduce)", reduce, {
+    reducedMotion: reduce ? "reduce" : "no-preference",
+  });
+}
+
+/**
+ * Emulates forced colours and resolves on the media query's change event, once
+ * `(forced-colors: active)` matches `active`. Resolves at once when the query already matches.
+ */
+export function emulateForcedColors(active: boolean) {
+  return emulateAndWait("(forced-colors: active)", active, {
+    forcedColors: active ? "active" : "none",
+  });
 }
 
 const nextFrame = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
