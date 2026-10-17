@@ -59,7 +59,7 @@ Each has a page in the [component index](https://ui-kit.chunk-creations.com/comp
 | --------- | --------------------------------------------- |
 | Headless  | `@base-ui/react` v1.9+ (includes Floating UI) |
 | Styling   | Tailwind CSS v4 + CVA                         |
-| Animation | Motion v12+ (optional peer dep)               |
+| Animation | Motion 12.8+ (optional peer dep)              |
 | Build     | tsup (ESM + CJS + `.d.ts`)                    |
 
 ## Color System
