@@ -46,29 +46,37 @@ function SelectTrigger({ className, ...props }: SelectTriggerProps) {
 
 // One line: a value wider than the trigger ends in an ellipsis before the chevron (#518). Three
 // classes, not `truncate`, so `whitespace-normal` in `className` brings back wrapping alone.
+// `flex-1`: it takes only the free space, so an element beside it keeps its width (#546), and
+// `text-start` keeps the text at the start of that space, which the trigger's <button> centres.
 function SelectValue({ className, ...props }: SelectValueProps) {
   return (
     <BaseSelect.Value
-      className={cnState("overflow-hidden text-ellipsis whitespace-nowrap", className)}
+      className={cnState(
+        "flex-1 text-start overflow-hidden text-ellipsis whitespace-nowrap",
+        className,
+      )}
       {...props}
     />
   );
 }
 
-function SelectIcon({ className, ...props }: SelectIconProps) {
+// Children replace the chevron, as on Combobox.Icon (#541)
+function SelectIcon({ className, children, ...props }: SelectIconProps) {
   return (
     <BaseSelect.Icon className={cnState("ms-auto", className)} {...props}>
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        className="size-4 text-muted-foreground"
-        aria-hidden="true"
-      >
-        <path d="m6 9 6 6 6-6" />
-      </svg>
+      {children ?? (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          className="size-4 text-muted-foreground"
+          aria-hidden="true"
+        >
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      )}
     </BaseSelect.Icon>
   );
 }

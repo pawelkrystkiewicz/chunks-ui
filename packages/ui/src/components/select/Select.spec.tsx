@@ -31,10 +31,25 @@ describe("Select", () => {
     );
     expect(screen.getByTestId("value")).toHaveClass(
       "custom",
+      "flex-1",
+      "text-start",
       "overflow-hidden",
       "text-ellipsis",
       "whitespace-nowrap",
     );
+  });
+
+  it("lets a Value className flex-initial replace flex-1", () => {
+    render(
+      <Select.Root>
+        <Select.Trigger>
+          <Select.Value className="flex-initial" data-testid="value" placeholder="Pick" />
+        </Select.Trigger>
+      </Select.Root>,
+    );
+    const value = screen.getByTestId("value");
+    expect(value).toHaveClass("flex-initial");
+    expect(value).not.toHaveClass("flex-1");
   });
 
   it("lets a Value className bring back wrapping and keep the clip", () => {
@@ -59,6 +74,33 @@ describe("Select", () => {
       </Select.Root>,
     );
     expect(screen.getByTestId("icon")).toHaveClass("custom");
+  });
+
+  // Base UI's Icon renders a `▼` when it has no children; ours draws a chevron svg instead
+  it("renders the chevron in Icon when it has no children", () => {
+    render(
+      <Select.Root>
+        <Select.Trigger>
+          <Select.Icon data-testid="icon" />
+        </Select.Trigger>
+      </Select.Root>,
+    );
+    const icon = screen.getByTestId("icon");
+    expect(icon.querySelector("svg")).toBeInTheDocument();
+    expect(icon).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("renders the children of Icon in place of the chevron", () => {
+    render(
+      <Select.Root>
+        <Select.Trigger>
+          <Select.Icon data-testid="icon">custom</Select.Icon>
+        </Select.Trigger>
+      </Select.Root>,
+    );
+    const icon = screen.getByTestId("icon");
+    expect(icon).toHaveTextContent(/^custom$/);
+    expect(icon.querySelector("svg")).not.toBeInTheDocument();
   });
 
   it("renders Popup with custom className", () => {

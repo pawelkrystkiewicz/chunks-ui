@@ -16,6 +16,7 @@ export type {
   ComboboxPositionerProps,
   ComboboxRootProps,
   ComboboxTriggerProps,
+  ComboboxValueProps,
 } from "./Combobox";
 export { Combobox } from "./Combobox";
 export { type ComboboxLabels, DEFAULT_COMBOBOX_LABELS } from "./Combobox.Labels";

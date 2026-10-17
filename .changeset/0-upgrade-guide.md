@@ -17,7 +17,7 @@ Upgrading from 0.1.4. Details are in the other entries, quoted by their first wo
   - `Dialog.Popup` is at most the viewport width less 2rem, so below 480px it is narrower than before ("Fixed: on a viewport narrower than about 456px").
   - `Menu.Content` opens 8px from its trigger, not 4px; the Tooltip gap is 8px, not 6px, set as a margin on `Tooltip.Popup`, and `Tooltip.Positioner` has no default `sideOffset` ("The keyboard focus ring", "Fixed: the `Tooltip` popup sat").
   - `Combobox.Positioner` opens the popup 8px below the input, where it opened flush; `sideOffset={0}` restores it ("Fixed: the `Combobox` popup opened flush").
-  - `Select.Value` stays on one line and ends in an ellipsis, where a long value wrapped or ran past the trigger; `whitespace-normal` in its `className` brings back wrapping. `Select.Trigger` is at most as wide as its container (`max-w-full`; `max-w-none` lifts it) ("Fixed: a `Select.Value` wider than its trigger").
+  - `Select.Value` and `Combobox.Value` stay on one line and end in an ellipsis, where a long value wrapped or ran past the trigger; `whitespace-normal` in their `className` brings back wrapping. They fill the trigger's free space (`flex-1`; `flex-initial` restores the earlier sizing), so an element beside them keeps its width. `Select.Trigger` and `Combobox.Trigger` are at most as wide as their container (`max-w-full`; `max-w-none` lifts it) ("Fixed: a `Select.Value` wider than its trigger", "Fixed: in a trigger-style `Combobox`").
   - `Select.Popup`'s CSS transition list is `opacity, scale` instead of `all`, and the CSS path now scales as well as fades; a `data-starting-style:translate-*` you add no longer animates until you list the property ("Changed: the CSS transition list").
   - `Dialog.Backdrop` and `Drawer.Backdrop` default `forceRender` to `true` ("Fixed: a `Drawer` opened from inside").
   - `Tabs.Indicator` renders an inline `<script>` in server HTML, which a strict CSP blocks ("`Tabs.Indicator` now shows on a server-rendered page").
@@ -35,6 +35,7 @@ Upgrading from 0.1.4. Details are in the other entries, quoted by their first wo
   - `Tabs.Content` is a Base UI `tabpanel` that stays mounted and is a tab stop; without Motion or with reduced motion, `Tabs.Contents` has one extra track `div` and no longer clips.
   - `Calendar` column headers hold a visible short name and a visually hidden long name.
   - Every `Calendar` day button wraps its number in a `<span>`, so `getByText("15")` returns the span, not the button ("Fixed: in forced-colors mode").
+  - `Combobox.Value` renders a `<span>` around the value, except for a function child in a multi-select, so `getByText` on the value returns the span, not the trigger ("Fixed: in a trigger-style `Combobox`").
   - `Avatar` is built on Base UI's `Avatar`: the `<img>` is hidden until it loads and, with `alt`, the fallback has `role="img"`.
   - `Dialog.Portal` and `Drawer.Portal` carry the z-layer; their popups and backdrops do not, and `z-overlays` is unused.
   - Popups opened inside a Dialog, Drawer, Popover or Combobox render in the parent's portal, not under `document.body`.
