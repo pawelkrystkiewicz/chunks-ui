@@ -1,7 +1,19 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  AppRouterContext,
+  type AppRouterInstance,
+} from "next/dist/shared/lib/app-router-context.shared-runtime";
 import { expect, it } from "vitest";
 import { LandingPage } from "./LandingPage";
+
+// Nextra's Search reads the App Router, which only Next mounts. No test navigates.
+const renderPage = () =>
+  render(
+    <AppRouterContext.Provider value={{} as AppRouterInstance}>
+      <LandingPage />
+    </AppRouterContext.Provider>,
+  );
 
 const header = (container: HTMLElement) => {
   const el = container.querySelector("header");
@@ -10,17 +22,22 @@ const header = (container: HTMLElement) => {
 };
 
 it("the header links to the GitHub repository in a new tab", () => {
-  const { container } = render(<LandingPage />);
+  const { container } = renderPage();
   const link = header(container).getByRole("link", { name: "GitHub repository" });
   expect(link.getAttribute("href")).toBe("https://github.com/pawelkrystkiewicz/chunks-ui");
   expect(link.getAttribute("target")).toBe("_blank");
+});
+
+it("the header has the docs search box", () => {
+  const { container } = renderPage();
+  expect(header(container).getByRole("combobox", { name: "Search documentation" })).toBeTruthy();
 });
 
 it.each([
   ["Read the docs", "/getting-started"],
   ["Open Create", "/create"],
 ])("the %s CTA is a link with the contained primary Button colours", (name, href) => {
-  render(<LandingPage />);
+  renderPage();
   const cta = screen.getByRole("link", { name });
   expect(cta.getAttribute("href")).toBe(href);
   expect([...cta.classList]).toEqual(
@@ -29,7 +46,7 @@ it.each([
 });
 
 it("the Create section links to /create once, besides the preset tiles", () => {
-  const { container } = render(<LandingPage />);
+  const { container } = renderPage();
   const create = container.querySelector<HTMLElement>("#create");
   if (!create) throw new Error("no #create section");
   const links = [...create.querySelectorAll("a:not([aria-label^='Open Create with'])")];
@@ -39,7 +56,7 @@ it("the Create section links to /create once, besides the preset tiles", () => {
 });
 
 it("every link and button, the footer's too, draws the --ring outline on keyboard focus", () => {
-  const { container } = render(<LandingPage />);
+  const { container } = renderPage();
   fireEvent.click(screen.getByRole("button", { name: "Menu" }));
   const focusable = [...container.querySelectorAll<HTMLElement>("a[href], button")];
   expect(focusable.length).toBeGreaterThan(40);
@@ -56,7 +73,7 @@ it("every link and button, the footer's too, draws the --ring outline on keyboar
 
 // The previews stand for the library, so their frames restore the site ring that .landing replaces.
 it("every component preview frame restores the library ring", () => {
-  const { container } = render(<LandingPage />);
+  const { container } = renderPage();
   const frames = [
     ...container.querySelectorAll<HTMLElement>("a[aria-labelledby^='cat-'] > div[aria-hidden]"),
   ];

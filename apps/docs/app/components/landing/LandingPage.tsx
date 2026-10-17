@@ -6,6 +6,7 @@ import { buttonVariants, cn } from "chunks-ui/utils";
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { Search } from "nextra/components";
 import { GitHubIcon } from "nextra/icons";
 import type { ComponentProps, ReactNode } from "react";
 import {
@@ -245,7 +246,7 @@ function CellText({
   );
 }
 
-// `auto` end column: its controls outgrow the logo column's 240px.
+// `auto` end column: its controls outgrow the logo column's 240px, the xl search by far.
 function Header() {
   return (
     <header className="relative z-5 grid grid-cols-[minmax(0,1fr)_auto] border-white/12 border-b lg:grid-cols-[240px_minmax(0,1fr)_auto]">
@@ -272,6 +273,10 @@ function Header() {
         ))}
       </nav>
       <div className="flex items-center justify-end gap-2 px-[clamp(22px,2.4vw,28px)] py-[18px]">
+        {/* Below xl it squeezes the nav. Hidden by a wrapper: on Search, `hidden` meets Nextra's x:flex */}
+        <div className="me-2 hidden xl:block">
+          <Search aria-label="Search documentation" />
+        </div>
         <Href
           href={GITHUB}
           aria-label="GitHub repository"
