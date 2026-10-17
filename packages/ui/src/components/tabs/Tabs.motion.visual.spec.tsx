@@ -77,6 +77,12 @@ const passedThrough = (heights: number[], from: number, to: number) =>
 const slow = { type: "tween", ease: "linear", duration: 10 } as const;
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
 
+// An absence window, as a stopped animation leaves nothing to wait for. Motion's frame loop runs
+// once a frame and the slow tween changes the value in each frame, so a write after the stop (the
+// stopped value landing after a clear, which then stays), or an animation that kept going or
+// started again, shows in the first or second frame. 5 frames leave margin
+const ABSENCE_WINDOW_FRAMES = 5;
+
 /** A Tabs.Animate pane's opacity and vertical offset, as painted */
 const poseOf = (pane: Element) => {
   const { opacity, transform } = getComputedStyle(pane);
@@ -255,7 +261,7 @@ describe("Tabs animations that must stop", () => {
     await expect.poll(() => poseOf(pane), { timeout: 1000 }).toEqual(AT_REST);
 
     await emulateReducedMotion(false);
-    for (let frame = 0; frame < 5; frame++) {
+    for (let frame = 0; frame < ABSENCE_WINDOW_FRAMES; frame++) {
       await nextFrame();
       expect(getComputedStyle(pane).opacity).toBe("1");
     }
@@ -268,7 +274,7 @@ describe("Tabs animations that must stop", () => {
     // Stopping may write the value it stopped at once; after that nothing moves
     await nextFrame();
     const transform = pane.style.transform;
-    for (let frame = 0; frame < 5; frame++) {
+    for (let frame = 0; frame < ABSENCE_WINDOW_FRAMES; frame++) {
       await nextFrame();
       expect(pane.style.transform).toBe(transform);
     }
@@ -300,7 +306,7 @@ describe("Tabs animations that must stop", () => {
     // Stopping may write the value it stopped at once; after that nothing moves
     await nextFrame();
     const transform = track.style.transform;
-    for (let frame = 0; frame < 5; frame++) {
+    for (let frame = 0; frame < ABSENCE_WINDOW_FRAMES; frame++) {
       await nextFrame();
       expect(track.style.transform).toBe(transform);
     }
@@ -327,7 +333,7 @@ describe("Tabs animations that must stop", () => {
     // Stopping may write the value it stopped at once; after that nothing changes
     await nextFrame();
     const height = contents.style.height;
-    for (let frame = 0; frame < 5; frame++) {
+    for (let frame = 0; frame < ABSENCE_WINDOW_FRAMES; frame++) {
       await nextFrame();
       expect(contents.style.height).toBe(height);
     }
@@ -339,7 +345,7 @@ describe("Tabs animations that must stop", () => {
     await emulateReducedMotion(true);
     // The inline styles are cleared, so the CSS layout shows the tall panel unshifted, full height
     await expect.poll(() => contents.style.height, { timeout: 1000 }).toBe("");
-    for (let frame = 0; frame < 5; frame++) {
+    for (let frame = 0; frame < ABSENCE_WINDOW_FRAMES; frame++) {
       await nextFrame();
       expect(contents.style.height).toBe("");
       expect(track.style.transform).toBe("");

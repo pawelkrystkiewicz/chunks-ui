@@ -356,7 +356,11 @@ export function describePopupCssPath(name: string, ui: (open: boolean) => ReactE
   });
 }
 
-/** How long a poll or `waitForStable` waits for a value to settle, in ms. */
+/**
+ * How long a wait gives Motion or the browser to act, in ms: for a value to settle, start or
+ * change, a render path to switch, an element to mount or go, or an event to arrive. A wait ends
+ * as soon as it is met, so only a failing one runs to the limit.
+ */
 export const SETTLE_TIMEOUT_MS = 5000;
 
 // Taken at import, before a spec's vi.useFakeTimers(), so the guard runs on real time
