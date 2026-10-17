@@ -1,7 +1,20 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { expect, it } from "vitest";
 import { LandingPage } from "./LandingPage";
+
+const header = (container: HTMLElement) => {
+  const el = container.querySelector("header");
+  if (!el) throw new Error("no header");
+  return within(el);
+};
+
+it("the header links to the GitHub repository in a new tab", () => {
+  const { container } = render(<LandingPage />);
+  const link = header(container).getByRole("link", { name: "GitHub repository" });
+  expect(link.getAttribute("href")).toBe("https://github.com/pawelkrystkiewicz/chunks-ui");
+  expect(link.getAttribute("target")).toBe("_blank");
+});
 
 it.each([
   ["Read the docs", "/getting-started"],

@@ -6,6 +6,7 @@ import { buttonVariants, cn } from "chunks-ui/utils";
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { GitHubIcon } from "nextra/icons";
 import type { ComponentProps, ReactNode } from "react";
 import {
   FeedbackPreview,
@@ -15,7 +16,7 @@ import {
   SelectionPreview,
   StructurePreview,
 } from "./ComponentPreviews";
-import { FOCUS_RING, FOCUS_RING_INSET } from "./focus";
+import { FOCUS_RING, FOCUS_RING_INSET, ICON_BUTTON } from "./focus";
 import { ApiArt, HeroStack, ScopeArt, SizeArt } from "./Illustrations";
 import {
   CopyRow,
@@ -244,9 +245,10 @@ function CellText({
   );
 }
 
+// `auto` end column: its controls outgrow the logo column's 240px.
 function Header() {
   return (
-    <header className="relative z-5 grid grid-cols-[minmax(0,1fr)_auto] border-white/12 border-b lg:grid-cols-[240px_minmax(0,1fr)_240px]">
+    <header className="relative z-5 grid grid-cols-[minmax(0,1fr)_auto] border-white/12 border-b lg:grid-cols-[240px_minmax(0,1fr)_auto]">
       <Link
         href="/"
         aria-label="Chunks UI home"
@@ -270,6 +272,13 @@ function Header() {
         ))}
       </nav>
       <div className="flex items-center justify-end gap-2 px-[clamp(22px,2.4vw,28px)] py-[18px]">
+        <Href
+          href={GITHUB}
+          aria-label="GitHub repository"
+          className={`${ICON_BUTTON} transition-colors duration-300 ${FOCUS_RING}`}
+        >
+          <GitHubIcon aria-hidden className="size-4" />
+        </Href>
         <ThemeButton />
         <Link
           href={DOCS}
