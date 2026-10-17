@@ -18,7 +18,7 @@ Every component must have:
 
 1. **Renders without crashing** — basic mount test
 2. **Custom className forwarding** — `className` prop merges with internal classes
-3. **Accessibility** — `jest-axe` audit, no violations
+3. **Accessibility** — `jest-axe` audit, no violations. With a portalled popup open, assert that `container` does not hold the popup, then audit `document.body` (see **Accessibility Testing** below)
 4. **Variants** — data-driven tests iterating over CVA variants
 5. **Keyboard interaction** — Base UI handles most, but verify focus management
 6. **Ref forwarding** — `ref` prop reaches the correct DOM element
