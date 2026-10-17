@@ -1,0 +1,5 @@
+---
+"chunks-ui": patch
+---
+
+Fixed: in a trigger-style `Combobox` (a button as the trigger, the search input in the popup), a `Combobox.Value` wider than its trigger stays on one line and ends in an ellipsis before the chevron. Before, a long word ran past the trigger's edge and pushed the chevron out of it, and a value of several words wrapped onto lines above and below the trigger. Base UI's `Combobox.Value` renders no element, so nothing could clip it; it now renders a `<span>`, as `Select.Value` does. `whitespace-normal` in its `className` brings back wrapping. The `<span>` fills the trigger's free space (`flex-1`), so an element beside it, such as a badge, keeps its width on one line and the value truncates first; `flex-initial` in its `className` brings back the earlier sizing. A function child in a multi-select gets no `<span>`: clip your own element there. The props type is exported as `ComboboxValueProps`. `Combobox.Trigger` now has `min-w-0 max-w-full`, so the one-line value does not widen it past its container: it shrinks beside other items in a flex row, and a trigger sized by its value (`w-auto`) stops at the container's width.
