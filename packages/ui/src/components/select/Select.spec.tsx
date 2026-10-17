@@ -37,8 +37,6 @@ describe("Select", () => {
     );
   });
 
-  // The truncation is spelled as three classes, not `truncate`, so a consumer class replaces only
-  // its own piece: tailwind-merge would let `whitespace-normal` drop all of `truncate`
   it("lets a Value className bring back wrapping and keep the clip", () => {
     render(
       <Select.Root>
