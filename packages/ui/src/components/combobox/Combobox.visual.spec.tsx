@@ -341,44 +341,40 @@ describe("Combobox.Value in a trigger", () => {
     expect(value.scrollWidth > value.clientWidth).toBe(truncated);
   });
 
-  // The one-line value must not widen the trigger past its container. Combobox.Trigger is a chevron
-  // over an input by default and has no `min-w-0 max-w-full` as Select.Trigger does, so the docs
-  // tell you to add them: beside a button in a flex row the trigger then shrinks, and sized by its
-  // value (`w-auto`) it stops at the container's width
+  // The one-line value must not widen the trigger past its container: Combobox.Trigger has
+  // `min-w-0 max-w-full`, as Select.Trigger does (#518). Beside a button in a flex row it shrinks,
+  // and sized by its value (`w-auto`) it stops at the container's width
   it.each([
     { layout: "beside a button in a 200px flex row", width: 200, row: true, trigger: undefined },
     { layout: "sized by its value in a 140px box", width: 140, row: false, trigger: "w-auto" },
-  ])(
-    "keeps a trigger with min-w-0 max-w-full $layout inside it, with the value cut",
-    ({ width, row, trigger }) => {
-      const { getByRole, getByTestId } = render(
-        <div style={{ padding: 40 }}>
-          <div data-testid="box" className={row ? "flex gap-2" : undefined} style={{ width }}>
-            <Combobox.Root defaultValue="Dragon fruit from the far end of the orchard">
-              <Combobox.Trigger
-                aria-label="Fruit"
-                className={[SELECT_LIKE, "min-w-0 max-w-full", trigger].filter(Boolean).join(" ")}
-              >
-                <Combobox.Value data-testid="value" />
-                <Combobox.Icon />
-              </Combobox.Trigger>
-            </Combobox.Root>
-            {row && (
-              <button type="button" style={{ width: 60 }}>
-                Go
-              </button>
-            )}
-          </div>
-        </div>,
-      );
-      const box = getByTestId("box");
-      expect(insetsWithin(box, getByRole("combobox")).right).toBeGreaterThanOrEqual(0);
-      if (row) expect(insetsWithin(box, getByRole("button")).right).toBeGreaterThanOrEqual(0);
-      const value = getByTestId("value");
-      expect(getComputedStyle(value).textOverflow).toBe("ellipsis");
-      expect(value.scrollWidth).toBeGreaterThan(value.clientWidth);
-    },
-  );
+  ])("keeps a trigger $layout inside it, with the value cut", ({ width, row, trigger }) => {
+    const { getByRole, getByTestId } = render(
+      <div style={{ padding: 40 }}>
+        <div data-testid="box" className={row ? "flex gap-2" : undefined} style={{ width }}>
+          <Combobox.Root defaultValue="Dragon fruit from the far end of the orchard">
+            <Combobox.Trigger
+              aria-label="Fruit"
+              className={[SELECT_LIKE, trigger].filter(Boolean).join(" ")}
+            >
+              <Combobox.Value data-testid="value" />
+              <Combobox.Icon />
+            </Combobox.Trigger>
+          </Combobox.Root>
+          {row && (
+            <button type="button" style={{ width: 60 }}>
+              Go
+            </button>
+          )}
+        </div>
+      </div>,
+    );
+    const box = getByTestId("box");
+    expect(insetsWithin(box, getByRole("combobox")).right).toBeGreaterThanOrEqual(0);
+    if (row) expect(insetsWithin(box, getByRole("button")).right).toBeGreaterThanOrEqual(0);
+    const value = getByTestId("value");
+    expect(getComputedStyle(value).textOverflow).toBe("ellipsis");
+    expect(value.scrollWidth).toBeGreaterThan(value.clientWidth);
+  });
 });
 
 describePopupCssPath("Combobox.Popup", (open) => combobox({ open }));

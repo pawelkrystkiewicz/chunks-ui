@@ -147,6 +147,10 @@ function ComboboxTrigger({ className, children, ...props }: ComboboxTriggerProps
       )}
       className={cnState(
         "absolute inset-y-0 end-0 flex items-center pe-2",
+        // A Combobox.Value in the trigger stays on one line (#541), so the trigger must be allowed
+        // to shrink in a flex row and to stay inside its container, as Select.Trigger is (#518). A
+        // chevron over an input is unaffected.
+        "min-w-0 max-w-full",
         "disabled:cursor-not-allowed disabled:opacity-50",
         className,
       )}
