@@ -2,7 +2,7 @@
 
 import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
 import { type ComponentProps, createContext, type ReactNode, useContext, useId } from "react";
-import { cnState } from "../../lib/cn";
+import { cn, cnState } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
 import { springs } from "../../lib/motion";
 import {
@@ -41,6 +41,9 @@ export type ComboboxEmptyProps = ComponentProps<typeof BaseCombobox.Empty>;
 export type ComboboxClearProps = ComponentProps<typeof BaseCombobox.Clear>;
 export type ComboboxGroupLabelProps = ComponentProps<typeof BaseCombobox.GroupLabel>;
 export type ComboboxIconProps = ComponentProps<typeof BaseCombobox.Icon>;
+// Base UI's Value takes `children` and `placeholder` only; the rest goes to the span around it
+export type ComboboxValueProps = Omit<ComponentProps<"span">, keyof BaseCombobox.Value.Props> &
+  BaseCombobox.Value.Props;
 export type ComboboxPositionerProps = Omit<
   ComponentProps<typeof BaseCombobox.Positioner>,
   "sideOffset"
@@ -169,6 +172,23 @@ function ComboboxIcon({ className, ...props }: ComboboxIconProps) {
         </svg>
       )}
     </BaseCombobox.Icon>
+  );
+}
+
+// Base UI's Value renders no element, so in a trigger-style Combobox (a button trigger, the input
+// in the popup) a value wider than the trigger had nothing to clip it: as Select.Value did before
+// #518, several words wrapped onto lines above and below the trigger, and one long word ran past
+// it and pushed the chevron out (#541). The span around it keeps one line, with an ellipsis, in
+// three classes rather than `truncate`, so `whitespace-normal` in `className` brings back wrapping
+// alone. A function child gets no span: Base UI's multi-select returns its chips and input from
+// one, and they must stay children of Combobox.Chips.
+function ComboboxValue({ className, children, placeholder, ...props }: ComboboxValueProps) {
+  const value = <BaseCombobox.Value placeholder={placeholder}>{children}</BaseCombobox.Value>;
+  if (typeof children === "function") return value;
+  return (
+    <span className={cn("overflow-hidden text-ellipsis whitespace-nowrap", className)} {...props}>
+      {value}
+    </span>
   );
 }
 
@@ -381,6 +401,6 @@ export const Combobox = {
   Chips: ComboboxChips,
   Chip: ComboboxChip,
   ChipRemove: ComboboxChipRemove,
-  Value: BaseCombobox.Value,
+  Value: ComboboxValue,
   Status: BaseCombobox.Status,
 };

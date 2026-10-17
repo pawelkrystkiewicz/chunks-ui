@@ -3,11 +3,14 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import {
   boxOf,
+  contentSpan,
   describePopupCssPath,
   emulateReducedMotion,
   enterMotionPath,
   expectNotAllowed,
   focusVisible,
+  inlineSpan,
+  insetsWithin,
   MOTION_PATHS,
   renderFixture,
   renderPage,
@@ -291,6 +294,91 @@ describe("Combobox.Input beside Clear and Trigger", () => {
     const button = getByRole("button", { name: first }).getBoundingClientRect();
     expect(textRight).toBeLessThanOrEqual(button.left);
   });
+});
+
+// A trigger-style Combobox: a button shows the selected value and the search input is in the popup.
+// Base UI's Combobox.Value renders no element, so a value wider than the trigger had nothing to
+// clip it. As Select.Value before #518, several words wrapped onto lines above and below the
+// trigger, and one long word ran past it and pushed the chevron out (#541).
+describe("Combobox.Value in a trigger", () => {
+  // The Trigger's defaults are a chevron over an input's end (`absolute inset-y-0 end-0`): this
+  // makes it a Select-like button
+  const SELECT_LIKE =
+    "static h-ui-height w-full justify-between rounded-md border border-input bg-background px-3 text-sm";
+
+  it.each([
+    { length: "short", fruit: "Fig", truncated: false },
+    { length: "long", fruit: "Dragon fruit from the far end of the orchard", truncated: true },
+    { length: "one-word long", fruit: "Supercalifragilisticexpialidocious", truncated: true },
+  ])("keeps a $length value and the chevron inside a 140px trigger", ({ fruit, truncated }) => {
+    const { getByRole, getByTestId } = render(
+      <div style={{ padding: 40 }}>
+        <Combobox.Root defaultValue={fruit}>
+          <Combobox.Trigger aria-label="Fruit" className={SELECT_LIKE} style={{ width: 140 }}>
+            <Combobox.Value data-testid="value" />
+            <Combobox.Icon data-testid="icon" />
+          </Combobox.Trigger>
+        </Combobox.Root>
+      </div>,
+    );
+    const trigger = getByRole("combobox", { name: "Fruit" });
+    const content = contentSpan(trigger, "ltr");
+    const icon = inlineSpan(getByTestId("icon"), "ltr");
+    // Nothing spills out of the trigger: neither a long word to the side, nor wrapped lines above
+    // and below it
+    expect(trigger.scrollWidth).toBeLessThanOrEqual(trigger.clientWidth);
+    expect(trigger.scrollHeight).toBeLessThanOrEqual(trigger.clientHeight);
+    expect(icon.end).toBeCloseTo(content.end, 1);
+    expect(icon.end - icon.start).toBe(16);
+    const value = getByTestId("value");
+    const { top, bottom } = insetsWithin(trigger, value);
+    expect(top).toBeGreaterThanOrEqual(0);
+    expect(bottom).toBeGreaterThanOrEqual(0);
+    expect(inlineSpan(value, "ltr").start).toBeCloseTo(content.start, 1);
+    expect(inlineSpan(value, "ltr").end).toBeLessThanOrEqual(icon.start);
+    // Cut at the value's box, with an ellipsis: the text is wider than what shows
+    expect(getComputedStyle(value).textOverflow).toBe("ellipsis");
+    expect(value.scrollWidth > value.clientWidth).toBe(truncated);
+  });
+
+  // The one-line value must not widen the trigger past its container. Combobox.Trigger is a chevron
+  // over an input by default and has no `min-w-0 max-w-full` as Select.Trigger does, so the docs
+  // tell you to add them: beside a button in a flex row the trigger then shrinks, and sized by its
+  // value (`w-auto`) it stops at the container's width
+  it.each([
+    { layout: "beside a button in a 200px flex row", width: 200, row: true, trigger: undefined },
+    { layout: "sized by its value in a 140px box", width: 140, row: false, trigger: "w-auto" },
+  ])(
+    "keeps a trigger with min-w-0 max-w-full $layout inside it, with the value cut",
+    ({ width, row, trigger }) => {
+      const { getByRole, getByTestId } = render(
+        <div style={{ padding: 40 }}>
+          <div data-testid="box" className={row ? "flex gap-2" : undefined} style={{ width }}>
+            <Combobox.Root defaultValue="Dragon fruit from the far end of the orchard">
+              <Combobox.Trigger
+                aria-label="Fruit"
+                className={[SELECT_LIKE, "min-w-0 max-w-full", trigger].filter(Boolean).join(" ")}
+              >
+                <Combobox.Value data-testid="value" />
+                <Combobox.Icon />
+              </Combobox.Trigger>
+            </Combobox.Root>
+            {row && (
+              <button type="button" style={{ width: 60 }}>
+                Go
+              </button>
+            )}
+          </div>
+        </div>,
+      );
+      const box = getByTestId("box");
+      expect(insetsWithin(box, getByRole("combobox")).right).toBeGreaterThanOrEqual(0);
+      if (row) expect(insetsWithin(box, getByRole("button")).right).toBeGreaterThanOrEqual(0);
+      const value = getByTestId("value");
+      expect(getComputedStyle(value).textOverflow).toBe("ellipsis");
+      expect(value.scrollWidth).toBeGreaterThan(value.clientWidth);
+    },
+  );
 });
 
 describePopupCssPath("Combobox.Popup", (open) => combobox({ open }));

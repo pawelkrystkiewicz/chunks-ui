@@ -483,6 +483,85 @@ describe("Combobox", () => {
   });
 });
 
+// Trigger-style: the Trigger shows the value and the search input is in the popup. Base UI's
+// Combobox.Value renders no element, so ours puts it in a span that clips to one line (#541).
+describe("Combobox.Value", () => {
+  const triggerStyle = (
+    valueProps: ComponentProps<typeof Combobox.Value> = {},
+    selected: (typeof items)[number] | null | undefined = items[0],
+  ) =>
+    render(
+      <Combobox.Root items={items} defaultValue={selected}>
+        <Combobox.Trigger aria-label="Fruit">
+          <Combobox.Value data-testid="value" {...valueProps} />
+          <Combobox.Icon />
+        </Combobox.Trigger>
+      </Combobox.Root>,
+    );
+
+  it("renders the selected label in a span that stays on one line and ends in an ellipsis", () => {
+    triggerStyle();
+    const value = screen.getByTestId("value");
+    expect(value.tagName).toBe("SPAN");
+    expect(value).toHaveTextContent(/^Apple$/);
+    expect(value).toHaveClass("overflow-hidden", "text-ellipsis", "whitespace-nowrap");
+  });
+
+  it("renders the placeholder in the span while nothing is selected", () => {
+    triggerStyle({ placeholder: "Pick a fruit" }, null);
+    const value = screen.getByTestId("value");
+    expect(value).toHaveTextContent(/^Pick a fruit$/);
+    expect(value).toHaveClass("whitespace-nowrap");
+  });
+
+  it("renders Value with a custom className", () => {
+    triggerStyle({ className: "custom" });
+    expect(screen.getByTestId("value")).toHaveClass(
+      "custom",
+      "overflow-hidden",
+      "text-ellipsis",
+      "whitespace-nowrap",
+    );
+  });
+
+  it("lets a Value className bring back wrapping and keep the clip", () => {
+    triggerStyle({ className: "whitespace-normal" });
+    const value = screen.getByTestId("value");
+    expect(value).toHaveClass("overflow-hidden", "text-ellipsis", "whitespace-normal");
+    expect(value).not.toHaveClass("whitespace-nowrap");
+  });
+
+  it("forwards a ref and other span props to the span", () => {
+    const ref = createRef<HTMLSpanElement>();
+    triggerStyle({ ref, title: "The fruit" });
+    const value = screen.getByTestId("value");
+    expect(ref.current).toBe(value);
+    expect(value).toHaveAttribute("title", "The fruit");
+  });
+
+  // Base UI's multi-select returns the chips and the input from a function child; they must stay
+  // children of Combobox.Chips, which lays them out in a row
+  it("renders no element around a function child", () => {
+    render(
+      <Combobox.Root multiple items={items} defaultValue={[items[0]]}>
+        <Combobox.Chips data-testid="chips">
+          <Combobox.Value>
+            {(selected: typeof items) =>
+              selected.map((item) => (
+                <Combobox.Chip key={item.value} data-testid="chip">
+                  {item.label}
+                </Combobox.Chip>
+              ))
+            }
+          </Combobox.Value>
+          <Combobox.Input aria-label="Fruits" />
+        </Combobox.Chips>
+      </Combobox.Root>,
+    );
+    expect(screen.getByTestId("chip").parentElement).toBe(screen.getByTestId("chips"));
+  });
+});
+
 describe("Combobox icon buttons", () => {
   const fruits = ["Apple", "Banana"];
 
