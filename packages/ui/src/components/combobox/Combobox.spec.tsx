@@ -769,6 +769,30 @@ describe("Combobox icon buttons", () => {
   });
 });
 
+// iOS Safari zooms the page when a field with text under 16px takes focus (#562)
+describe("Combobox.Input text size", () => {
+  const input = (className?: string) => {
+    render(
+      <Combobox.Root>
+        <Combobox.Input aria-label="Fruit" className={className} />
+      </Combobox.Root>,
+    );
+    return screen.getByRole("combobox", { name: "Fruit" });
+  };
+
+  it("has 16px text below md and 14px from md up", () => {
+    const el = input();
+    expect(el).toHaveClass("text-base", "md:text-sm");
+    expect(el).not.toHaveClass("text-sm");
+  });
+
+  it("lets a text-sm className replace the 16px text", () => {
+    const el = input("text-sm");
+    expect(el).toHaveClass("text-sm", "md:text-sm");
+    expect(el).not.toHaveClass("text-base");
+  });
+});
+
 describe("Combobox focus ring", () => {
   it("draws the library focus ring on Input", () => {
     render(

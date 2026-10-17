@@ -27,7 +27,9 @@ export function Textarea({ autoResize, className, ...props }: TextareaProps) {
     <BaseField.Control
       render={<textarea />}
       className={cnState(
-        "flex min-h-ui-height w-full rounded-md border border-input bg-background px-3 py-2 text-sm",
+        "flex min-h-ui-height w-full rounded-md border border-input bg-background px-3 py-2",
+        // 16px below md: iOS Safari zooms the page when a field under 16px takes focus (#562)
+        "text-base md:text-sm",
         "text-foreground placeholder:text-muted-foreground",
         // Only the colours (`transition-colors` also lists `outline-color`: the ring would fade in; the utility sorts before this list)
         "micro-interactions [transition-property:color,background-color,border-color] duration-150",

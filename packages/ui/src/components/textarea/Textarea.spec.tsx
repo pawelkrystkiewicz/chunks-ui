@@ -115,6 +115,23 @@ describe("Textarea inside Field", () => {
   });
 });
 
+// iOS Safari zooms the page when a field with text under 16px takes focus (#562)
+describe("Textarea text size", () => {
+  it("has 16px text below md and 14px from md up", () => {
+    render(<Textarea data-testid="ta" />);
+    const textarea = screen.getByTestId("ta");
+    expect(textarea).toHaveClass("text-base", "md:text-sm");
+    expect(textarea).not.toHaveClass("text-sm");
+  });
+
+  it("lets a text-sm className replace the 16px text", () => {
+    render(<Textarea data-testid="ta" className="text-sm" />);
+    const textarea = screen.getByTestId("ta");
+    expect(textarea).toHaveClass("text-sm", "md:text-sm");
+    expect(textarea).not.toHaveClass("text-base");
+  });
+});
+
 describe("Textarea focus ring", () => {
   it("draws the library focus ring", () => {
     render(<Textarea data-testid="ta" />);

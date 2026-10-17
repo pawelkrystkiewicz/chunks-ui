@@ -421,6 +421,47 @@ describe("Input labels", () => {
   });
 });
 
+// iOS Safari zooms the page when a field with text under 16px takes focus (#562)
+describe("Input text size", () => {
+  it("has 16px text below md and 14px from md up", () => {
+    render(<Input data-testid="inp" />);
+    const input = screen.getByTestId("inp");
+    expect(input).toHaveClass("text-base", "md:text-sm");
+    expect(input).not.toHaveClass("text-sm");
+  });
+
+  it("lets a text-sm className replace the 16px text", () => {
+    render(<Input data-testid="inp" className="text-sm" />);
+    const input = screen.getByTestId("inp");
+    expect(input).toHaveClass("text-sm", "md:text-sm");
+    expect(input).not.toHaveClass("text-base");
+  });
+});
+
+// The props the docs list under "Mobile Keyboards"
+describe("Input mobile keyboard props", () => {
+  it.each([
+    ["without adornments", {}],
+    ["with an adornment", { startAdornment: "$" }],
+  ])("passes type, inputMode, enterKeyHint and autoComplete to the input %s", (_, props) => {
+    render(
+      <Input
+        aria-label="Query"
+        type="search"
+        inputMode="search"
+        enterKeyHint="search"
+        autoComplete="off"
+        {...props}
+      />,
+    );
+    const input = screen.getByRole("searchbox", { name: "Query" });
+    expect(input).toHaveAttribute("type", "search");
+    expect(input).toHaveAttribute("inputmode", "search");
+    expect(input).toHaveAttribute("enterkeyhint", "search");
+    expect(input).toHaveAttribute("autocomplete", "off");
+  });
+});
+
 describe("Input focus ring", () => {
   it("draws the library focus ring", () => {
     render(<Input data-testid="inp" />);
