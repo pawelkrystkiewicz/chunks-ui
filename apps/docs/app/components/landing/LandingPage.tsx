@@ -393,7 +393,7 @@ const STEPS = [
     ),
     title: "Install",
     body: "Install the package. Motion is an optional peer for spring animations.",
-    meta: ["chunks-ui", "motion@12+"],
+    meta: ["chunks-ui", "motion@12.8+"],
   },
   {
     step: "02 · THEME",

@@ -10,7 +10,7 @@ Replaces `@creation-ui/react`. Published as a single npm package — not a copy/
 bun add chunks-ui motion
 ```
 
-Peer dependencies: `react` and `react-dom` (`^19.2.0`), `@base-ui/react`, `class-variance-authority`, and optionally `tailwindcss` (v4) and `motion` (`^12.0.0`). See [Getting Started](https://ui-kit.chunk-creations.com/getting-started) for the ranges.
+Peer dependencies: `react` and `react-dom` (`^19.2.0`), `@base-ui/react`, `class-variance-authority`, and optionally `tailwindcss` (v4) and `motion` (`^12.8.0`). See [Getting Started](https://ui-kit.chunk-creations.com/getting-started) for the ranges.
 
 Node 22 or newer. The install command does not add `tailwindcss`: the app is expected to have Tailwind v4 set up already.
 
@@ -51,7 +51,7 @@ See the [component index](https://ui-kit.chunk-creations.com/components) in the 
 | ----------- | ---------------------------------------------- |
 | Headless    | `@base-ui/react` v1.9+ (includes Floating UI)  |
 | Styling     | Tailwind CSS v4 + CVA                          |
-| Animation   | Motion v12+ (optional peer dep)                |
+| Animation   | Motion 12.8+ (optional peer dep)               |
 | Build       | tsup (ESM + CJS + `.d.ts`)                     |
 | Test        | Vitest + Testing Library + jest-axe            |
 | Lint/Format | Biome                                          |
@@ -113,7 +113,7 @@ Manrope (`--font-sans`) and Fira Code (`--font-mono`) are not shipped; the theme
 
 ## Animation
 
-Motion is a first-class but optional peer dependency (`^12.0.0`). Components detect it at runtime — if absent, they fall back to CSS transitions.
+Motion is a first-class but optional peer dependency (`^12.8.0`). Components detect it at runtime — if absent, they fall back to CSS transitions.
 
 Shared spring presets in `src/lib/motion.ts`:
 

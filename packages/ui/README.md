@@ -16,7 +16,7 @@ Peer dependencies:
 | `@base-ui/react`            | `^1.9.0`  | required                                         |
 | `class-variance-authority`  | `^0.7.1`  | required                                         |
 | `tailwindcss`               | `^4.0.0`  | optional peer; you need Tailwind v4 in the app to use `theme.css` |
-| `motion`                    | `^12.0.0` | optional; without it components use CSS transitions |
+| `motion`                    | `^12.8.0` | optional; without it components use CSS transitions |
 
 Node 22 or newer. The install command does not add `tailwindcss`: the app is expected to have Tailwind v4 set up already.
 
@@ -59,7 +59,7 @@ Each has a page in the [component index](https://ui-kit.chunk-creations.com/comp
 | --------- | --------------------------------------------- |
 | Headless  | `@base-ui/react` v1.9+ (includes Floating UI) |
 | Styling   | Tailwind CSS v4 + CVA                         |
-| Animation | Motion v12+ (optional peer dep)               |
+| Animation | Motion 12.8+ (optional peer dep)              |
 | Build     | tsup (ESM + CJS + `.d.ts`)                    |
 
 ## Color System
