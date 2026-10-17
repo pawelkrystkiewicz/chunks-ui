@@ -56,9 +56,17 @@
 }
 
 /* Hero, band and footer carry `dark` in both themes: white ring, as the library's dark-mode ring
-   (primary mixed with the dark background) is 2:1 or less there. */
+   (primary mixed with the dark background) is 2:1 or less there. Nextra resolves its bg colour on
+   :root, so the header search's shortcut badge stays light here unless it is resolved again. */
 .landing .dark {
   --ring: #fff;
+  --x-color-nextra-bg: rgb(var(--nextra-bg));
+}
+
+/* The header search's results are portalled out of the dark hero but cover it: Nextra's 70% bg
+   lets the hero darken the light theme's popup, so make it opaque. */
+:root:has(.landing) .nextra-search-results {
+  background-color: rgb(var(--nextra-bg));
 }
 
 /*

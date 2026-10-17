@@ -4,17 +4,17 @@ import { page } from "vitest/browser";
 import {
   contentSpan,
   describePopupCssPath,
-  eachPaintedFrame,
   emulateReducedMotion,
   enterMotionPath,
   expectNotAllowed,
   focusVisible,
+  framesOf,
   inlineSpan,
   insetsWithin,
   MOTION_PATHS,
   renderFixture,
   renderPage,
-  waitForStable,
+  settled,
 } from "../../VisualTest.utils";
 import { Select } from "./index";
 
@@ -233,35 +233,6 @@ describe("Select", () => {
 // Below its trigger: aligned over it, the popup fades without a scale (below)
 describePopupCssPath("Select.Popup", (open) => closedSelect(open, false));
 
-/** The rendered width over the layout width: 1 while nothing scales `el` */
-const renderedScale = (el: Element) =>
-  Math.round(
-    (el.getBoundingClientRect().width / Number.parseFloat(getComputedStyle(el).width)) * 1000,
-  ) / 1000;
-
-/** The popup's side, rendered scale and opacity, once a painted frame while it is mounted */
-const framesOf = async (popup: HTMLElement) => {
-  const frames = await eachPaintedFrame(
-    () =>
-      popup.isConnected && {
-        side: popup.getAttribute("data-side"),
-        scale: renderedScale(popup),
-        opacity: Number(getComputedStyle(popup).opacity),
-      },
-    40,
-  );
-  return frames.filter((frame) => frame !== false);
-};
-
-/**
- * Resolves once the popup is at rest and Motion is idle, as when a user closes it. Motion animates
- * the scale in JS, which `getAnimations()` does not see, so this also waits for a steady scale.
- */
-const settled = async (popup: HTMLElement) => {
-  await expect.poll(() => popup.getAnimations()).toEqual([]);
-  await waitForStable(() => renderedScale(popup));
-};
-
 // Aligned over its trigger (Base UI's default `alignItemWithTrigger`, `data-side="none"`), the
 // popup lands with the selected item over the trigger's value, as Base UI's own reference styles
 // assume: it fades in place at full size, on both paths
@@ -286,7 +257,7 @@ describe.each(MOTION_PATHS)("Select.Popup aligned with its trigger, $path", ({ w
     expect(frames.some(({ opacity }) => opacity > 0 && opacity < 1)).toBe(true);
   });
 
-  // Closed during the spring's tail and at rest; on the Motion path see `exitAtOnce` (#521)
+  // Closed during the spring's tail and at rest; on the Motion path see `createPopupRenderer` (#521)
   it.each([
     { when: "as it settles", atRest: false },
     { when: "at rest", atRest: true },

@@ -5,7 +5,7 @@
 Upgrading from 0.1.4. Details are in the other entries, quoted by their first words.
 
 - Requirements ("Peer dependency ranges")
-  - Peers: `@base-ui/react` `^1.9.0`, `react` and `react-dom` `^19.2.0`, optional `motion` `^12.0.0` and `tailwindcss` `^4.0.0`. Node 22 or newer. npm 7+ refuses to install over an older peer (`ERESOLVE`) until it is upgraded.
+  - Peers: `@base-ui/react` `^1.9.0`, `react` and `react-dom` `^19.2.0`, optional `motion` `^12.8.0` and `tailwindcss` `^4.0.0`. Node 22 or newer. npm 7+ refuses to install over an older peer (`ERESOLVE`) until it is upgraded.
   - `lucide-react` is no longer a dependency; add it to your app if you relied on it.
 - Changed defaults
   - Focus ring: `--ring` is 60% primary instead of grey, shows at once with no fade, is drawn on `Breadcrumb.Link`, `Slider` and the Popover, Menu, Dialog, Drawer and DatePicker popups, and sits 2px outside the edge of the controls (not `Tabs.Content` or `Drawer.Popup`, which stay inset) ("The keyboard focus ring", "`Toast.Close`, `Toast.Action` and `ClearButton`", "`Checkbox.Root`, `Radio.Root`, `Switch.Root`").

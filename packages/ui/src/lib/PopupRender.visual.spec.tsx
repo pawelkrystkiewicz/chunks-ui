@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { emulateReducedMotion, enterMotionPath, MOTION_PATHS } from "../VisualTest.utils";
+import { emulateReducedMotion, enterMotionPath, MOTION_PATHS, settled } from "../VisualTest.utils";
 import { type PopupPartName, popupParts } from "./PopupRender.fixtures";
 
 type Css = {
@@ -116,6 +116,18 @@ describe("popup parts with Motion loaded, no reduced-motion preference", () => {
       expect(computedTransition(el).transitionDuration).toBe("0s");
     },
   );
+
+  // Closed once settled, the exit starts by the next microtask; see `createPopupRenderer` (#540)
+  it.each(parts)("$part starts its exit animation as it closes", async ({ ui }) => {
+    const { rerender } = render(ui());
+    const el = await screen.findByTestId("popup");
+    // At rest, so an animation found after the close is the exit's
+    await settled(el);
+    rerender(ui(undefined, false));
+    // After the microtask the exit queued as it started, before any frame
+    await Promise.resolve();
+    expect(el.getAnimations()).not.toEqual([]);
+  });
 });
 
 // Base UI publishes `--transform-origin` on the Positioner once it has placed the popup: the point
