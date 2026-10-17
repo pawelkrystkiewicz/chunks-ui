@@ -341,12 +341,18 @@ describe("Toast", () => {
     await screen.findByText("Saved");
     await user.keyboard("{F6}");
     expect(screen.getByTestId("viewport")).toHaveFocus();
-    // Base UI renders the viewport's focus guards (tabindex 0, aria-hidden) only after F6, so the
-    // audits above never see them. Check that they are in the container, or this audit has nothing
-    // new to look at. axe cannot rule on the guards themselves: it counts the toast's role="dialog"
-    // as an open modal, and then reports aria-hidden-focus as incomplete, not as a violation
-    expect(container.querySelector("[data-base-ui-focus-guard]")).not.toBeNull();
-    expect(await axe(container)).toHaveNoViolations();
+    // Base UI renders the viewport's focus guards (aria-hidden, tabindex 0) only after F6
+    const guards = container.querySelectorAll("[data-base-ui-focus-guard]");
+    expect(guards.length).toBeGreaterThan(0);
+    const results = await axe(container);
+    expect(results).toHaveNoViolations();
+    // The toast's role="dialog" counts as an open modal for axe, so aria-hidden-focus leaves
+    // focusable aria-hidden nodes in `incomplete`. Only the guards may be there
+    const undecided = results.incomplete
+      .filter((rule) => rule.id === "aria-hidden-focus")
+      .flatMap((rule) => rule.nodes);
+    expect(undecided).toHaveLength(guards.length);
+    for (const node of undecided) expect(node.html).toContain("data-base-ui-focus-guard");
   });
 });
 
