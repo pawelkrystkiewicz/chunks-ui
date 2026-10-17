@@ -2,7 +2,7 @@ import { DirectionProvider } from "@base-ui/react/direction-provider";
 import { render, screen } from "@testing-library/react";
 import { type ReactNode, useState } from "react";
 import { afterEach, describe, expect, it } from "vitest";
-import { commands, page, userEvent } from "vitest/browser";
+import { page, userEvent } from "vitest/browser";
 import { Button } from "../components/button";
 import { Menu } from "../components/menu";
 import { Popover } from "../components/popover";
@@ -11,6 +11,7 @@ import {
   arrowOverhang,
   describeMotionPaths,
   eachPaintedFrame,
+  emulateForcedColors,
   emulateReducedMotion,
   LAYOUT_ROUNDING_PX,
   resetTheme,
@@ -542,7 +543,7 @@ describe.each(KINDS)("%s focused from the keyboard, without an arrow", (kind) =>
 });
 
 describe.each(KINDS)("%s in forced colours", (kind) => {
-  afterEach(() => commands.emulateMedia({ forcedColors: "none" }));
+  afterEach(() => emulateForcedColors(false));
 
   // Forced colours revert the `--ring` colour: on the focused popup to the browser's focus
   // colour, on the overlay, which has no focus, to CanvasText, so the overlay names `Highlight`
@@ -550,8 +551,7 @@ describe.each(KINDS)("%s in forced colours", (kind) => {
     { arrow: true, drawn: "::after" },
     { arrow: false, drawn: null },
   ])("with arrow $arrow, draws the ring in the system focus colour", async ({ arrow, drawn }) => {
-    await commands.emulateMedia({ forcedColors: "active" });
-    await expect.poll(() => matchMedia("(forced-colors: active)").matches).toBe(true);
+    await emulateForcedColors(true);
     render(popupWith(kind, "", arrow));
     const popup = await screen.findByTestId("popup");
     await userEvent.keyboard("{Shift}");

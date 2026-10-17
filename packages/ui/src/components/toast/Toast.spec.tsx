@@ -321,14 +321,7 @@ describe("Toast", () => {
         <Toast.Viewport />
       </Toast.Provider>,
     );
-    expect(
-      await axe(container, {
-        rules: {
-          // Base UI focus-guard spans with role="button" are internal implementation details
-          "aria-command-name": { enabled: false },
-        },
-      }),
-    ).toHaveNoViolations();
+    expect(await axe(container)).toHaveNoViolations();
   });
 
   it("has no a11y violations with a visible toast", async () => {
@@ -336,13 +329,9 @@ describe("Toast", () => {
     const { container } = render(<WrappedToastHarness />);
     await user.click(screen.getByRole("button", { name: "Show toast" }));
     await screen.findByText("Saved");
-    expect(
-      await axe(container, {
-        rules: {
-          "aria-command-name": { enabled: false },
-        },
-      }),
-    ).toHaveNoViolations();
+    // The viewport renders in place, not in a portal, so the container audit sees the toast
+    expect(container).toContainElement(screen.getByText("Saved"));
+    expect(await axe(container)).toHaveNoViolations();
   });
 });
 
