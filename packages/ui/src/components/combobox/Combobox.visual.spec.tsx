@@ -10,12 +10,14 @@ import {
   enterMotionPath,
   expectNotAllowed,
   focusVisible,
+  framesOf,
   inlineSpan,
   insetsWithin,
   MOTION_PATHS,
   renderFixture,
   renderPage,
   ringColor,
+  settled,
   waitForStable,
 } from "../../VisualTest.utils";
 import { Combobox, type ComboboxPositionerProps } from "./index";
@@ -411,6 +413,27 @@ describe("Combobox.Value in a trigger", () => {
 });
 
 describePopupCssPath("Combobox.Popup", (open) => combobox({ open }));
+
+// Base UI's Combobox Root, like Select's, passes `open` to the popup a commit late. The popup
+// vanished at once when closed after Motion had gone idle (#540).
+describe("Combobox.Popup closing, Motion", () => {
+  beforeAll(() => enterMotionPath(true));
+  beforeEach(() => emulateReducedMotion(false));
+  afterAll(() => emulateReducedMotion(true));
+
+  const below = (open: boolean) => <div style={{ padding: 40 }}>{combobox({ open })}</div>;
+
+  it("fades and scales out, closed at rest", async () => {
+    const { rerender, getByTestId } = render(below(true));
+    const popup = getByTestId("popup");
+    await expect.poll(() => getComputedStyle(popup).opacity).toBe("1");
+    await settled(popup);
+    rerender(below(false));
+    const frames = await framesOf(popup);
+    // Still mounted on a frame that shows it part-way out
+    expect(frames.some(({ scale, opacity }) => scale < 1 && opacity > 0 && opacity < 1)).toBe(true);
+  });
+});
 
 // ComboboxPositioner's default sideOffset, the gap a single-select popup keeps below its input
 const DEFAULT_SIDE_OFFSET = 8;

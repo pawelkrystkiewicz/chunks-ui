@@ -3,6 +3,8 @@ import type { MotionLike } from "./use-motion";
 /** `visualElementStore` is Motion internals (an undocumented export of motion 12), hence optional. */
 export type MotionInternals = {
   visualElementStore?: { get: (element: Element) => { scheduleRender?: () => void } | undefined };
+  /** Exported by Motion since 12.7.5, so optional */
+  flushKeyframeResolvers?: () => void;
 };
 
 /**

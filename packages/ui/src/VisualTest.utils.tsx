@@ -469,6 +469,36 @@ export const eachPaintedFrame = <T,>(read: () => T, frames: number) =>
     frame.postRender(step, true);
   });
 
+/** The rendered width over the layout width: 1 while nothing scales `el` */
+export const renderedScale = (el: Element) =>
+  Math.round(
+    (el.getBoundingClientRect().width / Number.parseFloat(getComputedStyle(el).width)) * 1000,
+  ) / 1000;
+
+/** The popup's side, rendered scale and opacity, once a painted frame while it is mounted */
+export const framesOf = async (popup: HTMLElement) => {
+  const frames = await eachPaintedFrame(
+    () =>
+      popup.isConnected && {
+        side: popup.getAttribute("data-side"),
+        scale: renderedScale(popup),
+        opacity: Number(getComputedStyle(popup).opacity),
+      },
+    40,
+  );
+  return frames.filter((frame) => frame !== false);
+};
+
+/** Resolves once `popup` is at rest: scale, opacity and box steady, and `getAnimations()` empty */
+export const settled = async (popup: HTMLElement) => {
+  // Steady first: `getAnimations()` is empty before Motion's first frame starts the entry, and
+  // does not see the scale, which Motion animates in JS
+  await waitForStable(() => [renderedScale(popup), getComputedStyle(popup).opacity, boxOf(popup)]);
+  await expect.poll(() => popup.getAnimations(), { timeout: SETTLE_TIMEOUT_MS }).toEqual([]);
+  // End on a frame: closed from a timer, the popup sometimes survives a missing flush (#540)
+  await nextFrame();
+};
+
 type BoxSize = { inlineSize: number; blockSize: number };
 
 const borderBoxOf = (el: Element): BoxSize => {
