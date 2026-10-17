@@ -33,8 +33,8 @@ const removeButtons: Record<string, (label?: string) => ReactNode> = {
             Apple
             <Combobox.ChipRemove />
           </Combobox.Chip>
+          <Combobox.Input aria-label="Fruits" />
         </Combobox.Chips>
-        <Combobox.Input aria-label="Fruits" />
       </Combobox.Control>
     </Combobox.Root>
   ),
