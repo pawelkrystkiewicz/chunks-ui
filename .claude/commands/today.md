@@ -18,7 +18,7 @@ Read `<main>/TODO.md`. It is gitignored, so worktrees cannot see it: read and ed
 - **No input:** do no work. Reply with the report in § 5.
 - **`W<n>`:** its TODO.md line is the brief. Reuse the issue that already covers it (`gh issue list --state open --search "<keywords>"`), or create one as `/deliver` step 1 says. A W-number that is missing or already ticked: report it and skip it.
 - **`#<n>` or an issue URL:** that issue.
-- **Task text:** file it in TODO.md first (§ 4), then treat it as a `W<n>`.
+- **Task text:** file it in TODO.md first (§ 4; its source is Paweł, and the location can wait until you have looked), then treat it as a `W<n>`.
 
 If a task needs a product call you cannot default (a name, a label, a breaking API), start the other tasks, then ask once for all such calls together.
 
@@ -63,6 +63,6 @@ A decision not to do something (an issue closed as not planned) gets a line unde
 
 **Next steps:** the open TODO.md items by tier (**Must**, **Should**, **Could**), then by `###` group, with CI and tooling first in each tier. One line per item: the W-number, what is wrong in plain words, and any decision it needs from Paweł. Show at most about 12.
 
-**Suggested batch:** two to four W-numbers that share a theme or files, and why, in one sentence.
+**Suggested batch:** up to four W-numbers that share a theme or files, and why, in one sentence. None when no item is open.
 
 Paweł answers with numbers. Those are the next Today: go back to § 1.
