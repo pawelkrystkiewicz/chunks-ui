@@ -6,6 +6,8 @@ import { reloadMotion } from "../../lib/use-motion";
 import {
   eachPaintedFrame,
   emulateReducedMotion,
+  enterMotionPath,
+  MOTION_PATHS,
   MotionLoaded,
   offBy,
   SETTLE_TIMEOUT_MS,
@@ -719,14 +721,11 @@ describe("Tabs.Indicator under the selected tab disabled at runtime", () => {
   afterEach(() => emulateReducedMotion(false));
 
   it.each([
-    { path: "Motion", withMotion: true, reduced: false },
-    { path: "the CSS fallback", withMotion: false, reduced: false },
+    ...MOTION_PATHS.map(({ path, withMotion }) => ({ path, withMotion, reduced: false })),
     { path: "reduced motion", withMotion: false, reduced: true },
   ])("dims the indicator with the tab, on $path", async ({ withMotion, reduced }) => {
     await emulateReducedMotion(reduced);
-    // Held back, Motion never arrives and the CSS fallback drives the indicator
-    if (withMotion) await reloadMotion();
-    else void reloadMotion(new Promise(() => {}));
+    await enterMotionPath(withMotion);
     const { rerender, getByTestId, getByRole } = render(tabs(false));
     const indicator = getByTestId("indicator");
     const tab = getByRole("tab", { name: "Beta" });
