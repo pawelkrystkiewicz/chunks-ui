@@ -16,12 +16,9 @@ import { removeButtonName } from "../chip/Chip";
 import { FOCUS_RING, FOCUS_RING_WITHIN, RING_TRANSITION } from "../shared";
 import { type ComboboxLabels, DEFAULT_COMBOBOX_LABELS } from "./Combobox.Labels";
 
-// What Combobox.Root gives its parts: the labels, and whether it is a multi-select, which
-// Combobox.Value needs to know (#541)
-const ComboboxContext = createContext<{ labels: ComboboxLabels; multiple: boolean }>({
-  labels: DEFAULT_COMBOBOX_LABELS,
-  multiple: false,
-});
+const ComboboxLabelsContext = createContext(DEFAULT_COMBOBOX_LABELS);
+// Whether Combobox.Root selects several, as Base UI reads `multiple`: any truthy value (#541)
+const ComboboxMultipleContext = createContext(false);
 // The id of the Combobox.Chip around a ChipRemove, which names the remove button
 const ComboboxChipIdContext = createContext<string | undefined>(undefined);
 
@@ -46,10 +43,7 @@ export type ComboboxEmptyProps = ComponentProps<typeof BaseCombobox.Empty>;
 export type ComboboxClearProps = ComponentProps<typeof BaseCombobox.Clear>;
 export type ComboboxGroupLabelProps = ComponentProps<typeof BaseCombobox.GroupLabel>;
 export type ComboboxIconProps = ComponentProps<typeof BaseCombobox.Icon>;
-// Base UI's `children` and `placeholder`, and the props of the span around them, which reach the
-// span. With a function child in a multi-select there is no span, so they are ignored. The keys
-// are named: a prop Base UI adds to Value later is then not accepted (a type error where it is
-// passed) and never reaches the span.
+// Named keys: a prop Base UI adds to Value later is rejected where passed, never a span attribute
 export type ComboboxValueProps = Omit<ComponentProps<"span">, "children" | "placeholder"> &
   Pick<BaseCombobox.Value.Props, "children" | "placeholder">;
 export type ComboboxPositionerProps = Omit<
@@ -74,15 +68,11 @@ function ComboboxRoot<Value, Multiple extends boolean | undefined = false, Item 
   ...props
 }: ComboboxRootProps<Value, Multiple, Item>) {
   return (
-    <ComboboxContext.Provider
-      value={{
-        labels: mergeLabels(DEFAULT_COMBOBOX_LABELS, labels),
-        // As Base UI reads it: any truthy `multiple` selects several
-        multiple: Boolean(props.multiple),
-      }}
-    >
-      <BaseCombobox.Root<Value, Multiple, Item> {...props} />
-    </ComboboxContext.Provider>
+    <ComboboxLabelsContext.Provider value={mergeLabels(DEFAULT_COMBOBOX_LABELS, labels)}>
+      <ComboboxMultipleContext.Provider value={Boolean(props.multiple)}>
+        <BaseCombobox.Root<Value, Multiple, Item> {...props} />
+      </ComboboxMultipleContext.Provider>
+    </ComboboxLabelsContext.Provider>
   );
 }
 
@@ -140,7 +130,7 @@ function ownContent(
 }
 
 function ComboboxTrigger({ className, children, ...props }: ComboboxTriggerProps) {
-  const { labels } = useContext(ComboboxContext);
+  const labels = useContext(ComboboxLabelsContext);
   return (
     <BaseCombobox.Trigger
       {...ownContent(
@@ -161,9 +151,7 @@ function ComboboxTrigger({ className, children, ...props }: ComboboxTriggerProps
       )}
       className={cnState(
         "absolute inset-y-0 end-0 flex items-center pe-2",
-        // A Combobox.Value in the trigger stays on one line (#541), so the trigger must be allowed
-        // to shrink in a flex row and to stay inside its container, as Select.Trigger is (#518). A
-        // chevron over an input is unaffected.
+        // Within its container around a one-line Combobox.Value, as Select.Trigger (#518)
         "min-w-0 max-w-full",
         "disabled:cursor-not-allowed disabled:opacity-50",
         className,
@@ -193,22 +181,11 @@ function ComboboxIcon({ className, ...props }: ComboboxIconProps) {
   );
 }
 
-// Base UI's Value renders no element, so in a trigger-style Combobox (a button trigger, the input
-// in the popup) a value wider than the trigger had nothing to clip it: as Select.Value did before
-// #518, several words wrapped onto lines above and below the trigger, and one long word ran past
-// it and pushed the chevron out (#541). The span around it keeps one line, with an ellipsis, in
-// three classes rather than `truncate`, so `whitespace-normal` in `className` brings back wrapping
-// alone. `flex-1`: it takes only the free space, so an element beside it keeps its width (#546, as
-// on Select.Value), and `text-start` keeps the text at the start of that space, which the
-// trigger's <button> centres. A function child formats the value, and in a single-select it gets
-// the span like any other child. In a multi-select it may return the chips and the input, to sit
-// inside Combobox.Chips, or the Chips itself, and a span would stand between them and their
-// parent. This wrapper cannot tell what it returns, so no function child there gets a span:
-// `className` and the span's props have nothing to reach, and text it returns is not clipped. To
-// clip text there, return your own clipped element, e.g.
-// <span className="flex-1 truncate text-start">...</span>.
+// As Select.Value (#518, #546): one line with an ellipsis. Base UI's Value renders no element, so
+// nothing clipped it (#541). A function child in a multi-select gets no span: it returns chips or
+// the Chips, which must stay children of Combobox.Chips, so clip your own element there.
 function ComboboxValue({ className, children, placeholder, ...props }: ComboboxValueProps) {
-  const { multiple } = useContext(ComboboxContext);
+  const multiple = useContext(ComboboxMultipleContext);
   const value = <BaseCombobox.Value placeholder={placeholder}>{children}</BaseCombobox.Value>;
   if (multiple && typeof children === "function") return value;
   return (
@@ -314,7 +291,7 @@ function ComboboxEmpty({ className, ...props }: ComboboxEmptyProps) {
 }
 
 function ComboboxClear({ className, children, ...props }: ComboboxClearProps) {
-  const { labels } = useContext(ComboboxContext);
+  const labels = useContext(ComboboxLabelsContext);
   return (
     <BaseCombobox.Clear
       {...ownContent(
@@ -373,7 +350,7 @@ function ComboboxChip({ className, id, ...props }: ComboboxChipProps) {
 }
 
 function ComboboxChipRemove({ className, children, ...props }: ComboboxChipRemoveProps) {
-  const { labels } = useContext(ComboboxContext);
+  const labels = useContext(ComboboxLabelsContext);
   const chipId = useContext(ComboboxChipIdContext);
   const id = useId();
   // Named by hidden text around the chip's text: "Remove Apple", or "Apple を削除". The button
