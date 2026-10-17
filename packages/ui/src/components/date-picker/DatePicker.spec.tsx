@@ -177,11 +177,7 @@ describe("DatePicker", () => {
 
   it("has no a11y violations", async () => {
     const { container } = render(<DatePicker value={new Date(2026, 2, 15)} />);
-    expect(
-      await axe(container, {
-        rules: { "aria-command-name": { enabled: false } },
-      }),
-    ).toHaveNoViolations();
+    expect(await axe(container)).toHaveNoViolations();
   });
 
   it("has no a11y violations with the calendar open", async () => {
@@ -296,11 +292,7 @@ describe("DatePicker labelling", () => {
         </Field.Root>
       </form>,
     );
-    expect(
-      await axe(container, {
-        rules: { "aria-command-name": { enabled: false } },
-      }),
-    ).toHaveNoViolations();
+    expect(await axe(container)).toHaveNoViolations();
   });
 });
 
