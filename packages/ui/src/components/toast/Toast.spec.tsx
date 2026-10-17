@@ -329,6 +329,8 @@ describe("Toast", () => {
     const { container } = render(<WrappedToastHarness />);
     await user.click(screen.getByRole("button", { name: "Show toast" }));
     await screen.findByText("Saved");
+    // The viewport renders in place, not in a portal, so the container audit sees the toast
+    expect(container).toContainElement(screen.getByText("Saved"));
     expect(await axe(container)).toHaveNoViolations();
   });
 });
