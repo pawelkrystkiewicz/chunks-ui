@@ -333,6 +333,21 @@ describe("Toast", () => {
     expect(container).toContainElement(screen.getByText("Saved"));
     expect(await axe(container)).toHaveNoViolations();
   });
+
+  it("has no a11y violations once F6 has moved focus into the viewport", async () => {
+    const user = userEvent.setup();
+    const { container } = render(<WrappedToastHarness />);
+    await user.click(screen.getByRole("button", { name: "Show toast" }));
+    await screen.findByText("Saved");
+    await user.keyboard("{F6}");
+    expect(screen.getByTestId("viewport")).toHaveFocus();
+    // Base UI renders the viewport's focus guards (tabindex 0, aria-hidden) only after F6, so the
+    // audits above never see them. Check that they are in the container, or this audit has nothing
+    // new to look at. axe cannot rule on the guards themselves: it counts the toast's role="dialog"
+    // as an open modal, and then reports aria-hidden-focus as incomplete, not as a violation
+    expect(container.querySelector("[data-base-ui-focus-guard]")).not.toBeNull();
+    expect(await axe(container)).toHaveNoViolations();
+  });
 });
 
 describe("Toast labels", () => {
