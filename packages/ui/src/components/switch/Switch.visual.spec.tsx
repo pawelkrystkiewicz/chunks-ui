@@ -1,7 +1,12 @@
 import { render } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import { commands, page, userEvent } from "vitest/browser";
-import { emulateReducedMotion, focusVisible, renderFixture } from "../../VisualTest.utils";
+import { page, userEvent } from "vitest/browser";
+import {
+  emulateForcedColors,
+  emulateReducedMotion,
+  focusVisible,
+  renderFixture,
+} from "../../VisualTest.utils";
 import { Switch } from "./index";
 
 describe("Switch", () => {
@@ -79,12 +84,12 @@ describe("Switch in forced-colors mode", () => {
   // Forced colours replace backgrounds with the page colour, so the track edge and the thumb
   // need system colours to stay visible.
   afterEach(async () => {
-    await commands.emulateMedia({ forcedColors: "none" });
+    await emulateForcedColors(false);
     await emulateReducedMotion(true);
   });
 
   it("keeps a visible track edge", async () => {
-    await commands.emulateMedia({ forcedColors: "active" });
+    await emulateForcedColors(true);
     const { getByRole } = render(
       <Switch.Root aria-label="Forced colors">
         <Switch.Thumb />
@@ -99,7 +104,7 @@ describe("Switch in forced-colors mode", () => {
     { path: "Motion spring", reducedMotion: false },
     { path: "CSS fallback", reducedMotion: true },
   ])("shows the thumb in both states, $path", async ({ reducedMotion }) => {
-    await commands.emulateMedia({ forcedColors: "active" });
+    await emulateForcedColors(true);
     await emulateReducedMotion(reducedMotion);
     const { getByRole, getByTestId } = render(
       <Switch.Root aria-label="Forced colors">

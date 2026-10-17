@@ -298,6 +298,8 @@ describe.each(DIRS)("in %s", (dir) => {
     expect(trigger.end).toEqual(near(control.end));
     expect(clear.end).toBeLessThanOrEqual(trigger.start);
     expect(clear.start).toBeGreaterThan((control.start + control.end) / 2);
+    // The input's end padding keeps its text out from under the clear button (#520)
+    expect(contentSpan(screen.getByRole("combobox"), dir).end).toBeLessThanOrEqual(clear.start);
     // A standalone icon in a row goes to the row's end
     expect(inlineSpan(screen.getByTestId("icon"), dir).end).toEqual(
       near(inlineSpan(screen.getByTestId("icon-row"), dir).end),
