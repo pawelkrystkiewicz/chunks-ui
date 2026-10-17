@@ -127,6 +127,8 @@ describe("popups animated with Motion", () => {
       const { rerender } = render(drawer(false));
       rerender(drawer(true));
       await expect.poll(() => visibleShare(popup())).toBeGreaterThan(0.99);
+      // Motion drives the slide: the CSS fallback slides it too, with no inline transform
+      expect(popup()?.style.transform).not.toBe("");
 
       rerender(drawer(false));
       const shares: number[] = [];
