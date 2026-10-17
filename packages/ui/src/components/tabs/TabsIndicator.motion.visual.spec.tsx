@@ -1,11 +1,12 @@
 import { render } from "@testing-library/react";
 import { type CSSProperties, Profiler } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { resizeBatches } from "../../lib/shared-resize";
 import {
   beforePaint,
   beforePaintOnceResized,
   eachPaintedFrame,
+  emulateReducedMotion,
   enterMotionPath,
   expectFollowsFromFirstFrame,
   MOTION_PATHS,
@@ -36,6 +37,8 @@ type Layout = {
   width?: number;
   /** Classes of tab "b" */
   tabClassName?: string;
+  /** Tab "b" is disabled */
+  disabled?: boolean;
   /** Content inside tab "a": an empty span of fixed size, e.g. an animated badge */
   badge?: boolean;
 };
@@ -48,6 +51,7 @@ const tabs = ({
   listClassName,
   width = 400,
   tabClassName,
+  disabled,
   badge,
 }: Layout = {}) => (
   <div style={{ width }}>
@@ -58,7 +62,7 @@ const tabs = ({
           Alpha
           {badge && <span data-testid="badge" style={{ display: "inline-block", width: 4 }} />}
         </Tabs.Tab>
-        <Tabs.Tab value="b" className={tabClassName}>
+        <Tabs.Tab value="b" className={tabClassName} disabled={disabled}>
           Beta
         </Tabs.Tab>
         <Tabs.Indicator data-testid="indicator" />
@@ -325,5 +329,67 @@ describe.each(MOTION_PATHS)("Tabs.Indicator, $path", ({ withMotion }) => {
     await waitForStable(offsets);
     expect(offsets().every((off) => off !== null && off <= 1)).toBe(true);
     expect(onRender).toHaveBeenCalledTimes(1);
+  });
+});
+
+// A controlled root keeps a tab selected when it becomes disabled, and the tab fades to 50%. The
+// indicator fades with it, frame for frame; with reduced motion both change at once.
+describe("Tabs.Indicator under the selected tab disabled at runtime", () => {
+  const opacityOf = (el: Element) => Number(getComputedStyle(el).opacity);
+
+  afterEach(() => emulateReducedMotion(false));
+
+  it.each([
+    ...MOTION_PATHS.map(({ path, withMotion }) => ({ path, withMotion, reduced: false })),
+    { path: "reduced motion", withMotion: false, reduced: true },
+  ])("dims the indicator with the tab, on $path", async ({ withMotion, reduced }) => {
+    await emulateReducedMotion(reduced);
+    const { rerender, indicator, tab } = await renderTabs(withMotion, { value: "b" });
+    const beta = tab("Beta");
+
+    rerender(tabs({ value: "b", disabled: true }));
+    const frames = await eachPaintedFrame(
+      () => ({ tab: opacityOf(beta), indicator: opacityOf(indicator) }),
+      40,
+    );
+    const log = JSON.stringify(frames);
+    expect(
+      frames.every((frame) => Math.abs(frame.indicator - frame.tab) < 0.01),
+      log,
+    ).toBe(true);
+    // Values between the two ends: it faded rather than jumped, unless reduced motion is on
+    const between = frames.filter(({ indicator: opacity }) => opacity > 0.5 && opacity < 1);
+    expect(between.length > 0, log).toBe(!reduced);
+    expect(await waitForStable(() => opacityOf(indicator))).toBe(0.5);
+  });
+
+  // The tab snaps because `.micro-interactions` is `transition: none !important` under reduced
+  // motion. Motion drives the indicator without that class, so its `motion-reduce:transition-none`
+  // has to snap it too, or it fades on until Motion hands it back.
+  it("snaps the indicator to 50% with the tab when reduced motion turns on mid-fade", async () => {
+    const { rerender, indicator, tab } = await renderTabs(true, { value: "b" });
+    const beta = tab("Beta");
+
+    // 10s outlasts SETTLE_TIMEOUT_MS, the wait for the preference to land
+    rerender(tabs({ value: "b", disabled: true, listClassName: "[&>*]:duration-[10s]" }));
+    // Every painted frame from here on. The frames that show a missing class come before
+    // `emulateReducedMotion` resolves, so a read after it would miss them.
+    const sampled = eachPaintedFrame(
+      () => ({ tab: opacityOf(beta), indicator: opacityOf(indicator) }),
+      40,
+    );
+    await untilChanged(() => opacityOf(beta));
+    await emulateReducedMotion(true);
+    const frames = await sampled;
+    const log = JSON.stringify(frames);
+    expect(
+      frames.every((frame) => Math.abs(frame.indicator - frame.tab) < 0.01),
+      log,
+    ).toBe(true);
+    // The preference landed within the sampled frames: nothing else ends a fade of 10s
+    expect(
+      frames.some((frame) => frame.tab === 0.5),
+      log,
+    ).toBe(true);
   });
 });

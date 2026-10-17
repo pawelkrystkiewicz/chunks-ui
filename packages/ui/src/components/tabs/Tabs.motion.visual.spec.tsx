@@ -1,13 +1,11 @@
 import { render } from "@testing-library/react";
-import { Activity, type CSSProperties, createRef, Fragment, useEffect, useRef } from "react";
+import { Activity, createRef, Fragment, useEffect, useRef } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { page } from "vitest/browser";
 import { reloadMotion } from "../../lib/use-motion";
 import {
   eachPaintedFrame,
   emulateReducedMotion,
-  enterMotionPath,
-  MOTION_PATHS,
   MotionLoaded,
   offBy,
   SETTLE_TIMEOUT_MS,
@@ -698,98 +696,5 @@ describe("Tabs.Indicator with Motion", () => {
         expect(offBy(tab, indicator)).toBeLessThanOrEqual(1);
       },
     );
-  });
-});
-
-// A controlled root keeps a tab selected when it becomes disabled, and the tab fades to 50% over
-// its transition. The indicator under it fades with it, frame for frame, instead of dropping to
-// 50% in one frame. With reduced motion the tab changes at once, and the indicator with it.
-describe("Tabs.Indicator under the selected tab disabled at runtime", () => {
-  // `fade` is the style of the tab and of the indicator
-  const tabs = (disabled: boolean, fade?: CSSProperties) => (
-    <Tabs.Root value="b">
-      <Tabs.List>
-        <Tabs.Tab value="a">Alpha</Tabs.Tab>
-        <Tabs.Tab value="b" disabled={disabled} style={fade}>
-          Beta
-        </Tabs.Tab>
-        <Tabs.Indicator data-testid="indicator" style={fade} />
-      </Tabs.List>
-    </Tabs.Root>
-  );
-  const opacityOf = (el: Element) => Number(getComputedStyle(el).opacity);
-
-  /** Renders the tabs, none disabled, once the path drives the indicator over the selected tab */
-  const renderTabs = async (withMotion: boolean) => {
-    await enterMotionPath(withMotion);
-    const { rerender, getByTestId, getByRole } = render(tabs(false));
-    const indicator = getByTestId("indicator");
-    const tab = getByRole("tab", { name: "Beta" });
-    // The CSS fallback has a transition class that Motion's path drops
-    await expect
-      .poll(() => indicator.classList.contains("micro-interactions"), {
-        timeout: SETTLE_TIMEOUT_MS,
-      })
-      .toBe(!withMotion);
-    await waitForStable(() => offBy(tab, indicator));
-    return { rerender, indicator, tab };
-  };
-
-  afterEach(() => emulateReducedMotion(false));
-
-  it.each([
-    ...MOTION_PATHS.map(({ path, withMotion }) => ({ path, withMotion, reduced: false })),
-    { path: "reduced motion", withMotion: false, reduced: true },
-  ])("dims the indicator with the tab, on $path", async ({ withMotion, reduced }) => {
-    await emulateReducedMotion(reduced);
-    const { rerender, indicator, tab } = await renderTabs(withMotion);
-
-    rerender(tabs(true));
-    const frames = await eachPaintedFrame(
-      () => ({ tab: opacityOf(tab), indicator: opacityOf(indicator) }),
-      40,
-    );
-    const log = JSON.stringify(frames);
-    expect(
-      frames.every((frame) => Math.abs(frame.indicator - frame.tab) < 0.01),
-      log,
-    ).toBe(true);
-    // Values between the two ends: it faded rather than jumped, unless reduced motion is on
-    const between = frames.filter(({ indicator: opacity }) => opacity > 0.5 && opacity < 1);
-    expect(between.length > 0, log).toBe(!reduced);
-    expect(await waitForStable(() => opacityOf(indicator))).toBe(0.5);
-  });
-
-  // Reduced motion turns on while the fade runs and Motion drives the indicator. The tab snaps to
-  // 50%: `.micro-interactions` has `transition: none !important` under reduced motion. The
-  // indicator has no such class while Motion drives it, so its `motion-reduce:transition-none` has
-  // to snap it too, or it fades on until Motion hands it back, a couple of frames later.
-  it("snaps the indicator to 50% with the tab when reduced motion turns on mid-fade", async () => {
-    const { rerender, indicator, tab } = await renderTabs(true);
-
-    // Longer than SETTLE_TIMEOUT_MS, the wait for the preference to land, so the fade is still
-    // under way when it does
-    rerender(tabs(true, { transitionDuration: "10s" }));
-    // Every painted frame from here on. The frames that show a missing class come before
-    // `emulateReducedMotion` resolves, so a read after it would miss them.
-    const sampled = eachPaintedFrame(
-      () => ({ tab: opacityOf(tab), indicator: opacityOf(indicator) }),
-      40,
-    );
-    // Once the fade is under way
-    await untilChanged(() => opacityOf(tab));
-    await emulateReducedMotion(true);
-    const frames = await sampled;
-    const log = JSON.stringify(frames);
-    expect(
-      frames.every((frame) => Math.abs(frame.indicator - frame.tab) < 0.01),
-      log,
-    ).toBe(true);
-    // The preference landed within the sampled frames: nothing else ends a fade of 10s
-    expect(
-      frames.some((frame) => frame.tab === 0.5),
-      log,
-    ).toBe(true);
-    expect(await waitForStable(() => opacityOf(indicator))).toBe(0.5);
   });
 });

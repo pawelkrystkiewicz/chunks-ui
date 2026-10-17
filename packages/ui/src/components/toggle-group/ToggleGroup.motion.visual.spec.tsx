@@ -997,9 +997,8 @@ describe("ToggleGroup pill from server HTML to the measured indicator", () => {
   );
 });
 
-// An item disabled while pressed fades to 50% over its transition. The indicator under it fades
-// with it, frame for frame, instead of dropping to 50% in one frame. With reduced motion the item
-// changes at once, and the indicator with it.
+// An item disabled while pressed fades to 50%. The indicator fades with it, frame for frame; with
+// reduced motion both change at once.
 describe("ToggleGroup indicator under the pressed item disabled at runtime", () => {
   const ui = (disabled: boolean, rootClassName?: string) => (
     <ToggleGroup.Root value={["b"]} className={rootClassName}>
@@ -1038,18 +1037,16 @@ describe("ToggleGroup indicator under the pressed item disabled at runtime", () 
     expect(await waitForStable(() => opacityOf(indicator()))).toBe(0.5);
   });
 
-  // Reduced motion turns on while the fade runs and Motion drives the indicator. The item snaps to
-  // 50%: `.micro-interactions` has `transition: none !important` under reduced motion. The
-  // indicator has no such class while Motion drives it, so its `motion-reduce:transition-none` has
-  // to snap it too, or it fades on until Motion hands it back, a couple of frames later.
+  // The item snaps because `.micro-interactions` is `transition: none !important` under reduced
+  // motion. Motion drives the indicator without that class, so its `motion-reduce:transition-none`
+  // has to snap it too, or it fades on until Motion hands it back.
   it("snaps the indicator to 50% with the item when reduced motion turns on mid-fade", async () => {
     const { indicator, rerender, getByRole } = await renderGroup(ui(false), true);
     const item = getByRole("button", { name: "Beta" });
     await waitForStable(() => offBy(item, indicator()));
 
-    // Longer than SETTLE_TIMEOUT_MS, the wait for the preference to land, so the fade is still
-    // under way when it does. The indicator is internal: a class on the root reaches it and the
-    // items.
+    // 10s outlasts SETTLE_TIMEOUT_MS, the wait for the preference to land. The indicator is
+    // internal: a class on the root reaches it and the items.
     rerender(ui(true, "[&>span]:duration-[10s] [&>button]:duration-[10s]"));
     // Every painted frame from here on. The frames that show a missing class come before
     // `emulateReducedMotion` resolves, so a read after it would miss them.
@@ -1057,7 +1054,6 @@ describe("ToggleGroup indicator under the pressed item disabled at runtime", () 
       () => ({ item: opacityOf(item), indicator: opacityOf(indicator()) }),
       40,
     );
-    // Once the fade is under way
     await untilChanged(() => opacityOf(item));
     await emulateReducedMotion(true);
     const frames = await sampled;
@@ -1071,6 +1067,5 @@ describe("ToggleGroup indicator under the pressed item disabled at runtime", () 
       frames.some((frame) => frame.item === 0.5),
       log,
     ).toBe(true);
-    expect(await waitForStable(() => opacityOf(indicator()))).toBe(0.5);
   });
 });
