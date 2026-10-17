@@ -46,9 +46,12 @@ export type ComboboxEmptyProps = ComponentProps<typeof BaseCombobox.Empty>;
 export type ComboboxClearProps = ComponentProps<typeof BaseCombobox.Clear>;
 export type ComboboxGroupLabelProps = ComponentProps<typeof BaseCombobox.GroupLabel>;
 export type ComboboxIconProps = ComponentProps<typeof BaseCombobox.Icon>;
-// Base UI's Value takes `children` and `placeholder` only; the rest goes to the span around it
-export type ComboboxValueProps = Omit<ComponentProps<"span">, keyof BaseCombobox.Value.Props> &
-  BaseCombobox.Value.Props;
+// Base UI's `children` and `placeholder`, and the props of the span around them, which reach the
+// span. With a function child in a multi-select there is no span, so they are ignored. The keys
+// are named: a prop Base UI adds to Value later is then a type error here, not a stray span
+// attribute.
+export type ComboboxValueProps = Omit<ComponentProps<"span">, "children" | "placeholder"> &
+  Pick<BaseCombobox.Value.Props, "children" | "placeholder">;
 export type ComboboxPositionerProps = Omit<
   ComponentProps<typeof BaseCombobox.Positioner>,
   "sideOffset"
