@@ -341,6 +341,69 @@ describe("Combobox.Value in a trigger", () => {
     expect(value.scrollWidth > value.clientWidth).toBe(truncated);
   });
 
+  // A badge beside the value keeps its width on one line, and the value takes only the free space
+  // and truncates first, as on Select.Value (#546). Before, the value's flex-basis was its full
+  // text width, so a long value and the badge shrank in proportion and the badge's two words
+  // wrapped.
+  it.each([
+    { length: "short", fruit: "Fig", truncated: false },
+    { length: "long", fruit: "Dragon fruit from the far end of the orchard", truncated: true },
+  ])("keeps a badge beside a $length value on one line, at full width", ({ fruit, truncated }) => {
+    const { getByRole, getByTestId } = render(
+      <div style={{ padding: 40 }}>
+        <Combobox.Root defaultValue={fruit}>
+          <Combobox.Trigger aria-label="Fruit" className={SELECT_LIKE} style={{ width: 200 }}>
+            <Combobox.Value data-testid="value" />
+            <span data-testid="badge" className="ms-2">
+              Pro plan
+            </span>
+            <Combobox.Icon data-testid="icon" />
+          </Combobox.Trigger>
+        </Combobox.Root>
+        {/* The badge's one line at its own width, in the trigger's font */}
+        <div data-testid="reference" className="w-max text-sm">
+          Pro plan
+        </div>
+      </div>,
+    );
+    const content = contentSpan(getByRole("combobox", { name: "Fruit" }), "ltr");
+    const value = getByTestId("value");
+    const badge = getByTestId("badge");
+    const icon = inlineSpan(getByTestId("icon"), "ltr");
+    const reference = getByTestId("reference").getBoundingClientRect();
+    const { width, height } = badge.getBoundingClientRect();
+    expect(width).toBeCloseTo(reference.width, 1);
+    expect(height).toBeCloseTo(reference.height, 1);
+    // The text keeps to the start of the value's box, which the trigger's <button> would centre
+    const text = document.createRange();
+    text.selectNodeContents(value);
+    expect(inlineSpan(text, "ltr").start).toBeCloseTo(content.start, 1);
+    expect(inlineSpan(value, "ltr").end).toBeLessThanOrEqual(inlineSpan(badge, "ltr").start);
+    expect(inlineSpan(badge, "ltr").end).toBeLessThanOrEqual(icon.start);
+    expect(icon.end).toBeCloseTo(content.end, 1);
+    expect(value.scrollWidth > value.clientWidth).toBe(truncated);
+  });
+
+  // `flex-initial` brings back the earlier sizing (#546): the value still shrinks and truncates
+  it("keeps a long value cut inside a 140px trigger with flex-initial on Combobox.Value", () => {
+    const { getByRole, getByTestId } = render(
+      <div style={{ padding: 40 }}>
+        <Combobox.Root defaultValue="Dragon fruit from the far end of the orchard">
+          <Combobox.Trigger aria-label="Fruit" className={SELECT_LIKE} style={{ width: 140 }}>
+            <Combobox.Value className="flex-initial" data-testid="value" />
+            <Combobox.Icon data-testid="icon" />
+          </Combobox.Trigger>
+        </Combobox.Root>
+      </div>,
+    );
+    const content = contentSpan(getByRole("combobox", { name: "Fruit" }), "ltr");
+    const value = getByTestId("value");
+    const icon = inlineSpan(getByTestId("icon"), "ltr");
+    expect(value.scrollWidth).toBeGreaterThan(value.clientWidth);
+    expect(inlineSpan(value, "ltr").end).toBeLessThanOrEqual(icon.start);
+    expect(icon.end).toBeCloseTo(content.end, 1);
+  });
+
   // The one-line value must not widen the trigger past its container: Combobox.Trigger has
   // `min-w-0 max-w-full`, as Select.Trigger does (#518). Beside a button in a flex row it shrinks,
   // and sized by its value (`w-auto`) it stops at the container's width

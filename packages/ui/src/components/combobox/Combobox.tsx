@@ -198,16 +198,21 @@ function ComboboxIcon({ className, ...props }: ComboboxIconProps) {
 // #518, several words wrapped onto lines above and below the trigger, and one long word ran past
 // it and pushed the chevron out (#541). The span around it keeps one line, with an ellipsis, in
 // three classes rather than `truncate`, so `whitespace-normal` in `className` brings back wrapping
-// alone. A function child formats the value, and in a single-select it gets the span like any
-// other child. In a multi-select it returns the chips and the input, to sit inside Combobox.Chips,
-// or the Chips itself: a span would stand between them and their parent, so it gets none then, and
-// `className` and the span's props have nothing to reach.
+// alone. `flex-1`: it takes only the free space, so an element beside it keeps its width (#546, as
+// on Select.Value), and `text-start` keeps the text at the start of that space, which the
+// trigger's <button> centres. A function child formats the value, and in a single-select it gets
+// the span like any other child. In a multi-select it returns the chips and the input, to sit
+// inside Combobox.Chips, or the Chips itself: a span would stand between them and their parent, so
+// it gets none then, and `className` and the span's props have nothing to reach.
 function ComboboxValue({ className, children, placeholder, ...props }: ComboboxValueProps) {
   const { multiple } = useContext(ComboboxContext);
   const value = <BaseCombobox.Value placeholder={placeholder}>{children}</BaseCombobox.Value>;
   if (multiple && typeof children === "function") return value;
   return (
-    <span className={cn("overflow-hidden text-ellipsis whitespace-nowrap", className)} {...props}>
+    <span
+      className={cn("flex-1 text-start overflow-hidden text-ellipsis whitespace-nowrap", className)}
+      {...props}
+    >
       {value}
     </span>
   );

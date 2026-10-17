@@ -519,10 +519,19 @@ describe("Combobox.Value", () => {
     triggerStyle({ className: "custom" });
     expect(screen.getByTestId("value")).toHaveClass(
       "custom",
+      "flex-1",
+      "text-start",
       "overflow-hidden",
       "text-ellipsis",
       "whitespace-nowrap",
     );
+  });
+
+  it("lets a Value className flex-initial replace flex-1", () => {
+    triggerStyle({ className: "flex-initial" });
+    const value = screen.getByTestId("value");
+    expect(value).toHaveClass("flex-initial");
+    expect(value).not.toHaveClass("flex-1");
   });
 
   it("lets a Value className bring back wrapping and keep the clip", () => {
