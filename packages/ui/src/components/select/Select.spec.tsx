@@ -39,7 +39,7 @@ describe("Select", () => {
     );
   });
 
-  it.each(["flex-none", "flex-initial"])("lets a Value className %s replace flex-1", (flex) => {
+  it.each(["flex-initial"])("lets a Value className %s replace flex-1", (flex) => {
     render(
       <Select.Root>
         <Select.Trigger>

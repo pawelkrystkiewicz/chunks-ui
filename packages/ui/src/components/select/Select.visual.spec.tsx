@@ -184,6 +184,28 @@ describe("Select", () => {
     expect(value.scrollWidth > value.clientWidth).toBe(truncated);
   });
 
+  // `flex-initial` on the value brings back the earlier sizing (#546): sized by its text, it still
+  // shrinks, so a long value is cut with an ellipsis and the chevron stays at the trigger's end.
+  // `flex-none` would not shrink: the text would keep its full width and push the chevron out.
+  it("keeps a long value cut inside a 140px trigger with flex-initial on Select.Value", () => {
+    const { getByRole, getByTestId } = render(
+      <div style={{ padding: 40 }}>
+        <Select.Root defaultValue="Dragon fruit from the far end of the orchard">
+          <Select.Trigger aria-label="Fruit" style={{ width: 140 }}>
+            <Select.Value className="flex-initial" data-testid="value" />
+            <Select.Icon data-testid="icon" />
+          </Select.Trigger>
+        </Select.Root>
+      </div>,
+    );
+    const content = contentSpan(getByRole("combobox"), "ltr");
+    const value = getByTestId("value");
+    const icon = inlineSpan(getByTestId("icon"), "ltr");
+    expect(value.scrollWidth).toBeGreaterThan(value.clientWidth);
+    expect(inlineSpan(value, "ltr").end).toBeLessThanOrEqual(icon.start);
+    expect(icon.end).toBeCloseTo(content.end, 1);
+  });
+
   // The value's one line must not widen the trigger past its container: beside a button in a
   // flex row it shrinks, and sized by its value (`w-auto`) it stops at the container's width
   it.each([
