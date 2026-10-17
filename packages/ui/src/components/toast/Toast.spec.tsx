@@ -336,12 +336,30 @@ describe("Toast", () => {
 
   it("has no a11y violations once F6 has moved focus into the viewport", async () => {
     const user = userEvent.setup();
-    const { container } = render(<WrappedToastHarness />);
-    await user.click(screen.getByRole("button", { name: "Show toast" }));
+    const manager = createToastManager();
+    const { container } = render(
+      <Toast.Provider toastManager={manager}>
+        <Toast.Viewport data-testid="viewport" />
+      </Toast.Provider>,
+    );
+    act(() => {
+      manager.add({
+        title: "Saved",
+        description: "Changes have been saved.",
+        dismissible: true,
+        actionProps: { children: "Undo" },
+      });
+    });
     await screen.findByText("Saved");
     await user.keyboard("{F6}");
     expect(screen.getByTestId("viewport")).toHaveFocus();
-    // Base UI renders the viewport's focus guards (aria-hidden, tabindex 0) only after F6
+    // Base UI aria-hides the close button until the viewport expands, which F6 does, and renders
+    // the focus guards only after F6. So this is the one state in which axe can audit them: check
+    // that the audit reaches the close button, the action and the guards
+    const close = screen.getByLabelText(DEFAULT_TOAST_LABELS.close, { selector: "button" });
+    expect(close).not.toHaveAttribute("aria-hidden", "true");
+    expect(container).toContainElement(close);
+    expect(container).toContainElement(screen.getByRole("button", { name: "Undo" }));
     const guards = container.querySelectorAll("[data-base-ui-focus-guard]");
     expect(guards.length).toBeGreaterThan(0);
     const results = await axe(container);
