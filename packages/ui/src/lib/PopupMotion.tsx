@@ -28,13 +28,9 @@ type PopupMotionConfig = {
  * own frame callback, once it has resolved the keyframes. An idle Motion's callback comes after
  * that check when the Root passes `open` to the popup in a layout effect, a commit late (Select,
  * Combobox), so the popup would vanish. The effect that starts the exit calls `onAnimationStart`
- * first, so a microtask from it resolves the keyframes before the next frame. Needs Motion 12.8 or
- * later, which exports `flushKeyframeResolvers`; on older versions the exit waits for Motion's frame.
+ * first, so a microtask from it resolves the keyframes before the next frame.
  */
 export function createPopupRenderer({ m, spring, from, to, skipInstant }: PopupMotionConfig) {
-  // Not on `MotionLike`: older versions lack it (see above)
-  const { flushKeyframeResolvers } = m as MotionLike & { flushKeyframeResolvers?: () => void };
-
   return (
     renderProps: RenderProps,
     state: { open: boolean; side?: string; instant?: string },
@@ -67,7 +63,7 @@ export function createPopupRenderer({ m, spring, from, to, skipInstant }: PopupM
     const onAnimationStart = state.open
       ? passed
       : (definition: unknown) => {
-          queueMicrotask(() => flushKeyframeResolvers?.());
+          queueMicrotask(m.flushKeyframeResolvers);
           passed?.(definition);
         };
 

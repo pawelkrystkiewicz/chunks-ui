@@ -54,6 +54,8 @@ export interface MotionLike {
     postRender: (callback: () => void) => unknown;
   };
   cancelFrame: (callback: () => void) => void;
+  /** Resolves pending keyframes now, not in Motion's next frame (exported since Motion 12.8) */
+  flushKeyframeResolvers: () => void;
 }
 
 let _cache: MotionLike | null | undefined;
