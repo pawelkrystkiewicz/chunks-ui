@@ -3,7 +3,7 @@ description: Start a work session on the tasks I name. Deliver each through /del
 argument-hint: "<W-numbers | issue numbers | task text>… [no merge] [quick review | passes=N]"
 ---
 
-# Today
+# Work cycle
 
 Input: `$ARGUMENTS`
 
