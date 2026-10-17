@@ -19,3 +19,17 @@ it("passes on onAnimationStart as the popup opens and closes", async () => {
   rerender(popup(props, { open: false }));
   await waitFor(() => expect(target()).toEqual({ opacity: 0 }));
 });
+
+// `flushKeyframeResolvers` is a motion-dom internal that `motion/react` exports since 12.7.5.
+// Calling it where it is missing would throw in Motion's effect, which has no try/catch, and
+// React would unmount the whole root on the first close
+it("starts the exit on a Motion without flushKeyframeResolvers", async () => {
+  const popup = createPopupRenderer({ ...options, m: { ...m, flushKeyframeResolvers: undefined } });
+  const onAnimationStart = vi.fn();
+  const props = { onAnimationStart } as HTMLAttributes<HTMLElement>;
+  const { rerender } = render(popup(props, { open: true }));
+  const target = () => onAnimationStart.mock.lastCall?.[0];
+  await waitFor(() => expect(target()).toEqual({ opacity: 1 }));
+  expect(() => rerender(popup(props, { open: false }))).not.toThrow();
+  await waitFor(() => expect(target()).toEqual({ opacity: 0 }));
+});
