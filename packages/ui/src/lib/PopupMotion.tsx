@@ -12,6 +12,15 @@ type PopupMotionConfig = {
   to: Record<string, number | string>;
   /** Jump to the target with no spring while Base UI's `instant` state is this value */
   skipInstant?: string;
+  /**
+   * Starts the exit as the popup closes. Base UI unmounts a closed popup once a check on the next
+   * frame finds no `getAnimations()` on it. A Root that passes `open` to the popup in a layout
+   * effect (Select) closes the popup a commit late, so that check runs before Motion's frame
+   * resolves the exit's keyframes. The effect that starts the exit calls `onAnimationStart` first,
+   * so a microtask from it resolves them at once. Needs Motion 12.8 or later, which exports
+   * `flushKeyframeResolvers`; on older versions the exit still waits for Motion's frame.
+   */
+  exitAtOnce?: boolean;
 };
 
 /**
@@ -23,7 +32,18 @@ type PopupMotionConfig = {
  * `transform-origin`, so an anchored popup's `origin-(--transform-origin)`
  * class makes it grow out of its trigger, as on the CSS path.
  */
-export function createPopupRenderer({ m, spring, from, to, skipInstant }: PopupMotionConfig) {
+export function createPopupRenderer({
+  m,
+  spring,
+  from,
+  to,
+  skipInstant,
+  exitAtOnce,
+}: PopupMotionConfig) {
+  // Not on `MotionLike` (see `exitAtOnce`)
+  const { flushKeyframeResolvers } = m as MotionLike & { flushKeyframeResolvers?: () => void };
+  const startExit = exitAtOnce ? () => queueMicrotask(() => flushKeyframeResolvers?.()) : undefined;
+
   return (
     renderProps: RenderProps,
     state: { open: boolean; side?: string; instant?: string },
@@ -50,6 +70,17 @@ export function createPopupRenderer({ m, spring, from, to, skipInstant }: PopupM
       ? Object.fromEntries(Object.entries(target).map(([key, value]) => [key, [value]]))
       : target;
 
+    // A consumer's `onAnimationStart` comes through Base UI's props, typed as a DOM handler; Motion
+    // calls it with its target instead
+    const passed = renderProps.onAnimationStart as ((definition: unknown) => void) | undefined;
+    const onAnimationStart =
+      state.open || !startExit
+        ? passed
+        : (definition: unknown) => {
+            startExit();
+            passed?.(definition);
+          };
+
     return (
       <m.motion.div
         {...(renderProps as Record<string, unknown>)}
@@ -58,6 +89,7 @@ export function createPopupRenderer({ m, spring, from, to, skipInstant }: PopupM
         initial={closed}
         animate={animate}
         transition={jump ? { duration: 0 } : spring}
+        onAnimationStart={onAnimationStart}
       />
     );
   };

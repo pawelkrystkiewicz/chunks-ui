@@ -78,6 +78,8 @@ function SelectPopup({ className, render: renderProp, ...props }: SelectPopupPro
     spring: springs.popup,
     from: { opacity: 0, scale: 0.95 },
     to: { opacity: 1, scale: 1 },
+    // Base UI's Select Root passes `open` to the popup a commit late: see `exitAtOnce`
+    exitAtOnce: true,
   });
 
   return (
