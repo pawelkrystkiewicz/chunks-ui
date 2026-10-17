@@ -39,16 +39,16 @@ describe("Select", () => {
     );
   });
 
-  it.each(["flex-initial"])("lets a Value className %s replace flex-1", (flex) => {
+  it("lets a Value className flex-initial replace flex-1", () => {
     render(
       <Select.Root>
         <Select.Trigger>
-          <Select.Value className={flex} data-testid="value" placeholder="Pick" />
+          <Select.Value className="flex-initial" data-testid="value" placeholder="Pick" />
         </Select.Trigger>
       </Select.Root>,
     );
     const value = screen.getByTestId("value");
-    expect(value).toHaveClass(flex);
+    expect(value).toHaveClass("flex-initial");
     expect(value).not.toHaveClass("flex-1");
   });
 
