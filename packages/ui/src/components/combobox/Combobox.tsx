@@ -48,8 +48,8 @@ export type ComboboxGroupLabelProps = ComponentProps<typeof BaseCombobox.GroupLa
 export type ComboboxIconProps = ComponentProps<typeof BaseCombobox.Icon>;
 // Base UI's `children` and `placeholder`, and the props of the span around them, which reach the
 // span. With a function child in a multi-select there is no span, so they are ignored. The keys
-// are named: a prop Base UI adds to Value later is then a type error here, not a stray span
-// attribute.
+// are named: a prop Base UI adds to Value later is then not accepted (a type error where it is
+// passed) and never reaches the span.
 export type ComboboxValueProps = Omit<ComponentProps<"span">, "children" | "placeholder"> &
   Pick<BaseCombobox.Value.Props, "children" | "placeholder">;
 export type ComboboxPositionerProps = Omit<
@@ -201,9 +201,12 @@ function ComboboxIcon({ className, ...props }: ComboboxIconProps) {
 // alone. `flex-1`: it takes only the free space, so an element beside it keeps its width (#546, as
 // on Select.Value), and `text-start` keeps the text at the start of that space, which the
 // trigger's <button> centres. A function child formats the value, and in a single-select it gets
-// the span like any other child. In a multi-select it returns the chips and the input, to sit
-// inside Combobox.Chips, or the Chips itself: a span would stand between them and their parent, so
-// it gets none then, and `className` and the span's props have nothing to reach.
+// the span like any other child. In a multi-select it may return the chips and the input, to sit
+// inside Combobox.Chips, or the Chips itself, and a span would stand between them and their
+// parent. This wrapper cannot tell what it returns, so no function child there gets a span:
+// `className` and the span's props have nothing to reach, and text it returns is not clipped. To
+// clip text there, return your own clipped element, e.g.
+// <span className="flex-1 truncate text-start">...</span>.
 function ComboboxValue({ className, children, placeholder, ...props }: ComboboxValueProps) {
   const { multiple } = useContext(ComboboxContext);
   const value = <BaseCombobox.Value placeholder={placeholder}>{children}</BaseCombobox.Value>;
