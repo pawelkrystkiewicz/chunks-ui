@@ -78,8 +78,9 @@ const slow = { type: "tween", ease: "linear", duration: 10 } as const;
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
 
 // An absence window, as a stopped animation leaves nothing to wait for. Motion's frame loop runs
-// once a frame and the slow tween changes the value in each, so one that kept going, or started
-// again, shows in the first or second frame. 5 frames leave margin
+// once a frame and the slow tween changes the value in each frame, so a write after the stop (the
+// stopped value landing after a clear, which then stays), or an animation that kept going or
+// started again, shows in the first or second frame. 5 frames leave margin
 const ABSENCE_WINDOW_FRAMES = 5;
 
 /** A Tabs.Animate pane's opacity and vertical offset, as painted */
