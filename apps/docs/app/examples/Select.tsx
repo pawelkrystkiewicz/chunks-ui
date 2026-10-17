@@ -5,7 +5,7 @@ import { Container } from "@/components";
 
 export function SelectBasicExample() {
   return (
-    <Container>
+    <Container className="w-64">
       <Select.Root>
         <Select.Trigger aria-label="Fruit">
           <Select.Value placeholder="Choose a fruit" />
@@ -40,7 +40,7 @@ export function SelectBasicExample() {
 
 export function SelectGroupedExample() {
   return (
-    <Container>
+    <Container className="w-64">
       <Select.Root>
         <Select.Trigger aria-label="Color">
           <Select.Value placeholder="Pick a color" />

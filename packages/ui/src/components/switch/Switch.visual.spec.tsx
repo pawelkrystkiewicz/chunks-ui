@@ -6,6 +6,7 @@ import {
   emulateReducedMotion,
   focusVisible,
   renderFixture,
+  SETTLE_TIMEOUT_MS,
 } from "../../VisualTest.utils";
 import { Switch } from "./index";
 
@@ -114,7 +115,7 @@ describe("Switch in forced-colors mode", () => {
     const track = getByRole("switch");
     const thumb = () => getByTestId("thumb");
     await expect
-      .poll(() => thumb().classList.contains("micro-interactions"), { timeout: 5000 })
+      .poll(() => thumb().classList.contains("micro-interactions"), { timeout: SETTLE_TIMEOUT_MS })
       .toBe(reducedMotion);
     const colours = () => ({
       thumb: getComputedStyle(thumb()).backgroundColor,
