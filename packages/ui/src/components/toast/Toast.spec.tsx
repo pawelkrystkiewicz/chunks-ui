@@ -333,6 +333,45 @@ describe("Toast", () => {
     expect(container).toContainElement(screen.getByText("Saved"));
     expect(await axe(container)).toHaveNoViolations();
   });
+
+  it("has no a11y violations once F6 has moved focus into the viewport", async () => {
+    const user = userEvent.setup();
+    const manager = createToastManager();
+    const { container } = render(
+      <Toast.Provider toastManager={manager}>
+        <Toast.Viewport data-testid="viewport" />
+      </Toast.Provider>,
+    );
+    act(() => {
+      manager.add({
+        title: "Saved",
+        description: "Changes have been saved.",
+        dismissible: true,
+        actionProps: { children: "Undo" },
+      });
+    });
+    await screen.findByText("Saved");
+    await user.keyboard("{F6}");
+    expect(screen.getByTestId("viewport")).toHaveFocus();
+    // Base UI aria-hides the close button until the viewport expands, which F6 does, and renders
+    // the focus guards only after F6. So this is the one state in which axe can audit them: check
+    // that the audit reaches the close button, the action and the guards
+    const close = screen.getByLabelText(DEFAULT_TOAST_LABELS.close, { selector: "button" });
+    expect(close).not.toHaveAttribute("aria-hidden", "true");
+    expect(container).toContainElement(close);
+    expect(container).toContainElement(screen.getByRole("button", { name: "Undo" }));
+    const guards = container.querySelectorAll("[data-base-ui-focus-guard]");
+    expect(guards.length).toBeGreaterThan(0);
+    const results = await axe(container);
+    expect(results).toHaveNoViolations();
+    // The toast's role="dialog" counts as an open modal for axe, so aria-hidden-focus leaves
+    // focusable aria-hidden nodes in `incomplete`. Only the guards may be there
+    const undecided = results.incomplete
+      .filter((rule) => rule.id === "aria-hidden-focus")
+      .flatMap((rule) => rule.nodes);
+    expect(undecided).toHaveLength(guards.length);
+    for (const node of undecided) expect(node.html).toContain("data-base-ui-focus-guard");
+  });
 });
 
 describe("Toast labels", () => {

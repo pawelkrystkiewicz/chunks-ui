@@ -7,7 +7,7 @@ import { Drawer } from "../components/drawer";
 import { Menu } from "../components/menu";
 import { Popover } from "../components/popover";
 import { Tooltip } from "../components/tooltip";
-import { MotionLoaded } from "../VisualTest.utils";
+import { MotionLoaded, SETTLE_TIMEOUT_MS } from "../VisualTest.utils";
 import { reloadMotion } from "./use-motion";
 
 // Runs with reduced motion off, so the popups animate with Motion instead of CSS
@@ -89,7 +89,7 @@ describe("popups animated with Motion", () => {
       expect(popup()?.style.transform).not.toBe("");
 
       rerender(popups[name](false));
-      await expect.poll(popup, { timeout: 3000 }).toBeNull();
+      await expect.poll(popup, { timeout: SETTLE_TIMEOUT_MS }).toBeNull();
     },
   );
 
