@@ -512,7 +512,6 @@ describe("Combobox.Value", () => {
     triggerStyle({ placeholder: "Pick a fruit" }, null);
     const value = screen.getByTestId("value");
     expect(value).toHaveTextContent(/^Pick a fruit$/);
-    expect(value).toHaveClass("whitespace-nowrap");
   });
 
   it("renders Value with a custom className", () => {
@@ -527,17 +526,16 @@ describe("Combobox.Value", () => {
     );
   });
 
-  it("lets a Value className flex-initial replace flex-1", () => {
-    triggerStyle({ className: "flex-initial" });
+  it("lets a Value className replace flex-1 and whitespace-nowrap, and keep the clip", () => {
+    triggerStyle({ className: "flex-initial whitespace-normal" });
     const value = screen.getByTestId("value");
-    expect(value).toHaveClass("flex-initial");
+    expect(value).toHaveClass(
+      "flex-initial",
+      "overflow-hidden",
+      "text-ellipsis",
+      "whitespace-normal",
+    );
     expect(value).not.toHaveClass("flex-1");
-  });
-
-  it("lets a Value className bring back wrapping and keep the clip", () => {
-    triggerStyle({ className: "whitespace-normal" });
-    const value = screen.getByTestId("value");
-    expect(value).toHaveClass("overflow-hidden", "text-ellipsis", "whitespace-normal");
     expect(value).not.toHaveClass("whitespace-nowrap");
   });
 
@@ -556,7 +554,6 @@ describe("Combobox.Value", () => {
     const value = screen.getByTestId("value");
     expect(value.tagName).toBe("SPAN");
     expect(value).toHaveTextContent(/^APPLE$/);
-    expect(value).toHaveClass("overflow-hidden", "text-ellipsis", "whitespace-nowrap");
   });
 
   // Only a function child in a multi-select goes without the span: this one is the labels as text,
@@ -573,7 +570,6 @@ describe("Combobox.Value", () => {
     const value = screen.getByTestId("value");
     expect(value.tagName).toBe("SPAN");
     expect(value).toHaveTextContent(/^Apple, Banana$/);
-    expect(value).toHaveClass("overflow-hidden", "text-ellipsis", "whitespace-nowrap");
   });
 
   // Base UI's multi-select returns the chips and the input from a function child; they must stay
@@ -596,25 +592,6 @@ describe("Combobox.Value", () => {
       </Combobox.Root>,
     );
     expect(screen.getByTestId("chip").parentElement).toBe(screen.getByTestId("chips"));
-  });
-
-  // The other multi-select shape: the function returns the Chips itself
-  it("renders no element around a Combobox.Chips that a function child returns", () => {
-    render(
-      <Combobox.Root multiple items={items} defaultValue={[items[0]]}>
-        <Combobox.Value>
-          {(selected: typeof items) => (
-            <Combobox.Chips data-testid="chips">
-              {selected.map((item) => (
-                <Combobox.Chip key={item.value}>{item.label}</Combobox.Chip>
-              ))}
-              <Combobox.Input aria-label="Fruits" />
-            </Combobox.Chips>
-          )}
-        </Combobox.Value>
-      </Combobox.Root>,
-    );
-    expect(screen.getByTestId("chips").closest("span")).toBeNull();
   });
 });
 

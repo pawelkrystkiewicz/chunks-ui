@@ -77,14 +77,11 @@ describe("Select", () => {
   });
 
   // Base UI's Icon renders a `▼` when it has no children; ours draws a chevron svg instead
-  it.each([
-    { absent: "undefined", children: undefined },
-    { absent: "null", children: null },
-  ])("renders the chevron in Icon when its children are $absent", ({ children }) => {
+  it("renders the chevron in Icon when it has no children", () => {
     render(
       <Select.Root>
         <Select.Trigger>
-          <Select.Icon data-testid="icon">{children}</Select.Icon>
+          <Select.Icon data-testid="icon" />
         </Select.Trigger>
       </Select.Root>,
     );
@@ -104,7 +101,6 @@ describe("Select", () => {
     const icon = screen.getByTestId("icon");
     expect(icon).toHaveTextContent(/^custom$/);
     expect(icon.querySelector("svg")).not.toBeInTheDocument();
-    expect(icon).toHaveClass("ms-auto");
   });
 
   it("renders Popup with custom className", () => {

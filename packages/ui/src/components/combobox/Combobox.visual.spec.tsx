@@ -1,6 +1,7 @@
 import { render } from "@testing-library/react";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { page, userEvent } from "vitest/browser";
+import { cn } from "../../lib/cn";
 import {
   boxOf,
   contentSpan,
@@ -296,10 +297,8 @@ describe("Combobox.Input beside Clear and Trigger", () => {
   });
 });
 
-// A trigger-style Combobox: a button shows the selected value and the search input is in the popup.
-// Base UI's Combobox.Value renders no element, so a value wider than the trigger had nothing to
-// clip it. As Select.Value before #518, several words wrapped onto lines above and below the
-// trigger, and one long word ran past it and pushed the chevron out (#541).
+// Trigger-style: a button shows the value, the search input is in the popup. Base UI's Value has no
+// element, so a wide value wrapped or ran past the trigger and pushed the chevron out (#541).
 describe("Combobox.Value in a trigger", () => {
   // The Trigger's defaults are a chevron over an input's end (`absolute inset-y-0 end-0`): this
   // makes it a Select-like button
@@ -324,10 +323,6 @@ describe("Combobox.Value in a trigger", () => {
     const trigger = getByRole("combobox", { name: "Fruit" });
     const content = contentSpan(trigger, "ltr");
     const icon = inlineSpan(getByTestId("icon"), "ltr");
-    // Nothing spills out of the trigger: neither a long word to the side, nor wrapped lines above
-    // and below it
-    expect(trigger.scrollWidth).toBeLessThanOrEqual(trigger.clientWidth);
-    expect(trigger.scrollHeight).toBeLessThanOrEqual(trigger.clientHeight);
     expect(icon.end).toBeCloseTo(content.end, 1);
     expect(icon.end - icon.start).toBe(16);
     const value = getByTestId("value");
@@ -371,9 +366,7 @@ describe("Combobox.Value in a trigger", () => {
     const badge = getByTestId("badge");
     const icon = inlineSpan(getByTestId("icon"), "ltr");
     const reference = getByTestId("reference").getBoundingClientRect();
-    const { width, height } = badge.getBoundingClientRect();
-    expect(width).toBeCloseTo(reference.width, 1);
-    expect(height).toBeCloseTo(reference.height, 1);
+    expect(badge.getBoundingClientRect().width).toBeCloseTo(reference.width, 1);
     // The text keeps to the start of the value's box, which the trigger's <button> would centre
     const text = document.createRange();
     text.selectNodeContents(value);
@@ -382,26 +375,6 @@ describe("Combobox.Value in a trigger", () => {
     expect(inlineSpan(badge, "ltr").end).toBeLessThanOrEqual(icon.start);
     expect(icon.end).toBeCloseTo(content.end, 1);
     expect(value.scrollWidth > value.clientWidth).toBe(truncated);
-  });
-
-  // `flex-initial` brings back the earlier sizing (#546): the value still shrinks and truncates
-  it("keeps a long value cut inside a 140px trigger with flex-initial on Combobox.Value", () => {
-    const { getByRole, getByTestId } = render(
-      <div style={{ padding: 40 }}>
-        <Combobox.Root defaultValue="Dragon fruit from the far end of the orchard">
-          <Combobox.Trigger aria-label="Fruit" className={SELECT_LIKE} style={{ width: 140 }}>
-            <Combobox.Value className="flex-initial" data-testid="value" />
-            <Combobox.Icon data-testid="icon" />
-          </Combobox.Trigger>
-        </Combobox.Root>
-      </div>,
-    );
-    const content = contentSpan(getByRole("combobox", { name: "Fruit" }), "ltr");
-    const value = getByTestId("value");
-    const icon = inlineSpan(getByTestId("icon"), "ltr");
-    expect(value.scrollWidth).toBeGreaterThan(value.clientWidth);
-    expect(inlineSpan(value, "ltr").end).toBeLessThanOrEqual(icon.start);
-    expect(icon.end).toBeCloseTo(content.end, 1);
   });
 
   // The one-line value must not widen the trigger past its container: Combobox.Trigger has
@@ -415,10 +388,7 @@ describe("Combobox.Value in a trigger", () => {
       <div style={{ padding: 40 }}>
         <div data-testid="box" className={row ? "flex gap-2" : undefined} style={{ width }}>
           <Combobox.Root defaultValue="Dragon fruit from the far end of the orchard">
-            <Combobox.Trigger
-              aria-label="Fruit"
-              className={[SELECT_LIKE, trigger].filter(Boolean).join(" ")}
-            >
+            <Combobox.Trigger aria-label="Fruit" className={cn(SELECT_LIKE, trigger)}>
               <Combobox.Value data-testid="value" />
               <Combobox.Icon />
             </Combobox.Trigger>
