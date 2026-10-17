@@ -25,7 +25,7 @@ export type MotionElementProps = Omit<
   ref?: Ref<HTMLDivElement>;
   style?: CSSProperties;
   initial?: MotionValues;
-  animate?: MotionValues;
+  animate?: Record<string, number | string | (number | string)[]>;
   transition?: MotionOptions;
 };
 
