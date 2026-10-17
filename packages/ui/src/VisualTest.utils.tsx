@@ -469,6 +469,32 @@ export const eachPaintedFrame = <T,>(read: () => T, frames: number) =>
     frame.postRender(step, true);
   });
 
+/** The rendered width over the layout width: 1 while nothing scales `el` */
+export const renderedScale = (el: Element) =>
+  Math.round(
+    (el.getBoundingClientRect().width / Number.parseFloat(getComputedStyle(el).width)) * 1000,
+  ) / 1000;
+
+/** The popup's side, rendered scale and opacity, once a painted frame while it is mounted */
+export const framesOf = async (popup: HTMLElement) => {
+  const frames = await eachPaintedFrame(
+    () =>
+      popup.isConnected && {
+        side: popup.getAttribute("data-side"),
+        scale: renderedScale(popup),
+        opacity: Number(getComputedStyle(popup).opacity),
+      },
+    40,
+  );
+  return frames.filter((frame) => frame !== false);
+};
+
+/** Resolves once `popup` is at rest, Motion idle: no `getAnimations()`, a steady JS-driven scale */
+export const settled = async (popup: HTMLElement) => {
+  await expect.poll(() => popup.getAnimations()).toEqual([]);
+  await waitForStable(() => renderedScale(popup));
+};
+
 type BoxSize = { inlineSize: number; blockSize: number };
 
 const borderBoxOf = (el: Element): BoxSize => {

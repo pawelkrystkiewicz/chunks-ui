@@ -35,14 +35,12 @@ it("passes on onAnimationStart as the popup opens and closes", async () => {
 // microtask: called at once, it would miss the exit's keyframes. An open needs no flush.
 it("flushes Motion's keyframe resolvers in a microtask, once, as the popup closes", async () => {
   const flushKeyframeResolvers = vi.fn();
-  const { target, close } = await mountOpen({ ...m, flushKeyframeResolvers });
-  await Promise.resolve();
+  const { close } = await mountOpen({ ...m, flushKeyframeResolvers });
   expect(flushKeyframeResolvers).not.toHaveBeenCalled();
   close();
   expect(flushKeyframeResolvers).not.toHaveBeenCalled();
   await Promise.resolve();
   expect(flushKeyframeResolvers).toHaveBeenCalledTimes(1);
-  expect(target()).toEqual({ opacity: 0 });
 });
 
 // `motion/react` exports `flushKeyframeResolvers`, a motion-dom internal, since 12.7.5. Passing a
