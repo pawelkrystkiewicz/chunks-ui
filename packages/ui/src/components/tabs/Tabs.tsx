@@ -115,7 +115,7 @@ function TabsList({ className, ...props }: TabsListProps) {
   return (
     <BaseTabs.List
       className={cnState(
-        "relative flex items-center rounded-lg bg-muted p-1",
+        "group/tabs-list relative flex items-center rounded-lg bg-muted p-1",
         "data-[orientation=vertical]:flex-col",
         className,
       )}
@@ -270,6 +270,9 @@ function TabsIndicatorElement({
     ...props,
     className: cn(
       "absolute rounded-md bg-background shadow-sm",
+      // Dimmed as the selected tab is when disabled, in server HTML too. A controlled value or an
+      // explicit defaultValue keeps a disabled tab selected.
+      "group-has-[[data-active][aria-disabled=true]]/tabs-list:opacity-50",
       // The CSS fallback places the indicator from the variables Base UI sets on it, and slides
       // it with a transition, which is off unless it slides to another tab. Motion writes inline
       // values instead, and they are removed when it hands back.

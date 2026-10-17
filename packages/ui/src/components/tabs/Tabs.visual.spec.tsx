@@ -1,5 +1,8 @@
 import { DirectionProvider } from "@base-ui/react/direction-provider";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { render } from "@testing-library/react";
+import { hydrateRoot, type Root } from "react-dom/client";
+import { renderToString } from "react-dom/server";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { userEvent } from "vitest/browser";
 import {
   boxOf,
@@ -10,7 +13,7 @@ import {
   renderFixture,
   waitForStable,
 } from "../../VisualTest.utils";
-import { Tabs } from "./index";
+import { Tabs, type TabsRootProps } from "./index";
 
 const activeTab = () => document.querySelector('[role="tab"][aria-selected="true"]') as Element;
 const indicator = () => document.querySelector('[data-testid="indicator"]') as Element;
@@ -22,6 +25,24 @@ async function expectIndicatorOverActiveTab() {
   await waitForStable(offset);
   expect(offset()).toBeLessThanOrEqual(1);
 }
+
+const opacityOf = (el: Element) => getComputedStyle(el).opacity;
+
+/** Two tabs, the second disabled unless `disabled` is false; `root` selects one */
+const disabledSelected = ({
+  disabled = true,
+  ...root
+}: Pick<TabsRootProps, "value" | "defaultValue"> & { disabled?: boolean }) => (
+  <Tabs.Root {...root}>
+    <Tabs.List>
+      <Tabs.Tab value="tab-1">Enabled</Tabs.Tab>
+      <Tabs.Tab value="tab-2" disabled={disabled}>
+        Disabled
+      </Tabs.Tab>
+      <Tabs.Indicator data-testid="indicator" />
+    </Tabs.List>
+  </Tabs.Root>
+);
 
 describe("Tabs", () => {
   it("horizontal", async () => {
@@ -111,6 +132,38 @@ describe("Tabs", () => {
     expectDimmed(getByRole("tab", { name: "Disabled" }), getByRole("tab", { name: "Enabled" }));
   });
 
+  // A controlled value or an explicit defaultValue keeps a disabled tab selected: the indicator
+  // under it dims as the tab does
+  it.each([
+    ["a controlled value", { value: "tab-2" }],
+    ["an explicit defaultValue", { defaultValue: "tab-2" }],
+  ] as const)("dims the indicator under a disabled tab selected by %s", async (_, root) => {
+    const { getByRole } = await renderFixture(disabledSelected(root));
+    expect(getByRole("tab", { name: "Disabled" })).toHaveAttribute("aria-selected", "true");
+    await expectIndicatorOverActiveTab();
+    expect(opacityOf(activeTab())).toBe("0.5");
+    expect(opacityOf(indicator())).toBe("0.5");
+  });
+
+  // Disabled while selected, a controlled root keeps the tab; an uncontrolled one moves to the
+  // first enabled tab, and the indicator with it at full opacity
+  it.each([
+    ["a controlled", { value: "tab-2" }, "Disabled", "0.5"],
+    ["an uncontrolled", { defaultValue: "tab-2" }, "Enabled", "1"],
+  ] as const)(
+    "follows the selected tab disabled at runtime in %s root",
+    async (_, root, selected, opacity) => {
+      const { rerender } = render(disabledSelected({ ...root, disabled: false }));
+      await expectIndicatorOverActiveTab();
+      expect(opacityOf(indicator())).toBe("1");
+
+      rerender(disabledSelected(root));
+      await expect.poll(() => activeTab().textContent).toBe(selected);
+      await expectIndicatorOverActiveTab();
+      expect(opacityOf(indicator())).toBe(opacity);
+    },
+  );
+
   // Keyboard focus shows the ring: 2px of --ring, 2px outside the tab, which reaches into the
   // list's 4px padding and over the indicator under the tab
   it("active tab focus-visible", async () => {
@@ -127,6 +180,39 @@ describe("Tabs", () => {
     const tab = activeTab() as HTMLElement;
     focusVisible(tab);
     await expect(fixture).toMatchScreenshot();
+  });
+});
+
+// The indicator is the same element before and after hydration. Base UI's script, which places
+// and shows it in server HTML, is a stub in browser bundles and sets no opacity: the classes do.
+describe("Tabs.Indicator under a selected disabled tab, in server HTML", () => {
+  let host: HTMLDivElement | null = null;
+  let app: Root | null = null;
+  afterEach(() => {
+    app?.unmount();
+    host?.remove();
+    app = null;
+    host = null;
+  });
+
+  it.each([
+    ["a controlled value", { value: "tab-2" }],
+    ["an explicit defaultValue", { defaultValue: "tab-2" }],
+  ] as const)("dims before and after hydration, selected by %s", async (_, root) => {
+    const page = disabledSelected(root);
+    host = document.createElement("div");
+    host.innerHTML = renderToString(page);
+    document.body.append(host);
+    const serverIndicator = indicator();
+    expect(serverIndicator).not.toBeNull();
+    expect(opacityOf(activeTab())).toBe("0.5");
+    expect(opacityOf(serverIndicator)).toBe("0.5");
+
+    app = hydrateRoot(host, page);
+    await expect.poll(() => indicator().hasAttribute("hidden")).toBe(false);
+    expect(indicator()).toBe(serverIndicator);
+    await expectIndicatorOverActiveTab();
+    expect(opacityOf(indicator())).toBe("0.5");
   });
 });
 

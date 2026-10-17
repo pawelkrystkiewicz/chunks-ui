@@ -1,8 +1,9 @@
 import { render } from "@testing-library/react";
 import type { CSSProperties } from "react";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { commands, userEvent } from "vitest/browser";
+import { userEvent } from "vitest/browser";
 import {
+  emulateForcedColors,
   emulateReducedMotion,
   type Insets,
   insetsWithin,
@@ -118,11 +119,11 @@ describe.each(PATHS)("Switch thumb geometry, $path", ({ reducedMotion }) => {
 // system colours. The thumb must rest in the same places there.
 describe.each(PATHS)("Switch thumb geometry in forced-colors mode, $path", ({ reducedMotion }) => {
   beforeAll(async () => {
-    await commands.emulateMedia({ forcedColors: "active" });
+    await emulateForcedColors(true);
     await emulateReducedMotion(reducedMotion);
   });
   afterAll(async () => {
-    await commands.emulateMedia({ forcedColors: "none" });
+    await emulateForcedColors(false);
     await emulateReducedMotion(true);
   });
 

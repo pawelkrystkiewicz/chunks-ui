@@ -88,11 +88,14 @@ function ComboboxControl({ className, ...props }: ComboboxControlProps) {
   );
 }
 
+// In a single-select, Clear and Trigger sit over its end, 42px of it: pe-12 keeps its text out
+// from under them, as on the Control (#520). A px-* replaces it: inside the Control, the input's
+// px-0 does.
 function ComboboxInput({ className, ...props }: ComboboxInputProps) {
   return (
     <BaseCombobox.Input
       className={cnState(
-        "flex h-ui-height w-full rounded-md border border-input bg-background px-3 text-sm",
+        "flex h-ui-height w-full rounded-md border border-input bg-background px-3 pe-12 text-sm",
         "placeholder:text-muted-foreground",
         FOCUS_RING,
         RING_TRANSITION,
