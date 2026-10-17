@@ -1,7 +1,13 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import { commands, page, userEvent } from "vitest/browser";
-import { renderPage, ringColor, systemColour, withViewport } from "../../VisualTest.utils";
+import { page, userEvent } from "vitest/browser";
+import {
+  emulateForcedColors,
+  renderPage,
+  ringColor,
+  systemColour,
+  withViewport,
+} from "../../VisualTest.utils";
 import { Button } from "../button";
 import { Dialog } from "./index";
 
@@ -115,12 +121,11 @@ describe("Dialog.Popup on a narrow page", () => {
 });
 
 describe("Dialog.Popup in forced colours", () => {
-  afterEach(() => commands.emulateMedia({ forcedColors: "none" }));
+  afterEach(() => emulateForcedColors(false));
 
   // Forced colours revert the `--ring` colour to the browser's focus colour
   it("draws the ring in the system focus colour", async () => {
-    await commands.emulateMedia({ forcedColors: "active" });
-    await expect.poll(() => matchMedia("(forced-colors: active)").matches).toBe(true);
+    await emulateForcedColors(true);
     expect(getComputedStyle(await focusedPopup()).outlineColor).toBe(systemColour("Highlight"));
   });
 });

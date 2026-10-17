@@ -380,6 +380,34 @@ export async function emulateReducedMotion(reduce: boolean) {
   }
 }
 
+/**
+ * Emulates forced colours and resolves on the media query's change event, once
+ * `(forced-colors: active)` matches `active`. Resolves at once when the query already matches.
+ */
+export async function emulateForcedColors(active: boolean) {
+  const query = matchMedia("(forced-colors: active)");
+  if (query.matches === active) return;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const changed = new Promise<void>((resolve, reject) => {
+    query.addEventListener("change", () => resolve(), { once: true });
+    timer = setTimeout(
+      () =>
+        reject(
+          new Error(
+            `emulateForcedColors(${active}): no change event within ${SETTLE_TIMEOUT_MS}ms`,
+          ),
+        ),
+      SETTLE_TIMEOUT_MS,
+    );
+  });
+  try {
+    await commands.emulateMedia({ forcedColors: active ? "active" : "none" });
+    await changed;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 const nextFrame = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 
 /**
