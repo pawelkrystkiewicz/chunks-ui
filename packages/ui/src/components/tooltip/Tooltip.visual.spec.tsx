@@ -37,22 +37,22 @@ describe("Tooltip", () => {
 
 const NAMES = ["A", "B"] as const;
 
-const group = (
+const tooltips = (names: readonly string[]) => (
   <div style={{ padding: 80, display: "flex", gap: 40, justifyContent: "center" }}>
-    <Tooltip.Provider>
-      {NAMES.map((name) => (
-        <Tooltip.Root key={name}>
-          <Tooltip.Trigger render={<Button variant="outlined" />}>{name}</Tooltip.Trigger>
-          <Tooltip.Portal>
-            <Tooltip.Positioner>
-              <Tooltip.Popup data-testid={`popup-${name}`}>Tooltip {name}</Tooltip.Popup>
-            </Tooltip.Positioner>
-          </Tooltip.Portal>
-        </Tooltip.Root>
-      ))}
-    </Tooltip.Provider>
+    {names.map((name) => (
+      <Tooltip.Root key={name}>
+        <Tooltip.Trigger render={<Button variant="outlined" />}>{name}</Tooltip.Trigger>
+        <Tooltip.Portal>
+          <Tooltip.Positioner>
+            <Tooltip.Popup data-testid={`popup-${name}`}>Tooltip {name}</Tooltip.Popup>
+          </Tooltip.Positioner>
+        </Tooltip.Portal>
+      </Tooltip.Root>
+    ))}
   </div>
 );
+
+const group = <Tooltip.Provider>{tooltips(NAMES)}</Tooltip.Provider>;
 
 const trigger = (name: string) => screen.getByRole("button", { name });
 
@@ -79,9 +79,7 @@ async function openAndSettle(name: "A" | "B") {
   await waitForStable(() => getComputedStyle(popup).opacity);
 }
 
-// Inside a Provider, a tooltip that opens while another is open skips its delay, and Base UI marks
-// both popups `data-instant`: the one opening and the one it replaces.
-describe.each(MOTION_PATHS)("Tooltip in a Provider, $path", ({ withMotion }) => {
+describe.each(MOTION_PATHS)("Tooltip animation, $path", ({ withMotion }) => {
   beforeAll(() => enterMotionPath(withMotion));
   beforeEach(() => emulateReducedMotion(false));
   afterAll(async () => {
@@ -96,6 +94,16 @@ describe.each(MOTION_PATHS)("Tooltip in a Provider, $path", ({ withMotion }) => 
     expect(first?.A?.scale).toBeLessThan(1);
   });
 
+  // Base UI marks a popup opened by keyboard focus `data-instant="focus"`; only the swap below skips
+  it("animates a tooltip that opens on keyboard focus", async () => {
+    render(tooltips(["A"]));
+    const [first] = await posesAfter("A", () => userEvent.tab());
+    expect(first?.A?.opacity).toBeLessThan(1);
+    expect(first?.A?.scale).toBeLessThan(1);
+  });
+
+  // Inside a Provider, a tooltip that opens while another is open skips its delay, and Base UI
+  // marks both popups `data-instant="delay"`: the one opening and the one it replaces.
   it("swaps to the next tooltip with no animation", async () => {
     render(group);
     await openAndSettle("A");

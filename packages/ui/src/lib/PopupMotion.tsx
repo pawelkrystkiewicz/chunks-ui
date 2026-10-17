@@ -10,8 +10,8 @@ type PopupMotionConfig = {
   spring: MotionOptions;
   from: Record<string, number | string>;
   to: Record<string, number | string>;
-  /** Jump to the target with no spring while Base UI marks the popup `instant` */
-  skipInstant?: boolean;
+  /** Jump to the target with no spring while Base UI's `instant` state is this value */
+  skipInstant?: string;
 };
 
 /**
@@ -41,15 +41,13 @@ export function createPopupRenderer({ m, spring, from, to, skipInstant }: PopupM
     const closed = state.side === "none" ? { ...from, scale: 1 } : from;
     const target = state.open ? to : closed;
 
-    // Base UI sets `instant` a render after the popup mounts or starts to close, once the spring
-    // has started, and Motion ignores a new transition while the target values are unchanged.
-    // One-keyframe lists count as a new target, so Motion takes them and, with no duration, sets
-    // them before the frame paints. `MotionElementProps` types single values only, hence the cast.
-    const jump = skipInstant && state.instant !== undefined;
+    // Base UI sets `instant: "delay"` a render after the popup mounts or starts to close, once the
+    // spring has started, and Motion ignores a new transition while the target values are
+    // unchanged. One-keyframe lists count as a new target, so Motion takes them and, with no
+    // duration, sets them before the frame paints.
+    const jump = skipInstant !== undefined && state.instant === skipInstant;
     const animate = jump
-      ? (Object.fromEntries(
-          Object.entries(target).map(([key, value]) => [key, [value]]),
-        ) as unknown as typeof target)
+      ? Object.fromEntries(Object.entries(target).map(([key, value]) => [key, [value]]))
       : target;
 
     return (

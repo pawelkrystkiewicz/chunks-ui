@@ -45,7 +45,7 @@ function TooltipPopup({ className, render: renderProp, ...props }: TooltipPopupP
     spring: springs.popup,
     from: { opacity: 0, scale: 0.95 },
     to: { opacity: 1, scale: 1 },
-    skipInstant: true,
+    skipInstant: "delay",
   });
 
   return (
@@ -71,11 +71,11 @@ function TooltipPopup({ className, render: renderProp, ...props }: TooltipPopupP
         !useSpring && "data-ending-style:scale-95 data-ending-style:opacity-0",
         // Only the fade and scale: `all` would also slide the side margin when the side flips
         !useSpring && "micro-interactions [transition-property:opacity,scale] duration-300",
-        // A tooltip that takes over from another in a Provider (`data-instant`) shows and hides
-        // with no transition, as in Base UI's reference styles. The starting style is still on
-        // in its first frame, so the instant pair keeps that frame at full size.
+        // A tooltip that takes over from another in a Provider (`data-instant="delay"`) shows and
+        // hides with no transition. The starting style is still on in its first frame, so the
+        // instant pair keeps that frame at full size. Focus opens and dismissals still animate.
         !useSpring &&
-          "data-instant:transition-none data-instant:data-starting-style:scale-100 data-instant:data-starting-style:opacity-100",
+          "data-[instant=delay]:transition-none data-[instant=delay]:data-starting-style:scale-100 data-[instant=delay]:data-starting-style:opacity-100",
         className,
       )}
       {...props}

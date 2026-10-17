@@ -93,7 +93,7 @@ The popup sits 2 spacing units (8px at the default `--spacing`) from the trigger
 
 The popup enters with a scale-up and fade (from `scale-95` and `opacity-0`): the `popup` spring (`springs.popup`) with Motion installed, a CSS transition of `opacity` and `scale` without it; reduced motion turns off both. The popup grows out of its trigger (`origin-(--transform-origin)`); a `className` such as `origin-top` replaces it.
 
-In a `Tooltip.Provider`, a tooltip that opens while another one is open shows at once, and the open one hides at once. Base UI marks both popups `data-instant`, and both paths skip the animation.
+In a `Tooltip.Provider`, a tooltip that opens while another one is open, or within the Provider's `timeout` (400ms by default) of one closing, shows at once, and the other one hides at once. Base UI marks both popups `data-instant="delay"`, and both paths skip the animation. A tooltip opened by keyboard focus, or closed with Escape or a click on its trigger, still animates.
 
 `render` on `Tooltip.Popup` replaces the element the spring animates, so a popup with `render` uses the CSS transition even with Motion installed. To restyle the popup, pass `className`.
 
