@@ -263,6 +263,36 @@ describe("Combobox", () => {
   });
 });
 
+// The docs' single-select: Clear and Trigger sit over the input's end, in a `relative` wrapper.
+// A long label ran under them: the input kept only its 12px of end padding (#520)
+describe("Combobox.Input beside Clear and Trigger", () => {
+  const long = { value: "long", label: "A framework whose label runs past the input's end" };
+  const singleCombobox = (withClear: boolean) => (
+    <div style={{ width: 250 }}>
+      <Combobox.Root items={[long]} defaultValue={long}>
+        <div className="relative">
+          <Combobox.Input aria-label="Framework" />
+          {withClear && <Combobox.Clear />}
+          <Combobox.Trigger />
+        </div>
+      </Combobox.Root>
+    </div>
+  );
+
+  it.each([
+    { buttons: "Clear and Trigger", withClear: true, first: "Clear selection" },
+    { buttons: "Trigger alone", withClear: false, first: "Show options" },
+  ])("ends the input's text box before the first button, with $buttons", ({ withClear, first }) => {
+    const { getByRole } = render(singleCombobox(withClear));
+    const input = getByRole("combobox");
+    const { paddingRight, borderRightWidth } = getComputedStyle(input);
+    const textRight =
+      input.getBoundingClientRect().right - parseFloat(paddingRight) - parseFloat(borderRightWidth);
+    const button = getByRole("button", { name: first }).getBoundingClientRect();
+    expect(textRight).toBeLessThanOrEqual(button.left);
+  });
+});
+
 describePopupCssPath("Combobox.Popup", (open) => combobox({ open }));
 
 // ComboboxPositioner's default sideOffset, the gap a single-select popup keeps below its input
