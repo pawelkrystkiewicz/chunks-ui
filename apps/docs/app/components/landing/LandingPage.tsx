@@ -246,7 +246,7 @@ function CellText({
   );
 }
 
-// `auto` end column: its controls outgrow the logo column's 240px, the xl search by far.
+// `auto` end column: its controls outgrow 240px from about 1065px wide, the xl search by far.
 function Header() {
   return (
     <header className="relative z-5 grid grid-cols-[minmax(0,1fr)_auto] border-white/12 border-b lg:grid-cols-[240px_minmax(0,1fr)_auto]">
@@ -273,7 +273,8 @@ function Header() {
         ))}
       </nav>
       <div className="flex items-center justify-end gap-2 px-[clamp(22px,2.4vw,28px)] py-[18px]">
-        {/* Below xl it squeezes the nav. Hidden by a wrapper: on Search, `hidden` meets Nextra's x:flex */}
+        {/* Below xl it squeezes the nav. Hidden by a wrapper: on Search, `hidden` meets Nextra's x:flex.
+            Hidden, it still swallows / and ⌘K, as Nextra's navbar search does below md. */}
         <div className="me-2 hidden xl:block">
           <Search aria-label="Search documentation" />
         </div>

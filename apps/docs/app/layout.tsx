@@ -1,4 +1,5 @@
 import { Head, Search } from "nextra/components";
+import { GitHubIcon } from "nextra/icons";
 import { getPageMap } from "nextra/page-map";
 import { Footer, Layout, Navbar, ThemeSwitch } from "nextra-theme-docs";
 import "nextra-theme-docs/style.css";
@@ -45,6 +46,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 </div>
               }
               projectLink={REPO}
+              // The landing's name for its GitHub link; Nextra's default icon says "Project repository"
+              projectIcon={<GitHubIcon height="24" aria-label="GitHub repository" />}
             >
               <ThemeSwitch lite />
             </Navbar>
@@ -53,9 +56,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           // Nextra names the search box only by its placeholder, which not every screen reader
           // reads as a label, and the theme switch by the current theme alone ("Light"). The
           // Search `aria-label` passes through to the input. `themeSwitch` sets the visible text
-          // of the option and button ("Light theme" etc.), which also becomes the sidebar switch's
-          // accessible name; the navbar's `lite` switch shows only an icon, so its Select's
-          // `title="Change theme"` names it.
+          // of the option and button ("Light theme" etc.), which names the expanded sidebar's
+          // switch. The navbar's switch, and the collapsed sidebar's, are `lite` (icon only): the
+          // Select's `title="Change theme"` names them.
           search={<Search aria-label="Search documentation" />}
           themeSwitch={{ light: "Light theme", dark: "Dark theme", system: "System theme" }}
           // Base of the "Edit this page" and feedback links; Nextra appends the file path
