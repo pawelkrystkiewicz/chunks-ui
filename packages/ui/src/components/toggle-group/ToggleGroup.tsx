@@ -358,8 +358,7 @@ function ToggleGroupIndicator({ box, value }: { box: IndicatorBox; value: string
         "group-has-[[data-pressed]:disabled]/toggle-group:opacity-50",
         // The CSS fallback slides the indicator to another item with a transition
         !driven && "micro-interactions",
-        // A slide takes 200ms. Otherwise the box jumps and the opacity fades as the item's does:
-        // 300ms, on the same curve, and not with reduced motion.
+        // Outside a slide only the opacity fades, as the item's does; the box jumps
         !driven && sliding && !reduced
           ? "duration-200 ease-snappy"
           : "transition-opacity duration-300 motion-reduce:transition-none",

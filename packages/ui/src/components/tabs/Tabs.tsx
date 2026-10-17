@@ -278,8 +278,7 @@ function TabsIndicatorElement({
       // removed when it hands back.
       !driven &&
         "top-(--active-tab-top) left-(--active-tab-left) h-(--active-tab-height) w-(--active-tab-width) micro-interactions",
-      // Otherwise only opacity transitions, as the tab's does: 300ms on Tailwind's default curve,
-      // which `.micro-interactions` sets too, and none with reduced motion. The box jumps.
+      // Outside a slide only the opacity fades, as the tab's does; the box jumps
       (driven || !sliding) && "transition-opacity duration-300 motion-reduce:transition-none",
       className,
     ),
