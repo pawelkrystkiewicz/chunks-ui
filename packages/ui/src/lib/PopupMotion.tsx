@@ -10,7 +10,14 @@ type PopupMotionConfig = {
   spring: MotionOptions;
   from: Record<string, number | string>;
   to: Record<string, number | string>;
-  /** Starts the exit as the popup closes, not in Motion's next frame (see `Select.Popup`) */
+  /**
+   * Starts the exit as the popup closes. Base UI unmounts a closed popup once a check on the next
+   * frame finds no `getAnimations()` on it. A Root that passes `open` to the popup in a layout
+   * effect (Select) closes the popup a commit late, so that check runs before Motion's frame
+   * resolves the exit's keyframes. The effect that starts the exit calls `onAnimationStart` first,
+   * so a microtask from it resolves them at once. Needs Motion 12.8 or later, which exports
+   * `flushKeyframeResolvers`; on older versions the exit still waits for Motion's frame.
+   */
   exitAtOnce?: boolean;
 };
 
@@ -24,10 +31,7 @@ type PopupMotionConfig = {
  * class makes it grow out of its trigger, as on the CSS path.
  */
 export function createPopupRenderer({ m, spring, from, to, exitAtOnce }: PopupMotionConfig) {
-  // Motion starts an animation in its next frame, once it has resolved the keyframes. The effect
-  // that starts the exit calls `onAnimationStart` first, so resolving them in a microtask after it
-  // starts the exit now. This needs Motion 12.8 or later, which exports `flushKeyframeResolvers`
-  // (`MotionLike` leaves it out). On an older Motion the exit still waits for the next frame.
+  // Not on `MotionLike` (see `exitAtOnce`)
   const { flushKeyframeResolvers } = m as MotionLike & { flushKeyframeResolvers?: () => void };
   const startExit = exitAtOnce ? () => queueMicrotask(() => flushKeyframeResolvers?.()) : undefined;
 

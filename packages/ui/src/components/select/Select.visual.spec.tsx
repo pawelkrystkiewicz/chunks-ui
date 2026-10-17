@@ -125,9 +125,8 @@ const framesOf = async (popup: HTMLElement) => {
 };
 
 /**
- * Resolves once the popup is at rest and Motion has run its last frame for the entry, as when a
- * user closes it. Motion runs a frame more after an animation ends, and `getAnimations()` does not
- * see the scale, which Motion animates in JS.
+ * Resolves once the popup is at rest and Motion is idle, as when a user closes it. Motion animates
+ * the scale in JS, which `getAnimations()` does not see, so this also waits for a steady scale.
  */
 const settled = async (popup: HTMLElement) => {
   await expect.poll(() => popup.getAnimations()).toEqual([]);
@@ -158,9 +157,7 @@ describe.each(MOTION_PATHS)("Select.Popup aligned with its trigger, $path", ({ w
     expect(frames.some(({ opacity }) => opacity > 0 && opacity < 1)).toBe(true);
   });
 
-  // Closed once it has faded in, while the spring's tail still runs and once at rest. On the Motion
-  // path the exit starts as the popup closes: Base UI looks for it on the next frame, before
-  // Motion's own frame, and unmounts a popup without one (#521)
+  // Closed during the spring's tail and at rest; on the Motion path see `exitAtOnce` (#521)
   it.each([
     { when: "as it settles", atRest: false },
     { when: "at rest", atRest: true },
@@ -178,8 +175,7 @@ describe.each(MOTION_PATHS)("Select.Popup aligned with its trigger, $path", ({ w
   });
 });
 
-// Below its trigger the popup scales as it fades out. On the Motion path the scale is a JS
-// animation, which Base UI does not see: the fade alone keeps the popup mounted through the scale
+// Below its trigger the scale is a JS animation: only the fade keeps the popup mounted through it
 describe("Select.Popup below its trigger, Motion", () => {
   beforeAll(() => enterMotionPath(true));
   beforeEach(() => emulateReducedMotion(false));

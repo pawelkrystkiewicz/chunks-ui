@@ -64,10 +64,7 @@ function SelectPopup({ className, render: renderProp, ...props }: SelectPopupPro
     spring: springs.popup,
     from: { opacity: 0, scale: 0.95 },
     to: { opacity: 1, scale: 1 },
-    // Base UI's Select Root keeps `open` itself and passes it to the popup in a layout effect, so the
-    // popup renders closed one commit after the Root. The Root asks for its exit-animation check in
-    // that first commit: the check runs on the next frame, before the Motion frame that would start
-    // the exit, finds no animation and unmounts the popup. Started as it closes, the fade is found.
+    // Base UI's Select Root passes `open` to the popup a commit late: see `exitAtOnce`
     exitAtOnce: true,
   });
 
