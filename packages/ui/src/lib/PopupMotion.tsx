@@ -70,6 +70,17 @@ export function createPopupRenderer({
       ? Object.fromEntries(Object.entries(target).map(([key, value]) => [key, [value]]))
       : target;
 
+    // A consumer's `onAnimationStart` comes through Base UI's props, typed as a DOM handler; Motion
+    // calls it with its target instead
+    const passed = renderProps.onAnimationStart as ((definition: unknown) => void) | undefined;
+    const onAnimationStart =
+      state.open || !startExit
+        ? passed
+        : (definition: unknown) => {
+            startExit();
+            passed?.(definition);
+          };
+
     return (
       <m.motion.div
         {...(renderProps as Record<string, unknown>)}
@@ -78,7 +89,7 @@ export function createPopupRenderer({
         initial={closed}
         animate={animate}
         transition={jump ? { duration: 0 } : spring}
-        onAnimationStart={state.open ? undefined : startExit}
+        onAnimationStart={onAnimationStart}
       />
     );
   };

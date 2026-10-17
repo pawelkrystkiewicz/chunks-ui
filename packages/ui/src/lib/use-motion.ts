@@ -27,7 +27,7 @@ export type MotionElementProps = Omit<
   initial?: MotionValues;
   animate?: Record<string, number | string | (number | string)[]>;
   transition?: MotionOptions;
-  onAnimationStart?: () => void;
+  onAnimationStart?: (definition: unknown) => void;
 };
 
 /** The controls of a running `animate()` that chunks-ui uses. */
