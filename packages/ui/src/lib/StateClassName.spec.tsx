@@ -357,17 +357,19 @@ const fixtures: Record<
   Select: {
     parts: {
       Trigger: "state-value-apple",
+      Value: "state-placeholder-false",
       Icon: "state-open-true",
       Positioner: "state-open-true",
       Popup: "state-open-true",
       GroupLabel: null,
       Item: "state-selected-true",
+      ItemText: null,
       ItemIndicator: "state-selected-true",
     },
     ui: (p) => (
       <Select.Root open defaultValue="apple">
         <Select.Trigger aria-label="Fruit" {...p("Trigger")}>
-          <Select.Value />
+          <Select.Value {...p("Value")} />
           <Select.Icon {...p("Icon")} />
         </Select.Trigger>
         <Select.Portal>
@@ -376,7 +378,7 @@ const fixtures: Record<
               <Select.Group>
                 <Select.GroupLabel {...p("GroupLabel")}>Fruit</Select.GroupLabel>
                 <Select.Item value="apple" {...p("Item")}>
-                  <Select.ItemText>Apple</Select.ItemText>
+                  <Select.ItemText {...p("ItemText")}>Apple</Select.ItemText>
                   <Select.ItemIndicator {...p("ItemIndicator")} />
                 </Select.Item>
               </Select.Group>
