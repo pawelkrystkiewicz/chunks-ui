@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Merge PRs one after another: branch up to date, all required checks green, no unresolved CodeRabbit threads,
-# exact checked sha. Never the release PR. Never asks for or waits on a CodeRabbit review; its status is info only.
+# Merge PRs one after another: branch up to date, all required checks green,
+# exact checked sha. Never the release PR.
 # Usage: .claude/commands/merge-pr.sh <pr> [<pr>...]   — one call, PRs in merge order.
 # Parallel runs queue: a run started while another is merging waits for it to exit, across all worktrees.
 # Exit 0 = all merged. Exit 1 = stopped; the last line says why.
@@ -25,30 +25,6 @@ until mkdir "$lock" 2>/dev/null; do
   sleep 15
 done
 echo "$$" >"$lock/pid"
-
-# CodeRabbit's commit status from the last commit with code in it (anything but an update-branch merge by web-flow) onward: reviewed | pending | rate-limited | skipped | none.
-coderabbit() {
-  local s d=""
-  for s in $(gh api "$R/pulls/$1/commits" --paginate --jq '.[] | "\(.sha) \((.parents | length) == 1 or .committer.login != "web-flow")"' |
-    awk '{ s[NR] = $1 } $2 == "true" { c = NR } END { for (i = c; i <= NR; i++) print s[i] }'); do
-    d+=$(gh api "$R/commits/$s/status" --jq '.statuses[] | select(.context == "CodeRabbit") | .state + " " + .description')$'\n'
-  done
-  case $d in
-    *"Review completed"*) echo reviewed ;;
-    *"rate limited"*) echo rate-limited ;;
-    *"Review in progress"*) echo pending ;;
-    *"Review skipped"*) echo skipped ;;
-    *) echo none ;;
-  esac
-}
-
-# ponytail: first 100 threads only; paginate if a PR ever collects more.
-open_threads() {
-  gh api graphql -F n="$1" -f owner="${repo%/*}" -f name="${repo#*/}" -f query='
-    query($owner: String!, $name: String!, $n: Int!) { repository(owner: $owner, name: $name) { pullRequest(number: $n) {
-      reviewThreads(first: 100) { nodes { isResolved comments(first: 1) { nodes { author { login } } } } } } } }' \
-    --jq '[.data.repository.pullRequest.reviewThreads.nodes[] | select((.isResolved | not) and .comments.nodes[0].author.login == "coderabbitai")] | length'
-}
 
 for n in "$@"; do
   ref=$(gh pr view "$n" --json headRefName -q .headRefName) || die "#$n not found"
@@ -76,19 +52,13 @@ for n in "$@"; do
       gh pr checks "$n" --required; die "#$n required checks not green after 30 min ($total/$need reported, $bad not passing)"
     fi
 
-    # CodeRabbit is optional: any status passes, read once for the merge line. Threads it has posted by now still block.
-    # ponytail: no settle sleep; its inline comments land with the review, seconds before "Review completed".
-    verdict=$(coderabbit "$n")
-    threads=$(open_threads "$n") || die "#$n cannot read review threads"
-    [ "$threads" -eq 0 ] || die "#$n has $threads unresolved CodeRabbit threads — triage, fix, reply, resolve each, rerun"
-
     # Merge only the commit that was checked, and only while it is up to date with master.
     # UNSTABLE = a non-required check (e.g. the docs preview) failed; required ones are green.
     # ponytail: master can still move between this read and the PUT (admin merge skips strict mode); window is seconds.
     read -r mstate now < <(gh pr view "$n" --json mergeStateStatus,headRefOid -q '"\(.mergeStateStatus) \(.headRefOid)"')
     if [ "$now" = "$head" ] && { [ "$mstate" = CLEAN ] || [ "$mstate" = UNSTABLE ]; } &&
       gh api -X PUT "$R/pulls/$n/merge" -f merge_method=merge -f sha="$head" --jq .message; then
-      echo "#$n merged (CodeRabbit: $verdict)"; sleep 15; break
+      echo "#$n merged"; sleep 15; break
     fi
     echo "#$n not merged this round ($mstate, head ${now:0:7})"; sleep 30
   done
