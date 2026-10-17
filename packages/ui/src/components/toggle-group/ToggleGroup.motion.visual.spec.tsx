@@ -24,6 +24,7 @@ import {
   insetsWithin,
   MOTION_PATHS,
   offBy,
+  SETTLE_TIMEOUT_MS,
   waitForStable,
 } from "../../VisualTest.utils";
 import { ToggleGroup, type ToggleGroupRootProps } from "./index";
@@ -482,7 +483,7 @@ async function renderGroup(ui: ReactElement, withMotion: boolean) {
   // Motion drops the CSS fallback's transition class once it drives the indicator
   await expect
     .poll(() => group.querySelector(":scope > span")?.classList.contains("micro-interactions"), {
-      timeout: 5000,
+      timeout: SETTLE_TIMEOUT_MS,
     })
     .toBe(!withMotion);
   return { ...result, group, indicator };
