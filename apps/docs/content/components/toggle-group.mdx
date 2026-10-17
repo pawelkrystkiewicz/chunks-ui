@@ -80,6 +80,12 @@ function ControlledToggleGroup() {
 }
 ```
 
+## Disabled items
+
+A disabled item dims to 50%. In single-select mode the indicator dims with the pressed item when that item or the group is disabled, and fades with the item when it becomes disabled.
+
+The indicator is internal, so it does not follow a disabled opacity of your own on the item (for example `disabled:opacity-70`): it stays at 50%. Before hydration the pressed item draws the pill itself, with your opacity, so the pill changes to 50% when the page hydrates.
+
 ## Compound Parts
 
 | Part | Description |
