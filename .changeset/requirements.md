@@ -12,7 +12,7 @@ Peer dependency ranges (tested in CI at their floors and at the current versions
 - `engines.node` is `>=22`. On an older Node, npm and pnpm print a warning; Yarn 1 and npm with `engine-strict` stop the install.
 - `chunks-ui/package.json` can be imported, for tools that read a dependency's version or metadata at build time.
 
-If your app has a peer outside its range installed (`@base-ui/react` below 1.9, `motion` below 12.8 or above 12.x, or `tailwindcss@3`, which conflicts although the peer is optional when the app depends on it directly), npm 7 or newer stops the install with an `ERESOLVE` error unless you pass `--legacy-peer-deps` or `--force`; pnpm, Bun and Yarn print a warning. Upgrade the peer to fix it:
+If your app has a peer outside its range installed (`@base-ui/react` below 1.9, `motion` older than 12.8 or 13 and later, or `tailwindcss@3`, which conflicts although the peer is optional when the app depends on it directly), npm 7 or newer stops the install with an `ERESOLVE` error unless you pass `--legacy-peer-deps` or `--force`; pnpm, Bun and Yarn print a warning. Upgrade the peer to fix it:
 
 ```bash
 bun add @base-ui/react@^1.9 motion@^12.8
