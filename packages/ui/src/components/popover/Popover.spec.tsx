@@ -1,9 +1,21 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
-import { axe } from "jest-axe";
+import { configureAxe } from "jest-axe";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Popover } from "./Popover";
 
 afterEach(cleanup);
+
+// aria-hidden-focus skips Base UI's focus guards, aria-hidden spans that hand focus on when Tab
+// reaches them. A browser's axe leaves them for review, as it takes the open popover, a dialog,
+// for a modal. Here axe runs while the popup is still at opacity 0, so it finds no modal and
+// flags them. The rule still checks every other aria-hidden node
+const axe = configureAxe({
+  globalOptions: {
+    rules: [
+      { id: "aria-hidden-focus", selector: '[aria-hidden="true"]:not([data-base-ui-focus-guard])' },
+    ],
+  },
+});
 
 describe("Popover", () => {
   it("renders Content with custom className", () => {

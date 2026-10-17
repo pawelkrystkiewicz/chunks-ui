@@ -1,10 +1,22 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { axe } from "jest-axe";
+import { configureAxe } from "jest-axe";
 import { afterEach, describe, expect, it } from "vitest";
 import { FOCUS_RING } from "../shared";
 import { Dialog } from "./Dialog";
 
 afterEach(cleanup);
+
+// aria-hidden-focus skips Base UI's focus guards, aria-hidden spans that hand focus on when Tab
+// reaches them. A browser's axe leaves them for review, as it takes the open dialog for a modal.
+// Here axe runs while the popup is still at opacity 0 and can't hit-test the backdrop, so it
+// finds no modal and flags them. The rule still checks every other aria-hidden node
+const axe = configureAxe({
+  globalOptions: {
+    rules: [
+      { id: "aria-hidden-focus", selector: '[aria-hidden="true"]:not([data-base-ui-focus-guard])' },
+    ],
+  },
+});
 
 describe("Dialog", () => {
   it("renders Backdrop with custom className", () => {

@@ -1,5 +1,5 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { axe } from "jest-axe";
+import { configureAxe } from "jest-axe";
 import { createRef, type FormEvent, type ReactElement, type ReactNode, useState } from "react";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { Drawer } from "../drawer";
@@ -7,6 +7,18 @@ import { FOCUS_RING } from "../shared";
 import { Dialog } from "./index";
 
 afterEach(cleanup);
+
+// aria-hidden-focus skips Base UI's focus guards, aria-hidden spans that hand focus on when Tab
+// reaches them. A browser's axe leaves them for review, as it takes the open dialog for a modal.
+// Here axe runs while the popup is still at opacity 0 and can't hit-test the backdrop, so it
+// finds no modal and flags them. The rule still checks every other aria-hidden node
+const axe = configureAxe({
+  globalOptions: {
+    rules: [
+      { id: "aria-hidden-focus", selector: '[aria-hidden="true"]:not([data-base-ui-focus-guard])' },
+    ],
+  },
+});
 
 // jsdom has no layout, so an element's content and box sizes come from these attributes; in a
 // hidden popup (`keepMounted`, before it opens) they are 0, as in the browser. The browser specs
