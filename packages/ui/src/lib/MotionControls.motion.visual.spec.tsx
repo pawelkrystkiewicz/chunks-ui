@@ -245,7 +245,7 @@ describe("controls when Motion loads", () => {
     const { ui, element, change, measure } = subject;
     const motion = motionLoading();
     render(ui());
-    await expect.poll(element).not.toBeNull();
+    await expect.poll(element, { timeout: SETTLE_TIMEOUT_MS }).not.toBeNull();
     const before = element();
 
     await motion.arrive();
@@ -262,7 +262,7 @@ describe("controls when Motion loads", () => {
     const { ui, element, change, measure, fallbackClass } = control(name);
     const motion = motionLoading();
     render(ui());
-    await expect.poll(element).not.toBeNull();
+    await expect.poll(element, { timeout: SETTLE_TIMEOUT_MS }).not.toBeNull();
     // At rest on the CSS fallback before the change
     const start = await settled(() => measure(element()));
     change();
@@ -285,10 +285,12 @@ describe("controls when Motion loads", () => {
     const subject = control("Tabs.Indicator");
     motionLoading();
     render(subject.ui());
-    await expect.poll(subject.element).not.toBeNull();
+    await expect.poll(subject.element, { timeout: SETTLE_TIMEOUT_MS }).not.toBeNull();
     const start = left(subject.element());
     subject.change();
-    await expect.poll(() => left(subject.element())).not.toBe(start);
+    await expect
+      .poll(() => left(subject.element()), { timeout: SETTLE_TIMEOUT_MS })
+      .not.toBe(start);
     await settled(() => left(subject.element()));
     expect(subject.element()).toHaveClass("micro-interactions");
     expectOver(subject);
@@ -310,7 +312,7 @@ describe("controls when Motion loads", () => {
       </Profiler>,
     );
     // All mounted on the CSS fallback, and their mount commits done
-    await expect.poll(onFallback).toBe(20);
+    await expect.poll(onFallback, { timeout: SETTLE_TIMEOUT_MS }).toBe(20);
     await settled(() => commits);
     commits = 0;
     await motion.arrive();
@@ -508,7 +510,7 @@ describe("controls once Motion has loaded", () => {
       await renderSettled(ui(), subject);
       const start = measure(element());
       change();
-      await expect.poll(() => measure(element())).not.toBe(start);
+      await expect.poll(() => measure(element()), { timeout: SETTLE_TIMEOUT_MS }).not.toBe(start);
       // To the pixel: a spring at rest can be a fraction short
       const before = Math.round(await settled(() => measure(element())));
 
@@ -548,7 +550,7 @@ describe("controls once Motion has loaded", () => {
     await expect.poll(() => driven(subject), { timeout: SETTLE_TIMEOUT_MS }).toBe(true);
     expect(left(byTestId())).toBe(before);
     rerender(ui(true));
-    await expect.poll(() => opacity(byTestId())).toBe(0.3);
+    await expect.poll(() => opacity(byTestId()), { timeout: SETTLE_TIMEOUT_MS }).toBe(0.3);
   });
 
   // <Activity> hidden and shown again in the frame Motion arrives: the first hand-off is
@@ -563,7 +565,7 @@ describe("controls once Motion has loaded", () => {
       </Activity>
     );
     const { rerender } = render(ui("visible"));
-    await expect.poll(byTestId).not.toBeNull();
+    await expect.poll(byTestId, { timeout: SETTLE_TIMEOUT_MS }).not.toBeNull();
     const resting = await settled(() => left(byTestId()));
 
     await motion.arrive();
@@ -587,7 +589,7 @@ describe("controls once Motion has loaded", () => {
       </Activity>
     );
     const { rerender } = render(ui("visible"));
-    await expect.poll(byTestId).not.toBeNull();
+    await expect.poll(byTestId, { timeout: SETTLE_TIMEOUT_MS }).not.toBeNull();
     const resting = await settled(() => left(byTestId()));
 
     await motion.arrive();

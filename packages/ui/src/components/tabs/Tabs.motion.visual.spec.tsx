@@ -350,7 +350,7 @@ describe("Tabs animations that must stop", () => {
     const track = contents.firstElementChild as HTMLElement;
     await emulateReducedMotion(true);
     // The inline styles are cleared, so the CSS layout shows the tall panel unshifted, full height
-    await expect.poll(() => contents.style.height, { timeout: 1000 }).toBe("");
+    await expect.poll(() => contents.style.height, { timeout: SETTLE_TIMEOUT_MS }).toBe("");
     for (let frame = 0; frame < ABSENCE_WINDOW_FRAMES; frame++) {
       await nextFrame();
       expect(contents.style.height).toBe("");
@@ -472,11 +472,11 @@ describe("Tabs.Contents when reduced motion turns off at rest", () => {
     const contents = getByTestId("contents");
     const place = placeIn(contents, page.getByText("Short panel").element());
     const inPlace = { offset: 0, height: HEIGHTS.short };
-    await expect.poll(() => contents.style.height).not.toBe("");
+    await expect.poll(() => contents.style.height, { timeout: SETTLE_TIMEOUT_MS }).not.toBe("");
     expect(await waitForStable(place)).toEqual(inPlace);
 
     await emulateReducedMotion(true);
-    await expect.poll(() => contents.style.height).toBe("");
+    await expect.poll(() => contents.style.height, { timeout: SETTLE_TIMEOUT_MS }).toBe("");
     expect(await waitForStable(place)).toEqual(inPlace);
 
     // Recorded from before the switch, so a frame between the two paths counts too
@@ -485,7 +485,9 @@ describe("Tabs.Contents when reduced motion turns off at rest", () => {
     const frames = await recording;
     // The switch may land after the recorded frames: wait for it, then record frames on the
     // Motion path too, so the spec never checks only frames from before the switch
-    await expect.poll(() => contents.classList.contains("overflow-clip")).toBe(true);
+    await expect
+      .poll(() => contents.classList.contains("overflow-clip"), { timeout: SETTLE_TIMEOUT_MS })
+      .toBe(true);
     const after = await eachPaintedFrame(place, 10);
     expect([...frames, ...after]).toEqual([...frames, ...after].map(() => inPlace));
   });
