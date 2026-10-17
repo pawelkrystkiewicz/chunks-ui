@@ -10,6 +10,7 @@ import {
   expectFollowsFromFirstFrame,
   MOTION_PATHS,
   offBy,
+  SETTLE_TIMEOUT_MS,
   untilChanged,
   waitForStable,
 } from "../../VisualTest.utils";
@@ -85,7 +86,9 @@ async function renderTabs(withMotion: boolean, layout?: Layout) {
   // Motion drops the CSS fallback's position classes, which read Base UI's variables, once it
   // drives the indicator
   await expect
-    .poll(() => indicator.classList.contains("top-(--active-tab-top)"), { timeout: 5000 })
+    .poll(() => indicator.classList.contains("top-(--active-tab-top)"), {
+      timeout: SETTLE_TIMEOUT_MS,
+    })
     .toBe(!withMotion);
   const tab = (name: "Alpha" | "Beta") => result.getByRole("tab", { name });
   const active = activeTab(layout);
