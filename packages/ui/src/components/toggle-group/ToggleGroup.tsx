@@ -356,10 +356,12 @@ function ToggleGroupIndicator({ box, value }: { box: IndicatorBox; value: string
         "absolute z-0 rounded-md bg-background shadow-sm",
         // Dimmed as the pressed item is, and the pill it draws before hydration with it
         "group-has-[[data-pressed]:disabled]/toggle-group:opacity-50",
-        // The CSS fallback slides with a transition, which is off unless the indicator slides to
-        // another item
-        !driven && "micro-interactions duration-200 ease-snappy",
-        !driven && (!sliding || reduced) && "transition-none",
+        // The CSS fallback slides the indicator to another item with a transition
+        !driven && "micro-interactions",
+        // Outside a slide only the opacity fades, as the item's does; the box jumps
+        !driven && sliding && !reduced
+          ? "duration-200 ease-snappy"
+          : "transition-opacity duration-300 motion-reduce:transition-none",
       )}
       style={style}
     />

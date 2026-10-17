@@ -2,7 +2,7 @@
 
 import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
 import { type ComponentProps, createContext, type ReactNode, useContext, useId } from "react";
-import { cnState } from "../../lib/cn";
+import { cn, cnState } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
 import { springs } from "../../lib/motion";
 import {
@@ -17,6 +17,8 @@ import { FOCUS_RING, FOCUS_RING_WITHIN, RING_TRANSITION } from "../shared";
 import { type ComboboxLabels, DEFAULT_COMBOBOX_LABELS } from "./Combobox.Labels";
 
 const ComboboxLabelsContext = createContext(DEFAULT_COMBOBOX_LABELS);
+// Whether Combobox.Root selects several, as Base UI reads `multiple`: any truthy value (#541)
+const ComboboxMultipleContext = createContext(false);
 // The id of the Combobox.Chip around a ChipRemove, which names the remove button
 const ComboboxChipIdContext = createContext<string | undefined>(undefined);
 
@@ -41,6 +43,9 @@ export type ComboboxEmptyProps = ComponentProps<typeof BaseCombobox.Empty>;
 export type ComboboxClearProps = ComponentProps<typeof BaseCombobox.Clear>;
 export type ComboboxGroupLabelProps = ComponentProps<typeof BaseCombobox.GroupLabel>;
 export type ComboboxIconProps = ComponentProps<typeof BaseCombobox.Icon>;
+// Named keys: a prop Base UI adds to Value later is rejected where passed, never a span attribute
+export type ComboboxValueProps = Omit<ComponentProps<"span">, "children" | "placeholder"> &
+  Pick<BaseCombobox.Value.Props, "children" | "placeholder">;
 export type ComboboxPositionerProps = Omit<
   ComponentProps<typeof BaseCombobox.Positioner>,
   "sideOffset"
@@ -64,7 +69,9 @@ function ComboboxRoot<Value, Multiple extends boolean | undefined = false, Item 
 }: ComboboxRootProps<Value, Multiple, Item>) {
   return (
     <ComboboxLabelsContext.Provider value={mergeLabels(DEFAULT_COMBOBOX_LABELS, labels)}>
-      <BaseCombobox.Root<Value, Multiple, Item> {...props} />
+      <ComboboxMultipleContext.Provider value={Boolean(props.multiple)}>
+        <BaseCombobox.Root<Value, Multiple, Item> {...props} />
+      </ComboboxMultipleContext.Provider>
     </ComboboxLabelsContext.Provider>
   );
 }
@@ -144,6 +151,8 @@ function ComboboxTrigger({ className, children, ...props }: ComboboxTriggerProps
       )}
       className={cnState(
         "absolute inset-y-0 end-0 flex items-center pe-2",
+        // Within its container around a one-line Combobox.Value, as Select.Trigger (#518)
+        "min-w-0 max-w-full",
         "disabled:cursor-not-allowed disabled:opacity-50",
         className,
       )}
@@ -169,6 +178,23 @@ function ComboboxIcon({ className, ...props }: ComboboxIconProps) {
         </svg>
       )}
     </BaseCombobox.Icon>
+  );
+}
+
+// As Select.Value (#518, #546): one line with an ellipsis. Base UI's Value renders no element, so
+// nothing clipped it (#541). A function child in a multi-select gets no span: it returns chips or
+// the Chips, which must stay children of Combobox.Chips, so clip your own element there.
+function ComboboxValue({ className, children, placeholder, ...props }: ComboboxValueProps) {
+  const multiple = useContext(ComboboxMultipleContext);
+  const value = <BaseCombobox.Value placeholder={placeholder}>{children}</BaseCombobox.Value>;
+  if (multiple && typeof children === "function") return value;
+  return (
+    <span
+      className={cn("flex-1 text-start overflow-hidden text-ellipsis whitespace-nowrap", className)}
+      {...props}
+    >
+      {value}
+    </span>
   );
 }
 
@@ -381,6 +407,6 @@ export const Combobox = {
   Chips: ComboboxChips,
   Chip: ComboboxChip,
   ChipRemove: ComboboxChipRemove,
-  Value: BaseCombobox.Value,
+  Value: ComboboxValue,
   Status: BaseCombobox.Status,
 };

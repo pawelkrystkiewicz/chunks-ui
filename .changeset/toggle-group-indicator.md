@@ -2,7 +2,7 @@
 "chunks-ui": patch
 ---
 
-The `ToggleGroup` indicator no longer springs when the group or an item changes size. A change of font size, padding or container width moves the pill to the pressed item at once, so it doesn't trail behind it. Only pressing another item slides the pill, with Motion and with the CSS fallback. A size change during a slide changes where the slide ends. Without Motion, the indicator's CSS transition is now off except during a slide.
+The `ToggleGroup` indicator no longer springs when the group or an item changes size. A change of font size, padding or container width moves the pill to the pressed item at once, so it doesn't trail behind it. Only pressing another item slides the pill, with Motion and with the CSS fallback. A size change during a slide changes where the slide ends. Without Motion, outside a slide the indicator transitions only its opacity, so a resize moves the pill at once.
 
 Fixed:
 

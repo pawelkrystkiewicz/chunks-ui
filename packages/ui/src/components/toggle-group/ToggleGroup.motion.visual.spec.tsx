@@ -25,6 +25,7 @@ import {
   MOTION_PATHS,
   offBy,
   SETTLE_TIMEOUT_MS,
+  untilChanged,
   waitForStable,
 } from "../../VisualTest.utils";
 import { ToggleGroup, type ToggleGroupRootProps } from "./index";
@@ -994,4 +995,77 @@ describe("ToggleGroup pill from server HTML to the measured indicator", () => {
       expect(before.backgroundColor).toBe("rgba(0, 0, 0, 0)");
     },
   );
+});
+
+// An item disabled while pressed fades to 50%. The indicator fades with it, frame for frame; with
+// reduced motion both change at once.
+describe("ToggleGroup indicator under the pressed item disabled at runtime", () => {
+  const ui = (disabled: boolean, rootClassName?: string) => (
+    <ToggleGroup.Root value={["b"]} className={rootClassName}>
+      <ToggleGroup.Item value="a">Alpha</ToggleGroup.Item>
+      <ToggleGroup.Item value="b" disabled={disabled}>
+        Beta
+      </ToggleGroup.Item>
+    </ToggleGroup.Root>
+  );
+  const opacityOf = (el: Element) => Number(getComputedStyle(el).opacity);
+
+  afterEach(() => emulateReducedMotion(false));
+
+  it.each([
+    ...MOTION_PATHS.map(({ path, withMotion }) => ({ path, withMotion, reduced: false })),
+    { path: "reduced motion", withMotion: false, reduced: true },
+  ])("dims the indicator with the item, on $path", async ({ withMotion, reduced }) => {
+    await emulateReducedMotion(reduced);
+    const { indicator, rerender, getByRole } = await renderGroup(ui(false), withMotion);
+    const item = getByRole("button", { name: "Beta" });
+    await waitForStable(() => offBy(item, indicator()));
+
+    rerender(ui(true));
+    const frames = await eachPaintedFrame(
+      () => ({ item: opacityOf(item), indicator: opacityOf(indicator()) }),
+      40,
+    );
+    const log = JSON.stringify(frames);
+    expect(
+      frames.every((frame) => Math.abs(frame.indicator - frame.item) < 0.01),
+      log,
+    ).toBe(true);
+    // Values between the two ends: it faded rather than jumped, unless reduced motion is on
+    const between = frames.filter(({ indicator: opacity }) => opacity > 0.5 && opacity < 1);
+    expect(between.length > 0, log).toBe(!reduced);
+    expect(await waitForStable(() => opacityOf(indicator()))).toBe(0.5);
+  });
+
+  // The item snaps because `.micro-interactions` is `transition: none !important` under reduced
+  // motion. Motion drives the indicator without that class, so its `motion-reduce:transition-none`
+  // has to snap it too, or it fades on until Motion hands it back.
+  it("snaps the indicator to 50% with the item when reduced motion turns on mid-fade", async () => {
+    const { indicator, rerender, getByRole } = await renderGroup(ui(false), true);
+    const item = getByRole("button", { name: "Beta" });
+    await waitForStable(() => offBy(item, indicator()));
+
+    // 10s outlasts SETTLE_TIMEOUT_MS, the wait for the preference to land. The indicator is
+    // internal: a class on the root reaches it and the items.
+    rerender(ui(true, "[&>span]:duration-[10s] [&>button]:duration-[10s]"));
+    // Every painted frame from here on. The frames that show a missing class come before
+    // `emulateReducedMotion` resolves, so a read after it would miss them.
+    const sampled = eachPaintedFrame(
+      () => ({ item: opacityOf(item), indicator: opacityOf(indicator()) }),
+      40,
+    );
+    await untilChanged(() => opacityOf(item));
+    await emulateReducedMotion(true);
+    const frames = await sampled;
+    const log = JSON.stringify(frames);
+    expect(
+      frames.every((frame) => Math.abs(frame.indicator - frame.item) < 0.01),
+      log,
+    ).toBe(true);
+    // The preference landed within the sampled frames: nothing else ends a fade of 10s
+    expect(
+      frames.some((frame) => frame.item === 0.5),
+      log,
+    ).toBe(true);
+  });
 });
