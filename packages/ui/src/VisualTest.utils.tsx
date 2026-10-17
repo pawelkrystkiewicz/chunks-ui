@@ -3,7 +3,7 @@ import { cancelFrame, frame } from "motion/react";
 import type { ReactElement, ReactNode } from "react";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { commands, page } from "vitest/browser";
-import { reloadMotion } from "./lib/use-motion";
+import { reloadMotion, useMotion } from "./lib/use-motion";
 
 /**
  * Base UI's InternalBackdrop: an empty, transparent `position: fixed; inset: 0` element that a
@@ -280,6 +280,15 @@ export const MOTION_PATHS = [
 export async function enterMotionPath(withMotion: boolean) {
   if (withMotion) await reloadMotion();
   else void reloadMotion(new Promise(() => {}));
+}
+
+/**
+ * Shows `data-testid="motion-loaded"` once `useMotion()` returns Motion. Every part of the same
+ * tree that reads Motion with `useMotion()` re-renders with it in the same render, so once the
+ * marker shows, Motion's arrival has been rendered. Render it beside the parts under test.
+ */
+export function MotionLoaded() {
+  return useMotion() ? <span data-testid="motion-loaded" /> : null;
 }
 
 /** Viewport-relative edges of `el`. */

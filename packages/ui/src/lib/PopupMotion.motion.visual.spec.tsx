@@ -7,6 +7,7 @@ import { Drawer } from "../components/drawer";
 import { Menu } from "../components/menu";
 import { Popover } from "../components/popover";
 import { Tooltip } from "../components/tooltip";
+import { MotionLoaded } from "../VisualTest.utils";
 import { reloadMotion } from "./use-motion";
 
 // Runs with reduced motion off, so the popups animate with Motion instead of CSS
@@ -70,11 +71,9 @@ function visibleShare(element: HTMLElement | null) {
 }
 
 async function renderClosed(name: Name, keepMounted?: boolean) {
-  await import("motion/react");
-  const result = render(popups[name](false, keepMounted));
-  // Popups switch to Motion after it loads, which is after the first render
-  await new Promise((resolve) => setTimeout(resolve, 100));
-  return result;
+  // A popup takes Motion only if it had loaded when the popup mounted
+  await reloadMotion();
+  return render(popups[name](false, keepMounted));
 }
 
 describe("popups animated with Motion", () => {
@@ -185,7 +184,12 @@ const openPopups = {
 describe("popups open while Motion loads", () => {
   async function renderWhileMotionLoads(ui: ReactNode) {
     const loading = reloadMotion();
-    render(ui);
+    render(
+      <>
+        {ui}
+        <MotionLoaded />
+      </>,
+    );
     const node = popup();
     // Opened before Motion arrived: no inline styles from a motion.div
     expect(node?.style.opacity).toBe("");
@@ -193,7 +197,9 @@ describe("popups open while Motion loads", () => {
       node,
       async motionLoaded() {
         await loading;
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        // Motion's arrival has been rendered: a popup that read Motion live, with useMotion(),
+        // would have swapped in a motion.div by the time the marker shows
+        await expect.element(page.getByTestId("motion-loaded")).toBeInTheDocument();
       },
     };
   }
