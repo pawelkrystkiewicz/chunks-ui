@@ -31,7 +31,7 @@ it("passes on onAnimationStart as the popup opens and closes", async () => {
 });
 
 // Motion fires `AnimationStart` before it creates the exit's animation, so the flush waits for a
-// microtask: called at once, it would find nothing to flush. Only a close needs it, not an open.
+// microtask: called at once, it would miss the exit's keyframes. An open needs no flush.
 it("flushes Motion's keyframe resolvers in a microtask, once, as the popup closes", async () => {
   const flushKeyframeResolvers = vi.fn();
   const { target, close } = await mountOpen({ ...m, flushKeyframeResolvers });

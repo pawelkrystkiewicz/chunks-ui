@@ -66,8 +66,10 @@ export function createPopupRenderer({ m, spring, from, to, skipInstant }: PopupM
     const onAnimationStart = state.open
       ? passed
       : (definition: unknown) => {
-          // Optional: on a Motion without the export, queueMicrotask(undefined) would throw here,
-          // inside Motion's effect
+          // A microtask, because Motion fires `AnimationStart` before it creates the animation:
+          // a call now would miss this exit's keyframes. Keep the `() =>` and the `?.`. On a
+          // Motion without the export, `queueMicrotask(m.flushKeyframeResolvers)` throws here,
+          // inside Motion's effect, and a call without the `?.` throws in the microtask.
           queueMicrotask(() => m.flushKeyframeResolvers?.());
           passed?.(definition);
         };
