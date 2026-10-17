@@ -10,6 +10,8 @@ type PopupMotionConfig = {
   spring: MotionOptions;
   from: Record<string, number | string>;
   to: Record<string, number | string>;
+  /** Jump to the target with no spring while Base UI's `instant` state is this value */
+  skipInstant?: string;
   /**
    * Starts the exit as the popup closes. Base UI unmounts a closed popup once a check on the next
    * frame finds no `getAnimations()` on it. A Root that passes `open` to the popup in a layout
@@ -30,12 +32,22 @@ type PopupMotionConfig = {
  * `transform-origin`, so an anchored popup's `origin-(--transform-origin)`
  * class makes it grow out of its trigger, as on the CSS path.
  */
-export function createPopupRenderer({ m, spring, from, to, exitAtOnce }: PopupMotionConfig) {
+export function createPopupRenderer({
+  m,
+  spring,
+  from,
+  to,
+  skipInstant,
+  exitAtOnce,
+}: PopupMotionConfig) {
   // Not on `MotionLike` (see `exitAtOnce`)
   const { flushKeyframeResolvers } = m as MotionLike & { flushKeyframeResolvers?: () => void };
   const startExit = exitAtOnce ? () => queueMicrotask(() => flushKeyframeResolvers?.()) : undefined;
 
-  return (renderProps: RenderProps, state: { open: boolean; side?: string }): JSX.Element => {
+  return (
+    renderProps: RenderProps,
+    state: { open: boolean; side?: string; instant?: string },
+  ): JSX.Element => {
     const style: CSSProperties = { ...(renderProps.style ?? {}) };
 
     if (!state.open) {
@@ -47,6 +59,16 @@ export function createPopupRenderer({ m, spring, from, to, exitAtOnce }: PopupMo
     // Motion reads `initial` at mount only, so a Select that Base UI moves off its trigger after
     // mount (too close to the viewport's edge to align) opens without the scale too.
     const closed = state.side === "none" ? { ...from, scale: 1 } : from;
+    const target = state.open ? to : closed;
+
+    // Base UI sets `instant: "delay"` a render after the popup mounts or starts to close, once the
+    // spring has started, and Motion ignores a new transition while the target values are
+    // unchanged. One-keyframe lists count as a new target, so Motion takes them and, with no
+    // duration, sets them before the frame paints.
+    const jump = skipInstant !== undefined && state.instant === skipInstant;
+    const animate = jump
+      ? Object.fromEntries(Object.entries(target).map(([key, value]) => [key, [value]]))
+      : target;
 
     return (
       <m.motion.div
@@ -54,8 +76,8 @@ export function createPopupRenderer({ m, spring, from, to, exitAtOnce }: PopupMo
         style={style}
         // Base UI mounts the popup as it opens, so animate in from the closed values
         initial={closed}
-        animate={state.open ? to : closed}
-        transition={spring}
+        animate={animate}
+        transition={jump ? { duration: 0 } : spring}
         onAnimationStart={state.open ? undefined : startExit}
       />
     );

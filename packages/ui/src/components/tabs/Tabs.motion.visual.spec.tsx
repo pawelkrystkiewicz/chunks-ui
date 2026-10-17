@@ -1,11 +1,12 @@
 import { render } from "@testing-library/react";
-import { Activity, createRef, useEffect, useRef } from "react";
+import { Activity, createRef, Fragment, useEffect, useRef } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { page } from "vitest/browser";
 import { reloadMotion } from "../../lib/use-motion";
 import {
   eachPaintedFrame,
   emulateReducedMotion,
+  MotionLoaded,
   offBy,
   untilChanged,
   waitForStable,
@@ -82,6 +83,15 @@ const poseOf = (pane: Element) => {
 };
 const AT_REST = { opacity: "1", y: 0 };
 
+/**
+ * Waits for a Tabs.Animate pane's entry to play out. The pane is at rest before Motion's first
+ * frame too, so this waits for Motion to write the entry's offset, then for the pose to come to rest.
+ */
+async function entryPlayedOut(pane: HTMLElement) {
+  await expect.poll(() => pane.style.transform, { timeout: 5000 }).not.toBe("");
+  await expect.poll(() => poseOf(pane), { timeout: 5000 }).toEqual(AT_REST);
+}
+
 describe("Tabs with Motion", () => {
   it("mounts a panel's children once when Motion has already loaded", async () => {
     await reloadMotion();
@@ -94,9 +104,9 @@ describe("Tabs with Motion", () => {
       }, []);
       return <p>Panel A</p>;
     }
-    render(
+    const { getByTestId } = render(
       <Tabs.Root defaultValue="a">
-        <Tabs.Contents>
+        <Tabs.Contents data-testid="contents">
           <Tabs.Content value="a">
             <Panel />
           </Tabs.Content>
@@ -104,7 +114,9 @@ describe("Tabs with Motion", () => {
         </Tabs.Contents>
       </Tabs.Root>,
     );
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    // Motion drives the container. A swap onto Motion's path after the mount, which would remount
+    // the panel, has happened by the time Motion writes the height
+    await expect.poll(() => getByTestId("contents").style.height, { timeout: 5000 }).not.toBe("");
     expect(instances.size).toBe(1);
   });
 
@@ -113,22 +125,34 @@ describe("Tabs with Motion", () => {
   it.each([
     [
       "Contents",
-      <Tabs.Contents key="contents">
+      <Tabs.Contents key="contents" data-testid="contents">
         <Tabs.Content value="a">
           <input aria-label="Name" />
         </Tabs.Content>
         <Tabs.Content value="b">Panel B</Tabs.Content>
       </Tabs.Contents>,
+      // On Motion's path once Motion writes the container's height
+      () =>
+        expect
+          .poll(() => page.getByTestId("contents").element().style.height, { timeout: 5000 })
+          .not.toBe(""),
     ],
     [
       "Animate",
-      <Tabs.Animate key="animate">
-        <input aria-label="Name" />
-      </Tabs.Animate>,
+      <Fragment key="animate">
+        <Tabs.Animate>
+          <input aria-label="Name" />
+        </Tabs.Animate>
+        <MotionLoaded />
+      </Fragment>,
+      // A showing pane stays as it is when Motion arrives, so nothing in it shows the arrival.
+      // Tabs.Animate reads Motion with useMotion(), so it has re-rendered with it once the
+      // marker shows
+      () => expect.element(page.getByTestId("motion-loaded")).toBeInTheDocument(),
     ],
-  ])(
+  ] as const)(
     "keeps text typed into Tabs.%s, and its focus, when Motion finishes loading",
-    async (_, ui) => {
+    async (_, ui, motionArrived) => {
       const loading = reloadMotion();
       render(<Tabs.Root defaultValue="a">{ui}</Tabs.Root>);
       const input = page.getByRole("textbox", { name: "Name" }).element() as HTMLInputElement;
@@ -136,7 +160,7 @@ describe("Tabs with Motion", () => {
       input.focus();
 
       await loading;
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await motionArrived();
       expect(document.activeElement).toBe(input);
       await expect.element(page.getByRole("textbox", { name: "Name" })).toHaveValue("Ada");
     },
@@ -178,7 +202,8 @@ describe("Tabs with Motion", () => {
       </Tabs.Root>
     );
     const { rerender } = render(tabs("a"));
-    await new Promise((resolve) => setTimeout(resolve, 600));
+    // The first pane mounts with Motion, so it plays the entry too: switch once it is at rest
+    await entryPlayedOut(page.getByText("Panel A").element().parentElement as HTMLElement);
 
     rerender(tabs("b"));
     const opacities: number[] = [];
@@ -375,16 +400,7 @@ describe("Tabs in <Activity> with Motion", () => {
         await expect.poll(() => fading() > 0 && fading() < 1, { timeout: 5000 }).toBe(true);
       },
     ],
-    [
-      "after its entry",
-      { type: "tween", duration: 0.1 },
-      async (pane: HTMLElement) => {
-        // At rest before Motion's first frame too, so wait for Motion to write the entry's
-        // offset, then for the pose to come to rest
-        await expect.poll(() => pane.style.transform, { timeout: 5000 }).not.toBe("");
-        await expect.poll(() => poseOf(pane), { timeout: 5000 }).toEqual(AT_REST);
-      },
-    ],
+    ["after its entry", { type: "tween", duration: 0.1 }, entryPlayedOut],
   ] as const)(
     "shows a Tabs.Animate pane at rest when shown again after hiding it %s",
     async (_, transition, settle) => {
@@ -543,8 +559,10 @@ describe("Tabs refs with Motion", () => {
       </Tabs.Root>
     );
     const { rerender } = render(tabs("a"));
-    expect(ref.current).toBe(page.getByText("Panel a").element().parentElement);
-    await new Promise((resolve) => setTimeout(resolve, 600));
+    const first = page.getByText("Panel a").element().parentElement as HTMLElement;
+    expect(ref.current).toBe(first);
+    // The first pane mounts with Motion, so it plays the entry too: switch once it is at rest
+    await entryPlayedOut(first);
 
     rerender(tabs("b"));
     const pane = page.getByText("Panel b").element().parentElement as HTMLElement;
