@@ -121,6 +121,7 @@ describe("popup parts with Motion loaded, no reduced-motion preference", () => {
   it.each(parts)("$part starts its exit animation as it closes", async ({ ui }) => {
     const { rerender } = render(ui());
     const el = await screen.findByTestId("popup");
+    // At rest, so an animation found after the close is the exit's
     await settled(el);
     rerender(ui(undefined, false));
     // After the microtask the exit queued as it started, before any frame

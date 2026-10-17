@@ -489,10 +489,14 @@ export const framesOf = async (popup: HTMLElement) => {
   return frames.filter((frame) => frame !== false);
 };
 
-/** Resolves once `popup` is at rest, Motion idle: no `getAnimations()`, a steady JS-driven scale */
+/** Resolves once `popup` is at rest: scale, opacity and box steady, and `getAnimations()` empty */
 export const settled = async (popup: HTMLElement) => {
-  await expect.poll(() => popup.getAnimations()).toEqual([]);
-  await waitForStable(() => renderedScale(popup));
+  // Steady first: `getAnimations()` is empty before Motion's first frame starts the entry, and
+  // does not see the scale, which Motion animates in JS
+  await waitForStable(() => [renderedScale(popup), getComputedStyle(popup).opacity, boxOf(popup)]);
+  await expect.poll(() => popup.getAnimations(), { timeout: SETTLE_TIMEOUT_MS }).toEqual([]);
+  // End on a frame: closed from a timer, the popup sometimes survives a missing flush (#540)
+  await nextFrame();
 };
 
 type BoxSize = { inlineSize: number; blockSize: number };
