@@ -16,7 +16,12 @@ import { removeButtonName } from "../chip/Chip";
 import { FOCUS_RING, FOCUS_RING_WITHIN, RING_TRANSITION } from "../shared";
 import { type ComboboxLabels, DEFAULT_COMBOBOX_LABELS } from "./Combobox.Labels";
 
-const ComboboxLabelsContext = createContext(DEFAULT_COMBOBOX_LABELS);
+// What Combobox.Root gives its parts: the labels, and whether it is a multi-select, which
+// Combobox.Value needs to know (#541)
+const ComboboxContext = createContext<{ labels: ComboboxLabels; multiple: boolean }>({
+  labels: DEFAULT_COMBOBOX_LABELS,
+  multiple: false,
+});
 // The id of the Combobox.Chip around a ChipRemove, which names the remove button
 const ComboboxChipIdContext = createContext<string | undefined>(undefined);
 
@@ -66,9 +71,15 @@ function ComboboxRoot<Value, Multiple extends boolean | undefined = false, Item 
   ...props
 }: ComboboxRootProps<Value, Multiple, Item>) {
   return (
-    <ComboboxLabelsContext.Provider value={mergeLabels(DEFAULT_COMBOBOX_LABELS, labels)}>
+    <ComboboxContext.Provider
+      value={{
+        labels: mergeLabels(DEFAULT_COMBOBOX_LABELS, labels),
+        // As Base UI reads it: any truthy `multiple` selects several
+        multiple: Boolean(props.multiple),
+      }}
+    >
       <BaseCombobox.Root<Value, Multiple, Item> {...props} />
-    </ComboboxLabelsContext.Provider>
+    </ComboboxContext.Provider>
   );
 }
 
@@ -126,7 +137,7 @@ function ownContent(
 }
 
 function ComboboxTrigger({ className, children, ...props }: ComboboxTriggerProps) {
-  const labels = useContext(ComboboxLabelsContext);
+  const { labels } = useContext(ComboboxContext);
   return (
     <BaseCombobox.Trigger
       {...ownContent(
@@ -184,11 +195,14 @@ function ComboboxIcon({ className, ...props }: ComboboxIconProps) {
 // #518, several words wrapped onto lines above and below the trigger, and one long word ran past
 // it and pushed the chevron out (#541). The span around it keeps one line, with an ellipsis, in
 // three classes rather than `truncate`, so `whitespace-normal` in `className` brings back wrapping
-// alone. A function child gets no span: Base UI's multi-select returns its chips and input from
-// one, and they must stay children of Combobox.Chips.
+// alone. A function child formats the value, and in a single-select it gets the span like any
+// other child. In a multi-select it returns the chips and the input, to sit inside Combobox.Chips,
+// or the Chips itself: a span would stand between them and their parent, so it gets none then, and
+// `className` and the span's props have nothing to reach.
 function ComboboxValue({ className, children, placeholder, ...props }: ComboboxValueProps) {
+  const { multiple } = useContext(ComboboxContext);
   const value = <BaseCombobox.Value placeholder={placeholder}>{children}</BaseCombobox.Value>;
-  if (typeof children === "function") return value;
+  if (multiple && typeof children === "function") return value;
   return (
     <span className={cn("overflow-hidden text-ellipsis whitespace-nowrap", className)} {...props}>
       {value}
@@ -289,7 +303,7 @@ function ComboboxEmpty({ className, ...props }: ComboboxEmptyProps) {
 }
 
 function ComboboxClear({ className, children, ...props }: ComboboxClearProps) {
-  const labels = useContext(ComboboxLabelsContext);
+  const { labels } = useContext(ComboboxContext);
   return (
     <BaseCombobox.Clear
       {...ownContent(
@@ -348,7 +362,7 @@ function ComboboxChip({ className, id, ...props }: ComboboxChipProps) {
 }
 
 function ComboboxChipRemove({ className, children, ...props }: ComboboxChipRemoveProps) {
-  const labels = useContext(ComboboxLabelsContext);
+  const { labels } = useContext(ComboboxContext);
   const chipId = useContext(ComboboxChipIdContext);
   const id = useId();
   // Named by hidden text around the chip's text: "Remove Apple", or "Apple を削除". The button

@@ -539,9 +539,36 @@ describe("Combobox.Value", () => {
     expect(value).toHaveAttribute("title", "The fruit");
   });
 
+  // Base UI's function child formats the selected value: in a single-select the trigger shows what
+  // it returns like any other value, so it needs the clip too
+  it("renders the result of a function child in a single-select in the span", () => {
+    triggerStyle({ children: (selected: (typeof items)[number]) => selected.label.toUpperCase() });
+    const value = screen.getByTestId("value");
+    expect(value.tagName).toBe("SPAN");
+    expect(value).toHaveTextContent(/^APPLE$/);
+    expect(value).toHaveClass("overflow-hidden", "text-ellipsis", "whitespace-nowrap");
+  });
+
+  // Only a function child in a multi-select goes without the span: this one is the labels as text,
+  // "Apple, Banana", which the trigger clips like a single value
+  it("renders the labels of a multi-select in the span", () => {
+    render(
+      <Combobox.Root multiple items={items} defaultValue={items}>
+        <Combobox.Trigger aria-label="Fruits">
+          <Combobox.Value data-testid="value" />
+          <Combobox.Icon />
+        </Combobox.Trigger>
+      </Combobox.Root>,
+    );
+    const value = screen.getByTestId("value");
+    expect(value.tagName).toBe("SPAN");
+    expect(value).toHaveTextContent(/^Apple, Banana$/);
+    expect(value).toHaveClass("overflow-hidden", "text-ellipsis", "whitespace-nowrap");
+  });
+
   // Base UI's multi-select returns the chips and the input from a function child; they must stay
   // children of Combobox.Chips, which lays them out in a row
-  it("renders no element around a function child", () => {
+  it("renders no element around a function child in a multi-select", () => {
     render(
       <Combobox.Root multiple items={items} defaultValue={[items[0]]}>
         <Combobox.Chips data-testid="chips">
@@ -559,6 +586,25 @@ describe("Combobox.Value", () => {
       </Combobox.Root>,
     );
     expect(screen.getByTestId("chip").parentElement).toBe(screen.getByTestId("chips"));
+  });
+
+  // The other multi-select shape: the function returns the Chips itself
+  it("renders no element around a Combobox.Chips that a function child returns", () => {
+    render(
+      <Combobox.Root multiple items={items} defaultValue={[items[0]]}>
+        <Combobox.Value>
+          {(selected: typeof items) => (
+            <Combobox.Chips data-testid="chips">
+              {selected.map((item) => (
+                <Combobox.Chip key={item.value}>{item.label}</Combobox.Chip>
+              ))}
+              <Combobox.Input aria-label="Fruits" />
+            </Combobox.Chips>
+          )}
+        </Combobox.Value>
+      </Combobox.Root>,
+    );
+    expect(screen.getByTestId("chips").closest("span")).toBeNull();
   });
 });
 
