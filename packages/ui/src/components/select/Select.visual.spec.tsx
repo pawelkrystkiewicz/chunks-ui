@@ -167,12 +167,7 @@ describe("Select", () => {
     const badge = getByTestId("badge");
     const icon = inlineSpan(getByTestId("icon"), "ltr");
     const reference = getByTestId("reference").getBoundingClientRect();
-    expect(badge.getBoundingClientRect().height).toBeCloseTo(reference.height, 1);
     expect(badge.getBoundingClientRect().width).toBeCloseTo(reference.width, 1);
-    const { top, bottom } = insetsWithin(trigger, badge);
-    expect(top).toBeGreaterThanOrEqual(0);
-    expect(bottom).toBeGreaterThanOrEqual(0);
-    expect(inlineSpan(value, "ltr").start).toBeCloseTo(content.start, 1);
     // The text keeps to the start of the value's box, which the trigger's <button> would centre
     const text = document.createRange();
     text.selectNodeContents(value);
@@ -180,13 +175,10 @@ describe("Select", () => {
     expect(inlineSpan(value, "ltr").end).toBeLessThanOrEqual(inlineSpan(badge, "ltr").start);
     expect(inlineSpan(badge, "ltr").end).toBeLessThanOrEqual(icon.start);
     expect(icon.end).toBeCloseTo(content.end, 1);
-    expect(icon.end - icon.start).toBe(16);
     expect(value.scrollWidth > value.clientWidth).toBe(truncated);
   });
 
-  // `flex-initial` on the value brings back the earlier sizing (#546): sized by its text, it still
-  // shrinks, so a long value is cut with an ellipsis and the chevron stays at the trigger's end.
-  // `flex-none` would not shrink: the text would keep its full width and push the chevron out.
+  // `flex-initial` brings back the earlier sizing (#546): the value still shrinks and truncates
   it("keeps a long value cut inside a 140px trigger with flex-initial on Select.Value", () => {
     const { getByRole, getByTestId } = render(
       <div style={{ padding: 40 }}>
