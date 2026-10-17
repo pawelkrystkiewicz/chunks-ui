@@ -11,6 +11,7 @@ import {
   MOTION_PATHS,
   renderFixture,
   renderPage,
+  waitForStable,
 } from "../../VisualTest.utils";
 import { Select } from "./index";
 
@@ -109,6 +110,30 @@ const renderedScale = (el: Element) =>
     (el.getBoundingClientRect().width / Number.parseFloat(getComputedStyle(el).width)) * 1000,
   ) / 1000;
 
+/** The popup's side, rendered scale and opacity, once a painted frame while it is mounted */
+const framesOf = async (popup: HTMLElement) => {
+  const frames = await eachPaintedFrame(
+    () =>
+      popup.isConnected && {
+        side: popup.getAttribute("data-side"),
+        scale: renderedScale(popup),
+        opacity: Number(getComputedStyle(popup).opacity),
+      },
+    40,
+  );
+  return frames.filter((frame) => frame !== false);
+};
+
+/**
+ * Resolves once the popup is at rest and Motion has run its last frame for the entry, as when a
+ * user closes it. Motion runs a frame more after an animation ends, and `getAnimations()` does not
+ * see the scale, which Motion animates in JS.
+ */
+const settled = async (popup: HTMLElement) => {
+  await expect.poll(() => popup.getAnimations()).toEqual([]);
+  await waitForStable(() => renderedScale(popup));
+};
+
 // Aligned over its trigger (Base UI's default `alignItemWithTrigger`, `data-side="none"`), the
 // popup lands with the selected item over the trigger's value, as Base UI's own reference styles
 // assume: it fades in place at full size, on both paths
@@ -123,20 +148,6 @@ describe.each(MOTION_PATHS)("Select.Popup aligned with its trigger, $path", ({ w
   // Clear of the page's top edge, where Base UI gives up the alignment
   const aligned = (open: boolean) => <div style={{ padding: 40 }}>{closedSelect(open)}</div>;
 
-  /** The popup's side, rendered scale and opacity, once a painted frame while it is mounted */
-  const framesOf = async (popup: HTMLElement) => {
-    const frames = await eachPaintedFrame(
-      () =>
-        popup.isConnected && {
-          side: popup.getAttribute("data-side"),
-          scale: renderedScale(popup),
-          opacity: Number(getComputedStyle(popup).opacity),
-        },
-      40,
-    );
-    return frames.filter((frame) => frame !== false);
-  };
-
   it("opens without a scale", async () => {
     const { rerender, getByTestId } = render(aligned(false));
     rerender(aligned(true));
@@ -147,17 +158,41 @@ describe.each(MOTION_PATHS)("Select.Popup aligned with its trigger, $path", ({ w
     expect(frames.some(({ opacity }) => opacity > 0 && opacity < 1)).toBe(true);
   });
 
-  // Closed once it has faded in. On the Motion path the exit starts as the popup closes: Base UI
-  // looks for it on the next frame, before Motion's own frame, and unmounts a popup without one (#521)
-  it("closes without a scale", async () => {
+  // Closed once it has faded in, while the spring's tail still runs and once at rest. On the Motion
+  // path the exit starts as the popup closes: Base UI looks for it on the next frame, before
+  // Motion's own frame, and unmounts a popup without one (#521)
+  it.each([
+    { when: "as it settles", atRest: false },
+    { when: "at rest", atRest: true },
+  ])("closes without a scale, $when", async ({ atRest }) => {
     const { rerender, getByTestId } = render(aligned(true));
     const popup = getByTestId("popup");
     await expect.poll(() => getComputedStyle(popup).opacity).toBe("1");
+    if (atRest) await settled(popup);
     rerender(aligned(false));
     const frames = await framesOf(popup);
     expect(new Set(frames.map(({ side }) => side))).toEqual(new Set(["none"]));
     expect(frames.map(({ scale }) => scale)).toEqual(frames.map(() => 1));
     // The frames cover the exit: the popup fades out over them
     expect(frames.some(({ opacity }) => opacity > 0 && opacity < 1)).toBe(true);
+  });
+});
+
+// Below its trigger the popup scales as it fades out. On the Motion path the scale is a JS
+// animation, which Base UI does not see: the fade alone keeps the popup mounted through the scale
+describe("Select.Popup below its trigger, Motion", () => {
+  beforeAll(() => enterMotionPath(true));
+  beforeEach(() => emulateReducedMotion(false));
+  afterAll(() => emulateReducedMotion(true));
+
+  const below = (open: boolean) => <div style={{ padding: 40 }}>{closedSelect(open, false)}</div>;
+
+  it("closes with a scale, at rest", async () => {
+    const { rerender, getByTestId } = render(below(true));
+    const popup = getByTestId("popup");
+    await settled(popup);
+    rerender(below(false));
+    const frames = await framesOf(popup);
+    expect(frames.some(({ scale, opacity }) => scale < 1 && opacity > 0 && opacity < 1)).toBe(true);
   });
 });
