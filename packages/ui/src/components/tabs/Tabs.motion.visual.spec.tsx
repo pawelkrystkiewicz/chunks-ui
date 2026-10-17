@@ -8,6 +8,7 @@ import {
   emulateReducedMotion,
   MotionLoaded,
   offBy,
+  SETTLE_TIMEOUT_MS,
   untilChanged,
   waitForStable,
 } from "../../VisualTest.utils";
@@ -88,8 +89,8 @@ const AT_REST = { opacity: "1", y: 0 };
  * frame too, so this waits for Motion to write the entry's offset, then for the pose to come to rest.
  */
 async function entryPlayedOut(pane: HTMLElement) {
-  await expect.poll(() => pane.style.transform, { timeout: 5000 }).not.toBe("");
-  await expect.poll(() => poseOf(pane), { timeout: 5000 }).toEqual(AT_REST);
+  await expect.poll(() => pane.style.transform, { timeout: SETTLE_TIMEOUT_MS }).not.toBe("");
+  await expect.poll(() => poseOf(pane), { timeout: SETTLE_TIMEOUT_MS }).toEqual(AT_REST);
 }
 
 describe("Tabs with Motion", () => {
@@ -116,7 +117,9 @@ describe("Tabs with Motion", () => {
     );
     // Motion drives the container. A swap onto Motion's path after the mount, which would remount
     // the panel, has happened by the time Motion writes the height
-    await expect.poll(() => getByTestId("contents").style.height, { timeout: 5000 }).not.toBe("");
+    await expect
+      .poll(() => getByTestId("contents").style.height, { timeout: SETTLE_TIMEOUT_MS })
+      .not.toBe("");
     expect(instances.size).toBe(1);
   });
 
@@ -134,7 +137,9 @@ describe("Tabs with Motion", () => {
       // On Motion's path once Motion writes the container's height
       () =>
         expect
-          .poll(() => page.getByTestId("contents").element().style.height, { timeout: 5000 })
+          .poll(() => page.getByTestId("contents").element().style.height, {
+            timeout: SETTLE_TIMEOUT_MS,
+          })
           .not.toBe(""),
     ],
     [
@@ -235,7 +240,7 @@ describe("Tabs animations that must stop", () => {
     // a set number of frames, as it can start a frame or two later under load
     await expect
       .poll(() => pane.style.transform !== "" && Number(poseOf(pane).opacity) < 1, {
-        timeout: 5000,
+        timeout: SETTLE_TIMEOUT_MS,
       })
       .toBe(true);
     await untilChanged(() => pane.style.transform);
@@ -287,7 +292,7 @@ describe("Tabs animations that must stop", () => {
     rerender(tabs("b"));
     // Mid-slide: between panel A (0) and panel B (-width). Waits for the track to move rather than
     // for a set number of frames, as Motion can start the slide a frame or two later under load
-    await expect.poll(x, { timeout: 5000 }).toBeLessThan(-1);
+    await expect.poll(x, { timeout: SETTLE_TIMEOUT_MS }).toBeLessThan(-1);
     expect(x()).toBeGreaterThan(-width + 1);
     // Still moving, so an animation left running would go on writing below
     await untilChanged(() => track.style.transform);
@@ -311,7 +316,7 @@ describe("Tabs animations that must stop", () => {
     // Mid-resize: between the two panel heights. Waits for the height to move rather than for a
     // set number of frames, as Motion can start the resize a frame or two later under load
     const height = () => Number.parseFloat(contents.style.height);
-    await expect.poll(height, { timeout: 5000 }).toBeGreaterThan(HEIGHTS.short);
+    await expect.poll(height, { timeout: SETTLE_TIMEOUT_MS }).toBeGreaterThan(HEIGHTS.short);
     expect(height()).toBeLessThan(HEIGHTS.tall);
     return { ...result, contents };
   }
@@ -373,7 +378,7 @@ describe("Tabs in <Activity> with Motion", () => {
     // as Motion can start them a frame or two later under load
     await expect
       .poll(() => place().offset < start.offset - 1 && place().height > HEIGHTS.short + 1, {
-        timeout: 5000,
+        timeout: SETTLE_TIMEOUT_MS,
       })
       .toBe(true);
     expect(place().offset).toBeGreaterThan(1);
@@ -397,7 +402,9 @@ describe("Tabs in <Activity> with Motion", () => {
       async (pane: HTMLElement) => {
         // Fading in. Before Motion's first frame the pane is still at full opacity.
         const fading = () => Number(poseOf(pane).opacity);
-        await expect.poll(() => fading() > 0 && fading() < 1, { timeout: 5000 }).toBe(true);
+        await expect
+          .poll(() => fading() > 0 && fading() < 1, { timeout: SETTLE_TIMEOUT_MS })
+          .toBe(true);
       },
     ],
     ["after its entry", { type: "tween", duration: 0.1 }, entryPlayedOut],
