@@ -299,6 +299,8 @@ export function DatePicker({
           >
             <BasePopover.Popup
               ref={popupRef}
+              // A dialog needs a name. As in the APG date picker, it names the task, not the month
+              aria-label={names.dialog}
               // Open on the calendar's tab-stop day (selected, else today), as in the APG date picker.
               initialFocus={() =>
                 popupRef.current?.querySelector<HTMLElement>('[role="grid"] [tabindex="0"]') ?? null

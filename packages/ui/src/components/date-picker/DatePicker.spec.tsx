@@ -175,6 +175,12 @@ describe("DatePicker", () => {
     expect(container.firstChild).toHaveClass("my-custom");
   });
 
+  it('names the calendar dialog "Choose date"', async () => {
+    render(<DatePicker />);
+    await userEvent.click(screen.getByRole("button", { name: "Pick a date" }));
+    expect(screen.getByRole("dialog")).toHaveAccessibleName("Choose date");
+  });
+
   it("has no a11y violations", async () => {
     const { container } = render(<DatePicker value={new Date(2026, 2, 15)} />);
     expect(
@@ -192,16 +198,7 @@ describe("DatePicker", () => {
     // The popup is portalled out of the container RTL hands back, so audit the body. It is a
     // dialog, which the region rule exempts, so the rule stays on.
     expect(container).not.toContainElement(screen.getByRole("dialog"));
-    // Known gap: the calendar dialog has no accessible name yet. This pin fails once DatePicker
-    // names it: then remove the pin and the rule override below.
-    expect(screen.getByRole("dialog")).not.toHaveAccessibleName();
-    expect(
-      await axe(document.body, {
-        rules: {
-          "aria-dialog-name": { enabled: false },
-        },
-      }),
-    ).toHaveNoViolations();
+    expect(await axe(document.body)).toHaveNoViolations();
   });
 });
 
@@ -829,6 +826,12 @@ describe("DatePicker labels", () => {
   it("prefers the placeholder prop over labels", () => {
     render(<DatePicker placeholder="Due date" labels={{ placeholder: "Wybierz datę" }} />);
     expect(screen.getByRole("button", { name: "Due date" })).toBeInTheDocument();
+  });
+
+  it("takes the calendar dialog's name from labels", async () => {
+    render(<DatePicker labels={{ dialog: "Datum wählen" }} />);
+    await userEvent.click(screen.getByRole("button", { name: "Pick a date" }));
+    expect(screen.getByRole("dialog")).toHaveAccessibleName("Datum wählen");
   });
 
   it("passes the calendar's labels to the calendar", async () => {

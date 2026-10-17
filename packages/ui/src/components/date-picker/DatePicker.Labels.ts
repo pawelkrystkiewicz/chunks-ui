@@ -16,6 +16,11 @@ export type DatePickerLabels = CalendarLabels & {
    * @default (date) => "March 15, 2026"
    */
   selectedDate: (date: Date) => string;
+  /**
+   * Accessible name of the dialog that holds the calendar.
+   * @default "Choose date"
+   */
+  dialog: string;
 };
 
 export const DEFAULT_DATE_PICKER_LABELS: Readonly<DatePickerLabels> = {
@@ -27,4 +32,5 @@ export const DEFAULT_DATE_PICKER_LABELS: Readonly<DatePickerLabels> = {
       day: "numeric",
       year: "numeric",
     }),
+  dialog: "Choose date",
 };
