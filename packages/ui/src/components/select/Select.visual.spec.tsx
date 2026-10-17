@@ -137,6 +137,53 @@ describe("Select", () => {
     expect(value.scrollWidth > value.clientWidth).toBe(truncated);
   });
 
+  // A badge beside the value keeps its width on one line, and the value takes only the free space
+  // and truncates first (#546). Before, the value's flex-basis was its full text width, so a long
+  // value and the badge shrank in proportion and the badge's two words wrapped.
+  it.each([
+    { length: "short", fruit: "Fig", truncated: false },
+    { length: "long", fruit: "Dragon fruit from the far end of the orchard", truncated: true },
+  ])("keeps a badge beside a $length value on one line, at full width", ({ fruit, truncated }) => {
+    const { getByRole, getByTestId } = render(
+      <div style={{ padding: 40 }}>
+        <Select.Root defaultValue={fruit}>
+          <Select.Trigger aria-label="Fruit" style={{ width: 200 }}>
+            <Select.Value data-testid="value" />
+            <span data-testid="badge" className="ms-2">
+              Pro plan
+            </span>
+            <Select.Icon data-testid="icon" />
+          </Select.Trigger>
+        </Select.Root>
+        {/* The badge's one line at its own width, in the trigger's font */}
+        <div data-testid="reference" className="w-max text-sm">
+          Pro plan
+        </div>
+      </div>,
+    );
+    const trigger = getByRole("combobox");
+    const content = contentSpan(trigger, "ltr");
+    const value = getByTestId("value");
+    const badge = getByTestId("badge");
+    const icon = inlineSpan(getByTestId("icon"), "ltr");
+    const reference = getByTestId("reference").getBoundingClientRect();
+    expect(badge.getBoundingClientRect().height).toBeCloseTo(reference.height, 1);
+    expect(badge.getBoundingClientRect().width).toBeCloseTo(reference.width, 1);
+    const { top, bottom } = insetsWithin(trigger, badge);
+    expect(top).toBeGreaterThanOrEqual(0);
+    expect(bottom).toBeGreaterThanOrEqual(0);
+    expect(inlineSpan(value, "ltr").start).toBeCloseTo(content.start, 1);
+    // The text keeps to the start of the value's box, which the trigger's <button> would centre
+    const text = document.createRange();
+    text.selectNodeContents(value);
+    expect(inlineSpan(text, "ltr").start).toBeCloseTo(content.start, 1);
+    expect(inlineSpan(value, "ltr").end).toBeLessThanOrEqual(inlineSpan(badge, "ltr").start);
+    expect(inlineSpan(badge, "ltr").end).toBeLessThanOrEqual(icon.start);
+    expect(icon.end).toBeCloseTo(content.end, 1);
+    expect(icon.end - icon.start).toBe(16);
+    expect(value.scrollWidth > value.clientWidth).toBe(truncated);
+  });
+
   // The value's one line must not widen the trigger past its container: beside a button in a
   // flex row it shrinks, and sized by its value (`w-auto`) it stops at the container's width
   it.each([
