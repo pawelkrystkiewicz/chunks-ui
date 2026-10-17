@@ -27,6 +27,11 @@ const left = (element: HTMLElement | null) => element?.getBoundingClientRect().l
 const opacity = (element: HTMLElement | null) =>
   element ? Number(getComputedStyle(element).opacity) : Number.NaN;
 
+// An absence window, as an animation stopped at unmount leaves nothing to wait for. One left
+// running goes on writing to the detached element in Motion's frame loop, once a frame, and its
+// spring has only just started, so the style changes in the first frame. 5 frames leave margin
+const ABSENCE_WINDOW_FRAMES = 5;
+
 /** A consumer's `render` prop for the part Motion animates */
 type ConsumerRender = (props: HTMLProps) => ReactElement;
 
@@ -363,7 +368,7 @@ describe("controls once Motion has loaded", () => {
     // Stopping may write the value it stopped at once; after that nothing changes
     await nextFrame();
     const style = moving.getAttribute("style");
-    for (let frame = 0; frame < 5; frame++) {
+    for (let frame = 0; frame < ABSENCE_WINDOW_FRAMES; frame++) {
       await nextFrame();
       expect(moving.getAttribute("style")).toBe(style);
     }

@@ -83,6 +83,12 @@ const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve))
 // started again, shows in the first or second frame. 5 frames leave margin
 const ABSENCE_WINDOW_FRAMES = 5;
 
+// An absence window, as a container that keeps the short panel's height changes nothing to wait
+// for. The previous panel's height would come from its re-measure, one requestAnimationFrame
+// callback that runs in the frame of the switch back, and the instant tween writes it in Motion's
+// next render step, so it shows in the first frame, and only in that one. 10 frames leave margin
+const SWITCH_BACK_ABSENCE_WINDOW_FRAMES = 10;
+
 /** A Tabs.Animate pane's opacity and vertical offset, as painted */
 const poseOf = (pane: Element) => {
   const { opacity, transform } = getComputedStyle(pane);
@@ -524,7 +530,7 @@ describe("Tabs.Contents height with Motion", () => {
     await nextFrame();
     rerender(panelsOfTwoHeights("short", { transition }));
     const heights: number[] = [];
-    for (let frame = 0; frame < 10; frame++) {
+    for (let frame = 0; frame < SWITCH_BACK_ABSENCE_WINDOW_FRAMES; frame++) {
       await nextFrame();
       heights.push(contents.offsetHeight);
     }
