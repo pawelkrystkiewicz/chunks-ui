@@ -692,3 +692,59 @@ describe("Tabs.Indicator with Motion", () => {
     );
   });
 });
+
+// A controlled root keeps a tab selected when it becomes disabled, and the tab fades to 50% over
+// its transition. The indicator under it fades with it, frame for frame, instead of dropping to
+// 50% in one frame. With reduced motion the tab changes at once, and the indicator with it.
+describe("Tabs.Indicator under the selected tab disabled at runtime", () => {
+  const tabs = (disabled: boolean) => (
+    <Tabs.Root value="b">
+      <Tabs.List>
+        <Tabs.Tab value="a">Alpha</Tabs.Tab>
+        <Tabs.Tab value="b" disabled={disabled}>
+          Beta
+        </Tabs.Tab>
+        <Tabs.Indicator data-testid="indicator" />
+      </Tabs.List>
+    </Tabs.Root>
+  );
+  const opacityOf = (el: Element) => Number(getComputedStyle(el).opacity);
+
+  afterEach(() => emulateReducedMotion(false));
+
+  it.each([
+    { path: "Motion", withMotion: true, reduced: false },
+    { path: "the CSS fallback", withMotion: false, reduced: false },
+    { path: "reduced motion", withMotion: false, reduced: true },
+  ])("dims the indicator with the tab, on $path", async ({ withMotion, reduced }) => {
+    await emulateReducedMotion(reduced);
+    // Held back, Motion never arrives and the CSS fallback drives the indicator
+    if (withMotion) await reloadMotion();
+    else void reloadMotion(new Promise(() => {}));
+    const { rerender, getByTestId, getByRole } = render(tabs(false));
+    const indicator = getByTestId("indicator");
+    const tab = getByRole("tab", { name: "Beta" });
+    // The CSS fallback has a transition class that Motion's path drops
+    await expect
+      .poll(() => indicator.classList.contains("micro-interactions"), {
+        timeout: SETTLE_TIMEOUT_MS,
+      })
+      .toBe(!withMotion);
+    await waitForStable(() => offBy(tab, indicator));
+
+    rerender(tabs(true));
+    const frames = await eachPaintedFrame(
+      () => ({ tab: opacityOf(tab), indicator: opacityOf(indicator) }),
+      40,
+    );
+    const log = JSON.stringify(frames);
+    expect(
+      frames.every((frame) => Math.abs(frame.indicator - frame.tab) < 0.01),
+      log,
+    ).toBe(true);
+    // Values between the two ends: it faded rather than jumped, unless reduced motion is on
+    const between = frames.filter(({ indicator }) => indicator > 0.5 && indicator < 1);
+    expect(between.length > 0, log).toBe(!reduced);
+    expect(await waitForStable(() => opacityOf(indicator))).toBe(0.5);
+  });
+});

@@ -274,11 +274,13 @@ function TabsIndicatorElement({
       // explicit defaultValue keeps a disabled tab selected.
       "group-has-[[data-active][aria-disabled=true]]/tabs-list:opacity-50",
       // The CSS fallback places the indicator from the variables Base UI sets on it, and slides
-      // it with a transition, which is off unless it slides to another tab. Motion writes inline
-      // values instead, and they are removed when it hands back.
+      // it to another tab with a transition. Motion writes inline values instead, and they are
+      // removed when it hands back.
       !driven &&
         "top-(--active-tab-top) left-(--active-tab-left) h-(--active-tab-height) w-(--active-tab-width) micro-interactions",
-      !driven && !sliding && "transition-none",
+      // Otherwise only opacity transitions, as the tab's does: 300ms on Tailwind's default curve,
+      // which `.micro-interactions` sets too, and none with reduced motion. The box jumps.
+      (driven || !sliding) && "transition-opacity duration-300 motion-reduce:transition-none",
       className,
     ),
   });
