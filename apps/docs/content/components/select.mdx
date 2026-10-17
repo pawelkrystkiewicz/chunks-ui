@@ -125,7 +125,7 @@ The popup enters with a scale-up and fade (from `scale-95` and `opacity-0`): the
 |---|---|
 | `Select.Root` | State container. Manages open/close and selected value. |
 | `Select.Trigger` | The button that opens the dropdown. Styled like an input. |
-| `Select.Value` | Displays the selected value or placeholder text. |
+| `Select.Value` | Displays the selected value or placeholder text. A value wider than the trigger stays on one line and ends in an ellipsis before the chevron. |
 | `Select.Icon` | Chevron icon inside the trigger. |
 | `Select.Portal` | Renders the popup in a portal. |
 | `Select.Positioner` | Handles Floating UI positioning. Base UI's default `alignItemWithTrigger` places the popup over the trigger, with the selected item on top of it; the examples pass `alignItemWithTrigger={false}` and `sideOffset={5}` to open it below the trigger instead. Gives the popup the trigger's width (`w-[var(--anchor-width)]`). For a trigger sized by its value, pass `w-auto min-w-[var(--anchor-width)]` in `className`: the popup is never narrower than the trigger, and its items keep their text on one line. Bare `w-auto` sizes the popup by its items. Set a width here, not on `Select.Popup`: a width on the popup spills out of the positioner, and Floating UI's collision handling measures the positioner. |

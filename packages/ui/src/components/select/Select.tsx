@@ -41,6 +41,11 @@ function SelectTrigger({ className, ...props }: SelectTriggerProps) {
   );
 }
 
+// One line: a value wider than the trigger ends in an ellipsis before the chevron (#518)
+function SelectValue({ className, ...props }: SelectValueProps) {
+  return <BaseSelect.Value className={cnState("truncate", className)} {...props} />;
+}
+
 function SelectIcon({ className, ...props }: SelectIconProps) {
   return (
     <BaseSelect.Icon className={cnState("ms-auto", className)} {...props}>
@@ -178,5 +183,5 @@ export const Select = {
   Positioner: SelectPositioner,
   Root: BaseSelect.Root,
   Trigger: SelectTrigger,
-  Value: BaseSelect.Value,
+  Value: SelectValue,
 };

@@ -2,12 +2,15 @@ import { render } from "@testing-library/react";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { page } from "vitest/browser";
 import {
+  contentSpan,
   describePopupCssPath,
   eachPaintedFrame,
   emulateReducedMotion,
   enterMotionPath,
   expectNotAllowed,
   focusVisible,
+  inlineSpan,
+  insetsWithin,
   MOTION_PATHS,
   renderFixture,
   renderPage,
@@ -97,6 +100,40 @@ describe("Select", () => {
       </Select.Root>,
     );
     expectNotAllowed(getByRole("combobox"));
+  });
+
+  // A value wider than the trigger stays on one line and ends in an ellipsis before the chevron,
+  // and the chevron keeps its size at the trigger's end, as beside a short value (#518). Before,
+  // a long word ran past the trigger and pushed the chevron out, and several words wrapped.
+  it.each([
+    { length: "short", fruit: "Fig", truncated: false },
+    { length: "long", fruit: "Dragon fruit from the far end of the orchard", truncated: true },
+    { length: "one-word long", fruit: "Supercalifragilisticexpialidocious", truncated: true },
+  ])("keeps a $length value and the chevron inside a 140px trigger", ({ fruit, truncated }) => {
+    const { getByRole, getByTestId } = render(
+      <div style={{ padding: 40 }}>
+        <Select.Root defaultValue={fruit}>
+          <Select.Trigger aria-label="Fruit" style={{ width: 140 }}>
+            <Select.Value data-testid="value" />
+            <Select.Icon data-testid="icon" />
+          </Select.Trigger>
+        </Select.Root>
+      </div>,
+    );
+    const trigger = getByRole("combobox");
+    const content = contentSpan(trigger, "ltr");
+    const value = getByTestId("value");
+    const icon = inlineSpan(getByTestId("icon"), "ltr");
+    const { top, bottom } = insetsWithin(trigger, value);
+    expect(top).toBeGreaterThanOrEqual(0);
+    expect(bottom).toBeGreaterThanOrEqual(0);
+    expect(inlineSpan(value, "ltr").start).toBeCloseTo(content.start, 1);
+    expect(inlineSpan(value, "ltr").end).toBeLessThanOrEqual(icon.start);
+    expect(icon.end).toBeCloseTo(content.end, 1);
+    expect(icon.end - icon.start).toBe(16);
+    // Cut at the value's box, with an ellipsis: the text is wider than what shows
+    expect(getComputedStyle(value).textOverflow).toBe("ellipsis");
+    expect(value.scrollWidth > value.clientWidth).toBe(truncated);
   });
 });
 

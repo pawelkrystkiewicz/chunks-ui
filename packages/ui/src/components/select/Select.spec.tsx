@@ -18,6 +18,20 @@ describe("Select", () => {
     expect(screen.getByTestId("trigger")).toHaveClass("custom");
   });
 
+  it.each([
+    { kind: "string", className: "custom" },
+    { kind: "function", className: () => "custom" },
+  ])("renders Value with a custom $kind className", ({ className }) => {
+    render(
+      <Select.Root>
+        <Select.Trigger>
+          <Select.Value className={className} data-testid="value" placeholder="Pick" />
+        </Select.Trigger>
+      </Select.Root>,
+    );
+    expect(screen.getByTestId("value")).toHaveClass("custom", "truncate");
+  });
+
   it("renders Icon with custom className", () => {
     render(
       <Select.Root>
