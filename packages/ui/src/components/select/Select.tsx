@@ -55,8 +55,9 @@ function SelectValue({ className, ...props }: SelectValueProps) {
   );
 }
 
-// The chevron is the default content, as on Combobox.Icon: children you pass replace it. They are
-// taken out of `props` because JSX children after a spread would replace them (#541).
+// The chevron is the default content, as on Combobox.Icon: children you pass replace it. JSX
+// children after `{...props}` replace `props.children`, so the consumer's children are passed as
+// the JSX children, with the chevron as the fallback (#541).
 function SelectIcon({ className, children, ...props }: SelectIconProps) {
   return (
     <BaseSelect.Icon className={cnState("ms-auto", className)} {...props}>
