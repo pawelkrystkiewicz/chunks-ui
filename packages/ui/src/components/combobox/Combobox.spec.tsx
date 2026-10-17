@@ -499,12 +499,13 @@ describe("Combobox.Value", () => {
       </Combobox.Root>,
     );
 
-  it("renders the selected label in a span that stays on one line and ends in an ellipsis", () => {
-    triggerStyle();
+  it("renders the selected label in a span that stays on one line and ends in an ellipsis", async () => {
+    const { container } = triggerStyle();
     const value = screen.getByTestId("value");
     expect(value.tagName).toBe("SPAN");
     expect(value).toHaveTextContent(/^Apple$/);
     expect(value).toHaveClass("overflow-hidden", "text-ellipsis", "whitespace-nowrap");
+    expect(await axe(container)).toHaveNoViolations();
   });
 
   it("renders the placeholder in the span while nothing is selected", () => {
