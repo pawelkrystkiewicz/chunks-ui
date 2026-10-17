@@ -124,7 +124,7 @@ The popup enters with a scale-up and fade (from `scale-95` and `opacity-0`): the
 | Part | Description |
 |---|---|
 | `Select.Root` | State container. Manages open/close and selected value. |
-| `Select.Trigger` | The button that opens the dropdown. Styled like an input. |
+| `Select.Trigger` | The button that opens the dropdown. Styled like an input. At most as wide as its container (`max-w-full`), and it shrinks in a flex row (`min-w-0`); `max-w-none` lifts the cap. |
 | `Select.Value` | Displays the selected value or placeholder text. A value wider than the trigger stays on one line and ends in an ellipsis before the chevron. |
 | `Select.Icon` | Chevron icon inside the trigger. |
 | `Select.Portal` | Renders the popup in a portal. |
