@@ -1,6 +1,6 @@
 import { Head, Search } from "nextra/components";
 import { getPageMap } from "nextra/page-map";
-import { Footer, Layout, Navbar } from "nextra-theme-docs";
+import { Footer, Layout, Navbar, ThemeSwitch } from "nextra-theme-docs";
 import "nextra-theme-docs/style.css";
 import "../globals.css";
 import Image from "next/image";
@@ -13,6 +13,7 @@ export const metadata = {
 };
 
 const LOGO_SIZE = 30;
+const REPO = "https://github.com/pawelkrystkiewicz/chunks-ui";
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -43,18 +44,22 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   <b>{metadata.title}</b>
                 </div>
               }
-            />
+              projectLink={REPO}
+            >
+              <ThemeSwitch lite />
+            </Navbar>
           }
           pageMap={await getPageMap()}
           // Nextra names the search box only by its placeholder, which not every screen reader
           // reads as a label, and the theme switch by the current theme alone ("Light"). The
           // Search `aria-label` passes through to the input. `themeSwitch` sets the visible text
-          // of the option and button ("Light theme" etc.), which also becomes the accessible name;
-          // the Select keeps its `title="Change theme"`.
+          // of the option and button ("Light theme" etc.), which also becomes the sidebar switch's
+          // accessible name; the navbar's `lite` switch shows only an icon, so its Select's
+          // `title="Change theme"` names it.
           search={<Search aria-label="Search documentation" />}
           themeSwitch={{ light: "Light theme", dark: "Dark theme", system: "System theme" }}
           // Base of the "Edit this page" and feedback links; Nextra appends the file path
-          docsRepositoryBase="https://github.com/pawelkrystkiewicz/chunks-ui/tree/master/apps/docs"
+          docsRepositoryBase={`${REPO}/tree/master/apps/docs`}
           footer={<Footer />}
         >
           {children}
