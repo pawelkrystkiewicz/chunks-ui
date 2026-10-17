@@ -1,6 +1,13 @@
 import { render, screen } from "@testing-library/react";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { emulateReducedMotion, enterMotionPath, MOTION_PATHS } from "../VisualTest.utils";
+import {
+  boxOf,
+  emulateReducedMotion,
+  enterMotionPath,
+  MOTION_PATHS,
+  SETTLE_TIMEOUT_MS,
+  waitForStable,
+} from "../VisualTest.utils";
 import { type PopupPartName, popupParts } from "./PopupRender.fixtures";
 
 type Css = {
@@ -116,6 +123,22 @@ describe("popup parts with Motion loaded, no reduced-motion preference", () => {
       expect(computedTransition(el).transitionDuration).toBe("0s");
     },
   );
+
+  // Base UI unmounts a closed part once a check on the next frame finds no `getAnimations()` on
+  // it, and Motion would create the exit's animation in its own frame, which can come after that
+  // check (#540)
+  it.each(parts)("$part starts its exit animation as it closes", async ({ ui }) => {
+    const { rerender } = render(ui());
+    const el = await screen.findByTestId("popup");
+    // Open and at rest, its entry's animations done, so one found after the close is the exit's.
+    // `getAnimations()` is empty before Motion's first frame starts the entry too.
+    await waitForStable(() => [getComputedStyle(el).opacity, boxOf(el)]);
+    await expect.poll(() => el.getAnimations(), { timeout: SETTLE_TIMEOUT_MS }).toEqual([]);
+    rerender(ui(undefined, false));
+    // After the microtask the exit queued as it started, before any frame
+    await Promise.resolve();
+    expect(el.getAnimations()).not.toEqual([]);
+  });
 });
 
 // Base UI publishes `--transform-origin` on the Positioner once it has placed the popup: the point

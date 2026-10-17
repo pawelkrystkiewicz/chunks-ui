@@ -12,15 +12,6 @@ type PopupMotionConfig = {
   to: Record<string, number | string>;
   /** Jump to the target with no spring while Base UI's `instant` state is this value */
   skipInstant?: string;
-  /**
-   * Starts the exit as the popup closes. Base UI unmounts a closed popup once a check on the next
-   * frame finds no `getAnimations()` on it. A Root that passes `open` to the popup in a layout
-   * effect (Select) closes the popup a commit late, so that check runs before Motion's frame
-   * resolves the exit's keyframes. The effect that starts the exit calls `onAnimationStart` first,
-   * so a microtask from it resolves them at once. Needs Motion 12.8 or later, which exports
-   * `flushKeyframeResolvers`; on older versions the exit still waits for Motion's frame.
-   */
-  exitAtOnce?: boolean;
 };
 
 /**
@@ -31,18 +22,18 @@ type PopupMotionConfig = {
  * that use Base UI's `open` state. The scale runs about the element's CSS
  * `transform-origin`, so an anchored popup's `origin-(--transform-origin)`
  * class makes it grow out of its trigger, as on the CSS path.
+ *
+ * Every exit starts as the popup closes. Base UI unmounts a closed popup once a check on the next
+ * frame finds no `getAnimations()` on it, and Motion creates the exit's browser animation in its
+ * own frame callback, once it has resolved the keyframes. An idle Motion's callback comes after
+ * that check when the Root passes `open` to the popup in a layout effect, a commit late (Select,
+ * Combobox), so the popup would vanish. The effect that starts the exit calls `onAnimationStart`
+ * first, so a microtask from it resolves the keyframes before the next frame. Needs Motion 12.8 or
+ * later, which exports `flushKeyframeResolvers`; on older versions the exit waits for Motion's frame.
  */
-export function createPopupRenderer({
-  m,
-  spring,
-  from,
-  to,
-  skipInstant,
-  exitAtOnce,
-}: PopupMotionConfig) {
-  // Not on `MotionLike` (see `exitAtOnce`)
+export function createPopupRenderer({ m, spring, from, to, skipInstant }: PopupMotionConfig) {
+  // Not on `MotionLike`: older versions lack it (see above)
   const { flushKeyframeResolvers } = m as MotionLike & { flushKeyframeResolvers?: () => void };
-  const startExit = exitAtOnce ? () => queueMicrotask(() => flushKeyframeResolvers?.()) : undefined;
 
   return (
     renderProps: RenderProps,
@@ -73,13 +64,12 @@ export function createPopupRenderer({
     // A consumer's `onAnimationStart` comes through Base UI's props, typed as a DOM handler; Motion
     // calls it with its target instead
     const passed = renderProps.onAnimationStart as ((definition: unknown) => void) | undefined;
-    const onAnimationStart =
-      state.open || !startExit
-        ? passed
-        : (definition: unknown) => {
-            startExit();
-            passed?.(definition);
-          };
+    const onAnimationStart = state.open
+      ? passed
+      : (definition: unknown) => {
+          queueMicrotask(() => flushKeyframeResolvers?.());
+          passed?.(definition);
+        };
 
     return (
       <m.motion.div

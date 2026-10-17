@@ -225,7 +225,7 @@ describe.each(MOTION_PATHS)("Select.Popup aligned with its trigger, $path", ({ w
     expect(frames.some(({ opacity }) => opacity > 0 && opacity < 1)).toBe(true);
   });
 
-  // Closed during the spring's tail and at rest; on the Motion path see `exitAtOnce` (#521)
+  // Closed during the spring's tail and at rest; on the Motion path see `createPopupRenderer` (#521)
   it.each([
     { when: "as it settles", atRest: false },
     { when: "at rest", atRest: true },

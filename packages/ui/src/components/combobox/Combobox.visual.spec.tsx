@@ -4,6 +4,7 @@ import { page, userEvent } from "vitest/browser";
 import {
   boxOf,
   describePopupCssPath,
+  eachPaintedFrame,
   emulateReducedMotion,
   enterMotionPath,
   expectNotAllowed,
@@ -294,6 +295,50 @@ describe("Combobox.Input beside Clear and Trigger", () => {
 });
 
 describePopupCssPath("Combobox.Popup", (open) => combobox({ open }));
+
+/** The rendered width over the layout width: 1 while nothing scales `el` */
+const renderedScale = (el: Element) =>
+  Math.round(
+    (el.getBoundingClientRect().width / Number.parseFloat(getComputedStyle(el).width)) * 1000,
+  ) / 1000;
+
+// Base UI's Combobox Root, like Select's, passes `open` to the popup a commit late. The popup
+// vanished at once when closed after Motion had gone idle (#540).
+describe("Combobox.Popup closing, Motion", () => {
+  beforeAll(() => enterMotionPath(true));
+  beforeEach(() => emulateReducedMotion(false));
+  afterAll(() => emulateReducedMotion(true));
+
+  const below = (open: boolean) => <div style={{ padding: 40 }}>{combobox({ open })}</div>;
+
+  it.each([
+    { when: "as it settles", atRest: false },
+    { when: "at rest", atRest: true },
+  ])("fades and scales out, closed $when", async ({ atRest }) => {
+    const { rerender, getByTestId } = render(below(true));
+    const popup = getByTestId("popup");
+    await expect.poll(() => getComputedStyle(popup).opacity).toBe("1");
+    // At rest Motion is idle: the fade has ended, and the scale, which Motion animates in JS and
+    // `getAnimations()` does not see, is steady
+    if (atRest) {
+      await expect.poll(() => popup.getAnimations()).toEqual([]);
+      await waitForStable(() => renderedScale(popup));
+    }
+    rerender(below(false));
+    const frames = await eachPaintedFrame(
+      () =>
+        popup.isConnected && {
+          scale: renderedScale(popup),
+          opacity: Number(getComputedStyle(popup).opacity),
+        },
+      40,
+    );
+    // Still mounted on a frame that shows it part-way out
+    expect(
+      frames.some((frame) => frame && frame.scale < 1 && frame.opacity > 0 && frame.opacity < 1),
+    ).toBe(true);
+  });
+});
 
 // ComboboxPositioner's default sideOffset, the gap a single-select popup keeps below its input
 const DEFAULT_SIDE_OFFSET = 8;

@@ -13,8 +13,8 @@ import { Tooltip } from "../components/tooltip";
 export const popupParts = table([
   {
     part: "Dialog.Backdrop",
-    ui: (r) => (
-      <Dialog.Root open>
+    ui: (r, open = true) => (
+      <Dialog.Root open={open}>
         <Dialog.Portal>
           <Dialog.Backdrop render={r} data-testid="popup" />
           <Dialog.Popup>Content</Dialog.Popup>
@@ -24,8 +24,8 @@ export const popupParts = table([
   },
   {
     part: "Dialog.Popup",
-    ui: (r) => (
-      <Dialog.Root open>
+    ui: (r, open = true) => (
+      <Dialog.Root open={open}>
         <Dialog.Portal>
           <Dialog.Popup render={r} data-testid="popup">
             Content
@@ -36,8 +36,8 @@ export const popupParts = table([
   },
   {
     part: "Drawer.Backdrop",
-    ui: (r) => (
-      <Drawer.Root open>
+    ui: (r, open = true) => (
+      <Drawer.Root open={open}>
         <Drawer.Portal>
           <Drawer.Backdrop render={r} data-testid="popup" />
           <Drawer.Popup>Content</Drawer.Popup>
@@ -48,8 +48,8 @@ export const popupParts = table([
   {
     // One side: `cssSlide` in Drawer.Variants.ts is on the base, shared by the three sides
     part: "Drawer.Popup",
-    ui: (r) => (
-      <Drawer.Root open>
+    ui: (r, open = true) => (
+      <Drawer.Root open={open}>
         <Drawer.Portal>
           <Drawer.Popup side="bottom" render={r} data-testid="popup">
             Content
@@ -60,8 +60,8 @@ export const popupParts = table([
   },
   {
     part: "Popover.Content",
-    ui: (r) => (
-      <Popover.Root open>
+    ui: (r, open = true) => (
+      <Popover.Root open={open}>
         <Popover.Trigger>Open</Popover.Trigger>
         <Popover.Content render={r} data-testid="popup">
           Content
@@ -71,8 +71,8 @@ export const popupParts = table([
   },
   {
     part: "Menu.Content",
-    ui: (r) => (
-      <Menu.Root open>
+    ui: (r, open = true) => (
+      <Menu.Root open={open}>
         <Menu.Trigger>Open</Menu.Trigger>
         <Menu.Content render={r} data-testid="popup">
           <Menu.Item>Item</Menu.Item>
@@ -82,8 +82,8 @@ export const popupParts = table([
   },
   {
     part: "Tooltip.Popup",
-    ui: (r) => (
-      <Tooltip.Root open>
+    ui: (r, open = true) => (
+      <Tooltip.Root open={open}>
         <Tooltip.Trigger>Hover</Tooltip.Trigger>
         <Tooltip.Portal>
           <Tooltip.Positioner>
@@ -97,8 +97,8 @@ export const popupParts = table([
   },
   {
     part: "Select.Popup",
-    ui: (r) => (
-      <Select.Root open>
+    ui: (r, open = true) => (
+      <Select.Root open={open}>
         <Select.Trigger>Pick</Select.Trigger>
         {/* Below its trigger: aligned over it, the popup fades without a scale */}
         <Select.Positioner alignItemWithTrigger={false}>
@@ -111,8 +111,8 @@ export const popupParts = table([
   },
   {
     part: "Combobox.Popup",
-    ui: (r) => (
-      <Combobox.Root open items={["apple"]}>
+    ui: (r, open = true) => (
+      <Combobox.Root open={open} items={["apple"]}>
         <Combobox.Input />
         <Combobox.Portal>
           <Combobox.Positioner>
@@ -130,8 +130,11 @@ export const popupParts = table([
 function table<Part extends string>(
   rows: {
     part: Part;
-    /** Mounts the part open as `data-testid="popup"`, with a consumer `render` when given one. */
-    ui: (renderProp?: ReactElement) => ReactNode;
+    /**
+     * Mounts the part as `data-testid="popup"`, open unless `open` is false, with a consumer
+     * `render` when given one.
+     */
+    ui: (renderProp?: ReactElement, open?: boolean) => ReactNode;
   }[],
 ) {
   return rows;
