@@ -17,10 +17,7 @@ import {
   saveTheme,
 } from "../../create/theme-model";
 import { isLayoutFont } from "../../layout-fonts";
-import { FOCUS_RING, FOCUS_RING_INSET } from "./focus";
-
-const ICON_BUTTON =
-  "flex size-[35px] items-center justify-center rounded-lg bg-white/8 text-white hover:bg-white/16 hover:text-white";
+import { FOCUS_RING, FOCUS_RING_INSET, ICON_BUTTON } from "./focus";
 
 function useCopy(text: string) {
   const [copied, setCopied] = useState(false);

@@ -1,6 +1,7 @@
 import { Head, Search } from "nextra/components";
+import { GitHubIcon } from "nextra/icons";
 import { getPageMap } from "nextra/page-map";
-import { Footer, Layout, Navbar } from "nextra-theme-docs";
+import { Footer, Layout, Navbar, ThemeSwitch } from "nextra-theme-docs";
 import "nextra-theme-docs/style.css";
 import "../globals.css";
 import Image from "next/image";
@@ -13,6 +14,7 @@ export const metadata = {
 };
 
 const LOGO_SIZE = 30;
+const REPO = "https://github.com/pawelkrystkiewicz/chunks-ui";
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -43,18 +45,24 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   <b>{metadata.title}</b>
                 </div>
               }
-            />
+              projectLink={REPO}
+              // The landing's name for its GitHub link; Nextra's default icon says "Project repository"
+              projectIcon={<GitHubIcon height="24" aria-label="GitHub repository" />}
+            >
+              <ThemeSwitch lite />
+            </Navbar>
           }
           pageMap={await getPageMap()}
           // Nextra names the search box only by its placeholder, which not every screen reader
           // reads as a label, and the theme switch by the current theme alone ("Light"). The
           // Search `aria-label` passes through to the input. `themeSwitch` sets the visible text
-          // of the option and button ("Light theme" etc.), which also becomes the accessible name;
-          // the Select keeps its `title="Change theme"`.
+          // of the option and button ("Light theme" etc.), which names the expanded sidebar's
+          // switch. The navbar's switch, and the collapsed sidebar's, are `lite` (icon only): the
+          // Select's `title="Change theme"` names them.
           search={<Search aria-label="Search documentation" />}
           themeSwitch={{ light: "Light theme", dark: "Dark theme", system: "System theme" }}
           // Base of the "Edit this page" and feedback links; Nextra appends the file path
-          docsRepositoryBase="https://github.com/pawelkrystkiewicz/chunks-ui/tree/master/apps/docs"
+          docsRepositoryBase={`${REPO}/tree/master/apps/docs`}
           footer={<Footer />}
         >
           {children}
