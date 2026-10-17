@@ -7,6 +7,11 @@ import { reloadMotion } from "./use-motion";
 
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
 
+// An absence window, as a control that keeps its elements changes nothing to wait for. One that
+// picked Motion up late would swap an element in an effect, which render() flushes, or one frame
+// later for each frame callback it waits on, so 5 frames see a swap up to 4 callbacks late
+const ABSENCE_WINDOW_FRAMES = 5;
+
 // Elements React removed from the rendered tree while it stayed mounted
 async function removedWhileMounted(ui: ReactNode) {
   // Resolves once use-motion holds the module; a bare import("motion/react") can settle first
@@ -17,7 +22,7 @@ async function removedWhileMounted(ui: ReactNode) {
   });
   observer.observe(document.body, { childList: true, subtree: true });
   render(ui);
-  for (let frame = 0; frame < 5; frame++) await nextFrame();
+  for (let frame = 0; frame < ABSENCE_WINDOW_FRAMES; frame++) await nextFrame();
   observer.disconnect();
   return removed.filter((node) => node instanceof Element);
 }
