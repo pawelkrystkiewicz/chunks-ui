@@ -10,6 +10,8 @@ type PopupMotionConfig = {
   spring: MotionOptions;
   from: Record<string, number | string>;
   to: Record<string, number | string>;
+  /** Starts the exit as the popup closes, not in Motion's next frame (see `Select.Popup`) */
+  exitAtOnce?: boolean;
 };
 
 /**
@@ -21,7 +23,15 @@ type PopupMotionConfig = {
  * `transform-origin`, so an anchored popup's `origin-(--transform-origin)`
  * class makes it grow out of its trigger, as on the CSS path.
  */
-export function createPopupRenderer({ m, spring, from, to }: PopupMotionConfig) {
+export function createPopupRenderer({ m, spring, from, to, exitAtOnce }: PopupMotionConfig) {
+  // Motion starts an animation in its next frame, once it has resolved the keyframes. The effect
+  // that starts the exit calls `onAnimationStart` first, so resolving them in a microtask after it
+  // starts the exit now. `MotionLike` has neither `flushKeyframeResolvers` nor this callback.
+  const { flushKeyframeResolvers } = m as MotionLike & { flushKeyframeResolvers?: () => void };
+  const startExit = exitAtOnce && {
+    onAnimationStart: () => queueMicrotask(() => flushKeyframeResolvers?.()),
+  };
+
   return (renderProps: RenderProps, state: { open: boolean; side?: string }): JSX.Element => {
     const style: CSSProperties = { ...(renderProps.style ?? {}) };
 
@@ -43,6 +53,7 @@ export function createPopupRenderer({ m, spring, from, to }: PopupMotionConfig) 
         initial={closed}
         animate={state.open ? to : closed}
         transition={spring}
+        {...(!state.open && startExit)}
       />
     );
   };

@@ -147,19 +147,17 @@ describe.each(MOTION_PATHS)("Select.Popup aligned with its trigger, $path", ({ w
     expect(frames.some(({ opacity }) => opacity > 0 && opacity < 1)).toBe(true);
   });
 
-  // On the Motion path a Select has no exit to watch: Base UI unmounts it on the frame after it
-  // closes, before Motion starts the exit
-  if (!withMotion) {
-    it("closes without a scale", async () => {
-      const { rerender, getByTestId } = render(aligned(true));
-      const popup = getByTestId("popup");
-      await expect.poll(() => getComputedStyle(popup).opacity).toBe("1");
-      rerender(aligned(false));
-      const frames = await framesOf(popup);
-      expect(new Set(frames.map(({ side }) => side))).toEqual(new Set(["none"]));
-      expect(frames.map(({ scale }) => scale)).toEqual(frames.map(() => 1));
-      // The frames cover the exit: the popup fades out over them
-      expect(frames.some(({ opacity }) => opacity > 0 && opacity < 1)).toBe(true);
-    });
-  }
+  // Closed once it has faded in. On the Motion path the exit starts as the popup closes: Base UI
+  // looks for it on the next frame, before Motion's own frame, and unmounts a popup without one (#521)
+  it("closes without a scale", async () => {
+    const { rerender, getByTestId } = render(aligned(true));
+    const popup = getByTestId("popup");
+    await expect.poll(() => getComputedStyle(popup).opacity).toBe("1");
+    rerender(aligned(false));
+    const frames = await framesOf(popup);
+    expect(new Set(frames.map(({ side }) => side))).toEqual(new Set(["none"]));
+    expect(frames.map(({ scale }) => scale)).toEqual(frames.map(() => 1));
+    // The frames cover the exit: the popup fades out over them
+    expect(frames.some(({ opacity }) => opacity > 0 && opacity < 1)).toBe(true);
+  });
 });
