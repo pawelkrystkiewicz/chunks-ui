@@ -54,12 +54,6 @@ export interface MotionLike {
     postRender: (callback: () => void) => unknown;
   };
   cancelFrame: (callback: () => void) => void;
-  /**
-   * A motion-dom internal that `motion/react` exports since 12.7.5, so optional. Resolves every
-   * pending keyframe resolver in the app's Motion now, not just one popup's, instead of in
-   * Motion's next frame.
-   */
-  flushKeyframeResolvers?: () => void;
 }
 
 let _cache: MotionLike | null | undefined;

@@ -1,12 +1,13 @@
 "use client";
 
 import type { CSSProperties, HTMLAttributes, JSX, Ref } from "react";
+import type { MotionInternals } from "./render-now";
 import type { MotionLike, MotionOptions } from "./use-motion";
 
 type RenderProps = HTMLAttributes<HTMLElement> & { ref?: Ref<HTMLElement> };
 
 type PopupMotionConfig = {
-  m: MotionLike;
+  m: MotionLike & MotionInternals;
   spring: MotionOptions;
   from: Record<string, number | string>;
   to: Record<string, number | string>;
@@ -66,10 +67,7 @@ export function createPopupRenderer({ m, spring, from, to, skipInstant }: PopupM
     const onAnimationStart = state.open
       ? passed
       : (definition: unknown) => {
-          // A microtask, because Motion fires `AnimationStart` before it creates the animation:
-          // a call now would miss this exit's keyframes. Keep the `() =>` and the `?.`. On a
-          // Motion without the export, `queueMicrotask(m.flushKeyframeResolvers)` throws here,
-          // inside Motion's effect, and a call without the `?.` throws in the microtask.
+          // Deferred: Motion fires AnimationStart before it creates the exit, so a call now misses its keyframes
           queueMicrotask(() => m.flushKeyframeResolvers?.());
           passed?.(definition);
         };

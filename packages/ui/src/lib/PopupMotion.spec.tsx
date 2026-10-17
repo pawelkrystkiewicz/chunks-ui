@@ -4,6 +4,7 @@ import type { HTMLAttributes } from "react";
 import { afterEach, expect, it, vi } from "vitest";
 import { springs } from "./motion";
 import { createPopupRenderer } from "./PopupMotion";
+import type { MotionInternals } from "./render-now";
 import type { MotionLike } from "./use-motion";
 
 const options = { m, spring: springs.popup, from: { opacity: 0 }, to: { opacity: 1 } };
@@ -12,7 +13,7 @@ afterEach(() => vi.restoreAllMocks());
 
 // Mounts the popup open and waits for Motion to start its entry. `target` is what the consumer's
 // `onAnimationStart` got last; `close` rerenders the popup closed.
-async function mountOpen(motion: MotionLike) {
+async function mountOpen(motion: MotionLike & MotionInternals) {
   const popup = createPopupRenderer({ ...options, m: motion });
   const onAnimationStart = vi.fn();
   const props = { onAnimationStart } as HTMLAttributes<HTMLElement>;
