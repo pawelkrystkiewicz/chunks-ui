@@ -123,7 +123,7 @@ describe("popups animated with Motion", () => {
           </Drawer.Portal>
         </Drawer.Root>
       );
-      await import("motion/react");
+      await reloadMotion();
       const { rerender } = render(drawer(false));
       rerender(drawer(true));
       await expect.poll(() => visibleShare(popup())).toBeGreaterThan(0.99);
