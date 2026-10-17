@@ -90,8 +90,8 @@ describe("Combobox", () => {
               Apple
               <Combobox.ChipRemove />
             </Combobox.Chip>
+            <Combobox.Input aria-label="Fruits" />
           </Combobox.Chips>
-          <Combobox.Input aria-label="Fruits" />
           <Combobox.Clear />
         </Combobox.Control>
       </Combobox.Root>,
@@ -106,10 +106,12 @@ describe("Combobox", () => {
     const ref = createRef<HTMLDivElement>();
     render(
       <Combobox.Root multiple items={items} defaultValue={[items[0]]}>
-        <Combobox.Chips ref={ref} className="custom gap-2" data-testid="chips">
-          <Combobox.Chip>Apple</Combobox.Chip>
-        </Combobox.Chips>
-        <Combobox.Input aria-label="Fruits" />
+        <Combobox.Control>
+          <Combobox.Chips ref={ref} className="custom gap-2" data-testid="chips">
+            <Combobox.Chip>Apple</Combobox.Chip>
+            <Combobox.Input aria-label="Fruits" />
+          </Combobox.Chips>
+        </Combobox.Control>
       </Combobox.Root>,
     );
     const chips = screen.getByTestId("chips");
@@ -679,10 +681,12 @@ describe("Combobox focus ring", () => {
   it("draws the library focus ring on Chip", () => {
     render(
       <Combobox.Root multiple items={items} defaultValue={[items[0]]}>
-        <Combobox.Chips>
-          <Combobox.Chip data-testid="chip">Apple</Combobox.Chip>
-        </Combobox.Chips>
-        <Combobox.Input aria-label="Fruits" />
+        <Combobox.Control>
+          <Combobox.Chips>
+            <Combobox.Chip data-testid="chip">Apple</Combobox.Chip>
+            <Combobox.Input aria-label="Fruits" />
+          </Combobox.Chips>
+        </Combobox.Control>
       </Combobox.Root>,
     );
     expect(screen.getByTestId("chip")).toHaveClass(FOCUS_RING);
