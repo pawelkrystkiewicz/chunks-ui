@@ -338,6 +338,30 @@ describe("Combobox.Value in a trigger", () => {
     expect(value.scrollWidth > value.clientWidth).toBe(truncated);
   });
 
+  // The placeholder is muted while nothing is selected, as on Select.Trigger, and a value has the
+  // colour of the text around the trigger
+  it.each([
+    { shows: "the placeholder muted", defaultValue: null, colour: "muted" },
+    { shows: "a value in the colour around it", defaultValue: "Fig", colour: "around" },
+  ])("shows $shows", ({ defaultValue, colour }) => {
+    const { getByTestId } = render(
+      <div data-testid="around" style={{ padding: 40 }}>
+        <Combobox.Root defaultValue={defaultValue}>
+          <Combobox.Trigger aria-label="Fruit" className={SELECT_LIKE} style={{ width: 200 }}>
+            <Combobox.Value data-testid="value" placeholder="Pick a fruit" />
+            <Combobox.Icon />
+          </Combobox.Trigger>
+        </Combobox.Root>
+        <span data-testid="muted" className="text-muted-foreground">
+          Muted
+        </span>
+      </div>,
+    );
+    const colourOf = (testId: string) => getComputedStyle(getByTestId(testId)).color;
+    expect(colourOf("muted")).not.toBe(colourOf("around"));
+    expect(colourOf("value")).toBe(colourOf(colour));
+  });
+
   // A badge beside the value keeps its width on one line, and the value takes only the free space
   // and truncates first, as on Select.Value (#546). Before, the value's flex-basis was its full
   // text width, so a long value and the badge shrank in proportion and the badge's two words

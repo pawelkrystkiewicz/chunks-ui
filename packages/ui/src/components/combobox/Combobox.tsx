@@ -154,6 +154,9 @@ function ComboboxTrigger({ className, children, ...props }: ComboboxTriggerProps
         // Within its container around a one-line Combobox.Value, as Select.Trigger (#518)
         "min-w-0 max-w-full",
         "disabled:cursor-not-allowed disabled:opacity-50",
+        // Base UI sets data-placeholder while nothing is selected: the placeholder of a trigger-style
+        // Combobox is muted, as on Select.Trigger (#564). The default chevron is muted already.
+        "data-placeholder:text-muted-foreground",
         className,
       )}
       {...props}
