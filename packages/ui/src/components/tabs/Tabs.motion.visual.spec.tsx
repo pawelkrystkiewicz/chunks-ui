@@ -1,5 +1,5 @@
 import { render } from "@testing-library/react";
-import { Activity, createRef, useEffect, useRef } from "react";
+import { Activity, createRef, Fragment, useEffect, useRef } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { page } from "vitest/browser";
 import { reloadMotion } from "../../lib/use-motion";
@@ -116,7 +116,7 @@ describe("Tabs with Motion", () => {
     );
     // Motion drives the container. A swap onto Motion's path after the mount, which would remount
     // the panel, has happened by the time Motion writes the height
-    await expect.poll(() => getByTestId("contents").style.height).not.toBe("");
+    await expect.poll(() => getByTestId("contents").style.height, { timeout: 5000 }).not.toBe("");
     expect(instances.size).toBe(1);
   });
 
@@ -125,37 +125,42 @@ describe("Tabs with Motion", () => {
   it.each([
     [
       "Contents",
-      <Tabs.Contents key="contents">
+      <Tabs.Contents key="contents" data-testid="contents">
         <Tabs.Content value="a">
           <input aria-label="Name" />
         </Tabs.Content>
         <Tabs.Content value="b">Panel B</Tabs.Content>
       </Tabs.Contents>,
+      // On Motion's path once Motion writes the container's height
+      () =>
+        expect
+          .poll(() => page.getByTestId("contents").element().style.height, { timeout: 5000 })
+          .not.toBe(""),
     ],
     [
       "Animate",
-      <Tabs.Animate key="animate">
-        <input aria-label="Name" />
-      </Tabs.Animate>,
+      <Fragment key="animate">
+        <Tabs.Animate>
+          <input aria-label="Name" />
+        </Tabs.Animate>
+        <MotionLoaded />
+      </Fragment>,
+      // A showing pane stays as it is when Motion arrives, so nothing in it shows the arrival.
+      // Tabs.Animate reads Motion with useMotion(), so it has re-rendered with it once the
+      // marker shows
+      () => expect.element(page.getByTestId("motion-loaded")).toBeInTheDocument(),
     ],
-  ])(
+  ] as const)(
     "keeps text typed into Tabs.%s, and its focus, when Motion finishes loading",
-    async (_, ui) => {
+    async (_, ui, motionArrived) => {
       const loading = reloadMotion();
-      render(
-        <>
-          <Tabs.Root defaultValue="a">{ui}</Tabs.Root>
-          <MotionLoaded />
-        </>,
-      );
+      render(<Tabs.Root defaultValue="a">{ui}</Tabs.Root>);
       const input = page.getByRole("textbox", { name: "Name" }).element() as HTMLInputElement;
       input.value = "Ada";
       input.focus();
 
       await loading;
-      // Tabs.Contents and Tabs.Animate read Motion with useMotion(), so they have re-rendered
-      // with it once the marker shows
-      await expect.element(page.getByTestId("motion-loaded")).toBeInTheDocument();
+      await motionArrived();
       expect(document.activeElement).toBe(input);
       await expect.element(page.getByRole("textbox", { name: "Name" })).toHaveValue("Ada");
     },
