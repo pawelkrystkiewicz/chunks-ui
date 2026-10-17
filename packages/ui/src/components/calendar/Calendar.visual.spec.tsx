@@ -1,7 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, it, vi } from "vitest";
-import { commands, userEvent } from "vitest/browser";
+import { userEvent } from "vitest/browser";
 import {
+  emulateForcedColors,
   expectNotAllowed,
   focusVisible,
   renderFixture,
@@ -93,11 +94,10 @@ function dayNumber(name: string) {
 
 describe("Calendar in forced-colors mode", () => {
   // Forced colours replace author colours, so the muted text of outside days needs a system colour
-  afterEach(() => commands.emulateMedia({ forcedColors: "none" }));
+  afterEach(() => emulateForcedColors(false));
 
   it("tells outside days from the shown month's days", async () => {
-    await commands.emulateMedia({ forcedColors: "active" });
-    await expect.poll(() => matchMedia("(forced-colors: active)").matches).toBe(true);
+    await emulateForcedColors(true);
     render(<Calendar value={new Date(2026, 2, 18)} weekStartsOn={1} showOutsideDays />);
     const colour = (name: string) =>
       getComputedStyle(screen.getByLabelText(name, { selector: "button" })).color;
@@ -109,8 +109,7 @@ describe("Calendar in forced-colors mode", () => {
   // Forced colours drop author backgrounds and box shadows: the selected day's fill and today's
   // ring go with them. System colours and text decorations survive.
   it("keeps the selected day, today, outside days and disabled days apart", async () => {
-    await commands.emulateMedia({ forcedColors: "active" });
-    await expect.poll(() => matchMedia("(forced-colors: active)").matches).toBe(true);
+    await emulateForcedColors(true);
     const { fixture } = await renderFixture(
       <Calendar
         value={new Date(2026, 2, 18)}
@@ -136,8 +135,7 @@ describe("Calendar in forced-colors mode", () => {
   });
 
   it("underlines today when it is disabled, and strikes it through", async () => {
-    await commands.emulateMedia({ forcedColors: "active" });
-    await expect.poll(() => matchMedia("(forced-colors: active)").matches).toBe(true);
+    await emulateForcedColors(true);
     render(
       <Calendar
         value={new Date(2026, 2, 18)}

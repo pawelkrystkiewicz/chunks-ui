@@ -18,6 +18,38 @@ describe("Select", () => {
     expect(screen.getByTestId("trigger")).toHaveClass("custom");
   });
 
+  it.each([
+    { kind: "string", className: "custom" },
+    { kind: "function", className: () => "custom" },
+  ])("renders Value with a custom $kind className", ({ className }) => {
+    render(
+      <Select.Root>
+        <Select.Trigger>
+          <Select.Value className={className} data-testid="value" placeholder="Pick" />
+        </Select.Trigger>
+      </Select.Root>,
+    );
+    expect(screen.getByTestId("value")).toHaveClass(
+      "custom",
+      "overflow-hidden",
+      "text-ellipsis",
+      "whitespace-nowrap",
+    );
+  });
+
+  it("lets a Value className bring back wrapping and keep the clip", () => {
+    render(
+      <Select.Root>
+        <Select.Trigger>
+          <Select.Value className="whitespace-normal" data-testid="value" placeholder="Pick" />
+        </Select.Trigger>
+      </Select.Root>,
+    );
+    const value = screen.getByTestId("value");
+    expect(value).toHaveClass("overflow-hidden", "text-ellipsis", "whitespace-normal");
+    expect(value).not.toHaveClass("whitespace-nowrap");
+  });
+
   it("renders Icon with custom className", () => {
     render(
       <Select.Root>

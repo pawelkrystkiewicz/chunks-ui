@@ -291,6 +291,9 @@ describe("Toast with motion allowed", () => {
     await expect.poll(() => getComputedStyle(toast).opacity).toBe("1");
 
     swipe(toast, "left");
+    // An absence window, as a toast that stays changes nothing to wait for. A swipe that
+    // dismissed it would set data-swipe-direction and data-ending-style in the render after
+    // pointerup, and take it off the page after the 300ms exit, so 600ms sees all three
     await new Promise((resolve) => setTimeout(resolve, 600));
     expect(toast.isConnected).toBe(true);
     expect(toast.dataset.swipeDirection).toBeUndefined();
