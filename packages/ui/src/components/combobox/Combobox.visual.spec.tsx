@@ -123,8 +123,8 @@ const disabledChipsCombobox = () => (
             <Combobox.ChipRemove />
           </Combobox.Chip>
         ))}
+        <Combobox.Input aria-label="Frameworks" />
       </Combobox.Chips>
-      <Combobox.Input aria-label="Frameworks" />
       <Combobox.Clear />
       <Combobox.Trigger />
     </Combobox.Control>
