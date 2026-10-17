@@ -293,6 +293,10 @@ Inside `Field.Root`, Base UI sets `aria-labelledby` on `Combobox.Trigger` to the
 
 Add `touch-target` to `Combobox.Trigger` only when there is no `Combobox.Clear` next to it. Their centres are 23px apart, so the trigger's area would cover the end of the clear button, and a press there would open the popup.
 
+## Text Size
+
+The text of `Combobox.Input` is 16px below the `md` breakpoint (768px by default) and 14px from it up, as in `Input`. iOS Safari zooms the page when a field with text under 16px takes focus, so a `text-sm` class on `Combobox.Input` brings the zoom back on phones: put a smaller size behind the breakpoint, as the default `md:text-sm` does. A size without a breakpoint, such as `text-lg`, replaces only the 16px; add `md:text-lg` to use it from `md` up too.
+
 ## Props
 
 All compound parts accept the same props as their underlying Base UI [`Combobox`](https://base-ui.com/react/components/combobox#api-reference) counterparts. `Combobox.Control` is Base UI's `Combobox.InputGroup` and accepts its props. `Combobox.Value` also takes a `<span>`'s props. `Combobox.Root` also takes `labels`:

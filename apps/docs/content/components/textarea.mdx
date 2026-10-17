@@ -77,6 +77,10 @@ A disabled `Textarea` shows the not-allowed cursor and has no resize handle. Pas
   <Textarea disabled placeholder="This field is disabled" />
 </Container>
 
+## Text Size
+
+The text is 16px below the `md` breakpoint (768px by default) and 14px from it up, as in `Input`. iOS Safari zooms the page when a field with text under 16px takes focus, so a `text-sm` class brings the zoom back on phones: put a smaller size behind the breakpoint, as the default `md:text-sm` does. A size without a breakpoint, such as `text-lg`, replaces only the 16px; add `md:text-lg` to use it from `md` up too.
+
 ## Props
 
 <TSDoc

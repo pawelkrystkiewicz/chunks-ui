@@ -93,6 +93,14 @@ A disabled `NumberField` is dimmed and shows the not-allowed cursor over its inp
 
 <NumberFieldDisabledExample />
 
+## Mobile Keyboards
+
+Base UI sets `inputMode` on `NumberField.Input` for you: `numeric`, except on iOS, whose number keypad has no minus key. There a `min` of 0 or more gives the decimal keypad, and without one, or with a negative `min`, the full keyboard shows, so a minus sign can be typed. Set `min={0}` when the value can't be negative, so iOS shows the keypad. An `inputMode` you pass to `NumberField.Input` replaces Base UI's.
+
+## Text Size
+
+The text of `NumberField.Input` is 16px below the `md` breakpoint (768px by default) and 14px from it up, as in `Input`. iOS Safari zooms the page when a field with text under 16px takes focus, so a `text-sm` class on `NumberField.Input` brings the zoom back on phones: put a smaller size behind the breakpoint, as the default `md:text-sm` does. A size without a breakpoint, such as `text-lg`, replaces only the 16px; add `md:text-lg` to use it from `md` up too.
+
 ## Compound Parts
 
 | Part | Description |
