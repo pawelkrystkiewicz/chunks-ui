@@ -124,6 +124,8 @@ Inside `Field.Root`: `Field.Label` names the trigger and `Field.Description` des
 
 A click on a `<label>` or a `Field.Label` clicks the trigger, so it opens the calendar.
 
+The calendar opens in a dialog named "Choose date". Set `labels.dialog` to change the name, for example to translate it.
+
 ## Forms
 
 Give the picker a `name` to send the selected date with a `<form>`. A hidden input holds the date as `yyyy-mm-dd`, or an empty string when no date is selected. The year always has 4 digits: January 5, 999 is `0999-01-05`. A disabled picker sends nothing.
