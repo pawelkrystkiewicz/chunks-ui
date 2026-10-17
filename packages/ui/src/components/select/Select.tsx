@@ -55,20 +55,24 @@ function SelectValue({ className, ...props }: SelectValueProps) {
   );
 }
 
-function SelectIcon({ className, ...props }: SelectIconProps) {
+// The chevron is the default content, as on Combobox.Icon: children you pass replace it. They are
+// taken out of `props` because JSX children after a spread would replace them (#541).
+function SelectIcon({ className, children, ...props }: SelectIconProps) {
   return (
     <BaseSelect.Icon className={cnState("ms-auto", className)} {...props}>
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        className="size-4 text-muted-foreground"
-        aria-hidden="true"
-      >
-        <path d="m6 9 6 6 6-6" />
-      </svg>
+      {children ?? (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          className="size-4 text-muted-foreground"
+          aria-hidden="true"
+        >
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      )}
     </BaseSelect.Icon>
   );
 }
