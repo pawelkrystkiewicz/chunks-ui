@@ -994,3 +994,45 @@ describe("ToggleGroup pill from server HTML to the measured indicator", () => {
     },
   );
 });
+
+// An item disabled while pressed fades to 50% over its transition. The indicator under it fades
+// with it, frame for frame, instead of dropping to 50% in one frame. With reduced motion the item
+// changes at once, and the indicator with it.
+describe("ToggleGroup indicator under the pressed item disabled at runtime", () => {
+  const ui = (disabled: boolean) => (
+    <ToggleGroup.Root value={["b"]}>
+      <ToggleGroup.Item value="a">Alpha</ToggleGroup.Item>
+      <ToggleGroup.Item value="b" disabled={disabled}>
+        Beta
+      </ToggleGroup.Item>
+    </ToggleGroup.Root>
+  );
+  const opacityOf = (el: Element) => Number(getComputedStyle(el).opacity);
+
+  afterEach(() => emulateReducedMotion(false));
+
+  it.each([
+    ...MOTION_PATHS.map(({ path, withMotion }) => ({ path, withMotion, reduced: false })),
+    { path: "reduced motion", withMotion: false, reduced: true },
+  ])("dims the indicator with the item, on $path", async ({ withMotion, reduced }) => {
+    await emulateReducedMotion(reduced);
+    const { indicator, rerender, getByRole } = await renderGroup(ui(false), withMotion);
+    const item = getByRole("button", { name: "Beta" });
+    await waitForStable(() => offBy(item, indicator()));
+
+    rerender(ui(true));
+    const frames = await eachPaintedFrame(
+      () => ({ item: opacityOf(item), indicator: opacityOf(indicator()) }),
+      40,
+    );
+    const log = JSON.stringify(frames);
+    expect(
+      frames.every((frame) => Math.abs(frame.indicator - frame.item) < 0.01),
+      log,
+    ).toBe(true);
+    // Values between the two ends: it faded rather than jumped, unless reduced motion is on
+    const between = frames.filter(({ indicator }) => indicator > 0.5 && indicator < 1);
+    expect(between.length > 0, log).toBe(!reduced);
+    expect(await waitForStable(() => opacityOf(indicator()))).toBe(0.5);
+  });
+});
