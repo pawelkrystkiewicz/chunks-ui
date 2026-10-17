@@ -29,6 +29,9 @@ function SelectTrigger({ className, ...props }: SelectTriggerProps) {
     <BaseSelect.Trigger
       className={cnState(
         "flex h-ui-height w-full items-center justify-between rounded-md border border-input bg-background px-3 text-sm",
+        // Within its container, however long the value: it shrinks in a flex row, and stops at the
+        // container's width when sized by its value (`w-auto`)
+        "min-w-0 max-w-full",
         "placeholder:text-muted-foreground",
         FOCUS_RING,
         RING_TRANSITION,
@@ -41,9 +44,15 @@ function SelectTrigger({ className, ...props }: SelectTriggerProps) {
   );
 }
 
-// One line: a value wider than the trigger ends in an ellipsis before the chevron (#518)
+// One line: a value wider than the trigger ends in an ellipsis before the chevron (#518). Three
+// classes, not `truncate`, so `whitespace-normal` in `className` brings back wrapping alone.
 function SelectValue({ className, ...props }: SelectValueProps) {
-  return <BaseSelect.Value className={cnState("truncate", className)} {...props} />;
+  return (
+    <BaseSelect.Value
+      className={cnState("overflow-hidden text-ellipsis whitespace-nowrap", className)}
+      {...props}
+    />
+  );
 }
 
 function SelectIcon({ className, ...props }: SelectIconProps) {

@@ -135,6 +135,37 @@ describe("Select", () => {
     expect(getComputedStyle(value).textOverflow).toBe("ellipsis");
     expect(value.scrollWidth > value.clientWidth).toBe(truncated);
   });
+
+  // The value's one line must not widen the trigger past its container: beside a button in a
+  // flex row it shrinks, and sized by its value (`w-auto`) it stops at the container's width
+  it.each([
+    { layout: "beside a button in a 200px flex row", width: 200, row: true, trigger: undefined },
+    { layout: "sized by its value in a 140px box", width: 140, row: false, trigger: "w-auto" },
+  ])("keeps a trigger $layout inside it, with the value cut", ({ width, row, trigger }) => {
+    const { getByRole, getByTestId } = render(
+      <div style={{ padding: 40 }}>
+        <div data-testid="box" className={row ? "flex gap-2" : undefined} style={{ width }}>
+          <Select.Root defaultValue="Dragon fruit from the far end of the orchard">
+            <Select.Trigger aria-label="Fruit" className={trigger}>
+              <Select.Value data-testid="value" />
+              <Select.Icon />
+            </Select.Trigger>
+          </Select.Root>
+          {row && (
+            <button type="button" style={{ width: 60 }}>
+              Go
+            </button>
+          )}
+        </div>
+      </div>,
+    );
+    const box = getByTestId("box");
+    expect(insetsWithin(box, getByRole("combobox")).right).toBeGreaterThanOrEqual(0);
+    if (row) expect(insetsWithin(box, getByRole("button")).right).toBeGreaterThanOrEqual(0);
+    const value = getByTestId("value");
+    expect(getComputedStyle(value).textOverflow).toBe("ellipsis");
+    expect(value.scrollWidth).toBeGreaterThan(value.clientWidth);
+  });
 });
 
 // Below its trigger: aligned over it, the popup fades without a scale (below)

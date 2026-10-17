@@ -29,7 +29,27 @@ describe("Select", () => {
         </Select.Trigger>
       </Select.Root>,
     );
-    expect(screen.getByTestId("value")).toHaveClass("custom", "truncate");
+    expect(screen.getByTestId("value")).toHaveClass(
+      "custom",
+      "overflow-hidden",
+      "text-ellipsis",
+      "whitespace-nowrap",
+    );
+  });
+
+  // The truncation is spelled as three classes, not `truncate`, so a consumer class replaces only
+  // its own piece: tailwind-merge would let `whitespace-normal` drop all of `truncate`
+  it("lets a Value className bring back wrapping and keep the clip", () => {
+    render(
+      <Select.Root>
+        <Select.Trigger>
+          <Select.Value className="whitespace-normal" data-testid="value" placeholder="Pick" />
+        </Select.Trigger>
+      </Select.Root>,
+    );
+    const value = screen.getByTestId("value");
+    expect(value).toHaveClass("overflow-hidden", "text-ellipsis", "whitespace-normal");
+    expect(value).not.toHaveClass("whitespace-nowrap");
   });
 
   it("renders Icon with custom className", () => {
