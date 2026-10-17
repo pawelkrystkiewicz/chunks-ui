@@ -31,10 +31,25 @@ describe("Select", () => {
     );
     expect(screen.getByTestId("value")).toHaveClass(
       "custom",
+      "flex-1",
+      "text-start",
       "overflow-hidden",
       "text-ellipsis",
       "whitespace-nowrap",
     );
+  });
+
+  it("lets a Value className flex-initial replace flex-1", () => {
+    render(
+      <Select.Root>
+        <Select.Trigger>
+          <Select.Value className="flex-initial" data-testid="value" placeholder="Pick" />
+        </Select.Trigger>
+      </Select.Root>,
+    );
+    const value = screen.getByTestId("value");
+    expect(value).toHaveClass("flex-initial");
+    expect(value).not.toHaveClass("flex-1");
   });
 
   it("lets a Value className bring back wrapping and keep the clip", () => {
