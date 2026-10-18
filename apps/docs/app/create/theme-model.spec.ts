@@ -260,6 +260,30 @@ describe("hand-set colours", () => {
     expect(applyPatch(custom, { overrides: undefined }).overrides).toBeUndefined();
   });
 
+  it("keeps them when the active swatch is clicked again", () => {
+    const same = applyPatch(custom, {
+      primary: { ...custom.primary },
+      base: custom.base,
+      chart: custom.chart,
+    });
+    expect(same.overrides).toEqual(custom.overrides);
+    const again = applyPatch(custom, { primary: custom.primary });
+    expect(again.overrides).toBe(custom.overrides);
+  });
+
+  it("writes initial for a derived token only one mode sets, so it can't leak across modes", () => {
+    const light = { ...DEFAULT_THEME, overrides: { light: { "primary-text": red } } };
+    const [root, dark] = buildCss(light).split("\n\n.dark");
+    expect(root).toContain("--primary-text: oklch(0.5 0.2 25);");
+    expect(root).not.toContain("initial");
+    expect(dark).toContain("  --primary-text: initial;");
+    const both = {
+      ...DEFAULT_THEME,
+      overrides: { light: { "primary-text": red }, dark: { "primary-text": red } },
+    };
+    expect(buildCss(both)).not.toContain("initial");
+  });
+
   it("removes the last one as no overrides at all, so presets match again", () => {
     const one = withOverride(undefined, "dark", "ring", red);
     expect(countOverrides(one)).toBe(1);

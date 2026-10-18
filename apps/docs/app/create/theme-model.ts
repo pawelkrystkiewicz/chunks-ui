@@ -205,14 +205,27 @@ export const previewColumnWidth = (t: Pick<Theme, "spacing" | "fontSize">) =>
 
 /** The "Get code" output: paste after the `chunks-ui` import. */
 export function buildCss(t: Theme): string {
-  const block = (selector: string, pal: Record<string, string>, extra: string[]) =>
-    `${selector} {\n${[...extra, ...Object.entries(pal).map(([k, v]) => `  --${k}: ${v};`)].join("\n")}\n}`;
+  // theme.css leaves these unset, and `.dark` doesn't redeclare them, so one set in a single mode
+  // would inherit into the other. `initial` is the guaranteed-invalid value: var()'s fallback applies.
+  const block = (
+    selector: string,
+    pal: Record<string, string>,
+    extra: string[],
+    other: Record<string, string>,
+  ) =>
+    `${selector} {\n${[
+      ...extra,
+      ...Object.entries(pal).map(([k, v]) => `  --${k}: ${v};`),
+      ...DERIVED.filter((k) => !(k in pal) && k in other).map((k) => `  --${k}: initial;`),
+    ].join("\n")}\n}`;
+  const light = palette(t, "light");
+  const dark = palette(t, "dark");
   const fonts = [...new Set([t.fontBody, t.fontHeading])]
     .map((f) => `family=${f.replaceAll(" ", "+")}:wght@400;500;600;700`)
     .join("&");
   return `/* Fonts: https://fonts.googleapis.com/css2?${fonts}&display=swap */\n${block(
     ":root",
-    palette(t, "light"),
+    light,
     [
       `  --font-sans: ${fontOf(t.fontBody).stack};`,
       `  --font-heading: ${fontOf(t.fontHeading).stack};`,
@@ -221,7 +234,8 @@ export function buildCss(t: Theme): string {
       `  --spacing: ${+(0.25 * t.spacing).toFixed(4)}rem;`,
       `  --spacing-ui-height: ${t.height}px;`,
     ],
-  )}\n\n${block(".dark", palette(t, "dark"), [])}`;
+    dark,
+  )}\n\n${block(".dark", dark, [], light)}`;
 }
 
 export const samePrimary = (a: Oklch, b: Oklch) =>
@@ -247,9 +261,8 @@ export function sameTheme(a: Omit<Theme, "mode">, b: Omit<Theme, "mode">): boole
   );
 }
 
-/** Tokens the contrast table may set by hand: every palette token, and the shades theme.css derives. */
-export const EDITABLE = [
-  ...Object.keys(palette(DEFAULT_THEME, "light")),
+/** The shades theme.css derives, unset until a hand-set colour gives them a value */
+const DERIVED = [
   "primary-text",
   "success-text",
   "warning-text",
@@ -257,6 +270,9 @@ export const EDITABLE = [
   "success-border",
   "warning-border",
 ];
+
+/** Tokens the contrast table may set by hand: every palette token, and the derived shades. */
+export const EDITABLE = [...Object.keys(palette(DEFAULT_THEME, "light")), ...DERIVED];
 
 const NEUTRALS = [
   "background",
@@ -304,7 +320,13 @@ export function withOverride(
 export function applyPatch(prev: Theme, patch: Partial<Theme>): Theme {
   const next = { ...prev, ...patch };
   if ("overrides" in patch || !prev.overrides) return next;
-  const moved = (["primary", "base", "chart"] as const).filter((k) => k in patch);
+  // A key counts as moved only when its value changed: clicking the active swatch keeps the colours
+  const changed = {
+    primary: (p: Partial<Theme>) => !!p.primary && !samePrimary(prev.primary, p.primary),
+    base: (p: Partial<Theme>) => "base" in p && p.base !== prev.base,
+    chart: (p: Partial<Theme>) => "chart" in p && p.chart !== prev.chart,
+  };
+  const moved = (["primary", "base", "chart"] as const).filter((k) => changed[k](patch));
   if (moved.length === 0) return next;
   const keep = (token: string) => !moved.some((k) => DRIVEN[k](token));
   let overrides: Overrides | undefined = prev.overrides;

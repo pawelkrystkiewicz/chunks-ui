@@ -174,7 +174,7 @@ export const isCustom = (t: Theme, mode: Mode, token: string) => !!t.overrides?.
 
 /** The tokens a side's colour comes from in `mode`: its own, or its fill's while it follows one */
 function reads(t: Theme, mode: Mode, side: Side): string[] {
-  if (side.locked) return [side.from ?? "", "background"];
+  if (side.locked) return [side.from ?? "", "card"];
   if (!side.from || isCustom(t, mode, side.token)) return [side.token];
   // The ring mixes the primary with the background
   return side.token === "ring" ? ["primary", "background"] : [side.from];
@@ -320,8 +320,8 @@ const ROWS: Row[] = [
 function paint(k: Tokens, side: Side): Rgb {
   const color = resolve(k, side);
   if (color) return srgb8(color);
-  // A locked side is a hover fill: its fill at 90% over the background
-  return over(srgb8(k.get(side.from ?? "")), srgb8(k.bg), 0.9);
+  // A locked side is a hover fill: its fill at 90% over the card
+  return over(srgb8(k.get(side.from ?? "")), srgb8(k.get("card")), 0.9);
 }
 
 export const DEFAULT_LEVELS: Levels = { wcag: "AA", apca: "Bronze" };

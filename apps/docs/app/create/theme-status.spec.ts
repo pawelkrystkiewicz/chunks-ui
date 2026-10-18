@@ -140,7 +140,8 @@ describe("affects", () => {
       "ring",
       "primary-border",
     ]);
-    expect(hit(DEFAULT_THEME, "background")).toContain("on-success-hover");
+    expect(hit(DEFAULT_THEME, "background")).not.toContain("on-success-hover");
+    expect(hit(DEFAULT_THEME, "card")).toContain("on-success-hover");
     expect(hit(DEFAULT_THEME, "background")).toContain("ring");
     expect(hit(DEFAULT_THEME, "muted")).toEqual(["muted-on-muted"]);
   });
