@@ -85,3 +85,15 @@ article:has(> main > .landing) {
     display: none;
   }
 }
+
+/*
+ * iOS Safari zooms into a focused text field under 16px. Nextra's search inputs (navbar and
+ * landing header) are 14px from 768px up (`x:md:text-sm`), so a tablet or a phone held sideways
+ * zooms on focus. Keep them at 16px on touch screens at every width. This rule is unlayered, so it
+ * beats Nextra's layered utilities.
+ */
+@media (pointer: coarse) {
+  .nextra-search input {
+    font-size: 1rem;
+  }
+}
