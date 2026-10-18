@@ -1,5 +1,6 @@
 import { Toast as BaseToast } from "@base-ui/react/toast";
 import { render, screen, within } from "@testing-library/react";
+import axe from "axe-core";
 import { type ComponentPropsWithoutRef, type ReactNode, useEffect } from "react";
 import { afterAll, beforeAll, describe, expect, it, onTestFinished } from "vitest";
 import { page, userEvent } from "vitest/browser";
@@ -13,19 +14,29 @@ function AddToast({
   actionProps,
   dismissible,
   timeout,
+  priority,
 }: {
   title: string;
   description?: string;
   actionProps?: ComponentPropsWithoutRef<"button">;
   dismissible?: boolean;
   timeout?: number;
+  priority?: "low" | "high";
 }) {
   const manager = Toast.useToast();
   // A fixed id: a remount updates this toast instead of adding a second one. Mount-only on
   // purpose: `manager` and `actionProps` change every render, and updating the toast renders again.
   // biome-ignore lint/correctness/useExhaustiveDependencies: the props are fixed in each spec
   useEffect(() => {
-    manager.add({ id: "visual-toast", title, description, actionProps, dismissible, timeout });
+    manager.add({
+      id: "visual-toast",
+      title,
+      description,
+      actionProps,
+      dismissible,
+      timeout,
+      priority,
+    });
   }, []);
   return null;
 }
@@ -79,6 +90,40 @@ describe("Toast", () => {
     close.focus();
     expect(close.matches(":focus-visible")).toBe(true);
     await expect(page.elementLocator(close.closest(".Toast") as HTMLElement)).toMatchScreenshot();
+  });
+
+  // Base UI 1.9 drops a high-priority toast's aria-hidden only on F6, or when focus in the
+  // viewport is :focus-visible (handleGlobalKeyDown and handleFocus in ToastViewport.js). A mouse
+  // click focuses the root without :focus-visible, so the root keeps aria-hidden while it has
+  // focus. The jsdom spec can't show this: Base UI takes every focus there for :focus-visible.
+  // A failure of the aria-hidden or axe check means Base UI changed this (a fix for
+  // mui/base-ui#5659, say): update this row and the high-priority note under Props in
+  // apps/docs/content/components/toast.mdx. Alone on purpose, as in the jsdom spec: next to a
+  // `low` toast (a role="dialog", which axe takes for an open modal) axe lists it as `incomplete`
+  it("keeps a high-priority toast aria-hidden when a click focuses it", async () => {
+    const { container } = render(
+      <Toast.Provider>
+        <AddToast
+          title="Connection lost"
+          description="Reconnecting automatically."
+          priority="high"
+          timeout={0}
+        />
+        <Toast.Viewport />
+      </Toast.Provider>,
+    );
+    // aria-hidden, so only a query with `hidden` finds it
+    const toast = await screen.findByRole("alertdialog", { hidden: true });
+    await userEvent.click(toast);
+    expect(toast).toHaveFocus();
+    // A frame later, so a change that unhides the root a tick or a frame after focus still fails
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    expect(toast).toHaveAttribute("aria-hidden", "true");
+    const results = await axe.run(container, { runOnly: ["aria-hidden-focus"] });
+    expect(results.violations.map((rule) => rule.id)).toEqual(["aria-hidden-focus"]);
+    expect(results.violations[0]?.nodes.map((node) => node.html)).toEqual([
+      expect.stringContaining('role="alertdialog"'),
+    ]);
   });
 });
 

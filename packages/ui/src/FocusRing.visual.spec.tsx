@@ -347,10 +347,8 @@ const RING_CASES: RingCase[] = [
   },
   {
     part: "DatePicker trigger",
-    // `className` goes on the wrapper
-    ui: () => <DatePicker />,
+    ui: (className) => <DatePicker triggerClassName={className} />,
     target: () => screen.findByRole("button", { name: DEFAULT_DATE_PICKER_LABELS.placeholder }),
-    internal: true,
   },
   {
     part: "Pagination.Link",

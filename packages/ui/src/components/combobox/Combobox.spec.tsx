@@ -745,8 +745,8 @@ describe("Combobox icon buttons", () => {
     expect(screen.getByRole("button", { name: "Supprimer ?" })).toBeInTheDocument();
   });
 
-  // Documents current behaviour: the name points at the whole chip, so the button's own text
-  // joins it. A later fix may point aria-labelledby at the chip's label only.
+  // On purpose: the name keeps the button's own text, so it contains the visible text (WCAG
+  // 2.5.3 Label in Name). Pointing aria-labelledby at the chip's label only would drop it (#601).
   it("reads text children of a ChipRemove with the chip's text", () => {
     render(
       <Combobox.Root multiple items={fruits} defaultValue={["Apple"]}>

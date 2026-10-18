@@ -1,5 +1,6 @@
 import {
   ToastBasicExample,
+  ToastHighPriorityExample,
   ToastPromiseExample,
   ToastStackingExample,
   ToastVariantsExample,
@@ -139,6 +140,22 @@ add({
 ```
 
 <ToastWithActionExample />
+
+## High Priority
+
+Pass `priority: "high"` for a toast the user must not miss. Screen readers announce it at once, interrupting what they read; a toast of the default `low` priority waits until they finish:
+
+```tsx
+add({
+  title: "Connection lost",
+  description: "Trying to reconnect…",
+  priority: "high",
+})
+```
+
+<ToastHighPriorityExample />
+
+Base UI 1.9 keeps a high-priority toast in the tab order while hiding it from screen readers: see the note under [Props](#props).
 
 ## Dismissible Toasts
 
@@ -285,7 +302,9 @@ export default Props
   })}
 />
 
-> **Note**: A toast added with `priority: "high"` can take focus while it is hidden from screen readers. While keyboard focus is outside the viewport (Tab or F6 moves it in), Base UI 1.9 keeps the toast `aria-hidden` but in the tab order, and announces it through a visually hidden alert. axe then reports `aria-hidden-focus` on the toast, unless a dialog is also on screen, such as a toast of the default `low` priority (a `role="dialog"`): axe takes the dialog for an open modal and lists the toast under `incomplete`.
+> **Note**: A toast added with `priority: "high"` can take focus while it is hidden from screen readers. Base UI 1.9 keeps the toast `aria-hidden` but in the tab order, and announces it through a visually hidden alert. Keyboard focus in the viewport clears `aria-hidden` until focus leaves the viewport: Tab into it, or press F6. A mouse click focuses the toast but leaves it `aria-hidden`. While it is hidden, axe reports `aria-hidden-focus` on the toast, unless a dialog is also on screen, such as a toast of the default `low` priority (a `role="dialog"`): axe takes the dialog for an open modal and lists the toast under `incomplete`.
+>
+> In Base UI 1.9, `tabIndex={-1}` on `Toast.Root` overrides its `tabIndex: 0` and works around the Tab case ([mui/base-ui#5659](https://github.com/mui/base-ui/issues/5659#issuecomment-6248862495)). Tab skips the toast, F6 then Tab still reaches the newest toast, and axe passes a toast with only a title and a description. A mouse click still focuses the toast and leaves it `aria-hidden`, though axe no longer reports it. A `Toast.Close` or `Toast.Action` in the toast keeps its own tab stop, so axe still reports that toast. `Toast.Viewport` renders the toast roots itself and gives them no props of yours except `add()`'s `className`, so you cannot set `tabIndex` on the toasts it renders. Only a viewport you build from Base UI's `Toast.Viewport`, mapping the toasts to chunks-ui's `Toast.Root` with `tabIndex={toast.priority === "high" ? -1 : 0}`, can set it.
 
 ### Toast.Viewport
 

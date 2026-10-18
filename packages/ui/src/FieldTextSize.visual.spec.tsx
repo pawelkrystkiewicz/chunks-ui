@@ -1,11 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  FIELDS,
-  fontSizeOf,
-  PARTS,
-  plainInput,
-  selectItemFontSize,
-} from "./FieldTextSize.fixtures";
+import { FIELDS, fontSizeOf, plainInput, selectItemFontSize } from "./FieldTextSize.fixtures";
 import { withViewport } from "./VisualTest.utils";
 
 /*
@@ -18,7 +12,7 @@ import { withViewport } from "./VisualTest.utils";
  */
 
 describe("below md, on the default 414px page", () => {
-  it.each(PARTS)("%s is 16px", (_, ui) => {
+  it.each(FIELDS)("%s is 16px", (_, ui) => {
     expect(fontSizeOf(ui())).toBe("16px");
   });
 
@@ -39,7 +33,7 @@ describe("below md, on the default 414px page", () => {
 describe("from md up, on an 800px page", () => {
   withViewport(800);
 
-  it.each(PARTS)("%s is 14px", (_, ui) => {
+  it.each(FIELDS)("%s is 14px", (_, ui) => {
     expect(fontSizeOf(ui())).toBe("14px");
   });
 
