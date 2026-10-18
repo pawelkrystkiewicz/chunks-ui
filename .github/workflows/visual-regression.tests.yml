@@ -120,6 +120,8 @@ jobs:
           VISUAL: ${{ steps.visual.outcome }}
           WEBKIT: ${{ steps.webkit.outcome }}
           SHUFFLED: ${{ steps.shuffled.outcome }}
+        # Container jobs default to sh (dash), which rejects the array below.
+        shell: bash
         run: |
           failed=()
           [ "$VISUAL" = failure ] && failed+=("Chromium visual")

@@ -1,4 +1,5 @@
 import { Container, ComboboxBasicDemo, ComboboxClearDemo, ComboboxGroupedDemo, ComboboxMultiDemo } from '@/components'
+import { ComboboxTriggerSearchExample } from '@/examples/Combobox'
 import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
 # Combobox
@@ -191,6 +192,50 @@ function MultiSelectCombobox() {
 
 Put `Combobox.Input` inside `Combobox.Chips`, after the chips. Only there does the keyboard reach the chips: ArrowLeft (ArrowRight in a right-to-left layout) at the start of the input focuses the last chip, and Backspace in an empty input removes it.
 
+## Trigger with Search
+
+A select with a search field: `Combobox.Trigger` is a button that shows `Combobox.Value`, and `Combobox.Input` sits inside the popup.
+
+```tsx
+<Combobox.Root items={fruits}>
+  <Combobox.Trigger
+    aria-label="Fruit"
+    className="static h-ui-height w-full rounded-md border border-input bg-background px-3 text-sm max-md:text-base md:[@media(pointer:coarse)]:text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+  >
+    <Combobox.Value placeholder="Pick a fruit" />
+    <Combobox.Icon />
+  </Combobox.Trigger>
+  <Combobox.Portal>
+    <Combobox.Positioner>
+      <Combobox.Popup aria-label="Fruits" className="flex flex-col overflow-hidden">
+        <Combobox.Input
+          placeholder="Search..."
+          aria-label="Search fruits"
+          className="mb-1 shrink-0 pe-3"
+        />
+        <Combobox.List className="min-h-0 overflow-y-auto overscroll-contain scroll-py-1">
+          {(item) => (
+            <Combobox.Item key={item.value} value={item}>
+              {item.label}
+              <Combobox.ItemIndicator />
+            </Combobox.Item>
+          )}
+        </Combobox.List>
+        <Combobox.Empty>No results found.</Combobox.Empty>
+      </Combobox.Popup>
+    </Combobox.Positioner>
+  </Combobox.Portal>
+</Combobox.Root>
+```
+
+<ComboboxTriggerSearchExample />
+
+`Combobox.Trigger`'s default classes put a chevron over the end of an input: `absolute inset-y-0 end-0 flex items-center pe-2`. `cn` merges your `className` over them, so `static` replaces `absolute` (which leaves `inset-y-0 end-0` without effect) and `px-3` replaces `pe-2`. The other classes draw the field, its text size and its focus ring as on `Select.Trigger`.
+
+In the popup, `pe-3` replaces the end padding (`pe-12`) that `Combobox.Input` keeps for the buttons over its end. `Combobox.Popup` scrolls as a whole, so in a long list the search input would scroll out of view: `flex flex-col overflow-hidden` stops the popup scrolling, `shrink-0` keeps the input's height, and `min-h-0 overflow-y-auto` makes `Combobox.List` scroll below the input instead.
+
+With children, `Combobox.Trigger` loses its default name, "Show options", and the value it shows does not name it either: with the input inside the popup, Base UI gives the trigger the `combobox` role, which takes no name from its content. Pass an `aria-label`, as here, or put the Combobox in `Field.Root` with a `Field.Label`. With the input inside, the popup is a `dialog`, so name it too, with an `aria-label` on `Combobox.Popup`.
+
 ## Controlled
 
 ```tsx
@@ -248,8 +293,8 @@ The popup enters with a scale-up and fade (from `scale-95` and `opacity-0`): the
 | `Combobox.Trigger` | Button that toggles the popup. Renders a default chevron icon, named "Show options". Children or a `render` element replace both the chevron and the name: see Accessible Names below. At most as wide as its container (`max-w-full`), and it shrinks in a flex row (`min-w-0`); `max-w-none` lifts the cap. |
 | `Combobox.Icon` | Chevron icon, usable standalone outside the trigger. Children you pass replace the chevron. With a `render` element and no children, there is no chevron: the element draws its own, and may be a void element such as `<img>`. |
 | `Combobox.Portal` | Renders the popup in a portal. |
-| `Combobox.Positioner` | Handles Floating UI positioning. Default `sideOffset={8}`, as on `Popover.Content` and `Menu.Content`: the input's focus ring, 4px outside its edge, stays clear of the popup. A `sideOffset` you pass replaces it, so `sideOffset={0}` opens the popup flush against the input. Inside a `Combobox.Control` the popup anchors to the Control: it is as wide as the Control and opens 8px below the Control's border. |
-| `Combobox.Popup` | The dropdown panel containing items. It is as wide as the input, or as the `Combobox.Control` in a multi-select. Item text wraps to that width, and a word longer than the popup breaks. Scrolls when the items need more than the space between the input and the viewport edge. |
+| `Combobox.Positioner` | Handles Floating UI positioning. Default `sideOffset={8}`, as on `Popover.Content` and `Menu.Content`: the input's focus ring, 4px outside its edge, stays clear of the popup. A `sideOffset` you pass replaces it, so `sideOffset={0}` opens the popup flush against the input, or against the trigger when the input is inside the popup. Inside a `Combobox.Control` the popup anchors to the Control: it is as wide as the Control and opens 8px below the Control's border. |
+| `Combobox.Popup` | The dropdown panel containing items. It is as wide as the input, as the `Combobox.Control` in a multi-select, or as the trigger when `Combobox.Input` is inside the popup. Item text wraps to that width, and a word longer than the popup breaks. Scrolls when the items need more than the space between the input (or that trigger) and the viewport edge. |
 | `Combobox.List` | List container. Takes a function child that renders each matching item (or each group, when `items` holds groups). |
 | `Combobox.Item` | An individual selectable option. Its text wraps, and a word longer than the popup breaks; give an icon, badge or shortcut beside the text `shrink-0`, or it is squeezed. |
 | `Combobox.ItemIndicator` | Checkmark shown for the selected item. Children you pass replace the checkmark. With a `render` element and no children, there is no checkmark: the element draws its own, and may be a void element such as `<img>`. The indicator is `aria-hidden`, so screen readers skip its children and announce the option's selected state instead. |
@@ -273,11 +318,15 @@ The popup enters with a scale-up and fade (from `scale-95` and `opacity-0`): the
 
 `Combobox.Clear` and `Combobox.ChipRemove` keep their name whatever you pass. `children` replace the X, and a `render` element with no children gets no X. If the children are visible text, pass an `aria-label` that contains it, so speech input users can say what they see.
 
-`Combobox.Trigger` is different: in a trigger-style Combobox it shows the selected value. If you pass `children` or a `render` element, its default name and its chevron are not applied, and the content you pass names the button. Give icon-only content an `aria-label`:
+`Combobox.Trigger` is different: it can hold content, such as the selected value. If you pass `children` or a `render` element, its default name and its chevron are not applied. Beside an input, the content you pass names the button:
 
 ```tsx
 <Combobox.Trigger render={<button type="button">Choose</button>} />
 ```
+
+Give icon-only content an `aria-label`.
+
+With the input inside the popup, as in [Trigger with Search](#trigger-with-search), the trigger is a `combobox`, which takes no name from its content: give it an `aria-label` or a `Field.Label`.
 
 Inside `Field.Root`, Base UI sets `aria-labelledby` on `Combobox.Trigger` to the field label. That label takes precedence over `aria-label`, so the default "Show options" name does not apply there.
 
