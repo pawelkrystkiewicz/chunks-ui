@@ -268,15 +268,20 @@ describe("controls when Motion loads", () => {
     change();
     // The CSS transition has started, so Motion arrives mid-way through it
     await untilChanged(() => measure(element()));
+    // Read before Motion arrives, so a jump back in the commit Motion arrives in is a step back
+    const moving = measure(element());
     await motion.arrive();
     const values = await sample(() => measure(element()), 40);
     const end = values.at(-1) ?? start;
-    const travel = Math.abs(end - start);
-    expect(travel).toBeGreaterThan(4);
-    const steps = values.map((value, i) =>
-      Math.abs(value - (i === 0 ? start : (values[i - 1] ?? 0))),
-    );
-    expect(Math.max(...steps)).toBeLessThan(travel / 2);
+    expect(Math.abs(end - start)).toBeGreaterThan(4);
+    // It slides on from where it was when Motion arrived: a frame shows it between there and the
+    // end, where a jump to the end shows none. No bound on one frame's step: ToggleGroup's slide
+    // covers 41% of the way in its first two frames and 61% in three, so one late frame passed
+    // for a jump (#625)
+    expectInBetween(moving, values);
+    // Only ever toward the end: a jump back is a step the other way
+    const path = [start, moving, ...values];
+    expect(path).toEqual([...path].sort((a, b) => (a - b) * Math.sign(end - start)));
     if (fallbackClass) expect(element()).not.toHaveClass(fallbackClass);
   });
 
