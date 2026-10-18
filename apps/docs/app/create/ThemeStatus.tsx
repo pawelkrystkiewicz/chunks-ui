@@ -15,6 +15,7 @@ import {
   formatLc,
   formatRatio,
   type Levels,
+  MODE_NAME,
   passApca,
   passWcag,
   themeChecks,
@@ -24,7 +25,6 @@ import {
 import { EMPTY_TRAIL, nextTrail, undoTrail } from "./undo-trail";
 
 const GROUPS = ["Text", "Controls", "Charts"] as const;
-const MODE_NAME: Record<Mode, string> = { light: "Light", dark: "Dark" };
 const TH = "py-1.5 pe-3 text-start font-medium";
 const CELL = "py-1.5 ps-2 pe-3 transition-colors motion-reduce:transition-none";
 // The pairs the open editor's active colour changes

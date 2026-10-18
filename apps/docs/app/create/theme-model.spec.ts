@@ -278,9 +278,7 @@ describe("hand-set colours", () => {
       base: custom.base,
       chart: custom.chart,
     });
-    expect(same.overrides).toEqual(custom.overrides);
-    const again = applyPatch(custom, { primary: custom.primary });
-    expect(again.overrides).toBe(custom.overrides);
+    expect(same.overrides).toBe(custom.overrides);
   });
 
   it("writes initial for a derived token only one mode sets, so it can't leak across modes", () => {

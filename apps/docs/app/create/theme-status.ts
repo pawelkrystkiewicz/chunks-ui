@@ -113,7 +113,7 @@ const parse = (s: string): Oklch => {
 };
 
 /** `color-mix(in oklab, x p, y)` */
-export function mix(x: Oklch, y: Oklch, p: number): Oklch {
+function mix(x: Oklch, y: Oklch, p: number): Oklch {
   const lab = ({ l, c, h }: Oklch) =>
     [l, c * Math.cos((h * Math.PI) / 180), c * Math.sin((h * Math.PI) / 180)] as const;
   const [l1, a1, b1] = lab(x);
@@ -184,10 +184,11 @@ function reads(t: Theme, mode: Mode, side: Side): string[] {
 export const affects = (t: Theme, mode: Mode, check: Check, token: string) =>
   [check.fg, check.bg].some((s) => s.token === token || reads(t, mode, s).includes(token));
 
+export const MODE_NAME: Record<Mode, string> = { light: "Light", dark: "Dark" };
 const T = (token: string): Side => ({ token });
 const BG = T("background");
 const ROLES = ["primary", "success", "warning", "destructive"] as const;
-const title = (s: string) => `${s[0]?.toUpperCase()}${s.slice(1)}`;
+export const title = (s: string) => `${s[0]?.toUpperCase()}${s.slice(1)}`;
 // Sizes and weights as the components set them: body and card descriptions text-sm, buttons
 // text-sm font-medium, card titles text-lg font-semibold, Field.Error text-xs
 const BODY: TextUse = { use: "body", step: "sm", weight: 400 };

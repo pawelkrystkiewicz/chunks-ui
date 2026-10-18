@@ -1,6 +1,6 @@
 import type { Overrides } from "./theme-model";
 
-export const UNDO_STEPS = 50;
+const UNDO_STEPS = 50;
 
 /**
  * Hand-set colours before each edit; a slider drag is one step. `last` is the overrides the panel

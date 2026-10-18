@@ -128,12 +128,15 @@ export function srgb8({ l, c, h }: Oklch): Rgb {
   ];
 }
 
+/** 8-bit sRGB channel to linear light */
+const linear = (v: number) => {
+  const s = v / 255;
+  return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+};
+
 /** 8-bit sRGB to OKLCH (Ottosson's matrices), rounded as `ok()` writes it */
 function fromRgb(rgb: Rgb): Oklch {
-  const [r, g, b] = rgb.map((v) => {
-    const s = v / 255;
-    return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
-  }) as Rgb;
+  const [r, g, b] = rgb.map(linear) as Rgb;
   const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
   const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
   const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
@@ -173,10 +176,6 @@ export const contrast = (x: Oklch, y: Oklch) => contrastRgb(srgb8(x), srgb8(y));
 
 /** WCAG 2 contrast ratio of two 8-bit sRGB colours, from 1 to 21. */
 export function contrastRgb(x: Rgb, y: Rgb): number {
-  const linear = (v: number) => {
-    const s = v / 255;
-    return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
-  };
   const luminance = ([r, g, b]: Rgb) =>
     0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(b);
   const [hi, lo] = [luminance(x), luminance(y)].sort((m, n) => n - m) as [number, number];

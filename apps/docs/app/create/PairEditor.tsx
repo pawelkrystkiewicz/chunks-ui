@@ -11,20 +11,20 @@ import {
   formatRatio,
   isCustom,
   type Levels,
+  MODE_NAME,
   nudge,
   passApca,
   passWcag,
   type Side,
   sideColor,
+  title,
 } from "./theme-status";
 
-const MODE_NAME: Record<Mode, string> = { light: "Light", dark: "Dark" };
 // parseColor and loadTheme clamp chroma to the same 0.4
 const MAX_CHROMA = 0.4;
 const NOTE = "text-[11.5px] text-muted-foreground leading-snug";
 
 const css = ([r, g, b]: Rgb) => `rgb(${r} ${g} ${b})`;
-const title = (s: string) => `${s[0]?.toUpperCase()}${s.slice(1)}`;
 const stops = (n: number, at: (x: number) => string) =>
   `linear-gradient(to right, ${Array.from({ length: n }, (_, i) => at(i / (n - 1))).join(", ")})`;
 

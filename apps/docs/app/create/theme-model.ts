@@ -291,13 +291,6 @@ const NEUTRALS = [
   "input",
 ];
 
-/** The hand-set tokens a sidebar control drives, which changing it drops */
-const DRIVEN: Record<"primary" | "base" | "chart", (token: string) => boolean> = {
-  primary: (t) => ["primary", "primary-foreground", "primary-text", "ring"].includes(t),
-  base: (t) => NEUTRALS.includes(t),
-  chart: (t) => t.startsWith("chart-"),
-};
-
 export const countOverrides = (o?: Overrides) =>
   Object.values(o ?? {}).reduce((n, tokens) => n + Object.keys(tokens ?? {}).length, 0);
 
@@ -321,22 +314,19 @@ export function applyPatch(prev: Theme, patch: Partial<Theme>): Theme {
   const next = { ...prev, ...patch };
   if ("overrides" in patch || !prev.overrides) return next;
   // A key counts as moved only when its value changed: clicking the active swatch keeps the colours
-  const changed = {
-    primary: (p: Partial<Theme>) => !!p.primary && !samePrimary(prev.primary, p.primary),
-    base: (p: Partial<Theme>) => "base" in p && p.base !== prev.base,
-    chart: (p: Partial<Theme>) => "chart" in p && p.chart !== prev.chart,
-  };
-  const moved: (keyof typeof DRIVEN)[] = (["primary", "base", "chart"] as const).filter((k) =>
-    changed[k](patch),
-  );
-  if (moved.length === 0) return next;
-  // The Mono and Spectrum charts are built from the primary
-  if (moved.includes("primary") && prev.chart !== "default") moved.push("chart");
-  const keep = (token: string) => !moved.some((k) => DRIVEN[k](token));
+  const primary = !!patch.primary && !samePrimary(prev.primary, patch.primary);
+  const base = "base" in patch && patch.base !== prev.base;
+  const chart = "chart" in patch && patch.chart !== prev.chart;
+  if (!(primary || base || chart)) return next;
+  // The hand-set tokens each moved control drives. The Mono and Spectrum charts are built from the primary.
+  const drops = (t: string) =>
+    (primary && ["primary", "primary-foreground", "primary-text", "ring"].includes(t)) ||
+    ((chart || (primary && prev.chart !== "default")) && t.startsWith("chart-")) ||
+    (base && NEUTRALS.includes(t));
   let overrides: Overrides | undefined = prev.overrides;
   for (const mode of ENUMS.mode) {
     for (const token of Object.keys(prev.overrides[mode] ?? {})) {
-      if (!keep(token)) overrides = withOverride(overrides, mode, token, null);
+      if (drops(token)) overrides = withOverride(overrides, mode, token, null);
     }
   }
   return { ...next, overrides };
