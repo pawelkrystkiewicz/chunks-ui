@@ -10,7 +10,7 @@ import {
   usePortalNode,
 } from "../../lib/portal-container";
 import { usePopupRender } from "../../lib/use-popup-render";
-import { FOCUS_RING, RING_TRANSITION } from "../shared";
+import { FIELD_TEXT_SIZE, FOCUS_RING, RING_TRANSITION } from "../shared";
 
 export type SelectRootProps = ComponentProps<typeof BaseSelect.Root>;
 export type SelectTriggerProps = ComponentProps<typeof BaseSelect.Trigger>;
@@ -28,7 +28,8 @@ function SelectTrigger({ className, ...props }: SelectTriggerProps) {
   return (
     <BaseSelect.Trigger
       className={cnState(
-        "flex h-ui-height w-full items-center justify-between rounded-md border border-input bg-background px-3 text-sm",
+        "flex h-ui-height w-full items-center justify-between rounded-md border border-input bg-background px-3",
+        FIELD_TEXT_SIZE,
         // Within its container, however long the value: it shrinks in a flex row, and stops at the
         // container's width when sized by its value (`w-auto`)
         "min-w-0 max-w-full",

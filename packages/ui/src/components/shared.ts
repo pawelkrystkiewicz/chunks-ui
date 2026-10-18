@@ -47,10 +47,11 @@ export const FOCUS_RING_WITHIN =
   "has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ring";
 
 /**
- * The text size of a text field (`Input`, `Textarea`, `NumberField.Input`, `Combobox.Input`): 16px
- * below `md`, 14px from `md` up. iOS Safari zooms the page when a field with text under 16px takes
- * focus (#562). `max-md:` leaves the unprefixed size to `className`, so a `text-lg` there still
- * sets the size from `md` up, as before, and a `max-md:` class changes the size below `md`.
+ * The text size of a text field (`Input`, `Textarea`, `NumberField.Input`, `Combobox.Input`), and
+ * of `Select.Trigger` and the `DatePicker` trigger, so a form has one size (#580): 16px below `md`,
+ * 14px from `md` up. iOS Safari zooms the page when a field with text under 16px takes focus
+ * (#562). `max-md:` leaves the unprefixed size to `className`, so a `text-lg` there still sets the
+ * size from `md` up, as before, and a `max-md:` class changes the size below `md`.
  */
 export const FIELD_TEXT_SIZE = "text-sm max-md:text-base";
 

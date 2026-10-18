@@ -17,6 +17,7 @@ import {
   SETTLE_TIMEOUT_MS,
   settled,
 } from "../../VisualTest.utils";
+import { FIELD_TEXT_SIZE } from "../shared";
 import { Select } from "./index";
 
 const fruits = [
@@ -157,7 +158,7 @@ describe("Select", () => {
           </Select.Trigger>
         </Select.Root>
         {/* The badge's one line at its own width, in the trigger's font */}
-        <div data-testid="reference" className="w-max text-sm">
+        <div data-testid="reference" className={`w-max ${FIELD_TEXT_SIZE}`}>
           Pro plan
         </div>
       </div>,
