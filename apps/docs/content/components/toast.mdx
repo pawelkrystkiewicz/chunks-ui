@@ -1,5 +1,6 @@
 import {
   ToastBasicExample,
+  ToastHighPriorityExample,
   ToastPromiseExample,
   ToastStackingExample,
   ToastVariantsExample,
@@ -139,6 +140,20 @@ add({
 ```
 
 <ToastWithActionExample />
+
+## High Priority
+
+Pass `priority: "high"` for a toast the user must not miss. Screen readers announce it at once, interrupting what they read; a toast of the default `low` priority waits until they finish:
+
+```tsx
+add({
+  title: "Connection lost",
+  description: "Trying to reconnect…",
+  priority: "high",
+})
+```
+
+<ToastHighPriorityExample />
 
 ## Dismissible Toasts
 
