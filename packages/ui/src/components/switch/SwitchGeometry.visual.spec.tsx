@@ -7,7 +7,6 @@ import {
   emulateReducedMotion,
   type Insets,
   insetsWithin,
-  SETTLE_TIMEOUT_MS,
   waitForStable,
 } from "../../VisualTest.utils";
 import { Switch } from "./index";
@@ -94,7 +93,7 @@ async function expectThumbGeometry({
     expectRestingAt(insets, state, gap);
   };
 
-  await expect.poll(isCssThumb, { timeout: SETTLE_TIMEOUT_MS }).toBe(reducedMotion);
+  await expect.poll(isCssThumb).toBe(reducedMotion);
 
   const start: State = defaultChecked ? "checked" : "unchecked";
   await expectThumbRestsAt(start);

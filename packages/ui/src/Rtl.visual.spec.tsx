@@ -20,7 +20,6 @@ import {
   inlineSpan,
   insetsWithin,
   px,
-  SETTLE_TIMEOUT_MS,
   waitForStable,
 } from "./VisualTest.utils";
 
@@ -112,7 +111,7 @@ describe("Switch in both directions", () => {
       "rests off at the inline start and on at the inline end, $layout, starting $start",
       async ({ dir, page, start }) => {
         const { track, isCssThumb, expectRestsAt } = renderSwitch(dir, start === "checked", page);
-        await expect.poll(isCssThumb, { timeout: SETTLE_TIMEOUT_MS }).toBe(reducedMotion);
+        await expect.poll(isCssThumb).toBe(reducedMotion);
         const other: State = start === "checked" ? "unchecked" : "checked";
 
         await expectRestsAt(start);
@@ -125,7 +124,7 @@ describe("Switch in both directions", () => {
 
     it("moves toward the new inline end after the direction changes", async () => {
       const { track, isCssThumb, expectRestsAt } = renderSwitch("ltr", false);
-      await expect.poll(isCssThumb, { timeout: SETTLE_TIMEOUT_MS }).toBe(reducedMotion);
+      await expect.poll(isCssThumb).toBe(reducedMotion);
       await expectRestsAt("unchecked");
 
       document.documentElement.dir = "rtl";
@@ -164,7 +163,7 @@ describe("Switch in both directions", () => {
 
       arrive();
       await loaded;
-      await expect.poll(isCssThumb, { timeout: SETTLE_TIMEOUT_MS }).toBe(false);
+      await expect.poll(isCssThumb).toBe(false);
       await expectRestsAt("checked");
       await userEvent.click(track);
       await expectRestsAt("unchecked");

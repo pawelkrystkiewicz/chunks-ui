@@ -18,7 +18,6 @@ import {
   renderFixture,
   renderPage,
   ringColor,
-  SETTLE_TIMEOUT_MS,
   settled,
   waitForStable,
 } from "../../VisualTest.utils";
@@ -530,9 +529,7 @@ describe("Combobox.Popup closing, Motion", () => {
   it("fades and scales out, closed at rest", async () => {
     const { rerender, getByTestId } = render(below(true));
     const popup = getByTestId("popup");
-    await expect
-      .poll(() => getComputedStyle(popup).opacity, { timeout: SETTLE_TIMEOUT_MS })
-      .toBe("1");
+    await expect.poll(() => getComputedStyle(popup).opacity).toBe("1");
     await settled(popup);
     rerender(below(false));
     const frames = await framesOf(popup);
@@ -609,7 +606,7 @@ describe.each([
     const trigger = view.getByRole("combobox", { name: "Framework" });
     await userEvent.click(trigger);
     const input = await view.findByRole("combobox", { name: "Search frameworks" });
-    await expect.poll(() => document.activeElement, { timeout: SETTLE_TIMEOUT_MS }).toBe(input);
+    await expect.poll(() => document.activeElement).toBe(input);
     // Open at rest: closed during its entry, the CSS path's popup can leave at once
     const popup = view.getByTestId("popup");
     await settled(popup);
@@ -643,8 +640,7 @@ describe.each([
     return () => focused;
   };
 
-  const unmounted = (popup: HTMLElement) =>
-    expect.poll(() => popup.isConnected, { timeout: SETTLE_TIMEOUT_MS }).toBe(false);
+  const unmounted = (popup: HTMLElement) => expect.poll(() => popup.isConnected).toBe(false);
 
   // Enter and Tab go in one call: with reduced motion the popup leaves a frame after the pick
   it("moves a Tab pressed during the exit past the trigger, after a pick by Enter", async () => {
@@ -707,7 +703,7 @@ describe.each([
     async () => {
       const view = render(fixture({ open: true }));
       const input = await view.findByRole("combobox", { name: "Search frameworks" });
-      await expect.poll(() => document.activeElement, { timeout: SETTLE_TIMEOUT_MS }).toBe(input);
+      await expect.poll(() => document.activeElement).toBe(input);
       const popup = view.getByTestId("popup");
       await settled(popup);
       // A press there keeps focus where it is, as on a toolbar

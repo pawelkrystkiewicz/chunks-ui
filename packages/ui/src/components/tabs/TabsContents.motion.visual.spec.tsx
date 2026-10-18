@@ -6,7 +6,6 @@ import {
   eachPaintedFrame,
   enterMotionPath,
   MOTION_PATHS,
-  SETTLE_TIMEOUT_MS,
   waitForStable,
 } from "../../VisualTest.utils";
 import { Button } from "../button";
@@ -53,9 +52,7 @@ const close = (a: Rgb, b: Rgb) => a.every((channel, i) => Math.abs(channel - (b[
 
 /** Waits until Tabs.Contents has settled on the path: Motion sets its height inline */
 async function settled(contents: HTMLElement, withMotion: boolean) {
-  await expect
-    .poll(() => contents.style.height !== "", { timeout: SETTLE_TIMEOUT_MS })
-    .toBe(withMotion);
+  await expect.poll(() => contents.style.height !== "").toBe(withMotion);
   await waitForStable(() => {
     const track = contents.firstElementChild as HTMLElement;
     return `${contents.getBoundingClientRect().height}|${track.getBoundingClientRect().left}`;

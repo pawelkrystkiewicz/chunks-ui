@@ -8,13 +8,7 @@ import { Radio } from "../components/radio";
 import { Switch } from "../components/switch";
 import { Tabs } from "../components/tabs";
 import { ToggleGroup } from "../components/toggle-group";
-import {
-  emulateReducedMotion,
-  offBy,
-  SETTLE_TIMEOUT_MS,
-  untilChanged,
-  waitForStable,
-} from "../VisualTest.utils";
+import { emulateReducedMotion, offBy, untilChanged, waitForStable } from "../VisualTest.utils";
 import { reloadMotion } from "./use-motion";
 
 // Runs with reduced motion off. These controls stay mounted, so Motion must animate their
@@ -254,11 +248,11 @@ describe("controls when Motion loads", () => {
     const { ui, element, change, measure } = subject;
     const motion = motionLoading();
     render(ui());
-    await expect.poll(element, { timeout: SETTLE_TIMEOUT_MS }).not.toBeNull();
+    await expect.poll(element).not.toBeNull();
     const before = element();
 
     await motion.arrive();
-    await expect.poll(() => driven(subject), { timeout: SETTLE_TIMEOUT_MS }).toBe(true);
+    await expect.poll(() => driven(subject)).toBe(true);
     expect(element()).toBe(before);
     // Motion took over: a change now animates
     const start = measure(element());
@@ -271,7 +265,7 @@ describe("controls when Motion loads", () => {
     const { ui, element, change, measure, fallbackClass } = control(name);
     const motion = motionLoading();
     render(ui());
-    await expect.poll(element, { timeout: SETTLE_TIMEOUT_MS }).not.toBeNull();
+    await expect.poll(element).not.toBeNull();
     // At rest on the CSS fallback before the change
     const start = await settled(() => measure(element()));
     change();
@@ -304,12 +298,10 @@ describe("controls when Motion loads", () => {
     const subject = control("Tabs.Indicator");
     motionLoading();
     render(subject.ui());
-    await expect.poll(subject.element, { timeout: SETTLE_TIMEOUT_MS }).not.toBeNull();
+    await expect.poll(subject.element).not.toBeNull();
     const start = left(subject.element());
     subject.change();
-    await expect
-      .poll(() => left(subject.element()), { timeout: SETTLE_TIMEOUT_MS })
-      .not.toBe(start);
+    await expect.poll(() => left(subject.element())).not.toBe(start);
     await settled(() => left(subject.element()));
     expect(subject.element()).toHaveClass("micro-interactions");
     expectOver(subject);
@@ -331,11 +323,11 @@ describe("controls when Motion loads", () => {
       </Profiler>,
     );
     // All mounted on the CSS fallback, and their mount commits done
-    await expect.poll(onFallback, { timeout: SETTLE_TIMEOUT_MS }).toBe(20);
+    await expect.poll(onFallback).toBe(20);
     await settled(() => commits);
     commits = 0;
     await motion.arrive();
-    await expect.poll(onFallback, { timeout: SETTLE_TIMEOUT_MS }).toBe(0);
+    await expect.poll(onFallback).toBe(0);
     // Every switch handed over, in one commit for Motion arriving and one for the hand-off
     expect(await settled(() => commits)).toBeLessThanOrEqual(2);
   });
@@ -346,7 +338,7 @@ describe("controls once Motion has loaded", () => {
   async function renderSettled(ui: ReactNode, subject: Control) {
     await reloadMotion();
     const result = render(ui);
-    await expect.poll(() => driven(subject), { timeout: SETTLE_TIMEOUT_MS }).toBe(true);
+    await expect.poll(() => driven(subject)).toBe(true);
     await settled(() => subject.measure(subject.element()));
     return result;
   }
@@ -404,13 +396,13 @@ describe("controls once Motion has loaded", () => {
       if (subject.toChecked) {
         // Radio and Checkbox: once faded out, animate the indicator in, so it is still there
         // at the end
-        await expect.poll(() => opacity(subject.element()), { timeout: SETTLE_TIMEOUT_MS }).toBe(0);
+        await expect.poll(() => opacity(subject.element())).toBe(0);
         subject.toChecked();
       }
       // Mid-animation: Motion has moved it from where it rested
       await untilChanged(() => subject.measure(subject.element()));
       await emulateReducedMotion(true);
-      await expect.poll(() => handedBack(subject), { timeout: SETTLE_TIMEOUT_MS }).toBe(true);
+      await expect.poll(() => handedBack(subject)).toBe(true);
       const finished = snapshot(subject);
       expect(finished.present).toBe(true);
       expectOver(subject);
@@ -434,12 +426,12 @@ describe("controls once Motion has loaded", () => {
       const start = measure(element());
       subject.change();
       // Hidden only once Motion has moved it and come to rest
-      await expect.poll(() => measure(element()), { timeout: SETTLE_TIMEOUT_MS }).not.toBe(start);
+      await expect.poll(() => measure(element())).not.toBe(start);
       await settled(() => measure(element()));
       rerender(ui("hidden"));
       await emulateReducedMotion(true);
       rerender(ui("visible"));
-      await expect.poll(() => handedBack(subject), { timeout: SETTLE_TIMEOUT_MS }).toBe(true);
+      await expect.poll(() => handedBack(subject)).toBe(true);
       const shown = await waitForStable(() => snapshot(subject));
       expectOver(subject);
       unmount();
@@ -458,13 +450,13 @@ describe("controls once Motion has loaded", () => {
       await renderSettled(ui(), subject);
       change();
       // Motion fades the indicator out and keeps it mounted at opacity 0 (NaN once unmounted)
-      await expect.poll(() => opacity(element()), { timeout: SETTLE_TIMEOUT_MS }).toBe(0);
+      await expect.poll(() => opacity(element())).toBe(0);
 
       await emulateReducedMotion(true);
-      await expect.poll(element, { timeout: SETTLE_TIMEOUT_MS }).toBeNull();
+      await expect.poll(element).toBeNull();
 
       await emulateReducedMotion(false);
-      await expect.poll(element, { timeout: SETTLE_TIMEOUT_MS }).not.toBeNull();
+      await expect.poll(element).not.toBeNull();
       expect(await waitForStable(() => opacity(element()))).toBe(0);
     },
   );
@@ -512,7 +504,7 @@ describe("controls once Motion has loaded", () => {
       </StrictMode>,
     );
     // Motion has written the values the re-run must keep
-    await expect.poll(() => driven(subject), { timeout: SETTLE_TIMEOUT_MS }).toBe(true);
+    await expect.poll(() => driven(subject)).toBe(true);
     const values = await sample(() => measure(byTestId()), 10);
     expect(new Set(values).size).toBe(1);
   });
@@ -545,15 +537,15 @@ describe("controls once Motion has loaded", () => {
       await renderSettled(ui(), subject);
       const start = measure(element());
       change();
-      await expect.poll(() => measure(element()), { timeout: SETTLE_TIMEOUT_MS }).not.toBe(start);
+      await expect.poll(() => measure(element())).not.toBe(start);
       // To the pixel: a spring at rest can be a fraction short
       const before = Math.round(await settled(() => measure(element())));
 
       await emulateReducedMotion(true);
-      await expect.poll(element, { timeout: SETTLE_TIMEOUT_MS }).toHaveClass(fallbackClass);
+      await expect.poll(element).toHaveClass(fallbackClass);
       expectOver(subject);
       await emulateReducedMotion(false);
-      await expect.poll(element, { timeout: SETTLE_TIMEOUT_MS }).not.toHaveClass(fallbackClass);
+      await expect.poll(element).not.toHaveClass(fallbackClass);
       expect(Math.round(await settled(() => measure(element())))).toBe(before);
     },
   );
@@ -580,12 +572,12 @@ describe("controls once Motion has loaded", () => {
     const before = left(byTestId());
 
     await emulateReducedMotion(true);
-    await expect.poll(() => handedBack(subject), { timeout: SETTLE_TIMEOUT_MS }).toBe(true);
+    await expect.poll(() => handedBack(subject)).toBe(true);
     await emulateReducedMotion(false);
-    await expect.poll(() => driven(subject), { timeout: SETTLE_TIMEOUT_MS }).toBe(true);
+    await expect.poll(() => driven(subject)).toBe(true);
     expect(left(byTestId())).toBe(before);
     rerender(ui(true));
-    await expect.poll(() => opacity(byTestId()), { timeout: SETTLE_TIMEOUT_MS }).toBe(0.3);
+    await expect.poll(() => opacity(byTestId())).toBe(0.3);
   });
 
   // <Activity> hidden and shown again in the frame Motion arrives: the first hand-off is
@@ -600,15 +592,13 @@ describe("controls once Motion has loaded", () => {
       </Activity>
     );
     const { rerender } = render(ui("visible"));
-    await expect.poll(byTestId, { timeout: SETTLE_TIMEOUT_MS }).not.toBeNull();
+    await expect.poll(byTestId).not.toBeNull();
     const resting = await settled(() => left(byTestId()));
 
     await motion.arrive();
     rerender(ui("hidden"));
     rerender(ui("visible"));
-    await expect
-      .poll(byTestId, { timeout: SETTLE_TIMEOUT_MS })
-      .not.toHaveClass("micro-interactions");
+    await expect.poll(byTestId).not.toHaveClass("micro-interactions");
     expect(await settled(() => left(byTestId()))).toBe(resting);
   });
 
@@ -624,7 +614,7 @@ describe("controls once Motion has loaded", () => {
       </Activity>
     );
     const { rerender } = render(ui("visible"));
-    await expect.poll(byTestId, { timeout: SETTLE_TIMEOUT_MS }).not.toBeNull();
+    await expect.poll(byTestId).not.toBeNull();
     const resting = await settled(() => left(byTestId()));
 
     await motion.arrive();
