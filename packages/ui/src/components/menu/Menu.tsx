@@ -1,7 +1,7 @@
 "use client";
 
 import { Menu as BaseMenu } from "@base-ui/react/menu";
-import { type ComponentProps, useState } from "react";
+import { type ComponentProps, createContext, useContext, useState } from "react";
 import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { arrowClasses, arrowPopupClasses } from "../../lib/popup-arrow";
@@ -11,6 +11,7 @@ import {
   usePortalNode,
 } from "../../lib/portal-container";
 import { ArrowChangeProvider, useArrowChange, useArrowPadding } from "../../lib/use-arrow-padding";
+import { type CloseFocus, useCloseFocusRoot, useFocusOnClose } from "../../lib/use-focus-on-close";
 import { usePopupRender } from "../../lib/use-popup-render";
 import { RING_TRANSITION_MOTION } from "../shared";
 
@@ -58,6 +59,21 @@ export type MenuCheckboxItemProps = ComponentProps<typeof BaseMenu.CheckboxItem>
 export type MenuRadioItemIndicatorProps = ComponentProps<typeof BaseMenu.RadioItemIndicator>;
 export type MenuCheckboxItemIndicatorProps = ComponentProps<typeof BaseMenu.CheckboxItemIndicator>;
 
+// For the popup's focus hand-off (#633). `null` under a Base UI Root, and inside a Menu.Content: a
+// submenu (Base UI's Menu.SubmenuRoot) keeps Base UI's return to its trigger, and the root's popup
+// hands over for the menu. A Menu.Root nested in a Menu.Content is its own menu: it provides its
+// own.
+const MenuCloseFocusContext = createContext<CloseFocus | null>(null);
+
+function MenuRoot<Payload>({ onOpenChange, ...props }: BaseMenu.Root.Props<Payload>) {
+  const [closeFocus, handleOpenChange] = useCloseFocusRoot(onOpenChange);
+  return (
+    <MenuCloseFocusContext.Provider value={closeFocus}>
+      <BaseMenu.Root<Payload> {...props} onOpenChange={handleOpenChange} />
+    </MenuCloseFocusContext.Provider>
+  );
+}
+
 function MenuContent(props: MenuContentProps) {
   const [portalRef, portalNode] = usePortalNode();
   return (
@@ -82,9 +98,16 @@ function MenuContentPopup({
   onPointerMove,
   onKeyDown,
   render: renderProp,
+  ref,
   ...props
 }: MenuContentProps) {
   const [positioner, arrowPaddingByDefault, arrowChanged] = useArrowPadding();
+  // Focus moves to the trigger as the popup starts to close, not at the unmount after the exit.
+  // Inside counts the portal, which holds the submenus' portals.
+  const popupRef = useFocusOnClose(ref, useContext(MenuCloseFocusContext), {
+    finalFocus: props.finalFocus,
+    scope: usePortalContainer(),
+  });
   // Pointer over the popup until the next key press keeps its ring off (W151); a reopen during the
   // exit animation keeps a stale flag until the next key press (accepted).
   const [pointer, setPointer] = useState(false);
@@ -106,6 +129,7 @@ function MenuContentPopup({
         arrowPadding={arrowPadding ?? arrowPaddingByDefault}
       >
         <BaseMenu.Popup
+          ref={popupRef}
           render={render}
           data-pointer={pointer || undefined}
           onPointerMove={(event) => {
@@ -136,7 +160,7 @@ function MenuContentPopup({
         >
           {/* The items scroll in here, so the popup clips nothing: Menu.Arrow sits outside its box */}
           <div className="min-h-0 overflow-y-auto overscroll-contain scroll-py-1 rounded-[inherit] p-1">
-            {children}
+            <MenuCloseFocusContext.Provider value={null}>{children}</MenuCloseFocusContext.Provider>
           </div>
         </BaseMenu.Popup>
       </BaseMenu.Positioner>
@@ -232,7 +256,7 @@ function MenuArrow({ className, ...props }: MenuArrowProps) {
 }
 
 export const Menu = {
-  Root: BaseMenu.Root,
+  Root: MenuRoot,
   Trigger: BaseMenu.Trigger,
   Content: MenuContent,
   Item: MenuItem,
