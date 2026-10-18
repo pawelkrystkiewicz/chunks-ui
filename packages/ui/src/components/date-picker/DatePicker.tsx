@@ -85,9 +85,16 @@ type DatePickerOwnProps = Pick<
    */
   form?: string;
   /**
-   * Classes for the wrapper element around the trigger.
+   * Classes for the wrapper element around the trigger. The trigger fills it, so set the width
+   * here. To style the trigger, use `triggerClassName`.
    */
   className?: string;
+  /**
+   * Classes for the trigger `<button>`. They merge after the trigger's own classes, so a
+   * conflicting class replaces the default: `h-12` sets the height, and a `text-*` colour also
+   * replaces the muted colour of the placeholder.
+   */
+  triggerClassName?: string;
   /**
    * Replaces the built-in English strings, e.g. to translate them, including the calendar's.
    * Keys you leave out keep the default from `DEFAULT_DATE_PICKER_LABELS`.
@@ -135,6 +142,7 @@ export function DatePicker({
   required,
   form,
   className,
+  triggerClassName,
   labels,
   ref,
   ...triggerProps
@@ -261,6 +269,7 @@ export function DatePicker({
                     RING_TRANSITION,
                     "disabled:cursor-not-allowed disabled:opacity-50",
                     !displayValue && "text-muted-foreground",
+                    triggerClassName,
                   )}
                 >
                   <span id={valueId}>{displayValue || (placeholder ?? names.placeholder)}</span>
