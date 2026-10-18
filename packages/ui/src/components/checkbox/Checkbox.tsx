@@ -54,11 +54,16 @@ function CheckboxIndicator({ className, render, ...props }: CheckboxIndicatorPro
   );
 }
 
-// The same element and path with and without Motion, so they aren't remounted when Motion loads
+// The same element and path with and without Motion, so they aren't remounted when Motion loads.
+// Children replace the check and the minus; with `render` and no children, there is neither: the
+// render element draws its own, and may be a void element (#581). The element still springs in
+// and out; the path, and its morph, are the default glyph's alone. Its hook never gets an element
+// then, and does nothing.
 function CheckboxIndicatorElement({
   state,
   render,
   className,
+  children,
   ref,
   ...props
 }: ComponentProps<"span"> & {
@@ -81,20 +86,23 @@ function CheckboxIndicatorElement({
   return useRenderPart(render, state, indicatorRef, {
     ...props,
     className: cn("flex items-center justify-center text-current", className),
-    children: (
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="3"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="size-3"
-        aria-hidden="true"
-      >
-        <path ref={pathRef} d={pathD} />
-      </svg>
-    ),
+    children:
+      children == null && !render ? (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="size-3"
+          aria-hidden="true"
+        >
+          <path ref={pathRef} d={pathD} />
+        </svg>
+      ) : (
+        children
+      ),
   });
 }
 
