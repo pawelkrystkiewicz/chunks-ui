@@ -32,6 +32,10 @@ const opacity = (element: HTMLElement | null) =>
 // spring has only just started, so the style changes in the first frame. 5 frames leave margin
 const ABSENCE_WINDOW_FRAMES = 5;
 
+// A commit this long before Motion's first frame. Past Motion's 40 ms MAX_RESOLVE_DELAY, Motion
+// starts a jump's animation at the late frame's time, ahead of the document timeline (#632)
+const LONG_COMMIT_MS = 60;
+
 /** A consumer's `render` prop for the part Motion animates */
 type ConsumerRender = (props: HTMLProps) => ReactElement;
 
@@ -511,6 +515,22 @@ describe("controls once Motion has loaded", () => {
     await expect.poll(() => driven(subject), { timeout: SETTLE_TIMEOUT_MS }).toBe(true);
     const values = await sample(() => measure(byTestId()), 10);
     expect(new Set(values).size).toBe(1);
+  });
+
+  it("shows an unchecked Checkbox at rest from the first frame after a long commit", async () => {
+    await reloadMotion();
+    render(
+      <StrictMode>
+        <Checkbox.Root aria-label="Subscribe">
+          <Checkbox.Indicator data-testid="moving" />
+        </Checkbox.Root>
+      </StrictMode>,
+    );
+    const end = performance.now() + LONG_COMMIT_MS;
+    while (performance.now() < end) {}
+    // From the first frame, as Motion writes in it: a poll for that write could wait out a flash
+    const values = await sample(() => opacity(byTestId()), 10);
+    expect(new Set(values)).toEqual(new Set([0]));
   });
 
   // Turning reduced motion off again hands the element back to Motion, which must put back
