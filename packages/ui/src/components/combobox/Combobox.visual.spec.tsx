@@ -541,10 +541,8 @@ describe("Combobox.Popup closing, Motion", () => {
   });
 });
 
-// Trigger-style, with the search input in the popup. Base UI returns focus to the trigger only
-// once the popup unmounts, after its exit: a Tab pressed while it closed went from the input in
-// the closing popup to <body> (#627). On each path the popup leaves: the Motion spring (about
-// 0.5s), the CSS transition (0.3s), and with reduced motion none (a frame).
+// Trigger-style, input in the popup: a Tab during the exit landed on <body> (#627). The exit is
+// about 0.5s with Motion, 0.3s on the CSS path, and a frame with reduced motion.
 describe.each([
   { path: "Motion", withMotion: true, reduce: false },
   { path: "CSS fallback", withMotion: false, reduce: false },
@@ -557,9 +555,7 @@ describe.each([
     await enterMotionPath(true);
   });
 
-  // The fields around the trigger are text fields: WebKit's Tab skips buttons, and a click there
-  // does not focus one, so the same rows also hold in WebKit. With `open`, the Root is controlled
-  // and ignores every change Base UI asks for.
+  // Text fields around the trigger, as WebKit's Tab and click skip buttons; `open` ignores changes
   const fixture = ({
     open,
     finalFocusBefore = false,
@@ -625,9 +621,7 @@ describe.each([
     };
   };
 
-  // Whether the popup was still on the page when Tab went down. A Tab after the exit finds focus
-  // back on the trigger, so the spec would pass without the fix. With reduced motion the popup
-  // leaves a frame after the pick, which a slow machine can miss: only the end state is checked.
+  // A Tab after the exit passes without the fix; skipped for reduced motion's one frame
   const recordTab = (popup: HTMLElement) => {
     let mounted: boolean | undefined;
     const onKeyDown = (event: KeyboardEvent) => {
@@ -677,8 +671,7 @@ describe.each([
     },
   );
 
-  // Enter with nothing highlighted closes the popup without preventDefault. Its keypress, on a
-  // trigger that already had focus, clicked it and opened the popup again.
+  // Its keypress, on a trigger that already had focus, clicked it and reopened the popup
   it("keeps the popup closed and moves a Tab past the trigger, after Enter with nothing highlighted", async () => {
     const { popup, trigger, after } = await openInPopup();
     const checkTab = recordTab(popup);
@@ -697,8 +690,7 @@ describe.each([
     expect(document.activeElement).toBe(trigger);
   });
 
-  // The click focuses the field outside: the popup must not pull focus back to the trigger, nor
-  // pass it through the trigger on the way, which would fire its focus and blur handlers
+  // Focus must not come back to the trigger, nor pass through it on the way
   it("leaves focus where an outside click put it", async () => {
     const { popup, trigger, before } = await openInPopup();
     const triggerFocused = tookFocus(trigger);
@@ -709,9 +701,7 @@ describe.each([
     expect(document.activeElement).toBe(before);
   });
 
-  // A parent that controls `open` ignores the close an outside press asks for, then closes the
-  // popup itself, through the prop alone. The press's event must not reach that later close: it
-  // skipped the hand-off. Tab then went from the input in the leaving popup to <body>.
+  // The ignored press's event must not reach the later close by the prop: it skipped the hand-off
   it.skipIf(reduce)(
     "moves a Tab past the trigger after a close by the prop, following an outside press the parent ignored",
     async () => {
@@ -735,8 +725,7 @@ describe.each([
     },
   );
 
-  // An element as `finalFocus` keeps Base UI's timing: focus moves there at the unmount, and
-  // never to the trigger first
+  // An element as `finalFocus` keeps Base UI's timing: focus moves there at the unmount
   it("moves focus only at the unmount, to an element passed as finalFocus", async () => {
     const { popup, trigger, before } = await openInPopup({ finalFocusBefore: true });
     const triggerFocused = tookFocus(trigger);

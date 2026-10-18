@@ -428,13 +428,8 @@ describe("Form controls in WebKit", () => {
   });
 });
 
-/*
- * #627: a trigger-style Combobox (the search input in the popup) moves focus to its trigger as
- * the popup starts to close. In WebKit, Base UI blurs a text field in a closing popup (against a
- * scroll jump), so focus went to <body> for the whole exit. WebKit's Tab skips buttons by
- * default, so the field after the trigger is a text field: Tab reaches it from the trigger
- * whether or not buttons are in the tab order, and not from <body>.
- */
+// #627: Base UI blurs the input of a closing popup in WebKit. The next field is a text field, as
+// WebKit's Tab skips buttons: Tab reaches it from the trigger, not from <body>.
 describe("Combobox focus as its popup closes, in WebKit", () => {
   const openInPopup = async () => {
     render(
