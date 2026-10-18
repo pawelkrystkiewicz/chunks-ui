@@ -835,7 +835,8 @@ describe("Combobox icon buttons", () => {
     }
   });
 
-  // A trigger-style Combobox shows the selected value inside its Trigger, so the content names it
+  // Beside an input, the Trigger's content names it. With the input inside the popup, the Trigger
+  // is a `combobox`, which its content does not name: it needs an aria-label or a Field.Label (#620)
   it.each([
     ["render element text", { render: <button type="button">Choose</button> }, "Choose"],
     ["custom children", { children: "Fruits" }, "Fruits"],

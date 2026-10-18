@@ -68,7 +68,8 @@ export type ComboboxPositionerProps = Omit<
   "sideOffset"
 > & {
   /**
-   * Distance from the anchor in pixels: the input, or the `Combobox.Control` around it.
+   * Distance from the anchor in pixels: the input, the `Combobox.Control` around it, or the
+   * trigger when the input is inside the popup.
    * @default 8
    */
   sideOffset?: ComponentProps<typeof BaseCombobox.Positioner>["sideOffset"];
@@ -153,9 +154,11 @@ function ComboboxInput({ className, ...props }: ComboboxInputProps) {
 }
 
 // With neither children nor `render`, the Trigger draws a chevron and is named "Show options"
-// (`labels.trigger`). Children or a `render` element replace both: a trigger-style Combobox shows
-// the selected value inside its Trigger, so that content names it (#581). A consumer's aria-label
-// replaces the default; inside Field.Root, Base UI's aria-labelledby still takes precedence.
+// (`labels.trigger`). Children or a `render` element replace both (#581): beside an input, that
+// content names the button. With the input inside the popup, Base UI makes the Trigger a
+// `combobox`, which its content does not name: it needs an aria-label or a Field.Label (#620).
+// A consumer's aria-label replaces the default; inside Field.Root, Base UI's aria-labelledby still
+// takes precedence.
 function ComboboxTrigger({ className, children, ref, ...props }: ComboboxTriggerProps) {
   const labels = useContext(ComboboxLabelsContext);
   const ownRef = useRef<HTMLButtonElement>(null);
