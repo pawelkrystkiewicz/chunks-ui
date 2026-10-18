@@ -11,7 +11,9 @@ afterEach(cleanup);
 // aria-hidden-focus skips Base UI's focus guards, aria-hidden spans that hand focus on when Tab
 // reaches them. A browser's axe leaves them for review, as it takes the open dialog for a modal.
 // Here axe runs while the popup is still at opacity 0 and can't hit-test the backdrop, so it
-// finds no modal and flags them. The rule still checks every other aria-hidden node
+// finds no modal and flags them. The rule still checks every other aria-hidden node. Base UI
+// also aria-hides the page outside a modal dialog, so a trigger rendered beside the open dialog
+// fails the same way; these audits leave it out
 const axe = configureAxe({
   globalOptions: {
     rules: [

@@ -11,8 +11,10 @@ afterEach(cleanup);
  *
  * While a dialog is visible, the rule leaves such a node in `incomplete`, in a browser too: axe
  * counts any visible `dialog`, `[role=dialog]` or `[aria-modal=true]` as an open modal, whose
- * focus trap may keep focus off the node. A toast of normal priority is a `role="dialog"`; to
- * audit around one, read `incomplete` as the F6 audit in Toast.spec.tsx does.
+ * focus trap may keep focus off the node. The Drawer audit (Drawer.spec.tsx), the open
+ * DatePicker audit (DatePicker.spec.tsx) and a toast of the default `low` priority, which is a
+ * `role="dialog"`, each show one; to check a node there, read `incomplete` as the F6 audit in
+ * Toast.spec.tsx does.
  */
 it("fails toHaveNoViolations() on a focusable aria-hidden node", async () => {
   const { container } = render(
