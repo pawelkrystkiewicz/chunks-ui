@@ -60,7 +60,9 @@ export type MenuRadioItemIndicatorProps = ComponentProps<typeof BaseMenu.RadioIt
 export type MenuCheckboxItemIndicatorProps = ComponentProps<typeof BaseMenu.CheckboxItemIndicator>;
 
 // For the popup's focus hand-off (#633). `null` under a Base UI Root, and inside a Menu.Content: a
-// submenu keeps Base UI's return to its trigger, and the root's popup hands over for the menu.
+// submenu (Base UI's Menu.SubmenuRoot) keeps Base UI's return to its trigger, and the root's popup
+// hands over for the menu. A Menu.Root nested in a Menu.Content is its own menu: it provides its
+// own.
 const MenuCloseFocusContext = createContext<CloseFocus | null>(null);
 
 function MenuRoot<Payload>({ onOpenChange, ...props }: BaseMenu.Root.Props<Payload>) {

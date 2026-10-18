@@ -179,6 +179,19 @@ describe.each([
     expect(document.activeElement).toBe(after);
   });
 
+  // A held Enter repeats its keydown and keypress: on a trigger that already had focus, the repeat
+  // clicked it and opened the calendar again
+  it("keeps the calendar closed and the trigger focused, after a pick by a held Enter", async () => {
+    const { popup, trigger } = await open();
+    await userEvent.keyboard("{ArrowDown}{Enter>2}{/Enter}");
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    expect(document.activeElement).toBe(trigger);
+    expect(trigger.matches(":focus-visible"), "the trigger shows its ring").toBe(true);
+    await unmounted(popup);
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    expect(document.activeElement).toBe(trigger);
+  });
+
   // A click and a key press are two calls, too far apart for the one frame of reduced motion
   it.skipIf(reduce)(
     "moves a Tab pressed during the exit past the trigger, after a pick by click",

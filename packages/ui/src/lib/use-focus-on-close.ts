@@ -133,7 +133,12 @@ export function useFocusOnClose<T extends HTMLElement>(
       // may be to come (a Base UI item clicks on the keydown), and a browser may turn it into a
       // click on the trigger. So wait for the keypress or the keyup, or for the next key's keydown:
       // a native button's Space clicks on its keyup, and with key rollover the Tab goes down before
-      // Enter comes up. The Tab then leaves from the trigger.
+      // Enter comes up. The Tab then leaves from the trigger. Any key's keypress or keyup ends the
+      // wait, not only the closing key's: harmless, as the hazard is that key's own keypress, which
+      // follows its keydown at once.
+      // ponytail: an assistive technology's click or a script's `.click()` has no click count too;
+      // its close waits for a key that may not come, and Base UI's return at the unmount moves
+      // focus instead. Accepted.
       const keyClick = event?.type === "click" && "detail" in event && event.detail === 0;
       byKey = keyClick || event?.type.startsWith("key") === true;
       if ((event?.type === "keydown" && !event.defaultPrevented) || keyClick) {

@@ -168,6 +168,15 @@ describe.each([
     expect(document.activeElement).toBe(before);
   });
 
+  // The press takes focus to <body>; Base UI's return at the unmount gives it to the trigger, and
+  // the popup does so as it starts to close: the same end, sooner
+  it("ends with focus on the trigger after a click on a blank area outside", async () => {
+    const { popup, trigger } = await openPopover();
+    await userEvent.click(page.getByTestId("blank"));
+    await unmounted(popup);
+    expect(document.activeElement).toBe(trigger);
+  });
+
   // An element as `finalFocus` keeps Base UI's timing: focus moves there at the unmount
   it("moves focus only at the unmount, to an element passed as finalFocus", async () => {
     const { popup, trigger, before } = await openPopover({ finalFocusBefore: true });
@@ -218,6 +227,7 @@ function popoverFixture({ finalFocusBefore = false, openOnHover = false } = {}) 
   return (
     <div className="flex w-60 flex-col items-start gap-2" style={{ padding: 40 }}>
       <input ref={beforeRef} aria-label="Before" />
+      <div data-testid="blank" className="h-6 w-full" />
       <Popover.Root>
         <Popover.Trigger openOnHover={openOnHover} delay={0} closeDelay={0}>
           Settings

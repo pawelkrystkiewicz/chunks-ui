@@ -89,7 +89,9 @@ function PopoverContentPopup({
   ...props
 }: PopoverContentProps) {
   const [positioner, arrowPaddingByDefault, arrowChanged] = useArrowPadding();
-  // Focus moves to the trigger as the popup starts to close, not at the unmount after the exit
+  // Focus moves to the trigger as the popup starts to close, not at the unmount after the exit.
+  // ponytail: inside is the popup alone. A popup portalled from in it (a Select in a
+  // Popover.Content) is outside, so a close with focus there keeps Base UI's return at the unmount.
   const popupRef = useFocusOnClose(ref, useContext(PopoverCloseFocusContext), {
     finalFocus: props.finalFocus,
   });

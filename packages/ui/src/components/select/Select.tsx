@@ -103,6 +103,8 @@ function SelectIcon({ className, children, ...props }: SelectIconProps) {
 
 // Focus moves to the trigger as the popup starts to close, not at the unmount after the exit
 function SelectPopup({ className, render: renderProp, ref, ...props }: SelectPopupProps) {
+  // ponytail: inside is the popup alone. A popup portalled from in it is outside, so a close with
+  // focus there keeps Base UI's return at the unmount.
   const popupRef = useFocusOnClose(ref, useContext(SelectCloseFocusContext), {
     finalFocus: props.finalFocus,
   });

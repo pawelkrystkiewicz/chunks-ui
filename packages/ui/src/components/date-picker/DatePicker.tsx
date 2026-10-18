@@ -158,13 +158,17 @@ export function DatePicker({
   // Focus moves to the trigger as the popup starts to close, not at the unmount after the exit
   const [closeFocus, handleOpenChange] = useCloseFocusRoot(setOpen);
   const focusOnCloseRef = useFocusOnClose(popupRef, closeFocus);
+  // The click that picks a day, by mouse, Enter or Space: the close goes through the hand-off with
+  // it, which waits after a key's click (a held Enter's repeat would click the trigger)
+  const pickRef = useRef<Event>(undefined);
   const [internalDate, setInternalDate] = useState<Date | null>(defaultValue ?? null);
   const selectedDate = validDate(value !== undefined ? value : internalDate);
 
   const handleDateSelect = (date: Date | null) => {
     if (value === undefined) setInternalDate(date);
     onValueChange?.(date);
-    setOpen(false);
+    const event = pickRef.current ?? new Event("base-ui");
+    handleOpenChange(false, { event, reason: "item-press", isCanceled: false });
   };
 
   // A form reset restores the default date, as it restores an input's default value. A
@@ -314,6 +318,9 @@ export function DatePicker({
           >
             <BasePopover.Popup
               ref={focusOnCloseRef}
+              onClickCapture={(event) => {
+                pickRef.current = event.nativeEvent;
+              }}
               // A dialog needs a name. As in the APG date picker, it names the task, not the month
               aria-label={names.dialog}
               // Open on the calendar's tab-stop day (selected, else today), as in the APG date picker.
