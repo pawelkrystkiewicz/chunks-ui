@@ -9,8 +9,8 @@
  * Covers the pages built from content/**\/*.mdx (the landing page, /create and /kitchen-sink
  * among them), every other page under app/, and the 404 page, which it gets by requesting a URL
  * no page answers on: that one must answer 404, every other page 200. On the pages POPUPS lists, it
- * then opens the first example's popup and audits it alone, open; on the pages TOASTS lists, it
- * adds each toast and audits it alone, one at a time, with aria-dialog-name added (see ToastCheck).
+ * then opens each popup listed and audits it alone, open; on the pages TOASTS lists, it adds each
+ * toast and audits it alone, one at a time. Both add aria-dialog-name (see Popup and ToastCheck).
  * axe's `incomplete` results (checks it could not decide, often contrast over images or gradients)
  * are not failed. A page is audited once React has hydrated it (`html[data-hydrated]`, set by
  * app/HydrationMarker.tsx) and its fonts have loaded.
@@ -107,15 +107,21 @@ type Role = Parameters<Page["getByRole"]>[0];
 
 /**
  * A popup the run opens and audits on its own, after its page, in every theme: it clicks the first
- * element of role `trigger` named `name` (the page's first example), waits for the one element of
- * role `popup`, runs axe on that element alone, checks the trigger has aria-expanded="true" and
- * aria-controls set to the popup's id, and closes it with Escape, also when a step before threw.
- * ALLOWED applies to the popup as to its page.
+ * element of role `trigger` named `name` (so the trigger of a later example needs a name that no
+ * earlier element of that role has), waits for the one element of role `popup`, runs axe on that
+ * element alone, checks the trigger has aria-expanded="true" and aria-controls set to the popup's
+ * id, and closes it with Escape, also when a step before threw. The audit also runs
+ * aria-dialog-name, a best-practice rule outside TAGS and the only axe rule that checks a dialog
+ * popup's own name; on other roles it finds nothing to check. ALLOWED applies to the popup as to
+ * its page.
  */
 type Popup = { page: string; trigger: Role; name: string; popup: Role };
 
 const POPUPS: Popup[] = [
   { page: "/components/combobox", trigger: "button", name: "Show options", popup: "listbox" },
+  // Trigger with Search: with the input inside the popup, Base UI makes the trigger a combobox and
+  // the popup a dialog
+  { page: "/components/combobox", trigger: "combobox", name: "Favorite fruit", popup: "dialog" },
   { page: "/components/date-picker", trigger: "button", name: "Pick a date", popup: "dialog" },
   { page: "/components/menu", trigger: "button", name: "Options", popup: "menu" },
   { page: "/components/popover", trigger: "button", name: "More info", popup: "dialog" },
@@ -405,9 +411,9 @@ async function auditPopup(
     await element.waitFor({ timeout: POPUP_MS });
     const id = await element.getAttribute("id");
     if (!id) throw new Error(`The open ${popup.popup} has no id to scope axe to`);
-    problems.push(
-      ...(await axe(page, popup.page, theme, matched, { selector: `[id="${id}"]`, label })),
-    );
+    // aria-dialog-name, outside TAGS, is the one axe rule that checks a dialog popup's own name
+    const scope = { selector: `[id="${id}"]`, label, rules: ["aria-dialog-name"] };
+    problems.push(...(await axe(page, popup.page, theme, matched, scope)));
     // The trigger tells assistive technology the popup is open, and which element it is
     const state = await handle.evaluate((el) => ({
       expanded: el.getAttribute("aria-expanded"),
