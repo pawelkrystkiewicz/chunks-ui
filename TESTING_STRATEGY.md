@@ -131,6 +131,8 @@ The audit of `document.body` also runs axe's `region` rule (best practice: all c
 
 Setup: `vitest.setup.ts` adds `toHaveNoViolations` to every `expect()`, and stubs `document.elementFromPoint` so that axe's `aria-hidden-focus` rule can fail in jsdom (see below).
 
+A browser spec (`*.visual.spec.tsx`) imports `axe-core` directly and runs `axe.run(element, { runOnly: [...] })`, as `Toast.visual.spec.tsx` does, not jest-axe: its types pull `@types/jest` into the visual typecheck, where jest's `expect` replaces Vitest's. Add a dependency that only specs import to `optimizeDeps.include` in `vitest.visual.config.ts`, or Vite can find it mid-run and reload the test page.
+
 ### Focusable aria-hidden nodes
 
 axe's `aria-hidden-focus` rule fails an element that is hidden from assistive tech but that Tab reaches. When no dialog is visible, the rule looks for a full-page overlay with axe's polyfill of `document.elementsFromPoint`, which calls `document.elementFromPoint`. jsdom has neither, so the rule threw. An errored rule lands in `incomplete`, which `toHaveNoViolations()` does not read, and every focusable `aria-hidden` node passed. `vitest.setup.ts` stubs `elementFromPoint` to return `null`: axe then finds no element at any point, sees no overlay, and fails the node. `src/AriaHiddenFocus.spec.tsx` checks that.
