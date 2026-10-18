@@ -8,10 +8,10 @@ afterEach(cleanup);
 
 // aria-hidden-focus skips Base UI's focus guards, aria-hidden spans that hand focus on when Tab
 // reaches them. A browser's axe leaves them for review, as it takes the open popover, a dialog,
-// for a modal. Here axe runs while the popup is still at opacity 0, so it finds no modal and
-// flags them. The rule still checks every other aria-hidden node. Were axe to find a modal, it
-// would leave a stray one in `incomplete`, which toHaveNoViolations() does not read, so the audit
-// also checks that the rule left nothing there
+// for a modal. Here axe runs while the popup is still at opacity 0, and so is Base UI's
+// positioner around it, so axe finds no modal and flags them. The rule still checks every other
+// aria-hidden node. Were axe to find a modal, it would leave a stray one in `incomplete`, which
+// toHaveNoViolations() does not read, so the audit also checks that the rule left nothing there
 const axe = configureAxe({
   globalOptions: {
     rules: [

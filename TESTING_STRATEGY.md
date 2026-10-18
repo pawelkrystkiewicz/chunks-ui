@@ -96,10 +96,11 @@ it("has no a11y violations", async () => {
 });
 ```
 
-A popup (Combobox, DatePicker, Dialog, Drawer, Menu, Popover, Select, Tooltip) renders into a portal node in `document.body`, outside the `container` that `render` returns, so `axe(container)` does not see it. When the test opens a popup, audit `document.body`. Also assert that the popup is in the document, so that the audit cannot pass when the popup did not open. An open Menu also needs an `axe` that skips Base UI's focus guards, as in this example (see **Focusable aria-hidden nodes** below):
+A popup (Combobox, DatePicker, Dialog, Drawer, Menu, Popover, Select, Tooltip) renders into a portal node in `document.body`, outside the `container` that `render` returns, so `axe(container)` does not see it. When the test opens a popup, audit `document.body`. Also assert that the popup is in the document, so that the audit cannot pass when the popup did not open. An open Menu also needs an `axe` that skips Base UI's focus guards, and a check that the rule left nothing in `incomplete`, as in this example (see **Focusable aria-hidden nodes** below):
 
 ```tsx
 import { configureAxe } from "jest-axe";
+import { undecided } from "../../AxeTest.utils";
 
 // Skips Base UI's focus guards, which aria-hidden-focus fails in jsdom
 const axe = configureAxe({
@@ -121,9 +122,9 @@ it("has no a11y violations", async () => {
   );
   // The popup is portalled out of the container RTL hands back, so audit the body
   expect(container).not.toContainElement(screen.getByRole("menu"));
-  expect(
-    await axe(document.body, { rules: { region: { enabled: false } } }),
-  ).toHaveNoViolations();
+  const results = await axe(document.body, { rules: { region: { enabled: false } } });
+  expect(results).toHaveNoViolations();
+  expect(undecided(results, "aria-hidden-focus")).toEqual([]);
 });
 ```
 
@@ -135,9 +136,9 @@ Setup: `vitest.setup.ts` adds `toHaveNoViolations` to every `expect()`, and stub
 
 axe's `aria-hidden-focus` rule fails an element that is hidden from assistive tech but that Tab reaches. When no dialog is visible, the rule looks for a full-page overlay with axe's polyfill of `document.elementsFromPoint`, which calls `document.elementFromPoint`. jsdom has neither, so the rule threw. An errored rule lands in `incomplete`, which `toHaveNoViolations()` does not read, and every focusable `aria-hidden` node passed. `vitest.setup.ts` stubs `elementFromPoint` to return `null`: axe then finds no element at any point, sees no overlay, and fails the node. `src/AriaHiddenFocus.spec.tsx` checks that.
 
-While a dialog is visible, the rule still can't fail a node, in a browser too. axe takes any visible `dialog`, `[role=dialog]` or `[aria-modal=true]` for an open modal and lists every focusable `aria-hidden` node under `incomplete`. The Drawer audit, the open DatePicker audit and a toast audit with a toast of the default `low` priority on screen (a `role="dialog"`) each show one. To check such a node there, read `incomplete`, as the F6 audit in `Toast.spec.tsx` does.
+While a dialog is visible, the rule still can't fail a node, in a browser too. axe takes any visible `dialog`, `[role=dialog]` or `[aria-modal=true]` for an open modal and lists every focusable `aria-hidden` node under `incomplete`. The Drawer audit, the open DatePicker audit and a toast audit with a toast of the default `low` priority on screen (a `role="dialog"`) each show one. In such an audit, call `expectOnlyFocusGuardsUndecided(results)` from `src/AxeTest.utils.ts` after `toHaveNoViolations()`. It fails on every node in `incomplete` that is not a Base UI focus guard.
 
-Base UI renders focus guards around an open popup: `aria-hidden` spans that Tab reaches and that hand focus on. In a browser, axe takes the open dialog, or the full-page backdrop of a Menu or a Select, for an open modal and lists the guards under `incomplete`. In jsdom, an open-popup audit with no visible dialog fails them: Dialog and Popover popups are still at Motion's opacity 0 when the audit runs, and jsdom can't hit-test the Menu and Select backdrops. Skip the guards in those audits with the `configureAxe` call from the Menu example, as the Dialog, OverlayBody, Popover, Menu and Select specs do. The rule still checks every other `aria-hidden` node.
+Base UI renders focus guards around an open popup: `aria-hidden` spans that Tab reaches and that hand focus on. In a browser, axe takes the open dialog, or the full-page backdrop of a Menu or a Select, for an open modal and lists the guards under `incomplete`. In jsdom, an open-popup audit with no visible dialog fails them: Dialog and Popover popups are still at Motion's opacity 0 when the audit runs (and so is the Popover's positioner), and jsdom can't hit-test the Menu and Select backdrops. Skip the guards in those audits with the `configureAxe` call from the Menu example, as the Dialog, OverlayBody, Popover, Menu and Select specs do. The rule still checks every other `aria-hidden` node. Those audits also assert that `undecided(results, "aria-hidden-focus")` from `src/AxeTest.utils.ts` is empty. Without that check, a stray node passes once axe finds a modal, for example when a popup is no longer at opacity 0.
 
 Base UI also aria-hides the page outside an open modal Dialog, so a trigger rendered beside the open Dialog fails the same way. Leave the trigger out of the audit, as the Dialog specs do. Don't widen the selector to `[data-base-ui-inert]`: that marker is on the hidden page too, so the rule would skip the whole page and any stray node in it, not only the guards.
 
