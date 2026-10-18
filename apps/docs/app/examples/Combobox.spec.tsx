@@ -2,7 +2,7 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import type { ComponentType } from "react";
 import { describe, expect, it } from "vitest";
-import { ComboboxBasicDemo, ComboboxGroupedDemo, ComboboxMultiDemo } from "./combobox-demos";
+import { ComboboxBasicDemo, ComboboxGroupedDemo, ComboboxMultiDemo } from "./Combobox";
 
 /** Opens the popup from the keyboard, then clicks the option. */
 async function pick(input: HTMLElement, option: string) {
