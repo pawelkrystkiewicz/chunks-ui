@@ -5,6 +5,7 @@ import { GetCodeDialog } from "./GetCodeDialog";
 import { PreviewPanel } from "./PreviewPanel";
 import { ThemeSidebar } from "./ThemeSidebar";
 import {
+  applyPatch,
   DEFAULT_THEME,
   FONTS_HREF,
   loadTheme,
@@ -30,7 +31,7 @@ export function CreatePage() {
     if (hydrated) saveTheme(theme);
   }, [hydrated, theme]);
 
-  const update = (patch: Partial<Theme>) => setTheme((prev) => ({ ...prev, ...patch }));
+  const update = (patch: Partial<Theme>) => setTheme((prev) => applyPatch(prev, patch));
 
   return (
     <>
@@ -49,11 +50,11 @@ export function CreatePage() {
             <ThemeSidebar
               theme={theme}
               onChange={update}
-              onShuffle={() => update(shuffle())}
+              onShuffle={() => update({ ...shuffle(), overrides: undefined })}
               onReset={() => setTheme((prev) => ({ ...DEFAULT_THEME, mode: prev.mode }))}
               onGetCode={() => setCodeOpen(true)}
             />
-            <PreviewPanel theme={theme} />
+            <PreviewPanel theme={theme} onChange={update} />
           </div>
         </div>
       </div>

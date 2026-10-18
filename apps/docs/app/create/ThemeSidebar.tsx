@@ -112,7 +112,7 @@ export function ThemeSidebar({
                   key={preset.name}
                   type="button"
                   aria-pressed={active}
-                  onClick={() => onChange(preset.theme)}
+                  onClick={() => onChange({ ...preset.theme, overrides: undefined })}
                   className={cn(
                     TILE,
                     "flex h-[66px] flex-col justify-between rounded-[10px] px-2.5 py-[9px] text-start",

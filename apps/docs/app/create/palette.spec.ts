@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  apca,
   BASES,
   chartList,
   contrast,
@@ -8,7 +9,10 @@ import {
   type Oklch,
   PRIMARIES,
   palette,
+  parseColor,
+  type Rgb,
   type Theme,
+  toHex,
 } from "./palette";
 import { ink, parseOklch, themeTokens } from "./theme-css.test-helpers";
 
@@ -101,6 +105,33 @@ describe("contrast", () => {
       4.57,
       1,
     );
+  });
+
+  it("measures APCA Lc like the apca-w3 reference", () => {
+    const white: Rgb = [255, 255, 255];
+    const black: Rgb = [0, 0, 0];
+    const grey: Rgb = [136, 136, 136];
+    expect(apca(black, white)).toBeCloseTo(106.04, 1);
+    expect(apca(white, black)).toBeCloseTo(-107.88, 1);
+    expect(apca(grey, white)).toBeCloseTo(63.06, 1);
+    expect(apca(white, grey)).toBeCloseTo(-68.54, 1);
+    expect(apca(grey, grey)).toBe(0);
+  });
+
+  it("reads typed hex and oklch() colours, and nothing else", () => {
+    // Hex round-trips through OKLCH to the same paint
+    for (const hex of ["#006cef", "#888888", "#000000", "#ffffff", "#ff8800"]) {
+      expect(toHex(parseColor(hex) as Oklch)).toBe(hex);
+    }
+    expect(parseColor("#888")).toEqual(parseColor("#888888"));
+    expect(parseColor("oklch(56% 0.2 -30deg)")).toEqual({ l: 0.56, c: 0.2, h: 330 });
+    // Without the #, three letters are a word: bad, add, fee
+    expect(parseColor("bad")).toBeNull();
+    expect(parseColor("#bad")).not.toBeNull();
+    expect(parseColor("006cef")).toEqual(parseColor("#006cef"));
+    for (const bad of ["red", "#12345", "oklch(2 0 0)", "oklch(0.5 0.1)", ""]) {
+      expect(parseColor(bad), bad).toBeNull();
+    }
   });
 
   it("measures the colours as painted, in 8-bit sRGB", () => {

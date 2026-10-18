@@ -19,6 +19,7 @@ import { UsageCard } from "./preview/UsageCard";
 import { UsersCard } from "./preview/UsersCard";
 import { VelocityCard } from "./preview/VelocityCard";
 import { ThemeScope } from "./ThemeScope";
+import { ThemeStatus } from "./ThemeStatus";
 import { previewColumnWidth, type Theme } from "./theme-model";
 
 // Width only: media queries inside the preview still follow the real window.
@@ -30,7 +31,13 @@ const VIEWPORTS = [
 
 type ViewportId = (typeof VIEWPORTS)[number]["id"];
 
-export function PreviewPanel({ theme }: { theme: Theme }) {
+export function PreviewPanel({
+  theme,
+  onChange,
+}: {
+  theme: Theme;
+  onChange: (patch: Partial<Theme>) => void;
+}) {
   const [viewport, setViewport] = useState<ViewportId>("desktop");
   const summary = [
     theme.fontHeading === theme.fontBody
@@ -72,6 +79,8 @@ export function PreviewPanel({ theme }: { theme: Theme }) {
           ))}
         </ToggleGroup.Root>
       </div>
+
+      <ThemeStatus theme={theme} onChange={onChange} />
 
       <ThemeScope
         theme={theme}
