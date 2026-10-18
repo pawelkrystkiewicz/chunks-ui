@@ -51,7 +51,9 @@ function typeBlack() {
   fireEvent.keyDown(field(), { key: "Enter" });
 }
 
-describe("the contrast panel", () => {
+// ponytail: getByRole names every button in the contrast table, so a test takes about 1s here and
+// 5-6s on a CI runner, past Vitest's 5s default. Query within the row if these grow slower.
+describe("the contrast panel", { timeout: 15_000 }, () => {
   it("keeps focus in the colour field after Enter, and the row's ratio updates", () => {
     render(<Harness />);
     openEditor();
