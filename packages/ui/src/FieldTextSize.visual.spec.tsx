@@ -11,21 +11,60 @@ import { withViewport } from "./VisualTest.utils";
  * iOS Safari zooms the page when a field with text under 16px takes focus (#562), so `Input`,
  * `Textarea`, `NumberField.Input` and `Combobox.Input` have 16px text below the `md` breakpoint
  * (768px) and 14px from `md` up. These specs read the font size the browser computes for each
- * field, on the default 414px page (below `md`) and on an 800px page (from `md` up). jsdom loads
- * no stylesheet, so a unit spec could only compare class strings. No screenshots are taken.
+ * field, on the default 414px page (below `md`), on a 700px page (from `sm` up to `md`) and on an
+ * 800px page (from `md` up). jsdom loads no stylesheet, so a unit spec could only compare class
+ * strings. No screenshots are taken.
  */
 
 /** A `className` for a field, and the font size the field has with it at each width */
 const CLASSES = [
-  { given: "no className", className: undefined, belowMd: "16px", fromMd: "14px" },
+  {
+    given: "no className",
+    className: undefined,
+    belowMd: "16px",
+    smToMd: "16px",
+    fromMd: "14px",
+  },
   // A size without a prefix applies from `md` up, and the field stays 16px below it
-  { given: "className text-lg", className: "text-lg", belowMd: "16px", fromMd: "18px" },
+  {
+    given: "className text-lg",
+    className: "text-lg",
+    belowMd: "16px",
+    smToMd: "16px",
+    fromMd: "18px",
+  },
   // A `max-md:` size replaces the 16px below `md`
   {
     given: "className max-md:text-lg",
     className: "max-md:text-lg",
     belowMd: "18px",
+    smToMd: "18px",
     fromMd: "14px",
+  },
+  // A `sm:` size applies from 640px. Tailwind emits every `max-*` variant before the min-width
+  // ones, so it wins over the 16px until `md`
+  {
+    given: "className sm:text-lg",
+    className: "sm:text-lg",
+    belowMd: "16px",
+    smToMd: "18px",
+    fromMd: "18px",
+  },
+  // shadcn's habit: 14px from `sm` up, which brings the zoom back between 640px and `md`
+  {
+    given: "className text-base sm:text-sm",
+    className: "text-base sm:text-sm",
+    belowMd: "16px",
+    smToMd: "14px",
+    fromMd: "14px",
+  },
+  // A `md:` size, like the larger breakpoints, leaves the 16px below `md` alone
+  {
+    given: "className md:text-lg",
+    className: "md:text-lg",
+    belowMd: "16px",
+    smToMd: "16px",
+    fromMd: "18px",
   },
 ] as const;
 
@@ -59,13 +98,21 @@ const ADORNED: {
   given: string;
   className: InputProps["className"];
   belowMd: string;
+  smToMd: string;
   fromMd: string;
 }[] = [
-  { given: "a string className", className: "max-md:text-lg", belowMd: "16px", fromMd: "14px" },
+  {
+    given: "a string className",
+    className: "max-md:text-lg",
+    belowMd: "16px",
+    smToMd: "16px",
+    fromMd: "14px",
+  },
   {
     given: "a function className",
     className: () => "max-md:text-lg",
     belowMd: "18px",
+    smToMd: "18px",
     fromMd: "14px",
   },
 ];
@@ -81,7 +128,7 @@ function fontSizeOf(ui: ReactNode) {
 }
 
 /** Defines a spec per field and `className` for the page the calling `describe` sets */
-function expectFontSizesAt(width: "belowMd" | "fromMd") {
+function expectFontSizesAt(width: "belowMd" | "smToMd" | "fromMd") {
   for (const { field, ui } of FIELDS) {
     describe(field, () => {
       for (const { given, className, ...sizes } of CLASSES) {
@@ -112,6 +159,11 @@ describe("below md, on the default 414px page", () => {
     expect(wrapper, "the input has a [data-slot=input-adornments] wrapper").not.toBeNull();
     expect(getComputedStyle(wrapper as Element).fontSize).toBe("18px");
   });
+});
+
+describe("from sm up to md, on a 700px page", () => {
+  withViewport(700);
+  expectFontSizesAt("smToMd");
 });
 
 describe("from md up, on an 800px page", () => {
