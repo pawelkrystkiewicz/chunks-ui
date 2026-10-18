@@ -68,3 +68,27 @@ export function fontSizeOf(ui: ReactNode) {
   render(ui);
   return getComputedStyle(screen.getByLabelText("Field")).fontSize;
 }
+
+/**
+ * Renders an open `Select` and returns the font size the browser computes for its item,
+ * which takes `className`
+ */
+export function selectItemFontSize(className?: string) {
+  render(
+    <Select.Root defaultOpen>
+      <Select.Trigger aria-label="Fruit">
+        <Select.Value />
+      </Select.Trigger>
+      <Select.Portal>
+        <Select.Positioner>
+          <Select.Popup>
+            <Select.Item value="apple" className={className}>
+              <Select.ItemText>Apple</Select.ItemText>
+            </Select.Item>
+          </Select.Popup>
+        </Select.Positioner>
+      </Select.Portal>
+    </Select.Root>,
+  );
+  return getComputedStyle(screen.getByRole("option")).fontSize;
+}

@@ -161,7 +161,7 @@ The popup enters with a scale-up and fade (from `scale-95` and `opacity-0`): the
 
 ## Text Size
 
-The text of `Select.Trigger` has the size of the text fields: 16px below the `md` breakpoint (768px by default) and on a touch screen, and 14px otherwise, so a form has one text size. A text-size class on `Select.Trigger` follows the same rules as on an `Input`. See [Text Size](/components/input#text-size) in `Input`.
+The text of `Select.Trigger` has the size of the text fields: 16px below the `md` breakpoint (768px by default) and on a touch screen, and 14px otherwise, so a form has one text size. The items follow the field size too, as a popup not opened by touch lays the selected item over the trigger's value; where the text is 16px, an item is 4px taller (36px). A text-size class on `Select.Trigger` or `Select.Item` follows the same rules as on an `Input`. A size class meant for the whole field goes on both `Select.Trigger` and `Select.Item`, or the item opens over the value at a different size. See [Text Size](/components/input#text-size) in `Input`.
 
 ## Props
 

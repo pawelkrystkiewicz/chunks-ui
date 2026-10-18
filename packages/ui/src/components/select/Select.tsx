@@ -119,7 +119,8 @@ function SelectItem({ className, ...props }: SelectItemProps) {
   return (
     <BaseSelect.Item
       className={cnState(
-        "relative flex w-full cursor-default items-center rounded-sm py-1.5 ps-2 pe-8 text-sm outline-none",
+        "relative flex w-full cursor-default items-center rounded-sm py-1.5 ps-2 pe-8 outline-none",
+        FIELD_TEXT_SIZE,
         "data-highlighted:bg-accent data-highlighted:text-accent-foreground",
         "data-disabled:pointer-events-none data-disabled:opacity-50",
         "cursor-pointer",

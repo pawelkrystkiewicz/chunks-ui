@@ -57,7 +57,7 @@ All other props are forwarded to the underlying [`IconButton`](/components/icon-
 
 ## Labels
 
-`labels` replaces the built-in English text, for example to translate it. Keys you leave out keep their default from `DEFAULT_COPY_BUTTON_LABELS`. `aria-label` takes precedence and keeps one name in both states. With `children`, the button has no default name, so `labels` does not apply. See [Labels](/labels).
+`labels` replaces the built-in English text, for example to translate it. Keys you leave out keep their default from `DEFAULT_COPY_BUTTON_LABELS`. `aria-label` takes precedence and keeps one name in both states. With `children`, the button has no default name, so `labels` does not apply. The content names the button then, so icon-only `children` need an `aria-label`. See [Labels](/labels).
 
 <TSDoc
   definition={generateDefinition({

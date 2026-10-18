@@ -26,13 +26,14 @@ const expectWidthOf = (popup: Element, anchor: Element) =>
   expect(Math.abs(widthOf(popup) - widthOf(anchor))).toBeLessThanOrEqual(1);
 
 /**
- * Renders `ui` in a column `width` px wide, 40px clear of the page's sides. 160px clear of its
- * top: a Select aligned over its trigger puts its selected item, the last, over the trigger, so
- * the items above it need the room, or Select falls back to opening below the trigger.
+ * Renders `ui` in a column `width` px wide, 40px clear of the page's sides. 200px clear of its
+ * top: a Select aligned over its trigger puts its selected item, the last, over the trigger, and
+ * the items above it need the room: without it Select scrolls them out of the popup, or opens
+ * below the trigger.
  */
 const inColumn = (width: number, ui: ReactNode) =>
   render(
-    <div style={{ padding: "160px 40px" }}>
+    <div style={{ padding: "200px 40px" }}>
       <div style={{ width }}>{ui}</div>
     </div>,
   );
@@ -154,9 +155,13 @@ describe("Select.Positioner opt-outs", () => {
     expect(widthOf(getByRole("combobox")), "the trigger fits its value").toBeLessThan(200);
     // --anchor-width carries the trigger's width rounded to whole pixels
     expect(widthOf(popup)).toBeGreaterThanOrEqual(widthOf(getByRole("combobox")) - 1);
-    // A one-line item is its line (20px) plus py-1.5 (12px)
+    // A one-line item is its line plus its padding, with 1px for rounding
     for (const option of getAllByRole("option")) {
-      expect(option.getBoundingClientRect().height, "an item on one line").toBeLessThanOrEqual(33);
+      const { lineHeight, paddingTop, paddingBottom } = getComputedStyle(option);
+      const oneLine = [lineHeight, paddingTop, paddingBottom].map(Number.parseFloat);
+      expect(option.getBoundingClientRect().height, "an item on one line").toBeLessThanOrEqual(
+        oneLine.reduce((sum, px) => sum + px) + 1,
+      );
     }
   });
 });

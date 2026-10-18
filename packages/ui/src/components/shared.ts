@@ -52,11 +52,13 @@ export const FOCUS_RING_WITHIN =
  * and on a touch screen at any width, else 14px. iOS Safari zooms the page when a field with text
  * under 16px takes focus (#562), and an iPad or a large iPhone held sideways is wider than `md`.
  * `max-md:` leaves the unprefixed size to `className`, so with a mouse a `text-lg` there still
- * sets the size from `md` up, and a `max-md:` class the size below `md`. On a touch screen the
- * touch size wins over both, and a `[@media(pointer:coarse)]:` class replaces it. Not
- * `pointer-coarse:`, which needs Tailwind 4.1: the peer range starts at 4.0.
+ * sets the size from `md` up, and a `max-md:` class sets the size below `md`, on a touch screen
+ * too. The touch size starts at `md` (#587), as `max-md:` covers a phone: it wins over a
+ * `text-lg`, and a `md:[@media(pointer:coarse)]:` class replaces it. Not `pointer-coarse:`, which
+ * needs Tailwind 4.1: the peer range starts at 4.0. `Select.Item` takes it too, as Base UI
+ * lays the selected item over the trigger's value.
  */
-export const FIELD_TEXT_SIZE = "text-sm max-md:text-base [@media(pointer:coarse)]:text-base";
+export const FIELD_TEXT_SIZE = "text-sm max-md:text-base md:[@media(pointer:coarse)]:text-base";
 
 /** The class `theme.css` styles the toast content box by; see `.ToastContent` there. */
 export const TOAST_CONTENT_CLASS = "ToastContent";
