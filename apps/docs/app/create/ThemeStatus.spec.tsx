@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useState } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { ThemeStatus } from "./ThemeStatus";
@@ -125,6 +125,79 @@ describe("the contrast panel", () => {
     expect(screen.getByRole("combobox", { name: /APCA level/ }).textContent).toContain("Bronze");
     expect(screen.getByRole("button", { name: "All pairs" }).getAttribute("aria-pressed")).toBe(
       "true",
+    );
+  });
+
+  it("marks a typed colour it can't read invalid, and leaves the theme alone", () => {
+    render(<Harness />);
+    openEditor();
+    const current = (field() as HTMLInputElement).value;
+    fireEvent.change(field(), { target: { value: "bad" } });
+    fireEvent.keyDown(field(), { key: "Enter" });
+    expect(field().getAttribute("aria-invalid")).toBe("true");
+    expect(screen.queryByText(/custom colour/)).toBeNull();
+    expect(undoButton().getAttribute("aria-disabled")).toBe("true");
+    // Typing the current value back clears the mark
+    fireEvent.change(field(), { target: { value: current } });
+    fireEvent.keyDown(field(), { key: "Enter" });
+    expect(field().getAttribute("aria-invalid")).toBeNull();
+  });
+
+  it("takes the hex of the current colour as no change", () => {
+    render(<Harness />);
+    openEditor();
+    const hex = field()
+      .closest("div")
+      ?.textContent?.match(/#[0-9a-f]{6}/)?.[0];
+    expect(hex).toBeTruthy();
+    fireEvent.change(field(), { target: { value: hex } });
+    fireEvent.keyDown(field(), { key: "Enter" });
+    expect(screen.queryByText(/custom colour/)).toBeNull();
+    expect(undoButton().getAttribute("aria-disabled")).toBe("true");
+  });
+
+  it("says what Nudge to pass did, and clears that once the colour changes another way", () => {
+    render(<Harness />);
+    fireEvent.click(screen.getByRole("button", { name: /Accessibility/ }));
+    fireEvent.click(swatchOf("Muted text", "Dark"));
+    fireEvent.click(screen.getAllByRole("button", { name: "Nudge to pass" })[0] as HTMLElement);
+    const note = screen
+      .getAllByRole("status")
+      .find((n) => /Lightness set to/.test(n.textContent ?? ""));
+    expect(note?.textContent).toMatch(/^Lightness set to \d\.\d{3}; the pair passes\.$/);
+    fireEvent.change(field(), { target: { value: "#ffffff" } });
+    fireEvent.keyDown(field(), { key: "Enter" });
+    expect(screen.queryByText(/Lightness set to/)).toBeNull();
+  });
+
+  it("puts Accessibility under the page's outline as an h2 button", () => {
+    render(<Harness />);
+    fireEvent.click(screen.getByRole("button", { name: /Accessibility/ }));
+    const h2 = screen.getByRole("heading", { level: 2 });
+    expect(h2.querySelector("button")?.textContent).toContain("Accessibility");
+    expect(screen.getAllByRole("heading", { level: 3 }).length).toBeGreaterThan(0);
+  });
+
+  it("keeps the table's settings in this browser", async () => {
+    render(<Harness />);
+    fireEvent.click(screen.getByRole("button", { name: /Accessibility/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Failures only" }));
+    expect(JSON.parse(localStorage.getItem("chunks-create-contrast-v1") ?? "{}")).toMatchObject({
+      failsOnly: true,
+    });
+    const level = screen.getByRole("combobox", { name: /WCAG level/ });
+    fireEvent.keyDown(level, { key: "ArrowDown" });
+    const option = screen.getByRole("option", { name: /AAA/ });
+    const list = screen.getByRole("listbox");
+    fireEvent.keyDown(list, { key: "ArrowDown" });
+    expect(option.hasAttribute("data-highlighted")).toBe(true);
+    fireEvent.keyDown(option, { key: "Enter" });
+    fireEvent.click(option);
+    await waitFor(() =>
+      expect(JSON.parse(localStorage.getItem("chunks-create-contrast-v1") ?? "{}")).toMatchObject({
+        wcag: "AAA",
+        failsOnly: true,
+      }),
     );
   });
 });

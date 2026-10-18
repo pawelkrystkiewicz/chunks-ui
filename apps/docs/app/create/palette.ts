@@ -150,12 +150,13 @@ export const toHex = (o: Oklch) =>
     .map((v) => v.toString(16).padStart(2, "0"))
     .join("")}`;
 
-/** A typed colour: `#rgb`, `#rrggbb` or `oklch(L C H)` with L as 0-1 or a percentage; else null. */
+/** A typed colour: `#rgb`, `#rrggbb` (the # is optional for six digits) or `oklch(L C H)` with L as 0-1 or a percentage; else null. */
 export function parseColor(input: string): Oklch | null {
   const s = input.trim().toLowerCase();
-  const hex = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/.exec(s)?.[1];
-  if (hex) {
-    const full = hex.length === 3 ? [...hex].map((d) => d + d).join("") : hex;
+  const hex = /^(?:#([0-9a-f]{3})|#?([0-9a-f]{6}))$/.exec(s);
+  const digits = hex?.[1] ?? hex?.[2];
+  if (digits) {
+    const full = digits.length === 3 ? [...digits].map((d) => d + d).join("") : digits;
     return fromRgb([0, 2, 4].map((i) => Number.parseInt(full.slice(i, i + 2), 16)) as Rgb);
   }
   const m = /^oklch\(\s*([\d.]+)(%?)\s+([\d.]+)\s+(-?[\d.]+)(?:deg)?\s*\)$/.exec(s);

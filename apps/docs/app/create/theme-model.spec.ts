@@ -260,6 +260,18 @@ describe("hand-set colours", () => {
     expect(applyPatch(custom, { overrides: undefined }).overrides).toBeUndefined();
   });
 
+  it("drop chart colours when Primary moves under a chart preset that follows it", () => {
+    const primary = { l: 0.6, c: 0.2, h: 150 };
+    for (const chart of ["mono", "vivid"] as const) {
+      const moved = applyPatch({ ...custom, chart }, { primary });
+      expect(moved.overrides?.light, chart).not.toHaveProperty("chart-1");
+      expect(moved.overrides?.light, chart).toHaveProperty("muted");
+    }
+    expect(
+      applyPatch({ ...custom, chart: "default" }, { primary }).overrides?.light,
+    ).toHaveProperty("chart-1");
+  });
+
   it("keeps them when the active swatch is clicked again", () => {
     const same = applyPatch(custom, {
       primary: { ...custom.primary },

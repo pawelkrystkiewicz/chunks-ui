@@ -326,8 +326,12 @@ export function applyPatch(prev: Theme, patch: Partial<Theme>): Theme {
     base: (p: Partial<Theme>) => "base" in p && p.base !== prev.base,
     chart: (p: Partial<Theme>) => "chart" in p && p.chart !== prev.chart,
   };
-  const moved = (["primary", "base", "chart"] as const).filter((k) => changed[k](patch));
+  const moved: (keyof typeof DRIVEN)[] = (["primary", "base", "chart"] as const).filter((k) =>
+    changed[k](patch),
+  );
   if (moved.length === 0) return next;
+  // The Mono and Spectrum charts are built from the primary
+  if (moved.includes("primary") && prev.chart !== "default") moved.push("chart");
   const keep = (token: string) => !moved.some((k) => DRIVEN[k](token));
   let overrides: Overrides | undefined = prev.overrides;
   for (const mode of ENUMS.mode) {

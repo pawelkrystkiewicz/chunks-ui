@@ -19,7 +19,8 @@ import {
 } from "./theme-status";
 
 const MODE_NAME: Record<Mode, string> = { light: "Light", dark: "Dark" };
-const MAX_CHROMA = 0.37;
+// parseColor and loadTheme clamp chroma to the same 0.4
+const MAX_CHROMA = 0.4;
 const NOTE = "text-[11.5px] text-muted-foreground leading-snug";
 
 const css = ([r, g, b]: Rgb) => `rgb(${r} ${g} ${b})`;
@@ -135,16 +136,23 @@ function SideEditor({
   const color = sideColor(theme, mode, side);
   const custom = isCustom(theme, mode, side.token);
   const from = side.from ? title(side.from) : "";
-  const set = (value: Oklch | null, drag?: boolean) =>
+  // Any other way of changing the colour retires what the note said about the nudge
+  const set = (value: Oklch | null, drag?: boolean) => {
+    setNote(null);
     onEdit(withOverride(theme.overrides, mode, side.token, value), drag);
+  };
   const nudgeToPass = () => {
     if (!Number.isFinite(check.target.apca)) {
       setNote(`The text is too small for APCA ${levels.apca}. Raise Base size.`);
       return;
     }
     const found = nudge(theme, levels, mode, check.id, side);
-    setNote(found ? null : "No lightness of this colour passes both measures.");
-    if (found) set(found);
+    if (!found) {
+      setNote("No lightness of this colour passes both measures.");
+      return;
+    }
+    set(found);
+    setNote(`Lightness set to ${found.l.toFixed(3)}; the pair passes.`);
   };
 
   // Hovering or focusing a side points the table's highlight at the pairs it changes
@@ -274,10 +282,11 @@ function ColorField({
     setInvalid(false);
   }
   const commit = () => {
-    if (draft.trim() === value) return;
-    const parsed = parseColor(draft);
-    setInvalid(!parsed);
-    if (parsed) onSet(parsed);
+    const parsed = draft.trim() === value ? null : parseColor(draft);
+    // The current colour typed back, as oklch() or as its hex, is no change
+    const same = draft.trim() === value || (!!parsed && toHex(parsed) === toHex(color));
+    setInvalid(!same && !parsed);
+    if (parsed && !same) onSet(parsed);
   };
   return (
     <Input
@@ -333,6 +342,7 @@ function Channel({
           <Slider.Track className="h-2" style={{ background: track }}>
             <Slider.Thumb
               getAriaLabel={() => `${name} ${label.toLowerCase()}`}
+              getAriaValueText={(_formatted, v) => format(v)}
               className="border-2 border-white shadow-[0_0_0_1px_oklch(0_0_0/0.25)]"
             />
           </Slider.Track>

@@ -125,6 +125,10 @@ describe("contrast", () => {
     }
     expect(parseColor("#888")).toEqual(parseColor("#888888"));
     expect(parseColor("oklch(56% 0.2 -30deg)")).toEqual({ l: 0.56, c: 0.2, h: 330 });
+    // Without the #, three letters are a word: bad, add, fee
+    expect(parseColor("bad")).toBeNull();
+    expect(parseColor("#bad")).not.toBeNull();
+    expect(parseColor("006cef")).toEqual(parseColor("#006cef"));
     for (const bad of ["red", "#12345", "oklch(2 0 0)", "oklch(0.5 0.1)", ""]) {
       expect(parseColor(bad), bad).toBeNull();
     }

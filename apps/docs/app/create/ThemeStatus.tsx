@@ -21,6 +21,7 @@ import {
   WCAG_LEVELS,
   type WcagLevel,
 } from "./theme-status";
+import { EMPTY_TRAIL, nextTrail, undoTrail } from "./undo-trail";
 
 const GROUPS = ["Text", "Controls", "Charts"] as const;
 const MODE_NAME: Record<Mode, string> = { light: "Light", dark: "Dark" };
@@ -30,7 +31,6 @@ const CELL = "py-1.5 ps-2 pe-3 transition-colors motion-reduce:transition-none";
 const LIT = "bg-primary/10";
 const SEGMENT = "h-[26px] px-2.5 text-[12px] text-foreground";
 const LINK = "underline decoration-border underline-offset-2 hover:decoration-current";
-const UNDO_STEPS = 50;
 
 /** The table's own settings, kept in this browser */
 type Prefs = Levels & { failsOnly: boolean };
@@ -66,12 +66,7 @@ export function ThemeStatus({
   const [editing, setEditing] = useState<{ id: string; mode: Mode; token: string | null } | null>(
     null,
   );
-  // Hand-set colours before each edit; a slider drag is one step
-  // `last` is the overrides the panel itself produced (by an edit or an undo). When anything else
-  // sets them (presets, shuffle, the sidebar), the entries no longer belong to the theme.
-  const [trail, setTrail] = useState<{ steps: (Overrides | undefined)[]; last?: Overrides }>({
-    steps: [],
-  });
+  const [trail, setTrail] = useState(EMPTY_TRAIL);
   const history = trail.steps.length > 0 && trail.last === theme.overrides ? trail.steps : [];
   const dragging = useRef(false);
   // The last editor opened stays listed under "Failures only" after it closes, so focus can go
@@ -93,18 +88,18 @@ export function ThemeStatus({
   };
 
   const edit = (overrides: Overrides | undefined, drag = false) => {
-    const steps =
-      drag && dragging.current ? history : [...history.slice(1 - UNDO_STEPS), theme.overrides];
-    setTrail({ steps, last: overrides });
+    const current = theme.overrides;
+    const dragged = dragging.current;
+    setTrail((t) => nextTrail(t, current, overrides, drag, dragged));
     dragging.current = drag;
     onChange({ overrides });
   };
   const undo = () => {
     if (history.length === 0) return;
+    const current = theme.overrides;
     dragging.current = false;
-    const last = history.at(-1);
-    setTrail({ steps: history.slice(0, -1), last });
-    onChange({ overrides: last });
+    setTrail((t) => undoTrail(t, current));
+    onChange({ overrides: history.at(-1) });
   };
   // ⌘Z / Ctrl+Z anywhere in the panel or an open editor, except in a text field's own undo
   const onKeyDown = (e: KeyboardEvent) => {
@@ -130,33 +125,36 @@ export function ThemeStatus({
 
   return (
     <Collapsible.Root className="border-border border-b">
-      <Collapsible.Trigger className="group min-h-11 flex-wrap gap-x-6 gap-y-1 py-2 pe-4 ps-[18px] text-[13px]">
-        <span className="flex items-center gap-1.5 font-semibold">
-          <ChevronRight
-            aria-hidden
-            className="size-3.5 transition-transform group-data-panel-open:rotate-90 motion-reduce:transition-none"
-          />
-          Accessibility
-        </span>
-        <span className="flex flex-wrap gap-x-5 gap-y-1 font-normal text-muted-foreground">
-          {modes.map((mode) => (
-            <span key={mode} className="flex gap-2.5">
-              <span className={cn(mode === theme.mode && "font-medium text-foreground")}>
-                {MODE_NAME[mode]}
-              </span>
-              <span>
-                WCAG {checks.filter((c) => passWcag(c, mode)).length}/{checks.length}
-              </span>
-              <span>
-                APCA {checks.filter((c) => passApca(c, mode)).length}/{checks.length}
-              </span>
-            </span>
-          ))}
-          <span>
-            Targets {targetsPassing}/{targets.length}
+      {/* The panel's own h3s (Target size, Type scale) sit under this h2 */}
+      <h2 className="m-0 font-normal">
+        <Collapsible.Trigger className="group min-h-11 flex-wrap gap-x-6 gap-y-1 py-2 pe-4 ps-[18px] text-[13px]">
+          <span className="flex items-center gap-1.5 font-semibold">
+            <ChevronRight
+              aria-hidden
+              className="size-3.5 transition-transform group-data-panel-open:rotate-90 motion-reduce:transition-none"
+            />
+            Accessibility
           </span>
-        </span>
-      </Collapsible.Trigger>
+          <span className="flex flex-wrap gap-x-5 gap-y-1 font-normal text-muted-foreground">
+            {modes.map((mode) => (
+              <span key={mode} className="flex gap-2.5">
+                <span className={cn(mode === theme.mode && "font-medium text-foreground")}>
+                  {MODE_NAME[mode]}
+                </span>
+                <span>
+                  WCAG {checks.filter((c) => passWcag(c, mode)).length}/{checks.length}
+                </span>
+                <span>
+                  APCA {checks.filter((c) => passApca(c, mode)).length}/{checks.length}
+                </span>
+              </span>
+            ))}
+            <span>
+              Targets {targetsPassing}/{targets.length}
+            </span>
+          </span>
+        </Collapsible.Trigger>
+      </h2>
       <Collapsible.Panel onKeyDown={onKeyDown} className="flex flex-col gap-3 px-[18px] pb-4">
         <p className="max-w-[75ch] text-[12.5px] text-muted-foreground leading-relaxed">
           <strong className="font-medium text-foreground">WCAG 2</strong> is the contrast ratio the
