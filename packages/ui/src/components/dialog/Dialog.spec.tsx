@@ -1,6 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { configureAxe } from "jest-axe";
 import { afterEach, describe, expect, it } from "vitest";
+import { undecided } from "../../AxeTest.utils";
 import { FOCUS_RING } from "../shared";
 import { Dialog } from "./Dialog";
 
@@ -11,7 +12,9 @@ afterEach(cleanup);
 // Here axe runs while the popup is still at opacity 0 and can't hit-test the backdrop, so it
 // finds no modal and flags them. The rule still checks every other aria-hidden node. Base UI
 // also aria-hides the page outside a modal dialog, so a trigger rendered beside the open dialog
-// fails the same way; these audits leave it out
+// fails the same way; these audits leave it out. Were axe to find a modal, it would leave a stray
+// focusable aria-hidden node in `incomplete`, which toHaveNoViolations() does not read, so the
+// audit also checks that the rule left nothing there
 const axe = configureAxe({
   globalOptions: {
     rules: [
@@ -101,6 +104,8 @@ describe("Dialog", () => {
     );
     // The popup is portalled out of the container RTL hands back, so audit the body
     expect(container).not.toContainElement(screen.getByRole("dialog"));
-    expect(await axe(document.body)).toHaveNoViolations();
+    const results = await axe(document.body);
+    expect(results).toHaveNoViolations();
+    expect(undecided(results, "aria-hidden-focus")).toEqual([]);
   });
 });

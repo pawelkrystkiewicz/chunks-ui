@@ -1,6 +1,7 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { configureAxe } from "jest-axe";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { undecided } from "../../AxeTest.utils";
 import { Popover } from "./Popover";
 
 afterEach(cleanup);
@@ -8,7 +9,9 @@ afterEach(cleanup);
 // aria-hidden-focus skips Base UI's focus guards, aria-hidden spans that hand focus on when Tab
 // reaches them. A browser's axe leaves them for review, as it takes the open popover, a dialog,
 // for a modal. Here axe runs while the popup is still at opacity 0, so it finds no modal and
-// flags them. The rule still checks every other aria-hidden node
+// flags them. The rule still checks every other aria-hidden node. Were axe to find a modal, it
+// would leave a stray one in `incomplete`, which toHaveNoViolations() does not read, so the audit
+// also checks that the rule left nothing there
 const axe = configureAxe({
   globalOptions: {
     rules: [
@@ -98,6 +101,8 @@ describe("Popover", () => {
     );
     // The popup is portalled out of the container RTL hands back, so audit the body
     expect(container).not.toContainElement(screen.getByRole("dialog"));
-    expect(await axe(document.body)).toHaveNoViolations();
+    const results = await axe(document.body);
+    expect(results).toHaveNoViolations();
+    expect(undecided(results, "aria-hidden-focus")).toEqual([]);
   });
 });

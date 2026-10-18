@@ -1,6 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { axe } from "jest-axe";
 import { afterEach, describe, expect, it } from "vitest";
+import { expectOnlyFocusGuardsUndecided } from "../../AxeTest.utils";
 import { reloadMotion } from "../../lib/use-motion";
 import { Drawer } from "./Drawer";
 
@@ -128,6 +129,10 @@ describe("Drawer", () => {
     );
     // The popup is portalled out of the container RTL hands back, so audit the body
     expect(container).not.toContainElement(screen.getByRole("dialog"));
-    expect(await axe(document.body)).toHaveNoViolations();
+    const results = await axe(document.body);
+    expect(results).toHaveNoViolations();
+    // The popup is a visible dialog, which axe takes for an open modal: aria-hidden-focus leaves
+    // focusable aria-hidden nodes in `incomplete`
+    expectOnlyFocusGuardsUndecided(results);
   });
 });
