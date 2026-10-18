@@ -159,7 +159,7 @@ A decimal value, such as an amount, gets a number keypad with a decimal separato
 
 ## Text Size
 
-The text is 16px below the `md` breakpoint (768px by default) and 14px from it up. iOS Safari zooms the page when a field with text under 16px takes focus, so a `text-sm` class on the input brings the zoom back on phones: put a smaller size behind the breakpoint, as the default `md:text-sm` does. A size without a breakpoint, such as `text-lg`, replaces only the 16px; add `md:text-lg` to use it from `md` up too.
+Below the `md` breakpoint (768px by default) the text is 16px, because iOS Safari zooms the page when a field with text under 16px takes focus. From `md` up it is 14px. A text-size class on the input, such as `text-lg`, sets the size from `md` up. To change the size below `md`, use a `max-md:` class, such as `max-md:text-lg`; a size under 16px there brings the zoom back.
 
 ## Props
 

@@ -462,15 +462,19 @@ describe("NumberField.Input text size", () => {
   };
 
   it("has 16px text below md and 14px from md up", () => {
-    const el = input();
-    expect(el).toHaveClass("text-base", "md:text-sm");
+    expect(input()).toHaveClass("text-sm", "max-md:text-base");
+  });
+
+  it("lets a text-size className set the size from md up and keeps 16px below md", () => {
+    const el = input("text-lg");
+    expect(el).toHaveClass("text-lg", "max-md:text-base");
     expect(el).not.toHaveClass("text-sm");
   });
 
-  it("lets a text-sm className replace the 16px text", () => {
-    const el = input("text-sm");
-    expect(el).toHaveClass("text-sm", "md:text-sm");
-    expect(el).not.toHaveClass("text-base");
+  it("lets a max-md: className replace the 16px below md", () => {
+    const el = input("max-md:text-lg");
+    expect(el).toHaveClass("text-sm", "max-md:text-lg");
+    expect(el).not.toHaveClass("max-md:text-base");
   });
 });
 

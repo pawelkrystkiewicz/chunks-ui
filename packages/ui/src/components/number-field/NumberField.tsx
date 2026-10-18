@@ -67,8 +67,9 @@ function NumberFieldInput({ className, ...props }: NumberFieldInputProps) {
       aria-roledescription={labels.roleDescription}
       className={cnState(
         "h-ui-height w-full min-w-16 flex-1 bg-transparent px-3 text-center text-foreground tabular-nums",
-        // 16px below md: iOS Safari zooms the page when a field under 16px takes focus (#562)
-        "text-base md:text-sm",
+        // 16px below md: iOS Safari zooms the page when a field under 16px takes focus (#562).
+        // max-md: keeps a text size in className working from md up, as before
+        "text-sm max-md:text-base",
         "placeholder:text-muted-foreground",
         "focus-visible:outline-none",
         "disabled:cursor-not-allowed",

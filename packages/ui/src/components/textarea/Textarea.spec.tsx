@@ -119,16 +119,21 @@ describe("Textarea inside Field", () => {
 describe("Textarea text size", () => {
   it("has 16px text below md and 14px from md up", () => {
     render(<Textarea data-testid="ta" />);
+    expect(screen.getByTestId("ta")).toHaveClass("text-sm", "max-md:text-base");
+  });
+
+  it("lets a text-size className set the size from md up and keeps 16px below md", () => {
+    render(<Textarea data-testid="ta" className="text-lg" />);
     const textarea = screen.getByTestId("ta");
-    expect(textarea).toHaveClass("text-base", "md:text-sm");
+    expect(textarea).toHaveClass("text-lg", "max-md:text-base");
     expect(textarea).not.toHaveClass("text-sm");
   });
 
-  it("lets a text-sm className replace the 16px text", () => {
-    render(<Textarea data-testid="ta" className="text-sm" />);
+  it("lets a max-md: className replace the 16px below md", () => {
+    render(<Textarea data-testid="ta" className="max-md:text-lg" />);
     const textarea = screen.getByTestId("ta");
-    expect(textarea).toHaveClass("text-sm", "md:text-sm");
-    expect(textarea).not.toHaveClass("text-base");
+    expect(textarea).toHaveClass("text-sm", "max-md:text-lg");
+    expect(textarea).not.toHaveClass("max-md:text-base");
   });
 });
 

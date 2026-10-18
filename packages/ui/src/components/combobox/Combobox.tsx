@@ -103,8 +103,9 @@ function ComboboxInput({ className, ...props }: ComboboxInputProps) {
     <BaseCombobox.Input
       className={cnState(
         "flex h-ui-height w-full rounded-md border border-input bg-background px-3 pe-12",
-        // 16px below md: iOS Safari zooms the page when a field under 16px takes focus (#562)
-        "text-base md:text-sm",
+        // 16px below md: iOS Safari zooms the page when a field under 16px takes focus (#562).
+        // max-md: keeps a text size in className working from md up, as before
+        "text-sm max-md:text-base",
         "placeholder:text-muted-foreground",
         FOCUS_RING,
         RING_TRANSITION,
