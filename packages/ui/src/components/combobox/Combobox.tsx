@@ -1,16 +1,7 @@
 "use client";
 
 import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
-import {
-  type ComponentProps,
-  createContext,
-  type RefObject,
-  useContext,
-  useId,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import { type ComponentProps, createContext, useContext, useId, useRef } from "react";
 import { cn, cnState } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
 import { springs } from "../../lib/motion";
@@ -19,6 +10,7 @@ import {
   usePortalContainer,
   usePortalNode,
 } from "../../lib/portal-container";
+import { type CloseFocus, useCloseFocusRoot, useFocusOnClose } from "../../lib/use-focus-on-close";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { usePopupRender } from "../../lib/use-popup-render";
 import { CloseIcon } from "../CloseIcon";
@@ -31,12 +23,8 @@ const ComboboxLabelsContext = createContext(DEFAULT_COMBOBOX_LABELS);
 const ComboboxMultipleContext = createContext(false);
 // The id of the Combobox.Chip around a ChipRemove, which names the remove button
 const ComboboxChipIdContext = createContext<string | undefined>(undefined);
-// The trigger and the last close's event, for the Popup's focus hand-off (#627). `null` under a
-// Base UI Root, so two such comboboxes never share them.
-type CloseFocus = {
-  trigger: RefObject<HTMLButtonElement | null>;
-  closeEvent: RefObject<Event | undefined>;
-};
+// For the Popup's focus hand-off (#627). `null` under a Base UI Root, so two such comboboxes never
+// share it.
 const ComboboxCloseFocusContext = createContext<CloseFocus | null>(null);
 
 // The defaults match ComponentProps<typeof BaseCombobox.Root>, the type before labels were added
@@ -86,28 +74,12 @@ function ComboboxRoot<Value, Multiple extends boolean | undefined = false, Item 
   onOpenChange,
   ...props
 }: ComboboxRootProps<Value, Multiple, Item>) {
-  const [closeFocus] = useState<CloseFocus>(() => ({
-    trigger: { current: null },
-    closeEvent: { current: undefined },
-  }));
+  const [closeFocus, handleOpenChange] = useCloseFocusRoot(onOpenChange);
   return (
     <ComboboxLabelsContext.Provider value={mergeLabels(DEFAULT_COMBOBOX_LABELS, labels)}>
       <ComboboxMultipleContext.Provider value={Boolean(props.multiple)}>
         <ComboboxCloseFocusContext.Provider value={closeFocus}>
-          <BaseCombobox.Root<Value, Multiple, Item>
-            {...props}
-            onOpenChange={(open, details) => {
-              onOpenChange?.(open, details);
-              if (open || details.isCanceled) return;
-              // A controlled parent may ignore the close: clear the event after the task
-              const { event } = details;
-              closeFocus.closeEvent.current = event;
-              setTimeout(() => {
-                if (closeFocus.closeEvent.current === event)
-                  closeFocus.closeEvent.current = undefined;
-              });
-            }}
-          />
+          <BaseCombobox.Root<Value, Multiple, Item> {...props} onOpenChange={handleOpenChange} />
         </ComboboxCloseFocusContext.Provider>
       </ComboboxMultipleContext.Provider>
     </ComboboxLabelsContext.Provider>
@@ -161,8 +133,12 @@ function ComboboxInput({ className, ...props }: ComboboxInputProps) {
 // takes precedence.
 function ComboboxTrigger({ className, children, ref, ...props }: ComboboxTriggerProps) {
   const labels = useContext(ComboboxLabelsContext);
-  const ownRef = useRef<HTMLButtonElement>(null);
-  const triggerRef = useMergedRef(useContext(ComboboxCloseFocusContext)?.trigger ?? ownRef, ref);
+  // The hand-off's trigger also when an open names none (ArrowDown on the trigger)
+  const ownRef = useRef<HTMLElement>(null);
+  const triggerRef = useMergedRef<HTMLElement>(
+    useContext(ComboboxCloseFocusContext)?.trigger ?? ownRef,
+    ref,
+  );
   const ownContent = children != null || props.render != null;
   return (
     <BaseCombobox.Trigger
@@ -259,62 +235,14 @@ function ComboboxPositioner({ className, sideOffset = 8, ...props }: ComboboxPos
 
 // With the input inside, Base UI returns focus to the trigger only at the unmount, after the exit,
 // so a Tab during it landed on <body> (#627): focus moves to the trigger as the popup closes.
+// Only then: with the input outside, focus stays in it.
+const isTriggerStyle = (popup: HTMLElement) => popup.getAttribute("role") === "dialog";
+
 function ComboboxPopup({ className, render: renderProp, ref, ...props }: ComboboxPopupProps) {
-  const closeFocus = useContext(ComboboxCloseFocusContext);
-  const [popup, setPopup] = useState<HTMLDivElement | null>(null);
-  const popupRef = useMergedRef(setPopup, ref);
-  const defaultFinalFocus = props.finalFocus === undefined || props.finalFocus === true;
-  useLayoutEffect(() => {
-    if (!popup || !closeFocus || !defaultFinalFocus) return;
-    const doc = popup.ownerDocument;
-    const root = popup.getRootNode() as Document | ShadowRoot;
-    // In WebKit, Base UI blurs the input before `data-closed`: <body> then counts as inside
-    let leftForNowhere = false;
-    const onFocusOut = (event: FocusEvent) => {
-      leftForNowhere = event.relatedTarget === null;
-    };
-    const onFocusIn = () => {
-      leftForNowhere = false;
-    };
-    const focusInside = () =>
-      popup.contains(root.activeElement) || (leftForNowhere && doc.activeElement === doc.body);
-    const closing = () =>
-      popup.hasAttribute("data-closed") && popup.getAttribute("role") === "dialog";
-    const stopWaiting = () => {
-      doc.removeEventListener("keypress", handOff, true);
-      doc.removeEventListener("keyup", handOff, true);
-    };
-    // Checks again after a wait: the popup may have reopened
-    const handOff = () => {
-      stopWaiting();
-      if (closing() && focusInside()) closeFocus.trigger.current?.focus({ preventScroll: true });
-    };
-    const observer = new MutationObserver(() => {
-      if (!closing()) return;
-      const event = closeFocus.closeEvent.current;
-      closeFocus.closeEvent.current = undefined;
-      // A mouse or pen press closes it before the browser moves focus to what was pressed: leave
-      // focus to the browser, not through the trigger (its focus and blur handlers would fire)
-      if (event?.type === "pointerdown" || event?.type === "mousedown") return;
-      // Enter with nothing highlighted is not default-prevented: its keypress would click the
-      // trigger and reopen the popup, so wait for that keypress (or the keyup)
-      if (event?.type === "keydown" && !event.defaultPrevented) {
-        doc.addEventListener("keypress", handOff, true);
-        doc.addEventListener("keyup", handOff, true);
-      } else {
-        handOff();
-      }
-    });
-    observer.observe(popup, { attributeFilter: ["data-closed"] });
-    popup.addEventListener("focusout", onFocusOut);
-    popup.addEventListener("focusin", onFocusIn);
-    return () => {
-      observer.disconnect();
-      popup.removeEventListener("focusout", onFocusOut);
-      popup.removeEventListener("focusin", onFocusIn);
-      stopWaiting();
-    };
-  }, [popup, defaultFinalFocus, closeFocus]);
+  const popupRef = useFocusOnClose(ref, useContext(ComboboxCloseFocusContext), {
+    finalFocus: props.finalFocus,
+    when: isTriggerStyle,
+  });
 
   const { useSpring, render } = usePopupRender(renderProp, {
     spring: springs.popup,
