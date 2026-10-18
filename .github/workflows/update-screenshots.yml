@@ -79,9 +79,9 @@ jobs:
             delim="EOF_$(od -An -tx1 -N8 /dev/urandom | tr -d ' \n')"
             {
               echo "changed_files<<$delim"
-              echo "$CHANGED_FILES"
+              printf '%s\n' "$CHANGED_FILES"
               echo "$delim"
-              echo "changed_count=$(echo "$CHANGED_FILES" | wc -l)"
+              echo "changed_count=$(printf '%s\n' "$CHANGED_FILES" | wc -l)"
             } >> "$GITHUB_OUTPUT"
           else
             echo "changes=false" >> "$GITHUB_OUTPUT"
@@ -120,7 +120,7 @@ jobs:
               echo ""
               echo "#### Changed Files:"
               echo "\`\`\`"
-              echo "$CHANGED_FILES"
+              printf '%s\n' "$CHANGED_FILES"
               echo "\`\`\`"
               echo ""
               echo "The updated screenshots have been committed and pushed. Your visual regression baseline is now up to date."
@@ -129,7 +129,7 @@ jobs:
             {
               echo "### Visual Regression Screenshots Not Pushed"
               echo ""
-              echo "**${CHANGED_COUNT}** screenshot(s) changed, but the push to \`${BRANCH}\` did not succeed (outcome: \`${PUSH_OUTCOME:-unknown}\`). See the Commit changes and Push changes logs."
+              echo "**${CHANGED_COUNT}** screenshot(s) changed, but the push to \`${BRANCH}\` did not succeed (outcome: \`${PUSH_OUTCOME:-unknown}\`), so this run's commit is discarded. See the Commit changes and Push changes logs."
             } >> "$GITHUB_STEP_SUMMARY"
           elif [ "$CHANGES" = false ]; then
             {
