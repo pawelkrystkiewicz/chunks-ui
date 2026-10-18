@@ -17,7 +17,7 @@ jobs:
     # Same image as the local linux/amd64 recipe; check:playwright keeps the tag equal to @playwright/test.
     container:
       image: mcr.microsoft.com/playwright:v1.64.0-noble@sha256:06a9939e57531807f8d5fd76ce44b53165ffb7d7501d87ab10e285c20b1e971f
-    # Read by notify-slack. Empty when the naming step did not run (the runner skips an empty output).
+    # Read by notify-slack.
     outputs:
       suites: ${{ steps.failed.outputs.suites }}
     steps:
@@ -41,8 +41,7 @@ jobs:
           run_full=true
           if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
             git config --global --add safe.directory "$GITHUB_WORKSPACE"
-            # WATCH is unquoted on purpose: it splits into one pathspec per word
-            # shellcheck disable=SC2086
+            # shellcheck disable=SC2086 # WATCH splits into git pathspecs
             changed=$(git diff --name-only "origin/$BASE_REF...HEAD" -- $WATCH)
             if [ -n "$changed" ]; then
               echo "$changed"
@@ -125,7 +124,6 @@ jobs:
           [ "$VISUAL" = failure ] && failed+=("Chromium visual")
           [ "$WEBKIT" = failure ] && failed+=("WebKit smoke")
           [ "$SHUFFLED" = failure ] && failed+=("Chromium visual shuffled (seed ${{ github.run_number }})")
-          # A cancelled job keeps the suites that had already failed, so Slack still names them
           [ "$JOB_STATUS" = cancelled ] && failed+=("cancelled or timed out")
           # No suite step failed: a setup step did, or a later one such as the artifact upload
           [ ${#failed[@]} -gt 0 ] || failed=("setup or another step")
@@ -133,8 +131,8 @@ jobs:
           echo "suites=${joined%, }" >> "$GITHUB_OUTPUT"
 
   # Posts to Slack when a master run fails, is cancelled or times out. A separate job because a
-  # container that fails to start runs no step, a run cancelled while the job is queued runs no
-  # step, and the Slack token stays out of the job that runs bun install and the test code.
+  # container that fails to start runs no step, and the Slack token stays out of the job that runs
+  # bun install and the test code.
   notify-slack:
     needs: visual-regression-test
     if: always() && github.ref == 'refs/heads/master' && (needs.visual-regression-test.result == 'failure' || needs.visual-regression-test.result == 'cancelled')
@@ -142,9 +140,6 @@ jobs:
     timeout-minutes: 5
     permissions: {}
     steps:
-      # An empty suites output means the naming step never ran: the container failed to start, the
-      # run was cancelled while the job was queued, or the runner was lost. The fallback names the
-      # job result instead.
       - name: Notify Slack on Failure
         uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
         with:
