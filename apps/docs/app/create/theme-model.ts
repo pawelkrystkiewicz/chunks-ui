@@ -6,7 +6,9 @@ import {
   baseOf,
   contrast,
   DEFAULT_THEME,
+  type Mode,
   type Oklch,
+  type Overrides,
   ok,
   PRIMARIES,
   palette,
@@ -14,7 +16,7 @@ import {
   type Theme,
 } from "./palette";
 
-export type { BaseId, ChartId, Mode, Oklch, Shadow, Theme } from "./palette";
+export type { BaseId, ChartId, Mode, Oklch, Overrides, Shadow, Theme } from "./palette";
 export { BASES, chartList, contrast, DEFAULT_THEME, ok, PRIMARIES, palette } from "./palette";
 
 export type FontKind = "Sans" | "Grotesk" | "Serif" | "Mono";
@@ -153,7 +155,7 @@ const SHADOWS: Record<Shadow, (dark: boolean) => string> = {
 };
 
 /** Tailwind's default `--text-*` sizes in px; "Base size" scales them by `fontSize / 14`. */
-const TEXT_STEPS = { xs: 12, sm: 14, base: 16, lg: 18, xl: 20, "2xl": 24 };
+export const TEXT_STEPS = { xs: 12, sm: 14, base: 16, lg: 18, xl: 20, "2xl": 24 };
 
 const textVars = (fontSize: number, unit: "px" | "rem") =>
   Object.entries(TEXT_STEPS).map(([k, px]) => {
@@ -203,14 +205,27 @@ export const previewColumnWidth = (t: Pick<Theme, "spacing" | "fontSize">) =>
 
 /** The "Get code" output: paste after the `chunks-ui` import. */
 export function buildCss(t: Theme): string {
-  const block = (selector: string, pal: Record<string, string>, extra: string[]) =>
-    `${selector} {\n${[...extra, ...Object.entries(pal).map(([k, v]) => `  --${k}: ${v};`)].join("\n")}\n}`;
+  // theme.css leaves these unset, and `.dark` doesn't redeclare them, so one set in a single mode
+  // would inherit into the other. `initial` is the guaranteed-invalid value: var()'s fallback applies.
+  const block = (
+    selector: string,
+    pal: Record<string, string>,
+    extra: string[],
+    other: Record<string, string>,
+  ) =>
+    `${selector} {\n${[
+      ...extra,
+      ...Object.entries(pal).map(([k, v]) => `  --${k}: ${v};`),
+      ...DERIVED.filter((k) => !(k in pal) && k in other).map((k) => `  --${k}: initial;`),
+    ].join("\n")}\n}`;
+  const light = palette(t, "light");
+  const dark = palette(t, "dark");
   const fonts = [...new Set([t.fontBody, t.fontHeading])]
     .map((f) => `family=${f.replaceAll(" ", "+")}:wght@400;500;600;700`)
     .join("&");
   return `/* Fonts: https://fonts.googleapis.com/css2?${fonts}&display=swap */\n${block(
     ":root",
-    palette(t, "light"),
+    light,
     [
       `  --font-sans: ${fontOf(t.fontBody).stack};`,
       `  --font-heading: ${fontOf(t.fontHeading).stack};`,
@@ -219,7 +234,8 @@ export function buildCss(t: Theme): string {
       `  --spacing: ${+(0.25 * t.spacing).toFixed(4)}rem;`,
       `  --spacing-ui-height: ${t.height}px;`,
     ],
-  )}\n\n${block(".dark", palette(t, "dark"), [])}`;
+    dark,
+  )}\n\n${block(".dark", dark, [], light)}`;
 }
 
 export const samePrimary = (a: Oklch, b: Oklch) =>
@@ -238,7 +254,82 @@ export function sameTheme(a: Omit<Theme, "mode">, b: Omit<Theme, "mode">): boole
     "shadow",
     "chart",
   ] as const;
-  return keys.every((k) => a[k] === b[k]) && samePrimary(a.primary, b.primary);
+  return (
+    keys.every((k) => a[k] === b[k]) &&
+    samePrimary(a.primary, b.primary) &&
+    countOverrides(a.overrides) === countOverrides(b.overrides)
+  );
+}
+
+/** The shades theme.css derives, unset until a hand-set colour gives them a value */
+const DERIVED = [
+  "primary-text",
+  "success-text",
+  "warning-text",
+  "destructive-text",
+  "success-border",
+  "warning-border",
+];
+
+/** Tokens the contrast table may set by hand: every palette token, and the derived shades. */
+export const EDITABLE = [...Object.keys(palette(DEFAULT_THEME, "light")), ...DERIVED];
+
+const NEUTRALS = [
+  "background",
+  "foreground",
+  "card",
+  "card-foreground",
+  "popover",
+  "popover-foreground",
+  "secondary",
+  "secondary-foreground",
+  "muted",
+  "muted-foreground",
+  "accent",
+  "accent-foreground",
+  "border",
+  "input",
+];
+
+export const countOverrides = (o?: Overrides) =>
+  Object.values(o ?? {}).reduce((n, tokens) => n + Object.keys(tokens ?? {}).length, 0);
+
+/** `o` with `token` set to `value` in `mode`, or removed when `value` is null */
+export function withOverride(
+  o: Overrides | undefined,
+  mode: Mode,
+  token: string,
+  value: Oklch | null,
+): Overrides | undefined {
+  const { [token]: _, ...rest } = o?.[mode] ?? {};
+  const next = { ...o, [mode]: value ? { ...rest, [token]: value } : rest };
+  return countOverrides(next) ? next : undefined;
+}
+
+/**
+ * Applies a change. Moving Primary, Base or Charts drops the hand-set colours that control drives;
+ * a patch that sets `overrides` itself (presets, shuffle) replaces them.
+ */
+export function applyPatch(prev: Theme, patch: Partial<Theme>): Theme {
+  const next = { ...prev, ...patch };
+  if ("overrides" in patch || !prev.overrides) return next;
+  // A key counts as moved only when its value changed: clicking the active swatch keeps the colours
+  const primary = !!patch.primary && !samePrimary(prev.primary, patch.primary);
+  const base = "base" in patch && patch.base !== prev.base;
+  const chart = "chart" in patch && patch.chart !== prev.chart;
+  if (!(primary || base || chart)) return next;
+  // The hand-set tokens each moved control drives. The Mono and Spectrum charts are built from the primary.
+  const drops = (t: string) =>
+    (primary && ["primary", "primary-foreground", "primary-text", "ring"].includes(t)) ||
+    ((chart || (primary && prev.chart !== "default")) && t.startsWith("chart-")) ||
+    (base && NEUTRALS.includes(t));
+  let overrides: Overrides | undefined = prev.overrides;
+  for (const mode of ENUMS.mode) {
+    for (const token of Object.keys(prev.overrides[mode] ?? {})) {
+      if (drops(token)) overrides = withOverride(overrides, mode, token, null);
+    }
+  }
+  return { ...next, overrides };
 }
 
 const pick = <T>(a: readonly T[]): T => a[Math.floor(Math.random() * a.length)] as T;
@@ -313,6 +404,23 @@ export function loadTheme(): Theme | null {
     for (const k of ["fontHeading", "fontBody"] as const) {
       if (typeof s[k] === "string") out[k] = s[k];
     }
+    // Hand-set colours: known tokens with all-finite channels, clamped to what oklch() paints
+    let overrides: Overrides | undefined;
+    for (const mode of ENUMS.mode) {
+      const tokens = s.overrides?.[mode];
+      if (!tokens || typeof tokens !== "object") continue;
+      for (const [token, v] of Object.entries(tokens as Record<string, Partial<Oklch>>)) {
+        if (!EDITABLE.includes(token) || !v || typeof v !== "object") continue;
+        const { l, c, h } = v;
+        if (!Number.isFinite(l) || !Number.isFinite(c) || !Number.isFinite(h)) continue;
+        overrides = withOverride(overrides, mode, token, {
+          l: Math.min(1, Math.max(0, l as number)),
+          c: Math.min(0.4, Math.max(0, c as number)),
+          h: (((h as number) % 360) + 360) % 360,
+        });
+      }
+    }
+    if (overrides) out.overrides = overrides;
     return out as Theme;
   } catch {
     return null;
