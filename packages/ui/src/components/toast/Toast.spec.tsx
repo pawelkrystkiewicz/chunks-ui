@@ -372,6 +372,30 @@ describe("Toast", () => {
     expect(undecided).toHaveLength(guards.length);
     for (const node of undecided) expect(node.html).toContain("data-base-ui-focus-guard");
   });
+
+  // Base UI 1.9 keeps a high-priority toast aria-hidden but in the tab order while keyboard focus
+  // is outside the viewport; the note under Props in toast.mdx says so. If a Base UI upgrade
+  // fails this test, update the note. Alone on purpose: next to a toast of the default `low`
+  // priority (a role="dialog", which axe takes for an open modal) it lands in `incomplete`
+  it("reports aria-hidden-focus on a lone high-priority toast", async () => {
+    const manager = createToastManager();
+    const { container } = render(
+      <Toast.Provider toastManager={manager}>
+        <Toast.Viewport />
+      </Toast.Provider>,
+    );
+    act(() => {
+      manager.add({ title: "Connection lost", priority: "high" });
+    });
+    // aria-hidden, so only a query with `hidden` finds it
+    const toast = await screen.findByRole("alertdialog", { hidden: true });
+    expect(toast).toHaveAttribute("aria-hidden", "true");
+    const results = await axe(container);
+    expect(results.violations.map((rule) => rule.id)).toEqual(["aria-hidden-focus"]);
+    expect(results.violations[0]?.nodes.map((node) => node.html)).toEqual([
+      expect.stringContaining('role="alertdialog"'),
+    ]);
+  });
 });
 
 describe("Toast labels", () => {

@@ -1,5 +1,5 @@
 import { render } from "@testing-library/react";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import { cn } from "../../lib/cn";
 import {
@@ -17,6 +17,7 @@ import {
   renderFixture,
   renderPage,
   ringColor,
+  SETTLE_TIMEOUT_MS,
   settled,
   waitForStable,
 } from "../../VisualTest.utils";
@@ -299,13 +300,80 @@ describe("Combobox.Input beside Clear and Trigger", () => {
   });
 });
 
+// Base UI sets `data-placeholder` on every Combobox.Trigger while nothing is selected, the one
+// beside an input too. Only what a Combobox.Value shows is muted (#564): the `render` element of a
+// Trigger beside an input keeps the colour around it, as in 0.1.4
+describe("Combobox.Trigger beside an input, with nothing selected", () => {
+  it("keeps its render element in the colour around it", () => {
+    const { getByRole, getByTestId } = render(
+      <div data-testid="around" style={{ padding: 40 }}>
+        <Combobox.Root items={options}>
+          <div className="relative">
+            <Combobox.Input aria-label="Framework" />
+            <Combobox.Trigger
+              aria-label="Fruit"
+              render={
+                <button type="button" data-testid="custom">
+                  Choose
+                </button>
+              }
+            />
+          </div>
+        </Combobox.Root>
+        <span data-testid="muted" className="text-muted-foreground">
+          Muted
+        </span>
+      </div>,
+    );
+    expect(getByRole("button", { name: "Fruit" }).hasAttribute("data-placeholder")).toBe(true);
+    const colourOf = (testId: string) => getComputedStyle(getByTestId(testId)).color;
+    expect(colourOf("muted")).not.toBe(colourOf("around"));
+    expect(colourOf("custom")).toBe(colourOf("around"));
+  });
+});
+
 // Trigger-style: a button shows the value, the search input is in the popup. Base UI's Value has no
-// element, so a wide value wrapped or ran past the trigger and pushed the chevron out (#541).
-describe("Combobox.Value in a trigger", () => {
+// element, so a wide value wrapped or ran past the trigger and pushed the chevron out (#541). Each
+// case runs in both directions: the value's `text-start` follows the direction, and the value, the
+// badge and the chevron keep their inline order.
+describe.each(["ltr", "rtl"] as const)("Combobox.Value in a trigger, %s", (dir) => {
+  beforeEach(() => {
+    document.documentElement.dir = dir;
+  });
+  afterEach(() => {
+    document.documentElement.removeAttribute("dir");
+  });
+
   // The Trigger's defaults are a chevron over an input's end (`absolute inset-y-0 end-0`): this
   // makes it a Select-like button
   const SELECT_LIKE =
     "static h-ui-height w-full justify-between rounded-md border border-input bg-background px-3 text-sm";
+
+  // Three of the cases below in one picture: a short and a long value in a 140px trigger, and a long
+  // value beside a badge in a 200px one. In RTL the value starts at the right edge and its ellipsis,
+  // the badge and the chevron sit to its left. A Latin value shows its last words there: its text
+  // keeps to the right edge, so its first words are what overflows
+  it("shows a short value, a cut value and a badge before the chevron", async () => {
+    const rows = [
+      { fruit: "Fig", width: 140 },
+      { fruit: "Dragon fruit from the far end of the orchard", width: 140 },
+      { fruit: "Dragon fruit from the far end of the orchard", width: 200, badge: "Pro plan" },
+    ];
+    const { fixture } = await renderFixture(
+      <div className="flex flex-col items-start gap-2">
+        {rows.map(({ fruit, width, badge }) => (
+          <Combobox.Root key={`${width} ${fruit}`} defaultValue={fruit}>
+            <Combobox.Trigger aria-label="Fruit" className={SELECT_LIKE} style={{ width }}>
+              <Combobox.Value />
+              {badge && <span className="ms-2">{badge}</span>}
+              <Combobox.Icon />
+            </Combobox.Trigger>
+          </Combobox.Root>
+        ))}
+      </div>,
+    );
+    await expect(fixture).toMatchScreenshot();
+  });
 
   it.each([
     { length: "short", fruit: "Fig", truncated: false },
@@ -323,16 +391,16 @@ describe("Combobox.Value in a trigger", () => {
       </div>,
     );
     const trigger = getByRole("combobox", { name: "Fruit" });
-    const content = contentSpan(trigger, "ltr");
-    const icon = inlineSpan(getByTestId("icon"), "ltr");
+    const content = contentSpan(trigger, dir);
+    const icon = inlineSpan(getByTestId("icon"), dir);
     expect(icon.end).toBeCloseTo(content.end, 1);
     expect(icon.end - icon.start).toBe(16);
     const value = getByTestId("value");
     const { top, bottom } = insetsWithin(trigger, value);
     expect(top).toBeGreaterThanOrEqual(0);
     expect(bottom).toBeGreaterThanOrEqual(0);
-    expect(inlineSpan(value, "ltr").start).toBeCloseTo(content.start, 1);
-    expect(inlineSpan(value, "ltr").end).toBeLessThanOrEqual(icon.start);
+    expect(inlineSpan(value, dir).start).toBeCloseTo(content.start, 1);
+    expect(inlineSpan(value, dir).end).toBeLessThanOrEqual(icon.start);
     // Cut at the value's box, with an ellipsis: the text is wider than what shows
     expect(getComputedStyle(value).textOverflow).toBe("ellipsis");
     expect(value.scrollWidth > value.clientWidth).toBe(truncated);
@@ -363,18 +431,18 @@ describe("Combobox.Value in a trigger", () => {
         </div>
       </div>,
     );
-    const content = contentSpan(getByRole("combobox", { name: "Fruit" }), "ltr");
+    const content = contentSpan(getByRole("combobox", { name: "Fruit" }), dir);
     const value = getByTestId("value");
     const badge = getByTestId("badge");
-    const icon = inlineSpan(getByTestId("icon"), "ltr");
+    const icon = inlineSpan(getByTestId("icon"), dir);
     const reference = getByTestId("reference").getBoundingClientRect();
     expect(badge.getBoundingClientRect().width).toBeCloseTo(reference.width, 1);
     // The text keeps to the start of the value's box, which the trigger's <button> would centre
     const text = document.createRange();
     text.selectNodeContents(value);
-    expect(inlineSpan(text, "ltr").start).toBeCloseTo(content.start, 1);
-    expect(inlineSpan(value, "ltr").end).toBeLessThanOrEqual(inlineSpan(badge, "ltr").start);
-    expect(inlineSpan(badge, "ltr").end).toBeLessThanOrEqual(icon.start);
+    expect(inlineSpan(text, dir).start).toBeCloseTo(content.start, 1);
+    expect(inlineSpan(value, dir).end).toBeLessThanOrEqual(inlineSpan(badge, dir).start);
+    expect(inlineSpan(badge, dir).end).toBeLessThanOrEqual(icon.start);
     expect(icon.end).toBeCloseTo(content.end, 1);
     expect(value.scrollWidth > value.clientWidth).toBe(truncated);
   });
@@ -403,12 +471,47 @@ describe("Combobox.Value in a trigger", () => {
         </div>
       </div>,
     );
-    const box = getByTestId("box");
-    expect(insetsWithin(box, getByRole("combobox")).right).toBeGreaterThanOrEqual(0);
-    if (row) expect(insetsWithin(box, getByRole("button")).right).toBeGreaterThanOrEqual(0);
+    // An overflow would pass the box's inline end: its right edge in LTR, its left edge in RTL
+    const box = inlineSpan(getByTestId("box"), dir);
+    expect(inlineSpan(getByRole("combobox"), dir).end).toBeLessThanOrEqual(box.end);
+    if (row) expect(inlineSpan(getByRole("button"), dir).end).toBeLessThanOrEqual(box.end);
     const value = getByTestId("value");
     expect(getComputedStyle(value).textOverflow).toBe("ellipsis");
     expect(value.scrollWidth).toBeGreaterThan(value.clientWidth);
+  });
+});
+
+// The placeholder is muted while nothing is selected, as on Select.Trigger, in a multi-select too
+// (Base UI sets data-placeholder for an empty array as well), and a value has the colour of the
+// text around the trigger. Base UI types `defaultValue` by `multiple`: the rows mix both, so the
+// Root's type arguments are spelled out.
+describe("Combobox.Value colour in a trigger", () => {
+  it.each([
+    { shows: "the placeholder muted", defaultValue: null, colour: "muted" },
+    {
+      shows: "the placeholder muted, in a multi-select",
+      multiple: true,
+      defaultValue: [],
+      colour: "muted",
+    },
+    { shows: "a value in the colour around it", defaultValue: "Fig", colour: "around" },
+  ])("shows $shows", ({ multiple, defaultValue, colour }) => {
+    const { getByTestId } = render(
+      <div data-testid="around">
+        <Combobox.Root<string | string[], boolean> multiple={multiple} defaultValue={defaultValue}>
+          <Combobox.Trigger aria-label="Fruit">
+            <Combobox.Value data-testid="value" placeholder="Pick a fruit" />
+            <Combobox.Icon />
+          </Combobox.Trigger>
+        </Combobox.Root>
+        <span data-testid="muted" className="text-muted-foreground">
+          Muted
+        </span>
+      </div>,
+    );
+    const colourOf = (testId: string) => getComputedStyle(getByTestId(testId)).color;
+    expect(colourOf("muted")).not.toBe(colourOf("around"));
+    expect(colourOf("value")).toBe(colourOf(colour));
   });
 });
 
@@ -426,7 +529,9 @@ describe("Combobox.Popup closing, Motion", () => {
   it("fades and scales out, closed at rest", async () => {
     const { rerender, getByTestId } = render(below(true));
     const popup = getByTestId("popup");
-    await expect.poll(() => getComputedStyle(popup).opacity).toBe("1");
+    await expect
+      .poll(() => getComputedStyle(popup).opacity, { timeout: SETTLE_TIMEOUT_MS })
+      .toBe("1");
     await settled(popup);
     rerender(below(false));
     const frames = await framesOf(popup);

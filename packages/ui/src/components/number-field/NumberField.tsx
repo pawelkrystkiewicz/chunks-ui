@@ -78,7 +78,8 @@ function NumberFieldInput({ className, ...props }: NumberFieldInputProps) {
   );
 }
 
-function NumberFieldIncrement({ className, ...props }: NumberFieldIncrementProps) {
+// Children replace the plus, and the button keeps its aria-label (#564)
+function NumberFieldIncrement({ className, children, ...props }: NumberFieldIncrementProps) {
   const labels = useContext(NumberFieldLabelsContext);
   return (
     <BaseNumberField.Increment
@@ -92,24 +93,27 @@ function NumberFieldIncrement({ className, ...props }: NumberFieldIncrementProps
       )}
       {...props}
     >
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-      >
-        <path d="M12 5v14M5 12h14" />
-      </svg>
+      {children ?? (
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+      )}
     </BaseNumberField.Increment>
   );
 }
 
-function NumberFieldDecrement({ className, ...props }: NumberFieldDecrementProps) {
+// Children replace the minus, and the button keeps its aria-label (#564)
+function NumberFieldDecrement({ className, children, ...props }: NumberFieldDecrementProps) {
   const labels = useContext(NumberFieldLabelsContext);
   return (
     <BaseNumberField.Decrement
@@ -123,19 +127,21 @@ function NumberFieldDecrement({ className, ...props }: NumberFieldDecrementProps
       )}
       {...props}
     >
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-      >
-        <path d="M5 12h14" />
-      </svg>
+      {children ?? (
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M5 12h14" />
+        </svg>
+      )}
     </BaseNumberField.Decrement>
   );
 }

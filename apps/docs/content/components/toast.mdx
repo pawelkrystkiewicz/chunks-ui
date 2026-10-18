@@ -285,6 +285,8 @@ export default Props
   })}
 />
 
+> **Note**: A toast added with `priority: "high"` can take focus while it is hidden from screen readers. While keyboard focus is outside the viewport (Tab or F6 moves it in), Base UI 1.9 keeps the toast `aria-hidden` but in the tab order, and announces it through a visually hidden alert. axe then reports `aria-hidden-focus` on the toast, unless a dialog is also on screen, such as a toast of the default `low` priority (a `role="dialog"`): axe takes the dialog for an open modal and lists the toast under `incomplete`.
+
 ### Toast.Viewport
 
 `Toast.Viewport` is a thin style wrapper. It renders the toast list itself and forwards every other prop to Base UI's [`Toast.Viewport`](https://base-ui.com/react/components/toast#api-reference); `children` you pass are not rendered. All per-toast behaviour (`icon`, `iconClassName`, `className`, `dismissible`, `onClose`, `closeProps`) lives on the individual `add()` call, not the container, so a single viewport can host a mix of dismissible and non-dismissible toasts, styled and unstyled ones, etc.

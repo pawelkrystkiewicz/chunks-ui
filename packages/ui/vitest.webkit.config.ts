@@ -1,5 +1,5 @@
 import { defineConfig } from "vitest/config";
-import visual, { playwrightProvider } from "./vitest.visual.config";
+import visual, { playwrightProvider } from "./vitest.visual.config.ts";
 
 /**
  * WebKit (Playwright's Safari engine) smoke project: a few geometry and paint checks, no

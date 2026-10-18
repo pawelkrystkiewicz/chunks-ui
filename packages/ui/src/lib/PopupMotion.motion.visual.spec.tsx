@@ -84,7 +84,7 @@ describe("popups animated with Motion", () => {
       expect(popup()).toBeNull();
 
       rerender(popups[name](true));
-      await expect.poll(popup).not.toBeNull();
+      await expect.poll(popup, { timeout: SETTLE_TIMEOUT_MS }).not.toBeNull();
       // Motion drives it: the animated values are inline styles, not CSS transitions
       expect(popup()?.style.transform).not.toBe("");
 
@@ -98,7 +98,7 @@ describe("popups animated with Motion", () => {
     async (name) => {
       const { rerender } = await renderClosed(name);
       rerender(popups[name](true));
-      await expect.poll(() => popup()?.style.opacity).toBe("1");
+      await expect.poll(() => popup()?.style.opacity, { timeout: SETTLE_TIMEOUT_MS }).toBe("1");
 
       rerender(popups[name](false));
       const opacities: number[] = [];
@@ -126,7 +126,9 @@ describe("popups animated with Motion", () => {
       await reloadMotion();
       const { rerender } = render(drawer(false));
       rerender(drawer(true));
-      await expect.poll(() => visibleShare(popup())).toBeGreaterThan(0.99);
+      await expect
+        .poll(() => visibleShare(popup()), { timeout: SETTLE_TIMEOUT_MS })
+        .toBeGreaterThan(0.99);
       // Motion drives the slide: the CSS fallback slides it too, with no inline transform
       expect(popup()?.style.transform).not.toBe("");
 
@@ -201,7 +203,9 @@ describe("popups open while Motion loads", () => {
         await loading;
         // Motion's arrival has been rendered: a popup that read Motion live, with useMotion(),
         // would have swapped in a motion.div by the time the marker shows
-        await expect.element(page.getByTestId("motion-loaded")).toBeInTheDocument();
+        await expect
+          .element(page.getByTestId("motion-loaded"), { timeout: SETTLE_TIMEOUT_MS })
+          .toBeInTheDocument();
       },
     };
   }

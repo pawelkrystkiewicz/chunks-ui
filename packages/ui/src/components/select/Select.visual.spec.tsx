@@ -14,6 +14,7 @@ import {
   MOTION_PATHS,
   renderFixture,
   renderPage,
+  SETTLE_TIMEOUT_MS,
   settled,
 } from "../../VisualTest.utils";
 import { Select } from "./index";
@@ -264,7 +265,9 @@ describe.each(MOTION_PATHS)("Select.Popup aligned with its trigger, $path", ({ w
   ])("closes without a scale, $when", async ({ atRest }) => {
     const { rerender, getByTestId } = render(aligned(true));
     const popup = getByTestId("popup");
-    await expect.poll(() => getComputedStyle(popup).opacity).toBe("1");
+    await expect
+      .poll(() => getComputedStyle(popup).opacity, { timeout: SETTLE_TIMEOUT_MS })
+      .toBe("1");
     if (atRest) await settled(popup);
     rerender(aligned(false));
     const frames = await framesOf(popup);

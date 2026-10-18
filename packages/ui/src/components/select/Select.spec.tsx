@@ -1,10 +1,22 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { axe } from "jest-axe";
+import { configureAxe } from "jest-axe";
 import { afterEach, describe, expect, it } from "vitest";
 import { FOCUS_RING } from "../shared";
 import { Select } from "./Select";
 
 afterEach(cleanup);
+
+// aria-hidden-focus skips Base UI's focus guards, aria-hidden spans that hand focus on when Tab
+// reaches them. A browser's axe leaves them for review, as it takes the open select's full-page
+// backdrop for a modal. jsdom can't hit-test the backdrop, so axe finds no modal and flags them.
+// The rule still checks every other aria-hidden node
+const axe = configureAxe({
+  globalOptions: {
+    rules: [
+      { id: "aria-hidden-focus", selector: '[aria-hidden="true"]:not([data-base-ui-focus-guard])' },
+    ],
+  },
+});
 
 describe("Select", () => {
   it("renders Trigger with custom className", () => {
@@ -133,7 +145,7 @@ describe("Select", () => {
     expect(screen.getByTestId("item")).toHaveClass("custom");
   });
 
-  it("renders ItemIndicator with checkmark svg", () => {
+  it("renders the check in ItemIndicator when it has no children", () => {
     render(
       <Select.Root open defaultValue="a">
         <Select.Trigger>Pick</Select.Trigger>
@@ -146,7 +158,25 @@ describe("Select", () => {
         </Select.Positioner>
       </Select.Root>,
     );
-    expect(screen.getByTestId("ind")).toBeInTheDocument();
+    expect(screen.getByTestId("ind").querySelector("svg")).toBeInTheDocument();
+  });
+
+  it("renders the children of ItemIndicator in place of the check", () => {
+    render(
+      <Select.Root open defaultValue="a">
+        <Select.Trigger>Pick</Select.Trigger>
+        <Select.Positioner>
+          <Select.Popup>
+            <Select.Item value="a">
+              <Select.ItemIndicator data-testid="ind">custom</Select.ItemIndicator>A
+            </Select.Item>
+          </Select.Popup>
+        </Select.Positioner>
+      </Select.Root>,
+    );
+    const indicator = screen.getByTestId("ind");
+    expect(indicator).toHaveTextContent(/^custom$/);
+    expect(indicator.querySelector("svg")).not.toBeInTheDocument();
   });
 
   it("renders GroupLabel with custom className", () => {

@@ -46,7 +46,7 @@ export default Props
   })}
 />
 
-All other props are forwarded to the underlying `<button>` element.
+All other props are forwarded to the underlying `<button>` element. Children you pass replace the X icon, and the button keeps its `aria-label`. If the children are visible text, pass an `aria-label` that contains it: with the default one, `<ClearButton>Clear all</ClearButton>` is announced "Clear".
 
 ## Labels
 
