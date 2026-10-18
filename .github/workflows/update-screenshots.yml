@@ -72,16 +72,18 @@ jobs:
           git add -A
           CHANGED_FILES=$(git diff --cached --name-only -z | tr '\0' '\n')
           if [ "${CHANGED_FILES:+x}" ]; then
-            echo "changes=true" >> $GITHUB_OUTPUT
+            echo "changes=true" >> "$GITHUB_OUTPUT"
             echo "Changes detected"
 
             # save the list for the summary
-            echo "changed_files<<EOF" >> $GITHUB_OUTPUT
-            echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
-            echo "changed_count=$(echo "$CHANGED_FILES" | wc -l)" >> $GITHUB_OUTPUT
+            {
+              echo "changed_files<<EOF"
+              echo "$CHANGED_FILES"
+              echo "EOF"
+              echo "changed_count=$(echo "$CHANGED_FILES" | wc -l)"
+            } >> "$GITHUB_OUTPUT"
           else
-            echo "changes=false" >> $GITHUB_OUTPUT
+            echo "changes=false" >> "$GITHUB_OUTPUT"
             echo "No changes detected"
           fi
 
@@ -107,20 +109,24 @@ jobs:
         if: always()
         run: |
           if [[ "$CHANGES" == "true" ]]; then
-            echo "### Visual Regression Screenshots Updated" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Successfully updated **${CHANGED_COUNT}** screenshot(s) on \`${BRANCH}\`" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "#### Changed Files:" >> $GITHUB_STEP_SUMMARY
-            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-            echo "$CHANGED_FILES" >> $GITHUB_STEP_SUMMARY
-            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "The updated screenshots have been committed and pushed. Your visual regression baseline is now up to date." >> $GITHUB_STEP_SUMMARY
+            {
+              echo "### Visual Regression Screenshots Updated"
+              echo ""
+              echo "Successfully updated **${CHANGED_COUNT}** screenshot(s) on \`${BRANCH}\`"
+              echo ""
+              echo "#### Changed Files:"
+              echo "\`\`\`"
+              echo "$CHANGED_FILES"
+              echo "\`\`\`"
+              echo ""
+              echo "The updated screenshots have been committed and pushed. Your visual regression baseline is now up to date."
+            } >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "### No Screenshot Updates Required" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "All screenshots are already up to date." >> $GITHUB_STEP_SUMMARY
+            {
+              echo "### No Screenshot Updates Required"
+              echo ""
+              echo "All screenshots are already up to date."
+            } >> "$GITHUB_STEP_SUMMARY"
           fi
         env:
           CHANGES: ${{ steps.check_changes.outputs.changes }}
