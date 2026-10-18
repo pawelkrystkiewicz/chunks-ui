@@ -67,7 +67,7 @@ export function PairEditor({ check, mode, theme, onOpenChange, side: placement, 
     <Popover.Root onOpenChange={onOpenChange}>
       <Popover.Trigger
         ref={trigger}
-        aria-label={`Edit colours: ${check.label}, ${MODE_NAME[mode]}`}
+        aria-label={`Edit colours: ${check.label}, ${MODE_NAME[mode]}${custom ? ", custom colour" : ""}`}
         className="group/edit relative flex shrink-0 items-center gap-1 rounded-md"
       >
         <span
@@ -138,6 +138,10 @@ function SideEditor({
   const set = (value: Oklch | null, drag?: boolean) =>
     onEdit(withOverride(theme.overrides, mode, side.token, value), drag);
   const nudgeToPass = () => {
+    if (!Number.isFinite(check.target.apca)) {
+      setNote(`The text is too small for APCA ${levels.apca}. Raise Base size.`);
+      return;
+    }
     const found = nudge(theme, levels, mode, check.id, side);
     setNote(found ? null : "No lightness of this colour passes both measures.");
     if (found) set(found);
@@ -169,11 +173,13 @@ function SideEditor({
             </span>
           )}
         </span>
-        {custom && (
+        {/* aria-disabled, not unmounted, once reset: focus stays on the button */}
+        {!side.locked && (
           <button
             type="button"
-            onClick={() => set(null)}
-            className="rounded-sm text-[11.5px] underline decoration-border underline-offset-2 hover:decoration-current"
+            aria-disabled={!custom || undefined}
+            onClick={() => custom && set(null)}
+            className="rounded-sm text-[11.5px] underline decoration-border underline-offset-2 hover:decoration-current aria-disabled:opacity-50"
           >
             {side.from ? `Follow ${from}` : "Reset"}
           </button>
@@ -183,7 +189,7 @@ function SideEditor({
       {!color ? (
         <p className={`flex gap-1.5 ${NOTE}`}>
           <Lock aria-hidden className="mt-px size-3 shrink-0" />
-          Derived: {from} at 90% over the background. Change it in the {from} button row.
+          Derived: {from} at 90% over the card. Change it in the {from} button row.
         </p>
       ) : (
         <>
@@ -224,8 +230,7 @@ function SideEditor({
             onCommit={onEditEnd}
           />
           <div className="flex flex-col gap-2">
-            {/* Remounts when the colour changes elsewhere, so it always starts from the current value */}
-            <ColorField key={ok(color.l, color.c, color.h)} name={name} color={color} onSet={set} />
+            <ColorField name={name} color={color} onSet={set} />
             {/* aria-disabled, not unmounted, once the pair passes: focus stays here after a nudge */}
             <Button
               variant="outlined"
@@ -238,7 +243,9 @@ function SideEditor({
               Nudge to pass
             </Button>
           </div>
-          {note && <p className={NOTE}>{note}</p>}
+          <p role="status" className={NOTE}>
+            {note}
+          </p>
         </>
       )}
     </section>
@@ -257,9 +264,18 @@ function ColorField({
 }) {
   const [invalid, setInvalid] = useState(false);
   const value = ok(color.l, color.c, color.h);
-  const commit = (input: HTMLInputElement) => {
-    if (input.value.trim() === value) return;
-    const parsed = parseColor(input.value);
+  // The draft restarts from the colour whenever it changes elsewhere; adjusted while rendering so
+  // the input stays mounted (and focused)
+  const [draft, setDraft] = useState(value);
+  const [seen, setSeen] = useState(value);
+  if (seen !== value) {
+    setSeen(value);
+    setDraft(value);
+    setInvalid(false);
+  }
+  const commit = () => {
+    if (draft.trim() === value) return;
+    const parsed = parseColor(draft);
     setInvalid(!parsed);
     if (parsed) onSet(parsed);
   };
@@ -267,10 +283,11 @@ function ColorField({
     <Input
       aria-label={`${name} colour, hex or oklch()`}
       aria-invalid={invalid || undefined}
-      defaultValue={value}
+      value={draft}
       spellCheck={false}
-      onBlur={(e) => commit(e.currentTarget)}
-      onKeyDown={(e) => e.key === "Enter" && commit(e.currentTarget)}
+      onChange={(e) => setDraft(e.currentTarget.value)}
+      onBlur={commit}
+      onKeyDown={(e) => e.key === "Enter" && commit()}
       endAdornment={
         <span className="font-mono text-[10.5px] text-muted-foreground">{toHex(color)}</span>
       }

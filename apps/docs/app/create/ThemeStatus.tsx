@@ -67,8 +67,16 @@ export function ThemeStatus({
     null,
   );
   // Hand-set colours before each edit; a slider drag is one step
-  const [history, setHistory] = useState<(Overrides | undefined)[]>([]);
+  // `last` is the overrides the panel itself produced (by an edit or an undo). When anything else
+  // sets them (presets, shuffle, the sidebar), the entries no longer belong to the theme.
+  const [trail, setTrail] = useState<{ steps: (Overrides | undefined)[]; last?: Overrides }>({
+    steps: [],
+  });
+  const history = trail.steps.length > 0 && trail.last === theme.overrides ? trail.steps : [];
   const dragging = useRef(false);
+  // The last editor opened stays listed under "Failures only" after it closes, so focus can go
+  // back to its swatch even when the pair now passes
+  const [pinned, setPinned] = useState<string | null>(null);
 
   // Read after mount, like the theme: the page is server-rendered
   useEffect(() => setPrefs(loadPrefs()), []);
@@ -76,6 +84,7 @@ export function ThemeStatus({
   const setPref = (patch: Partial<Prefs>) => {
     const next = { ...prefs, ...patch };
     setPrefs(next);
+    if ("failsOnly" in patch) setPinned(null);
     try {
       localStorage.setItem(PREFS_KEY, JSON.stringify(next));
     } catch {
@@ -84,17 +93,18 @@ export function ThemeStatus({
   };
 
   const edit = (overrides: Overrides | undefined, drag = false) => {
-    if (!(drag && dragging.current)) {
-      setHistory((h) => [...h.slice(1 - UNDO_STEPS), theme.overrides]);
-    }
+    const steps =
+      drag && dragging.current ? history : [...history.slice(1 - UNDO_STEPS), theme.overrides];
+    setTrail({ steps, last: overrides });
     dragging.current = drag;
     onChange({ overrides });
   };
   const undo = () => {
     if (history.length === 0) return;
     dragging.current = false;
-    setHistory(history.slice(0, -1));
-    onChange({ overrides: history.at(-1) });
+    const last = history.at(-1);
+    setTrail({ steps: history.slice(0, -1), last });
+    onChange({ overrides: last });
   };
   // ⌘Z / Ctrl+Z anywhere in the panel or an open editor, except in a text field's own undo
   const onKeyDown = (e: KeyboardEvent) => {
@@ -106,9 +116,7 @@ export function ThemeStatus({
 
   const checks = themeChecks(theme, prefs);
   const modes: Mode[] = theme.mode === "light" ? ["light", "dark"] : ["dark", "light"];
-  const shown = prefs.failsOnly
-    ? checks.filter((c) => fails(c, modes) || c.id === editing?.id)
-    : checks;
+  const shown = prefs.failsOnly ? checks.filter((c) => fails(c, modes) || c.id === pinned) : checks;
   const lit = (c: Check, mode: Mode) =>
     !!editing?.token && editing.mode === mode && affects(theme, mode, c, editing.token);
   const pairs = (mode: Mode) => (token: string) =>
@@ -167,15 +175,19 @@ export function ThemeStatus({
           >
             control edges, focus rings and chart marks
           </a>{" "}
-          3:1 at either level. <strong className="font-medium text-foreground">APCA</strong> is the
-          method drafted for WCAG 3. It weighs lightness the way eyes see it, so on dark backgrounds
-          it often asks for more than WCAG 2. It is not a standard yet. Its{" "}
-          <a className={LINK} href="https://readtech.org/ARC/">
+          3:1 at either level. <strong className="font-medium text-foreground">APCA</strong> is a
+          method proposed for WCAG 3. It weighs lightness the way eyes see it, so on dark
+          backgrounds it often asks for more than WCAG 2. It is not a standard yet. Its{" "}
+          <a
+            className={LINK}
+            href="https://www.readtech.org/ARC/tests/visual-readability-contrast/?tn=criterion"
+          >
             levels
           </a>{" "}
           differ for text: Bronze asks Lc 75 of body text and Lc 60 of other text; Silver and Gold
           look the target up by each row's size and weight, and Gold needs text of 16px or more.
-          Non-text marks need Lc 30. Click a swatch to change its colours; ⌘Z undoes a change.
+          Non-text marks need Lc 30. Click a swatch to change its colours; ⌘Z or Ctrl+Z undoes a
+          change.
         </p>
 
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
@@ -206,29 +218,32 @@ export function ThemeStatus({
             onChange={(apca: ApcaLevel) => setPref({ apca })}
           />
 
-          {history.length > 0 && (
+          {/* aria-disabled, not unmounted, when there is nothing to do: focus stays on the button */}
+          <button
+            type="button"
+            aria-disabled={history.length === 0 || undefined}
+            onClick={() => history.length > 0 && undo()}
+            className="flex items-center gap-1 rounded-sm text-[12px] hover:text-foreground aria-disabled:opacity-50"
+          >
+            <Undo2 aria-hidden className="size-3.5" />
+            Undo
+          </button>
+          <span className="flex items-center gap-2 text-[12px] text-muted-foreground">
+            {custom > 0 && (
+              <>
+                <span aria-hidden className="size-2 rounded-full bg-primary" />
+                {custom} custom {custom === 1 ? "colour" : "colours"}
+              </>
+            )}
             <button
               type="button"
-              onClick={undo}
-              className="flex items-center gap-1 rounded-sm text-[12px] hover:text-foreground"
+              aria-disabled={custom === 0 || undefined}
+              onClick={() => custom > 0 && edit(undefined)}
+              className={cn("rounded-sm text-foreground aria-disabled:opacity-50", LINK)}
             >
-              <Undo2 aria-hidden className="size-3.5" />
-              Undo
+              Reset all
             </button>
-          )}
-          {custom > 0 && (
-            <span className="flex items-center gap-2 text-[12px] text-muted-foreground">
-              <span aria-hidden className="size-2 rounded-full bg-primary" />
-              {custom} custom {custom === 1 ? "colour" : "colours"}
-              <button
-                type="button"
-                onClick={() => edit(undefined)}
-                className={cn("rounded-sm text-foreground", LINK)}
-              >
-                Reset all
-              </button>
-            </span>
-          )}
+          </span>
         </div>
 
         {shown.length === 0 ? (
@@ -236,6 +251,15 @@ export function ThemeStatus({
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[760px] text-[12.5px]">
+              <caption className="sr-only">
+                Contrast of each colour pair in light and dark mode
+              </caption>
+              <colgroup>
+                <col />
+                <col />
+              </colgroup>
+              <colgroup span={2} />
+              <colgroup span={2} />
               <thead className="text-muted-foreground">
                 <tr>
                   <th rowSpan={2} scope="col" className={cn(TH, "align-bottom")}>
@@ -270,7 +294,7 @@ export function ThemeStatus({
                     <tr>
                       <th
                         colSpan={6}
-                        scope="colgroup"
+                        scope="rowgroup"
                         className="pt-3 pb-1 text-start font-semibold text-[11px] text-muted-foreground uppercase tracking-wide"
                       >
                         {group}
@@ -306,6 +330,7 @@ export function ThemeStatus({
                                 }}
                                 onOpenChange={(open) => {
                                   dragging.current = false;
+                                  if (open) setPinned(check.id);
                                   setEditing((cur) => {
                                     if (open) {
                                       const side = [check.fg, check.bg].find((s) => !s.locked);
@@ -363,9 +388,10 @@ export function ThemeStatus({
             >
               44×44px at AAA
             </a>
-            . A smaller control still passes AA when no other target sits within 24px of it, which
-            this table can't see. The <code className="font-mono text-[11.5px]">touch-target</code>{" "}
-            class grows a control's area to 44px. Sizes follow Control height and Spacing.
+            . A smaller control can still pass AA through WCAG's spacing exception, when a 24px
+            circle centred on it overlaps no other target, which this table can't measure. The{" "}
+            <code className="font-mono text-[11.5px]">touch-target</code> class grows a control's
+            area to 44px. Sizes follow Control height and Spacing.
           </p>
           <SizeTable
             heads={["Control", "Size", "Target"]}
