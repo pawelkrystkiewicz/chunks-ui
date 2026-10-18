@@ -159,6 +159,10 @@ A form reset sets the picker back to its `defaultValue`, or to no date. This inc
 
 When the picker has a `name` or is `required`, or its `Field.Root` has a `name`, the form input is the field's control and takes part in the browser's form validation, as an `Input` does. A failing `validate` on `Field.Root` with `validationMode` set to `"onChange"` or `"onBlur"` then also blocks the submit of a plain `<form>` and shows the browser's validation bubble.
 
+## Text Size
+
+The text of the trigger has the size of the text fields: 16px below the `md` breakpoint (768px by default) and on a touch screen, and 14px otherwise, so a form has one text size. `className` goes on the wrapper, so a text-size class there does not change the trigger. See [Text Size](/components/input#text-size) in `Input`.
+
 ## Keyboard
 
 | Key | Action |
