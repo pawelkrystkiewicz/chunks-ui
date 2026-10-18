@@ -31,9 +31,14 @@ const ComboboxLabelsContext = createContext(DEFAULT_COMBOBOX_LABELS);
 const ComboboxMultipleContext = createContext(false);
 // The id of the Combobox.Chip around a ChipRemove, which names the remove button
 const ComboboxChipIdContext = createContext<string | undefined>(undefined);
-// The Combobox.Trigger, which the Popup gives focus to as it starts to close (#627). `null` under
-// a Base UI Root, so parts of two such comboboxes never share one ref.
-const ComboboxTriggerContext = createContext<RefObject<HTMLButtonElement | null> | null>(null);
+// What the Popup reads to give focus to the trigger as it starts to close (#627): the trigger,
+// and the event of the last close Base UI went ahead with, from `onOpenChange`. `null` under a
+// Base UI Root, so parts of two such comboboxes never share them.
+type CloseFocus = {
+  trigger: RefObject<HTMLButtonElement | null>;
+  closeEvent: RefObject<Event | undefined>;
+};
+const ComboboxCloseFocusContext = createContext<CloseFocus | null>(null);
 
 // The defaults match ComponentProps<typeof BaseCombobox.Root>, the type before labels were added
 export type ComboboxRootProps<
@@ -78,15 +83,25 @@ export type ComboboxControlProps = ComponentProps<typeof BaseCombobox.InputGroup
 
 function ComboboxRoot<Value, Multiple extends boolean | undefined = false, Item = Value>({
   labels,
+  onOpenChange,
   ...props
 }: ComboboxRootProps<Value, Multiple, Item>) {
-  const triggerRef = useRef<HTMLButtonElement>(null);
+  const [closeFocus] = useState<CloseFocus>(() => ({
+    trigger: { current: null },
+    closeEvent: { current: undefined },
+  }));
   return (
     <ComboboxLabelsContext.Provider value={mergeLabels(DEFAULT_COMBOBOX_LABELS, labels)}>
       <ComboboxMultipleContext.Provider value={Boolean(props.multiple)}>
-        <ComboboxTriggerContext.Provider value={triggerRef}>
-          <BaseCombobox.Root<Value, Multiple, Item> {...props} />
-        </ComboboxTriggerContext.Provider>
+        <ComboboxCloseFocusContext.Provider value={closeFocus}>
+          <BaseCombobox.Root<Value, Multiple, Item>
+            {...props}
+            onOpenChange={(open, details) => {
+              onOpenChange?.(open, details);
+              if (!open && !details.isCanceled) closeFocus.closeEvent.current = details.event;
+            }}
+          />
+        </ComboboxCloseFocusContext.Provider>
       </ComboboxMultipleContext.Provider>
     </ComboboxLabelsContext.Provider>
   );
@@ -138,7 +153,7 @@ function ComboboxInput({ className, ...props }: ComboboxInputProps) {
 function ComboboxTrigger({ className, children, ref, ...props }: ComboboxTriggerProps) {
   const labels = useContext(ComboboxLabelsContext);
   const ownRef = useRef<HTMLButtonElement>(null);
-  const triggerRef = useMergedRef(useContext(ComboboxTriggerContext) ?? ownRef, ref);
+  const triggerRef = useMergedRef(useContext(ComboboxCloseFocusContext)?.trigger ?? ownRef, ref);
   const ownContent = children != null || props.render != null;
   return (
     <BaseCombobox.Trigger
@@ -238,37 +253,45 @@ function ComboboxPositioner({ className, sideOffset = 8, ...props }: ComboboxPos
 // <body> (#627). So focus moves to the trigger as the popup closes (`data-closed`), if it is
 // still inside. Base UI's own return then finds it on the trigger. With the input outside
 // (`role="presentation"`), Base UI returns no focus, and with a `finalFocus` other than `true`
-// it returns it at the unmount, as before.
+// focus moves as before: at the unmount, or not at all with `false`.
 function ComboboxPopup({ className, render: renderProp, ref, ...props }: ComboboxPopupProps) {
-  const triggerRef = useContext(ComboboxTriggerContext);
+  const closeFocus = useContext(ComboboxCloseFocusContext);
   const [popup, setPopup] = useState<HTMLDivElement | null>(null);
   const popupRef = useMergedRef(setPopup, ref);
   const defaultFinalFocus = props.finalFocus === undefined || props.finalFocus === true;
   useLayoutEffect(() => {
-    if (!popup || !triggerRef || !defaultFinalFocus) return;
+    if (!popup || !closeFocus || !defaultFinalFocus) return;
     const doc = popup.ownerDocument;
+    const root = popup.getRootNode() as Document | ShadowRoot;
+    // In WebKit, Base UI blurs a text field in a closing popup, against a scroll jump, before the
+    // popup is marked closed. Focus that left the popup for nowhere (<body>) still counts as in it.
+    let leftForNowhere = false;
+    const onFocusOut = (event: FocusEvent) => {
+      leftForNowhere = event.relatedTarget === null;
+    };
+    const onFocusIn = () => {
+      leftForNowhere = false;
+    };
+    const focusInside = () =>
+      popup.contains(root.activeElement) || (leftForNowhere && doc.activeElement === doc.body);
+    const closing = () =>
+      popup.hasAttribute("data-closed") && popup.getAttribute("role") === "dialog";
     const stopWaiting = () => {
       doc.removeEventListener("keypress", handOff, true);
       doc.removeEventListener("keyup", handOff, true);
     };
-    const closing = () =>
-      popup.hasAttribute("data-closed") && popup.getAttribute("role") === "dialog";
     // Checks again when it waited for a key: the popup may have opened again meanwhile
     const handOff = () => {
       stopWaiting();
-      if (closing() && popup.contains(doc.activeElement)) {
-        triggerRef.current?.focus({ preventScroll: true });
-      }
+      if (closing() && focusInside()) closeFocus.trigger.current?.focus({ preventScroll: true });
     };
     const observer = new MutationObserver(() => {
       if (!closing()) return;
-      // The event being dispatched, which React also reads to rank updates. The browser sets it
-      // on the window of the running listener (React's or Base UI's), so it is this `window`,
-      // not the popup document's, which differs for a popup portalled into an iframe.
-      const event = window.event;
-      // A mouse press outside closes the popup on pointerdown, before the browser moves focus to
-      // what was pressed. Focus is left to the browser, and to Base UI's return at the unmount:
-      // passing through the trigger would fire its focus and blur handlers.
+      const event = closeFocus.closeEvent.current;
+      closeFocus.closeEvent.current = undefined;
+      // A mouse or pen press outside closes the popup on pointerdown, before the browser moves
+      // focus to what was pressed. Focus is left to the browser, and to Base UI's return at the
+      // unmount: passing through the trigger would fire its focus and blur handlers.
       if (event?.type === "pointerdown" || event?.type === "mousedown") return;
       // Enter with no item highlighted closes the popup without preventDefault, so a form can
       // submit. Its keypress is still to come, and goes to the focused element: on the trigger it
@@ -282,11 +305,15 @@ function ComboboxPopup({ className, render: renderProp, ref, ...props }: Combobo
       }
     });
     observer.observe(popup, { attributeFilter: ["data-closed"] });
+    popup.addEventListener("focusout", onFocusOut);
+    popup.addEventListener("focusin", onFocusIn);
     return () => {
       observer.disconnect();
+      popup.removeEventListener("focusout", onFocusOut);
+      popup.removeEventListener("focusin", onFocusIn);
       stopWaiting();
     };
-  }, [popup, defaultFinalFocus, triggerRef]);
+  }, [popup, defaultFinalFocus, closeFocus]);
 
   const { useSpring, render } = usePopupRender(renderProp, {
     spring: springs.popup,

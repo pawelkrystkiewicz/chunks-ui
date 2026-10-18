@@ -1,4 +1,5 @@
 import { render } from "@testing-library/react";
+import { createRef } from "react";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import { cn } from "../../lib/cn";
@@ -556,10 +557,13 @@ describe.each([
     await enterMotionPath(true);
   });
 
-  const openInPopup = async () => {
+  // The fields around the trigger are text fields: WebKit's Tab skips buttons, and a click there
+  // does not focus one, so the same rows also hold in WebKit
+  const openInPopup = async ({ finalFocusBefore = false } = {}) => {
+    const beforeRef = createRef<HTMLInputElement>();
     const view = render(
       <div className="flex w-60 flex-col items-start gap-2" style={{ padding: 40 }}>
-        <button type="button">Before</button>
+        <input ref={beforeRef} aria-label="Before" />
         <Combobox.Root items={options}>
           <Combobox.Trigger
             aria-label="Framework"
@@ -570,7 +574,11 @@ describe.each([
           </Combobox.Trigger>
           <Combobox.Portal>
             <Combobox.Positioner>
-              <Combobox.Popup aria-label="Frameworks" data-testid="popup">
+              <Combobox.Popup
+                aria-label="Frameworks"
+                data-testid="popup"
+                finalFocus={finalFocusBefore ? beforeRef : undefined}
+              >
                 <Combobox.Input aria-label="Search frameworks" className="pe-3" />
                 <Combobox.List>
                   {(item: (typeof options)[number]) => (
@@ -583,7 +591,7 @@ describe.each([
             </Combobox.Positioner>
           </Combobox.Portal>
         </Combobox.Root>
-        <button type="button">After</button>
+        <input aria-label="After" />
       </div>,
     );
     const trigger = view.getByRole("combobox", { name: "Framework" });
@@ -596,13 +604,14 @@ describe.each([
     return {
       trigger,
       popup,
-      before: view.getByRole("button", { name: "Before" }),
-      after: view.getByRole("button", { name: "After" }),
+      before: view.getByRole("textbox", { name: "Before" }),
+      after: view.getByRole("textbox", { name: "After" }),
     };
   };
 
   // Whether the popup was still on the page when Tab went down. A Tab after the exit finds focus
-  // back on the trigger, so the spec would pass without the fix.
+  // back on the trigger, so the spec would pass without the fix. With reduced motion the popup
+  // leaves a frame after the pick, which a slow machine can miss: only the end state is checked.
   const recordTab = (popup: HTMLElement) => {
     let mounted: boolean | undefined;
     const onKeyDown = (event: KeyboardEvent) => {
@@ -611,8 +620,17 @@ describe.each([
     document.addEventListener("keydown", onKeyDown, true);
     return () => {
       document.removeEventListener("keydown", onKeyDown, true);
-      return mounted;
+      if (!reduce) expect(mounted, "the popup was still closing when Tab went down").toBe(true);
     };
+  };
+
+  /** Whether `el` has taken focus since the call */
+  const tookFocus = (el: HTMLElement) => {
+    let focused = false;
+    el.addEventListener("focus", () => {
+      focused = true;
+    });
+    return () => focused;
   };
 
   const unmounted = (popup: HTMLElement) =>
@@ -622,9 +640,9 @@ describe.each([
   it("moves a Tab pressed during the exit past the trigger, after a pick by Enter", async () => {
     const { popup, after } = await openInPopup();
     await userEvent.keyboard("{ArrowDown}");
-    const mountedOnTab = recordTab(popup);
+    const checkTab = recordTab(popup);
     await userEvent.keyboard("{Enter}{Tab}");
-    expect(mountedOnTab(), "the popup was still closing when Tab went down").toBe(true);
+    checkTab();
     await unmounted(popup);
     expect(document.activeElement).toBe(after);
   });
@@ -634,10 +652,10 @@ describe.each([
     "moves a Tab pressed during the exit past the trigger, after a pick by click",
     async () => {
       const { popup, after } = await openInPopup();
-      const mountedOnTab = recordTab(popup);
+      const checkTab = recordTab(popup);
       await userEvent.click(page.getByRole("option", { name: "Vue" }));
       await userEvent.keyboard("{Tab}");
-      expect(mountedOnTab(), "the popup was still closing when Tab went down").toBe(true);
+      checkTab();
       await unmounted(popup);
       expect(document.activeElement).toBe(after);
     },
@@ -647,9 +665,9 @@ describe.each([
   // trigger that already had focus, clicked it and opened the popup again.
   it("keeps the popup closed and moves a Tab past the trigger, after Enter with nothing highlighted", async () => {
     const { popup, trigger, after } = await openInPopup();
-    const mountedOnTab = recordTab(popup);
+    const checkTab = recordTab(popup);
     await userEvent.keyboard("{Enter}{Tab}");
-    expect(mountedOnTab(), "the popup was still closing when Tab went down").toBe(true);
+    checkTab();
     await unmounted(popup);
     expect(document.activeElement).toBe(after);
     expect(trigger).toHaveAttribute("aria-expanded", "false");
@@ -663,18 +681,26 @@ describe.each([
     expect(document.activeElement).toBe(trigger);
   });
 
-  // The click focuses the button outside: the popup must not pull focus back to the trigger, nor
+  // The click focuses the field outside: the popup must not pull focus back to the trigger, nor
   // pass it through the trigger on the way, which would fire its focus and blur handlers
   it("leaves focus where an outside click put it", async () => {
     const { popup, trigger, before } = await openInPopup();
-    let triggerFocused = false;
-    trigger.addEventListener("focus", () => {
-      triggerFocused = true;
-    });
+    const triggerFocused = tookFocus(trigger);
     await userEvent.click(before);
-    expect(triggerFocused, "the trigger took focus on the way").toBe(false);
+    expect(triggerFocused(), "the trigger took focus on the way").toBe(false);
     expect(document.activeElement).toBe(before);
     await unmounted(popup);
+    expect(document.activeElement).toBe(before);
+  });
+
+  // An element as `finalFocus` keeps Base UI's timing: focus moves there at the unmount, and
+  // never to the trigger first
+  it("moves focus only at the unmount, to an element passed as finalFocus", async () => {
+    const { popup, trigger, before } = await openInPopup({ finalFocusBefore: true });
+    const triggerFocused = tookFocus(trigger);
+    await userEvent.click(page.getByRole("option", { name: "Vue" }));
+    await unmounted(popup);
+    expect(triggerFocused(), "the trigger took focus").toBe(false);
     expect(document.activeElement).toBe(before);
   });
 });
