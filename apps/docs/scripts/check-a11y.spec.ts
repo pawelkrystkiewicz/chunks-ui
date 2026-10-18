@@ -73,12 +73,14 @@ describe("linkedIssue", () => {
     expect(linkedIssue({ ...everywhere, why: "#254: success-text on a tint, 4.47:1" })).toBe(254);
   });
 
-  it.each(["comments #6A737D on black, 4.36:1", "see #254", "Nextra bug (shuding/nextra#4567)"])(
-    "reads no issue from %s",
-    (why) => {
-      expect(linkedIssue({ ...everywhere, why })).toBeUndefined();
-    },
-  );
+  it.each([
+    "comments #6A737D on black, 4.36:1",
+    "see #254",
+    "Nextra bug (shuding/nextra#4567)",
+    "mui/base-ui#5659: an issue in another repository",
+  ])("reads no issue from %s", (why) => {
+    expect(linkedIssue({ ...everywhere, why })).toBeUndefined();
+  });
 });
 
 describe("fixedEntries", () => {

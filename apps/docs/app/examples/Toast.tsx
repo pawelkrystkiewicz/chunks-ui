@@ -43,15 +43,16 @@ interface ToastTriggerProps {
   title: string;
   description?: string;
   type?: ToastType;
+  priority?: "low" | "high";
 }
 
-function ToastTrigger({ label, title, description, type }: ToastTriggerProps) {
+function ToastTrigger({ label, title, description, type, priority }: ToastTriggerProps) {
   const { add } = Toast.useToast();
 
   return (
     <Button
       type="button"
-      onClick={() => add({ title, description, ...(type && TYPE_STYLES[type]) })}
+      onClick={() => add({ title, description, priority, ...(type && TYPE_STYLES[type]) })}
       variant="outlined"
       color={type}
     >
@@ -139,6 +140,21 @@ export function ToastWithActionExample() {
         <ToastWithActionTrigger />
         <Toast.Viewport />
       </Toast.Provider>
+    </Container>
+  );
+}
+
+export function ToastHighPriorityExample() {
+  return (
+    <Container>
+      <ToastSetup>
+        <ToastTrigger
+          label="Show urgent toast"
+          title="Connection lost"
+          description="Trying to reconnect…"
+          priority="high"
+        />
+      </ToastSetup>
     </Container>
   );
 }

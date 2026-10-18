@@ -9,7 +9,8 @@
  * Covers the pages built from content/**\/*.mdx (the landing page, /create and /kitchen-sink
  * among them), every other page under app/, and the 404 page, which it gets by requesting a URL
  * no page answers on: that one must answer 404, every other page 200. On the pages POPUPS lists, it
- * then opens the first example's popup and audits it alone, open. axe's `incomplete` results
+ * then opens the first example's popup and audits it alone, open; on the pages TOASTS lists, it
+ * adds each toast and audits it alone, one at a time. axe's `incomplete` results
  * (checks it could not decide, often contrast over images or gradients) are not failed. A page is
  * audited once React has hydrated it (`html[data-hydrated]`, set by app/HydrationMarker.tsx) and
  * its fonts have loaded.
@@ -92,6 +93,14 @@ const ALLOWED: Allowed[] = [
     pages: ["/components/chip", "/kitchen-sink"],
     themes: ["light"],
   },
+  // Upstream Base UI behaviour in the library's own components
+  {
+    rule: "aria-hidden-focus",
+    selector: '.Toast[role="alertdialog"][aria-hidden="true"][tabindex="0"]',
+    why: 'mui/base-ui#5659: Base UI 1.9 keeps a priority: "high" toast aria-hidden, but in the tab order, until keyboard focus enters the viewport (Tab or F6)',
+    pages: ["/components/toast"],
+    themes: ["light", "dark"],
+  },
 ];
 
 type Role = Parameters<Page["getByRole"]>[0];
@@ -111,6 +120,23 @@ const POPUPS: Popup[] = [
   { page: "/components/menu", trigger: "button", name: "Options", popup: "menu" },
   { page: "/components/popover", trigger: "button", name: "More info", popup: "dialog" },
   { page: "/components/select", trigger: "combobox", name: "Fruit", popup: "listbox" },
+];
+
+/**
+ * A toast the run adds and audits on its own, after its page's popups, in every theme: it clicks
+ * the first button named `name`, waits for the one element of role `toast`, runs axe on it alone,
+ * and closes it with Escape from inside it. Toasts don't fit Popup: their button has no
+ * aria-expanded or aria-controls, and Escape closes one only with focus inside it. Base UI gives a
+ * toast role "dialog", or "alertdialog" with `priority: "high"`. ALLOWED applies as to its page.
+ * The high-priority toast is aria-hidden while audited, so only the few axe rules that read hidden
+ * content (aria-hidden-focus among them) check it; the default one covers the same markup with the
+ * name and ARIA rules.
+ */
+type ToastCheck = { page: string; name: string; toast: "dialog" | "alertdialog" };
+
+const TOASTS: ToastCheck[] = [
+  { page: "/components/toast", name: "Show toast", toast: "dialog" },
+  { page: "/components/toast", name: "Show urgent toast", toast: "alertdialog" },
 ];
 
 /** The entries that may excuse `rule` on `page` in `theme` */
@@ -406,6 +432,42 @@ async function auditPopup(
   return problems;
 }
 
+/** Adds `check`'s toast on its loaded page, runs axe on it alone, and closes it with Escape */
+async function auditToast(
+  page: Page,
+  check: ToastCheck,
+  label: string,
+  theme: Theme,
+  matched: Map<Allowed, Set<string>>,
+) {
+  await page
+    .getByRole("button", { name: check.name, exact: true })
+    .first()
+    .click({ timeout: POPUP_MS });
+  // A CSS locator, as getByRole skips the aria-hidden high-priority toast. `Toast` is a class every
+  // Toast.Root has, so another dialog on the page can't match. The locator is strict: the toast is
+  // the one element the selector matches, and all that it hands axe.
+  const selector = `.Toast[role="${check.toast}"]`;
+  const toast = page.locator(selector);
+  // Base UI pauses the timeout while the pointer is over the toasts, so it cannot close mid-audit
+  await toast.hover({ timeout: POPUP_MS });
+  const problems = await axe(page, check.page, theme, matched, { selector, label });
+  // Gone before the next one: axe reports aria-hidden-focus as incomplete while a dialog is open
+  try {
+    await toast.press("Escape", { timeout: POPUP_MS });
+    await toast.waitFor({ state: "detached", timeout: POPUP_MS });
+  } catch (error) {
+    problems.push({
+      page: label,
+      theme,
+      rule: "toast",
+      help: "The toast could not be closed with Escape",
+      targets: [String(error)],
+    });
+  }
+  return problems;
+}
+
 async function audit(
   browser: Browser,
   route: string,
@@ -471,6 +533,20 @@ async function audit(
         });
       }
     }
+    for (const check of TOASTS.filter((entry) => entry.page === route)) {
+      const label = `${route} after ${check.name}`;
+      try {
+        problems.push(...(await auditToast(page, check, label, theme, matched)));
+      } catch (error) {
+        problems.push({
+          page: label,
+          theme,
+          rule: "toast",
+          help: "The toast could not be added, audited or closed",
+          targets: [String(error)],
+        });
+      }
+    }
     // Checked last, as opening a popup can load more
     if (failed.length > 0) {
       problems.push({ page: route, theme, rule: "http", help: "Requests failed", targets: failed });
@@ -484,10 +560,12 @@ async function audit(
 // Not on import, so the spec can test the pure functions above
 if (import.meta.main) {
   const routes = pages();
-  // A renamed page would otherwise drop its popup from the run without a word
-  const lost = POPUPS.filter((popup) => !routes.includes(popup.page)).map((popup) => popup.page);
+  // A renamed page would otherwise drop its popup or toast from the run without a word
+  const lost = [...POPUPS, ...TOASTS]
+    .filter((entry) => !routes.includes(entry.page))
+    .map((entry) => entry.page);
   if (lost.length > 0) {
-    throw new Error(`POPUPS names pages the docs don't have: ${lost.join(", ")}`);
+    throw new Error(`POPUPS or TOASTS name pages the docs don't have: ${lost.join(", ")}`);
   }
   const issues = [...new Set(ALLOWED.flatMap((entry) => linkedIssue(entry) ?? []))].sort(
     (a, b) => a - b,
@@ -537,7 +615,7 @@ if (import.meta.main) {
     for (const message of failures) console.error(`  ${message}`);
   }
   console.log(
-    `axe checked ${routes.length} pages and ${POPUPS.length} popups in ${THEMES.length} themes: ${problems.length} problems, ${stale.length} stale ALLOWED entries, ${failures.length} unread ${failures.length === 1 ? "issue" : "issues"}.`,
+    `axe checked ${routes.length} pages, ${POPUPS.length} popups and ${TOASTS.length} toasts in ${THEMES.length} themes: ${problems.length} problems, ${stale.length} stale ALLOWED entries, ${failures.length} unread ${failures.length === 1 ? "issue" : "issues"}.`,
   );
   process.exit(problems.length + stale.length + failures.length > 0 ? 1 : 0);
 }
