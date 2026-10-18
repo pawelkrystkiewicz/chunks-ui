@@ -265,7 +265,7 @@ The stacking CSS respects `prefers-reduced-motion: reduce` — users with that s
 | `Toast.Root` | Individual toast wrapper with slide/fade enter/exit transitions. |
 | `Toast.Title` | Bold toast heading. |
 | `Toast.Description` | Supporting text in `text-muted-foreground`. |
-| `Toast.Close` | Icon button that dismisses the toast. |
+| `Toast.Close` | Icon button that dismisses the toast. Children you pass replace the X; with a `render` element and no children, there is no X. The button keeps its `aria-label` (`labels.close`) whatever its content: if the children are visible text, pass an `aria-label` that contains it. |
 | `Toast.Action` | Optional action button rendered inside the toast. |
 | `Toast.useToast` | Hook that returns `{ toasts, add, close, update, promise }` for the nearest provider. |
 
