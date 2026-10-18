@@ -75,11 +75,12 @@ jobs:
             echo "changes=true" >> "$GITHUB_OUTPUT"
             echo "Changes detected"
 
-            # save the list for the summary
+            # save the list for the summary; random delimiter so a file named EOF cannot end the block early
+            delim="EOF_$(od -An -tx1 -N8 /dev/urandom | tr -d ' \n')"
             {
-              echo "changed_files<<EOF"
+              echo "changed_files<<$delim"
               echo "$CHANGED_FILES"
-              echo "EOF"
+              echo "$delim"
               echo "changed_count=$(echo "$CHANGED_FILES" | wc -l)"
             } >> "$GITHUB_OUTPUT"
           else
