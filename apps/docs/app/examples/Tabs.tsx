@@ -67,6 +67,34 @@ export function TabsUnderlineExample() {
   );
 }
 
+export function TabsDisabledExample() {
+  return (
+    <Container>
+      <Tabs.Root defaultValue="tab-1">
+        <Tabs.List>
+          <Tabs.Tab value="tab-1">Account</Tabs.Tab>
+          <Tabs.Tab value="tab-2" disabled>
+            Billing
+          </Tabs.Tab>
+          <Tabs.Tab value="tab-3">Notifications</Tabs.Tab>
+          <Tabs.Indicator />
+        </Tabs.List>
+        <Tabs.Contents>
+          <Tabs.Content value="tab-1">
+            <p className="p-4">Account settings content.</p>
+          </Tabs.Content>
+          <Tabs.Content value="tab-2">
+            <p className="p-4">Billing details.</p>
+          </Tabs.Content>
+          <Tabs.Content value="tab-3">
+            <p className="p-4">Notification preferences.</p>
+          </Tabs.Content>
+        </Tabs.Contents>
+      </Tabs.Root>
+    </Container>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Routed-tab pattern #1 — `<Tabs.Animate>` (component)
 //
