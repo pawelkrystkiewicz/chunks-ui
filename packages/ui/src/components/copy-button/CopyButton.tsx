@@ -33,7 +33,8 @@ export type CopyButtonProps = Omit<ComponentProps<typeof IconButton>, "children"
   /**
    * Replaces the built-in English strings, e.g. to translate them. Keys you leave out keep the
    * default from `DEFAULT_COPY_BUTTON_LABELS`. `aria-label` takes precedence. With `children`,
-   * the button has no default name, so `labels` does not apply, and the content names the button, so icon-only children need an `aria-label`.
+   * the button has no default name, so `labels` does not apply. The content names the button
+   * then, so icon-only children need an `aria-label`.
    */
   labels?: Partial<CopyButtonLabels>;
 };
