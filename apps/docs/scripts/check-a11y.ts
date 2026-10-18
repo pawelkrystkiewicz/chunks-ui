@@ -109,8 +109,8 @@ type Role = Parameters<Page["getByRole"]>[0];
  * A popup the run opens and audits on its own, after its page, in every theme: it clicks the first
  * element of role `trigger` named `name` (the page's first example), waits for the one element of
  * role `popup`, runs axe on that element alone, checks the trigger has aria-expanded="true" and
- * aria-controls set to the popup's id, and closes it with Escape. ALLOWED applies to the
- * popup as to its page.
+ * aria-controls set to the popup's id, and closes it with Escape, also when a step before threw.
+ * ALLOWED applies to the popup as to its page.
  */
 type Popup = { page: string; trigger: Role; name: string; popup: Role };
 
@@ -125,9 +125,10 @@ const POPUPS: Popup[] = [
 /**
  * A toast the run adds and audits on its own, after its page's popups, in every theme: it clicks
  * the first button named `name`, waits for the one element of role `toast`, runs axe on it alone,
- * and closes it with Escape from inside it. Toasts don't fit Popup: their button has no
- * aria-expanded or aria-controls, and Escape closes one only with focus inside it. Base UI gives a
- * toast role "dialog", or "alertdialog" with `priority: "high"`. ALLOWED applies as to its page.
+ * and closes it with Escape from inside it, also when a step before threw. Toasts don't fit Popup:
+ * their button has no aria-expanded or aria-controls, and Escape closes one only with focus inside
+ * it. Base UI gives a toast role "dialog", or "alertdialog" with `priority: "high"`. ALLOWED
+ * applies as to its page.
  * The high-priority toast is aria-hidden while audited, so only the few axe rules that read hidden
  * content (aria-hidden-focus among them) check it; the default one covers the same markup with the
  * name and ARIA rules.
@@ -390,13 +391,15 @@ async function auditPopup(
   // A handle, as some triggers change their name while open (Combobox: "Hide options")
   const handle = await trigger.elementHandle({ timeout: POPUP_MS });
   const element = page.getByRole(popup.popup);
-  let problems: Problem[];
+  const problems: Problem[] = [];
   try {
     await trigger.click({ timeout: POPUP_MS });
     await element.waitFor({ timeout: POPUP_MS });
     const id = await element.getAttribute("id");
     if (!id) throw new Error(`The open ${popup.popup} has no id to scope axe to`);
-    problems = await axe(page, popup.page, theme, matched, { selector: `[id="${id}"]`, label });
+    problems.push(
+      ...(await axe(page, popup.page, theme, matched, { selector: `[id="${id}"]`, label })),
+    );
     // The trigger tells assistive technology the popup is open, and which element it is
     const state = await handle.evaluate((el) => ({
       expanded: el.getAttribute("aria-expanded"),
@@ -415,19 +418,21 @@ async function auditPopup(
     }
   } finally {
     await handle.dispose();
-  }
-  // The violations found above must survive a popup that won't close
-  try {
-    await page.keyboard.press("Escape");
-    await element.waitFor({ state: "hidden", timeout: POPUP_MS });
-  } catch (error) {
-    problems.push({
-      page: label,
-      theme,
-      rule: "popup",
-      help: "The popup could not be closed",
-      targets: [String(error)],
-    });
+    // Closed also when the audit threw, so the page's next audit doesn't run with it open. A failed
+    // close is caught, so the violations above survive it and it never replaces the audit's error,
+    // which the caller reports in place of `problems`.
+    try {
+      await page.keyboard.press("Escape");
+      await element.waitFor({ state: "hidden", timeout: POPUP_MS });
+    } catch (error) {
+      problems.push({
+        page: label,
+        theme,
+        rule: "popup",
+        help: "The popup could not be closed",
+        targets: [String(error)],
+      });
+    }
   }
   return problems;
 }
@@ -440,30 +445,36 @@ async function auditToast(
   theme: Theme,
   matched: Map<Allowed, Set<string>>,
 ) {
-  await page
-    .getByRole("button", { name: check.name, exact: true })
-    .first()
-    .click({ timeout: POPUP_MS });
   // A CSS locator, as getByRole skips the aria-hidden high-priority toast. `Toast` is a class every
   // Toast.Root has, so another dialog on the page can't match. The locator is strict: the toast is
   // the one element the selector matches, and all that it hands axe.
   const selector = `.Toast[role="${check.toast}"]`;
   const toast = page.locator(selector);
-  // Base UI pauses the timeout while the pointer is over the toasts, so it cannot close mid-audit
-  await toast.hover({ timeout: POPUP_MS });
-  const problems = await axe(page, check.page, theme, matched, { selector, label });
-  // Gone before the next one: axe reports aria-hidden-focus as incomplete while a dialog is open
+  const problems: Problem[] = [];
   try {
-    await toast.press("Escape", { timeout: POPUP_MS });
-    await toast.waitFor({ state: "detached", timeout: POPUP_MS });
-  } catch (error) {
-    problems.push({
-      page: label,
-      theme,
-      rule: "toast",
-      help: "The toast could not be closed with Escape",
-      targets: [String(error)],
-    });
+    await page
+      .getByRole("button", { name: check.name, exact: true })
+      .first()
+      .click({ timeout: POPUP_MS });
+    // Base UI pauses the timeout while the pointer is over the toasts, so it cannot close mid-audit
+    await toast.hover({ timeout: POPUP_MS });
+    problems.push(...(await axe(page, check.page, theme, matched, { selector, label })));
+  } finally {
+    // Gone before the next one, also when the audit threw: axe reports aria-hidden-focus as
+    // incomplete while a dialog is open. A failed close is caught, so it never replaces the audit's
+    // error, which the caller reports in place of `problems`.
+    try {
+      await toast.press("Escape", { timeout: POPUP_MS });
+      await toast.waitFor({ state: "detached", timeout: POPUP_MS });
+    } catch (error) {
+      problems.push({
+        page: label,
+        theme,
+        rule: "toast",
+        help: "The toast could not be closed with Escape",
+        targets: [String(error)],
+      });
+    }
   }
   return problems;
 }
