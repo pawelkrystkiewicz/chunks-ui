@@ -15,15 +15,17 @@ import { withViewport } from "./VisualTest.utils";
  * (768px) and 14px from `md` up. `Select.Trigger` and the `DatePicker` trigger take the same size,
  * so a form on a phone has one text size (#580). These specs read the font size the browser
  * computes for each part, on the default 414px page (below `md`), on an 800px page (from `md` up)
- * and, for the `sm:` caveat, on a 700px page (from `sm` up to `md`). jsdom loads no stylesheet, so
- * a unit spec could only compare class strings. No screenshots are taken.
+ * and, for the `sm:` caveat, on a 700px page (from `sm` up to `md`), all without a touch screen.
+ * jsdom loads no stylesheet, so a unit spec could only compare class strings. No screenshots are
+ * taken.
  */
 
 const plainInput = (className?: string) => <Input aria-label="Field" className={className} />;
 
 /**
- * Each part that takes the text size through `className`, rendered with one and the name "Field". The Input with an adornment gets
- * the class as a function: a string goes on its wrapper, and only a function reaches the input.
+ * Each part that takes the text size through `className`, rendered with one and the name "Field".
+ * The Input with an adornment gets the class as a function: a string goes on its wrapper, and
+ * only a function reaches the input.
  */
 const FIELDS: [field: string, ui: (className?: string) => ReactNode][] = [
   ["Input", plainInput],
@@ -113,7 +115,8 @@ describe("from sm up to md, on a 700px page", () => {
   withViewport(700);
 
   // shadcn's habit: 14px from `sm` up. A `sm:` size applies from 640px and, as Tailwind emits
-  // every `max-*` variant before the min-width ones, wins over the 16px until `md`: the zoom is back
+  // every `max-*` variant before the min-width ones, wins over the 16px until `md`. Only with a
+  // mouse: the touch size wins over it, so a phone or tablet keeps 16px
   it("Input is 14px with className text-base sm:text-sm", () => {
     expect(fontSizeOf(plainInput("text-base sm:text-sm"))).toBe("14px");
   });
