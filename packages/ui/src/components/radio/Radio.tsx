@@ -74,11 +74,14 @@ function RadioIndicator({ className, render, ...props }: RadioIndicatorProps) {
   );
 }
 
-// The same element with and without Motion, so it isn't remounted when Motion loads
+// The same element with and without Motion, so it isn't remounted when Motion loads. Children
+// replace the dot; with `render` and no children, there is no dot: the render element draws its
+// own, and may be a void element (#581). The element springs in and out either way.
 function RadioIndicatorElement({
   state,
   render,
   className,
+  children,
   ref,
   ...props
 }: ComponentProps<"span"> & {
@@ -93,7 +96,8 @@ function RadioIndicatorElement({
   return useRenderPart(render, state, indicatorRef, {
     ...props,
     className: cn("flex items-center justify-center", className),
-    children: <span className="size-2 rounded-full bg-primary" />,
+    children:
+      children == null && !render ? <span className="size-2 rounded-full bg-primary" /> : children,
   });
 }
 

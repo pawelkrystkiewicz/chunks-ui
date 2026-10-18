@@ -2,7 +2,7 @@ import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { axe } from "jest-axe";
 import { type ComponentProps, createRef } from "react";
-import { afterEach, describe, expect, expectTypeOf, it } from "vitest";
+import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 import { FOCUS_RING, FOCUS_RING_WITHIN } from "../shared";
 import {
   Combobox,
@@ -182,6 +182,19 @@ describe("Combobox", () => {
     expect(screen.getByTestId("custom")).toBeInTheDocument();
   });
 
+  it("renders no chevron in a void render element on Icon, without an error", () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    render(
+      <Combobox.Root>
+        <Combobox.Icon render={<img alt="" src="data:," data-testid="icon" />} />
+      </Combobox.Root>,
+    );
+    expect(consoleError).not.toHaveBeenCalled();
+    consoleError.mockRestore();
+    expect(screen.getByTestId("icon").tagName).toBe("IMG");
+    expect(screen.getByTestId("icon")).toBeEmptyDOMElement();
+  });
+
   it("renders Icon with custom className", () => {
     render(
       <Combobox.Root>
@@ -282,6 +295,38 @@ describe("Combobox", () => {
       </Combobox.Root>,
     );
     expect(screen.getByTestId("check-apple")).toBeInTheDocument();
+  });
+
+  it.each([
+    ["no check in a render element", <span key="span" data-testid="ind" />],
+    [
+      "a void render element without an error",
+      <img key="img" alt="" src="data:," data-testid="ind" />,
+    ],
+  ])("renders %s on ItemIndicator", (_case, element) => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    render(
+      <Combobox.Root open items={items} defaultValue="apple">
+        <Combobox.Input />
+        <Combobox.Portal>
+          <Combobox.Positioner>
+            <Combobox.Popup>
+              <Combobox.List>
+                {(item) => (
+                  <Combobox.Item key={item.value} value={item.value}>
+                    <Combobox.ItemIndicator render={element} />
+                    {item.label}
+                  </Combobox.Item>
+                )}
+              </Combobox.List>
+            </Combobox.Popup>
+          </Combobox.Positioner>
+        </Combobox.Portal>
+      </Combobox.Root>,
+    );
+    expect(consoleError).not.toHaveBeenCalled();
+    consoleError.mockRestore();
+    expect(screen.getByTestId("ind")).toBeEmptyDOMElement();
   });
 
   it("renders Empty with custom className", () => {
@@ -700,6 +745,22 @@ describe("Combobox icon buttons", () => {
     expect(screen.getByRole("button", { name: "Supprimer ?" })).toBeInTheDocument();
   });
 
+  // Documents current behaviour: the name points at the whole chip, so the button's own text
+  // joins it. A later fix may point aria-labelledby at the chip's label only.
+  it("reads text children of a ChipRemove with the chip's text", () => {
+    render(
+      <Combobox.Root multiple items={fruits} defaultValue={["Apple"]}>
+        <Combobox.Chips>
+          <Combobox.Chip>
+            Apple
+            <Combobox.ChipRemove>Drop</Combobox.ChipRemove>
+          </Combobox.Chip>
+        </Combobox.Chips>
+      </Combobox.Root>,
+    );
+    expect(screen.getByRole("button", { name: "Remove Apple Drop" })).toBeInTheDocument();
+  });
+
   it("names ChipRemove after rich chip content", () => {
     render(
       <Combobox.Root multiple items={fruits} defaultValue={["Apple"]}>
@@ -759,21 +820,12 @@ describe("Combobox icon buttons", () => {
       },
     ],
     [
-      "render element text",
-      ["Choose", "Reset", "Drop"],
+      "aria-label next to text children",
+      ["Show fruits", "Clear all fruits", "Drop Apple"],
       {
-        triggerProps: { render: <button type="button">Choose</button> },
-        clearProps: { render: <button type="button">Reset</button> },
-        chipRemoveProps: { render: <button type="button">Drop</button> },
-      },
-    ],
-    [
-      "custom children",
-      ["Fruits", "Clear all", "Drop"],
-      {
-        triggerProps: { children: "Fruits" },
-        clearProps: { children: "Clear all" },
-        chipRemoveProps: { children: "Drop" },
+        triggerProps: { "aria-label": "Show fruits", children: "Fruits" },
+        clearProps: { "aria-label": "Clear all fruits", children: "Clear all" },
+        chipRemoveProps: { "aria-label": "Drop Apple", children: "Drop" },
       },
     ],
   ])("takes the name from %s instead of the default", (_case, names, props) => {
@@ -781,6 +833,88 @@ describe("Combobox icon buttons", () => {
     for (const name of names) {
       expect(screen.getByRole("button", { name })).toBeInTheDocument();
     }
+  });
+
+  // A trigger-style Combobox shows the selected value inside its Trigger, so the content names it
+  it.each([
+    ["render element text", { render: <button type="button">Choose</button> }, "Choose"],
+    ["custom children", { children: "Fruits" }, "Fruits"],
+  ])("names the Trigger by its %s instead of the default", (_case, triggerProps, name) => {
+    render(<MultiSelect triggerProps={triggerProps} />);
+    expect(screen.getByRole("button", { name })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Show options" })).not.toBeInTheDocument();
+  });
+
+  // Clear and ChipRemove are icon buttons: they keep the default name whatever their content
+  it("keeps the default names of Clear and ChipRemove with icon or text children in place of the X", () => {
+    const { unmount } = render(
+      <MultiSelect
+        clearProps={{ children: <svg aria-hidden="true" data-testid="clear-icon" /> }}
+        chipRemoveProps={{ children: <svg aria-hidden="true" data-testid="remove-icon" /> }}
+      />,
+    );
+    const clear = screen.getByRole("button", { name: "Clear selection" });
+    const remove = screen.getByRole("button", { name: "Remove Apple" });
+    expect(clear.querySelectorAll("svg")).toHaveLength(1);
+    expect(clear.querySelector("svg")).toBe(screen.getByTestId("clear-icon"));
+    expect(remove.querySelectorAll("svg")).toHaveLength(1);
+    expect(remove.querySelector("svg")).toBe(screen.getByTestId("remove-icon"));
+    unmount();
+
+    render(<MultiSelect clearProps={{ children: "Clear all" }} />);
+    expect(screen.getByRole("button", { name: "Clear selection" })).toHaveTextContent(
+      /^Clear all$/,
+    );
+  });
+
+  it("keeps the default name of a ChipRemove outside Combobox.Chip with text children", () => {
+    render(
+      <Combobox.Root multiple items={fruits} defaultValue={["Apple"]}>
+        <Combobox.Chips>
+          <BaseCombobox.Chip>
+            Apple
+            <Combobox.ChipRemove>Drop</Combobox.ChipRemove>
+          </BaseCombobox.Chip>
+        </Combobox.Chips>
+      </Combobox.Root>,
+    );
+    expect(screen.getByRole("button", { name: "Remove" })).toHaveTextContent(/^Drop$/);
+  });
+
+  it("keeps the default names of Clear and ChipRemove in render elements, which get no X", () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    const img = (testId: string) => ({
+      nativeButton: false,
+      render: <img alt="" src="data:," data-testid={testId} />,
+    });
+    const { unmount } = render(
+      <MultiSelect
+        triggerProps={{ ...img("trigger"), "aria-label": "Show fruits" }}
+        clearProps={img("clear")}
+        chipRemoveProps={img("remove")}
+      />,
+    );
+    expect(consoleError).not.toHaveBeenCalled();
+    consoleError.mockRestore();
+    expect(screen.getByTestId("trigger").tagName).toBe("IMG");
+    expect(screen.getByRole("button", { name: "Clear selection" })).toBe(
+      screen.getByTestId("clear"),
+    );
+    expect(screen.getByRole("button", { name: "Remove Apple" })).toBe(screen.getByTestId("remove"));
+    unmount();
+
+    render(
+      <MultiSelect
+        clearProps={{ render: <button type="button" data-testid="clear" /> }}
+        chipRemoveProps={{ render: <button type="button" data-testid="remove" /> }}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Clear selection" })).toBe(
+      screen.getByTestId("clear"),
+    );
+    expect(screen.getByRole("button", { name: "Remove Apple" })).toBe(screen.getByTestId("remove"));
+    expect(screen.getByTestId("clear")).toBeEmptyDOMElement();
+    expect(screen.getByTestId("remove")).toBeEmptyDOMElement();
   });
 });
 

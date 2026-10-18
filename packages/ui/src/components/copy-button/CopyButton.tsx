@@ -27,7 +27,7 @@ export type CopyButtonProps = Omit<ComponentProps<typeof IconButton>, "children"
   timeout?: number;
   /**
    * Render prop function that receives the copied state object and returns custom ReactNode for button content.
-   * If not provided, a default icon/UI is rendered.
+   * If not provided, a default icon/UI is rendered, unless `render` is set.
    */
   children?: (state: { copied: boolean }) => ReactNode;
   /**
@@ -73,11 +73,13 @@ export function CopyButton({
   const names = mergeLabels(DEFAULT_COPY_BUTTON_LABELS, labels);
   const defaultLabel = !children ? (copied ? names.copied : names.copy) : undefined;
 
+  // With `render` and no children, no icon: the render element draws its own, and may be a void
+  // element (#581). The button keeps its default name.
   return (
     <IconButton aria-label={defaultLabel} {...props} onClick={handleClick}>
       {children ? (
         children({ copied })
-      ) : copied ? (
+      ) : props.render ? null : copied ? (
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="16"

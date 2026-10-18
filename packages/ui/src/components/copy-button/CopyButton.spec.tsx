@@ -41,6 +41,23 @@ describe("CopyButton", () => {
     expect(screen.getByText("Done")).toBeInTheDocument();
   });
 
+  it.each([
+    ["no icon in a render element", <button key="button" type="button" data-testid="copy" />, {}],
+    [
+      "a void render element without an error",
+      <img key="img" alt="" src="data:," data-testid="copy" />,
+      { nativeButton: false },
+    ],
+  ])("renders %s, under the default name", (_case, element, props) => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    render(<CopyButton value="test" render={element} {...props} />);
+    expect(consoleError).not.toHaveBeenCalled();
+    consoleError.mockRestore();
+    const button = screen.getByRole("button", { name: DEFAULT_COPY_BUTTON_LABELS.copy });
+    expect(button).toBe(screen.getByTestId("copy"));
+    expect(button).toBeEmptyDOMElement();
+  });
+
   it("has type=button", () => {
     render(<CopyButton value="test" />);
     expect(screen.getByRole("button")).toHaveAttribute("type", "button");

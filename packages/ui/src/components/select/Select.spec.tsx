@@ -1,6 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { configureAxe } from "jest-axe";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { FOCUS_RING } from "../shared";
 import { Select } from "./Select";
 
@@ -115,6 +115,26 @@ describe("Select", () => {
     expect(icon.querySelector("svg")).not.toBeInTheDocument();
   });
 
+  it.each([
+    ["no chevron in a render element", <span key="span" data-testid="icon" />],
+    [
+      "a void render element without an error",
+      <img key="img" alt="" src="data:," data-testid="icon" />,
+    ],
+  ])("renders %s on Icon", (_case, element) => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    render(
+      <Select.Root>
+        <Select.Trigger>
+          <Select.Icon render={element} />
+        </Select.Trigger>
+      </Select.Root>,
+    );
+    expect(consoleError).not.toHaveBeenCalled();
+    consoleError.mockRestore();
+    expect(screen.getByTestId("icon")).toBeEmptyDOMElement();
+  });
+
   it("renders Popup with custom className", () => {
     render(
       <Select.Root open>
@@ -177,6 +197,31 @@ describe("Select", () => {
     const indicator = screen.getByTestId("ind");
     expect(indicator).toHaveTextContent(/^custom$/);
     expect(indicator.querySelector("svg")).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ["no check in a render element", <span key="span" data-testid="ind" />],
+    [
+      "a void render element without an error",
+      <img key="img" alt="" src="data:," data-testid="ind" />,
+    ],
+  ])("renders %s on ItemIndicator", (_case, element) => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    render(
+      <Select.Root open defaultValue="a">
+        <Select.Trigger>Pick</Select.Trigger>
+        <Select.Positioner>
+          <Select.Popup>
+            <Select.Item value="a">
+              <Select.ItemIndicator render={element} />A
+            </Select.Item>
+          </Select.Popup>
+        </Select.Positioner>
+      </Select.Root>,
+    );
+    expect(consoleError).not.toHaveBeenCalled();
+    consoleError.mockRestore();
+    expect(screen.getByTestId("ind")).toBeEmptyDOMElement();
   });
 
   it("renders GroupLabel with custom className", () => {
