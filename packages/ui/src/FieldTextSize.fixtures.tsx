@@ -55,7 +55,6 @@ export const FIELDS: [field: string, ui: (className?: string) => ReactNode][] = 
       </Select.Root>
     ),
   ],
-  // `className` goes on a wrapper, so the trigger takes its class through `triggerClassName`
   [
     "DatePicker trigger",
     (className) => <DatePicker aria-label="Field" triggerClassName={className} />,
