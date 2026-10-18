@@ -285,7 +285,7 @@ export default Props
   })}
 />
 
-> **Note**: A toast added with `priority: "high"` can take focus while it is hidden from screen readers. Until keyboard focus moves into the viewport (Tab or F6), Base UI 1.9 keeps the toast `aria-hidden` but in the tab order, and announces it through a visually hidden alert. axe reports `aria-hidden-focus` on the toast in that state.
+> **Note**: A toast added with `priority: "high"` can take focus while it is hidden from screen readers. While keyboard focus is outside the viewport (Tab or F6 moves it in), Base UI 1.9 keeps the toast `aria-hidden` but in the tab order, and announces it through a visually hidden alert. axe then reports `aria-hidden-focus` on the toast, unless a dialog is also on screen, such as a toast of the default `low` priority (a `role="dialog"`): axe takes the dialog for an open modal and lists the toast under `incomplete`.
 
 ### Toast.Viewport
 
