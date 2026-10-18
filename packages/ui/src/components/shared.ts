@@ -55,7 +55,8 @@ export const FOCUS_RING_WITHIN =
  * sets the size from `md` up, and a `max-md:` class sets the size below `md`, on a touch screen
  * too. The touch size starts at `md` (#587), as `max-md:` covers a phone: it wins over a
  * `text-lg`, and a `md:[@media(pointer:coarse)]:` class replaces it. Not `pointer-coarse:`, which
- * needs Tailwind 4.1: the peer range starts at 4.0.
+ * needs Tailwind 4.1: the peer range starts at 4.0. `Select.Item` takes it too, as Base UI
+ * lays the selected item over the trigger's value.
  */
 export const FIELD_TEXT_SIZE = "text-sm max-md:text-base md:[@media(pointer:coarse)]:text-base";
 

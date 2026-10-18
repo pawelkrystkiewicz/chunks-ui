@@ -1,11 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { FIELDS, fontSizeOf, PARTS, plainInput } from "./FieldTextSize.fixtures";
+import {
+  FIELDS,
+  fontSizeOf,
+  PARTS,
+  plainInput,
+  selectItemFontSize,
+} from "./FieldTextSize.fixtures";
 import { withViewport } from "./VisualTest.utils";
 
 /*
  * iOS Safari zooms the page when a field with text under 16px takes focus (#562), so the text
  * fields have 16px text below `md`, and `Select.Trigger` and the `DatePicker` trigger take the same
- * size so a form has one (#580). These specs read the computed font size with a mouse;
+ * size so a form has one (#580), as do the items of an open `Select`, which Base UI lays over the
+ * trigger's value (#587). These specs read the computed font size with a mouse;
  * `FieldTextSize.touch.visual.spec.tsx` covers a touch screen. jsdom loads no stylesheet, so a unit
  * spec could only compare class strings.
  */
@@ -13,6 +20,10 @@ import { withViewport } from "./VisualTest.utils";
 describe("below md, on the default 414px page", () => {
   it.each(PARTS)("%s is 16px", (_, ui) => {
     expect(fontSizeOf(ui())).toBe("16px");
+  });
+
+  it("an open Select's item is 16px", () => {
+    expect(selectItemFontSize()).toBe("16px");
   });
 
   it.each([
@@ -30,6 +41,10 @@ describe("from md up, on an 800px page", () => {
 
   it.each(PARTS)("%s is 14px", (_, ui) => {
     expect(fontSizeOf(ui())).toBe("14px");
+  });
+
+  it("an open Select's item is 14px", () => {
+    expect(selectItemFontSize()).toBe("14px");
   });
 
   // A size without a prefix applies from `md` up. A row per field: a field that put `className`

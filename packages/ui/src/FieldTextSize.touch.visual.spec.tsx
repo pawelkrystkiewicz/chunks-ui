@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fontSizeOf, PARTS, plainInput } from "./FieldTextSize.fixtures";
+import { fontSizeOf, PARTS, plainInput, selectItemFontSize } from "./FieldTextSize.fixtures";
 import { withViewport } from "./VisualTest.utils";
 
 /*
@@ -40,6 +40,10 @@ describe("on a 1024px page", () => {
 
   it.each(PARTS)("%s is 16px", (_, ui) => {
     expect(fontSizeOf(ui())).toBe("16px");
+  });
+
+  it("an open Select's item is 16px", () => {
+    expect(selectItemFontSize()).toBe("16px");
   });
 
   // The touch size wins over an unprefixed or breakpoint size, and over a touch size without

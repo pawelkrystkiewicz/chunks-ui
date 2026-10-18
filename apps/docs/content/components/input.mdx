@@ -161,7 +161,7 @@ A decimal value, such as an amount, gets a number keypad with a decimal separato
 
 ## Text Size
 
-The text is 16px below the `md` breakpoint (768px by default) and at any width where touch is the main pointer (`pointer: coarse`), such as a phone or a tablet, and 14px otherwise; a laptop with a touch screen keeps 14px. iOS Safari zooms the page when a field with text under 16px takes focus, and a touch device can be wider than `md`: an iPad, or a larger iPhone (such as the Plus, Pro Max and Air models) held sideways. `Select.Trigger` and the `DatePicker` trigger have the same size, so a form has one text size. The 16px assumes the default root font size, because `text-base` is 1rem.
+The text is 16px below the `md` breakpoint (768px by default) and at any width where touch is the main pointer (`pointer: coarse`), such as a phone or a tablet, and 14px otherwise; a laptop with a touch screen keeps 14px. iOS Safari zooms the page when a field with text under 16px takes focus, and a touch device can be wider than `md`: an iPad, or a larger iPhone (such as the Plus, Pro Max and Air models) held sideways. `Select.Trigger`, the `Select` items and the `DatePicker` trigger have the same size, so a form has one text size. The 16px assumes the default root font size, because `text-base` is 1rem.
 
 With a mouse, a text-size class on the input, such as `text-lg`, sets the size from `md` up. A `max-md:` class, such as `max-md:text-lg`, sets it below `md`, on a touch screen too. A `sm:` size applies from 640px and wins over the 16px until `md`, on a touch screen too: with `sm:text-sm`, an iPhone 17 held sideways (750px) has 14px text, and iOS zooms.
 
