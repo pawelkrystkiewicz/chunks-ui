@@ -9,23 +9,32 @@ const FOCUS_GUARD = "[data-base-ui-focus-guard]";
 
 /** The element axe reported, found again by its selector; throws if it is no longer there */
 function elementOf(node: AxeNode): Element {
-  const [selector, ...nested] = node.target;
-  // A target with more than one part is in an iframe or a shadow root, which the specs don't use
-  const element =
-    typeof selector === "string" && nested.length === 0 ? document.querySelector(selector) : null;
+  const [selector, ...inFrame] = node.target;
+  // In axe 4, only a node in an iframe has a target of several parts, and a part for a node in a
+  // shadow root is itself an array of selectors. The specs use neither
+  if (typeof selector !== "string" || inFrame.length > 0) {
+    throw new Error(`iframe or shadow-DOM targets are not supported: ${node.html}`);
+  }
+  const element = document.querySelector(selector);
   if (!element) throw new Error(`axe reported a node that is not in the document: ${node.html}`);
   return element;
 }
 
 /**
  * The elements that the axe rule `ruleId` left in `incomplete`, as it could not decide them.
- * toHaveNoViolations() reads only `violations`, so it passes whatever is here.
+ * toHaveNoViolations() reads only `violations`, so it passes whatever is here. Throws if the rule
+ * errored: axe files a rule that threw under `incomplete` too, with the error and no nodes.
  */
 export function undecided(results: AxeResults, ruleId: string): Element[] {
-  return results.incomplete
-    .filter((rule) => rule.id === ruleId)
-    .flatMap((rule) => rule.nodes)
-    .map(elementOf);
+  const entries = results.incomplete.filter((rule) => rule.id === ruleId);
+  for (const entry of entries) {
+    // axe's typings leave out the `error` that it sets on a rule that threw
+    const { error } = entry as { error?: Error };
+    if (error || entry.nodes.length === 0) {
+      throw new Error(`axe rule ${ruleId} errored: ${error?.message ?? "no nodes in incomplete"}`);
+    }
+  }
+  return entries.flatMap((rule) => rule.nodes).map(elementOf);
 }
 
 /**
@@ -41,7 +50,8 @@ export function expectOnlyFocusGuardsUndecided(results: AxeResults): void {
   const stray = undecided(results, "aria-hidden-focus").filter(
     (element) => !element.matches(FOCUS_GUARD),
   );
-  // The message names each node by its tag alone; the diff under it shows the whole node
+  // The message names each node by its opening tag, attributes included; the diff under it
+  // shows the whole node
   const tags = stray.map((element) => (element.cloneNode(false) as Element).outerHTML);
   expect(stray, `focusable aria-hidden nodes besides the focus guards: ${tags}`).toEqual([]);
 }

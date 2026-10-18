@@ -62,4 +62,32 @@ describe("expectOnlyFocusGuardsUndecided", () => {
     expect(undecided(results, "aria-hidden-focus")).toContain(screen.getByTestId("stray"));
     expect(() => expectOnlyFocusGuardsUndecided(results)).toThrow('data-testid="stray"');
   });
+
+  it("fails when aria-hidden-focus errored, which axe files under `incomplete` with no nodes", async () => {
+    // As before #565: with no elementFromPoint in jsdom, the rule throws
+    const elementFromPoint = document.elementFromPoint;
+    Reflect.deleteProperty(document, "elementFromPoint");
+    try {
+      const { container } = render(
+        // biome-ignore lint/a11y/noAriaHiddenOnFocusable lint/a11y/noNoninteractiveTabindex: a node for the rule to check
+        <span aria-hidden="true" tabIndex={0}>
+          Stray
+        </span>,
+      );
+      const results = await axe(container);
+      expect(results).toHaveNoViolations();
+      expect(results.incomplete.map((rule) => [rule.id, rule.nodes])).toContainEqual([
+        "aria-hidden-focus",
+        [],
+      ]);
+      expect(() => undecided(results, "aria-hidden-focus")).toThrow(
+        "axe rule aria-hidden-focus errored",
+      );
+      expect(() => expectOnlyFocusGuardsUndecided(results)).toThrow(
+        "axe rule aria-hidden-focus errored",
+      );
+    } finally {
+      document.elementFromPoint = elementFromPoint;
+    }
+  });
 });
