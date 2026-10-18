@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { FIELDS, fontSizeOf, PARTS, plainInput } from "./FieldTextSize.parts";
+import { FIELDS, fontSizeOf, PARTS, plainInput } from "./FieldTextSize.fixtures";
 import { withViewport } from "./VisualTest.utils";
 
 /*
