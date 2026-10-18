@@ -109,6 +109,7 @@ export function TaskTable() {
           className="sm:max-w-xs"
         />
         <Select.Root
+          items={STATUS_OPTIONS}
           value={statusFilter ?? undefined}
           onValueChange={(val) => setStatusFilter(val || null)}
         >

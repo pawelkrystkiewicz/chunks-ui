@@ -4,6 +4,8 @@ import { Button, Dialog, Field, Input, Select, Textarea } from "chunks-ui";
 import { Plus } from "lucide-react";
 import { PRIORITY_OPTIONS, STATUS_OPTIONS, TEAM } from "./data";
 
+const ASSIGNEE_OPTIONS = TEAM.map((m) => ({ value: m.id, label: m.name }));
+
 export function CreateTaskDialog() {
   return (
     <Dialog.Root>
@@ -29,7 +31,7 @@ export function CreateTaskDialog() {
             <div className="grid grid-cols-2 gap-3">
               <Field.Root>
                 <Field.Label>Status</Field.Label>
-                <Select.Root defaultValue="backlog">
+                <Select.Root items={STATUS_OPTIONS} defaultValue="backlog">
                   <Select.Trigger>
                     <Select.Value placeholder="Status" />
                     <Select.Icon />
@@ -51,7 +53,7 @@ export function CreateTaskDialog() {
 
               <Field.Root>
                 <Field.Label>Priority</Field.Label>
-                <Select.Root defaultValue="medium">
+                <Select.Root items={PRIORITY_OPTIONS} defaultValue="medium">
                   <Select.Trigger>
                     <Select.Value placeholder="Priority" />
                     <Select.Icon />
@@ -74,7 +76,7 @@ export function CreateTaskDialog() {
 
             <Field.Root>
               <Field.Label>Assignee</Field.Label>
-              <Select.Root>
+              <Select.Root items={ASSIGNEE_OPTIONS}>
                 <Select.Trigger>
                   <Select.Value placeholder="Assign to..." />
                   <Select.Icon />
