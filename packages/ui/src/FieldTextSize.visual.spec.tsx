@@ -1,66 +1,17 @@
-import { render, screen } from "@testing-library/react";
-import type { ReactNode } from "react";
 import { describe, expect, it } from "vitest";
-import { Combobox } from "./components/combobox";
-import { Input } from "./components/input";
-import { NumberField } from "./components/number-field";
-import { Textarea } from "./components/textarea";
+import { FIELDS, fontSizeOf, PARTS, plainInput } from "./FieldTextSize.fixtures";
 import { withViewport } from "./VisualTest.utils";
 
 /*
- * iOS Safari zooms the page when a field with text under 16px takes focus (#562), so `Input`,
- * `Textarea`, `NumberField.Input` and `Combobox.Input` have 16px text below the `md` breakpoint
- * (768px) and 14px from `md` up. These specs read the font size the browser computes for each
- * field, on the default 414px page (below `md`), on an 800px page (from `md` up) and, for the
- * `sm:` caveat, on a 700px page (from `sm` up to `md`). jsdom loads no stylesheet, so a unit spec
- * could only compare class strings. No screenshots are taken.
+ * iOS Safari zooms the page when a field with text under 16px takes focus (#562), so the text
+ * fields have 16px text below `md`, and `Select.Trigger` and the `DatePicker` trigger take the same
+ * size so a form has one (#580). These specs read the computed font size with a mouse;
+ * `FieldTextSize.touch.visual.spec.tsx` covers a touch screen. jsdom loads no stylesheet, so a unit
+ * spec could only compare class strings.
  */
-
-const plainInput = (className?: string) => <Input aria-label="Field" className={className} />;
-
-/**
- * Each field, rendered with a `className` and the name "Field". The Input with an adornment gets
- * the class as a function: a string goes on its wrapper, and only a function reaches the input.
- */
-const FIELDS: [field: string, ui: (className?: string) => ReactNode][] = [
-  ["Input", plainInput],
-  [
-    "Input with an adornment",
-    (className) => (
-      <Input
-        aria-label="Field"
-        startAdornment="$"
-        className={className ? () => className : undefined}
-      />
-    ),
-  ],
-  ["Textarea", (className) => <Textarea aria-label="Field" className={className} />],
-  [
-    "NumberField.Input",
-    (className) => (
-      <NumberField.Root>
-        <NumberField.Input aria-label="Field" className={className} />
-      </NumberField.Root>
-    ),
-  ],
-  [
-    "Combobox.Input",
-    (className) => (
-      <Combobox.Root>
-        <Combobox.Input aria-label="Field" className={className} />
-      </Combobox.Root>
-    ),
-  ],
-];
-
-/** Renders `ui` and returns the font size the browser computes for the field named "Field" */
-function fontSizeOf(ui: ReactNode) {
-  render(ui);
-  return getComputedStyle(screen.getByLabelText("Field")).fontSize;
-}
 
 describe("below md, on the default 414px page", () => {
-  it.each(FIELDS)("%s is 16px", (_, ui) => {
+  it.each(PARTS)("%s is 16px", (_, ui) => {
     expect(fontSizeOf(ui())).toBe("16px");
   });
 
@@ -77,7 +28,7 @@ describe("below md, on the default 414px page", () => {
 describe("from md up, on an 800px page", () => {
   withViewport(800);
 
-  it.each(FIELDS)("%s is 14px", (_, ui) => {
+  it.each(PARTS)("%s is 14px", (_, ui) => {
     expect(fontSizeOf(ui())).toBe("14px");
   });
 
@@ -96,7 +47,8 @@ describe("from sm up to md, on a 700px page", () => {
   withViewport(700);
 
   // shadcn's habit: 14px from `sm` up. A `sm:` size applies from 640px and, as Tailwind emits
-  // every `max-*` variant before the min-width ones, wins over the 16px until `md`: the zoom is back
+  // every `max-*` variant before the min-width ones, wins over the 16px until `md`. Only with a
+  // mouse: the touch size wins over it, so a phone or tablet keeps 16px
   it("Input is 14px with className text-base sm:text-sm", () => {
     expect(fontSizeOf(plainInput("text-base sm:text-sm"))).toBe("14px");
   });

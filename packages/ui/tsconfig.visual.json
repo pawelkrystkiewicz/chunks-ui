@@ -4,6 +4,7 @@
     "src/**/*.visual.spec.tsx",
     "src/VisualTest.utils.tsx",
     "src/VisualTest.overlays.tsx",
+    "src/FieldTextSize.fixtures.tsx",
     "vitest.visual.setup.ts"
   ],
   "exclude": ["dist", "node_modules"],

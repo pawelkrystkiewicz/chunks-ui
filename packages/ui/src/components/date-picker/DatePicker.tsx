@@ -17,7 +17,7 @@ import { usePortalContainer } from "../../lib/portal-container";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { Calendar, type CalendarProps } from "../calendar/Calendar";
 import { toIsoDate, validDate } from "../calendar/date";
-import { FOCUS_RING, RING_TRANSITION } from "../shared";
+import { FIELD_TEXT_SIZE, FOCUS_RING, RING_TRANSITION } from "../shared";
 import { type DatePickerLabels, DEFAULT_DATE_PICKER_LABELS } from "./DatePicker.Labels";
 
 // The app's bundler replaces it, as it does in @base-ui/react. The package has no Node types.
@@ -255,7 +255,8 @@ export function DatePicker({
                   render={hasFormInput ? undefined : <button type="button" ref={fieldRef} />}
                   aria-labelledby={labelledBy ? `${labelledBy} ${valueId}` : undefined}
                   className={cn(
-                    "flex h-ui-height w-full cursor-pointer items-center rounded-md border border-input bg-background px-3 text-start text-sm",
+                    "flex h-ui-height w-full cursor-pointer items-center rounded-md border border-input bg-background px-3 text-start",
+                    FIELD_TEXT_SIZE,
                     FOCUS_RING,
                     RING_TRANSITION,
                     "disabled:cursor-not-allowed disabled:opacity-50",
