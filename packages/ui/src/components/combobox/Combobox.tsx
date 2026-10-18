@@ -192,9 +192,10 @@ function ComboboxValue({ className, children, placeholder, ...props }: ComboboxV
     <span
       className={cn(
         "flex-1 text-start overflow-hidden text-ellipsis whitespace-nowrap",
-        // The placeholder is muted, as on Select.Trigger. Base UI sets data-placeholder on every
-        // Trigger while nothing is selected, the one beside an input too: muting the Trigger
-        // would also mute its children or render element (#564).
+        // Muted while nothing is selected, as on Select.Trigger. in-data-placeholder: matches any
+        // ancestor with data-placeholder: the Trigger, and the Control. So all the span shows is
+        // muted then, not the placeholder alone. Base UI marks every Trigger, the one beside an
+        // input too, so muting the Trigger would also mute its children or render element (#564).
         "in-data-placeholder:text-muted-foreground",
         className,
       )}
