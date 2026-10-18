@@ -47,8 +47,8 @@ describe("from sm up to md, on a 700px page", () => {
   withViewport(700);
 
   // shadcn's habit: 14px from `sm` up. A `sm:` size applies from 640px and, as Tailwind emits
-  // every `max-*` variant before the min-width ones, wins over the 16px until `md`. Only with a
-  // mouse: the touch size wins over it, so a phone or tablet keeps 16px
+  // every `max-*` variant before the min-width ones, wins over the 16px until `md`, on a touch
+  // screen too (the touch spec)
   it("Input is 14px with className text-base sm:text-sm", () => {
     expect(fontSizeOf(plainInput("text-base sm:text-sm"))).toBe("14px");
   });

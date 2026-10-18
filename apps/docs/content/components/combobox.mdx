@@ -297,7 +297,7 @@ Add `touch-target` to `Combobox.Trigger` only when there is no `Combobox.Clear` 
 
 ## Text Size
 
-The text of `Combobox.Input` is 16px below the `md` breakpoint (768px by default) and on a touch screen, so iOS Safari does not zoom the page when the field takes focus (it zooms into text under 16px); otherwise it is 14px, as in `Input`. With a mouse, a text-size class on `Combobox.Input`, such as `text-lg`, sets the size from `md` up, and a `max-md:` class, such as `max-md:text-lg`, sets it below; on a touch screen, a `[@media(pointer:coarse)]:` class sets it. See [Text Size](/components/input#text-size) in `Input` for the limits.
+The text of `Combobox.Input` is 16px below the `md` breakpoint (768px by default) and on a touch screen, so iOS Safari does not zoom the page when the field takes focus (it zooms into text under 16px); otherwise it is 14px, as in `Input`. With a mouse, a text-size class on `Combobox.Input`, such as `text-lg`, sets the size from `md` up. A `max-md:` class, such as `max-md:text-lg`, sets it below `md`, on a touch screen too; from `md` up on a touch screen, a `md:[@media(pointer:coarse)]:` class sets it. See [Text Size](/components/input#text-size) in `Input` for the limits.
 
 ## Props
 
