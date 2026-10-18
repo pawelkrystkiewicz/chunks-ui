@@ -1,4 +1,4 @@
-import { Label } from 'chunks-ui'
+import { Input, Label } from 'chunks-ui'
 import { LabelDisabledControlExample } from '@/examples/Label'
 import { Container } from '@/components'
 import { generateDefinition, TSDoc } from 'nextra/tsdoc'
@@ -28,14 +28,14 @@ import { Label } from "chunks-ui";
 ```tsx
 <div className="flex flex-col gap-1.5">
   <Label htmlFor="username">Username</Label>
-  <input id="username" className="border rounded px-3 py-1.5 text-sm" />
+  <Input id="username" />
 </div>
 ```
 
 <Container>
   <div className="flex flex-col gap-1.5">
     <Label htmlFor="username">Username</Label>
-    <input id="username" className="rounded border px-3 py-1.5 text-sm" />
+    <Input id="username" />
   </div>
 </Container>
 
