@@ -253,7 +253,9 @@ function Header() {
       <Link
         href="/"
         aria-label="Chunks UI home"
-        className={`flex items-center gap-2.5 px-[clamp(22px,2.4vw,28px)] py-[18px] font-bold text-[17px] text-white tracking-[-.01em] ${FOCUS_RING_INSET}`}
+        // ponytail: below 329px the name enters the link's end padding, passes the focus ring below
+        // 311px and reaches the GitHub button below 285px. Trim the padding below 330px if needed.
+        className={`flex items-center gap-2.5 whitespace-nowrap px-[clamp(22px,2.4vw,28px)] py-[18px] font-bold text-[17px] text-white tracking-[-.01em] ${FOCUS_RING_INSET}`}
       >
         <Logo />
         Chunks UI
