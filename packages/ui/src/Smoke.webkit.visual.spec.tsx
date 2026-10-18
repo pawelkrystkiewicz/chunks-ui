@@ -5,6 +5,7 @@ import { page, userEvent } from "vitest/browser";
 import { Button } from "./components/button";
 import { Card } from "./components/card";
 import { Checkbox } from "./components/checkbox";
+import { Combobox } from "./components/combobox";
 import { Input } from "./components/input";
 import { Popover } from "./components/popover";
 import { Select } from "./components/select";
@@ -424,6 +425,61 @@ describe("Form controls in WebKit", () => {
     const insets = insetsWithin(track, thumb);
     expect(insets.left).toBeGreaterThan(insets.right);
     expect(await paintedPixels(thumb)).toBeGreaterThan(0);
+  });
+});
+
+// #627: Base UI blurs the input of a closing popup in WebKit. The next field is a text field, as
+// WebKit's Tab skips buttons: Tab reaches it from the trigger, not from <body>.
+describe("Combobox focus as its popup closes, in WebKit", () => {
+  const openInPopup = async () => {
+    render(
+      <div className="flex w-60 flex-col items-start gap-2" style={{ padding: 40 }}>
+        <Input aria-label="Previous field" />
+        <Combobox.Root items={["Apple", "Banana", "Cherry"]}>
+          <Combobox.Trigger aria-label="Fruit" className="static h-ui-height w-full border px-3">
+            <Combobox.Value placeholder="Pick a fruit" />
+          </Combobox.Trigger>
+          <Combobox.Portal>
+            <Combobox.Positioner>
+              <Combobox.Popup aria-label="Fruits" data-testid="popup">
+                <Combobox.Input aria-label="Search fruits" className="pe-3" />
+                <Combobox.List>
+                  {(item: string) => (
+                    <Combobox.Item key={item} value={item}>
+                      {item}
+                    </Combobox.Item>
+                  )}
+                </Combobox.List>
+              </Combobox.Popup>
+            </Combobox.Positioner>
+          </Combobox.Portal>
+        </Combobox.Root>
+        <Input aria-label="Next field" />
+      </div>,
+    );
+    const trigger = screen.getByRole("combobox", { name: "Fruit" });
+    await userEvent.click(trigger);
+    const input = await screen.findByRole("combobox", { name: "Search fruits" });
+    await expect.poll(() => document.activeElement).toBe(input);
+    const popup = screen.getByTestId("popup");
+    await settle(popup);
+    return { trigger, popup };
+  };
+
+  // The spring takes about 0.5s, so the popup is still leaving when the key press returns
+  it("keeps focus on the trigger while the popup leaves after Escape", async () => {
+    const { trigger, popup } = await openInPopup();
+    await userEvent.keyboard("{Escape}");
+    expect(popup.isConnected, "the popup is still leaving").toBe(true);
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it("moves a Tab pressed while the popup leaves after a pick to the next field", async () => {
+    const { popup } = await openInPopup();
+    await userEvent.click(screen.getByRole("option", { name: "Banana" }));
+    await userEvent.keyboard("{Tab}");
+    await expect.poll(() => popup.isConnected).toBe(false);
+    expect(document.activeElement).toBe(screen.getByRole("textbox", { name: "Next field" }));
   });
 });
 
