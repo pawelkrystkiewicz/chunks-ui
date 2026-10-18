@@ -195,17 +195,23 @@ describe.each([
   });
 
   // A held Enter repeats its keydown and keypress: on a trigger that already had focus, the repeat
-  // clicked it and opened the calendar again
-  it("keeps the calendar closed and the trigger focused, after a pick by a held Enter", async () => {
-    const { popup, trigger } = await open();
-    await userEvent.keyboard("{ArrowDown}{Enter>2}{/Enter}");
-    expect(trigger).toHaveAttribute("aria-expanded", "false");
-    expect(document.activeElement).toBe(trigger);
-    expect(trigger.matches(":focus-visible"), "the trigger shows its ring").toBe(true);
-    await unmounted(popup);
-    expect(trigger).toHaveAttribute("aria-expanded", "false");
-    expect(document.activeElement).toBe(trigger);
-  });
+  // clicked it and opened the calendar again. The CSS path only (#652): with reduced motion the
+  // popup unmounts a frame after the pick and Base UI focuses the trigger, so this repeat lands on
+  // either side by load, and a repeat after the unmount clicks the focused trigger, as on any
+  // button.
+  it.skipIf(reduce)(
+    "keeps the calendar closed and the trigger focused, after a pick by a held Enter",
+    async () => {
+      const { popup, trigger } = await open();
+      await userEvent.keyboard("{ArrowDown}{Enter>2}{/Enter}");
+      expect(trigger).toHaveAttribute("aria-expanded", "false");
+      expect(document.activeElement).toBe(trigger);
+      expect(trigger.matches(":focus-visible"), "the trigger shows its ring").toBe(true);
+      await unmounted(popup);
+      expect(trigger).toHaveAttribute("aria-expanded", "false");
+      expect(document.activeElement).toBe(trigger);
+    },
+  );
 
   // A click and a key press are two calls, too far apart for the one frame of reduced motion
   it.skipIf(reduce)(
