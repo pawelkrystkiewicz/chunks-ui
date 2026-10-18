@@ -8,6 +8,7 @@
   ],
   "compilerOptions": {
     "noUncheckedIndexedAccess": true,
-    "allowImportingTsExtensions": true
+    "allowImportingTsExtensions": true,
+    "noEmit": true
   }
 }
