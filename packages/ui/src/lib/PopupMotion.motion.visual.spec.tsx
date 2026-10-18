@@ -203,7 +203,9 @@ describe("popups open while Motion loads", () => {
         await loading;
         // Motion's arrival has been rendered: a popup that read Motion live, with useMotion(),
         // would have swapped in a motion.div by the time the marker shows
-        await expect.element(page.getByTestId("motion-loaded")).toBeInTheDocument();
+        await expect
+          .element(page.getByTestId("motion-loaded"), { timeout: SETTLE_TIMEOUT_MS })
+          .toBeInTheDocument();
       },
     };
   }

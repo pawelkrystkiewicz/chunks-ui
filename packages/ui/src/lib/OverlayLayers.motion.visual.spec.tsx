@@ -2,7 +2,7 @@ import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { page } from "vitest/browser";
 import { AppBars, expectAboveAppBars, overlap, overlays } from "../VisualTest.overlays";
-import { waitForStable } from "../VisualTest.utils";
+import { SETTLE_TIMEOUT_MS, waitForStable } from "../VisualTest.utils";
 import { reloadMotion } from "./use-motion";
 
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
@@ -29,7 +29,7 @@ describe("overlays opened from the page, animated with Motion", () => {
       );
       await page.getByRole("button", { name: `Open ${name}` }).click();
       const popupLocator = page.getByRole("dialog", { name });
-      await expect.element(popupLocator).toBeInTheDocument();
+      await expect.element(popupLocator, { timeout: SETTLE_TIMEOUT_MS }).toBeInTheDocument();
       const popup = popupLocator.element() as HTMLElement;
       const backdrop = page.getByTestId(`${name} backdrop`).element();
 

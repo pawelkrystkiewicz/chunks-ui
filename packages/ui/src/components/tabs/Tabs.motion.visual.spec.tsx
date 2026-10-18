@@ -165,7 +165,10 @@ describe("Tabs with Motion", () => {
       // A showing pane stays as it is when Motion arrives, so nothing in it shows the arrival.
       // Tabs.Animate reads Motion with useMotion(), so it has re-rendered with it once the
       // marker shows
-      () => expect.element(page.getByTestId("motion-loaded")).toBeInTheDocument(),
+      () =>
+        expect
+          .element(page.getByTestId("motion-loaded"), { timeout: SETTLE_TIMEOUT_MS })
+          .toBeInTheDocument(),
     ],
   ] as const)(
     "keeps text typed into Tabs.%s, and its focus, when Motion finishes loading",
