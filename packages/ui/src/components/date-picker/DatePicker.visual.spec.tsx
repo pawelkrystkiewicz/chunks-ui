@@ -195,10 +195,10 @@ describe.each([
   });
 
   // A held Enter repeats its keydown and keypress: on a trigger that already had focus, the repeat
-  // clicked it and opened the calendar again. The CSS path only (#652): with reduced motion Base UI
-  // unmounts the popup about 2ms after the pick and its own return focuses the trigger, so this
-  // repeat, a few ms behind, lands on either side by timing, and one after it clicks the trigger
-  // as a held key does any focused button. A user's repeat, after the OS delay, always lands after.
+  // clicked it and opened the calendar again. The CSS path only (#652): with reduced motion the
+  // popup unmounts a frame after the pick and Base UI focuses the trigger, so this repeat lands on
+  // either side by load, and a repeat after the unmount clicks the focused trigger, as on any
+  // button.
   it.skipIf(reduce)(
     "keeps the calendar closed and the trigger focused, after a pick by a held Enter",
     async () => {
