@@ -1,6 +1,15 @@
-import { describe, it } from "vitest";
+import { render } from "@testing-library/react";
+import { createRef } from "react";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { commands, page, userEvent } from "vitest/browser";
-import { renderFixture, renderPage } from "../../VisualTest.utils";
+import {
+  emulateReducedMotion,
+  enterMotionPath,
+  renderFixture,
+  renderPage,
+  SETTLE_TIMEOUT_MS,
+  settled,
+} from "../../VisualTest.utils";
 import { Button } from "../button";
 import { Popover } from "./index";
 
@@ -70,3 +79,171 @@ describe("Popover", () => {
     await expect(fixture).toMatchScreenshot();
   });
 });
+
+// Base UI returns focus to the trigger only at the unmount, after the exit: a Tab during it went
+// to a focus guard in the closing popup, then <body> (#633). The exit is about 0.5s with Motion,
+// 0.3s on the CSS path, and a frame with reduced motion.
+describe.each([
+  { path: "Motion", withMotion: true, reduce: false },
+  { path: "CSS fallback", withMotion: false, reduce: false },
+  { path: "reduced motion", withMotion: true, reduce: true },
+])("Popover focus as the popup closes, $path", ({ withMotion, reduce }) => {
+  beforeAll(() => enterMotionPath(withMotion));
+  beforeEach(() => emulateReducedMotion(reduce));
+  afterAll(async () => {
+    await emulateReducedMotion(true);
+    await enterMotionPath(true);
+  });
+
+  // A Tab after the exit passes without the fix; skipped for reduced motion's one frame
+  const recordTab = (popup: HTMLElement) => {
+    let mounted: boolean | undefined;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Tab") mounted = popup.isConnected;
+    };
+    document.addEventListener("keydown", onKeyDown, true);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown, true);
+      if (!reduce) expect(mounted, "the popup was still closing when Tab went down").toBe(true);
+    };
+  };
+
+  // Enter and Tab go in one call: with reduced motion the popup leaves a frame after the close
+  it("moves a Tab pressed during the exit past the trigger, after Popover.Close by Enter", async () => {
+    const { popup, after } = await openPopover();
+    await userEvent.keyboard("{Tab}");
+    const checkTab = recordTab(popup);
+    await userEvent.keyboard("{Enter}{Tab}");
+    checkTab();
+    expect(document.activeElement).toBe(after);
+    await unmounted(popup);
+    expect(document.activeElement).toBe(after);
+  });
+
+  // A click and a key press are two calls, too far apart for the one frame of reduced motion
+  it.skipIf(reduce)(
+    "moves a Tab pressed during the exit past the trigger, after Popover.Close by click",
+    async () => {
+      const { popup, after } = await openPopover();
+      const checkTab = recordTab(popup);
+      await userEvent.click(page.getByRole("button", { name: "Done" }));
+      await userEvent.keyboard("{Tab}");
+      checkTab();
+      expect(document.activeElement).toBe(after);
+      await unmounted(popup);
+      expect(document.activeElement).toBe(after);
+    },
+  );
+
+  it("moves focus to the trigger on Escape", async () => {
+    const { popup, trigger } = await openPopover();
+    await userEvent.keyboard("{Escape}");
+    expect(document.activeElement).toBe(trigger);
+    await unmounted(popup);
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  // Focus must not come back to the trigger, nor pass through it on the way
+  it("leaves focus where an outside click put it", async () => {
+    const { popup, trigger, before } = await openPopover();
+    const triggerFocused = tookFocus(trigger);
+    await userEvent.click(before);
+    expect(triggerFocused(), "the trigger took focus on the way").toBe(false);
+    expect(document.activeElement).toBe(before);
+    await unmounted(popup);
+    expect(document.activeElement).toBe(before);
+  });
+
+  // An element as `finalFocus` keeps Base UI's timing: focus moves there at the unmount
+  it("moves focus only at the unmount, to an element passed as finalFocus", async () => {
+    const { popup, trigger, before } = await openPopover({ finalFocusBefore: true });
+    const triggerFocused = tookFocus(trigger);
+    await userEvent.keyboard("{Escape}");
+    await unmounted(popup);
+    expect(triggerFocused(), "the trigger took focus").toBe(false);
+    expect(document.activeElement).toBe(before);
+  });
+});
+
+// Closes that move focus away themselves: the popup hands nothing to the trigger
+describe("Popover focus as the popup closes, focus moved away", () => {
+  beforeAll(() => enterMotionPath(true));
+  beforeEach(() => emulateReducedMotion(false));
+  afterAll(() => emulateReducedMotion(true));
+
+  // Out of the last field, a Tab goes to the field after the trigger and closes the popover
+  it("leaves a Tab out of the popup where it went", async () => {
+    const { popup, trigger, after } = await openPopover();
+    await userEvent.keyboard("{Tab}");
+    const triggerFocused = tookFocus(trigger);
+    await userEvent.keyboard("{Tab}");
+    expect(document.activeElement).toBe(after);
+    await unmounted(popup);
+    expect(triggerFocused(), "the trigger took focus").toBe(false);
+    expect(document.activeElement).toBe(after);
+  });
+
+  it("leaves focus outside the popup on a hover close", async () => {
+    const view = render(popoverFixture({ openOnHover: true }));
+    const before = view.getByRole("textbox", { name: "Before" });
+    await userEvent.click(before);
+    const trigger = view.getByRole("button", { name: "Settings" });
+    const triggerFocused = tookFocus(trigger);
+    await userEvent.hover(trigger);
+    const popup = await view.findByTestId("popup");
+    await userEvent.hover(before);
+    await unmounted(popup);
+    expect(triggerFocused(), "the trigger took focus").toBe(false);
+    expect(document.activeElement).toBe(before);
+  });
+});
+
+// Text fields around the trigger, as WebKit's Tab and click skip buttons
+function popoverFixture({ finalFocusBefore = false, openOnHover = false } = {}) {
+  const beforeRef = createRef<HTMLInputElement>();
+  return (
+    <div className="flex w-60 flex-col items-start gap-2" style={{ padding: 40 }}>
+      <input ref={beforeRef} aria-label="Before" />
+      <Popover.Root>
+        <Popover.Trigger openOnHover={openOnHover} delay={0} closeDelay={0}>
+          Settings
+        </Popover.Trigger>
+        <Popover.Content data-testid="popup" finalFocus={finalFocusBefore ? beforeRef : undefined}>
+          <input aria-label="Name" />
+          <Popover.Close>Done</Popover.Close>
+        </Popover.Content>
+      </Popover.Root>
+      <input aria-label="After" />
+    </div>
+  );
+}
+
+/** Renders the fixture and opens it by click: the first field inside takes focus */
+async function openPopover(props?: Parameters<typeof popoverFixture>[0]) {
+  const view = render(popoverFixture(props));
+  const trigger = view.getByRole("button", { name: "Settings" });
+  await userEvent.click(trigger);
+  const name = await view.findByRole("textbox", { name: "Name" });
+  await expect.poll(() => document.activeElement, { timeout: SETTLE_TIMEOUT_MS }).toBe(name);
+  // Open at rest: closed during its entry, the CSS path's popup can leave at once
+  const popup = view.getByTestId("popup");
+  await settled(popup);
+  return {
+    trigger,
+    popup,
+    before: view.getByRole("textbox", { name: "Before" }),
+    after: view.getByRole("textbox", { name: "After" }),
+  };
+}
+
+/** Whether `el` has taken focus since the call */
+function tookFocus(el: HTMLElement) {
+  let focused = false;
+  el.addEventListener("focus", () => {
+    focused = true;
+  });
+  return () => focused;
+}
+
+const unmounted = (popup: HTMLElement) =>
+  expect.poll(() => popup.isConnected, { timeout: SETTLE_TIMEOUT_MS }).toBe(false);

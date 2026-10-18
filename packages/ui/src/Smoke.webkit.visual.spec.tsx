@@ -483,6 +483,88 @@ describe("Combobox focus as its popup closes, in WebKit", () => {
   });
 });
 
+// #633: as Combobox's, for Select and Popover. A click in WebKit focuses no button, so the field in
+// the Popover goes to <body> before the close: the hand-off counts that as inside.
+describe("Select and Popover focus as the popup closes, in WebKit", () => {
+  const select = () =>
+    render(
+      <div className="flex w-60 flex-col items-start gap-2" style={{ padding: 40 }}>
+        <Select.Root defaultValue="apple">
+          <Select.Trigger aria-label="Fruit">
+            <Select.Value />
+          </Select.Trigger>
+          <Select.Portal>
+            <Select.Positioner>
+              <Select.Popup data-testid="popup">
+                {["Apple", "Banana", "Cherry"].map((fruit) => (
+                  <Select.Item key={fruit} value={fruit.toLowerCase()}>
+                    <Select.ItemText>{fruit}</Select.ItemText>
+                  </Select.Item>
+                ))}
+              </Select.Popup>
+            </Select.Positioner>
+          </Select.Portal>
+        </Select.Root>
+        <Input aria-label="Next field" />
+      </div>,
+    );
+
+  const openSelect = async () => {
+    select();
+    const trigger = screen.getByRole("combobox", { name: "Fruit" });
+    await userEvent.click(trigger);
+    const popup = screen.getByTestId("popup");
+    await expect.poll(() => popup.contains(document.activeElement)).toBe(true);
+    await settle(popup);
+    return { trigger, popup };
+  };
+
+  // The spring takes about 0.5s, so the popup is still leaving when the key press returns
+  it("keeps focus on the Select trigger while the popup leaves after Escape", async () => {
+    const { trigger, popup } = await openSelect();
+    await userEvent.keyboard("{Escape}");
+    expect(popup.checkVisibility(), "the popup is still leaving").toBe(true);
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it("moves a Tab pressed while the Select popup leaves after a pick to the next field", async () => {
+    const { popup } = await openSelect();
+    await userEvent.click(screen.getByRole("option", { name: "Banana" }));
+    await userEvent.keyboard("{Tab}");
+    const next = screen.getByRole("textbox", { name: "Next field" });
+    expect(document.activeElement).toBe(next);
+    // Base UI keeps the popup mounted, hidden, while the trigger has focus
+    await expect.poll(() => popup.checkVisibility()).toBe(false);
+    expect(document.activeElement).toBe(next);
+  });
+
+  it("moves a Tab pressed while the Popover leaves after a click on Popover.Close to the next field", async () => {
+    render(
+      <div className="flex w-60 flex-col items-start gap-2" style={{ padding: 40 }}>
+        <Popover.Root>
+          <Popover.Trigger>Settings</Popover.Trigger>
+          <Popover.Content data-testid="popup">
+            <Input aria-label="Name" />
+            <Popover.Close>Done</Popover.Close>
+          </Popover.Content>
+        </Popover.Root>
+        <Input aria-label="Next field" />
+      </div>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Settings" }));
+    const name = await screen.findByRole("textbox", { name: "Name" });
+    await expect.poll(() => document.activeElement).toBe(name);
+    const popup = screen.getByTestId("popup");
+    await settle(popup);
+    await userEvent.click(screen.getByRole("button", { name: "Done" }));
+    await userEvent.keyboard("{Tab}");
+    const next = screen.getByRole("textbox", { name: "Next field" });
+    expect(document.activeElement).toBe(next);
+    await expect.poll(() => popup.isConnected).toBe(false);
+    expect(document.activeElement).toBe(next);
+  });
+});
+
 describe("Focus rings in WebKit", () => {
   /*
    * W122 (#383): with an arrow, the ring moves to an `::after` overlay that takes the popup's

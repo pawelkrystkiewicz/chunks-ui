@@ -1,7 +1,7 @@
 "use client";
 
 import { Select as BaseSelect } from "@base-ui/react/select";
-import type { ComponentProps } from "react";
+import { type ComponentProps, createContext, useContext } from "react";
 import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import {
@@ -9,6 +9,7 @@ import {
   usePortalContainer,
   usePortalNode,
 } from "../../lib/portal-container";
+import { type CloseFocus, useCloseFocusRoot, useFocusOnClose } from "../../lib/use-focus-on-close";
 import { usePopupRender } from "../../lib/use-popup-render";
 import { FIELD_TEXT_SIZE, FOCUS_RING, RING_TRANSITION } from "../shared";
 
@@ -23,6 +24,21 @@ export type SelectItemTextProps = ComponentProps<typeof BaseSelect.ItemText>;
 export type SelectItemIndicatorProps = ComponentProps<typeof BaseSelect.ItemIndicator>;
 export type SelectGroupProps = ComponentProps<typeof BaseSelect.Group>;
 export type SelectGroupLabelProps = ComponentProps<typeof BaseSelect.GroupLabel>;
+
+// For the Popup's focus hand-off (#633); `null` under a Base UI Root
+const SelectCloseFocusContext = createContext<CloseFocus | null>(null);
+
+function SelectRoot<Value, Multiple extends boolean | undefined = false>({
+  onOpenChange,
+  ...props
+}: BaseSelect.Root.Props<Value, Multiple>) {
+  const [closeFocus, handleOpenChange] = useCloseFocusRoot(onOpenChange);
+  return (
+    <SelectCloseFocusContext.Provider value={closeFocus}>
+      <BaseSelect.Root<Value, Multiple> {...props} onOpenChange={handleOpenChange} />
+    </SelectCloseFocusContext.Provider>
+  );
+}
 
 function SelectTrigger({ className, ...props }: SelectTriggerProps) {
   return (
@@ -85,7 +101,11 @@ function SelectIcon({ className, children, ...props }: SelectIconProps) {
   );
 }
 
-function SelectPopup({ className, render: renderProp, ...props }: SelectPopupProps) {
+// Focus moves to the trigger as the popup starts to close, not at the unmount after the exit
+function SelectPopup({ className, render: renderProp, ref, ...props }: SelectPopupProps) {
+  const popupRef = useFocusOnClose(ref, useContext(SelectCloseFocusContext), {
+    finalFocus: props.finalFocus,
+  });
   const { useSpring, render } = usePopupRender(renderProp, {
     spring: springs.popup,
     from: { opacity: 0, scale: 0.95 },
@@ -94,6 +114,7 @@ function SelectPopup({ className, render: renderProp, ...props }: SelectPopupPro
 
   return (
     <BaseSelect.Popup
+      ref={popupRef}
       render={render}
       className={cnState(
         "rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md",
@@ -209,7 +230,7 @@ export const Select = {
   Popup: SelectPopup,
   Portal: SelectPortal,
   Positioner: SelectPositioner,
-  Root: BaseSelect.Root,
+  Root: SelectRoot,
   Trigger: SelectTrigger,
   Value: SelectValue,
 };

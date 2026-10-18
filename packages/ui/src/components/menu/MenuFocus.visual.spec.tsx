@@ -1,7 +1,16 @@
+import { Menu as BaseMenu } from "@base-ui/react/menu";
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
-import { userEvent } from "vitest/browser";
-import { describeMotionPaths, waitForStable } from "../../VisualTest.utils";
+import { createRef } from "react";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { page, userEvent } from "vitest/browser";
+import {
+  describeMotionPaths,
+  emulateReducedMotion,
+  enterMotionPath,
+  SETTLE_TIMEOUT_MS,
+  settled,
+  waitForStable,
+} from "../../VisualTest.utils";
 import { Menu } from "./index";
 
 /*
@@ -107,3 +116,225 @@ describeMotionPaths("Menu popup pointer flag", () => {
     expect(ringOf(popup)).toBe(false);
   });
 });
+
+// Base UI returns focus to the trigger only at the unmount, after the exit: a Tab during it went
+// to a focus guard in the closing popup, then <body> (#633). The exit is about 0.5s with Motion,
+// 0.3s on the CSS path, and a frame with reduced motion.
+describe.each([
+  { path: "Motion", withMotion: true, reduce: false },
+  { path: "CSS fallback", withMotion: false, reduce: false },
+  { path: "reduced motion", withMotion: true, reduce: true },
+])("Menu focus as the popup closes, $path", ({ withMotion, reduce }) => {
+  beforeAll(() => enterMotionPath(withMotion));
+  beforeEach(() => emulateReducedMotion(reduce));
+  afterAll(async () => {
+    await emulateReducedMotion(true);
+    await enterMotionPath(true);
+  });
+
+  // A Tab after the exit passes without the fix; skipped for reduced motion's one frame
+  const recordTab = (popup: HTMLElement) => {
+    let mounted: boolean | undefined;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Tab") mounted = popup.isConnected;
+    };
+    document.addEventListener("keydown", onKeyDown, true);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown, true);
+      if (!reduce) expect(mounted, "the popup was still closing when Tab went down").toBe(true);
+    };
+  };
+
+  // Enter and Tab go in one call: with reduced motion the popup leaves a frame after the pick
+  it("moves a Tab pressed during the exit past the trigger, after a pick by Enter", async () => {
+    const { popup, after } = await openMenu();
+    await userEvent.keyboard("{ArrowDown}");
+    const checkTab = recordTab(popup);
+    await userEvent.keyboard("{Enter}{Tab}");
+    checkTab();
+    expect(document.activeElement).toBe(after);
+    await unmounted(popup);
+    expect(document.activeElement).toBe(after);
+  });
+
+  // A click and a key press are two calls, too far apart for the one frame of reduced motion
+  it.skipIf(reduce)(
+    "moves a Tab pressed during the exit past the trigger, after a pick by click",
+    async () => {
+      const { popup, after } = await openMenu();
+      const checkTab = recordTab(popup);
+      await userEvent.click(page.getByRole("menuitem", { name: "Copy" }));
+      await userEvent.keyboard("{Tab}");
+      checkTab();
+      expect(document.activeElement).toBe(after);
+      await unmounted(popup);
+      expect(document.activeElement).toBe(after);
+    },
+  );
+
+  // Picked in a submenu, the whole menu closes: focus goes to the root trigger
+  it("moves a Tab pressed during the exit past the trigger, after a pick in a submenu", async () => {
+    const { popup, after } = await openMenu();
+    await userEvent.keyboard("{ArrowUp}{ArrowRight}");
+    const submenu = await screen.findByTestId("submenu");
+    await expect
+      .poll(() => submenu.contains(document.activeElement), { timeout: SETTLE_TIMEOUT_MS })
+      .toBe(true);
+    await settled(submenu);
+    const checkTab = recordTab(popup);
+    await userEvent.keyboard("{Enter}{Tab}");
+    checkTab();
+    expect(document.activeElement).toBe(after);
+    await unmounted(popup);
+    expect(document.activeElement).toBe(after);
+  });
+
+  it("moves focus to the trigger on Escape", async () => {
+    const { popup, trigger } = await openMenu();
+    await userEvent.keyboard("{Escape}");
+    expect(document.activeElement).toBe(trigger);
+    await unmounted(popup);
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  // Focus must not come back to the trigger, nor pass through it on the way. Not modal, so the
+  // click reaches the field, not Base UI's backdrop.
+  it("leaves focus where an outside click put it", async () => {
+    const { popup, trigger, before } = await openMenu({ modal: false });
+    const triggerFocused = tookFocus(trigger);
+    await userEvent.click(before);
+    expect(triggerFocused(), "the trigger took focus on the way").toBe(false);
+    expect(document.activeElement).toBe(before);
+    await unmounted(popup);
+    expect(document.activeElement).toBe(before);
+  });
+
+  // An element as `finalFocus` keeps Base UI's timing: focus moves there at the unmount
+  it("moves focus only at the unmount, to an element passed as finalFocus", async () => {
+    const { popup, trigger, before } = await openMenu({ finalFocusBefore: true });
+    const triggerFocused = tookFocus(trigger);
+    await userEvent.keyboard("{Escape}");
+    await unmounted(popup);
+    expect(triggerFocused(), "the trigger took focus").toBe(false);
+    expect(document.activeElement).toBe(before);
+  });
+});
+
+// Closes that keep Base UI's own focus handling
+describe("Menu focus as the popup closes, Base UI's own handling", () => {
+  beforeAll(() => enterMotionPath(true));
+  beforeEach(() => emulateReducedMotion(false));
+  afterAll(() => emulateReducedMotion(true));
+
+  // Base UI focuses the submenu's trigger; the arrow keys go on in the menu
+  it("leaves focus on the submenu trigger as a submenu closes alone", async () => {
+    const { popup, trigger } = await openMenu();
+    const triggerFocused = tookFocus(trigger);
+    await userEvent.keyboard("{ArrowUp}{ArrowRight}");
+    const submenu = await screen.findByTestId("submenu");
+    await settled(submenu);
+    await userEvent.keyboard("{ArrowLeft}");
+    const share = screen.getByRole("menuitem", { name: "Share" });
+    expect(document.activeElement).toBe(share);
+    await unmounted(submenu);
+    expect(document.activeElement).toBe(share);
+    expect(popup).toHaveAttribute("data-open");
+    await userEvent.keyboard("{ArrowUp}");
+    expect(document.activeElement).toBe(screen.getByRole("menuitem", { name: "Copy" }));
+    expect(triggerFocused(), "the trigger took focus").toBe(false);
+  });
+
+  // A Tab closes the menu and goes to the field after the trigger
+  it("leaves a Tab out of the menu where it went", async () => {
+    const { popup, trigger, after } = await openMenu();
+    await userEvent.keyboard("{ArrowDown}");
+    const triggerFocused = tookFocus(trigger);
+    await userEvent.keyboard("{Tab}");
+    expect(document.activeElement).toBe(after);
+    await unmounted(popup);
+    expect(triggerFocused(), "the trigger took focus").toBe(false);
+    expect(document.activeElement).toBe(after);
+  });
+
+  // Hovered items take focus; Base UI returns none after a hover close, and nor does the popup
+  it("hands no focus to the trigger on a hover close", async () => {
+    const view = render(menuFixture({ openOnHover: true }));
+    const before = view.getByRole("textbox", { name: "Before" });
+    await userEvent.click(before);
+    const trigger = view.getByRole("button", { name: "Options" });
+    const triggerFocused = tookFocus(trigger);
+    await userEvent.hover(trigger);
+    const popup = await view.findByTestId("popup");
+    await settled(popup);
+    await userEvent.hover(view.getByRole("menuitem", { name: "Edit" }));
+    await userEvent.hover(before);
+    await unmounted(popup);
+    expect(triggerFocused(), "the trigger took focus").toBe(false);
+  });
+});
+
+// Text fields around the trigger, as WebKit's Tab and click skip buttons
+function menuFixture({
+  modal,
+  openOnHover = false,
+  finalFocusBefore = false,
+}: {
+  modal?: boolean;
+  openOnHover?: boolean;
+  finalFocusBefore?: boolean;
+} = {}) {
+  const beforeRef = createRef<HTMLInputElement>();
+  return (
+    <div className="flex w-60 flex-col items-start gap-2" style={{ padding: 40 }}>
+      <input ref={beforeRef} aria-label="Before" />
+      <Menu.Root modal={modal}>
+        <Menu.Trigger openOnHover={openOnHover} delay={0} closeDelay={0}>
+          Options
+        </Menu.Trigger>
+        <Menu.Content data-testid="popup" finalFocus={finalFocusBefore ? beforeRef : undefined}>
+          <Menu.Item>Edit</Menu.Item>
+          <Menu.Item>Copy</Menu.Item>
+          <BaseMenu.SubmenuRoot>
+            <BaseMenu.SubmenuTrigger>Share</BaseMenu.SubmenuTrigger>
+            <Menu.Content data-testid="submenu">
+              <Menu.Item>Email</Menu.Item>
+              <Menu.Item>Link</Menu.Item>
+            </Menu.Content>
+          </BaseMenu.SubmenuRoot>
+        </Menu.Content>
+      </Menu.Root>
+      <input aria-label="After" />
+    </div>
+  );
+}
+
+/** Renders the fixture and opens it by click: the popup takes focus */
+async function openMenu(props?: Parameters<typeof menuFixture>[0]) {
+  const view = render(menuFixture(props));
+  const trigger = view.getByRole("button", { name: "Options" });
+  await userEvent.click(trigger);
+  const popup = await view.findByTestId("popup");
+  await expect
+    .poll(() => popup.contains(document.activeElement), { timeout: SETTLE_TIMEOUT_MS })
+    .toBe(true);
+  // Open at rest: closed during its entry, the CSS path's popup can leave at once
+  await settled(popup);
+  return {
+    trigger,
+    popup,
+    before: view.getByRole("textbox", { name: "Before" }),
+    after: view.getByRole("textbox", { name: "After" }),
+  };
+}
+
+/** Whether `el` has taken focus since the call */
+function tookFocus(el: HTMLElement) {
+  let focused = false;
+  el.addEventListener("focus", () => {
+    focused = true;
+  });
+  return () => focused;
+}
+
+const unmounted = (popup: HTMLElement) =>
+  expect.poll(() => popup.isConnected, { timeout: SETTLE_TIMEOUT_MS }).toBe(false);

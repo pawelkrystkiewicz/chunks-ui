@@ -1,7 +1,7 @@
 "use client";
 
 import { Popover as BasePopover } from "@base-ui/react/popover";
-import type { ComponentProps } from "react";
+import { type ComponentProps, createContext, useContext } from "react";
 import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { arrowClasses, arrowPopupClasses } from "../../lib/popup-arrow";
@@ -11,6 +11,7 @@ import {
   usePortalNode,
 } from "../../lib/portal-container";
 import { ArrowChangeProvider, useArrowChange, useArrowPadding } from "../../lib/use-arrow-padding";
+import { type CloseFocus, useCloseFocusRoot, useFocusOnClose } from "../../lib/use-focus-on-close";
 import { usePopupRender } from "../../lib/use-popup-render";
 import { RING_TRANSITION_MOTION } from "../shared";
 
@@ -51,6 +52,18 @@ export type PopoverContentProps = ComponentProps<typeof BasePopover.Popup> & {
   arrowPadding?: ComponentProps<typeof BasePopover.Positioner>["arrowPadding"];
 };
 
+// For the popup's focus hand-off (#633); `null` under a Base UI Root
+const PopoverCloseFocusContext = createContext<CloseFocus | null>(null);
+
+function PopoverRoot<Payload>({ onOpenChange, ...props }: BasePopover.Root.Props<Payload>) {
+  const [closeFocus, handleOpenChange] = useCloseFocusRoot(onOpenChange);
+  return (
+    <PopoverCloseFocusContext.Provider value={closeFocus}>
+      <BasePopover.Root<Payload> {...props} onOpenChange={handleOpenChange} />
+    </PopoverCloseFocusContext.Provider>
+  );
+}
+
 function PopoverContent(props: PopoverContentProps) {
   const [portalRef, portalNode] = usePortalNode();
   return (
@@ -72,9 +85,14 @@ function PopoverContentPopup({
   alignOffset,
   arrowPadding,
   render: renderProp,
+  ref,
   ...props
 }: PopoverContentProps) {
   const [positioner, arrowPaddingByDefault, arrowChanged] = useArrowPadding();
+  // Focus moves to the trigger as the popup starts to close, not at the unmount after the exit
+  const popupRef = useFocusOnClose(ref, useContext(PopoverCloseFocusContext), {
+    finalFocus: props.finalFocus,
+  });
   const { useSpring, render } = usePopupRender(renderProp, {
     spring: springs.popup,
     from: { opacity: 0, scale: 0.95 },
@@ -93,6 +111,7 @@ function PopoverContentPopup({
         arrowPadding={arrowPadding ?? arrowPaddingByDefault}
       >
         <BasePopover.Popup
+          ref={popupRef}
           render={render}
           className={cnState(
             "rounded-md border border-border bg-popover p-4 text-popover-foreground shadow-md",
@@ -137,7 +156,7 @@ function PopoverDescription({ className, ...props }: PopoverDescriptionProps) {
 }
 
 export const Popover = {
-  Root: BasePopover.Root,
+  Root: PopoverRoot,
   Trigger: BasePopover.Trigger,
   Content: PopoverContent,
   Arrow: PopoverArrow,

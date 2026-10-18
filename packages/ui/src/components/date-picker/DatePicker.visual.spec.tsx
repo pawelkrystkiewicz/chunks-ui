@@ -1,8 +1,14 @@
 import { Form } from "@base-ui/react/form";
 import { render } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { page, userEvent } from "vitest/browser";
-import { expectNotAllowed, renderFixture } from "../../VisualTest.utils";
+import {
+  emulateReducedMotion,
+  expectNotAllowed,
+  renderFixture,
+  SETTLE_TIMEOUT_MS,
+  settled,
+} from "../../VisualTest.utils";
 import { Field } from "../field";
 import { DatePicker } from "./index";
 
@@ -109,5 +115,104 @@ describe("DatePicker in a form", () => {
     const trigger = page.getByRole("button", { name: "Due date Pick a date" });
     await expect.element(trigger).toHaveFocus();
     expect(trigger.element().matches(":focus-visible")).toBe(true);
+  });
+});
+
+// Base UI returns focus to the trigger only at the unmount, after the 0.3s exit (a frame with
+// reduced motion): a Tab during it went to a focus guard in the closing popup, then <body> (#633)
+describe.each([
+  { path: "CSS", reduce: false },
+  { path: "reduced motion", reduce: true },
+])("DatePicker focus as the popup closes, $path", ({ reduce }) => {
+  beforeEach(() => emulateReducedMotion(reduce));
+  afterAll(() => emulateReducedMotion(true));
+
+  // Text fields around the trigger, as WebKit's Tab and click skip buttons
+  const open = async () => {
+    const view = render(
+      <div className="flex w-72 flex-col items-start gap-2" style={{ padding: 40 }}>
+        <input aria-label="Before" />
+        <DatePicker defaultValue={new Date(2026, 2, 15)} />
+        <input aria-label="After" />
+      </div>,
+    );
+    const trigger = view.getByRole("button", { name: "March 15, 2026" });
+    await userEvent.click(trigger);
+    const day = await view.findByRole("button", { name: "Sunday, March 15, 2026" });
+    await expect.poll(() => document.activeElement, { timeout: SETTLE_TIMEOUT_MS }).toBe(day);
+    // Open at rest: closed during its entry, the popup can leave at once
+    const popup = view.getByRole("dialog");
+    await settled(popup);
+    return {
+      trigger,
+      popup,
+      before: view.getByRole("textbox", { name: "Before" }),
+      after: view.getByRole("textbox", { name: "After" }),
+    };
+  };
+
+  // A Tab after the exit passes without the fix; skipped for reduced motion's one frame
+  const recordTab = (popup: HTMLElement) => {
+    let mounted: boolean | undefined;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Tab") mounted = popup.isConnected;
+    };
+    document.addEventListener("keydown", onKeyDown, true);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown, true);
+      if (!reduce) expect(mounted, "the popup was still closing when Tab went down").toBe(true);
+    };
+  };
+
+  const unmounted = (popup: HTMLElement) =>
+    expect.poll(() => popup.isConnected, { timeout: SETTLE_TIMEOUT_MS }).toBe(false);
+
+  // Enter and Tab go in one call: with reduced motion the popup leaves a frame after the pick
+  it("moves a Tab pressed during the exit past the trigger, after a pick by Enter", async () => {
+    const { popup, after } = await open();
+    await userEvent.keyboard("{ArrowDown}");
+    const checkTab = recordTab(popup);
+    await userEvent.keyboard("{Enter}{Tab}");
+    checkTab();
+    expect(document.activeElement).toBe(after);
+    await unmounted(popup);
+    expect(document.activeElement).toBe(after);
+  });
+
+  // A click and a key press are two calls, too far apart for the one frame of reduced motion
+  it.skipIf(reduce)(
+    "moves a Tab pressed during the exit past the trigger, after a pick by click",
+    async () => {
+      const { popup, after } = await open();
+      const checkTab = recordTab(popup);
+      await userEvent.click(page.getByRole("button", { name: "Friday, March 20, 2026" }));
+      await userEvent.keyboard("{Tab}");
+      checkTab();
+      expect(document.activeElement).toBe(after);
+      await unmounted(popup);
+      expect(document.activeElement).toBe(after);
+    },
+  );
+
+  it("moves focus to the trigger on Escape", async () => {
+    const { popup, trigger } = await open();
+    await userEvent.keyboard("{Escape}");
+    expect(document.activeElement).toBe(trigger);
+    await unmounted(popup);
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  // Focus must not come back to the trigger, nor pass through it on the way
+  it("leaves focus where an outside click put it", async () => {
+    const { popup, trigger, before } = await open();
+    let triggerFocused = false;
+    trigger.addEventListener("focus", () => {
+      triggerFocused = true;
+    });
+    await userEvent.click(before);
+    expect(triggerFocused, "the trigger took focus on the way").toBe(false);
+    expect(document.activeElement).toBe(before);
+    await unmounted(popup);
+    expect(document.activeElement).toBe(before);
   });
 });

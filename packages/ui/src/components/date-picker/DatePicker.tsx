@@ -14,6 +14,7 @@ import {
 import { cn } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
 import { usePortalContainer } from "../../lib/portal-container";
+import { useCloseFocusRoot, useFocusOnClose } from "../../lib/use-focus-on-close";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { Calendar, type CalendarProps } from "../calendar/Calendar";
 import { toIsoDate, validDate } from "../calendar/date";
@@ -154,6 +155,9 @@ export function DatePicker({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const mergedTriggerRef = useMergedRef(triggerRef, ref);
   const [open, setOpen] = useState(false);
+  // Focus moves to the trigger as the popup starts to close, not at the unmount after the exit
+  const [closeFocus, handleOpenChange] = useCloseFocusRoot(setOpen);
+  const focusOnCloseRef = useFocusOnClose(popupRef, closeFocus);
   const [internalDate, setInternalDate] = useState<Date | null>(defaultValue ?? null);
   const selectedDate = validDate(value !== undefined ? value : internalDate);
 
@@ -206,7 +210,7 @@ export function DatePicker({
 
   return (
     <div className={cn("relative", className)}>
-      <BasePopover.Root open={open} onOpenChange={setOpen}>
+      <BasePopover.Root open={open} onOpenChange={handleOpenChange}>
         {/* Field.Control registers the trigger as the control of a surrounding Field.Root, so
             Field.Label names it and Field.Description describes it. Outside a Field it only
             passes the props through. */}
@@ -309,7 +313,7 @@ export function DatePicker({
             sideOffset={8}
           >
             <BasePopover.Popup
-              ref={popupRef}
+              ref={focusOnCloseRef}
               // A dialog needs a name. As in the APG date picker, it names the task, not the month
               aria-label={names.dialog}
               // Open on the calendar's tab-stop day (selected, else today), as in the APG date picker.
