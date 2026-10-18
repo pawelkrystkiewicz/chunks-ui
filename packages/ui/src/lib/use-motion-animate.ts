@@ -24,9 +24,9 @@ function runningTransitions(element: Element) {
 
 /**
  * Keyframes for a jump: each value twice. A fresh element has no motion value, so a 0 ms jump
- * to one value becomes a WAAPI animation from the value read off the element, and when the first
- * frame comes late it holds that first keyframe for a frame or two (#632). Two equal keyframes
- * leave nothing to animate: Motion sets the value.
+ * to one value becomes an animation from the value read off the element; for opacity, which Motion
+ * runs with WAAPI, a late first frame holds that first keyframe for a frame or two (#632). Two
+ * equal keyframes leave nothing to animate: Motion sets the value.
  */
 function jumpTo(values: AnimatedValues) {
   return Object.fromEntries(
