@@ -98,8 +98,9 @@ jobs:
         run: cd packages/ui && bunx vitest run --config vitest.visual.config.ts --sequence.shuffle --sequence.seed=${{ github.run_number }}
 
       # Vitest writes each failed screenshot's actual and diff PNGs to <root>/.vitest-attachments
-      - name: Upload diff screenshots on failure
-        if: failure()
+      # cancelled() also keeps the diffs of a run that timed out or was cancelled mid-suite.
+      - name: Upload diff screenshots on failure or cancel
+        if: failure() || cancelled()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: visual-regression-diffs
