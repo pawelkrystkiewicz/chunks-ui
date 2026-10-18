@@ -108,6 +108,8 @@ describe("below md, on the default 414px page", () => {
   it("puts the string className of an Input with an adornment on the wrapper", () => {
     render(adorned("max-md:text-lg"));
     const wrapper = screen.getByLabelText("Field").closest("[data-slot=input-adornments]");
+    // A renamed data-slot fails here, not as a TypeError in getComputedStyle
+    expect(wrapper, "the input has a [data-slot=input-adornments] wrapper").not.toBeNull();
     expect(getComputedStyle(wrapper as Element).fontSize).toBe("18px");
   });
 });
