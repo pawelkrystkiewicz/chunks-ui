@@ -3,10 +3,17 @@
 import { Select } from "chunks-ui";
 import { Container } from "@/components";
 
+const fruits = {
+  apple: "Apple",
+  banana: "Banana",
+  cherry: "Cherry",
+  strawberry: "Strawberry",
+};
+
 export function SelectBasicExample() {
   return (
     <Container className="w-64">
-      <Select.Root>
+      <Select.Root items={fruits}>
         <Select.Trigger aria-label="Fruit">
           <Select.Value placeholder="Choose a fruit" />
           <Select.Icon />
@@ -38,10 +45,17 @@ export function SelectBasicExample() {
   );
 }
 
+const colors = {
+  red: "Red",
+  orange: "Orange",
+  blue: "Blue",
+  green: "Green",
+};
+
 export function SelectGroupedExample() {
   return (
     <Container className="w-64">
-      <Select.Root>
+      <Select.Root items={colors}>
         <Select.Trigger aria-label="Color">
           <Select.Value placeholder="Pick a color" />
           <Select.Icon />
@@ -50,7 +64,7 @@ export function SelectGroupedExample() {
           <Select.Positioner sideOffset={5} alignItemWithTrigger={false}>
             <Select.Popup>
               <Select.Group>
-                <Select.GroupLabel className={"uppercase"}>Warm</Select.GroupLabel>
+                <Select.GroupLabel className="uppercase">Warm</Select.GroupLabel>
                 <Select.Item value="red">
                   <Select.ItemText>Red</Select.ItemText>
                   <Select.ItemIndicator />
@@ -61,7 +75,7 @@ export function SelectGroupedExample() {
                 </Select.Item>
               </Select.Group>
               <Select.Group>
-                <Select.GroupLabel className={"uppercase"}>Cool</Select.GroupLabel>
+                <Select.GroupLabel className="uppercase">Cool</Select.GroupLabel>
                 <Select.Item value="blue">
                   <Select.ItemText>Blue</Select.ItemText>
                   <Select.ItemIndicator />
