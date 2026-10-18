@@ -195,11 +195,21 @@ describe("DatePicker", () => {
     expect(trigger).not.toHaveClass("h-ui-height");
   });
 
-  it("lets a triggerClassName colour replace the muted placeholder colour", () => {
-    render(<DatePicker triggerClassName="text-foreground" />);
+  it("marks the trigger with data-placeholder only while no date is picked", () => {
+    const { rerender } = render(<DatePicker value={null} />);
     const trigger = screen.getByRole("button", { name: "Pick a date" });
-    expect(trigger).toHaveClass("text-foreground", "text-sm");
+    expect(trigger).toHaveAttribute("data-placeholder", "");
+    expect(trigger).toHaveClass("data-placeholder:text-muted-foreground");
     expect(trigger).not.toHaveClass("text-muted-foreground");
+    rerender(<DatePicker value={new Date(2026, 2, 15)} />);
+    expect(screen.getByRole("button", { name: "March 15, 2026" })).not.toHaveAttribute(
+      "data-placeholder",
+    );
+    rerender(<DatePicker value={null} />);
+    expect(screen.getByRole("button", { name: "Pick a date" })).toHaveAttribute(
+      "data-placeholder",
+      "",
+    );
   });
 
   it('names the calendar dialog "Choose date"', async () => {
