@@ -190,6 +190,8 @@ function ToastDescription({ className, ...props }: ToastDescriptionProps) {
   );
 }
 
+// An icon button: it keeps its aria-label whatever its content. Children replace the X; with
+// `render` and no children, there is no X: the render element draws its own (#581).
 function ToastClose({ className, children, ...props }: ToastCloseProps) {
   return (
     <BaseToast.Close
@@ -202,7 +204,7 @@ function ToastClose({ className, children, ...props }: ToastCloseProps) {
       )}
       {...props}
     >
-      {children ?? <CloseIcon className="size-3.5" />}
+      {children == null && !props.render ? <CloseIcon className="size-3.5" /> : children}
     </BaseToast.Close>
   );
 }

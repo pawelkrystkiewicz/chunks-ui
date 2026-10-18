@@ -507,6 +507,19 @@ describe("NumberField Increment and Decrement content", () => {
       expect(el.firstElementChild).toBe(screen.getByTestId("custom"));
     },
   );
+
+  it.each(parts)(
+    "renders no glyph in a void render element on $part, under the same name, without an error",
+    ({ name, Part }) => {
+      const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+      field(<Part nativeButton={false} render={<img alt="" src="data:," />} />);
+      expect(consoleError).not.toHaveBeenCalled();
+      consoleError.mockRestore();
+      const el = screen.getByRole("button", { name });
+      expect(el.tagName).toBe("IMG");
+      expect(el).toBeEmptyDOMElement();
+    },
+  );
 });
 
 describe("NumberField focus ring", () => {

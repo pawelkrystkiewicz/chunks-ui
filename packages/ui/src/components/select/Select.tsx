@@ -61,11 +61,12 @@ function SelectValue({ className, ...props }: SelectValueProps) {
   );
 }
 
-// Children replace the chevron, as on Combobox.Icon (#541)
+// Children replace the chevron, as on Combobox.Icon (#541). With `render` and no children, there
+// is no chevron: the render element draws its own, and may be a void element like <img> (#581).
 function SelectIcon({ className, children, ...props }: SelectIconProps) {
   return (
     <BaseSelect.Icon className={cnState("ms-auto", className)} {...props}>
-      {children ?? (
+      {children == null && !props.render ? (
         <svg
           viewBox="0 0 24 24"
           fill="none"
@@ -77,6 +78,8 @@ function SelectIcon({ className, children, ...props }: SelectIconProps) {
         >
           <path d="m6 9 6 6 6-6" />
         </svg>
+      ) : (
+        children
       )}
     </BaseSelect.Icon>
   );
@@ -138,14 +141,15 @@ function SelectItemText({ className, ...props }: SelectItemTextProps) {
   );
 }
 
-// Children replace the check, as on Combobox.ItemIndicator (#564)
+// Children replace the check, as on Combobox.ItemIndicator (#564). With `render` and no children,
+// there is no check: the render element draws its own, and may be a void element like <img> (#581).
 function SelectItemIndicator({ className, children, ...props }: SelectItemIndicatorProps) {
   return (
     <BaseSelect.ItemIndicator
       className={cnState("absolute end-2 flex items-center", className)}
       {...props}
     >
-      {children ?? (
+      {children == null && !props.render ? (
         <svg
           viewBox="0 0 24 24"
           fill="none"
@@ -158,6 +162,8 @@ function SelectItemIndicator({ className, children, ...props }: SelectItemIndica
         >
           <path d="M20 6 9 17l-5-5" />
         </svg>
+      ) : (
+        children
       )}
     </BaseSelect.ItemIndicator>
   );

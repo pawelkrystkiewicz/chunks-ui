@@ -553,6 +553,23 @@ describe("Toast closeProps", () => {
     expect(screen.getByLabelText("Zamknij", { selector: "button" })).toBeInTheDocument();
   });
 
+  it("renders closeProps children in place of the X, under the same name", async () => {
+    const close = await showToast({ children: <svg data-testid="custom" aria-hidden="true" /> });
+    expect(close.children).toHaveLength(1);
+    expect(close.firstElementChild).toBe(screen.getByTestId("custom"));
+  });
+
+  it("renders no X in a void closeProps render element, without an error", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    await addToast({
+      dismissible: true,
+      closeProps: { nativeButton: false, render: <img alt="" src="data:," /> },
+    });
+    expect(consoleError).not.toHaveBeenCalled();
+    consoleError.mockRestore();
+    expect(screen.getByLabelText("Zamknij", { selector: "img" })).toBeEmptyDOMElement();
+  });
+
   it("renders no close button for closeProps alone", async () => {
     await addToast({ closeProps: { className: "x" } });
     expect(screen.queryByLabelText("Zamknij", { selector: "button" })).toBeNull();

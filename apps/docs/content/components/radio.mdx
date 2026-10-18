@@ -86,7 +86,7 @@ That holds for the item's own `disabled`. In a disabled `Radio.Group`, or a grou
 | `Radio.Group`     | Wrapper that manages value state. Renders a vertical flex column by default. |
 | `Radio.Item`      | Convenience compound: label + radio + indicator in one element.              |
 | `Radio.Root`      | Individual radio button. Renders a circular control.                         |
-| `Radio.Indicator` | The inner dot that appears when the radio is selected.                       |
+| `Radio.Indicator` | The inner dot that appears when the radio is selected. Children you pass replace the dot; with a `render` element and no children, there is no dot, and the element may be a void element such as `<img>`. Your content scales and fades in and out as the dot does. |
 
 ## Radio.Group Props
 

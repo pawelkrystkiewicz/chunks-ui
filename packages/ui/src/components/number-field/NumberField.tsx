@@ -78,7 +78,8 @@ function NumberFieldInput({ className, ...props }: NumberFieldInputProps) {
   );
 }
 
-// Children replace the plus, and the button keeps its aria-label (#564)
+// Children replace the plus, and the button keeps its aria-label whatever its content (#564).
+// With `render` and no children, there is no plus: the render element draws its own (#581).
 function NumberFieldIncrement({ className, children, ...props }: NumberFieldIncrementProps) {
   const labels = useContext(NumberFieldLabelsContext);
   return (
@@ -93,7 +94,7 @@ function NumberFieldIncrement({ className, children, ...props }: NumberFieldIncr
       )}
       {...props}
     >
-      {children ?? (
+      {children == null && !props.render ? (
         <svg
           width="16"
           height="16"
@@ -107,12 +108,15 @@ function NumberFieldIncrement({ className, children, ...props }: NumberFieldIncr
         >
           <path d="M12 5v14M5 12h14" />
         </svg>
+      ) : (
+        children
       )}
     </BaseNumberField.Increment>
   );
 }
 
-// Children replace the minus, and the button keeps its aria-label (#564)
+// Children replace the minus, and the button keeps its aria-label whatever its content (#564).
+// With `render` and no children, there is no minus: the render element draws its own (#581).
 function NumberFieldDecrement({ className, children, ...props }: NumberFieldDecrementProps) {
   const labels = useContext(NumberFieldLabelsContext);
   return (
@@ -127,7 +131,7 @@ function NumberFieldDecrement({ className, children, ...props }: NumberFieldDecr
       )}
       {...props}
     >
-      {children ?? (
+      {children == null && !props.render ? (
         <svg
           width="16"
           height="16"
@@ -141,6 +145,8 @@ function NumberFieldDecrement({ className, children, ...props }: NumberFieldDecr
         >
           <path d="M5 12h14" />
         </svg>
+      ) : (
+        children
       )}
     </BaseNumberField.Decrement>
   );

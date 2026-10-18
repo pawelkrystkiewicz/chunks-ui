@@ -6,12 +6,12 @@ export type ComboboxLabels = {
    */
   trigger: string;
   /**
-   * Name of `Combobox.Clear` when it renders the default icon.
+   * Name of `Combobox.Clear`, whatever its content.
    * @default "Clear selection"
    */
   clear: string;
   /**
-   * Name of `Combobox.ChipRemove` when it renders the default icon, read with its chip's text.
+   * Name of `Combobox.ChipRemove`, read with its chip's text.
    * `{chip}` marks where the text goes: `"{chip} を削除"` reads "Apple を削除". Without `{chip}`,
    * the text follows the label, so the default reads "Remove Apple".
    * Only the first `{chip}` counts.

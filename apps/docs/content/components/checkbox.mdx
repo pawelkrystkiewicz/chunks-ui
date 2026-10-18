@@ -90,7 +90,7 @@ The box is 16px. To make it easier to tap, add [`touch-target`](/utilities#touch
 | Part | Description |
 |---|---|
 | `Checkbox.Root` | The checkbox control. Handles checked state and keyboard interaction. |
-| `Checkbox.Indicator` | Renders the check/indeterminate icon inside the root. |
+| `Checkbox.Indicator` | Renders the check, or the minus when indeterminate, inside the root. Children you pass replace them; with a `render` element and no children, there is neither, and the element may be a void element such as `<img>`. Your content scales and fades in and out as the check does; the morph between the check and the minus belongs to the default icon. |
 
 ## Props
 
