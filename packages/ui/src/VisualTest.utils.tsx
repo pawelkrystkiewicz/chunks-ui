@@ -4,6 +4,7 @@ import type { ReactElement, ReactNode } from "react";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { commands, page } from "vitest/browser";
 import { reloadMotion, useMotion } from "./lib/use-motion";
+import { SETTLE_TIMEOUT_MS } from "./VisualTest.timeouts";
 
 /**
  * Base UI's InternalBackdrop: an empty, transparent `position: fixed; inset: 0` element that a
@@ -356,12 +357,7 @@ export function describePopupCssPath(name: string, ui: (open: boolean) => ReactE
   });
 }
 
-/**
- * How long a wait gives Motion or the browser to act, in ms: for a value to settle, start or
- * change, a render path to switch, an element to mount or go, or an event to arrive. A wait ends
- * as soon as it is met, so only a failing one runs to the limit.
- */
-export const SETTLE_TIMEOUT_MS = 5000;
+export { SETTLE_TIMEOUT_MS };
 
 // Taken at import, before a spec's vi.useFakeTimers(), so the guard runs on real time
 const { setTimeout: realSetTimeout, clearTimeout: realClearTimeout } = globalThis;
@@ -494,7 +490,7 @@ export const settled = async (popup: HTMLElement) => {
   // Steady first: `getAnimations()` is empty before Motion's first frame starts the entry, and
   // does not see the scale, which Motion animates in JS
   await waitForStable(() => [renderedScale(popup), getComputedStyle(popup).opacity, boxOf(popup)]);
-  await expect.poll(() => popup.getAnimations(), { timeout: SETTLE_TIMEOUT_MS }).toEqual([]);
+  await expect.poll(() => popup.getAnimations()).toEqual([]);
   // End on a frame: closed from a timer, the popup sometimes survives a missing flush (#540)
   await nextFrame();
 };

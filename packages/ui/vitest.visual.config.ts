@@ -2,6 +2,7 @@ import react from "@vitejs/plugin-react";
 import { playwright } from "@vitest/browser-playwright";
 import { defineConfig } from "vitest/config";
 import type { BrowserCommand } from "vitest/node";
+import { SETTLE_TIMEOUT_MS } from "./src/VisualTest.timeouts.ts";
 import type { AccessibilityNode, EmulatedMedia } from "./src/VisualTest.utils.tsx";
 
 /**
@@ -120,6 +121,11 @@ export default defineConfig({
     globals: true,
     include: ["src/**/*.visual.spec.tsx"],
     setupFiles: ["./vitest.visual.setup.ts"],
+    // The default is 1000 ms, tight for a CSS transition or a Motion spring on a loaded runner. Only
+    // expect.poll reads it: expect.element, though it polls, waits for the rest of the test timeout
+    // (15 s in browser mode) unless it gets `{ timeout }`; the few that want a 5 s bound pass
+    // SETTLE_TIMEOUT_MS. A wait ends as soon as it is met, so only a failing one is slow.
+    expect: { poll: { timeout: SETTLE_TIMEOUT_MS } },
     browser: {
       enabled: true,
       headless: true,

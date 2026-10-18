@@ -11,7 +11,6 @@ import {
   focusVisible,
   offBy,
   renderFixture,
-  SETTLE_TIMEOUT_MS,
   waitForStable,
 } from "../../VisualTest.utils";
 import { Tabs, type TabsRootProps } from "./index";
@@ -227,11 +226,7 @@ const PATHS = [
 
 /** Waits until the indicator is on the path: Motion drops the CSS fallback's transition class */
 const onPath = (reducedMotion: boolean) =>
-  expect
-    .poll(() => indicator().classList.contains("micro-interactions"), {
-      timeout: SETTLE_TIMEOUT_MS,
-    })
-    .toBe(reducedMotion);
+  expect.poll(() => indicator().classList.contains("micro-interactions")).toBe(reducedMotion);
 
 /** Where the indicator's `::after` line is drawn, in viewport px */
 function underline() {

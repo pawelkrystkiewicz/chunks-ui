@@ -101,8 +101,8 @@ const AT_REST = { opacity: "1", y: 0 };
  * frame too, so this waits for Motion to write the entry's offset, then for the pose to come to rest.
  */
 async function entryPlayedOut(pane: HTMLElement) {
-  await expect.poll(() => pane.style.transform, { timeout: SETTLE_TIMEOUT_MS }).not.toBe("");
-  await expect.poll(() => poseOf(pane), { timeout: SETTLE_TIMEOUT_MS }).toEqual(AT_REST);
+  await expect.poll(() => pane.style.transform).not.toBe("");
+  await expect.poll(() => poseOf(pane)).toEqual(AT_REST);
 }
 
 describe("Tabs with Motion", () => {
@@ -129,9 +129,7 @@ describe("Tabs with Motion", () => {
     );
     // Motion drives the container. A swap onto Motion's path after the mount, which would remount
     // the panel, has happened by the time Motion writes the height
-    await expect
-      .poll(() => getByTestId("contents").style.height, { timeout: SETTLE_TIMEOUT_MS })
-      .not.toBe("");
+    await expect.poll(() => getByTestId("contents").style.height).not.toBe("");
     expect(instances.size).toBe(1);
   });
 
@@ -147,12 +145,7 @@ describe("Tabs with Motion", () => {
         <Tabs.Content value="b">Panel B</Tabs.Content>
       </Tabs.Contents>,
       // On Motion's path once Motion writes the container's height
-      () =>
-        expect
-          .poll(() => page.getByTestId("contents").element().style.height, {
-            timeout: SETTLE_TIMEOUT_MS,
-          })
-          .not.toBe(""),
+      () => expect.poll(() => page.getByTestId("contents").element().style.height).not.toBe(""),
     ],
     [
       "Animate",
@@ -254,9 +247,7 @@ describe("Tabs animations that must stop", () => {
     // Mid-entry: fading in and still moving. Waits for Motion to start the entry rather than for
     // a set number of frames, as it can start a frame or two later under load
     await expect
-      .poll(() => pane.style.transform !== "" && Number(poseOf(pane).opacity) < 1, {
-        timeout: SETTLE_TIMEOUT_MS,
-      })
+      .poll(() => pane.style.transform !== "" && Number(poseOf(pane).opacity) < 1)
       .toBe(true);
     await untilChanged(() => pane.style.transform);
     expect(Number(poseOf(pane).opacity)).toBeLessThan(1);
@@ -307,7 +298,7 @@ describe("Tabs animations that must stop", () => {
     rerender(tabs("b"));
     // Mid-slide: between panel A (0) and panel B (-width). Waits for the track to move rather than
     // for a set number of frames, as Motion can start the slide a frame or two later under load
-    await expect.poll(x, { timeout: SETTLE_TIMEOUT_MS }).toBeLessThan(-1);
+    await expect.poll(x).toBeLessThan(-1);
     expect(x()).toBeGreaterThan(-width + 1);
     // Still moving, so an animation left running would go on writing below
     await untilChanged(() => track.style.transform);
@@ -331,7 +322,7 @@ describe("Tabs animations that must stop", () => {
     // Mid-resize: between the two panel heights. Waits for the height to move rather than for a
     // set number of frames, as Motion can start the resize a frame or two later under load
     const height = () => Number.parseFloat(contents.style.height);
-    await expect.poll(height, { timeout: SETTLE_TIMEOUT_MS }).toBeGreaterThan(HEIGHTS.short);
+    await expect.poll(height).toBeGreaterThan(HEIGHTS.short);
     expect(height()).toBeLessThan(HEIGHTS.tall);
     return { ...result, contents };
   }
@@ -393,9 +384,7 @@ describe("Tabs in <Activity> with Motion", () => {
     // Mid-slide and mid-resize. Waits for both to move rather than for a set number of frames,
     // as Motion can start them a frame or two later under load
     await expect
-      .poll(() => place().offset < start.offset - 1 && place().height > HEIGHTS.short + 1, {
-        timeout: SETTLE_TIMEOUT_MS,
-      })
+      .poll(() => place().offset < start.offset - 1 && place().height > HEIGHTS.short + 1)
       .toBe(true);
     expect(place().offset).toBeGreaterThan(1);
     expect(place().height).toBeLessThan(HEIGHTS.tall - 1);
@@ -418,9 +407,7 @@ describe("Tabs in <Activity> with Motion", () => {
       async (pane: HTMLElement) => {
         // Fading in. Before Motion's first frame the pane is still at full opacity.
         const fading = () => Number(poseOf(pane).opacity);
-        await expect
-          .poll(() => fading() > 0 && fading() < 1, { timeout: SETTLE_TIMEOUT_MS })
-          .toBe(true);
+        await expect.poll(() => fading() > 0 && fading() < 1).toBe(true);
       },
     ],
     ["after its entry", { type: "tween", duration: 0.1 }, entryPlayedOut],
@@ -476,11 +463,11 @@ describe("Tabs.Contents when reduced motion turns off at rest", () => {
     const contents = getByTestId("contents");
     const place = placeIn(contents, page.getByText("Short panel").element());
     const inPlace = { offset: 0, height: HEIGHTS.short };
-    await expect.poll(() => contents.style.height, { timeout: SETTLE_TIMEOUT_MS }).not.toBe("");
+    await expect.poll(() => contents.style.height).not.toBe("");
     expect(await waitForStable(place)).toEqual(inPlace);
 
     await emulateReducedMotion(true);
-    await expect.poll(() => contents.style.height, { timeout: SETTLE_TIMEOUT_MS }).toBe("");
+    await expect.poll(() => contents.style.height).toBe("");
     expect(await waitForStable(place)).toEqual(inPlace);
 
     // Recorded from before the switch, so a frame between the two paths counts too
@@ -489,9 +476,7 @@ describe("Tabs.Contents when reduced motion turns off at rest", () => {
     const frames = await recording;
     // The switch may land after the recorded frames: wait for it, then record frames on the
     // Motion path too, so the spec never checks only frames from before the switch
-    await expect
-      .poll(() => contents.classList.contains("overflow-clip"), { timeout: SETTLE_TIMEOUT_MS })
-      .toBe(true);
+    await expect.poll(() => contents.classList.contains("overflow-clip")).toBe(true);
     const after = await eachPaintedFrame(place, 10);
     expect([...frames, ...after]).toEqual([...frames, ...after].map(() => inPlace));
   });
