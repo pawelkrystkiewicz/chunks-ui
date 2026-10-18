@@ -301,8 +301,8 @@ describe("Combobox.Input beside Clear and Trigger", () => {
 
 // Trigger-style: a button shows the value, the search input is in the popup. Base UI's Value has no
 // element, so a wide value wrapped or ran past the trigger and pushed the chevron out (#541). Each
-// case runs in both directions: the value's `text-start` and the chevron's `ms-auto` follow the
-// direction.
+// case runs in both directions: the value's `text-start` follows the direction, and the value, the
+// badge and the chevron keep their inline order.
 describe.each(["ltr", "rtl"] as const)("Combobox.Value in a trigger, %s", (dir) => {
   beforeEach(() => {
     document.documentElement.dir = dir;
@@ -316,9 +316,10 @@ describe.each(["ltr", "rtl"] as const)("Combobox.Value in a trigger, %s", (dir) 
   const SELECT_LIKE =
     "static h-ui-height w-full justify-between rounded-md border border-input bg-background px-3 text-sm";
 
-  // The cases below in one picture. In RTL the value starts at the right edge and its ellipsis, the
-  // badge and the chevron sit to its left. A Latin value shows its last words there: its text keeps
-  // to the right edge, so its first words are what overflows
+  // Three of the cases below in one picture: a short and a long value in a 140px trigger, and a long
+  // value beside a badge in a 200px one. In RTL the value starts at the right edge and its ellipsis,
+  // the badge and the chevron sit to its left. A Latin value shows its last words there: its text
+  // keeps to the right edge, so its first words are what overflows
   it("shows a short value, a cut value and a badge before the chevron", async () => {
     const rows = [
       { fruit: "Fig", width: 140 },
