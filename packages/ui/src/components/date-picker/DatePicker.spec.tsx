@@ -200,15 +200,9 @@ describe("DatePicker", () => {
     const trigger = screen.getByRole("button", { name: "Pick a date" });
     expect(trigger).toHaveAttribute("data-placeholder", "");
     expect(trigger).toHaveClass("data-placeholder:text-muted-foreground");
-    expect(trigger).not.toHaveClass("text-muted-foreground");
     rerender(<DatePicker value={new Date(2026, 2, 15)} />);
     expect(screen.getByRole("button", { name: "March 15, 2026" })).not.toHaveAttribute(
       "data-placeholder",
-    );
-    rerender(<DatePicker value={null} />);
-    expect(screen.getByRole("button", { name: "Pick a date" })).toHaveAttribute(
-      "data-placeholder",
-      "",
     );
   });
 

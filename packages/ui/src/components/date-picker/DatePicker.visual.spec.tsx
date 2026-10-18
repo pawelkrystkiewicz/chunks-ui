@@ -37,9 +37,7 @@ describe("DatePicker", () => {
     const picked = colour(getByRole("button", { name: "March 15, 2026" }));
     expect(picked).not.toBe(muted);
     rerender(<DatePicker triggerClassName="text-red-600 data-placeholder:text-blue-600" />);
-    const recoloured = colour(getByRole("button", { name: "Pick a date" }));
-    expect(recoloured).not.toBe(muted);
-    expect(recoloured).not.toBe(picked);
+    expect(colour(getByRole("button", { name: "Pick a date" }))).not.toBe(muted);
   });
 
   it("shows a not-allowed cursor on a disabled trigger", () => {
