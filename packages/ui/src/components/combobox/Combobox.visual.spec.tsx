@@ -558,13 +558,25 @@ describe.each([
   });
 
   // The fields around the trigger are text fields: WebKit's Tab skips buttons, and a click there
-  // does not focus one, so the same rows also hold in WebKit
-  const openInPopup = async ({ finalFocusBefore = false } = {}) => {
+  // does not focus one, so the same rows also hold in WebKit. With `open`, the Root is controlled
+  // and ignores every change Base UI asks for.
+  const fixture = ({
+    open,
+    finalFocusBefore = false,
+  }: {
+    open?: boolean;
+    finalFocusBefore?: boolean;
+  } = {}) => {
     const beforeRef = createRef<HTMLInputElement>();
-    const view = render(
+    return (
       <div className="flex w-60 flex-col items-start gap-2" style={{ padding: 40 }}>
         <input ref={beforeRef} aria-label="Before" />
-        <Combobox.Root items={options}>
+        <div data-testid="outside" className="h-6 w-full" />
+        <Combobox.Root
+          items={options}
+          open={open}
+          onOpenChange={open === undefined ? undefined : () => {}}
+        >
           <Combobox.Trigger
             aria-label="Framework"
             className="static h-ui-height w-full rounded-md border border-input px-3"
@@ -592,8 +604,12 @@ describe.each([
           </Combobox.Portal>
         </Combobox.Root>
         <input aria-label="After" />
-      </div>,
+      </div>
     );
+  };
+
+  const openInPopup = async (props?: { finalFocusBefore?: boolean }) => {
+    const view = render(fixture(props));
     const trigger = view.getByRole("combobox", { name: "Framework" });
     await userEvent.click(trigger);
     const input = await view.findByRole("combobox", { name: "Search frameworks" });
@@ -692,6 +708,32 @@ describe.each([
     await unmounted(popup);
     expect(document.activeElement).toBe(before);
   });
+
+  // A parent that controls `open` ignores the close an outside press asks for, then closes the
+  // popup itself, through the prop alone. The press's event must not reach that later close: it
+  // skipped the hand-off. Tab then went from the input in the leaving popup to <body>.
+  it.skipIf(reduce)(
+    "moves a Tab past the trigger after a close by the prop, following an outside press the parent ignored",
+    async () => {
+      const view = render(fixture({ open: true }));
+      const input = await view.findByRole("combobox", { name: "Search frameworks" });
+      await expect.poll(() => document.activeElement, { timeout: SETTLE_TIMEOUT_MS }).toBe(input);
+      const popup = view.getByTestId("popup");
+      await settled(popup);
+      // A press there keeps focus where it is, as on a toolbar
+      const outside = view.getByTestId("outside");
+      outside.addEventListener("mousedown", (event) => event.preventDefault());
+      await userEvent.click(outside);
+      expect(popup, "the parent kept the popup open").toHaveAttribute("data-open");
+      expect(document.activeElement, "the press kept focus in the input").toBe(input);
+      view.rerender(fixture({ open: false }));
+      const checkTab = recordTab(popup);
+      await userEvent.keyboard("{Tab}");
+      checkTab();
+      await unmounted(popup);
+      expect(document.activeElement).toBe(view.getByRole("textbox", { name: "After" }));
+    },
+  );
 
   // An element as `finalFocus` keeps Base UI's timing: focus moves there at the unmount, and
   // never to the trigger first

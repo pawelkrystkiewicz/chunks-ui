@@ -98,7 +98,16 @@ function ComboboxRoot<Value, Multiple extends boolean | undefined = false, Item 
             {...props}
             onOpenChange={(open, details) => {
               onOpenChange?.(open, details);
-              if (!open && !details.isCanceled) closeFocus.closeEvent.current = details.event;
+              if (open || details.isCanceled) return;
+              // Kept for the close it belongs to, which commits in the same task. A parent that
+              // controls `open` may ignore it and close later through the prop alone, which must
+              // not read it.
+              const { event } = details;
+              closeFocus.closeEvent.current = event;
+              setTimeout(() => {
+                if (closeFocus.closeEvent.current === event)
+                  closeFocus.closeEvent.current = undefined;
+              });
             }}
           />
         </ComboboxCloseFocusContext.Provider>
@@ -291,7 +300,9 @@ function ComboboxPopup({ className, render: renderProp, ref, ...props }: Combobo
       closeFocus.closeEvent.current = undefined;
       // A mouse or pen press outside closes the popup on pointerdown, before the browser moves
       // focus to what was pressed. Focus is left to the browser, and to Base UI's return at the
-      // unmount: passing through the trigger would fire its focus and blur handlers.
+      // unmount: passing through the trigger would fire its focus and blur handlers. A touch tap
+      // closes it on click, once focus has moved: on space that takes no focus, focus is on
+      // <body>, and the trigger takes it, as Base UI's return would.
       if (event?.type === "pointerdown" || event?.type === "mousedown") return;
       // Enter with no item highlighted closes the popup without preventDefault, so a form can
       // submit. Its keypress is still to come, and goes to the focused element: on the trigger it
