@@ -540,6 +540,145 @@ describe("Combobox.Popup closing, Motion", () => {
   });
 });
 
+// Trigger-style, with the search input in the popup. Base UI returns focus to the trigger only
+// once the popup unmounts, after its exit: a Tab pressed while it closed went from the input in
+// the closing popup to <body> (#627). On each path the popup leaves: the Motion spring (about
+// 0.5s), the CSS transition (0.3s), and with reduced motion none (a frame).
+describe.each([
+  { path: "Motion", withMotion: true, reduce: false },
+  { path: "CSS fallback", withMotion: false, reduce: false },
+  { path: "reduced motion", withMotion: true, reduce: true },
+])("Combobox with the input in the popup, closing, $path", ({ withMotion, reduce }) => {
+  beforeAll(() => enterMotionPath(withMotion));
+  beforeEach(() => emulateReducedMotion(reduce));
+  afterAll(async () => {
+    await emulateReducedMotion(true);
+    await enterMotionPath(true);
+  });
+
+  const openInPopup = async () => {
+    const view = render(
+      <div className="flex w-60 flex-col items-start gap-2" style={{ padding: 40 }}>
+        <button type="button">Before</button>
+        <Combobox.Root items={options}>
+          <Combobox.Trigger
+            aria-label="Framework"
+            className="static h-ui-height w-full rounded-md border border-input px-3"
+          >
+            <Combobox.Value placeholder="Pick a framework" />
+            <Combobox.Icon />
+          </Combobox.Trigger>
+          <Combobox.Portal>
+            <Combobox.Positioner>
+              <Combobox.Popup aria-label="Frameworks" data-testid="popup">
+                <Combobox.Input aria-label="Search frameworks" className="pe-3" />
+                <Combobox.List>
+                  {(item: (typeof options)[number]) => (
+                    <Combobox.Item key={item.value} value={item}>
+                      {item.label}
+                    </Combobox.Item>
+                  )}
+                </Combobox.List>
+              </Combobox.Popup>
+            </Combobox.Positioner>
+          </Combobox.Portal>
+        </Combobox.Root>
+        <button type="button">After</button>
+      </div>,
+    );
+    const trigger = view.getByRole("combobox", { name: "Framework" });
+    await userEvent.click(trigger);
+    const input = await view.findByRole("combobox", { name: "Search frameworks" });
+    await expect.poll(() => document.activeElement, { timeout: SETTLE_TIMEOUT_MS }).toBe(input);
+    // Open at rest: closed during its entry, the CSS path's popup can leave at once
+    const popup = view.getByTestId("popup");
+    await settled(popup);
+    return {
+      trigger,
+      popup,
+      before: view.getByRole("button", { name: "Before" }),
+      after: view.getByRole("button", { name: "After" }),
+    };
+  };
+
+  // Whether the popup was still on the page when Tab went down. A Tab after the exit finds focus
+  // back on the trigger, so the spec would pass without the fix.
+  const recordTab = (popup: HTMLElement) => {
+    let mounted: boolean | undefined;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Tab") mounted = popup.isConnected;
+    };
+    document.addEventListener("keydown", onKeyDown, true);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown, true);
+      return mounted;
+    };
+  };
+
+  const unmounted = (popup: HTMLElement) =>
+    expect.poll(() => popup.isConnected, { timeout: SETTLE_TIMEOUT_MS }).toBe(false);
+
+  // Enter and Tab go in one call: with reduced motion the popup leaves a frame after the pick
+  it("moves a Tab pressed during the exit past the trigger, after a pick by Enter", async () => {
+    const { popup, after } = await openInPopup();
+    await userEvent.keyboard("{ArrowDown}");
+    const mountedOnTab = recordTab(popup);
+    await userEvent.keyboard("{Enter}{Tab}");
+    expect(mountedOnTab(), "the popup was still closing when Tab went down").toBe(true);
+    await unmounted(popup);
+    expect(document.activeElement).toBe(after);
+  });
+
+  // A click and a key press are two calls, too far apart for the one frame of reduced motion
+  it.skipIf(reduce)(
+    "moves a Tab pressed during the exit past the trigger, after a pick by click",
+    async () => {
+      const { popup, after } = await openInPopup();
+      const mountedOnTab = recordTab(popup);
+      await userEvent.click(page.getByRole("option", { name: "Vue" }));
+      await userEvent.keyboard("{Tab}");
+      expect(mountedOnTab(), "the popup was still closing when Tab went down").toBe(true);
+      await unmounted(popup);
+      expect(document.activeElement).toBe(after);
+    },
+  );
+
+  // Enter with nothing highlighted closes the popup without preventDefault. Its keypress, on a
+  // trigger that already had focus, clicked it and opened the popup again.
+  it("keeps the popup closed and moves a Tab past the trigger, after Enter with nothing highlighted", async () => {
+    const { popup, trigger, after } = await openInPopup();
+    const mountedOnTab = recordTab(popup);
+    await userEvent.keyboard("{Enter}{Tab}");
+    expect(mountedOnTab(), "the popup was still closing when Tab went down").toBe(true);
+    await unmounted(popup);
+    expect(document.activeElement).toBe(after);
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("moves focus to the trigger on Escape", async () => {
+    const { popup, trigger } = await openInPopup();
+    await userEvent.keyboard("{Escape}");
+    expect(document.activeElement).toBe(trigger);
+    await unmounted(popup);
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  // The click focuses the button outside: the popup must not pull focus back to the trigger, nor
+  // pass it through the trigger on the way, which would fire its focus and blur handlers
+  it("leaves focus where an outside click put it", async () => {
+    const { popup, trigger, before } = await openInPopup();
+    let triggerFocused = false;
+    trigger.addEventListener("focus", () => {
+      triggerFocused = true;
+    });
+    await userEvent.click(before);
+    expect(triggerFocused, "the trigger took focus on the way").toBe(false);
+    expect(document.activeElement).toBe(before);
+    await unmounted(popup);
+    expect(document.activeElement).toBe(before);
+  });
+});
+
 // ComboboxPositioner's default sideOffset, the gap a single-select popup keeps below its input
 const DEFAULT_SIDE_OFFSET = 8;
 

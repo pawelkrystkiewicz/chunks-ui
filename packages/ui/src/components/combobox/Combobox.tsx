@@ -1,7 +1,16 @@
 "use client";
 
 import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
-import { type ComponentProps, createContext, useContext, useId } from "react";
+import {
+  type ComponentProps,
+  createContext,
+  type RefObject,
+  useContext,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { cn, cnState } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
 import { springs } from "../../lib/motion";
@@ -10,6 +19,7 @@ import {
   usePortalContainer,
   usePortalNode,
 } from "../../lib/portal-container";
+import { useMergedRef } from "../../lib/use-merged-ref";
 import { usePopupRender } from "../../lib/use-popup-render";
 import { CloseIcon } from "../CloseIcon";
 import { removeButtonName } from "../chip/Chip";
@@ -21,6 +31,9 @@ const ComboboxLabelsContext = createContext(DEFAULT_COMBOBOX_LABELS);
 const ComboboxMultipleContext = createContext(false);
 // The id of the Combobox.Chip around a ChipRemove, which names the remove button
 const ComboboxChipIdContext = createContext<string | undefined>(undefined);
+// The Combobox.Trigger, which the Popup gives focus to as it starts to close (#627). `null` under
+// a Base UI Root, so parts of two such comboboxes never share one ref.
+const ComboboxTriggerContext = createContext<RefObject<HTMLButtonElement | null> | null>(null);
 
 // The defaults match ComponentProps<typeof BaseCombobox.Root>, the type before labels were added
 export type ComboboxRootProps<
@@ -67,10 +80,13 @@ function ComboboxRoot<Value, Multiple extends boolean | undefined = false, Item 
   labels,
   ...props
 }: ComboboxRootProps<Value, Multiple, Item>) {
+  const triggerRef = useRef<HTMLButtonElement>(null);
   return (
     <ComboboxLabelsContext.Provider value={mergeLabels(DEFAULT_COMBOBOX_LABELS, labels)}>
       <ComboboxMultipleContext.Provider value={Boolean(props.multiple)}>
-        <BaseCombobox.Root<Value, Multiple, Item> {...props} />
+        <ComboboxTriggerContext.Provider value={triggerRef}>
+          <BaseCombobox.Root<Value, Multiple, Item> {...props} />
+        </ComboboxTriggerContext.Provider>
       </ComboboxMultipleContext.Provider>
     </ComboboxLabelsContext.Provider>
   );
@@ -119,11 +135,14 @@ function ComboboxInput({ className, ...props }: ComboboxInputProps) {
 // (`labels.trigger`). Children or a `render` element replace both: a trigger-style Combobox shows
 // the selected value inside its Trigger, so that content names it (#581). A consumer's aria-label
 // replaces the default; inside Field.Root, Base UI's aria-labelledby still takes precedence.
-function ComboboxTrigger({ className, children, ...props }: ComboboxTriggerProps) {
+function ComboboxTrigger({ className, children, ref, ...props }: ComboboxTriggerProps) {
   const labels = useContext(ComboboxLabelsContext);
+  const ownRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = useMergedRef(useContext(ComboboxTriggerContext) ?? ownRef, ref);
   const ownContent = children != null || props.render != null;
   return (
     <BaseCombobox.Trigger
+      ref={triggerRef}
       aria-label={ownContent ? undefined : labels.trigger}
       className={cnState(
         "absolute inset-y-0 end-0 flex items-center pe-2",
@@ -214,7 +233,61 @@ function ComboboxPositioner({ className, sideOffset = 8, ...props }: ComboboxPos
   );
 }
 
-function ComboboxPopup({ className, render: renderProp, ...props }: ComboboxPopupProps) {
+// With the input inside, Base UI returns focus to the trigger only once the popup unmounts, after
+// its exit animation: a Tab pressed until then went from the input in the closing popup to
+// <body> (#627). So focus moves to the trigger as the popup closes (`data-closed`), if it is
+// still inside. Base UI's own return then finds it on the trigger. With the input outside
+// (`role="presentation"`), Base UI returns no focus, and with a `finalFocus` other than `true`
+// it returns it at the unmount, as before.
+function ComboboxPopup({ className, render: renderProp, ref, ...props }: ComboboxPopupProps) {
+  const triggerRef = useContext(ComboboxTriggerContext);
+  const [popup, setPopup] = useState<HTMLDivElement | null>(null);
+  const popupRef = useMergedRef(setPopup, ref);
+  const defaultFinalFocus = props.finalFocus === undefined || props.finalFocus === true;
+  useLayoutEffect(() => {
+    if (!popup || !triggerRef || !defaultFinalFocus) return;
+    const doc = popup.ownerDocument;
+    const stopWaiting = () => {
+      doc.removeEventListener("keypress", handOff, true);
+      doc.removeEventListener("keyup", handOff, true);
+    };
+    const closing = () =>
+      popup.hasAttribute("data-closed") && popup.getAttribute("role") === "dialog";
+    // Checks again when it waited for a key: the popup may have opened again meanwhile
+    const handOff = () => {
+      stopWaiting();
+      if (closing() && popup.contains(doc.activeElement)) {
+        triggerRef.current?.focus({ preventScroll: true });
+      }
+    };
+    const observer = new MutationObserver(() => {
+      if (!closing()) return;
+      // The event being dispatched, which React also reads to rank updates. The browser sets it
+      // on the window of the running listener (React's or Base UI's), so it is this `window`,
+      // not the popup document's, which differs for a popup portalled into an iframe.
+      const event = window.event;
+      // A mouse press outside closes the popup on pointerdown, before the browser moves focus to
+      // what was pressed. Focus is left to the browser, and to Base UI's return at the unmount:
+      // passing through the trigger would fire its focus and blur handlers.
+      if (event?.type === "pointerdown" || event?.type === "mousedown") return;
+      // Enter with no item highlighted closes the popup without preventDefault, so a form can
+      // submit. Its keypress is still to come, and goes to the focused element: on the trigger it
+      // would click it and open the popup again. So focus waits for that keypress, or for the
+      // keyup of a key with no keypress.
+      if (event?.type === "keydown" && !event.defaultPrevented) {
+        doc.addEventListener("keypress", handOff, true);
+        doc.addEventListener("keyup", handOff, true);
+      } else {
+        handOff();
+      }
+    });
+    observer.observe(popup, { attributeFilter: ["data-closed"] });
+    return () => {
+      observer.disconnect();
+      stopWaiting();
+    };
+  }, [popup, defaultFinalFocus, triggerRef]);
+
   const { useSpring, render } = usePopupRender(renderProp, {
     spring: springs.popup,
     from: { opacity: 0, scale: 0.95 },
@@ -223,6 +296,7 @@ function ComboboxPopup({ className, render: renderProp, ...props }: ComboboxPopu
 
   return (
     <BaseCombobox.Popup
+      ref={popupRef}
       render={render}
       className={cnState(
         "rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md",
