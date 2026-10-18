@@ -96,7 +96,7 @@ const ALLOWED: Allowed[] = [
   // Upstream Base UI behaviour in the library's own components
   {
     rule: "aria-hidden-focus",
-    selector: '[role="alertdialog"][aria-hidden="true"][tabindex="0"]',
+    selector: '.Toast[role="alertdialog"][aria-hidden="true"][tabindex="0"]',
     why: 'mui/base-ui#5659: Base UI 1.9 keeps a priority: "high" toast aria-hidden, but in the tab order, until keyboard focus enters the viewport (Tab or F6)',
     pages: ["/components/toast"],
     themes: ["light", "dark"],
@@ -444,9 +444,10 @@ async function auditToast(
     .getByRole("button", { name: check.name, exact: true })
     .first()
     .click({ timeout: POPUP_MS });
-  // A CSS locator, as getByRole skips the aria-hidden high-priority toast. It is strict, so the
-  // toast is the one element the selector matches, and all that it hands axe.
-  const selector = `[role="${check.toast}"]`;
+  // A CSS locator, as getByRole skips the aria-hidden high-priority toast. `Toast` is a class every
+  // Toast.Root has, so another dialog on the page can't match. The locator is strict: the toast is
+  // the one element the selector matches, and all that it hands axe.
+  const selector = `.Toast[role="${check.toast}"]`;
   const toast = page.locator(selector);
   // Base UI pauses the timeout while the pointer is over the toasts, so it cannot close mid-audit
   await toast.hover({ timeout: POPUP_MS });
