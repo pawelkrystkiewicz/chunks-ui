@@ -36,7 +36,9 @@ export function useCloseFocusRoot<Details extends OpenChangeDetails>(
       // A button, or the trigger's render element.
       // ponytail: a programmatic open keeps the last trigger, and a hover-opened Menu closed from
       // the keyboard gets it too, where Base UI's return at the unmount prefers the element focused
-      // before the open. Accepted: the trigger is where APG returns focus.
+      // before the open. Accepted: the trigger is where APG returns focus. Until an open carries a
+      // trigger (`defaultOpen`, `open` true at mount, `handle.open()` without one) there is none,
+      // and the popup hands nothing over: Base UI's return at the unmount stays.
       if (details.trigger) closeFocus.trigger.current = details.trigger as HTMLElement;
       return;
     }
@@ -91,7 +93,10 @@ export function useFocusOnClose<T extends HTMLElement>(
     const focusInside = () =>
       inside.contains(root.activeElement) || (leftForNowhere && doc.activeElement === doc.body);
     const closing = () => popup.hasAttribute("data-closed") && (when?.(popup) ?? true);
+    // Whether a key closed it: the trigger then shows its ring, as after Base UI's return
+    let byKey = false;
     const stopWaiting = () => {
+      doc.removeEventListener("keydown", onNextKeyDown, true);
       doc.removeEventListener("keypress", handOff, true);
       doc.removeEventListener("keyup", handOff, true);
     };
@@ -100,7 +105,14 @@ export function useFocusOnClose<T extends HTMLElement>(
     // takes it (its focus and blur handlers fire). Accepted for now.
     const handOff = () => {
       stopWaiting();
-      if (closing() && focusInside()) closeFocus.trigger.current?.focus({ preventScroll: true });
+      if (!closing() || !focusInside()) return;
+      // `focusVisible`, which lib.dom lacks
+      const options = { preventScroll: true, ...(byKey && { focusVisible: true }) };
+      closeFocus.trigger.current?.focus(options as FocusOptions);
+    };
+    // A held key repeats its keydown: only a new key ends the wait
+    const onNextKeyDown = (event: KeyboardEvent) => {
+      if (!event.repeat) handOff();
     };
     const observer = new MutationObserver(() => {
       if (!closing()) return;
@@ -108,17 +120,24 @@ export function useFocusOnClose<T extends HTMLElement>(
       closeFocus.close.current = undefined;
       const event = close?.event;
       // A mouse or pen press closes it before the browser moves focus to what was pressed, and a
-      // touch outside (a tap or a scroll) would scroll the page to the trigger where `preventScroll`
-      // is unsupported: leave focus to the browser and Base UI, not through the trigger (its focus
-      // and blur handlers would fire). A hover close keeps Base UI's choice not to return focus.
+      // touch outside (a scroll, or a tap, which closes a Combobox on its click) would scroll the
+      // page to the trigger where `preventScroll` is unsupported: leave focus to the browser and
+      // Base UI, not through the trigger (its focus and blur handlers would fire). A hover close
+      // keeps Base UI's choice not to return focus.
       if (event?.type === "pointerdown" || event?.type === "mousedown") return;
-      if (close?.reason === "outside-press" && event?.type !== "click") return;
+      const touch = event !== undefined && "pointerType" in event && event.pointerType === "touch";
+      if (close?.reason === "outside-press" && (event?.type !== "click" || touch)) return;
       if (close?.reason === "trigger-hover") return;
       // Enter with nothing highlighted is not default-prevented: its keypress would click the
-      // trigger and reopen the popup. A click made by Enter or Space (no click count) still has its
-      // keyup to come, which a browser may turn into a click on the trigger. Wait for either.
+      // trigger and reopen the popup. After a click made by a key (no click count) that key's keyup
+      // may be to come (a Base UI item clicks on the keydown), and a browser may turn it into a
+      // click on the trigger. So wait for the keypress or the keyup, or for the next key's keydown:
+      // a native button's Space clicks on its keyup, and with key rollover the Tab goes down before
+      // Enter comes up. The Tab then leaves from the trigger.
       const keyClick = event?.type === "click" && "detail" in event && event.detail === 0;
+      byKey = keyClick || event?.type.startsWith("key") === true;
       if ((event?.type === "keydown" && !event.defaultPrevented) || keyClick) {
+        doc.addEventListener("keydown", onNextKeyDown, true);
         doc.addEventListener("keypress", handOff, true);
         doc.addEventListener("keyup", handOff, true);
       } else {

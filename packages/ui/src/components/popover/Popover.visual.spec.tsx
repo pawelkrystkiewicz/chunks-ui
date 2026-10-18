@@ -120,6 +120,18 @@ describe.each([
     expect(document.activeElement).toBe(after);
   });
 
+  // A native button's Space clicks on the keyup: no key is left to wait for but the Tab
+  it("moves a Tab pressed during the exit past the trigger, after Popover.Close by Space", async () => {
+    const { popup, after } = await openPopover();
+    await userEvent.keyboard("{Tab}");
+    const checkTab = recordTab(popup);
+    await userEvent.keyboard(" {Tab}");
+    checkTab();
+    expect(document.activeElement).toBe(after);
+    await unmounted(popup);
+    expect(document.activeElement).toBe(after);
+  });
+
   // A click and a key press are two calls, too far apart for the one frame of reduced motion
   it.skipIf(reduce)(
     "moves a Tab pressed during the exit past the trigger, after Popover.Close by click",
@@ -135,10 +147,12 @@ describe.each([
     },
   );
 
+  // Opened by mouse: the ring after Escape comes from the keyboard close, as in Base UI's return
   it("moves focus to the trigger on Escape", async () => {
     const { popup, trigger } = await openPopover();
     await userEvent.keyboard("{Escape}");
     expect(document.activeElement).toBe(trigger);
+    expect(trigger.matches(":focus-visible"), "the trigger shows its ring").toBe(true);
     await unmounted(popup);
     expect(document.activeElement).toBe(trigger);
   });

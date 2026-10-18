@@ -158,6 +158,18 @@ describe.each([
     expect(document.activeElement).toBe(after);
   });
 
+  // Key rollover: the item clicks on Enter's keydown, and Tab goes down before Enter comes up
+  it("moves a Tab pressed during the exit past the trigger, with Enter held over it", async () => {
+    const { popup, after } = await openMenu();
+    await userEvent.keyboard("{ArrowDown}");
+    const checkTab = recordTab(popup);
+    await userEvent.keyboard("{Enter>}{Tab}{/Enter}");
+    checkTab();
+    expect(document.activeElement).toBe(after);
+    await unmounted(popup);
+    expect(document.activeElement).toBe(after);
+  });
+
   // A click and a key press are two calls, too far apart for the one frame of reduced motion
   it.skipIf(reduce)(
     "moves a Tab pressed during the exit past the trigger, after a pick by click",

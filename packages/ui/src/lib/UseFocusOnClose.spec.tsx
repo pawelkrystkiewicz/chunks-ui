@@ -126,6 +126,12 @@ describe("useFocusOnClose", () => {
     { close: "a mouse press outside", event: new MouseEvent("mousedown"), reason: "outside-press" },
     // A tap or a scroll: a focus() may scroll the page where `preventScroll` is unsupported
     { close: "a touch outside", event: new Event("touchend"), reason: "outside-press" },
+    // Combobox closes on the tap's click (touch: "intentional")
+    {
+      close: "a touch tap outside, on its click",
+      event: new PointerEvent("click", { pointerType: "touch", bubbles: true, detail: 1 }),
+      reason: "outside-press",
+    },
     { close: "a hover", event: new MouseEvent("mouseleave"), reason: "trigger-hover" },
   ])("leaves focus to the browser after $close", async ({ event, reason }) => {
     const { getByRole } = await openThenClose(details(reason, event));
@@ -140,12 +146,40 @@ describe("useFocusOnClose", () => {
     expect(document.activeElement).toBe(getByRole("textbox", { name: "Inside" }));
   });
 
-  // A click from Enter or Space has no click count (detail 0): its keyup would reach the trigger
-  it.each([
+  // A click from Enter or Space has no click count (detail 0). Its keyup may be to come (a Base UI
+  // item clicks on the keydown), or gone (a native button's Space clicks on the keyup).
+  const keyCloses = [
     { close: "a keydown that is not default-prevented", event: new KeyboardEvent("keydown") },
     { close: "a click made by a key", event: new MouseEvent("click", { detail: 0 }) },
-  ])("waits for the keyup after $close", async ({ event }) => {
+  ];
+
+  it.each(keyCloses)("waits after $close, and hands over at the keyup", async ({ event }) => {
     const { trigger, getByRole } = await openThenClose(details("item-press", event));
+    expect(document.activeElement).toBe(getByRole("textbox", { name: "Inside" }));
+    document.dispatchEvent(new KeyboardEvent("keyup"));
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  // Before the key's own handlers and its default: a Tab then leaves from the trigger
+  it.each(keyCloses)("hands over at the next key's keydown after $close", async ({ event }) => {
+    const { trigger } = await openThenClose(details("item-press", event));
+    let focusedAtTab: Element | null = null;
+    document.addEventListener(
+      "keydown",
+      () => {
+        focusedAtTab = document.activeElement;
+      },
+      { once: true },
+    );
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab" }));
+    expect(focusedAtTab).toBe(trigger);
+  });
+
+  it("does not hand over at a held key's repeated keydown", async () => {
+    const { trigger, getByRole } = await openThenClose(
+      details("item-press", new MouseEvent("click", { detail: 0 })),
+    );
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", repeat: true }));
     expect(document.activeElement).toBe(getByRole("textbox", { name: "Inside" }));
     document.dispatchEvent(new KeyboardEvent("keyup"));
     expect(document.activeElement).toBe(trigger);
