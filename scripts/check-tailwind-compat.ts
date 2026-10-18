@@ -7,9 +7,10 @@
  *
  * Tailwind does not scan CSS files, so a utility that theme.css (or a stylesheet it imports)
  * defines with `@utility` and that no component uses (`touch-target`) would not be compiled. Both
- * versions also scan a file that lists each of those utilities and the CLASSNAME_SIZES, and the
- * installed one must generate the utilities. The run fails when that list is empty or lacks `touch-target`, or when an
- * import of the theme does not resolve, so the check cannot pass without testing anything.
+ * versions also scan a file that lists each of those utilities and the CLASSNAME_SIZES, and
+ * the installed one must generate the utilities. The run fails when the utility list is empty or
+ * lacks `touch-target`, or when an import of the theme does not resolve, so the check cannot pass
+ * without testing anything.
  *
  * It also fails when either version puts the classes of TOUCH_ORDER out of the order the touch
  * rule of `FIELD_TEXT_SIZE` needs.
@@ -70,13 +71,14 @@ const CLASSNAME_SIZES = [
  *   variant sorts after the breakpoints.
  * - `md:text-lg`: the same `md:`, and the arbitrary variant on top.
  * - `[@media(pointer:coarse)]:text-lg`: the same arbitrary variant, and `md:` on top.
- * Left out: an arbitrary or compound variant that sorts after `[@media(pointer:coarse)]` (`lg:[@media(pointer:coarse)]:text-sm`,
- * `[@supports(display:grid)]:text-sm`) still wins on a coarse `md` screen, and no pair can rule that out;
- * `max-md:text-base`, which does not apply from `md` up; `pointer-coarse:text-lg`,
- * which 4.0 does not generate (FieldTextSize.touch.visual.spec.tsx covers it on the installed
- * version); a `md:[@media(pointer:coarse)]:` size, which tailwind-merge keeps in place of
- * TOUCH_SIZE; sizes under other named variants (`xl:`, `max-lg:`, `dark:`), which sort before an
- * arbitrary variant as `sm:` and `lg:` do.
+ * ponytail: left out: an arbitrary or compound variant that sorts after `[@media(pointer:coarse)]`
+ * (`lg:[@media(pointer:coarse)]:text-sm`, `[@supports(display:grid)]:text-sm`) still wins on a
+ * coarse `md` screen, and no pair can rule that out; `max-md:text-base`, which does not apply from
+ * `md` up; `pointer-coarse:text-lg`, which 4.0 does not generate
+ * (FieldTextSize.touch.visual.spec.tsx covers it on the installed version); a
+ * `md:[@media(pointer:coarse)]:` size, which tailwind-merge keeps in place of TOUCH_SIZE; sizes
+ * under other named variants (`xl:`, `max-lg:`, `dark:`), which sort before an arbitrary variant as
+ * `sm:` and `lg:` do.
  */
 const TOUCH_ORDER: readonly (readonly [before: string, after: string])[] = [
   ["text-sm", TOUCH_SIZE],
