@@ -51,10 +51,6 @@ describe("kitchen sink Selects", () => {
 
       expect(trigger.textContent).toBe("All statuses");
       expect(shown()).toEqual(TASKS.map((t) => t.id));
-      // The rows show the priority's label, not the raw value ("critical")
-      expect(screen.getAllByText("Critical")).toHaveLength(
-        TASKS.filter((t) => t.priority === "critical").length,
-      );
       expect(error).not.toHaveBeenCalled();
     } finally {
       error.mockRestore();
@@ -89,4 +85,12 @@ describe("kitchen sink Selects", () => {
       expect(trigger.textContent).toBe("Bob Rivera");
     });
   });
+});
+
+it("the task table shows the priority's label, not the raw value", () => {
+  render(<TaskTable />);
+
+  expect(screen.getAllByText("Critical")).toHaveLength(
+    TASKS.filter((t) => t.priority === "critical").length,
+  );
 });

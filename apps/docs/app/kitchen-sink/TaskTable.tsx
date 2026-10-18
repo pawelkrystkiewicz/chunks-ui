@@ -20,9 +20,11 @@ const statusColors: Record<TaskStatus, string> = {
   done: "bg-success/10 text-success-text",
 };
 
-const statusLabel = (status: TaskStatus) => STATUS_OPTIONS.find((o) => o.value === status)?.label;
+// A value missing from the options shows as is, not as an empty cell
+const statusLabel = (status: TaskStatus) =>
+  STATUS_OPTIONS.find((o) => o.value === status)?.label ?? status;
 const priorityLabel = (priority: TaskPriority) =>
-  PRIORITY_OPTIONS.find((o) => o.value === priority)?.label;
+  PRIORITY_OPTIONS.find((o) => o.value === priority)?.label ?? priority;
 
 // The `null` item takes the filter off; as a label in `items`, it also names the empty trigger
 const STATUS_FILTER_OPTIONS = [{ value: null, label: "All statuses" }, ...STATUS_OPTIONS];
