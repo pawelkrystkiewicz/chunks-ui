@@ -109,10 +109,12 @@ async function expectRefAndIndicator(part: Part, kind: RefKind, path: "css" | "m
     if (kind !== "undefined") expect(tg.received()).toBe(part === "Root" ? tg.group : tg.beta);
   };
   expectRefHolds();
-  await expect.poll(() => tg.indicator()).not.toBeNull();
+  await expect.poll(() => tg.indicator(), { timeout: SETTLE_TIMEOUT_MS }).not.toBeNull();
   // The CSS fallback has a transition class that Motion's path drops
   await expect
-    .poll(() => tg.indicator()?.classList.contains("micro-interactions"))
+    .poll(() => tg.indicator()?.classList.contains("micro-interactions"), {
+      timeout: SETTLE_TIMEOUT_MS,
+    })
     .toBe(path === "css");
   expect(await settledIndicatorOver(tg.group, tg.alpha)).toEqual(COVERS);
 
@@ -176,7 +178,9 @@ describe.each([
     const beta = getByRole("button", { name: "Beta, a longer item" });
     // The path under test drives the indicator: the CSS fallback has a class Motion's path drops
     await expect
-      .poll(() => group.querySelector(":scope > span")?.classList.contains("micro-interactions"))
+      .poll(() => group.querySelector(":scope > span")?.classList.contains("micro-interactions"), {
+        timeout: SETTLE_TIMEOUT_MS,
+      })
       .toBe(reducedMotion === "reduce");
     expect(await settledIndicatorOver(group, alpha)).toEqual(COVERS);
     await userEvent.click(beta);
@@ -630,7 +634,7 @@ describe.each(MOTION_PATHS)("ToggleGroup indicator on a resize, $path", ({ withM
 
     rerender(sized(FIXED));
     const alpha = getByRole("button", { name: "Alpha" });
-    await expect.poll(indicator).not.toBeNull();
+    await expect.poll(indicator, { timeout: SETTLE_TIMEOUT_MS }).not.toBeNull();
     await waitForStable(() => offBy(alpha, indicator() ?? alpha));
     expect(offBy(alpha, indicator() ?? alpha)).toBeLessThanOrEqual(1);
   });
@@ -956,7 +960,7 @@ describe("ToggleGroup pill from server HTML to the measured indicator", () => {
       expect(before, "the item dims its own pill").toBe(0.5);
 
       app = hydrateRoot(host, page);
-      await expect.poll(indicator).not.toBeNull();
+      await expect.poll(indicator, { timeout: SETTLE_TIMEOUT_MS }).not.toBeNull();
       const shown = indicator();
       if (!shown) throw new Error("No indicator after hydration");
       expect(opacityIn(group, shown)).toBe(before);
@@ -987,7 +991,9 @@ describe("ToggleGroup pill from server HTML to the measured indicator", () => {
         </ToggleGroup.Root>,
       );
       const item = getByRole("button", { name: own === "a" ? "Alpha" : "Beta" });
-      await expect.poll(() => host.querySelector("[role='group'] > span")).not.toBeNull();
+      await expect
+        .poll(() => host.querySelector("[role='group'] > span"), { timeout: SETTLE_TIMEOUT_MS })
+        .not.toBeNull();
       const before = getComputedStyle(item, "::before");
       expect(before.display).toBe("block");
       expect(before.width).toBe("4px");

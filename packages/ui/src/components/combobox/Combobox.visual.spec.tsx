@@ -17,6 +17,7 @@ import {
   renderFixture,
   renderPage,
   ringColor,
+  SETTLE_TIMEOUT_MS,
   settled,
   waitForStable,
 } from "../../VisualTest.utils";
@@ -462,7 +463,9 @@ describe("Combobox.Popup closing, Motion", () => {
   it("fades and scales out, closed at rest", async () => {
     const { rerender, getByTestId } = render(below(true));
     const popup = getByTestId("popup");
-    await expect.poll(() => getComputedStyle(popup).opacity).toBe("1");
+    await expect
+      .poll(() => getComputedStyle(popup).opacity, { timeout: SETTLE_TIMEOUT_MS })
+      .toBe("1");
     await settled(popup);
     rerender(below(false));
     const frames = await framesOf(popup);

@@ -2,7 +2,7 @@ import react from "@vitejs/plugin-react";
 import { playwright } from "@vitest/browser-playwright";
 import { defineConfig } from "vitest/config";
 import type { BrowserCommand } from "vitest/node";
-import type { AccessibilityNode, EmulatedMedia } from "./src/VisualTest.utils";
+import type { AccessibilityNode, EmulatedMedia } from "./src/VisualTest.utils.tsx";
 
 /**
  * The runner's browser window, in CSS px. Vitest scales the test page down until it fits the

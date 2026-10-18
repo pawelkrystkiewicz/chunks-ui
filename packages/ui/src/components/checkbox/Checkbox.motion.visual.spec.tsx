@@ -1,7 +1,7 @@
 import { render } from "@testing-library/react";
 import { beforeAll, describe, expect, it } from "vitest";
 import { reloadMotion } from "../../lib/use-motion";
-import { eachPaintedFrame, insetsWithin } from "../../VisualTest.utils";
+import { eachPaintedFrame, insetsWithin, SETTLE_TIMEOUT_MS } from "../../VisualTest.utils";
 import { Checkbox } from "./index";
 
 // Runs with reduced motion off, so Motion springs the indicator. Checkbox.Root does not clip its
@@ -30,7 +30,9 @@ describe("Checkbox indicator with Motion", () => {
       eachPaintedFrame(() => Math.min(...Object.values(insetsWithin(box, indicator))), FRAMES);
 
     // Motion hides the unchecked indicator in its first frame; a click before that skips the spring
-    await expect.poll(() => getComputedStyle(indicator).opacity).toBe("0");
+    await expect
+      .poll(() => getComputedStyle(indicator).opacity, { timeout: SETTLE_TIMEOUT_MS })
+      .toBe("0");
     box.click();
     const checking = await frames();
     box.click();

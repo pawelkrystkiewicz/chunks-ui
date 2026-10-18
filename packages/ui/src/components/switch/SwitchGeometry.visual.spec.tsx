@@ -21,8 +21,9 @@ import { Switch } from "./index";
 const SPACINGS_PX = [3, 4, 4.8, 6];
 
 const PATHS = [
-  // Motion is a dev dependency of this package. With no reduced-motion preference the thumb is
-  // swapped for a `motion.span` after mount and moves with a spring.
+  // Motion is a dev dependency of this package. With no reduced-motion preference Motion drives
+  // the thumb in place: the same `span` drops its CSS translate and transition classes, and
+  // Motion springs its inline transform.
   { path: "Motion spring", reducedMotion: false },
   // With `prefers-reduced-motion: reduce` the thumb keeps the CSS translate classes. This is the
   // same render that ships when Motion is not installed (the transition is off, the geometry is not).
@@ -83,7 +84,9 @@ async function expectThumbGeometry({
     </div>,
   );
   const track = getByRole("switch");
-  // The Motion path replaces the thumb element once Motion loads, so always query it.
+  // The same element on both paths. Motion's path drops its `micro-interactions` class once
+  // Motion drives it, which can be after mount: a thumb that mounts before Motion has loaded
+  // starts on the CSS classes and is handed over when Motion arrives.
   const isCssThumb = () => getByTestId("thumb").classList.contains("micro-interactions");
   const expectThumbRestsAt = async (state: State) => {
     expect(track.getAttribute("aria-checked")).toBe(String(state === "checked"));
