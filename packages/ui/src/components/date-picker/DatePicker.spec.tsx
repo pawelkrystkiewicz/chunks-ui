@@ -187,6 +187,13 @@ describe("DatePicker", () => {
     expect(container.firstChild).not.toHaveClass("text-lg");
   });
 
+  it("puts triggerClassName on the trigger when a form input is rendered", () => {
+    render(<DatePicker name="d" triggerClassName="h-12" />);
+    const trigger = screen.getByRole("button", { name: "Pick a date" });
+    expect(trigger).toHaveClass("h-12");
+    expect(trigger).not.toHaveClass("h-ui-height");
+  });
+
   it("lets a triggerClassName colour replace the muted placeholder colour", () => {
     render(<DatePicker triggerClassName="text-foreground" />);
     const trigger = screen.getByRole("button", { name: "Pick a date" });
