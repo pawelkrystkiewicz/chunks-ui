@@ -338,9 +338,9 @@ async function startServer() {
 }
 
 /**
- * Runs axe on the page, or on the elements `scope.selector` matches alone with TAGS plus the rules
- * `scope.rules` names, and returns the violations ALLOWED does not excuse, recording each entry that
- * excused one in `matched`
+ * Runs axe with TAGS plus the rules `scope.rules` names, on the page or on the elements
+ * `scope.selector` matches alone, and returns the violations ALLOWED does not excuse, recording
+ * each entry that excused one in `matched`
  */
 async function axe(
   page: Page,
@@ -445,7 +445,10 @@ async function auditPopup(
   return problems;
 }
 
-/** Adds `check`'s toast on its loaded page, runs axe on it alone, and closes it with Escape */
+/**
+ * Adds `check`'s toast on its loaded page, runs axe on it alone, audits a high-priority toast again
+ * once F6 has focused it, and closes it with Escape, also when a step threw
+ */
 async function auditToast(
   page: Page,
   check: ToastCheck,
