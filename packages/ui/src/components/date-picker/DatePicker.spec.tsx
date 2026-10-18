@@ -13,6 +13,7 @@ import {
   onTestFinished,
   vi,
 } from "vitest";
+import { expectOnlyFocusGuardsUndecided } from "../../AxeTest.utils";
 import { createDate } from "../calendar/date";
 import { Field } from "../field";
 import { DatePicker } from "./DatePicker";
@@ -220,7 +221,11 @@ describe("DatePicker", () => {
     // The popup is portalled out of the container RTL hands back, so audit the body. It is a
     // dialog, which the region rule exempts, so the rule stays on.
     expect(container).not.toContainElement(screen.getByRole("dialog"));
-    expect(await axe(document.body)).toHaveNoViolations();
+    const results = await axe(document.body);
+    expect(results).toHaveNoViolations();
+    // axe takes the visible dialog for an open modal: aria-hidden-focus leaves focusable
+    // aria-hidden nodes in `incomplete`
+    expectOnlyFocusGuardsUndecided(results);
   });
 });
 

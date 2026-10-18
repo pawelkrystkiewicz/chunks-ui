@@ -191,6 +191,7 @@ The changelog entry links the PR that added the changeset (`@changesets/changelo
 - `**/__screenshots__/**` (visual baselines)
 - `vitest*.config.ts` and `vitest*.setup.ts` in the package root
 - `src/VisualTest.*` and `src/visual-test.css` (visual test helpers and styles, never bundled)
+- `src/AxeTest.*` (unit test helpers for axe audits, never bundled)
 - `scripts/**` (the package's own `scripts/check-dist.ts`, which checks `dist` and ships nothing)
 
 A PR that changes only these files passes the gate with no changeset. Any other file in `packages/ui` counts: source, `package.json` and build config such as `tsup.config.ts`. Keep `**` first in the list and add exclusions after it: a later positive pattern adds back the files an earlier negation removed (micromatch applies the list in order).

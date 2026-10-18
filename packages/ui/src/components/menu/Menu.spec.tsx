@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { configureAxe } from "jest-axe";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { undecided } from "../../AxeTest.utils";
 import { Menu } from "./Menu";
 
 afterEach(cleanup);
@@ -9,7 +10,9 @@ afterEach(cleanup);
 // aria-hidden-focus skips Base UI's focus guards, aria-hidden spans that hand focus on when Tab
 // reaches them. A browser's axe leaves them for review, as it takes the open menu's full-page
 // backdrop for a modal. jsdom can't hit-test the backdrop, so axe finds no modal and flags them.
-// The rule still checks every other aria-hidden node
+// The rule still checks every other aria-hidden node. Were axe to find a modal, it would leave a
+// stray one in `incomplete`, which toHaveNoViolations() does not read, so the audit also checks
+// that the rule left nothing there
 const axe = configureAxe({
   globalOptions: {
     rules: [
@@ -255,14 +258,14 @@ describe("Menu", () => {
     );
     // The popup is portalled out of the container RTL hands back, so audit the body
     expect(container).not.toContainElement(screen.getByRole("menu"));
-    expect(
-      await axe(document.body, {
-        rules: {
-          // A portalled menu sits outside any landmark, on a real page too, and the
-          // region rule exempts dialogs, not menus
-          region: { enabled: false },
-        },
-      }),
-    ).toHaveNoViolations();
+    const results = await axe(document.body, {
+      rules: {
+        // A portalled menu sits outside any landmark, on a real page too, and the
+        // region rule exempts dialogs, not menus
+        region: { enabled: false },
+      },
+    });
+    expect(results).toHaveNoViolations();
+    expect(undecided(results, "aria-hidden-focus")).toEqual([]);
   });
 });

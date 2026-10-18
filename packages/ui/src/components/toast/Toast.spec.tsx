@@ -2,6 +2,7 @@ import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { expectOnlyFocusGuardsUndecided, undecided } from "../../AxeTest.utils";
 import { FOCUS_RING } from "../shared";
 import { createToastManager, Toast, type ToastCloseProps } from "./Toast";
 import { DEFAULT_TOAST_LABELS } from "./Toast.Labels";
@@ -331,7 +332,11 @@ describe("Toast", () => {
     await screen.findByText("Saved");
     // The viewport renders in place, not in a portal, so the container audit sees the toast
     expect(container).toContainElement(screen.getByText("Saved"));
-    expect(await axe(container)).toHaveNoViolations();
+    const results = await axe(container);
+    expect(results).toHaveNoViolations();
+    // The toast's role="dialog" counts as an open modal for axe, so aria-hidden-focus leaves
+    // focusable aria-hidden nodes in `incomplete`
+    expectOnlyFocusGuardsUndecided(results);
   });
 
   it("has no a11y violations once F6 has moved focus into the viewport", async () => {
@@ -365,12 +370,9 @@ describe("Toast", () => {
     const results = await axe(container);
     expect(results).toHaveNoViolations();
     // The toast's role="dialog" counts as an open modal for axe, so aria-hidden-focus leaves
-    // focusable aria-hidden nodes in `incomplete`. Only the guards may be there
-    const undecided = results.incomplete
-      .filter((rule) => rule.id === "aria-hidden-focus")
-      .flatMap((rule) => rule.nodes);
-    expect(undecided).toHaveLength(guards.length);
-    for (const node of undecided) expect(node.html).toContain("data-base-ui-focus-guard");
+    // focusable aria-hidden nodes in `incomplete`. Only the guards may be there, all of them
+    expectOnlyFocusGuardsUndecided(results);
+    expect(undecided(results, "aria-hidden-focus")).toHaveLength(guards.length);
   });
 
   // Base UI 1.9 keeps a high-priority toast aria-hidden but in the tab order while keyboard focus
