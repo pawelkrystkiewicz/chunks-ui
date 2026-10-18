@@ -79,7 +79,7 @@ A disabled `Textarea` shows the not-allowed cursor and has no resize handle. Pas
 
 ## Text Size
 
-Below the `md` breakpoint (768px by default) the text is 16px, and from `md` up it is 14px, as in `Input`. A text-size class, such as `text-lg`, sets the size from `md` up. Below `md` a row of text is 4px taller (24px), so a `Textarea` sized by its `rows` is taller there. See [Text Size](/components/input#text-size) in `Input` for the reason and the limits.
+Below the `md` breakpoint (768px by default) the text is 16px, so iOS Safari does not zoom the page when the field takes focus (it zooms into text under 16px); from `md` up it is 14px, as in `Input`. A text-size class, such as `text-lg`, sets the size from `md` up, and a `max-md:` class, such as `max-md:text-lg`, sets it below. Below `md` a row of text is 4px taller (24px), so a `Textarea` sized by its `rows` is taller there. See [Text Size](/components/input#text-size) in `Input` for the limits.
 
 ## Props
 
