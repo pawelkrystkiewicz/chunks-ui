@@ -11,6 +11,9 @@
  * generate them all. The run fails when that list is empty or lacks `touch-target`, or when an
  * import of the theme does not resolve, so the check cannot pass without testing anything.
  *
+ * It also fails when either version puts the classes of TOUCH_ORDER out of the order the touch
+ * rule of `FIELD_TEXT_SIZE` needs.
+ *
  * The installed version compiles in this process, with the `@tailwindcss/node` and
  * `@tailwindcss/oxide` from bun.lock. The oldest compiles with the CLI installed from the
  * committed fixture in scripts/tailwind-4.0 (`bun install --frozen-lockfile` in a throwaway
@@ -38,6 +41,45 @@ const KNOWN_CLASS = "disabled:pointer-events-none";
  */
 const KNOWN_UTILITY = "touch-target";
 const ESCAPE = /\\([0-9a-fA-F]{1,6}) ?|\\(.)/g;
+
+/**
+ * The touch size of `FIELD_TEXT_SIZE` (packages/ui/src/components/shared.ts): 16px on a touch
+ * screen from `md` up (#587). The built code is its only source, so the check fails when
+ * `FIELD_TEXT_SIZE` drops it, instead of passing on a stale name.
+ */
+const TOUCH_SIZE = "md:[@media(pointer:coarse)]:text-base";
+/**
+ * Sizes a `className` can give a field that tailwind-merge keeps beside TOUCH_SIZE (`text-lg`
+ * replaces `text-sm`). No component uses them, so both versions also scan them.
+ */
+const CLASSNAME_SIZES = [
+  "text-lg",
+  "sm:text-lg",
+  "md:text-lg",
+  "lg:text-lg",
+  "[@media(pointer:coarse)]:text-lg",
+];
+/**
+ * Pairs [before, after] that the CSS must have in this order. Each class is one class selector in
+ * `@layer utilities`, so where both apply, on a touch screen from `md` up, the later rule sets the
+ * font size, and TOUCH_SIZE must be the later one (the check compares the last rule of `before`
+ * with the first rule of `after`):
+ * - `text-sm` (`FIELD_TEXT_SIZE`'s own size) and `text-lg`: a utility without a variant sorts
+ *   before every utility with one.
+ * - `sm:text-lg` (every `md` screen) and `lg:text-lg` (an iPad held sideways): an arbitrary
+ *   variant sorts after the breakpoints.
+ * - `md:text-lg`: the same `md:`, and the arbitrary variant on top.
+ * - `[@media(pointer:coarse)]:text-lg`: the same arbitrary variant, and `md:` on top.
+ * Left out: `max-md:text-base`, which does not apply from `md` up; `pointer-coarse:text-lg`,
+ * which 4.0 does not generate (FieldTextSize.touch.visual.spec.tsx covers it on the installed
+ * version); a `md:[@media(pointer:coarse)]:` size, which tailwind-merge keeps in place of
+ * TOUCH_SIZE; sizes under other variants (`xl:`, `max-lg:`, `dark:`), which sort before an
+ * arbitrary variant as `sm:` and `lg:` do.
+ */
+const TOUCH_ORDER: readonly (readonly [before: string, after: string])[] = [
+  ["text-sm", TOUCH_SIZE],
+  ...CLASSNAME_SIZES.map((name) => [name, TOUCH_SIZE] as const),
+];
 
 /** The names of the utilities that `css` defines with `@utility`, without functional ones (`tab-*`). */
 export function themeUtilities(css: string): string[] {
@@ -91,23 +133,56 @@ export function assertThemeUtilities(utilities: readonly string[]) {
   }
 }
 
-/** The class names in the selectors of compiled CSS, unescaped. */
-export function classNames(css: string): Set<string> {
-  const names = new Set<string>();
+/**
+ * The class names in each selector or at-rule of compiled CSS, unescaped, in the order of the CSS:
+ * one list per "{", empty for an at-rule.
+ */
+function selectorClasses(css: string): string[][] {
   const chunks = css.replace(/\/\*[\s\S]*?\*\//g, "").split("{");
-  for (const chunk of chunks.slice(0, -1)) {
+  return chunks.slice(0, -1).map((chunk) => {
     // The selector or at-rule before this "{": what follows the last declaration or block
     const selector = chunk.slice(Math.max(chunk.lastIndexOf("}"), chunk.lastIndexOf(";")) + 1);
-    for (const [, name = ""] of selector.matchAll(CLASS)) {
-      if (/^\d/.test(name)) continue; // a number such as 0.5rem
-      names.add(
+    return [...selector.matchAll(CLASS)]
+      .map(([, name = ""]) => name)
+      .filter((name) => !/^\d/.test(name)) // a number such as 0.5rem
+      .map((name) =>
         name.replace(ESCAPE, (_, hex, char) =>
           hex ? String.fromCodePoint(parseInt(hex, 16)) : char,
         ),
       );
-    }
+  });
+}
+
+/** The class names in the selectors of compiled CSS, unescaped. */
+export function classNames(css: string): Set<string> {
+  return new Set(selectorClasses(css).flat());
+}
+
+/**
+ * What is wrong with the order of `pairs` in `css`, the output of Tailwind `version`: a class it
+ * does not generate, or a rule of `before` after a rule of `after`. A class counts only in a
+ * selector, by its whole name, not in a declaration or inside another class's name.
+ */
+export function orderProblems(
+  css: string,
+  version: string,
+  pairs: readonly (readonly [before: string, after: string])[] = TOUCH_ORDER,
+): string[] {
+  const rules = selectorClasses(css);
+  const first = (name: string) => rules.findIndex((names) => names.includes(name));
+  const last = (name: string) => rules.findLastIndex((names) => names.includes(name));
+  const absent = [...new Set(pairs.flat())].filter((name) => first(name) < 0);
+  if (absent.length > 0) {
+    return [
+      `Tailwind ${version} did not generate ${absent.join(", ")}: FIELD_TEXT_SIZE changed (update TOUCH_ORDER in scripts/check-tailwind-compat.ts), or the scan broke.`,
+    ];
   }
-  return names;
+  return pairs
+    .filter(([before, after]) => last(before) > first(after))
+    .map(
+      ([before, after]) =>
+        `Tailwind ${version} puts ${before} after ${after}: on a touch screen from md up, a field with both takes the size of ${before}. The touch rule of FIELD_TEXT_SIZE needs ${before} first.`,
+    );
 }
 
 /** The classes in `installed` that `oldest` lacks, sorted. */
@@ -134,10 +209,13 @@ export function scanProblem(
   }
 }
 
-/** The input both versions compile: the built theme, and `utilities`, a file that names the theme's own utilities. */
-function input(utilities: string): string {
+/**
+ * The input both versions compile: the built theme, and `list`, a file that names the theme's own
+ * utilities and CLASSNAME_SIZES.
+ */
+function input(list: string): string {
   const path = (file: string) => JSON.stringify(file.replaceAll("\\", "/"));
-  return `@import "tailwindcss" source(none);\n@import ${path(THEME)};\n@source ${path(utilities)};\n`;
+  return `@import "tailwindcss" source(none);\n@import ${path(THEME)};\n@source ${path(list)};\n`;
 }
 
 function run(cmd: string[], cwd: string) {
@@ -175,8 +253,8 @@ async function compileBoth() {
   assertThemeUtilities(utilities);
   const dir = mkdtempSync(join(tmpdir(), `tailwind-${OLDEST}-`));
   try {
-    const list = join(dir, "theme-utilities.html");
-    await Bun.write(list, `${utilities.join("\n")}\n`);
+    const list = join(dir, "classes.html");
+    await Bun.write(list, `${[...utilities, ...CLASSNAME_SIZES].join("\n")}\n`);
     const css = input(list);
     return {
       utilities,
@@ -201,11 +279,12 @@ if (import.meta.main) {
       `Tailwind ${version} generates these classes for chunks-ui, and ${OLDEST} does not (a name can come from a word in a comment or string in the built files the theme's @source scans, not only a class in use):\n${missing.map((name) => `  ${name}`).join("\n")}`,
     );
   }
+  problems.push(...orderProblems(oldest, OLDEST), ...orderProblems(installed, version));
   if (problems.length > 0) {
     for (const problem of problems) console.error(problem);
     process.exit(1);
   }
   console.log(
-    `Tailwind ${OLDEST} generates all ${classNames(installed).size} classes that ${version} does.`,
+    `Tailwind ${OLDEST} generates all ${classNames(installed).size} classes that ${version} does, and both order the touch rule's classes as it needs.`,
   );
 }
