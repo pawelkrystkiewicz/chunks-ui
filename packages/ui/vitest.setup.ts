@@ -25,3 +25,6 @@ Object.defineProperty(window, "matchMedia", {
     dispatchEvent: () => false,
   }),
 });
+
+// axe's elementsFromPoint polyfill calls this, and without it aria-hidden-focus could never fail
+document.elementFromPoint = () => null;
