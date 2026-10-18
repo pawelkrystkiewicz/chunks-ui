@@ -109,7 +109,8 @@ export function TaskTable() {
           className="sm:max-w-xs"
         />
         <Select.Root
-          value={statusFilter ?? undefined}
+          items={STATUS_OPTIONS}
+          value={statusFilter}
           onValueChange={(val) => setStatusFilter(val || null)}
         >
           <Select.Trigger className="w-40" aria-label="Status">
