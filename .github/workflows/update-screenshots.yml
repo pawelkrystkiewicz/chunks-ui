@@ -106,9 +106,8 @@ jobs:
           REPO: ${{ github.repository }}
         run: git push "https://x-access-token:${GH_PAT}@github.com/${REPO}.git" "HEAD:${REF_NAME}"
 
-      # pretty summary for humans; "pushed" only on a successful push, and an empty CHANGES means
-      # the run stopped before check_changes set its output (an earlier step failed or the run was
-      # cancelled), not "up to date"
+      # pretty summary for humans: "pushed" only on a successful push; an empty CHANGES means an
+      # earlier step failed or the run was cancelled, not "up to date"
       - name: Summary
         if: always()
         run: |
