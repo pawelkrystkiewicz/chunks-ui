@@ -129,9 +129,12 @@ const POPUPS: Popup[] = [
  * their button has no aria-expanded or aria-controls, and Escape closes one only with focus inside
  * it. Base UI gives a toast role "dialog", or "alertdialog" with `priority: "high"`. ALLOWED
  * applies as to its page.
- * The high-priority toast is aria-hidden while audited, so only the few axe rules that read hidden
- * content (aria-hidden-focus among them) check it; the default one covers the same markup with the
- * name and ARIA rules.
+ * The high-priority toast is aria-hidden until keyboard focus enters its viewport, so its first
+ * audit gets only the few axe rules that read hidden content (aria-hidden-focus and color-contrast
+ * among them). The run then presses F6, which moves focus into the viewport, checks aria-hidden is
+ * gone, and audits the toast again ("focused with F6"), now with the ARIA attribute and role rules,
+ * and the name rules for any button it has. Neither audit checks a toast's own name: axe does that
+ * only in aria-dialog-name, a best-practice rule outside TAGS.
  */
 type ToastCheck = { page: string; name: string; toast: "dialog" | "alertdialog" };
 
@@ -459,6 +462,29 @@ async function auditToast(
     // Base UI pauses the timeout while the pointer is over the toasts, so it cannot close mid-audit
     await toast.hover({ timeout: POPUP_MS });
     problems.push(...(await axe(page, check.page, theme, matched, { selector, label })));
+    if (check.toast === "alertdialog") {
+      // F6 moves keyboard focus into the viewport, and Base UI then clears the toast's aria-hidden.
+      // The focus guards it also renders sit beside the toast, outside the audit's scope.
+      await page.keyboard.press("F6");
+      const focused = { selector, label: `${label}, focused with F6` };
+      // Reported, not thrown, so the first audit's results above still count
+      const failure = await page
+        .locator(`${selector}:not([aria-hidden])`)
+        .waitFor({ timeout: POPUP_MS })
+        .then(
+          () => undefined,
+          (error) => String(error),
+        );
+      if (failure) {
+        problems.push({
+          page: focused.label,
+          theme,
+          rule: "toast",
+          help: "F6 did not clear the toast's aria-hidden, so it was not audited focused",
+          targets: [failure],
+        });
+      } else problems.push(...(await axe(page, check.page, theme, matched, focused)));
+    }
   } finally {
     // Gone before the next one, also when the audit threw: axe reports aria-hidden-focus as
     // incomplete while a dialog is open. A failed close is caught, so it never replaces the audit's
