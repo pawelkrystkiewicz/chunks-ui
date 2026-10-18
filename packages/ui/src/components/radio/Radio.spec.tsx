@@ -1,7 +1,8 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { reloadMotion } from "../../lib/use-motion";
 import { FOCUS_RING } from "../shared";
 import { Radio } from "./Radio";
 
@@ -43,6 +44,55 @@ describe("Radio", () => {
       </Radio.Group>,
     );
     expect(screen.getByTestId("ind")).toHaveClass("custom");
+  });
+
+  it("draws the dot without children", () => {
+    render(
+      <Radio.Group defaultValue="a">
+        <Radio.Root value="a" aria-label="A">
+          <Radio.Indicator data-testid="ind" />
+        </Radio.Root>
+      </Radio.Group>,
+    );
+    expect(screen.getByTestId("ind").firstElementChild).toHaveClass("rounded-full", "bg-primary");
+  });
+
+  it("renders the children of Indicator in place of the dot", () => {
+    render(
+      <Radio.Group defaultValue="a">
+        <Radio.Root value="a" aria-label="A">
+          <Radio.Indicator data-testid="ind">★</Radio.Indicator>
+        </Radio.Root>
+      </Radio.Group>,
+    );
+    const indicator = screen.getByTestId("ind");
+    expect(indicator).toHaveTextContent(/^★$/);
+    expect(indicator.children).toHaveLength(0);
+  });
+
+  it("renders no dot in a render element", () => {
+    render(
+      <Radio.Group defaultValue="a">
+        <Radio.Root value="a" aria-label="A">
+          <Radio.Indicator render={<span data-testid="ind" />} />
+        </Radio.Root>
+      </Radio.Group>,
+    );
+    expect(screen.getByTestId("ind")).toBeEmptyDOMElement();
+  });
+
+  it("mounts a void render element on Indicator without an error", () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    render(
+      <Radio.Group defaultValue="a">
+        <Radio.Root value="a" aria-label="A">
+          <Radio.Indicator render={<img alt="" src="data:," data-testid="ind" />} />
+        </Radio.Root>
+      </Radio.Group>,
+    );
+    expect(consoleError).not.toHaveBeenCalled();
+    consoleError.mockRestore();
+    expect(screen.getByTestId("ind").tagName).toBe("IMG");
   });
 
   it("renders Item with label", () => {
@@ -102,6 +152,77 @@ describe("Radio", () => {
     await waitFor(() => {
       expect(screen.getByTestId("ind")).toBeInTheDocument();
     });
+  });
+});
+
+/** Runs `count` animation frames, in which Motion writes its values */
+const frames = (count: number) =>
+  act(async () => {
+    for (let i = 0; i < count; i++) {
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+    }
+  });
+
+/** Radios "A" and "B", "A" selected, with a ★ in each indicator */
+function StarredGroup() {
+  return (
+    <Radio.Group defaultValue="a">
+      <Radio.Root value="a" aria-label="A">
+        <Radio.Indicator data-testid="ind-a">★</Radio.Indicator>
+      </Radio.Root>
+      <Radio.Root value="b" aria-label="B">
+        <Radio.Indicator data-testid="ind-b">★</Radio.Indicator>
+      </Radio.Root>
+    </Radio.Group>
+  );
+}
+
+describe.each([
+  // Motion never arrives: the CSS fallback renders
+  ["without Motion", () => void reloadMotion(new Promise(() => {}))],
+  ["with Motion", () => reloadMotion()],
+])("Radio.Indicator children %s", (_case, loadMotion) => {
+  beforeAll(loadMotion);
+  afterAll(() => reloadMotion());
+
+  it("shows the children in place of the dot, with no error or warning", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const user = userEvent.setup();
+    render(<StarredGroup />);
+    expect(screen.getByTestId("ind-a")).toHaveTextContent(/^★$/);
+    await user.click(screen.getByRole("radio", { name: "B" }));
+    await frames(10);
+
+    expect(screen.getByTestId("ind-b")).toHaveTextContent(/^★$/);
+    expect(screen.getByTestId("ind-b").children).toHaveLength(0);
+    expect(consoleError).not.toHaveBeenCalled();
+    expect(consoleWarn).not.toHaveBeenCalled();
+    consoleError.mockRestore();
+    consoleWarn.mockRestore();
+  });
+});
+
+describe("Radio.Indicator children with Motion", () => {
+  beforeAll(() => reloadMotion());
+
+  it("springs the children out and keeps them mounted, as it does the dot", async () => {
+    const user = userEvent.setup();
+    render(<StarredGroup />);
+    const indicator = screen.getByTestId("ind-a");
+    // Motion drives the indicator once it has written its resting values
+    await waitFor(() => expect(indicator.style.opacity).toBe("1"));
+    await user.click(screen.getByRole("radio", { name: "B" }));
+    const opacities: number[] = [];
+    for (let frame = 0; frame < 30; frame++) {
+      await frames(1);
+      opacities.push(Number(indicator.style.opacity));
+    }
+    // In-between values on the way out, not a jump to 0
+    expect(opacities.some((opacity) => opacity > 0 && opacity < 1)).toBe(true);
+    expect(opacities.at(-1)).toBeCloseTo(0, 1);
+    expect(indicator).toBeInTheDocument();
+    expect(indicator).toHaveTextContent(/^★$/);
   });
 });
 
