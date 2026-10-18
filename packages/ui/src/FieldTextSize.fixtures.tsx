@@ -55,12 +55,11 @@ export const FIELDS: [field: string, ui: (className?: string) => ReactNode][] = 
       </Select.Root>
     ),
   ],
-];
-
-/** The fields, and the `DatePicker` trigger, which takes no class: `className` goes on a wrapper */
-export const PARTS: typeof FIELDS = [
-  ...FIELDS,
-  ["DatePicker trigger", () => <DatePicker aria-label="Field" />],
+  // `className` goes on a wrapper, so the trigger takes its class through `triggerClassName`
+  [
+    "DatePicker trigger",
+    (className) => <DatePicker aria-label="Field" triggerClassName={className} />,
+  ],
 ];
 
 /** Renders `ui` and returns the font size the browser computes for the part named "Field" */

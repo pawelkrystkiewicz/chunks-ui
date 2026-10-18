@@ -190,7 +190,7 @@ describe("DatePicker", () => {
   it("lets a triggerClassName colour replace the muted placeholder colour", () => {
     render(<DatePicker triggerClassName="text-foreground" />);
     const trigger = screen.getByRole("button", { name: "Pick a date" });
-    expect(trigger).toHaveClass("text-foreground");
+    expect(trigger).toHaveClass("text-foreground", "text-sm");
     expect(trigger).not.toHaveClass("text-muted-foreground");
   });
 
