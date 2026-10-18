@@ -3,10 +3,8 @@ import { fontSizeOf, PARTS, plainInput } from "./FieldTextSize.fixtures";
 import { withViewport } from "./VisualTest.utils";
 
 /*
- * A touch screen (`pointer: coarse`) gets 16px field text at any width (#580): an iPad, or a large
- * iPhone held sideways, is wider than `md` and iOS Safari zooms into 14px text there too. The
- * `chromium-touch` project runs this file on a page with a touch screen; see
- * vitest.visual.config.ts. No screenshots are taken.
+ * Where touch is the primary pointer (`pointer: coarse`), field text is 16px at any width (#580).
+ * The `chromium-touch` project in vitest.visual.config.ts runs this file on a touch-screen page.
  */
 
 it("runs with a touch screen", () => {

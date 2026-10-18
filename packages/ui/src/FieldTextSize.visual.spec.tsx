@@ -3,14 +3,11 @@ import { FIELDS, fontSizeOf, PARTS, plainInput } from "./FieldTextSize.fixtures"
 import { withViewport } from "./VisualTest.utils";
 
 /*
- * iOS Safari zooms the page when a field with text under 16px takes focus (#562), so `Input`,
- * `Textarea`, `NumberField.Input` and `Combobox.Input` have 16px text below the `md` breakpoint
- * (768px) and 14px from `md` up. `Select.Trigger` and the `DatePicker` trigger take the same size,
- * so a form on a phone has one text size (#580). These specs read the font size the browser
- * computes for each part, on the default 414px page (below `md`), on an 800px page (from `md` up)
- * and, for the `sm:` caveat, on a 700px page (from `sm` up to `md`), all without a touch screen.
- * `FieldTextSize.touch.visual.spec.tsx` covers a touch screen. jsdom loads no stylesheet, so a
- * unit spec could only compare class strings. No screenshots are taken.
+ * iOS Safari zooms the page when a field with text under 16px takes focus (#562), so the text
+ * fields have 16px text below `md`, and `Select.Trigger` and the `DatePicker` trigger take the same
+ * size so a form has one (#580). These specs read the computed font size with a mouse;
+ * `FieldTextSize.touch.visual.spec.tsx` covers a touch screen. jsdom loads no stylesheet, so a unit
+ * spec could only compare class strings.
  */
 
 describe("below md, on the default 414px page", () => {
