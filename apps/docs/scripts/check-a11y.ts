@@ -10,10 +10,10 @@
  * among them), every other page under app/, and the 404 page, which it gets by requesting a URL
  * no page answers on: that one must answer 404, every other page 200. On the pages POPUPS lists, it
  * then opens the first example's popup and audits it alone, open; on the pages TOASTS lists, it
- * adds each toast and audits it alone, one at a time. axe's `incomplete` results
- * (checks it could not decide, often contrast over images or gradients) are not failed. A page is
- * audited once React has hydrated it (`html[data-hydrated]`, set by app/HydrationMarker.tsx) and
- * its fonts have loaded.
+ * adds each toast and audits it alone, one at a time, with aria-dialog-name added (see ToastCheck).
+ * axe's `incomplete` results (checks it could not decide, often contrast over images or gradients)
+ * are not failed. A page is audited once React has hydrated it (`html[data-hydrated]`, set by
+ * app/HydrationMarker.tsx) and its fonts have loaded.
  *
  * Reads the issue states from the GitHub API with GITHUB_TOKEN (CI passes it; locally run
  * `GITHUB_TOKEN=$(gh auth token) bun run check:a11y`). Outside CI, an issue whose state can't be
@@ -109,8 +109,8 @@ type Role = Parameters<Page["getByRole"]>[0];
  * A popup the run opens and audits on its own, after its page, in every theme: it clicks the first
  * element of role `trigger` named `name` (the page's first example), waits for the one element of
  * role `popup`, runs axe on that element alone, checks the trigger has aria-expanded="true" and
- * aria-controls set to the popup's id, and closes it with Escape. ALLOWED applies to the
- * popup as to its page.
+ * aria-controls set to the popup's id, and closes it with Escape, also when a step before threw.
+ * ALLOWED applies to the popup as to its page.
  */
 type Popup = { page: string; trigger: Role; name: string; popup: Role };
 
@@ -125,12 +125,17 @@ const POPUPS: Popup[] = [
 /**
  * A toast the run adds and audits on its own, after its page's popups, in every theme: it clicks
  * the first button named `name`, waits for the one element of role `toast`, runs axe on it alone,
- * and closes it with Escape from inside it. Toasts don't fit Popup: their button has no
- * aria-expanded or aria-controls, and Escape closes one only with focus inside it. Base UI gives a
- * toast role "dialog", or "alertdialog" with `priority: "high"`. ALLOWED applies as to its page.
- * The high-priority toast is aria-hidden while audited, so only the few axe rules that read hidden
- * content (aria-hidden-focus among them) check it; the default one covers the same markup with the
- * name and ARIA rules.
+ * and closes it with Escape from inside it, also when a step before threw. Toasts don't fit Popup:
+ * their button has no aria-expanded or aria-controls, and Escape closes one only with focus inside
+ * it. Base UI gives a toast role "dialog", or "alertdialog" with `priority: "high"`. ALLOWED
+ * applies as to its page.
+ * The high-priority toast is aria-hidden until keyboard focus enters its viewport, so its first
+ * audit gets only the few axe rules that read hidden content (aria-hidden-focus and color-contrast
+ * among them). The run then presses F6, which moves focus into the viewport, checks aria-hidden is
+ * gone, and audits the toast again ("focused with F6"), now with the ARIA attribute and role rules,
+ * and the name rules for any button it has. A toast's audits also run aria-dialog-name, a
+ * best-practice rule outside TAGS and the only axe rule that checks a toast's own name. It skips the
+ * aria-hidden urgent toast, so that one's name is checked in the focused audit.
  */
 type ToastCheck = { page: string; name: string; toast: "dialog" | "alertdialog" };
 
@@ -333,17 +338,21 @@ async function startServer() {
 }
 
 /**
- * Runs axe on the page, or on the elements `scope.selector` matches alone, and returns the
- * violations ALLOWED does not excuse, recording each entry that excused one in `matched`
+ * Runs axe with TAGS plus the rules `scope.rules` names, on the page or on the elements
+ * `scope.selector` matches alone, and returns the violations ALLOWED does not excuse, recording
+ * each entry that excused one in `matched`
  */
 async function axe(
   page: Page,
   route: string,
   theme: Theme,
   matched: Map<Allowed, Set<string>>,
-  scope?: { selector: string; label: string },
+  scope?: { selector: string; label: string; rules?: string[] },
 ) {
-  const builder = new AxeBuilder({ page }).withTags(TAGS);
+  // axe runs a rule enabled in `rules` whatever its tags. options() replaces every option set
+  // before it, so it comes before withTags.
+  const rules = Object.fromEntries((scope?.rules ?? []).map((rule) => [rule, { enabled: true }]));
+  const builder = new AxeBuilder({ page }).options({ rules }).withTags(TAGS);
   const { violations } = await (scope ? builder.include(scope.selector) : builder).analyze();
   const problems: Problem[] = [];
   for (const violation of violations) {
@@ -390,13 +399,15 @@ async function auditPopup(
   // A handle, as some triggers change their name while open (Combobox: "Hide options")
   const handle = await trigger.elementHandle({ timeout: POPUP_MS });
   const element = page.getByRole(popup.popup);
-  let problems: Problem[];
+  const problems: Problem[] = [];
   try {
     await trigger.click({ timeout: POPUP_MS });
     await element.waitFor({ timeout: POPUP_MS });
     const id = await element.getAttribute("id");
     if (!id) throw new Error(`The open ${popup.popup} has no id to scope axe to`);
-    problems = await axe(page, popup.page, theme, matched, { selector: `[id="${id}"]`, label });
+    problems.push(
+      ...(await axe(page, popup.page, theme, matched, { selector: `[id="${id}"]`, label })),
+    );
     // The trigger tells assistive technology the popup is open, and which element it is
     const state = await handle.evaluate((el) => ({
       expanded: el.getAttribute("aria-expanded"),
@@ -415,24 +426,29 @@ async function auditPopup(
     }
   } finally {
     await handle.dispose();
-  }
-  // The violations found above must survive a popup that won't close
-  try {
-    await page.keyboard.press("Escape");
-    await element.waitFor({ state: "hidden", timeout: POPUP_MS });
-  } catch (error) {
-    problems.push({
-      page: label,
-      theme,
-      rule: "popup",
-      help: "The popup could not be closed",
-      targets: [String(error)],
-    });
+    // Closed also when the audit threw, so the page's next audit doesn't run with it open. A failed
+    // close is caught, so the violations above survive it and it never replaces the audit's error,
+    // which the caller reports in place of `problems`.
+    try {
+      await page.keyboard.press("Escape");
+      await element.waitFor({ state: "hidden", timeout: POPUP_MS });
+    } catch (error) {
+      problems.push({
+        page: label,
+        theme,
+        rule: "popup",
+        help: "The popup could not be closed",
+        targets: [String(error)],
+      });
+    }
   }
   return problems;
 }
 
-/** Adds `check`'s toast on its loaded page, runs axe on it alone, and closes it with Escape */
+/**
+ * Adds `check`'s toast on its loaded page, runs axe on it alone, audits a high-priority toast again
+ * once F6 has focused it, and closes it with Escape, also when a step threw
+ */
 async function auditToast(
   page: Page,
   check: ToastCheck,
@@ -440,30 +456,61 @@ async function auditToast(
   theme: Theme,
   matched: Map<Allowed, Set<string>>,
 ) {
-  await page
-    .getByRole("button", { name: check.name, exact: true })
-    .first()
-    .click({ timeout: POPUP_MS });
   // A CSS locator, as getByRole skips the aria-hidden high-priority toast. `Toast` is a class every
   // Toast.Root has, so another dialog on the page can't match. The locator is strict: the toast is
   // the one element the selector matches, and all that it hands axe.
   const selector = `.Toast[role="${check.toast}"]`;
   const toast = page.locator(selector);
-  // Base UI pauses the timeout while the pointer is over the toasts, so it cannot close mid-audit
-  await toast.hover({ timeout: POPUP_MS });
-  const problems = await axe(page, check.page, theme, matched, { selector, label });
-  // Gone before the next one: axe reports aria-hidden-focus as incomplete while a dialog is open
+  const problems: Problem[] = [];
   try {
-    await toast.press("Escape", { timeout: POPUP_MS });
-    await toast.waitFor({ state: "detached", timeout: POPUP_MS });
-  } catch (error) {
-    problems.push({
-      page: label,
-      theme,
-      rule: "toast",
-      help: "The toast could not be closed with Escape",
-      targets: [String(error)],
-    });
+    await page
+      .getByRole("button", { name: check.name, exact: true })
+      .first()
+      .click({ timeout: POPUP_MS });
+    // Base UI pauses the timeout while the pointer is over the toasts, so it cannot close mid-audit
+    await toast.hover({ timeout: POPUP_MS });
+    // aria-dialog-name, outside TAGS, is the one axe rule that checks the toast's own name
+    const scope = { selector, label, rules: ["aria-dialog-name"] };
+    problems.push(...(await axe(page, check.page, theme, matched, scope)));
+    if (check.toast === "alertdialog") {
+      // F6 moves keyboard focus into the viewport, and Base UI then clears the toast's aria-hidden.
+      // The focus guards it also renders sit beside the toast, outside the audit's scope.
+      await page.keyboard.press("F6");
+      const focused = { ...scope, label: `${label}, focused with F6` };
+      // Reported, not thrown, so the first audit's results above still count
+      const failure = await page
+        .locator(`${selector}:not([aria-hidden])`)
+        .waitFor({ timeout: POPUP_MS })
+        .then(
+          () => undefined,
+          (error) => String(error),
+        );
+      if (failure) {
+        problems.push({
+          page: focused.label,
+          theme,
+          rule: "toast",
+          help: "F6 did not clear the toast's aria-hidden, so it was not audited focused",
+          targets: [failure],
+        });
+      } else problems.push(...(await axe(page, check.page, theme, matched, focused)));
+    }
+  } finally {
+    // Gone before the next one, also when the audit threw: axe reports aria-hidden-focus as
+    // incomplete while a dialog is open. A failed close is caught, so it never replaces the audit's
+    // error, which the caller reports in place of `problems`.
+    try {
+      await toast.press("Escape", { timeout: POPUP_MS });
+      await toast.waitFor({ state: "detached", timeout: POPUP_MS });
+    } catch (error) {
+      problems.push({
+        page: label,
+        theme,
+        rule: "toast",
+        help: "The toast could not be closed with Escape",
+        targets: [String(error)],
+      });
+    }
   }
   return problems;
 }
