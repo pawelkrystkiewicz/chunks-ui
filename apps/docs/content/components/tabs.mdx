@@ -2,6 +2,7 @@ import {
   TabsAnimateExample,
   TabsBasicExample,
   TabsDirectionExample,
+  TabsDisabledExample,
   TabsHookExample,
   TabsUnderlineExample,
   TabsVerticalExample,
@@ -137,6 +138,42 @@ To change the look, keep the box and change what is drawn in it. For an underlin
 <TabsUnderlineExample />
 
 The line then sits along the bottom of the active tab and moves with it, with Motion and with the CSS fallback.
+
+## Disabled tabs
+
+Set `disabled` on a `Tabs.Tab`. The tab dims to 50%, and a user can't select it. Base UI keeps it focusable, so it gets `aria-disabled`, not the `disabled` attribute. The arrow keys move focus onto it, and Enter or Space does nothing. With `activateOnFocus`, focus does not select it either.
+
+```tsx
+<Tabs.Root defaultValue="tab-1">
+  <Tabs.List>
+    <Tabs.Tab value="tab-1">Account</Tabs.Tab>
+    <Tabs.Tab value="tab-2" disabled>
+      Billing
+    </Tabs.Tab>
+    <Tabs.Tab value="tab-3">Notifications</Tabs.Tab>
+    <Tabs.Indicator />
+  </Tabs.List>
+  <Tabs.Contents>
+    <Tabs.Content value="tab-1">
+      <p className="p-4">Account settings content.</p>
+    </Tabs.Content>
+    <Tabs.Content value="tab-2">
+      <p className="p-4">Billing details.</p>
+    </Tabs.Content>
+    <Tabs.Content value="tab-3">
+      <p className="p-4">Notification preferences.</p>
+    </Tabs.Content>
+  </Tabs.Contents>
+</Tabs.Root>
+```
+
+<TabsDisabledExample />
+
+At mount, a `value` or an explicit `defaultValue` can select a disabled tab. The tab stays selected, and the indicator under it dims to 50%. Without either, the root selects the first enabled tab.
+
+When the selected tab becomes disabled later, a controlled root keeps it selected. The indicator dims and fades with the tab (at once with reduced motion). Base UI does not call `onValueChange`, so moving the selection is up to you. An uncontrolled root moves the selection to the first enabled tab, also when `defaultValue` selected it, and calls `onValueChange` with the new value and the reason `"disabled"`. `eventDetails.cancel()` can't stop this move.
+
+The indicator does not follow a disabled opacity of your own on `Tabs.Tab`: it stays at 50%. Set that opacity with `aria-disabled:` (for example `aria-disabled:opacity-70`), as a disabled tab is never `:disabled`. To dim the indicator the same, give `Tabs.Indicator` that opacity with the variant the library dims it with: `group-has-[[data-active][aria-disabled=true]]/tabs-list:opacity-70`. It replaces the library's `opacity-50`.
 
 ## Routed Tabs (single panel)
 
