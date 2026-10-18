@@ -455,34 +455,26 @@ describe("NumberField labels", () => {
 // would need an aria-label that contains them, as the default name does not
 describe("NumberField Increment and Decrement content", () => {
   const parts = [
-    {
-      part: "Increment",
-      name: DEFAULT_NUMBER_FIELD_LABELS.increment,
-      button: (children?: React.ReactNode) => (
-        <NumberField.Increment>{children}</NumberField.Increment>
-      ),
-    },
-    {
-      part: "Decrement",
-      name: DEFAULT_NUMBER_FIELD_LABELS.decrement,
-      button: (children?: React.ReactNode) => (
-        <NumberField.Decrement>{children}</NumberField.Decrement>
-      ),
-    },
+    { part: "Increment", Part: NumberField.Increment, name: DEFAULT_NUMBER_FIELD_LABELS.increment },
+    { part: "Decrement", Part: NumberField.Decrement, name: DEFAULT_NUMBER_FIELD_LABELS.decrement },
   ];
   const field = (button: React.ReactNode) =>
     render(<NumberField.Root defaultValue={0}>{button}</NumberField.Root>);
 
-  it.each(parts)("renders the glyph in $part when it has no children", ({ name, button }) => {
-    field(button());
+  it.each(parts)("renders the glyph in $part when it has no children", ({ name, Part }) => {
+    field(<Part />);
     const glyph = screen.getByRole("button", { name }).querySelector("svg");
     expect(glyph).toHaveAttribute("aria-hidden", "true");
   });
 
   it.each(parts)(
     "renders the children of $part in place of the glyph, under the same name",
-    ({ name, button }) => {
-      field(button(<svg data-testid="custom" aria-hidden="true" />));
+    ({ name, Part }) => {
+      field(
+        <Part>
+          <svg data-testid="custom" aria-hidden="true" />
+        </Part>,
+      );
       const el = screen.getByRole("button", { name });
       expect(el.children).toHaveLength(1);
       expect(el.firstElementChild).toBe(screen.getByTestId("custom"));
