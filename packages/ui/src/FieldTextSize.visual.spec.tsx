@@ -53,6 +53,10 @@ describe("from md up, on an 800px page", () => {
     expect(fontSizeOf(ui("text-lg"))).toBe("18px");
   });
 
+  it("an open Select's item is 18px with className text-lg", () => {
+    expect(selectItemFontSize("text-lg")).toBe("18px");
+  });
+
   it("Input is 14px with className max-md:text-lg", () => {
     expect(fontSizeOf(plainInput("max-md:text-lg"))).toBe("14px");
   });

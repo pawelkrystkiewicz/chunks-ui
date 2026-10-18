@@ -24,6 +24,12 @@ describe("on the default 414px page", () => {
   it.each(["max-md:text-lg", EVERYWHERE])("Input is 18px with className %s", (className) => {
     expect(fontSizeOf(plainInput(className))).toBe("18px");
   });
+
+  // Below `md` a touch size without `md:` sorts after `max-md:text-base` in the CSS, so a phone
+  // shows it where a tablet (1024px, below) does not
+  it("Input is 18px with className [@media(pointer:coarse)]:text-lg", () => {
+    expect(fontSizeOf(plainInput("[@media(pointer:coarse)]:text-lg"))).toBe("18px");
+  });
 });
 
 describe("on a 700px page", () => {
@@ -44,6 +50,10 @@ describe("on a 1024px page", () => {
 
   it("an open Select's item is 16px", () => {
     expect(selectItemFontSize()).toBe("16px");
+  });
+
+  it("an open Select's item is 18px with className md:[@media(pointer:coarse)]:text-lg", () => {
+    expect(selectItemFontSize("md:[@media(pointer:coarse)]:text-lg")).toBe("18px");
   });
 
   // The touch size wins over an unprefixed or breakpoint size, and over a touch size without
