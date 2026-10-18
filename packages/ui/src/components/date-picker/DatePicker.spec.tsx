@@ -175,6 +175,32 @@ describe("DatePicker", () => {
     expect(container.firstChild).toHaveClass("my-custom");
   });
 
+  it("puts triggerClassName on the trigger, where it replaces the library's conflicting classes", () => {
+    const { container } = render(<DatePicker className="w-64" triggerClassName="h-12 text-lg" />);
+    const trigger = screen.getByRole("button", { name: "Pick a date" });
+    expect(trigger).toHaveClass("h-12", "text-lg");
+    expect(trigger).not.toHaveClass("h-ui-height");
+    expect(trigger).not.toHaveClass("text-sm");
+    expect(trigger).not.toHaveClass("w-64");
+    expect(container.firstChild).toHaveClass("w-64");
+    expect(container.firstChild).not.toHaveClass("h-12");
+    expect(container.firstChild).not.toHaveClass("text-lg");
+  });
+
+  it("puts triggerClassName on the trigger when a form input is rendered", () => {
+    render(<DatePicker name="d" triggerClassName="h-12" />);
+    const trigger = screen.getByRole("button", { name: "Pick a date" });
+    expect(trigger).toHaveClass("h-12");
+    expect(trigger).not.toHaveClass("h-ui-height");
+  });
+
+  it("lets a triggerClassName colour replace the muted placeholder colour", () => {
+    render(<DatePicker triggerClassName="text-foreground" />);
+    const trigger = screen.getByRole("button", { name: "Pick a date" });
+    expect(trigger).toHaveClass("text-foreground", "text-sm");
+    expect(trigger).not.toHaveClass("text-muted-foreground");
+  });
+
   it('names the calendar dialog "Choose date"', async () => {
     render(<DatePicker />);
     await userEvent.click(screen.getByRole("button", { name: "Pick a date" }));
