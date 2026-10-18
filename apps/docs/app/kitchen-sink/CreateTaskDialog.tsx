@@ -84,9 +84,9 @@ export function CreateTaskDialog() {
                 <Select.Portal>
                   <Select.Positioner sideOffset={5} alignItemWithTrigger={false}>
                     <Select.Popup>
-                      {TEAM.map((m) => (
-                        <Select.Item key={m.id} value={m.id}>
-                          <Select.ItemText>{m.name}</Select.ItemText>
+                      {ASSIGNEE_OPTIONS.map((opt) => (
+                        <Select.Item key={opt.value} value={opt.value}>
+                          <Select.ItemText>{opt.label}</Select.ItemText>
                           <Select.ItemIndicator />
                         </Select.Item>
                       ))}

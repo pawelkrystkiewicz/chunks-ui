@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { CreateTaskDialog } from "./CreateTaskDialog";
 import { TaskTable } from "./TaskTable";
 
@@ -20,12 +20,20 @@ async function pick(trigger: HTMLElement, option: string) {
 // Without `items` on Select.Root, these triggers show the raw value ("in-progress", "u1") (#591)
 describe("kitchen sink Selects", () => {
   it("the task table's status filter shows the picked status's label", async () => {
-    render(<TaskTable />);
-    const trigger = screen.getByRole("combobox", { name: "Status" });
+    // Base UI reports a Select switching from uncontrolled to controlled through console.error
+    const error = vi.spyOn(console, "error");
+    try {
+      render(<TaskTable />);
+      const trigger = screen.getByRole("combobox", { name: "Status" });
+      expect(trigger.textContent).toBe("All statuses");
 
-    await pick(trigger, "In Progress");
+      await pick(trigger, "In Progress");
 
-    expect(trigger.textContent).toBe("In Progress");
+      expect(trigger.textContent).toBe("In Progress");
+      expect(error).not.toHaveBeenCalled();
+    } finally {
+      error.mockRestore();
+    }
   });
 
   describe("the create-task dialog", () => {
@@ -49,6 +57,7 @@ describe("kitchen sink Selects", () => {
     it("shows the picked assignee's name", async () => {
       await open();
       const trigger = screen.getByRole("combobox", { name: "Assignee" });
+      expect(trigger.textContent).toBe("Assign to...");
 
       await pick(trigger, "Bob Rivera");
 
