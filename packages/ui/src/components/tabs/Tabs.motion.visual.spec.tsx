@@ -352,8 +352,9 @@ describe("Tabs animations that must stop", () => {
     const { contents } = await resizeMidway();
     const track = contents.firstElementChild as HTMLElement;
     await emulateReducedMotion(true);
-    // The inline styles are cleared, so the CSS layout shows the tall panel unshifted, full height
-    await expect.poll(() => contents.style.height, { timeout: SETTLE_TIMEOUT_MS }).toBe("");
+    // The inline styles are cleared, so the CSS layout shows the tall panel unshifted, full height.
+    // Dropped at once, not 10s later: the clear after the stop lands in Motion's next render step
+    await expect.poll(() => contents.style.height, { timeout: 1000 }).toBe("");
     for (let frame = 0; frame < ABSENCE_WINDOW_FRAMES; frame++) {
       await nextFrame();
       expect(contents.style.height).toBe("");
