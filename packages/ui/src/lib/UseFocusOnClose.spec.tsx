@@ -62,30 +62,32 @@ async function openThenClose(
 }
 
 describe("useCloseFocusRoot", () => {
-  it("calls the consumer's handler first, then notes the open's trigger", () => {
-    const calls: string[] = [];
-    function Root() {
-      const [closeFocus, handleOpenChange] = useCloseFocusRoot<Details>(() => {
-        calls.push(`handler, trigger ${closeFocus.trigger.current?.id ?? "unset"}`);
-      });
-      state = closeFocus;
-      openChange = handleOpenChange;
-      return <button type="button" id="trigger" />;
-    }
-    const { getByRole } = render(<Root />);
-    openChange(true, details("trigger-press", new MouseEvent("click"), getByRole("button")));
-    expect(calls).toEqual(["handler, trigger unset"]);
-    expect(state.trigger.current).toBe(getByRole("button"));
-  });
-
-  it("keeps a close's event until the end of its task, and none of a cancelled close", () => {
+  // The consumer's handler sees the state before the call notes anything
+  it("calls the consumer's handler first, notes the open's trigger, and keeps a close's event until the end of its task, none of a cancelled one", () => {
     vi.useFakeTimers();
     try {
-      render(<Popup />);
+      const calls: string[] = [];
+      function Root() {
+        const [closeFocus, handleOpenChange] = useCloseFocusRoot<Details>((open) => {
+          const noted = open ? closeFocus.trigger.current?.id : closeFocus.close.current?.reason;
+          calls.push(`${open ? "open" : "close"}: ${noted ?? "nothing noted"}`);
+        });
+        state = closeFocus;
+        openChange = handleOpenChange;
+        return <button type="button" id="trigger" />;
+      }
+      const { getByRole } = render(<Root />);
+      openChange(true, details("trigger-press", new MouseEvent("click"), getByRole("button")));
+      expect(state.trigger.current).toBe(getByRole("button"));
       const event = new KeyboardEvent("keydown");
       openChange(false, { ...details("escape-key", event), isCanceled: true });
       expect(state.close.current).toBeUndefined();
       openChange(false, details("escape-key", event));
+      expect(calls).toEqual([
+        "open: nothing noted",
+        "close: nothing noted",
+        "close: nothing noted",
+      ]);
       expect(state.close.current).toEqual({ event, reason: "escape-key" });
       vi.runAllTimers();
       expect(state.close.current).toBeUndefined();

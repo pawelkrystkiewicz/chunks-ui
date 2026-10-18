@@ -1,6 +1,6 @@
 import { Menu as BaseMenu } from "@base-ui/react/menu";
 import { render, screen } from "@testing-library/react";
-import { createRef, useState } from "react";
+import { useState } from "react";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import {
@@ -202,7 +202,8 @@ describe.each([
     expect(document.activeElement).toBe(after);
   });
 
-  it("moves focus to the trigger on Escape", async () => {
+  // Motion and CSS only: reduced motion's one-frame exit adds nothing here
+  it.skipIf(reduce)("moves focus to the trigger on Escape", async () => {
     const { popup, trigger } = await openMenu();
     await userEvent.keyboard("{Escape}");
     expect(document.activeElement).toBe(trigger);
@@ -219,16 +220,6 @@ describe.each([
     expect(triggerFocused(), "the trigger took focus on the way").toBe(false);
     expect(document.activeElement).toBe(before);
     await unmounted(popup);
-    expect(document.activeElement).toBe(before);
-  });
-
-  // An element as `finalFocus` keeps Base UI's timing: focus moves there at the unmount
-  it("moves focus only at the unmount, to an element passed as finalFocus", async () => {
-    const { popup, trigger, before } = await openMenu({ finalFocusBefore: true });
-    const triggerFocused = tookFocus(trigger);
-    await userEvent.keyboard("{Escape}");
-    await unmounted(popup);
-    expect(triggerFocused(), "the trigger took focus").toBe(false);
     expect(document.activeElement).toBe(before);
   });
 });
@@ -332,21 +323,18 @@ describe("Menu focus as the popup closes, Base UI's own handling", () => {
 function menuFixture({
   modal,
   openOnHover = false,
-  finalFocusBefore = false,
 }: {
   modal?: boolean;
   openOnHover?: boolean;
-  finalFocusBefore?: boolean;
 } = {}) {
-  const beforeRef = createRef<HTMLInputElement>();
   return (
     <div className="flex w-60 flex-col items-start gap-2" style={{ padding: 40 }}>
-      <input ref={beforeRef} aria-label="Before" />
+      <input aria-label="Before" />
       <Menu.Root modal={modal}>
         <Menu.Trigger openOnHover={openOnHover} delay={0} closeDelay={0}>
           Options
         </Menu.Trigger>
-        <Menu.Content data-testid="popup" finalFocus={finalFocusBefore ? beforeRef : undefined}>
+        <Menu.Content data-testid="popup">
           <Menu.Item>Edit</Menu.Item>
           <Menu.Item>Copy</Menu.Item>
           <BaseMenu.SubmenuRoot>

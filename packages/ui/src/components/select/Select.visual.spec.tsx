@@ -432,7 +432,8 @@ describe.each([
     },
   );
 
-  it("moves focus to the trigger on Escape", async () => {
+  // Motion and CSS only: reduced motion's one-frame exit adds nothing here
+  it.skipIf(reduce)("moves focus to the trigger on Escape", async () => {
     const { popup, trigger } = await open();
     await userEvent.keyboard("{Escape}");
     expect(document.activeElement).toBe(trigger);

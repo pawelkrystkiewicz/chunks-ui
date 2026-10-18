@@ -147,8 +147,9 @@ describe.each([
     },
   );
 
-  // Opened by mouse: the ring after Escape comes from the keyboard close, as in Base UI's return
-  it("moves focus to the trigger on Escape", async () => {
+  // Opened by mouse: the ring after Escape comes from the keyboard close, as in Base UI's return.
+  // Motion and CSS only: reduced motion's one-frame exit adds nothing here.
+  it.skipIf(reduce)("moves focus to the trigger on Escape", async () => {
     const { popup, trigger } = await openPopover();
     await userEvent.keyboard("{Escape}");
     expect(document.activeElement).toBe(trigger);

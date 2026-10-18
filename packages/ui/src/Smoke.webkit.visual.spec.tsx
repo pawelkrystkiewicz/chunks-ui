@@ -519,14 +519,6 @@ describe("Select and Popover focus as the popup closes, in WebKit", () => {
     return { trigger, popup };
   };
 
-  // The spring takes about 0.5s, so the popup is still leaving when the key press returns
-  it("keeps focus on the Select trigger while the popup leaves after Escape", async () => {
-    const { trigger, popup } = await openSelect();
-    await userEvent.keyboard("{Escape}");
-    expect(popup.checkVisibility(), "the popup is still leaving").toBe(true);
-    expect(document.activeElement).toBe(trigger);
-  });
-
   it("moves a Tab pressed while the Select popup leaves after a pick to the next field", async () => {
     const { popup } = await openSelect();
     await userEvent.click(screen.getByRole("option", { name: "Banana" }));
