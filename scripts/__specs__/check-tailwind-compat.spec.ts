@@ -331,19 +331,17 @@ ${css}`;
     const css = `:root {
   --text-lg: 1.125rem;
 }
-.md\\:text-lg {
+.text-lg {
   font-size: var(--text-lg);
 }
 .z-10 {
   z-index: 10;
 }
-.text-lg {
+.md\\:text-lg {
   font-size: var(--text-lg);
 }
 `;
-    expect(orderProblems(css, "4.3.3", [["text-lg", "z-10"]])).toEqual([
-      expect.stringMatching(/^Tailwind 4\.3\.3 puts text-lg after z-10/),
-    ]);
+    expect(orderProblems(css, "4.3.3", [["text-lg", "z-10"]])).toEqual([]);
   });
 
   // A later rule of `before` would set the size again after `after`
