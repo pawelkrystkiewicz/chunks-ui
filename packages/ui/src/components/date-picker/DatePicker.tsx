@@ -271,13 +271,14 @@ export function DatePicker({
                   // render element, which Base UI merges with `ref`.
                   render={hasFormInput ? undefined : <button type="button" ref={fieldRef} />}
                   aria-labelledby={labelledBy ? `${labelledBy} ${valueId}` : undefined}
+                  data-placeholder={displayValue ? undefined : ""}
                   className={cn(
                     "flex h-ui-height w-full cursor-pointer items-center rounded-md border border-input bg-background px-3 text-start",
                     FIELD_TEXT_SIZE,
                     FOCUS_RING,
                     RING_TRANSITION,
                     "disabled:cursor-not-allowed disabled:opacity-50",
-                    !displayValue && "text-muted-foreground",
+                    "data-placeholder:text-muted-foreground",
                     triggerClassName,
                   )}
                 >

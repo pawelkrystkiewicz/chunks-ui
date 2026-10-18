@@ -187,7 +187,7 @@ export default Props
 
 `DatePicker` also takes every other `<button>` prop except `onChange` and passes it to the trigger. Use `onValueChange` to follow the date.
 
-`className` goes on the wrapper `<div>` (set the width here). `triggerClassName` and `style` go on the trigger `<button>`; a conflicting class in `triggerClassName` replaces the default, such as `h-12` for the height.
+`className` goes on the wrapper `<div>` (set the width here). `triggerClassName` and `style` go on the trigger `<button>`; a conflicting class in `triggerClassName` replaces the default, such as `h-12` for the height. The trigger has a `data-placeholder` attribute while no date is picked, and the muted colour is a `data-placeholder:text-muted-foreground` class: a plain text colour in `triggerClassName` colours the picked date, and `data-placeholder:text-red-600` colours the placeholder.
 
 The calendar popup is at least as wide as the trigger, and never narrower than the calendar (about 280px). In a wider popup the calendar sits in the centre.
 

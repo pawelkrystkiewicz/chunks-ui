@@ -79,9 +79,9 @@ jobs:
             delim="EOF_$(od -An -tx1 -N8 /dev/urandom | tr -d ' \n')"
             {
               echo "changed_files<<$delim"
-              echo "$CHANGED_FILES"
+              printf '%s\n' "$CHANGED_FILES"
               echo "$delim"
-              echo "changed_count=$(echo "$CHANGED_FILES" | wc -l)"
+              echo "changed_count=$(printf '%s\n' "$CHANGED_FILES" | wc -l)"
             } >> "$GITHUB_OUTPUT"
           else
             echo "changes=false" >> "$GITHUB_OUTPUT"
@@ -98,6 +98,7 @@ jobs:
           COMMIT_MESSAGE: ${{ env.COMMIT_MESSAGE }}
 
       - name: Push changes
+        id: push_changes
         if: steps.check_changes.outputs.changes == 'true'
         env:
           REF_NAME: ${{ github.ref_name }}
@@ -105,11 +106,12 @@ jobs:
           REPO: ${{ github.repository }}
         run: git push "https://x-access-token:${GH_PAT}@github.com/${REPO}.git" "HEAD:${REF_NAME}"
 
-      # pretty summary for humans
+      # pretty summary for humans: "pushed" only on a successful push; an empty CHANGES means an
+      # earlier step failed or the run was cancelled, not "up to date"
       - name: Summary
         if: always()
         run: |
-          if [ "$CHANGES" = true ]; then
+          if [ "$CHANGES" = true ] && [ "$PUSH_OUTCOME" = success ]; then
             {
               echo "### Visual Regression Screenshots Updated"
               echo ""
@@ -117,20 +119,33 @@ jobs:
               echo ""
               echo "#### Changed Files:"
               echo "\`\`\`"
-              echo "$CHANGED_FILES"
+              printf '%s\n' "$CHANGED_FILES"
               echo "\`\`\`"
               echo ""
               echo "The updated screenshots have been committed and pushed. Your visual regression baseline is now up to date."
             } >> "$GITHUB_STEP_SUMMARY"
-          else
+          elif [ "$CHANGES" = true ]; then
+            {
+              echo "### Visual Regression Screenshots Not Pushed"
+              echo ""
+              echo "**${CHANGED_COUNT}** screenshot(s) changed, but the push to \`${BRANCH}\` did not succeed (outcome: \`${PUSH_OUTCOME:-unknown}\`), so this run's commit is discarded. See the Commit changes and Push changes logs."
+            } >> "$GITHUB_STEP_SUMMARY"
+          elif [ "$CHANGES" = false ]; then
             {
               echo "### No Screenshot Updates Required"
               echo ""
               echo "All screenshots are already up to date."
             } >> "$GITHUB_STEP_SUMMARY"
+          else
+            {
+              echo "### Screenshot Update Did Not Finish"
+              echo ""
+              echo "The run stopped before changes were checked (an earlier step failed or the run was cancelled). See the earlier steps' logs."
+            } >> "$GITHUB_STEP_SUMMARY"
           fi
         env:
           CHANGES: ${{ steps.check_changes.outputs.changes }}
+          PUSH_OUTCOME: ${{ steps.push_changes.outcome }}
           CHANGED_COUNT: ${{ steps.check_changes.outputs.changed_count }}
           CHANGED_FILES: ${{ steps.check_changes.outputs.changed_files }}
           BRANCH: ${{ github.ref_name }}

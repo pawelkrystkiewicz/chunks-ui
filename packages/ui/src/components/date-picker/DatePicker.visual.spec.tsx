@@ -31,6 +31,21 @@ describe("DatePicker", () => {
     await expect(fixture).toMatchScreenshot();
   });
 
+  // A colour in triggerClassName must not reach the placeholder: it has its own data-placeholder
+  // class, which only a `data-placeholder:` class of the consumer replaces
+  it("colours the picked date and the placeholder apart through triggerClassName", async () => {
+    const colour = (el: Element) => getComputedStyle(el).color;
+    const { getByRole, rerender } = render(<DatePicker />);
+    const muted = colour(getByRole("button", { name: "Pick a date" }));
+    rerender(<DatePicker triggerClassName="text-red-600" />);
+    expect(colour(getByRole("button", { name: "Pick a date" }))).toBe(muted);
+    rerender(<DatePicker triggerClassName="text-red-600" value={new Date(2026, 2, 15)} />);
+    const picked = colour(getByRole("button", { name: "March 15, 2026" }));
+    expect(picked).not.toBe(muted);
+    rerender(<DatePicker triggerClassName="text-red-600 data-placeholder:text-blue-600" />);
+    expect(colour(getByRole("button", { name: "Pick a date" }))).not.toBe(muted);
+  });
+
   it("shows a not-allowed cursor on a disabled trigger", () => {
     const { getByRole } = render(<DatePicker disabled />);
     expectNotAllowed(getByRole("button", { name: "Pick a date" }));
