@@ -123,8 +123,8 @@ export default defineConfig({
     setupFiles: ["./vitest.visual.setup.ts"],
     // The default is 1000 ms, tight for a CSS transition or a Motion spring on a loaded runner. Only
     // expect.poll reads it: expect.element, though it polls, waits for the rest of the test timeout
-    // unless it gets `{ timeout }`, so those calls pass SETTLE_TIMEOUT_MS. A wait ends as soon as it
-    // is met, so only a failing one is slow.
+    // (15 s in browser mode) unless it gets `{ timeout }`; the few that want a 5 s bound pass
+    // SETTLE_TIMEOUT_MS. A wait ends as soon as it is met, so only a failing one is slow.
     expect: { poll: { timeout: SETTLE_TIMEOUT_MS } },
     browser: {
       enabled: true,
