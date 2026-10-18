@@ -299,6 +299,56 @@ describe("Combobox.Input beside Clear and Trigger", () => {
   });
 });
 
+// Base UI sets `data-placeholder` on every Combobox.Trigger while nothing is selected, the one
+// beside an input too. Only the placeholder inside a Combobox.Value is muted (#564): the children
+// or `render` element of a Trigger beside an input keep the colour around them, as in 0.1.4
+describe("Combobox.Trigger beside an input, with nothing selected", () => {
+  it.each([
+    {
+      content: "its children",
+      trigger: (
+        <Combobox.Trigger aria-label="Fruit">
+          <span data-testid="custom">Choose</span>
+        </Combobox.Trigger>
+      ),
+    },
+    {
+      content: "its render element",
+      trigger: (
+        <Combobox.Trigger
+          aria-label="Fruit"
+          render={
+            <button type="button" data-testid="custom">
+              Choose
+            </button>
+          }
+        />
+      ),
+    },
+  ])("keeps $content in the colour around it", ({ trigger }) => {
+    const { getByRole, getByTestId } = render(
+      <div data-testid="around" style={{ padding: 40 }}>
+        <Combobox.Root items={options}>
+          <div className="relative">
+            <Combobox.Input aria-label="Framework" />
+            {trigger}
+          </div>
+        </Combobox.Root>
+        <span data-testid="muted" className="text-muted-foreground">
+          Muted
+        </span>
+      </div>,
+    );
+    // Base UI marks this Trigger a placeholder too, so a rule on that attribute would reach it
+    expect(getByRole("button", { name: "Fruit" }).hasAttribute("data-placeholder")).toBe(true);
+    const custom = getByTestId("custom");
+    expect(custom.textContent).toBe("Choose");
+    const colourOf = (testId: string) => getComputedStyle(getByTestId(testId)).color;
+    expect(colourOf("muted")).not.toBe(colourOf("around"));
+    expect(getComputedStyle(custom).color).toBe(colourOf("around"));
+  });
+});
+
 // Trigger-style: a button shows the value, the search input is in the popup. Base UI's Value has no
 // element, so a wide value wrapped or ran past the trigger and pushed the chevron out (#541).
 describe("Combobox.Value in a trigger", () => {

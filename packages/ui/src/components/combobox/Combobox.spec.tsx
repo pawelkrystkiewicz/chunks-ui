@@ -514,12 +514,21 @@ describe("Combobox.Value", () => {
     expect(value).toHaveTextContent(/^Pick a fruit$/);
   });
 
-  // Base UI marks the trigger `data-placeholder` while nothing is selected, as on Select.Trigger
-  it("mutes the trigger while it shows the placeholder", () => {
+  // Base UI marks every Trigger `data-placeholder` while nothing is selected, the one beside an
+  // input too: the Value mutes itself under such a Trigger, and the Trigger keeps its colour (#564)
+  it("mutes the Value, not the Trigger, while nothing is selected", () => {
     triggerStyle({ placeholder: "Pick a fruit" }, null);
     const trigger = screen.getByRole("combobox", { name: "Fruit" });
     expect(trigger).toHaveAttribute("data-placeholder");
-    expect(trigger).toHaveClass("data-placeholder:text-muted-foreground");
+    expect(trigger).not.toHaveClass("data-placeholder:text-muted-foreground");
+    expect(screen.getByTestId("value")).toHaveClass("in-data-placeholder:text-muted-foreground");
+  });
+
+  it("lets in-data-placeholder:text-inherit in a Value className replace the muted colour", () => {
+    triggerStyle({ className: "in-data-placeholder:text-inherit" }, null);
+    const value = screen.getByTestId("value");
+    expect(value).toHaveClass("in-data-placeholder:text-inherit", "flex-1", "overflow-hidden");
+    expect(value).not.toHaveClass("in-data-placeholder:text-muted-foreground");
   });
 
   it("renders Value with a custom className", () => {

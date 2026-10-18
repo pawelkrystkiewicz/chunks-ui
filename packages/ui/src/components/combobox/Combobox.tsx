@@ -154,9 +154,6 @@ function ComboboxTrigger({ className, children, ...props }: ComboboxTriggerProps
         // Within its container around a one-line Combobox.Value, as Select.Trigger (#518)
         "min-w-0 max-w-full",
         "disabled:cursor-not-allowed disabled:opacity-50",
-        // Base UI sets data-placeholder while nothing is selected: the placeholder of a trigger-style
-        // Combobox is muted, as on Select.Trigger (#564). The default chevron is muted already.
-        "data-placeholder:text-muted-foreground",
         className,
       )}
       {...props}
@@ -193,7 +190,14 @@ function ComboboxValue({ className, children, placeholder, ...props }: ComboboxV
   if (multiple && typeof children === "function") return value;
   return (
     <span
-      className={cn("flex-1 text-start overflow-hidden text-ellipsis whitespace-nowrap", className)}
+      className={cn(
+        "flex-1 text-start overflow-hidden text-ellipsis whitespace-nowrap",
+        // The placeholder is muted, as on Select.Trigger. Base UI sets data-placeholder on every
+        // Trigger while nothing is selected, the one beside an input too: muting the Trigger
+        // would also mute its children or render element (#564).
+        "in-data-placeholder:text-muted-foreground",
+        className,
+      )}
       {...props}
     >
       {value}
