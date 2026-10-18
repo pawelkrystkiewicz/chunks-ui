@@ -100,8 +100,8 @@ A disabled `NumberField` is dimmed and shows the not-allowed cursor over its inp
 | `NumberField.Root` | State container. Manages value, min, max, step, and disabled state. |
 | `NumberField.Group` | Wraps `Decrement`, `Input`, and `Increment` into a single bordered control. |
 | `NumberField.Input` | The text input. Displays and accepts the numeric value. |
-| `NumberField.Decrement` | Button that decrements the value by `step`. |
-| `NumberField.Increment` | Button that increments the value by `step`. |
+| `NumberField.Decrement` | Button that decrements the value by `step`. Children you pass replace the minus icon, and the button keeps its `aria-label`. If the children are visible text, pass an `aria-label` that contains it. |
+| `NumberField.Increment` | Button that increments the value by `step`. Children you pass replace the plus icon, and the button keeps its `aria-label`. If the children are visible text, pass an `aria-label` that contains it. |
 | `NumberField.ScrubArea` | A region the user can click-drag to change the value. |
 | `NumberField.ScrubAreaCursor` | The cursor shown in place of the locked system pointer while the user scrubs. Renders a left-right arrow unless you pass children or `render`. Leave it out and a mouse scrub shows no pointer. |
 

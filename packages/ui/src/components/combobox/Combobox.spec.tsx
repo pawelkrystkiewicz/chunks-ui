@@ -514,6 +514,21 @@ describe("Combobox.Value", () => {
     expect(value).toHaveTextContent(/^Pick a fruit$/);
   });
 
+  it("mutes the Value, not the Trigger, while nothing is selected", () => {
+    triggerStyle({ placeholder: "Pick a fruit" }, null);
+    const trigger = screen.getByRole("combobox", { name: "Fruit" });
+    expect(trigger).toHaveAttribute("data-placeholder");
+    expect(trigger).not.toHaveClass("data-placeholder:text-muted-foreground");
+    expect(screen.getByTestId("value")).toHaveClass("in-data-placeholder:text-muted-foreground");
+  });
+
+  it("lets in-data-placeholder:text-inherit in a Value className replace the muted colour", () => {
+    triggerStyle({ className: "in-data-placeholder:text-inherit" }, null);
+    const value = screen.getByTestId("value");
+    expect(value).toHaveClass("in-data-placeholder:text-inherit", "flex-1", "overflow-hidden");
+    expect(value).not.toHaveClass("in-data-placeholder:text-muted-foreground");
+  });
+
   it("renders Value with a custom className", () => {
     triggerStyle({ className: "custom" });
     expect(screen.getByTestId("value")).toHaveClass(

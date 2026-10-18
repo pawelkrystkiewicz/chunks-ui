@@ -300,6 +300,38 @@ describe("Combobox.Input beside Clear and Trigger", () => {
   });
 });
 
+// Base UI sets `data-placeholder` on every Combobox.Trigger while nothing is selected, the one
+// beside an input too. Only what a Combobox.Value shows is muted (#564): the `render` element of a
+// Trigger beside an input keeps the colour around it, as in 0.1.4
+describe("Combobox.Trigger beside an input, with nothing selected", () => {
+  it("keeps its render element in the colour around it", () => {
+    const { getByRole, getByTestId } = render(
+      <div data-testid="around" style={{ padding: 40 }}>
+        <Combobox.Root items={options}>
+          <div className="relative">
+            <Combobox.Input aria-label="Framework" />
+            <Combobox.Trigger
+              aria-label="Fruit"
+              render={
+                <button type="button" data-testid="custom">
+                  Choose
+                </button>
+              }
+            />
+          </div>
+        </Combobox.Root>
+        <span data-testid="muted" className="text-muted-foreground">
+          Muted
+        </span>
+      </div>,
+    );
+    expect(getByRole("button", { name: "Fruit" }).hasAttribute("data-placeholder")).toBe(true);
+    const colourOf = (testId: string) => getComputedStyle(getByTestId(testId)).color;
+    expect(colourOf("muted")).not.toBe(colourOf("around"));
+    expect(colourOf("custom")).toBe(colourOf("around"));
+  });
+});
+
 // Trigger-style: a button shows the value, the search input is in the popup. Base UI's Value has no
 // element, so a wide value wrapped or ran past the trigger and pushed the chevron out (#541). Each
 // case runs in both directions: the value's `text-start` follows the direction, and the value, the
@@ -446,6 +478,40 @@ describe.each(["ltr", "rtl"] as const)("Combobox.Value in a trigger, %s", (dir) 
     const value = getByTestId("value");
     expect(getComputedStyle(value).textOverflow).toBe("ellipsis");
     expect(value.scrollWidth).toBeGreaterThan(value.clientWidth);
+  });
+});
+
+// The placeholder is muted while nothing is selected, as on Select.Trigger, in a multi-select too
+// (Base UI sets data-placeholder for an empty array as well), and a value has the colour of the
+// text around the trigger. Base UI types `defaultValue` by `multiple`: the rows mix both, so the
+// Root's type arguments are spelled out.
+describe("Combobox.Value colour in a trigger", () => {
+  it.each([
+    { shows: "the placeholder muted", defaultValue: null, colour: "muted" },
+    {
+      shows: "the placeholder muted, in a multi-select",
+      multiple: true,
+      defaultValue: [],
+      colour: "muted",
+    },
+    { shows: "a value in the colour around it", defaultValue: "Fig", colour: "around" },
+  ])("shows $shows", ({ multiple, defaultValue, colour }) => {
+    const { getByTestId } = render(
+      <div data-testid="around">
+        <Combobox.Root<string | string[], boolean> multiple={multiple} defaultValue={defaultValue}>
+          <Combobox.Trigger aria-label="Fruit">
+            <Combobox.Value data-testid="value" placeholder="Pick a fruit" />
+            <Combobox.Icon />
+          </Combobox.Trigger>
+        </Combobox.Root>
+        <span data-testid="muted" className="text-muted-foreground">
+          Muted
+        </span>
+      </div>,
+    );
+    const colourOf = (testId: string) => getComputedStyle(getByTestId(testId)).color;
+    expect(colourOf("muted")).not.toBe(colourOf("around"));
+    expect(colourOf("value")).toBe(colourOf(colour));
   });
 });
 

@@ -155,7 +155,7 @@ The popup enters with a scale-up and fade (from `scale-95` and `opacity-0`): the
 | `Select.Popup` | The dropdown panel containing items. It is as wide as the trigger, over the trigger or below it. Item text wraps to that width, and a word longer than the popup breaks; the check mark keeps its room at the item's end. |
 | `Select.Item` | An individual selectable option. Put its text in `Select.ItemText`: only that wraps at the popup's width, so text placed straight in the item can run past a narrow popup. |
 | `Select.ItemText` | The text content of an item. It wraps at the popup's width and breaks a word longer than that; a badge or shortcut beside it keeps its width. |
-| `Select.ItemIndicator` | Checkmark shown for the selected item. |
+| `Select.ItemIndicator` | Checkmark shown for the selected item. Children you pass replace the checkmark. The indicator is `aria-hidden`, so screen readers skip its children and announce the option's selected state instead. |
 | `Select.Group` | Groups related items together. |
 | `Select.GroupLabel` | Label for a group of items. |
 

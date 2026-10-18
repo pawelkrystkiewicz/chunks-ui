@@ -21,7 +21,8 @@ export type ClearButtonProps = ComponentProps<"button"> & {
   labels?: Partial<ClearButtonLabels>;
 };
 
-export function ClearButton({ className, label, labels, ...props }: ClearButtonProps) {
+// Children replace the X, and the button keeps its aria-label (#564)
+export function ClearButton({ className, label, labels, children, ...props }: ClearButtonProps) {
   // No default next to aria-labelledby: when the referenced element contains this button, its
   // text would take the default in, and "Remove Apple" would read "Remove Apple Clear"
   const defaultLabel = props["aria-labelledby"]
@@ -47,7 +48,7 @@ export function ClearButton({ className, label, labels, ...props }: ClearButtonP
       )}
       {...props}
     >
-      <CloseIcon className="size-4" />
+      {children ?? <CloseIcon className="size-4" />}
     </button>
   );
 }

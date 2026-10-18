@@ -145,7 +145,7 @@ describe("Select", () => {
     expect(screen.getByTestId("item")).toHaveClass("custom");
   });
 
-  it("renders ItemIndicator with checkmark svg", () => {
+  it("renders the check in ItemIndicator when it has no children", () => {
     render(
       <Select.Root open defaultValue="a">
         <Select.Trigger>Pick</Select.Trigger>
@@ -158,7 +158,25 @@ describe("Select", () => {
         </Select.Positioner>
       </Select.Root>,
     );
-    expect(screen.getByTestId("ind")).toBeInTheDocument();
+    expect(screen.getByTestId("ind").querySelector("svg")).toBeInTheDocument();
+  });
+
+  it("renders the children of ItemIndicator in place of the check", () => {
+    render(
+      <Select.Root open defaultValue="a">
+        <Select.Trigger>Pick</Select.Trigger>
+        <Select.Positioner>
+          <Select.Popup>
+            <Select.Item value="a">
+              <Select.ItemIndicator data-testid="ind">custom</Select.ItemIndicator>A
+            </Select.Item>
+          </Select.Popup>
+        </Select.Positioner>
+      </Select.Root>,
+    );
+    const indicator = screen.getByTestId("ind");
+    expect(indicator).toHaveTextContent(/^custom$/);
+    expect(indicator.querySelector("svg")).not.toBeInTheDocument();
   });
 
   it("renders GroupLabel with custom className", () => {

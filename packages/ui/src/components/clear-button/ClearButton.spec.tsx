@@ -54,6 +54,28 @@ describe("ClearButton", () => {
   });
 });
 
+// The X is only the default content: children replace it, and the button keeps its name (#564)
+describe("ClearButton content", () => {
+  it("renders the X when it has no children", () => {
+    render(<ClearButton />);
+    const x = screen.getByRole("button", { name: DEFAULT_CLEAR_BUTTON_LABELS.clear });
+    expect(x.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+  });
+
+  // An icon with aria-hidden, the intended use: text children would need an aria-label that
+  // contains them, as the default name does not
+  it("renders its children in place of the X, under the same name", () => {
+    render(
+      <ClearButton>
+        <svg data-testid="custom" aria-hidden="true" />
+      </ClearButton>,
+    );
+    const button = screen.getByRole("button", { name: DEFAULT_CLEAR_BUTTON_LABELS.clear });
+    expect(button.children).toHaveLength(1);
+    expect(button.firstElementChild).toBe(screen.getByTestId("custom"));
+  });
+});
+
 describe("ClearButton labels", () => {
   it("is named by DEFAULT_CLEAR_BUTTON_LABELS", () => {
     render(<ClearButton />);

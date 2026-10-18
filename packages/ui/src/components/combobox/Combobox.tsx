@@ -182,15 +182,24 @@ function ComboboxIcon({ className, ...props }: ComboboxIconProps) {
 }
 
 // As Select.Value (#518, #546): one line with an ellipsis. Base UI's Value renders no element, so
-// nothing clipped it (#541). A function child in a multi-select gets no span: it returns chips or
-// the Chips, which must stay children of Combobox.Chips, so clip your own element there.
+// nothing clipped it (#541). A function child in a multi-select gets no span, so it is not clipped
+// or muted: it returns chips or the Chips, which must stay children of Combobox.Chips, so clip
+// your own element there.
 function ComboboxValue({ className, children, placeholder, ...props }: ComboboxValueProps) {
   const multiple = useContext(ComboboxMultipleContext);
   const value = <BaseCombobox.Value placeholder={placeholder}>{children}</BaseCombobox.Value>;
   if (multiple && typeof children === "function") return value;
   return (
     <span
-      className={cn("flex-1 text-start overflow-hidden text-ellipsis whitespace-nowrap", className)}
+      className={cn(
+        "flex-1 text-start overflow-hidden text-ellipsis whitespace-nowrap",
+        // Muted while nothing is selected, as on Select.Trigger. in-data-placeholder: matches any
+        // ancestor with data-placeholder: the Trigger, and the Control. So all the span shows is
+        // muted then, not the placeholder alone. Base UI marks every Trigger, the one beside an
+        // input too, so muting the Trigger would also mute its children or render element (#564).
+        "in-data-placeholder:text-muted-foreground",
+        className,
+      )}
       {...props}
     >
       {value}
