@@ -514,8 +514,6 @@ describe("Combobox.Value", () => {
     expect(value).toHaveTextContent(/^Pick a fruit$/);
   });
 
-  // Base UI marks every Trigger `data-placeholder` while nothing is selected, the one beside an
-  // input too: the Value mutes itself under such a Trigger, and the Trigger keeps its colour (#564)
   it("mutes the Value, not the Trigger, while nothing is selected", () => {
     triggerStyle({ placeholder: "Pick a fruit" }, null);
     const trigger = screen.getByRole("combobox", { name: "Fruit" });

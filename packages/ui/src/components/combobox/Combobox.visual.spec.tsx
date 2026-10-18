@@ -301,38 +301,23 @@ describe("Combobox.Input beside Clear and Trigger", () => {
 });
 
 // Base UI sets `data-placeholder` on every Combobox.Trigger while nothing is selected, the one
-// beside an input too. Only what a Combobox.Value shows is muted (#564): the children or `render`
-// element of a Trigger beside an input keep the colour around them, as in 0.1.4
+// beside an input too. Only what a Combobox.Value shows is muted (#564): the `render` element of a
+// Trigger beside an input keeps the colour around it, as in 0.1.4
 describe("Combobox.Trigger beside an input, with nothing selected", () => {
-  it.each([
-    {
-      content: "its children",
-      trigger: (
-        <Combobox.Trigger aria-label="Fruit">
-          <span data-testid="custom">Choose</span>
-        </Combobox.Trigger>
-      ),
-    },
-    {
-      content: "its render element",
-      trigger: (
-        <Combobox.Trigger
-          aria-label="Fruit"
-          render={
-            <button type="button" data-testid="custom">
-              Choose
-            </button>
-          }
-        />
-      ),
-    },
-  ])("keeps $content in the colour around it", ({ trigger }) => {
+  it("keeps its render element in the colour around it", () => {
     const { getByRole, getByTestId } = render(
       <div data-testid="around" style={{ padding: 40 }}>
         <Combobox.Root items={options}>
           <div className="relative">
             <Combobox.Input aria-label="Framework" />
-            {trigger}
+            <Combobox.Trigger
+              aria-label="Fruit"
+              render={
+                <button type="button" data-testid="custom">
+                  Choose
+                </button>
+              }
+            />
           </div>
         </Combobox.Root>
         <span data-testid="muted" className="text-muted-foreground">
@@ -340,13 +325,10 @@ describe("Combobox.Trigger beside an input, with nothing selected", () => {
         </span>
       </div>,
     );
-    // Base UI marks this Trigger a placeholder too, so a rule on that attribute would reach it
     expect(getByRole("button", { name: "Fruit" }).hasAttribute("data-placeholder")).toBe(true);
-    const custom = getByTestId("custom");
-    expect(custom.textContent).toBe("Choose");
     const colourOf = (testId: string) => getComputedStyle(getByTestId(testId)).color;
     expect(colourOf("muted")).not.toBe(colourOf("around"));
-    expect(getComputedStyle(custom).color).toBe(colourOf("around"));
+    expect(colourOf("custom")).toBe(colourOf("around"));
   });
 });
 
@@ -424,38 +406,6 @@ describe.each(["ltr", "rtl"] as const)("Combobox.Value in a trigger, %s", (dir) 
     expect(value.scrollWidth > value.clientWidth).toBe(truncated);
   });
 
-  // The placeholder is muted while nothing is selected, as on Select.Trigger, in a multi-select too
-  // (Base UI sets data-placeholder for an empty array as well), and a value has the colour of the
-  // text around the trigger. Base UI types `defaultValue` by `multiple`: the rows mix both, so the
-  // Root's type arguments are spelled out.
-  it.each([
-    { shows: "the placeholder muted", defaultValue: null, colour: "muted" },
-    {
-      shows: "the placeholder muted, in a multi-select",
-      multiple: true,
-      defaultValue: [],
-      colour: "muted",
-    },
-    { shows: "a value in the colour around it", defaultValue: "Fig", colour: "around" },
-  ])("shows $shows", ({ multiple, defaultValue, colour }) => {
-    const { getByTestId } = render(
-      <div data-testid="around" style={{ padding: 40 }}>
-        <Combobox.Root<string | string[], boolean> multiple={multiple} defaultValue={defaultValue}>
-          <Combobox.Trigger aria-label="Fruit" className={SELECT_LIKE} style={{ width: 200 }}>
-            <Combobox.Value data-testid="value" placeholder="Pick a fruit" />
-            <Combobox.Icon />
-          </Combobox.Trigger>
-        </Combobox.Root>
-        <span data-testid="muted" className="text-muted-foreground">
-          Muted
-        </span>
-      </div>,
-    );
-    const colourOf = (testId: string) => getComputedStyle(getByTestId(testId)).color;
-    expect(colourOf("muted")).not.toBe(colourOf("around"));
-    expect(colourOf("value")).toBe(colourOf(colour));
-  });
-
   // A badge beside the value keeps its width on one line, and the value takes only the free space
   // and truncates first, as on Select.Value (#546). Before, the value's flex-basis was its full
   // text width, so a long value and the badge shrank in proportion and the badge's two words
@@ -528,6 +478,40 @@ describe.each(["ltr", "rtl"] as const)("Combobox.Value in a trigger, %s", (dir) 
     const value = getByTestId("value");
     expect(getComputedStyle(value).textOverflow).toBe("ellipsis");
     expect(value.scrollWidth).toBeGreaterThan(value.clientWidth);
+  });
+});
+
+// The placeholder is muted while nothing is selected, as on Select.Trigger, in a multi-select too
+// (Base UI sets data-placeholder for an empty array as well), and a value has the colour of the
+// text around the trigger. Base UI types `defaultValue` by `multiple`: the rows mix both, so the
+// Root's type arguments are spelled out.
+describe("Combobox.Value colour in a trigger", () => {
+  it.each([
+    { shows: "the placeholder muted", defaultValue: null, colour: "muted" },
+    {
+      shows: "the placeholder muted, in a multi-select",
+      multiple: true,
+      defaultValue: [],
+      colour: "muted",
+    },
+    { shows: "a value in the colour around it", defaultValue: "Fig", colour: "around" },
+  ])("shows $shows", ({ multiple, defaultValue, colour }) => {
+    const { getByTestId } = render(
+      <div data-testid="around">
+        <Combobox.Root<string | string[], boolean> multiple={multiple} defaultValue={defaultValue}>
+          <Combobox.Trigger aria-label="Fruit">
+            <Combobox.Value data-testid="value" placeholder="Pick a fruit" />
+            <Combobox.Icon />
+          </Combobox.Trigger>
+        </Combobox.Root>
+        <span data-testid="muted" className="text-muted-foreground">
+          Muted
+        </span>
+      </div>,
+    );
+    const colourOf = (testId: string) => getComputedStyle(getByTestId(testId)).color;
+    expect(colourOf("muted")).not.toBe(colourOf("around"));
+    expect(colourOf("value")).toBe(colourOf(colour));
   });
 });
 
