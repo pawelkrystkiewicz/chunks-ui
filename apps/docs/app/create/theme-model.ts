@@ -6,7 +6,9 @@ import {
   baseOf,
   contrast,
   DEFAULT_THEME,
+  type Mode,
   type Oklch,
+  type Overrides,
   ok,
   PRIMARIES,
   palette,
@@ -14,7 +16,7 @@ import {
   type Theme,
 } from "./palette";
 
-export type { BaseId, ChartId, Mode, Oklch, Shadow, Theme } from "./palette";
+export type { BaseId, ChartId, Mode, Oklch, Overrides, Shadow, Theme } from "./palette";
 export { BASES, chartList, contrast, DEFAULT_THEME, ok, PRIMARIES, palette } from "./palette";
 
 export type FontKind = "Sans" | "Grotesk" | "Serif" | "Mono";
@@ -153,7 +155,7 @@ const SHADOWS: Record<Shadow, (dark: boolean) => string> = {
 };
 
 /** Tailwind's default `--text-*` sizes in px; "Base size" scales them by `fontSize / 14`. */
-const TEXT_STEPS = { xs: 12, sm: 14, base: 16, lg: 18, xl: 20, "2xl": 24 };
+export const TEXT_STEPS = { xs: 12, sm: 14, base: 16, lg: 18, xl: 20, "2xl": 24 };
 
 const textVars = (fontSize: number, unit: "px" | "rem") =>
   Object.entries(TEXT_STEPS).map(([k, px]) => {
@@ -238,7 +240,80 @@ export function sameTheme(a: Omit<Theme, "mode">, b: Omit<Theme, "mode">): boole
     "shadow",
     "chart",
   ] as const;
-  return keys.every((k) => a[k] === b[k]) && samePrimary(a.primary, b.primary);
+  return (
+    keys.every((k) => a[k] === b[k]) &&
+    samePrimary(a.primary, b.primary) &&
+    countOverrides(a.overrides) === countOverrides(b.overrides)
+  );
+}
+
+/** Tokens the contrast table may set by hand: every palette token, and the shades theme.css derives. */
+export const EDITABLE = [
+  ...Object.keys(palette(DEFAULT_THEME, "light")),
+  "primary-text",
+  "success-text",
+  "warning-text",
+  "destructive-text",
+  "success-border",
+  "warning-border",
+];
+
+const NEUTRALS = [
+  "background",
+  "foreground",
+  "card",
+  "card-foreground",
+  "popover",
+  "popover-foreground",
+  "secondary",
+  "secondary-foreground",
+  "muted",
+  "muted-foreground",
+  "accent",
+  "accent-foreground",
+  "border",
+  "input",
+];
+
+/** The hand-set tokens a sidebar control drives, which changing it drops */
+const DRIVEN: Record<"primary" | "base" | "chart", (token: string) => boolean> = {
+  primary: (t) => ["primary", "primary-foreground", "primary-text", "ring"].includes(t),
+  base: (t) => NEUTRALS.includes(t),
+  chart: (t) => t.startsWith("chart-"),
+};
+
+export const countOverrides = (o?: Overrides) =>
+  Object.values(o ?? {}).reduce((n, tokens) => n + Object.keys(tokens ?? {}).length, 0);
+
+/** `o` with `token` set to `value` in `mode`, or removed when `value` is null */
+export function withOverride(
+  o: Overrides | undefined,
+  mode: Mode,
+  token: string,
+  value: Oklch | null,
+): Overrides | undefined {
+  const { [token]: _, ...rest } = o?.[mode] ?? {};
+  const next = { ...o, [mode]: value ? { ...rest, [token]: value } : rest };
+  return countOverrides(next) ? next : undefined;
+}
+
+/**
+ * Applies a change. Moving Primary, Base or Charts drops the hand-set colours that control drives;
+ * a patch that sets `overrides` itself (presets, shuffle) replaces them.
+ */
+export function applyPatch(prev: Theme, patch: Partial<Theme>): Theme {
+  const next = { ...prev, ...patch };
+  if ("overrides" in patch || !prev.overrides) return next;
+  const moved = (["primary", "base", "chart"] as const).filter((k) => k in patch);
+  if (moved.length === 0) return next;
+  const keep = (token: string) => !moved.some((k) => DRIVEN[k](token));
+  let overrides: Overrides | undefined = prev.overrides;
+  for (const mode of ENUMS.mode) {
+    for (const token of Object.keys(prev.overrides[mode] ?? {})) {
+      if (!keep(token)) overrides = withOverride(overrides, mode, token, null);
+    }
+  }
+  return { ...next, overrides };
 }
 
 const pick = <T>(a: readonly T[]): T => a[Math.floor(Math.random() * a.length)] as T;
@@ -313,6 +388,23 @@ export function loadTheme(): Theme | null {
     for (const k of ["fontHeading", "fontBody"] as const) {
       if (typeof s[k] === "string") out[k] = s[k];
     }
+    // Hand-set colours: known tokens with all-finite channels, clamped to what oklch() paints
+    let overrides: Overrides | undefined;
+    for (const mode of ENUMS.mode) {
+      const tokens = s.overrides?.[mode];
+      if (!tokens || typeof tokens !== "object") continue;
+      for (const [token, v] of Object.entries(tokens as Record<string, Partial<Oklch>>)) {
+        if (!EDITABLE.includes(token) || !v || typeof v !== "object") continue;
+        const { l, c, h } = v;
+        if (!Number.isFinite(l) || !Number.isFinite(c) || !Number.isFinite(h)) continue;
+        overrides = withOverride(overrides, mode, token, {
+          l: Math.min(1, Math.max(0, l as number)),
+          c: Math.min(0.4, Math.max(0, c as number)),
+          h: (((h as number) % 360) + 360) % 360,
+        });
+      }
+    }
+    if (overrides) out.overrides = overrides;
     return out as Theme;
   } catch {
     return null;

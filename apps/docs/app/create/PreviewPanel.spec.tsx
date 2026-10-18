@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 import { PreviewPanel } from "./PreviewPanel";
 import { DEFAULT_THEME } from "./theme-model";
 
@@ -16,7 +16,9 @@ const OVERLAYS = [
 it.each(OVERLAYS)(
   "$trigger opens $title in the preview theme layer",
   async ({ trigger, title, focus: [role, name] }) => {
-    render(<PreviewPanel theme={{ ...DEFAULT_THEME, mode: "dark", radius: 4 }} />);
+    render(
+      <PreviewPanel theme={{ ...DEFAULT_THEME, mode: "dark", radius: 4 }} onChange={vi.fn()} />,
+    );
     const preview = screen.getByRole("region", { name: "Preview" });
     const button = within(preview).getByRole("button", { name: trigger });
 

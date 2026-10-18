@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ink, parseOklch, themeTokens } from "./theme-css.test-helpers";
 import {
+  applyPatch,
   BASES,
   buildCss,
   contrast,
+  countOverrides,
   DEFAULT_THEME,
   loadTheme,
   type Mode,
@@ -15,6 +17,7 @@ import {
   type Theme,
   toScopeStyle,
   withHue,
+  withOverride,
 } from "./theme-model";
 
 describe("withHue", () => {
@@ -225,5 +228,62 @@ describe("loadTheme", () => {
       stored({ ...DEFAULT_THEME, primary });
       expect(loadTheme()?.primary).toEqual(primary);
     }
+  });
+});
+
+describe("hand-set colours", () => {
+  const red: Oklch = { l: 0.5, c: 0.2, h: 25 };
+  const custom: Theme = {
+    ...DEFAULT_THEME,
+    overrides: { light: { primary: red, muted: red, "chart-1": red, "success-text": red } },
+  };
+
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("win in palette, the preview scope and Get code, in their mode only", () => {
+    expect(palette(custom, "light").muted).toBe("oklch(0.5 0.2 25)");
+    expect(palette(custom, "dark").muted).toBe(palette(DEFAULT_THEME, "dark").muted);
+    expect(toScopeStyle(custom)).toMatchObject({ "--success-text": "oklch(0.5 0.2 25)" });
+    expect(buildCss(custom)).toContain("  --success-text: oklch(0.5 0.2 25);");
+  });
+
+  it("drop the ones a moved sidebar control drives, and keep the rest", () => {
+    const moved = applyPatch(custom, { primary: { l: 0.6, c: 0.2, h: 150 } });
+    expect(Object.keys(moved.overrides?.light ?? {}).sort()).toEqual([
+      "chart-1",
+      "muted",
+      "success-text",
+    ]);
+    expect(applyPatch(custom, { chart: "mono" }).overrides?.light).not.toHaveProperty("chart-1");
+    expect(applyPatch(custom, { base: "zinc" }).overrides?.light).not.toHaveProperty("muted");
+    expect(applyPatch(custom, { mode: "dark", radius: 4 }).overrides).toEqual(custom.overrides);
+    expect(applyPatch(custom, { overrides: undefined }).overrides).toBeUndefined();
+  });
+
+  it("removes the last one as no overrides at all, so presets match again", () => {
+    const one = withOverride(undefined, "dark", "ring", red);
+    expect(countOverrides(one)).toBe(1);
+    expect(withOverride(one, "dark", "ring", null)).toBeUndefined();
+    expect(sameTheme(custom, DEFAULT_THEME)).toBe(false);
+  });
+
+  it("load from storage only as known tokens with finite channels, clamped", () => {
+    vi.stubGlobal("localStorage", {
+      getItem: () =>
+        JSON.stringify({
+          ...DEFAULT_THEME,
+          overrides: {
+            light: {
+              muted: { l: 2, c: -1, h: -30 },
+              "not-a-token": red,
+              input: { l: 0.5, c: "x", h: 1 },
+              border: "red",
+            },
+            dark: "nope",
+            sepia: { muted: red },
+          },
+        }),
+    });
+    expect(loadTheme()?.overrides).toEqual({ light: { muted: { l: 1, c: 0, h: 330 } } });
   });
 });
