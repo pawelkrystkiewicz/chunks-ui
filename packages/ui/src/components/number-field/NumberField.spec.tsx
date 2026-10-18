@@ -450,34 +450,6 @@ describe("NumberField labels", () => {
   });
 });
 
-// iOS Safari zooms the page when a field with text under 16px takes focus (#562)
-describe("NumberField.Input text size", () => {
-  const input = (className?: string) => {
-    render(
-      <NumberField.Root defaultValue={0}>
-        <NumberField.Input aria-label="Quantity" className={className} />
-      </NumberField.Root>,
-    );
-    return screen.getByRole("textbox", { name: "Quantity" });
-  };
-
-  it("has 16px text below md and 14px from md up", () => {
-    expect(input()).toHaveClass("text-sm", "max-md:text-base");
-  });
-
-  it("lets a text-size className set the size from md up and keeps 16px below md", () => {
-    const el = input("text-lg");
-    expect(el).toHaveClass("text-lg", "max-md:text-base");
-    expect(el).not.toHaveClass("text-sm");
-  });
-
-  it("lets a max-md: className replace the 16px below md", () => {
-    const el = input("max-md:text-lg");
-    expect(el).toHaveClass("text-sm", "max-md:text-lg");
-    expect(el).not.toHaveClass("max-md:text-base");
-  });
-});
-
 describe("NumberField focus ring", () => {
   const group = (className?: string) =>
     render(

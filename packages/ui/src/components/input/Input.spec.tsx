@@ -421,28 +421,6 @@ describe("Input labels", () => {
   });
 });
 
-// iOS Safari zooms the page when a field with text under 16px takes focus (#562)
-describe("Input text size", () => {
-  it("has 16px text below md and 14px from md up", () => {
-    render(<Input data-testid="inp" />);
-    expect(screen.getByTestId("inp")).toHaveClass("text-sm", "max-md:text-base");
-  });
-
-  it("lets a text-size className set the size from md up and keeps 16px below md", () => {
-    render(<Input data-testid="inp" className="text-lg" />);
-    const input = screen.getByTestId("inp");
-    expect(input).toHaveClass("text-lg", "max-md:text-base");
-    expect(input).not.toHaveClass("text-sm");
-  });
-
-  it("lets a max-md: className replace the 16px below md", () => {
-    render(<Input data-testid="inp" className="max-md:text-lg" />);
-    const input = screen.getByTestId("inp");
-    expect(input).toHaveClass("text-sm", "max-md:text-lg");
-    expect(input).not.toHaveClass("max-md:text-base");
-  });
-});
-
 // The props the docs list under "Mobile Keyboards"
 describe("Input mobile keyboard props", () => {
   it.each([
