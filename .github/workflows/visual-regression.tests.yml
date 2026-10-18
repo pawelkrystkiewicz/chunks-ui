@@ -41,6 +41,8 @@ jobs:
           run_full=true
           if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
             git config --global --add safe.directory "$GITHUB_WORKSPACE"
+            # WATCH is unquoted on purpose: it splits into one pathspec per word
+            # shellcheck disable=SC2086
             changed=$(git diff --name-only "origin/$BASE_REF...HEAD" -- $WATCH)
             if [ -n "$changed" ]; then
               echo "$changed"
