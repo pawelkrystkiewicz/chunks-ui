@@ -437,8 +437,8 @@ describe("Input mobile keyboard props", () => {
         {...props}
       />,
     );
+    // Only type="search" gives an input the searchbox role, so this also checks the type
     const input = screen.getByRole("searchbox", { name: "Query" });
-    expect(input).toHaveAttribute("type", "search");
     expect(input).toHaveAttribute("inputmode", "search");
     expect(input).toHaveAttribute("enterkeyhint", "search");
     expect(input).toHaveAttribute("autocomplete", "off");
