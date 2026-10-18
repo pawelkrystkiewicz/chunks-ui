@@ -172,7 +172,7 @@ export function ComboboxTriggerSearchExample() {
     <Container className="w-64">
       <Combobox.Root items={fruits}>
         <Combobox.Trigger
-          aria-label="Fruit"
+          aria-label="Fruit, with search"
           className="static h-ui-height w-full rounded-md border border-input bg-background px-3 text-sm max-md:text-base md:[@media(pointer:coarse)]:text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
         >
           <Combobox.Value placeholder="Pick a fruit" />
