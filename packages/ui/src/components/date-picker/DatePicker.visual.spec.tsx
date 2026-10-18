@@ -6,7 +6,6 @@ import {
   emulateReducedMotion,
   expectNotAllowed,
   renderFixture,
-  SETTLE_TIMEOUT_MS,
   settled,
 } from "../../VisualTest.utils";
 import { Field } from "../field";
@@ -154,7 +153,7 @@ describe.each([
     const trigger = view.getByRole("button", { name: "March 15, 2026" });
     await userEvent.click(trigger);
     const day = await view.findByRole("button", { name: "Sunday, March 15, 2026" });
-    await expect.poll(() => document.activeElement, { timeout: SETTLE_TIMEOUT_MS }).toBe(day);
+    await expect.poll(() => document.activeElement).toBe(day);
     // Open at rest: closed during its entry, the popup can leave at once
     const popup = view.getByRole("dialog");
     await settled(popup);
@@ -179,8 +178,7 @@ describe.each([
     };
   };
 
-  const unmounted = (popup: HTMLElement) =>
-    expect.poll(() => popup.isConnected, { timeout: SETTLE_TIMEOUT_MS }).toBe(false);
+  const unmounted = (popup: HTMLElement) => expect.poll(() => popup.isConnected).toBe(false);
 
   // Enter and Tab go in one call: with reduced motion the popup leaves a frame after the pick
   it("moves a Tab pressed during the exit past the trigger, after a pick by Enter", async () => {

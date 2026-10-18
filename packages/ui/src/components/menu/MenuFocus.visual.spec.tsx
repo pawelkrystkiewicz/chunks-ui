@@ -7,7 +7,6 @@ import {
   describeMotionPaths,
   emulateReducedMotion,
   enterMotionPath,
-  SETTLE_TIMEOUT_MS,
   settled,
   waitForStable,
 } from "../../VisualTest.utils";
@@ -190,9 +189,7 @@ describe.each([
     const { popup, after } = await openMenu();
     await userEvent.keyboard("{ArrowUp}{ArrowRight}");
     const submenu = await screen.findByTestId("submenu");
-    await expect
-      .poll(() => submenu.contains(document.activeElement), { timeout: SETTLE_TIMEOUT_MS })
-      .toBe(true);
+    await expect.poll(() => submenu.contains(document.activeElement)).toBe(true);
     await settled(submenu);
     const checkTab = recordTab(popup);
     await userEvent.keyboard("{Enter}{Tab}");
@@ -291,9 +288,7 @@ describe("Menu focus as the popup closes, Base UI's own handling", () => {
     await settled(popup);
     await userEvent.keyboard("{ArrowDown}{Enter}");
     const dialog = await view.findByTestId("dialog");
-    await expect
-      .poll(() => dialog.contains(document.activeElement), { timeout: SETTLE_TIMEOUT_MS })
-      .toBe(true);
+    await expect.poll(() => dialog.contains(document.activeElement)).toBe(true);
     await unmounted(popup);
     expect(dialog.contains(document.activeElement), "the Dialog keeps focus").toBe(true);
     await settled(dialog);
@@ -357,9 +352,7 @@ async function openMenu(props?: Parameters<typeof menuFixture>[0]) {
   const trigger = view.getByRole("button", { name: "Options" });
   await userEvent.click(trigger);
   const popup = await view.findByTestId("popup");
-  await expect
-    .poll(() => popup.contains(document.activeElement), { timeout: SETTLE_TIMEOUT_MS })
-    .toBe(true);
+  await expect.poll(() => popup.contains(document.activeElement)).toBe(true);
   // Open at rest: closed during its entry, the CSS path's popup can leave at once
   await settled(popup);
   return {
@@ -379,5 +372,4 @@ function tookFocus(el: HTMLElement) {
   return () => focused;
 }
 
-const unmounted = (popup: HTMLElement) =>
-  expect.poll(() => popup.isConnected, { timeout: SETTLE_TIMEOUT_MS }).toBe(false);
+const unmounted = (popup: HTMLElement) => expect.poll(() => popup.isConnected).toBe(false);

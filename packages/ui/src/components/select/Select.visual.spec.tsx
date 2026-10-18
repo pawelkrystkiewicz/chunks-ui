@@ -356,9 +356,7 @@ describe.each([
     const trigger = view.getByRole("combobox", { name: "Fruit" });
     await userEvent.click(trigger);
     const popup = view.getByTestId("popup");
-    await expect
-      .poll(() => popup.contains(document.activeElement), { timeout: SETTLE_TIMEOUT_MS })
-      .toBe(true);
+    await expect.poll(() => popup.contains(document.activeElement)).toBe(true);
     // Open at rest: closed during its entry, the CSS path's popup can leave at once
     await settled(popup);
     return {
@@ -393,8 +391,7 @@ describe.each([
   };
 
   // The exit is over: Base UI keeps the popup mounted, hidden, while the trigger has focus
-  const exited = (popup: HTMLElement) =>
-    expect.poll(() => popup.checkVisibility(), { timeout: SETTLE_TIMEOUT_MS }).toBe(false);
+  const exited = (popup: HTMLElement) => expect.poll(() => popup.checkVisibility()).toBe(false);
 
   // Enter and Tab go in one call: with reduced motion the popup leaves a frame after the pick
   it.each([

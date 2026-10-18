@@ -7,7 +7,6 @@ import {
   enterMotionPath,
   renderFixture,
   renderPage,
-  SETTLE_TIMEOUT_MS,
   settled,
 } from "../../VisualTest.utils";
 import { Button } from "../button";
@@ -249,7 +248,7 @@ async function openPopover(props?: Parameters<typeof popoverFixture>[0]) {
   const trigger = view.getByRole("button", { name: "Settings" });
   await userEvent.click(trigger);
   const name = await view.findByRole("textbox", { name: "Name" });
-  await expect.poll(() => document.activeElement, { timeout: SETTLE_TIMEOUT_MS }).toBe(name);
+  await expect.poll(() => document.activeElement).toBe(name);
   // Open at rest: closed during its entry, the CSS path's popup can leave at once
   const popup = view.getByTestId("popup");
   await settled(popup);
@@ -270,5 +269,4 @@ function tookFocus(el: HTMLElement) {
   return () => focused;
 }
 
-const unmounted = (popup: HTMLElement) =>
-  expect.poll(() => popup.isConnected, { timeout: SETTLE_TIMEOUT_MS }).toBe(false);
+const unmounted = (popup: HTMLElement) => expect.poll(() => popup.isConnected).toBe(false);
