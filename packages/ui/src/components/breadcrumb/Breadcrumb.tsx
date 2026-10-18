@@ -119,26 +119,29 @@ function BreadcrumbSeparator({ className, children, ...props }: BreadcrumbSepara
   );
 }
 
-function BreadcrumbEllipsis({ className, ...props }: BreadcrumbEllipsisProps) {
+// Children replace the dots; the hidden label stays beside them (#564)
+function BreadcrumbEllipsis({ className, children, ...props }: BreadcrumbEllipsisProps) {
   const labels = useContext(BreadcrumbLabelsContext);
   return (
     <span className={cn("flex size-9 items-center justify-center", className)} {...props}>
-      <svg
-        aria-hidden="true"
-        xmlns="http://www.w3.org/2000/svg"
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <circle cx="12" cy="12" r="1" />
-        <circle cx="19" cy="12" r="1" />
-        <circle cx="5" cy="12" r="1" />
-      </svg>
+      {children ?? (
+        <svg
+          aria-hidden="true"
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <circle cx="12" cy="12" r="1" />
+          <circle cx="19" cy="12" r="1" />
+          <circle cx="5" cy="12" r="1" />
+        </svg>
+      )}
       <span className="sr-only">{labels.ellipsis}</span>
     </span>
   );

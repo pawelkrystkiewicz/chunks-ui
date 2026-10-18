@@ -1,5 +1,6 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, isInaccessible, render, screen } from "@testing-library/react";
 import { axe } from "jest-axe";
+import type { ReactNode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { Pagination, type PaginationRootProps } from "./Pagination";
 import { DEFAULT_PAGINATION_LABELS } from "./Pagination.Labels";
@@ -122,6 +123,38 @@ describe("Pagination", () => {
   it("has no a11y violations", async () => {
     const { container } = render(<BasicPagination />);
     expect(await axe(container)).toHaveNoViolations();
+  });
+});
+
+// The dots are only the default content: children replace them, and the hidden label stays (#564)
+describe("Pagination.Ellipsis content", () => {
+  const ellipsis = (children?: ReactNode) =>
+    render(
+      <Pagination.Root>
+        <Pagination.Content>
+          <Pagination.Item>
+            <Pagination.Ellipsis data-testid="ellipsis">{children}</Pagination.Ellipsis>
+          </Pagination.Item>
+        </Pagination.Content>
+      </Pagination.Root>,
+    );
+
+  it("renders the dots when it has no children", () => {
+    ellipsis();
+    const dots = screen.getByTestId("ellipsis").querySelector("svg");
+    expect(dots).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("renders its children in place of the dots, beside its label", () => {
+    ellipsis(<span>custom</span>);
+    const el = screen.getByTestId("ellipsis");
+    expect(el.querySelector("svg")).not.toBeInTheDocument();
+    const custom = screen.getByText("custom");
+    expect(el).toContainElement(custom);
+    expect(isInaccessible(custom)).toBe(false);
+    const label = screen.getByText(DEFAULT_PAGINATION_LABELS.ellipsis);
+    expect(label).toHaveClass("sr-only");
+    expect(isInaccessible(label)).toBe(false);
   });
 });
 

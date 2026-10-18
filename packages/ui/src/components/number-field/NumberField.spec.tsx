@@ -450,6 +450,45 @@ describe("NumberField labels", () => {
   });
 });
 
+// The plus and minus are only the default content: children replace them, and the button keeps
+// its name (#564)
+describe("NumberField Increment and Decrement content", () => {
+  const parts = [
+    {
+      part: "Increment",
+      name: DEFAULT_NUMBER_FIELD_LABELS.increment,
+      button: (children?: React.ReactNode) => (
+        <NumberField.Increment>{children}</NumberField.Increment>
+      ),
+    },
+    {
+      part: "Decrement",
+      name: DEFAULT_NUMBER_FIELD_LABELS.decrement,
+      button: (children?: React.ReactNode) => (
+        <NumberField.Decrement>{children}</NumberField.Decrement>
+      ),
+    },
+  ];
+  const field = (button: React.ReactNode) =>
+    render(<NumberField.Root defaultValue={0}>{button}</NumberField.Root>);
+
+  it.each(parts)("renders the glyph in $part when it has no children", ({ name, button }) => {
+    field(button());
+    const glyph = screen.getByRole("button", { name }).querySelector("svg");
+    expect(glyph).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it.each(parts)(
+    "renders the children of $part in place of the glyph, under the same name",
+    ({ name, button }) => {
+      field(button("custom"));
+      const el = screen.getByRole("button", { name });
+      expect(el).toHaveTextContent(/^custom$/);
+      expect(el.querySelector("svg")).not.toBeInTheDocument();
+    },
+  );
+});
+
 describe("NumberField focus ring", () => {
   const group = (className?: string) =>
     render(

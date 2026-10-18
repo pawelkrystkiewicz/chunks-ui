@@ -1,5 +1,6 @@
 import { cleanup, isInaccessible, render, screen } from "@testing-library/react";
 import { axe } from "jest-axe";
+import type { ReactNode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { Breadcrumb, type BreadcrumbRootProps } from "./Breadcrumb";
 import { DEFAULT_BREADCRUMB_LABELS } from "./Breadcrumb.Labels";
@@ -105,6 +106,34 @@ describe("Breadcrumb", () => {
   it("has no a11y violations", async () => {
     const { container } = render(<BasicBreadcrumb />);
     expect(await axe(container)).toHaveNoViolations();
+  });
+});
+
+// The dots are only the default content: children replace them, and the hidden label stays (#564)
+describe("Breadcrumb.Ellipsis content", () => {
+  const ellipsis = (children?: ReactNode) =>
+    render(
+      <Breadcrumb.Root>
+        <Breadcrumb.List>
+          <Breadcrumb.Item>
+            <Breadcrumb.Ellipsis data-testid="ellipsis">{children}</Breadcrumb.Ellipsis>
+          </Breadcrumb.Item>
+        </Breadcrumb.List>
+      </Breadcrumb.Root>,
+    );
+
+  it("renders the dots when it has no children", () => {
+    ellipsis();
+    const dots = screen.getByTestId("ellipsis").querySelector("svg");
+    expect(dots).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("renders its children in place of the dots, beside its label", () => {
+    ellipsis(<span>custom</span>);
+    const el = screen.getByTestId("ellipsis");
+    expect(el.querySelector("svg")).not.toBeInTheDocument();
+    expect(el).toContainElement(getReadableText("custom"));
+    expect(getReadableText(DEFAULT_BREADCRUMB_LABELS.ellipsis)).toHaveClass("sr-only");
   });
 });
 
