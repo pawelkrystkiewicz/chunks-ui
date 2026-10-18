@@ -109,7 +109,7 @@ jobs:
       - name: Summary
         if: always()
         run: |
-          if [[ "$CHANGES" == "true" ]]; then
+          if [ "$CHANGES" = true ]; then
             {
               echo "### Visual Regression Screenshots Updated"
               echo ""
