@@ -83,6 +83,12 @@ const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve))
 // started again, shows in the first or second frame. 5 frames leave margin
 const ABSENCE_WINDOW_FRAMES = 5;
 
+// An absence window, as a container that keeps the short panel's height changes nothing to wait
+// for. The previous panel's height would come from its re-measure, one requestAnimationFrame
+// callback that runs in the frame of the switch back, and the instant tween writes it in Motion's
+// next render step, so it shows in the first frame, and only in that one. 10 frames leave margin
+const SWITCH_BACK_ABSENCE_WINDOW_FRAMES = 10;
+
 /** A Tabs.Animate pane's opacity and vertical offset, as painted */
 const poseOf = (pane: Element) => {
   const { opacity, transform } = getComputedStyle(pane);
@@ -159,7 +165,10 @@ describe("Tabs with Motion", () => {
       // A showing pane stays as it is when Motion arrives, so nothing in it shows the arrival.
       // Tabs.Animate reads Motion with useMotion(), so it has re-rendered with it once the
       // marker shows
-      () => expect.element(page.getByTestId("motion-loaded")).toBeInTheDocument(),
+      () =>
+        expect
+          .element(page.getByTestId("motion-loaded"), { timeout: SETTLE_TIMEOUT_MS })
+          .toBeInTheDocument(),
     ],
   ] as const)(
     "keeps text typed into Tabs.%s, and its focus, when Motion finishes loading",
@@ -343,7 +352,8 @@ describe("Tabs animations that must stop", () => {
     const { contents } = await resizeMidway();
     const track = contents.firstElementChild as HTMLElement;
     await emulateReducedMotion(true);
-    // The inline styles are cleared, so the CSS layout shows the tall panel unshifted, full height
+    // The inline styles are cleared, so the CSS layout shows the tall panel unshifted, full height.
+    // Dropped at once, not 10s later: the clear after the stop lands in Motion's next render step
     await expect.poll(() => contents.style.height, { timeout: 1000 }).toBe("");
     for (let frame = 0; frame < ABSENCE_WINDOW_FRAMES; frame++) {
       await nextFrame();
@@ -466,11 +476,11 @@ describe("Tabs.Contents when reduced motion turns off at rest", () => {
     const contents = getByTestId("contents");
     const place = placeIn(contents, page.getByText("Short panel").element());
     const inPlace = { offset: 0, height: HEIGHTS.short };
-    await expect.poll(() => contents.style.height).not.toBe("");
+    await expect.poll(() => contents.style.height, { timeout: SETTLE_TIMEOUT_MS }).not.toBe("");
     expect(await waitForStable(place)).toEqual(inPlace);
 
     await emulateReducedMotion(true);
-    await expect.poll(() => contents.style.height).toBe("");
+    await expect.poll(() => contents.style.height, { timeout: SETTLE_TIMEOUT_MS }).toBe("");
     expect(await waitForStable(place)).toEqual(inPlace);
 
     // Recorded from before the switch, so a frame between the two paths counts too
@@ -479,7 +489,9 @@ describe("Tabs.Contents when reduced motion turns off at rest", () => {
     const frames = await recording;
     // The switch may land after the recorded frames: wait for it, then record frames on the
     // Motion path too, so the spec never checks only frames from before the switch
-    await expect.poll(() => contents.classList.contains("overflow-clip")).toBe(true);
+    await expect
+      .poll(() => contents.classList.contains("overflow-clip"), { timeout: SETTLE_TIMEOUT_MS })
+      .toBe(true);
     const after = await eachPaintedFrame(place, 10);
     expect([...frames, ...after]).toEqual([...frames, ...after].map(() => inPlace));
   });
@@ -524,7 +536,7 @@ describe("Tabs.Contents height with Motion", () => {
     await nextFrame();
     rerender(panelsOfTwoHeights("short", { transition }));
     const heights: number[] = [];
-    for (let frame = 0; frame < 10; frame++) {
+    for (let frame = 0; frame < SWITCH_BACK_ABSENCE_WINDOW_FRAMES; frame++) {
       await nextFrame();
       heights.push(contents.offsetHeight);
     }

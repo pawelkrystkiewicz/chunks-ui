@@ -96,9 +96,20 @@ it("has no a11y violations", async () => {
 });
 ```
 
-A popup (Combobox, DatePicker, Dialog, Drawer, Menu, Popover, Select, Tooltip) renders into a portal node in `document.body`, outside the `container` that `render` returns, so `axe(container)` does not see it. When the test opens a popup, audit `document.body`. Also assert that the popup is in the document, so that the audit cannot pass when the popup did not open:
+A popup (Combobox, DatePicker, Dialog, Drawer, Menu, Popover, Select, Tooltip) renders into a portal node in `document.body`, outside the `container` that `render` returns, so `axe(container)` does not see it. When the test opens a popup, audit `document.body`. Also assert that the popup is in the document, so that the audit cannot pass when the popup did not open. An open Menu also needs an `axe` that skips Base UI's focus guards, as in this example (see **Focusable aria-hidden nodes** below):
 
 ```tsx
+import { configureAxe } from "jest-axe";
+
+// Skips Base UI's focus guards, which aria-hidden-focus fails in jsdom
+const axe = configureAxe({
+  globalOptions: {
+    rules: [
+      { id: "aria-hidden-focus", selector: '[aria-hidden="true"]:not([data-base-ui-focus-guard])' },
+    ],
+  },
+});
+
 it("has no a11y violations", async () => {
   const { container } = render(
     <Menu.Root open>
@@ -118,7 +129,17 @@ it("has no a11y violations", async () => {
 
 The audit of `document.body` also runs axe's `region` rule (best practice: all content is in a landmark). The test page has no landmarks, and a portalled popup is outside them on a real page too. The rule does not flag a dialog, so the Dialog, Drawer and Popover audits keep it. For a popup with a different role (a menu, a listbox, a tooltip), disable `region` in that audit only. With the popup closed, and for parts that render in place, such as `Toast.Viewport`, `axe(container)` is correct.
 
-Setup: `jest-axe` is globally configured in `vitest.setup.ts` — `toHaveNoViolations` is available on all `expect()` calls.
+Setup: `vitest.setup.ts` adds `toHaveNoViolations` to every `expect()`, and stubs `document.elementFromPoint` so that axe's `aria-hidden-focus` rule can fail in jsdom (see below).
+
+### Focusable aria-hidden nodes
+
+axe's `aria-hidden-focus` rule fails an element that is hidden from assistive tech but that Tab reaches. When no dialog is visible, the rule looks for a full-page overlay with axe's polyfill of `document.elementsFromPoint`, which calls `document.elementFromPoint`. jsdom has neither, so the rule threw. An errored rule lands in `incomplete`, which `toHaveNoViolations()` does not read, and every focusable `aria-hidden` node passed. `vitest.setup.ts` stubs `elementFromPoint` to return `null`: axe then finds no element at any point, sees no overlay, and fails the node. `src/AriaHiddenFocus.spec.tsx` checks that.
+
+While a dialog is visible, the rule still can't fail a node, in a browser too. axe takes any visible `dialog`, `[role=dialog]` or `[aria-modal=true]` for an open modal and lists every focusable `aria-hidden` node under `incomplete`. The Drawer audit, the open DatePicker audit and a toast audit with a toast of the default `low` priority on screen (a `role="dialog"`) each show one. To check such a node there, read `incomplete`, as the F6 audit in `Toast.spec.tsx` does.
+
+Base UI renders focus guards around an open popup: `aria-hidden` spans that Tab reaches and that hand focus on. In a browser, axe takes the open dialog, or the full-page backdrop of a Menu or a Select, for an open modal and lists the guards under `incomplete`. In jsdom, an open-popup audit with no visible dialog fails them: Dialog and Popover popups are still at Motion's opacity 0 when the audit runs, and jsdom can't hit-test the Menu and Select backdrops. Skip the guards in those audits with the `configureAxe` call from the Menu example, as the Dialog, OverlayBody, Popover, Menu and Select specs do. The rule still checks every other `aria-hidden` node.
+
+Base UI also aria-hides the page outside an open modal Dialog, so a trigger rendered beside the open Dialog fails the same way. Leave the trigger out of the audit, as the Dialog specs do. Don't widen the selector to `[data-base-ui-inert]`: that marker is on the hidden page too, so the rule would skip the whole page and any stray node in it, not only the guards.
 
 ### Accessible names in Chromium
 
@@ -136,6 +157,7 @@ Browser specs (Vitest browser mode, Playwright Chromium) in `packages/ui`. They 
 - **Text renders in Manrope from local files.** Manrope is the theme's `--font-sans`. `vitest.visual.setup.ts` loads it from the `@fontsource-variable/manrope` devDependency before any spec runs: weights 200–800 and the subsets the docs app loads from Google Fonts. No request leaves the machine. A file that does not load fails the setup, and with it every spec. Without the font, text fell back to the machine's sans-serif, so text widths and overflow differed between macOS and the Docker image.
 - **Every test starts with the pointer parked and in keyboard modality.** `vitest.visual.setup.ts` moves the mouse off the page and sends Escape in a `beforeEach`. The page keeps the last mouse position and the last input modality across tests and spec files, so a hover style or a `:focus-visible` ring (shown on programmatic focus only after a keyboard event) would otherwise depend on which spec ran before. A spec that wants mouse modality (no ring) clicks first.
 - **Only Linux baselines are committed** (`*-linux.png`), and CI compares against them. macOS baselines (`*-darwin.png`) are gitignored and exist only on your machine. With zero tolerance, a macOS baseline left over from an older checkout fails locally although nothing is wrong: refresh it with `bun run test:visual:update` (in `packages/ui`) before you treat a local failure as a regression. Both `bun run test:visual` and `bun run test:visual:update` take a path filter (a substring of the spec path): `bun run test:visual:update button` refreshes only the matching specs. In `packages/ui` the script passes `--update=true`, because a bare `--update` would take the filter as its value and refresh every spec.
+- **An agent run hides a passing spec's `console.log`.** When Vitest 4.1 finds an AI agent in the environment (`AI_AGENT`, `CLAUDECODE` and others, read by `std-env`), it uses its `agent` reporter, which prints console output only for a failed test. `--silent=false` and `--printConsoleTrace` do not change that. To see a passing spec's `console.log`, add `--reporter=default`: `bun run test:visual tabs --reporter=default` in `packages/ui`. In `packages/ui`, the unit suite (`bun run test`) works the same way. A run from the repo root goes through Turbo, which does not pass the agent variables on, so Vitest uses its default reporter there and prints the output. In an agent run, Vite also copies the browser's `console.warn` and `console.error` to the terminal (`[vite] (client) [console.warn] …`), from passing specs too.
 - **Regenerate Linux baselines in Docker** after you commit the change. CI renders on x86 in the same image, so force `linux/amd64`; an arm64 render can differ from the CI render. Under emulation on Apple silicon the run takes minutes, which is not a hang. `<wt>` is your checkout or worktree, `<scratchpad>` any scratch directory outside it:
 
   ```bash
