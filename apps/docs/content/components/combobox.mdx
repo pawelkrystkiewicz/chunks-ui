@@ -245,21 +245,21 @@ The popup enters with a scale-up and fade (from `scale-95` and `opacity-0`): the
 | `Combobox.Root` | State container. Manages open/close, filtering, and selected value(s). |
 | `Combobox.Control` | Bordered wrapper for multi-select (chips + input): Base UI's `Combobox.InputGroup`, a `role="group"` (pass `aria-label` to name it). The popup anchors to it, and a press on its padding focuses the input and opens the popup, unless `openOnInputClick` is false. `Combobox.Clear` and `Combobox.Trigger` sit over its end: its end padding (`pe-12`) keeps the chips and the input's text out from under them. A `px-*` or `p-*` class, with or without a variant such as `md:`, replaces it: add `pe-12` back. Draws the focus ring (`has-[:focus-visible]`) while the input or a chip inside it has keyboard focus, and turns off the ring of its combobox input, so one ring shows; a focused chip also draws its own. |
 | `Combobox.Input` | Text input with built-in filtering. In a single-select, `Combobox.Clear` and `Combobox.Trigger` sit over its end: its end padding (`pe-12`) keeps the text out from under them. A `px-*` or `p-*` class, with or without a variant such as `md:`, replaces it: add `pe-12` back. Inside `Combobox.Chips`, the example's `px-0` removes it, and the Control's end padding keeps the text clear instead. |
-| `Combobox.Trigger` | Button that toggles the popup. Renders a default chevron icon. At most as wide as its container (`max-w-full`), and it shrinks in a flex row (`min-w-0`); `max-w-none` lifts the cap. |
-| `Combobox.Icon` | Chevron icon, usable standalone outside the trigger. Children you pass replace the chevron. |
+| `Combobox.Trigger` | Button that toggles the popup. Renders a default chevron icon, named "Show options". Children or a `render` element replace both the chevron and the name: see [Accessible Names](#accessible-names). At most as wide as its container (`max-w-full`), and it shrinks in a flex row (`min-w-0`); `max-w-none` lifts the cap. |
+| `Combobox.Icon` | Chevron icon, usable standalone outside the trigger. Children you pass replace the chevron. With a `render` element and no children, there is no chevron: the element draws its own, and may be a void element such as `<img>`. |
 | `Combobox.Portal` | Renders the popup in a portal. |
 | `Combobox.Positioner` | Handles Floating UI positioning. Default `sideOffset={8}`, as on `Popover.Content` and `Menu.Content`: the input's focus ring, 4px outside its edge, stays clear of the popup. A `sideOffset` you pass replaces it, so `sideOffset={0}` opens the popup flush against the input. Inside a `Combobox.Control` the popup anchors to the Control: it is as wide as the Control and opens 8px below the Control's border. |
 | `Combobox.Popup` | The dropdown panel containing items. It is as wide as the input, or as the `Combobox.Control` in a multi-select. Item text wraps to that width, and a word longer than the popup breaks. Scrolls when the items need more than the space between the input and the viewport edge. |
 | `Combobox.List` | List container. Takes a function child that renders each matching item (or each group, when `items` holds groups). |
 | `Combobox.Item` | An individual selectable option. Its text wraps, and a word longer than the popup breaks; give an icon, badge or shortcut beside the text `shrink-0`, or it is squeezed. |
-| `Combobox.ItemIndicator` | Checkmark shown for the selected item. Children you pass replace the checkmark. The indicator is `aria-hidden`, so screen readers skip its children and announce the option's selected state instead. |
+| `Combobox.ItemIndicator` | Checkmark shown for the selected item. Children you pass replace the checkmark. With a `render` element and no children, there is no checkmark: the element draws its own, and may be a void element such as `<img>`. The indicator is `aria-hidden`, so screen readers skip its children and announce the option's selected state instead. |
 | `Combobox.Empty` | Message displayed when no items match the filter. Needs `items` on Root. |
-| `Combobox.Clear` | Button that clears the current value. Renders a default X icon. |
+| `Combobox.Clear` | Button that clears the current value. Renders a default X icon. Children you pass replace the X; with a `render` element and no children, there is no X. The button keeps its name, "Clear selection", whatever its content: if the children are visible text, pass an `aria-label` that contains it. |
 | `Combobox.Group` | Groups related items together. |
 | `Combobox.GroupLabel` | Label for a group of items. |
 | `Combobox.Chips` | Container for selected chips in multi-select mode: a wrapping row with a 4px gap between the chips (`gap-1`; `className` merges with it). Takes ordinary children: map the selected values to `Combobox.Chip`s, and put `Combobox.Input` after them. Add `flex-1`, as the example does: the row is only as wide as its chips, so without it the input shrinks to its minimum width. |
 | `Combobox.Chip` | A styled chip representing a selected value. Draws the focus ring when the arrow keys focus it. Arrow keys move focus from the input to a chip only when the input is inside `Combobox.Chips`. |
-| `Combobox.ChipRemove` | Button to remove a chip. Renders a default X icon. |
+| `Combobox.ChipRemove` | Button to remove a chip. Renders a default X icon. Children you pass replace the X; with a `render` element and no children, there is no X. The button keeps its name, "Remove" and the chip's text, whatever its content: if the children are visible text, pass an `aria-label` that contains it. |
 | `Combobox.Value` | Displays the selected value, or `placeholder` while nothing is selected, in a `<span>` that stays on one line and ends in an ellipsis when the value is wider than its trigger, and fills the trigger's free space (`flex-1`, so an element beside it keeps its width); `flex-initial` in `className` sizes it by its text instead, and `whitespace-normal` brings back wrapping. While nothing is selected, what the `<span>` shows is muted (`text-muted-foreground`), as in `Select`: the `placeholder`, static children, and a function child's result in a single-select. To colour it yourself, use `in-data-placeholder:text-*`; `in-data-placeholder:text-inherit` keeps it in the colour around it. A plain `text-*` in `className` colours the value only: the muted colour stays beside it and wins while nothing is selected. A function child in a multi-select gets no `<span>`, so it can return the chips or the `Combobox.Chips` itself, but text it returns is neither clipped nor muted: return your own clipped element, such as `<span className="flex-1 truncate text-start">...</span>`. |
 | `Combobox.Status` | Accessible status announcements for screen readers. |
 
@@ -271,7 +271,13 @@ The popup enters with a scale-up and fade (from `scale-95` and `opacity-0`): the
 <Combobox.ChipRemove aria-label={`Deselect ${item.label}`} />
 ```
 
-If you pass `children` or a `render` element, the default name and the default icon are not applied. The content you pass names the button, so give icon-only content an `aria-label`:
+`Combobox.Clear` and `Combobox.ChipRemove` keep their name whatever you pass. `children` replace the X, and a `render` element with no children gets no X. If the children are visible text, pass an `aria-label` that contains it, so speech input users can say what they see:
+
+```tsx
+<Combobox.Clear aria-label="Clear all fruits">Clear all</Combobox.Clear>
+```
+
+`Combobox.Trigger` is different: in a trigger-style Combobox it shows the selected value. If you pass `children` or a `render` element, its default name and its chevron are not applied, and the content you pass names the button. Give icon-only content an `aria-label`:
 
 ```tsx
 <Combobox.Trigger render={<button type="button">Choose</button>} />

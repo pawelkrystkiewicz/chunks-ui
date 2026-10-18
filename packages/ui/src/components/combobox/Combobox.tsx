@@ -1,7 +1,7 @@
 "use client";
 
 import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
-import { type ComponentProps, createContext, type ReactNode, useContext, useId } from "react";
+import { type ComponentProps, createContext, useContext, useId } from "react";
 import { cn, cnState } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
 import { springs } from "../../lib/motion";
@@ -115,41 +115,16 @@ function ComboboxInput({ className, ...props }: ComboboxInputProps) {
   );
 }
 
-// Trigger, Clear and ChipRemove render an aria-hidden icon by default, so they name themselves
-// with a default name from `labels`. Custom children or a `render` element own the content instead
-// (a fixed label would hide their visible text), so neither the name nor the icon is applied then.
-// A consumer's aria-label replaces the default; inside Field.Root, Base UI's aria-labelledby on
-// the Trigger still takes precedence over any aria-label.
-function ownContent(
-  children: ReactNode,
-  render: unknown,
-  name: { "aria-label"?: string; "aria-labelledby"?: string },
-  icon: ReactNode,
-) {
-  const hasOwnContent = children != null || render != null;
-  return hasOwnContent ? { children } : { ...name, children: icon };
-}
-
+// With neither children nor `render`, the Trigger draws a chevron and is named "Show options"
+// (`labels.trigger`). Children or a `render` element replace both: a trigger-style Combobox shows
+// the selected value inside its Trigger, so that content names it (#581). A consumer's aria-label
+// replaces the default; inside Field.Root, Base UI's aria-labelledby still takes precedence.
 function ComboboxTrigger({ className, children, ...props }: ComboboxTriggerProps) {
   const labels = useContext(ComboboxLabelsContext);
+  const ownContent = children != null || props.render != null;
   return (
     <BaseCombobox.Trigger
-      {...ownContent(
-        children,
-        props.render,
-        { "aria-label": labels.trigger },
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          className="size-4 text-muted-foreground"
-          aria-hidden="true"
-        >
-          <path d="m6 9 6 6 6-6" />
-        </svg>,
-      )}
+      aria-label={ownContent ? undefined : labels.trigger}
       className={cnState(
         "absolute inset-y-0 end-0 flex items-center pe-2",
         // Within its container around a one-line Combobox.Value, as Select.Trigger (#518)
@@ -158,14 +133,10 @@ function ComboboxTrigger({ className, children, ...props }: ComboboxTriggerProps
         className,
       )}
       {...props}
-    />
-  );
-}
-
-function ComboboxIcon({ className, ...props }: ComboboxIconProps) {
-  return (
-    <BaseCombobox.Icon className={cnState("ms-auto", className)} {...props}>
-      {props.children ?? (
+    >
+      {ownContent ? (
+        children
+      ) : (
         <svg
           viewBox="0 0 24 24"
           fill="none"
@@ -177,6 +148,29 @@ function ComboboxIcon({ className, ...props }: ComboboxIconProps) {
         >
           <path d="m6 9 6 6 6-6" />
         </svg>
+      )}
+    </BaseCombobox.Trigger>
+  );
+}
+
+// Children replace the chevron; with `render` and no children, there is no chevron (#581)
+function ComboboxIcon({ className, ...props }: ComboboxIconProps) {
+  return (
+    <BaseCombobox.Icon className={cnState("ms-auto", className)} {...props}>
+      {props.children == null && !props.render ? (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          className="size-4 text-muted-foreground"
+          aria-hidden="true"
+        >
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      ) : (
+        props.children
       )}
     </BaseCombobox.Icon>
   );
@@ -262,13 +256,14 @@ function ComboboxItem({ className, ...props }: ComboboxItemProps) {
   );
 }
 
+// Children replace the check; with `render` and no children, there is no check (#581)
 function ComboboxItemIndicator({ className, ...props }: ComboboxItemIndicatorProps) {
   return (
     <BaseCombobox.ItemIndicator
       className={cnState("absolute end-2 flex items-center", className)}
       {...props}
     >
-      {props.children ?? (
+      {props.children == null && !props.render ? (
         <svg
           viewBox="0 0 24 24"
           fill="none"
@@ -281,6 +276,8 @@ function ComboboxItemIndicator({ className, ...props }: ComboboxItemIndicatorPro
         >
           <path d="M20 6 9 17l-5-5" />
         </svg>
+      ) : (
+        props.children
       )}
     </BaseCombobox.ItemIndicator>
   );
@@ -300,23 +297,23 @@ function ComboboxEmpty({ className, ...props }: ComboboxEmptyProps) {
   );
 }
 
+// An icon button: named "Clear selection" (`labels.clear`) whatever its content, and a consumer's
+// aria-label replaces that. Children replace the X; with `render` and no children, there is no X
+// (#581).
 function ComboboxClear({ className, children, ...props }: ComboboxClearProps) {
   const labels = useContext(ComboboxLabelsContext);
   return (
     <BaseCombobox.Clear
-      {...ownContent(
-        children,
-        props.render,
-        { "aria-label": labels.clear },
-        <CloseIcon className="size-3.5" />,
-      )}
+      aria-label={labels.clear}
       className={cnState(
         "absolute inset-y-0 end-7 flex items-center text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:hover:text-muted-foreground",
         "micro-interactions",
         className,
       )}
       {...props}
-    />
+    >
+      {children == null && !props.render ? <CloseIcon className="size-3.5" /> : children}
+    </BaseCombobox.Clear>
   );
 }
 
@@ -363,28 +360,30 @@ function ComboboxChipRemove({ className, children, ...props }: ComboboxChipRemov
   const labels = useContext(ComboboxLabelsContext);
   const chipId = useContext(ComboboxChipIdContext);
   const id = useId();
-  // Named by hidden text around the chip's text: "Remove Apple", or "Apple を削除". The button
-  // sits inside the chip, so it has no aria-label: one would be read again as part of the chip's
-  // text. Without a Combobox.Chip around it, there is no chip text to read, and `{chip}` is dropped.
+  // An icon button: named by hidden text around the chip's text whatever its content, "Remove
+  // Apple" or "Apple を削除". The button sits inside the chip, so it has no aria-label: one would
+  // be read again as part of the chip's text. Without a Combobox.Chip around it, there is no chip
+  // text to read: it is named by aria-label, and `{chip}` is dropped. A consumer's aria-label
+  // replaces either name. Children replace the X; with `render` and no children, there is no X
+  // (#581). The hidden text sits beside the button, so a void `render` element can take its place.
   const name = removeButtonName(labels.chipRemove, chipId ?? "", id);
   const namedByChip = chipId !== undefined && props["aria-label"] === undefined;
   return (
-    <BaseCombobox.ChipRemove
-      {...ownContent(
-        children,
-        props.render,
-        namedByChip ? { "aria-labelledby": name.labelledBy } : { "aria-label": name.withoutChip },
-        <>
-          {namedByChip && name.hiddenText}
-          <CloseIcon className="size-3" />
-        </>,
-      )}
-      className={cnState(
-        "micro-interactions inline-flex items-center text-muted-foreground hover:text-foreground data-disabled:cursor-not-allowed data-disabled:hover:text-muted-foreground",
-        className,
-      )}
-      {...props}
-    />
+    <>
+      {namedByChip && name.hiddenText}
+      <BaseCombobox.ChipRemove
+        {...(namedByChip
+          ? { "aria-labelledby": name.labelledBy }
+          : { "aria-label": name.withoutChip })}
+        className={cnState(
+          "micro-interactions inline-flex items-center text-muted-foreground hover:text-foreground data-disabled:cursor-not-allowed data-disabled:hover:text-muted-foreground",
+          className,
+        )}
+        {...props}
+      >
+        {children == null && !props.render ? <CloseIcon className="size-3" /> : children}
+      </BaseCombobox.ChipRemove>
+    </>
   );
 }
 
