@@ -8,6 +8,7 @@ import {
   missingClasses,
   orderProblems,
   scanProblem,
+  TOUCH_ORDER,
   themeUtilities,
   themeUtilitiesIn,
 } from "../check-tailwind-compat";
@@ -219,11 +220,6 @@ const TOUCH_4_0 = `@layer utilities {
   .text-sm {
     font-size: var(--text-sm);
   }
-  .sm\\:text-lg {
-    @media (width >= 40rem) {
-      font-size: var(--text-lg);
-    }
-  }
   .md\\:text-lg {
     @media (width >= 48rem) {
       font-size: var(--text-lg);
@@ -255,11 +251,6 @@ const TOUCH_4_3 = `@layer utilities {
   }
   .text-sm {
     font-size: var(--text-sm);
-  }
-  @media (width >= 40rem) {
-    .sm\\:text-lg {
-      font-size: var(--text-lg);
-    }
   }
   @media (width >= 48rem) {
     .md\\:text-lg {
@@ -303,14 +294,7 @@ describe("orderProblems", () => {
   font-size: var(--text-base);
 }
 ${css}`;
-    const sizes = [
-      "text-sm",
-      "text-lg",
-      "sm:text-lg",
-      "md:text-lg",
-      "lg:text-lg",
-      "[@media(pointer:coarse)]:text-lg",
-    ];
+    const sizes = TOUCH_ORDER.map(([before]) => before);
     expect(orderProblems(touchFirst, version)).toEqual(
       sizes.map((name) =>
         expect.stringContaining(

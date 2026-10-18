@@ -53,34 +53,24 @@ const TOUCH_SIZE = "md:[@media(pointer:coarse)]:text-base";
  * Sizes a `className` can give a field that tailwind-merge keeps beside TOUCH_SIZE (`text-lg`
  * replaces `text-sm`). The built code may not have them, so both versions also scan them.
  */
-const CLASSNAME_SIZES = [
-  "text-lg",
-  "sm:text-lg",
-  "md:text-lg",
-  "lg:text-lg",
-  "[@media(pointer:coarse)]:text-lg",
-];
+const CLASSNAME_SIZES = ["text-lg", "md:text-lg", "lg:text-lg", "[@media(pointer:coarse)]:text-lg"];
 /**
  * Pairs [before, after] that the CSS must have in this order. Each class is one class selector in
  * `@layer utilities`, so where both apply, on a touch screen from `md` up, the later rule sets the
  * font size, and TOUCH_SIZE must be the later one (the check compares the last rule of `before`
  * with the first rule of `after`):
- * - `text-sm` (`FIELD_TEXT_SIZE`'s own size) and `text-lg`: a utility without a variant sorts
- *   before every utility with one.
- * - `sm:text-lg` (every `md` screen) and `lg:text-lg` (an iPad held sideways): an arbitrary
- *   variant sorts after the breakpoints.
+ * - `text-sm` (`FIELD_TEXT_SIZE`'s own size) and `text-lg`: a utility without a variant sorts first.
+ * - `lg:text-lg` (an iPad held sideways): an arbitrary variant sorts after the breakpoints.
  * - `md:text-lg`: the same `md:`, and the arbitrary variant on top.
  * - `[@media(pointer:coarse)]:text-lg`: the same arbitrary variant, and `md:` on top.
- * ponytail: left out: an arbitrary or compound variant that sorts after `[@media(pointer:coarse)]`
- * (`lg:[@media(pointer:coarse)]:text-sm`, `[@supports(display:grid)]:text-sm`) still wins on a
- * coarse `md` screen, and no pair can rule that out; `max-md:text-base`, which does not apply from
- * `md` up; `pointer-coarse:text-lg`, which 4.0 does not generate
- * (FieldTextSize.touch.visual.spec.tsx covers it on the installed version); a
- * `md:[@media(pointer:coarse)]:` size, which tailwind-merge keeps in place of TOUCH_SIZE; sizes
- * under other named variants (`xl:`, `max-lg:`, `dark:`), which sort before an arbitrary variant as
- * `sm:` and `lg:` do.
+ * ponytail: left out: a later arbitrary or compound variant (`lg:[@media(pointer:coarse)]:text-sm`,
+ * `[@supports(display:grid)]:text-sm`), which no pair can rule out; `max-md:text-base`, which does
+ * not apply from `md` up; `pointer-coarse:text-lg`, which 4.0 does not generate
+ * (FieldTextSize.touch.visual.spec.tsx covers it); a `md:[@media(pointer:coarse)]:` size, which
+ * tailwind-merge keeps in place of TOUCH_SIZE; sizes under other named variants (`sm:`, `xl:`,
+ * `max-lg:`, `dark:`), which sort before an arbitrary variant as `lg:` does.
  */
-const TOUCH_ORDER: readonly (readonly [before: string, after: string])[] = [
+export const TOUCH_ORDER: readonly (readonly [before: string, after: string])[] = [
   ["text-sm", TOUCH_SIZE],
   ...CLASSNAME_SIZES.map((name) => [name, TOUCH_SIZE] as const),
 ];
