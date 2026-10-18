@@ -67,9 +67,11 @@ describe("Select", () => {
     await expect(page.getByTestId("fixture")).toMatchScreenshot();
   });
 
+  // 60px above the trigger: the popup lands with Banana over the trigger's value, and Apple's row
+  // above it needs the room, or Base UI scrolls the list to keep the alignment
   it("open", async () => {
     const body = await renderPage(
-      <div style={{ padding: 40 }}>
+      <div style={{ padding: "60px 40px 40px" }}>
         <Select.Root defaultValue="banana" defaultOpen>
           <Select.Trigger>
             <Select.Value />
