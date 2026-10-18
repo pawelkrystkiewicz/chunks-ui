@@ -569,8 +569,8 @@ function MotionSection() {
           <div className={`${STATEMENT} gap-3.5`}>
             <span className={STATEMENT_LABEL}>{"// The default"}</span>
             <p className={STATEMENT_TEXT}>
-              Motion v12 is optional. Add it and you get five tuned springs for indicators, content,
-              popups, overlays and small nudges.
+              Motion 12.8+ is optional. Add it and you get five tuned springs for indicators,
+              content, popups, overlays and small nudges.
             </p>
           </div>
           <div className={`${STATEMENT} gap-3.5`}>
