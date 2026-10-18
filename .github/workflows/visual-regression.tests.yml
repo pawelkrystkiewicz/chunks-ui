@@ -17,6 +17,9 @@ jobs:
     # Same image as the local linux/amd64 recipe; check:playwright keeps the tag equal to @playwright/test.
     container:
       image: mcr.microsoft.com/playwright:v1.64.0-noble@sha256:06a9939e57531807f8d5fd76ce44b53165ffb7d7501d87ab10e285c20b1e971f
+    # Read by notify-slack. Empty when the naming step did not run (the runner skips an empty output).
+    outputs:
+      suites: ${{ steps.failed.outputs.suites }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
@@ -26,7 +29,7 @@ jobs:
           persist-credentials: false
 
       # The failure and master steps carry no run_full condition on purpose: a failing checkout or
-      # decide step on master still posts the Slack failure message.
+      # decide step on master still names a cause for the Slack message that notify-slack posts.
       - name: Decide whether the suite runs
         id: changes
         env:
@@ -105,15 +108,21 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
-      # Names the suites that failed: Chromium visual and WebKit smoke are one job.
+      # Names the suites that failed for notify-slack: Chromium visual and WebKit smoke are one job.
+      # timeout-minutes cancels the job, so a timeout and a manual cancel both read job.status cancelled.
       - name: Name the failed suites
         id: failed
-        if: failure() && github.ref == 'refs/heads/master'
+        if: (failure() || cancelled()) && github.ref == 'refs/heads/master'
         env:
+          JOB_STATUS: ${{ job.status }}
           VISUAL: ${{ steps.visual.outcome }}
           WEBKIT: ${{ steps.webkit.outcome }}
           SHUFFLED: ${{ steps.shuffled.outcome }}
         run: |
+          if [ "$JOB_STATUS" = cancelled ]; then
+            echo "suites=cancelled or timed out" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           failed=()
           [ "$VISUAL" = failure ] && failed+=("Chromium visual")
           [ "$WEBKIT" = failure ] && failed+=("WebKit smoke")
@@ -123,12 +132,22 @@ jobs:
           joined=$(printf '%s, ' "${failed[@]}")
           echo "suites=${joined%, }" >> "$GITHUB_OUTPUT"
 
+  # Posts to Slack when a master run fails, is cancelled or times out. A separate job because a
+  # cancelled job skips failure() steps, and a container that fails to start runs no step at all.
+  notify-slack:
+    needs: visual-regression-test
+    if: always() && github.ref == 'refs/heads/master' && (needs.visual-regression-test.result == 'failure' || needs.visual-regression-test.result == 'cancelled')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      # An empty suites output means the naming step never ran: the container failed to start, or
+      # the run was cancelled while the job was queued
       - name: Notify Slack on Failure
-        if: failure() && github.ref == 'refs/heads/master'
         uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
         with:
           method: chat.postMessage
           token: ${{ secrets.SLACK_BOT_TOKEN }}
           payload: |
             channel: "${{ secrets.SLACK_CHANNEL_ID }}"
-            text: "Visual Regression Tests failed on master: ${{ steps.failed.outputs.suites }}\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>"
+            text: "Visual Regression Tests failed on master: ${{ needs.visual-regression-test.outputs.suites || 'failed or cancelled before its first step' }}\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>"
