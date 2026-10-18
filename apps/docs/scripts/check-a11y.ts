@@ -108,7 +108,7 @@ type Role = Parameters<Page["getByRole"]>[0];
 /**
  * A popup the run opens and audits on its own, after its page, in every theme: it clicks the first
  * element of role `trigger` named `name` (so the trigger of a later example needs a name that no
- * element before it has), waits for the one element of role `popup`, runs axe on that element
+ * earlier element of that role has), waits for the one element of role `popup`, runs axe on that element
  * alone, checks the trigger has aria-expanded="true" and aria-controls set to the popup's id, and
  * closes it with Escape, also when a step before threw. The audit also runs aria-dialog-name, a
  * best-practice rule outside TAGS and the only axe rule that checks a dialog popup's own name; on
@@ -123,7 +123,7 @@ const POPUPS: Popup[] = [
   {
     page: "/components/combobox",
     trigger: "combobox",
-    name: "Fruit, with search",
+    name: "Favorite fruit",
     popup: "dialog",
   },
   { page: "/components/date-picker", trigger: "button", name: "Pick a date", popup: "dialog" },
