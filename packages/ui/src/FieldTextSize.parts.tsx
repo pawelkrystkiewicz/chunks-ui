@@ -1,0 +1,70 @@
+import { render, screen } from "@testing-library/react";
+import type { ReactNode } from "react";
+import { Combobox } from "./components/combobox";
+import { DatePicker } from "./components/date-picker";
+import { Input } from "./components/input";
+import { NumberField } from "./components/number-field";
+import { Select } from "./components/select";
+import { Textarea } from "./components/textarea";
+
+// The parts with the field text size, for FieldTextSize.visual.spec.tsx and its touch spec
+
+export const plainInput = (className?: string) => (
+  <Input aria-label="Field" className={className} />
+);
+
+/**
+ * Each part that takes the text size through `className`, rendered with one and the name "Field".
+ * The Input with an adornment gets the class as a function: a string goes on its wrapper, and
+ * only a function reaches the input.
+ */
+export const FIELDS: [field: string, ui: (className?: string) => ReactNode][] = [
+  ["Input", plainInput],
+  [
+    "Input with an adornment",
+    (className) => (
+      <Input
+        aria-label="Field"
+        startAdornment="$"
+        className={className ? () => className : undefined}
+      />
+    ),
+  ],
+  ["Textarea", (className) => <Textarea aria-label="Field" className={className} />],
+  [
+    "NumberField.Input",
+    (className) => (
+      <NumberField.Root>
+        <NumberField.Input aria-label="Field" className={className} />
+      </NumberField.Root>
+    ),
+  ],
+  [
+    "Combobox.Input",
+    (className) => (
+      <Combobox.Root>
+        <Combobox.Input aria-label="Field" className={className} />
+      </Combobox.Root>
+    ),
+  ],
+  [
+    "Select.Trigger",
+    (className) => (
+      <Select.Root>
+        <Select.Trigger aria-label="Field" className={className} />
+      </Select.Root>
+    ),
+  ],
+];
+
+/** The fields, and the `DatePicker` trigger, which takes no class: `className` goes on a wrapper */
+export const PARTS: typeof FIELDS = [
+  ...FIELDS,
+  ["DatePicker trigger", () => <DatePicker aria-label="Field" />],
+];
+
+/** Renders `ui` and returns the font size the browser computes for the part named "Field" */
+export function fontSizeOf(ui: ReactNode) {
+  render(ui);
+  return getComputedStyle(screen.getByLabelText("Field")).fontSize;
+}

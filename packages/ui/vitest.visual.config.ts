@@ -12,11 +12,15 @@ import type { AccessibilityNode, EmulatedMedia } from "./src/VisualTest.utils.ts
  */
 const RUNNER_WINDOW = { width: 1280, height: 1024 };
 
-/** Playwright with the window above, the pinned time zone and the given reduced-motion preference */
-export const playwrightProvider = (reducedMotion: "reduce" | "no-preference") =>
+/**
+ * Playwright with the window above, the pinned time zone, the given reduced-motion preference and,
+ * with `hasTouch`, a touch screen
+ */
+export const playwrightProvider = (reducedMotion: "reduce" | "no-preference", hasTouch = false) =>
   playwright({
     contextOptions: {
       reducedMotion,
+      hasTouch,
       viewport: RUNNER_WINDOW,
       // The unit suite pins TZ the same way; see TESTING_STRATEGY.md "Time zone".
       timezoneId: "Europe/Warsaw",
@@ -120,7 +124,11 @@ export default defineConfig({
           browser: "chromium",
           provider: playwrightProvider("reduce"),
           // The WebKit smoke specs run in their own project, vitest.webkit.config.ts
-          exclude: ["src/**/*.motion.visual.spec.tsx", "src/**/*.webkit.visual.spec.tsx"],
+          exclude: [
+            "src/**/*.motion.visual.spec.tsx",
+            "src/**/*.webkit.visual.spec.tsx",
+            "src/**/*.touch.visual.spec.tsx",
+          ],
         },
         // Motion only animates when reduced motion is off
         {
@@ -128,6 +136,15 @@ export default defineConfig({
           name: "chromium-motion",
           provider: playwrightProvider("no-preference"),
           include: ["src/**/*.motion.visual.spec.tsx"],
+        },
+        // A touch screen, so `(pointer: coarse)` matches, from the start: CDP touch emulation turned
+        // off in a spec leaves the Docker image's page with no pointer and no hover (Playwright's
+        // fine pointer is a launch flag), and the page runs the session's later spec files
+        {
+          browser: "chromium",
+          name: "chromium-touch",
+          provider: playwrightProvider("reduce", true),
+          include: ["src/**/*.touch.visual.spec.tsx"],
         },
       ],
       expect: {
