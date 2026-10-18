@@ -121,21 +121,20 @@ jobs:
           WEBKIT: ${{ steps.webkit.outcome }}
           SHUFFLED: ${{ steps.shuffled.outcome }}
         run: |
-          if [ "$JOB_STATUS" = cancelled ]; then
-            echo "suites=cancelled or timed out" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
           failed=()
           [ "$VISUAL" = failure ] && failed+=("Chromium visual")
           [ "$WEBKIT" = failure ] && failed+=("WebKit smoke")
           [ "$SHUFFLED" = failure ] && failed+=("Chromium visual shuffled (seed ${{ github.run_number }})")
+          # A cancelled job keeps the suites that had already failed, so Slack still names them
+          [ "$JOB_STATUS" = cancelled ] && failed+=("cancelled or timed out")
           # No suite step failed: a setup step did, or a later one such as the artifact upload
           [ ${#failed[@]} -gt 0 ] || failed=("setup or another step")
           joined=$(printf '%s, ' "${failed[@]}")
           echo "suites=${joined%, }" >> "$GITHUB_OUTPUT"
 
   # Posts to Slack when a master run fails, is cancelled or times out. A separate job because a
-  # cancelled job skips failure() steps, and a container that fails to start runs no step at all.
+  # container that fails to start runs no step, a run cancelled while the job is queued runs no
+  # step, and the Slack token stays out of the job that runs bun install and the test code.
   notify-slack:
     needs: visual-regression-test
     if: always() && github.ref == 'refs/heads/master' && (needs.visual-regression-test.result == 'failure' || needs.visual-regression-test.result == 'cancelled')
@@ -143,8 +142,9 @@ jobs:
     timeout-minutes: 5
     permissions: {}
     steps:
-      # An empty suites output means the naming step never ran: the container failed to start, or
-      # the run was cancelled while the job was queued
+      # An empty suites output means the naming step never ran: the container failed to start, the
+      # run was cancelled while the job was queued, or the runner was lost. The fallback names the
+      # job result instead.
       - name: Notify Slack on Failure
         uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
         with:
@@ -152,4 +152,4 @@ jobs:
           token: ${{ secrets.SLACK_BOT_TOKEN }}
           payload: |
             channel: "${{ secrets.SLACK_CHANNEL_ID }}"
-            text: "Visual Regression Tests failed on master: ${{ needs.visual-regression-test.outputs.suites || 'failed or cancelled before its first step' }}\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>"
+            text: "Visual Regression Tests failed on master: ${{ needs.visual-regression-test.outputs.suites || format('job {0} before a suite was named', needs.visual-regression-test.result) }}\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>"
