@@ -10,10 +10,10 @@
  * among them), every other page under app/, and the 404 page, which it gets by requesting a URL
  * no page answers on: that one must answer 404, every other page 200. On the pages POPUPS lists, it
  * then opens the first example's popup and audits it alone, open; on the pages TOASTS lists, it
- * adds each toast and audits it alone, one at a time. axe's `incomplete` results
- * (checks it could not decide, often contrast over images or gradients) are not failed. A page is
- * audited once React has hydrated it (`html[data-hydrated]`, set by app/HydrationMarker.tsx) and
- * its fonts have loaded.
+ * adds each toast and audits it alone, one at a time, with aria-dialog-name added (see ToastCheck).
+ * axe's `incomplete` results (checks it could not decide, often contrast over images or gradients)
+ * are not failed. A page is audited once React has hydrated it (`html[data-hydrated]`, set by
+ * app/HydrationMarker.tsx) and its fonts have loaded.
  *
  * Reads the issue states from the GitHub API with GITHUB_TOKEN (CI passes it; locally run
  * `GITHUB_TOKEN=$(gh auth token) bun run check:a11y`). Outside CI, an issue whose state can't be
@@ -133,8 +133,9 @@ const POPUPS: Popup[] = [
  * audit gets only the few axe rules that read hidden content (aria-hidden-focus and color-contrast
  * among them). The run then presses F6, which moves focus into the viewport, checks aria-hidden is
  * gone, and audits the toast again ("focused with F6"), now with the ARIA attribute and role rules,
- * and the name rules for any button it has. Neither audit checks a toast's own name: axe does that
- * only in aria-dialog-name, a best-practice rule outside TAGS.
+ * and the name rules for any button it has. A toast's audits also run aria-dialog-name, a
+ * best-practice rule outside TAGS and the only axe rule that checks a toast's own name. It skips the
+ * aria-hidden urgent toast, so that one's name is checked in the focused audit.
  */
 type ToastCheck = { page: string; name: string; toast: "dialog" | "alertdialog" };
 
@@ -337,17 +338,21 @@ async function startServer() {
 }
 
 /**
- * Runs axe on the page, or on the elements `scope.selector` matches alone, and returns the
- * violations ALLOWED does not excuse, recording each entry that excused one in `matched`
+ * Runs axe on the page, or on the elements `scope.selector` matches alone with TAGS plus the rules
+ * `scope.rules` names, and returns the violations ALLOWED does not excuse, recording each entry that
+ * excused one in `matched`
  */
 async function axe(
   page: Page,
   route: string,
   theme: Theme,
   matched: Map<Allowed, Set<string>>,
-  scope?: { selector: string; label: string },
+  scope?: { selector: string; label: string; rules?: string[] },
 ) {
-  const builder = new AxeBuilder({ page }).withTags(TAGS);
+  // axe runs a rule enabled in `rules` whatever its tags. options() replaces every option set
+  // before it, so it comes before withTags.
+  const rules = Object.fromEntries((scope?.rules ?? []).map((rule) => [rule, { enabled: true }]));
+  const builder = new AxeBuilder({ page }).options({ rules }).withTags(TAGS);
   const { violations } = await (scope ? builder.include(scope.selector) : builder).analyze();
   const problems: Problem[] = [];
   for (const violation of violations) {
@@ -461,12 +466,14 @@ async function auditToast(
       .click({ timeout: POPUP_MS });
     // Base UI pauses the timeout while the pointer is over the toasts, so it cannot close mid-audit
     await toast.hover({ timeout: POPUP_MS });
-    problems.push(...(await axe(page, check.page, theme, matched, { selector, label })));
+    // aria-dialog-name, outside TAGS, is the one axe rule that checks the toast's own name
+    const scope = { selector, label, rules: ["aria-dialog-name"] };
+    problems.push(...(await axe(page, check.page, theme, matched, scope)));
     if (check.toast === "alertdialog") {
       // F6 moves keyboard focus into the viewport, and Base UI then clears the toast's aria-hidden.
       // The focus guards it also renders sit beside the toast, outside the audit's scope.
       await page.keyboard.press("F6");
-      const focused = { selector, label: `${label}, focused with F6` };
+      const focused = { ...scope, label: `${label}, focused with F6` };
       // Reported, not thrown, so the first audit's results above still count
       const failure = await page
         .locator(`${selector}:not([aria-hidden])`)
