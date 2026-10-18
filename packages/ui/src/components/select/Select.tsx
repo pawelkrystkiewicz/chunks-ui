@@ -115,7 +115,6 @@ function SelectPopup({ className, render: renderProp, ...props }: SelectPopupPro
   );
 }
 
-// The text size of the trigger: Base UI lays the selected item over the trigger's value
 function SelectItem({ className, ...props }: SelectItemProps) {
   return (
     <BaseSelect.Item
