@@ -301,8 +301,8 @@ describe("Combobox.Input beside Clear and Trigger", () => {
 });
 
 // Base UI sets `data-placeholder` on every Combobox.Trigger while nothing is selected, the one
-// beside an input too. Only the placeholder inside a Combobox.Value is muted (#564): the children
-// or `render` element of a Trigger beside an input keep the colour around them, as in 0.1.4
+// beside an input too. Only what a Combobox.Value shows is muted (#564): the children or `render`
+// element of a Trigger beside an input keep the colour around them, as in 0.1.4
 describe("Combobox.Trigger beside an input, with nothing selected", () => {
   it.each([
     {
@@ -424,15 +424,23 @@ describe.each(["ltr", "rtl"] as const)("Combobox.Value in a trigger, %s", (dir) 
     expect(value.scrollWidth > value.clientWidth).toBe(truncated);
   });
 
-  // The placeholder is muted while nothing is selected, as on Select.Trigger, and a value has the
-  // colour of the text around the trigger
+  // The placeholder is muted while nothing is selected, as on Select.Trigger, in a multi-select too
+  // (Base UI sets data-placeholder for an empty array as well), and a value has the colour of the
+  // text around the trigger. Base UI types `defaultValue` by `multiple`: the rows mix both, so the
+  // Root's type arguments are spelled out.
   it.each([
     { shows: "the placeholder muted", defaultValue: null, colour: "muted" },
+    {
+      shows: "the placeholder muted, in a multi-select",
+      multiple: true,
+      defaultValue: [],
+      colour: "muted",
+    },
     { shows: "a value in the colour around it", defaultValue: "Fig", colour: "around" },
-  ])("shows $shows", ({ defaultValue, colour }) => {
+  ])("shows $shows", ({ multiple, defaultValue, colour }) => {
     const { getByTestId } = render(
       <div data-testid="around" style={{ padding: 40 }}>
-        <Combobox.Root defaultValue={defaultValue}>
+        <Combobox.Root<string | string[], boolean> multiple={multiple} defaultValue={defaultValue}>
           <Combobox.Trigger aria-label="Fruit" className={SELECT_LIKE} style={{ width: 200 }}>
             <Combobox.Value data-testid="value" placeholder="Pick a fruit" />
             <Combobox.Icon />
