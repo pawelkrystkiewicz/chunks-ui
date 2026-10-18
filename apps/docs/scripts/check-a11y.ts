@@ -97,7 +97,7 @@ const ALLOWED: Allowed[] = [
   {
     rule: "aria-hidden-focus",
     selector: '[role="alertdialog"][aria-hidden="true"][tabindex="0"]',
-    why: 'mui/base-ui#5659: Base UI 1.9 keeps a priority: "high" toast aria-hidden, but in the tab order, until it has focus',
+    why: 'mui/base-ui#5659: Base UI 1.9 keeps a priority: "high" toast aria-hidden, but in the tab order, until keyboard focus enters the viewport (Tab or F6)',
     pages: ["/components/toast"],
     themes: ["light", "dark"],
   },
@@ -128,6 +128,9 @@ const POPUPS: Popup[] = [
  * and closes it with Escape from inside it. Toasts don't fit Popup: their button has no
  * aria-expanded or aria-controls, and Escape closes one only with focus inside it. Base UI gives a
  * toast role "dialog", or "alertdialog" with `priority: "high"`. ALLOWED applies as to its page.
+ * The high-priority toast is aria-hidden while audited, so only the few axe rules that read hidden
+ * content (aria-hidden-focus among them) check it; the default one covers the same markup with the
+ * name and ARIA rules.
  */
 type ToastCheck = { page: string; name: string; toast: "dialog" | "alertdialog" };
 
@@ -441,15 +444,13 @@ async function auditToast(
     .getByRole("button", { name: check.name, exact: true })
     .first()
     .click({ timeout: POPUP_MS });
-  // includeHidden, as a high-priority toast is aria-hidden until it has focus. The locator is
-  // strict, so the toast is the one element of its role and all that the selector below hands axe.
-  const toast = page.getByRole(check.toast, { includeHidden: true });
+  // A CSS locator, as getByRole skips the aria-hidden high-priority toast. It is strict, so the
+  // toast is the one element the selector matches, and all that it hands axe.
+  const selector = `[role="${check.toast}"]`;
+  const toast = page.locator(selector);
   // Base UI pauses the timeout while the pointer is over the toasts, so it cannot close mid-audit
   await toast.hover({ timeout: POPUP_MS });
-  const problems = await axe(page, check.page, theme, matched, {
-    selector: `[role="${check.toast}"]`,
-    label,
-  });
+  const problems = await axe(page, check.page, theme, matched, { selector, label });
   // Gone before the next one: axe reports aria-hidden-focus as incomplete while a dialog is open
   try {
     await toast.press("Escape", { timeout: POPUP_MS });
