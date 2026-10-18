@@ -160,8 +160,13 @@ async function sample(measure: () => number, frames: number) {
 /** Some sampled values lie strictly between where the change started and where it ended */
 function expectInBetween(start: number, values: number[]) {
   const end = values.at(-1) ?? start;
-  expect(Math.abs(end - start)).toBeGreaterThan(0.5);
-  expect(values.some((value) => (value - start) * (value - end) < 0)).toBe(true);
+  // The samples in the message tell a jump from a late frame apart (#625)
+  const sampled = values.join(", ");
+  expect(Math.abs(end - start), `no move from ${start}: ${sampled}`).toBeGreaterThan(0.5);
+  expect(
+    values.some((value) => (value - start) * (value - end) < 0),
+    `no value strictly between ${start} and ${end}: ${sampled}`,
+  ).toBe(true);
 }
 
 /**
@@ -268,15 +273,25 @@ describe("controls when Motion loads", () => {
     change();
     // The CSS transition has started, so Motion arrives mid-way through it
     await untilChanged(() => measure(element()));
+    // Read before Motion arrives, so a jump back in the commit Motion arrives in is a step back
+    const moving = measure(element());
+    // ponytail: a main-thread stall of about 170 ms from here (ToggleGroup's 200 ms slide; about
+    // 100 ms more for Switch and Tabs.Indicator) ends the transition before the first sample, and
+    // the in-between check fails with correct code. Timing-free upgrade: pause the element's
+    // running CSS transitions before arrive() (getAnimations(), pause()), check that its position
+    // and the fallback class hold for a couple of frames, then play() them
     await motion.arrive();
     const values = await sample(() => measure(element()), 40);
     const end = values.at(-1) ?? start;
-    const travel = Math.abs(end - start);
-    expect(travel).toBeGreaterThan(4);
-    const steps = values.map((value, i) =>
-      Math.abs(value - (i === 0 ? start : (values[i - 1] ?? 0))),
-    );
-    expect(Math.max(...steps)).toBeLessThan(travel / 2);
+    expect(Math.abs(end - start)).toBeGreaterThan(4);
+    // It slides on from where it was when Motion arrived: a frame shows it between there and the
+    // end, where a jump to the end shows none. No bound on one frame's step: ToggleGroup's slide
+    // covers 41% of the way in its first two frames and 61% in three, so one late frame passed
+    // for a jump (#625)
+    expectInBetween(moving, values);
+    // Only ever toward the end: a jump back is a step the other way
+    const path = [start, moving, ...values];
+    expect(path).toEqual([...path].sort((a, b) => (a - b) * Math.sign(end - start)));
     if (fallbackClass) expect(element()).not.toHaveClass(fallbackClass);
   });
 
