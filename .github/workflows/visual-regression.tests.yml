@@ -105,16 +105,6 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
-      - name: Notify Slack on Success
-        if: success() && github.ref == 'refs/heads/master'
-        uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
-        with:
-          method: chat.postMessage
-          token: ${{ secrets.SLACK_BOT_TOKEN }}
-          payload: |
-            channel: "${{ secrets.SLACK_CHANNEL_ID }}"
-            text: "Visual Regression Tests passed on master\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>"
-
       # Names the suites that failed: Chromium visual and WebKit smoke are one job.
       - name: Name the failed suites
         id: failed
