@@ -85,3 +85,14 @@ article:has(> main > .landing) {
     display: none;
   }
 }
+
+/*
+ * iOS Safari zooms into a focused text field under 16px. Nextra's search input is 14px from
+ * 768px up (`x:md:text-sm`), so a phone held sideways zooms on focus. Keep it at 16px on touch
+ * screens at every width. This rule is unlayered, so it beats Nextra's layered utilities.
+ */
+@media (pointer: coarse) {
+  .nextra-search input {
+    font-size: 1rem;
+  }
+}
