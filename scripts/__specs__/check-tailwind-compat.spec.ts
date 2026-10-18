@@ -6,7 +6,9 @@ import {
   assertThemeUtilities,
   classNames,
   missingClasses,
+  orderProblems,
   scanProblem,
+  TOUCH_ORDER,
   themeUtilities,
   themeUtilitiesIn,
 } from "../check-tailwind-compat";
@@ -206,5 +208,146 @@ describe("missingClasses", () => {
 
   it("is empty when the oldest version generates every class", () => {
     expect(missingClasses(INSTALLED, OLDEST)).toEqual([]);
+  });
+});
+
+// The touch rule's classes, in the order it needs, shaped like each version's output: 4.0.0 nests
+// the at-rules in the rule, 4.3.3 nests the rule in the at-rules
+const TOUCH_4_0 = `@layer utilities {
+  .text-lg {
+    font-size: var(--text-lg);
+  }
+  .text-sm {
+    font-size: var(--text-sm);
+  }
+  .md\\:text-lg {
+    @media (width >= 48rem) {
+      font-size: var(--text-lg);
+    }
+  }
+  .lg\\:text-lg {
+    @media (width >= 64rem) {
+      font-size: var(--text-lg);
+    }
+  }
+  .\\[\\@media\\(pointer\\:coarse\\)\\]\\:text-lg {
+    @media (pointer:coarse) {
+      font-size: var(--text-lg);
+    }
+  }
+  .md\\:\\[\\@media\\(pointer\\:coarse\\)\\]\\:text-base {
+    @media (width >= 48rem) {
+      @media (pointer:coarse) {
+        font-size: var(--text-base);
+      }
+    }
+  }
+}
+`;
+
+const TOUCH_4_3 = `@layer utilities {
+  .text-lg {
+    font-size: var(--text-lg);
+  }
+  .text-sm {
+    font-size: var(--text-sm);
+  }
+  @media (width >= 48rem) {
+    .md\\:text-lg {
+      font-size: var(--text-lg);
+    }
+  }
+  @media (width >= 64rem) {
+    .lg\\:text-lg {
+      font-size: var(--text-lg);
+    }
+  }
+  @media (pointer:coarse) {
+    .\\[\\@media\\(pointer\\:coarse\\)\\]\\:text-lg {
+      font-size: var(--text-lg);
+    }
+  }
+  @media (width >= 48rem) {
+    @media (pointer:coarse) {
+      .md\\:\\[\\@media\\(pointer\\:coarse\\)\\]\\:text-base {
+        font-size: var(--text-base);
+      }
+    }
+  }
+}
+`;
+
+describe("orderProblems", () => {
+  it.each([
+    ["4.0.0", TOUCH_4_0],
+    ["4.3.3", TOUCH_4_3],
+  ])("accepts the order the touch rule needs in %s output", (version, css) => {
+    expect(orderProblems(css, version)).toEqual([]);
+  });
+
+  // A touch size rule ahead of all the others: every class must come before it
+  it.each([
+    ["4.0.0", TOUCH_4_0],
+    ["4.3.3", TOUCH_4_3],
+  ])("reports each class the touch size comes before in %s output", (version, css) => {
+    const touchFirst = `.md\\:\\[\\@media\\(pointer\\:coarse\\)\\]\\:text-base {
+  font-size: var(--text-base);
+}
+${css}`;
+    const sizes = TOUCH_ORDER.map(([before]) => before);
+    expect(orderProblems(touchFirst, version)).toEqual(
+      sizes.map((name) =>
+        expect.stringContaining(
+          `Tailwind ${version} puts ${name} after md:[@media(pointer:coarse)]:text-base:`,
+        ),
+      ),
+    );
+  });
+
+  it("reports a pair in the wrong order, naming both classes and the version", () => {
+    expect(orderProblems(TOUCH_4_3, "4.3.3", [["md:text-lg", "text-lg"]])).toEqual([
+      expect.stringMatching(/^Tailwind 4\.3\.3 puts md:text-lg after text-lg/),
+    ]);
+  });
+
+  // The theme's `--text-lg` and the escaped `md\:text-lg` hold `text-lg`: neither is its rule
+  it("finds a class by its own rule, not by a substring of another", () => {
+    const css = `:root {
+  --text-lg: 1.125rem;
+}
+.text-lg {
+  font-size: var(--text-lg);
+}
+.z-10 {
+  z-index: 10;
+}
+.md\\:text-lg {
+  font-size: var(--text-lg);
+}
+`;
+    expect(orderProblems(css, "4.3.3", [["text-lg", "z-10"]])).toEqual([]);
+  });
+
+  // A later rule of `before` would set the size again after `after`
+  it("reports a class with a rule before and another after the class it must precede", () => {
+    const css = `${TOUCH_4_0}.text-sm {
+  font-size: var(--text-sm);
+}
+`;
+    expect(orderProblems(css, "4.0.0")).toEqual([
+      expect.stringMatching(
+        /^Tailwind 4\.0\.0 puts text-sm after md:\[@media\(pointer:coarse\)\]:text-base/,
+      ),
+    ]);
+  });
+
+  // The touch size is in every pair: it is named once
+  it("reports the classes the output lacks, once each", () => {
+    const css = TOUCH_4_0.replaceAll("text-base", "text-xl");
+    expect(orderProblems(css, "4.0.0")).toEqual([
+      expect.stringMatching(
+        /^Tailwind 4\.0\.0 did not generate md:\[@media\(pointer:coarse\)\]:text-base:/,
+      ),
+    ]);
   });
 });

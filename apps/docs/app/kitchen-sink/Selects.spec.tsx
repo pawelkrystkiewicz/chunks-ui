@@ -2,6 +2,7 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { CreateTaskDialog } from "./CreateTaskDialog";
+import { TASKS } from "./data";
 import { TaskTable } from "./TaskTable";
 
 /** Opens the popup from the trigger, then clicks the option. */
@@ -36,6 +37,26 @@ describe("kitchen sink Selects", () => {
     }
   });
 
+  it("the task table's status filter shows every task again on All statuses", async () => {
+    const error = vi.spyOn(console, "error");
+    try {
+      render(<TaskTable />);
+      const trigger = screen.getByRole("combobox", { name: "Status" });
+      const shown = () => TASKS.filter((t) => screen.queryByText(t.title)).map((t) => t.id);
+
+      await pick(trigger, "Done");
+      expect(shown()).toEqual(TASKS.filter((t) => t.status === "done").map((t) => t.id));
+
+      await pick(trigger, "All statuses");
+
+      expect(trigger.textContent).toBe("All statuses");
+      expect(shown()).toEqual(TASKS.map((t) => t.id));
+      expect(error).not.toHaveBeenCalled();
+    } finally {
+      error.mockRestore();
+    }
+  });
+
   describe("the create-task dialog", () => {
     async function open() {
       render(<CreateTaskDialog />);
@@ -64,4 +85,12 @@ describe("kitchen sink Selects", () => {
       expect(trigger.textContent).toBe("Bob Rivera");
     });
   });
+});
+
+it("the task table shows the priority's label, not the raw value", () => {
+  render(<TaskTable />);
+
+  expect(screen.getAllByText("Critical")).toHaveLength(
+    TASKS.filter((t) => t.priority === "critical").length,
+  );
 });

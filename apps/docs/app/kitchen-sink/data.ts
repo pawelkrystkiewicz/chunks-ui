@@ -57,7 +57,7 @@ const bob: TeamMember = {
 
 const carol: TeamMember = {
   id: "u3",
-  name: "Carl Zhang",
+  name: "Carol Zhang",
   role: "Backend Engineer",
   email: "carol@acme.dev",
   tasksCompleted: 18,
