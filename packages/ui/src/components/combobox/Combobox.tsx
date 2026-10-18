@@ -182,8 +182,9 @@ function ComboboxIcon({ className, ...props }: ComboboxIconProps) {
 }
 
 // As Select.Value (#518, #546): one line with an ellipsis. Base UI's Value renders no element, so
-// nothing clipped it (#541). A function child in a multi-select gets no span: it returns chips or
-// the Chips, which must stay children of Combobox.Chips, so clip your own element there.
+// nothing clipped it (#541). A function child in a multi-select gets no span, so it is not clipped
+// or muted: it returns chips or the Chips, which must stay children of Combobox.Chips, so clip
+// your own element there.
 function ComboboxValue({ className, children, placeholder, ...props }: ComboboxValueProps) {
   const multiple = useContext(ComboboxMultipleContext);
   const value = <BaseCombobox.Value placeholder={placeholder}>{children}</BaseCombobox.Value>;
