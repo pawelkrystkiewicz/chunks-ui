@@ -62,11 +62,17 @@ describe("ClearButton content", () => {
     expect(x.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
   });
 
+  // An icon with aria-hidden, the intended use: text children would need an aria-label that
+  // contains them, as the default name does not
   it("renders its children in place of the X, under the same name", () => {
-    render(<ClearButton>custom</ClearButton>);
+    render(
+      <ClearButton>
+        <svg data-testid="custom" aria-hidden="true" />
+      </ClearButton>,
+    );
     const button = screen.getByRole("button", { name: DEFAULT_CLEAR_BUTTON_LABELS.clear });
-    expect(button).toHaveTextContent(/^custom$/);
-    expect(button.querySelector("svg")).not.toBeInTheDocument();
+    expect(button.children).toHaveLength(1);
+    expect(button.firstElementChild).toBe(screen.getByTestId("custom"));
   });
 });
 

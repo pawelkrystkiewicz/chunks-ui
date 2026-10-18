@@ -451,7 +451,8 @@ describe("NumberField labels", () => {
 });
 
 // The plus and minus are only the default content: children replace them, and the button keeps
-// its name (#564)
+// its name (#564). The children here are an icon with aria-hidden, the intended use: text children
+// would need an aria-label that contains them, as the default name does not
 describe("NumberField Increment and Decrement content", () => {
   const parts = [
     {
@@ -481,10 +482,10 @@ describe("NumberField Increment and Decrement content", () => {
   it.each(parts)(
     "renders the children of $part in place of the glyph, under the same name",
     ({ name, button }) => {
-      field(button("custom"));
+      field(button(<svg data-testid="custom" aria-hidden="true" />));
       const el = screen.getByRole("button", { name });
-      expect(el).toHaveTextContent(/^custom$/);
-      expect(el.querySelector("svg")).not.toBeInTheDocument();
+      expect(el.children).toHaveLength(1);
+      expect(el.firstElementChild).toBe(screen.getByTestId("custom"));
     },
   );
 });
