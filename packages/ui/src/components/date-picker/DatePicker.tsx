@@ -92,7 +92,8 @@ type DatePickerOwnProps = Pick<
   /**
    * Classes for the trigger `<button>`. They merge after the trigger's own classes, so a
    * conflicting class replaces the default: `h-12` sets the height, and a `text-*` colour also
-   * replaces the muted colour of the placeholder.
+   * replaces the muted colour of the placeholder. A text size applies with a mouse from `md` up:
+   * below `md` and on a touch screen the text stays 16px (see Text Size in the docs).
    */
   triggerClassName?: string;
   /**
