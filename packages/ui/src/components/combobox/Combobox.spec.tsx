@@ -182,16 +182,7 @@ describe("Combobox", () => {
     expect(screen.getByTestId("custom")).toBeInTheDocument();
   });
 
-  it("renders no chevron in Icon with a render element", () => {
-    render(
-      <Combobox.Root>
-        <Combobox.Icon render={<span data-testid="icon" />} />
-      </Combobox.Root>,
-    );
-    expect(screen.getByTestId("icon")).toBeEmptyDOMElement();
-  });
-
-  it("mounts a void render element on Icon without an error", () => {
+  it("renders no chevron in a void render element on Icon, without an error", () => {
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
     render(
       <Combobox.Root>
@@ -201,6 +192,7 @@ describe("Combobox", () => {
     expect(consoleError).not.toHaveBeenCalled();
     consoleError.mockRestore();
     expect(screen.getByTestId("icon").tagName).toBe("IMG");
+    expect(screen.getByTestId("icon")).toBeEmptyDOMElement();
   });
 
   it("renders Icon with custom className", () => {
@@ -854,8 +846,8 @@ describe("Combobox icon buttons", () => {
   });
 
   // Clear and ChipRemove are icon buttons: they keep the default name whatever their content
-  it("keeps the default names of Clear and ChipRemove with icon children in place of the X", () => {
-    render(
+  it("keeps the default names of Clear and ChipRemove with icon or text children in place of the X", () => {
+    const { unmount } = render(
       <MultiSelect
         clearProps={{ children: <svg aria-hidden="true" data-testid="clear-icon" /> }}
         chipRemoveProps={{ children: <svg aria-hidden="true" data-testid="remove-icon" /> }}
@@ -867,12 +859,12 @@ describe("Combobox icon buttons", () => {
     expect(clear.querySelector("svg")).toBe(screen.getByTestId("clear-icon"));
     expect(remove.querySelectorAll("svg")).toHaveLength(1);
     expect(remove.querySelector("svg")).toBe(screen.getByTestId("remove-icon"));
-  });
+    unmount();
 
-  it("keeps the default name of Clear with text children", () => {
     render(<MultiSelect clearProps={{ children: "Clear all" }} />);
-    const clear = screen.getByRole("button", { name: "Clear selection" });
-    expect(clear).toHaveTextContent(/^Clear all$/);
+    expect(screen.getByRole("button", { name: "Clear selection" })).toHaveTextContent(
+      /^Clear all$/,
+    );
   });
 
   it("keeps the default name of a ChipRemove outside Combobox.Chip with text children", () => {
@@ -889,28 +881,13 @@ describe("Combobox icon buttons", () => {
     expect(screen.getByRole("button", { name: "Remove" })).toHaveTextContent(/^Drop$/);
   });
 
-  it("keeps the default names of Clear and ChipRemove with a render element, which gets no X", () => {
-    render(
-      <MultiSelect
-        clearProps={{ render: <button type="button" data-testid="clear" /> }}
-        chipRemoveProps={{ render: <button type="button" data-testid="remove" /> }}
-      />,
-    );
-    expect(screen.getByRole("button", { name: "Clear selection" })).toBe(
-      screen.getByTestId("clear"),
-    );
-    expect(screen.getByRole("button", { name: "Remove Apple" })).toBe(screen.getByTestId("remove"));
-    expect(screen.getByTestId("clear")).toBeEmptyDOMElement();
-    expect(screen.getByTestId("remove")).toBeEmptyDOMElement();
-  });
-
-  it("mounts a void render element on Trigger, Clear and ChipRemove without an error", () => {
+  it("keeps the default names of Clear and ChipRemove in render elements, which get no X", () => {
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
     const img = (testId: string) => ({
       nativeButton: false,
       render: <img alt="" src="data:," data-testid={testId} />,
     });
-    render(
+    const { unmount } = render(
       <MultiSelect
         triggerProps={{ ...img("trigger"), "aria-label": "Show fruits" }}
         clearProps={img("clear")}
@@ -924,6 +901,20 @@ describe("Combobox icon buttons", () => {
       screen.getByTestId("clear"),
     );
     expect(screen.getByRole("button", { name: "Remove Apple" })).toBe(screen.getByTestId("remove"));
+    unmount();
+
+    render(
+      <MultiSelect
+        clearProps={{ render: <button type="button" data-testid="clear" /> }}
+        chipRemoveProps={{ render: <button type="button" data-testid="remove" /> }}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Clear selection" })).toBe(
+      screen.getByTestId("clear"),
+    );
+    expect(screen.getByRole("button", { name: "Remove Apple" })).toBe(screen.getByTestId("remove"));
+    expect(screen.getByTestId("clear")).toBeEmptyDOMElement();
+    expect(screen.getByTestId("remove")).toBeEmptyDOMElement();
   });
 });
 

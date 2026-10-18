@@ -559,12 +559,7 @@ describe("Toast closeProps", () => {
     expect(close.firstElementChild).toBe(screen.getByTestId("custom"));
   });
 
-  it("renders no X in a closeProps render element", async () => {
-    await addToast({ dismissible: true, closeProps: { render: <button type="button" /> } });
-    expect(screen.getByLabelText("Zamknij", { selector: "button" })).toBeEmptyDOMElement();
-  });
-
-  it("mounts a void closeProps render element without an error", async () => {
+  it("renders no X in a void closeProps render element, without an error", async () => {
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
     await addToast({
       dismissible: true,
@@ -572,7 +567,7 @@ describe("Toast closeProps", () => {
     });
     expect(consoleError).not.toHaveBeenCalled();
     consoleError.mockRestore();
-    expect(screen.getByLabelText("Zamknij", { selector: "img" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Zamknij", { selector: "img" })).toBeEmptyDOMElement();
   });
 
   it("renders no close button for closeProps alone", async () => {

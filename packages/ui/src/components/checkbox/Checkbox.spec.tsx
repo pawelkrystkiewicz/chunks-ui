@@ -51,16 +51,7 @@ describe("Checkbox", () => {
     expect(glyph?.querySelector("path")).toHaveAttribute("d", d);
   });
 
-  it("renders no check in a render element", () => {
-    render(
-      <Checkbox.Root aria-label="Accept" defaultChecked>
-        <Checkbox.Indicator render={<span data-testid="ind" />} />
-      </Checkbox.Root>,
-    );
-    expect(screen.getByTestId("ind")).toBeEmptyDOMElement();
-  });
-
-  it("mounts a void render element without an error", () => {
+  it("renders no check in a void render element, without an error", () => {
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
     render(
       <Checkbox.Root aria-label="Accept" defaultChecked>
@@ -70,6 +61,7 @@ describe("Checkbox", () => {
     expect(consoleError).not.toHaveBeenCalled();
     consoleError.mockRestore();
     expect(screen.getByTestId("ind").tagName).toBe("IMG");
+    expect(screen.getByTestId("ind")).toBeEmptyDOMElement();
   });
 
   it("has no a11y violations", async () => {

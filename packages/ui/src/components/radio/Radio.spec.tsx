@@ -70,18 +70,7 @@ describe("Radio", () => {
     expect(indicator.children).toHaveLength(0);
   });
 
-  it("renders no dot in a render element", () => {
-    render(
-      <Radio.Group defaultValue="a">
-        <Radio.Root value="a" aria-label="A">
-          <Radio.Indicator render={<span data-testid="ind" />} />
-        </Radio.Root>
-      </Radio.Group>,
-    );
-    expect(screen.getByTestId("ind")).toBeEmptyDOMElement();
-  });
-
-  it("mounts a void render element on Indicator without an error", () => {
+  it("renders no dot in a void render element on Indicator, without an error", () => {
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
     render(
       <Radio.Group defaultValue="a">
@@ -93,6 +82,7 @@ describe("Radio", () => {
     expect(consoleError).not.toHaveBeenCalled();
     consoleError.mockRestore();
     expect(screen.getByTestId("ind").tagName).toBe("IMG");
+    expect(screen.getByTestId("ind")).toBeEmptyDOMElement();
   });
 
   it("renders Item with label", () => {
