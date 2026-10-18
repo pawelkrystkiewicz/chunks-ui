@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fontSizeOf, PARTS, plainInput, selectItemFontSize } from "./FieldTextSize.fixtures";
+import { FIELDS, fontSizeOf, plainInput, selectItemFontSize } from "./FieldTextSize.fixtures";
 import { withViewport } from "./VisualTest.utils";
 
 /*
@@ -44,7 +44,7 @@ describe("on a 700px page", () => {
 describe("on a 1024px page", () => {
   withViewport(1024);
 
-  it.each(PARTS)("%s is 16px", (_, ui) => {
+  it.each(FIELDS)("%s is 16px", (_, ui) => {
     expect(fontSizeOf(ui())).toBe("16px");
   });
 

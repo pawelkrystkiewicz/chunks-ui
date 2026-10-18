@@ -161,7 +161,7 @@ When the picker has a `name` or is `required`, or its `Field.Root` has a `name`,
 
 ## Text Size
 
-The text of the trigger has the size of the text fields: 16px below the `md` breakpoint (768px by default) and on a touch screen, and 14px otherwise, so a form has one text size. `className` goes on the wrapper, so a text-size class there does not change the trigger. See [Text Size](/components/input#text-size) in `Input`.
+The text of the trigger has the size of the text fields: 16px below the `md` breakpoint (768px by default) and on a touch screen, and 14px otherwise, so a form has one text size. To change it, pass a text-size class in `triggerClassName`. See [Text Size](/components/input#text-size) in `Input`.
 
 ## Keyboard
 
@@ -179,7 +179,7 @@ When the calendar opens, focus goes to the selected day, or to today if no date 
   definition={generateDefinition({
     code: `
 import type { DatePickerProps } from 'chunks-ui'
-type Props = Pick<DatePickerProps, 'value' | 'defaultValue' | 'onValueChange' | 'placeholder' | 'disabled' | 'min' | 'max' | 'isDateDisabled' | 'weekStartsOn' | 'showOutsideDays' | 'month' | 'onMonthChange' | 'name' | 'required' | 'form' | 'className' | 'labels'>
+type Props = Pick<DatePickerProps, 'value' | 'defaultValue' | 'onValueChange' | 'placeholder' | 'disabled' | 'min' | 'max' | 'isDateDisabled' | 'weekStartsOn' | 'showOutsideDays' | 'month' | 'onMonthChange' | 'name' | 'required' | 'form' | 'className' | 'triggerClassName' | 'labels'>
 export default Props
 `
   })}
@@ -187,7 +187,7 @@ export default Props
 
 `DatePicker` also takes every other `<button>` prop except `onChange` and passes it to the trigger. Use `onValueChange` to follow the date.
 
-`className` goes on the `<div>` that wraps the trigger, and `style` on the trigger `<button>`. The trigger fills the wrapper, so set the width with `className`.
+`className` goes on the wrapper `<div>` (set the width here). `triggerClassName` and `style` go on the trigger `<button>`; a conflicting class in `triggerClassName` replaces the default, such as `h-12` for the height.
 
 The calendar popup is at least as wide as the trigger, and never narrower than the calendar (about 280px). In a wider popup the calendar sits in the centre.
 
