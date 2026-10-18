@@ -19,6 +19,7 @@
     "!vitest*.config.ts",
     "!vitest*.setup.ts",
     "!src/VisualTest.*",
+    "!src/AxeTest.*",
     "!src/visual-test.css",
     "!scripts/**"
   ]
