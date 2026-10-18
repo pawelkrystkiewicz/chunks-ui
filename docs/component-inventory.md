@@ -164,7 +164,7 @@ Detect `prefers-reduced-motion` user preference.
 ## Architecture
 
 - **Styling**: Tailwind CSS v4 + CVA + clsx + tailwind-merge
-- **Headless Foundation**: @base-ui/react v1.2+ (with Floating UI)
+- **Headless Foundation**: @base-ui/react v1.9+ (with Floating UI)
 - **Animation**: motion 12.8+ (optional peer dependency, CSS fallback)
 - **Pattern**: Compound components (`Component.SubComponent`)
 - **Color System**: CSS variables — primary, destructive, success, warning, secondary
