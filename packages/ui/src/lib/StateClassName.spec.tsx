@@ -428,6 +428,7 @@ const fixtures: Record<
       Tab: "state-active-true",
       Indicator: "state-orientation-horizontal",
       Panel: "state-hidden-false",
+      Content: "state-hidden-false",
     },
     ui: (p) => (
       <Tabs.Root defaultValue="a" {...p("Root")}>
@@ -440,6 +441,11 @@ const fixtures: Record<
         <Tabs.Panel value="a" {...p("Panel")}>
           Body
         </Tabs.Panel>
+        <Tabs.Contents>
+          <Tabs.Content value="a" {...p("Content")}>
+            Body
+          </Tabs.Content>
+        </Tabs.Contents>
       </Tabs.Root>
     ),
   },

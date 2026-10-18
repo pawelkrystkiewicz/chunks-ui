@@ -466,7 +466,7 @@ function FontPicker({
           >
             Aa
           </span>
-          <Select.Value className="min-w-0 flex-1 truncate text-start font-medium text-[13px]" />
+          <Select.Value className="font-medium text-[13px]" />
           <span className="font-mono text-[10.5px] text-muted-foreground">{font.kind}</span>
           <ChevronsUpDown className="size-[15px] text-muted-foreground" />
         </Select.Trigger>
