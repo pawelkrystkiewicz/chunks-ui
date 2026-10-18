@@ -121,12 +121,7 @@ const POPUPS: Popup[] = [
   { page: "/components/combobox", trigger: "button", name: "Show options", popup: "listbox" },
   // Trigger with Search: with the input inside the popup, Base UI makes the trigger a combobox and
   // the popup a dialog
-  {
-    page: "/components/combobox",
-    trigger: "combobox",
-    name: "Favorite fruit",
-    popup: "dialog",
-  },
+  { page: "/components/combobox", trigger: "combobox", name: "Favorite fruit", popup: "dialog" },
   { page: "/components/date-picker", trigger: "button", name: "Pick a date", popup: "dialog" },
   { page: "/components/menu", trigger: "button", name: "Options", popup: "menu" },
   { page: "/components/popover", trigger: "button", name: "More info", popup: "dialog" },
