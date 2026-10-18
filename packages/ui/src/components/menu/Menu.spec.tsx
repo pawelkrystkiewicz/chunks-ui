@@ -1,10 +1,22 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { axe } from "jest-axe";
+import { configureAxe } from "jest-axe";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Menu } from "./Menu";
 
 afterEach(cleanup);
+
+// aria-hidden-focus skips Base UI's focus guards, aria-hidden spans that hand focus on when Tab
+// reaches them. A browser's axe leaves them for review, as it takes the open menu's full-page
+// backdrop for a modal. jsdom can't hit-test the backdrop, so axe finds no modal and flags them.
+// The rule still checks every other aria-hidden node
+const axe = configureAxe({
+  globalOptions: {
+    rules: [
+      { id: "aria-hidden-focus", selector: '[aria-hidden="true"]:not([data-base-ui-focus-guard])' },
+    ],
+  },
+});
 
 describe("Menu", () => {
   it("renders Trigger and Content when open", () => {
