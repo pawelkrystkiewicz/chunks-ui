@@ -4,7 +4,7 @@ import { Avatar, Button, Checkbox, Chip, Input, Select, Table, Tooltip } from "c
 import { ArrowUpDown, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { Task, TaskPriority, TaskStatus } from "./data";
-import { initials, STATUS_OPTIONS, TASKS } from "./data";
+import { initials, PRIORITY_OPTIONS, STATUS_OPTIONS, TASKS } from "./data";
 
 const priorityColors: Record<TaskPriority, string> = {
   low: "text-muted-foreground",
@@ -20,12 +20,14 @@ const statusColors: Record<TaskStatus, string> = {
   done: "bg-success/10 text-success-text",
 };
 
-const statusLabels: Record<TaskStatus, string> = {
-  backlog: "Backlog",
-  "in-progress": "In Progress",
-  "in-review": "In Review",
-  done: "Done",
-};
+// A value missing from the options shows as is, not as an empty cell
+const statusLabel = (status: TaskStatus) =>
+  STATUS_OPTIONS.find((o) => o.value === status)?.label ?? status;
+const priorityLabel = (priority: TaskPriority) =>
+  PRIORITY_OPTIONS.find((o) => o.value === priority)?.label ?? priority;
+
+// The `null` item takes the filter off; as a label in `items`, it also names the empty trigger
+const STATUS_FILTER_OPTIONS = [{ value: null, label: "All statuses" }, ...STATUS_OPTIONS];
 
 type SortKey = "title" | "priority" | "dueDate";
 type SortDir = "asc" | "desc";
@@ -109,19 +111,19 @@ export function TaskTable() {
           className="sm:max-w-xs"
         />
         <Select.Root
-          items={STATUS_OPTIONS}
+          items={STATUS_FILTER_OPTIONS}
           value={statusFilter}
-          onValueChange={(val) => setStatusFilter(val || null)}
+          onValueChange={setStatusFilter}
         >
           <Select.Trigger className="w-40" aria-label="Status">
-            <Select.Value placeholder="All statuses" />
+            <Select.Value />
             <Select.Icon />
           </Select.Trigger>
           <Select.Portal>
             <Select.Positioner sideOffset={5} alignItemWithTrigger={false}>
               <Select.Popup>
-                {STATUS_OPTIONS.map((opt) => (
-                  <Select.Item key={opt.value} value={opt.value}>
+                {STATUS_FILTER_OPTIONS.map((opt) => (
+                  <Select.Item key={opt.label} value={opt.value}>
                     <Select.ItemText>{opt.label}</Select.ItemText>
                     <Select.ItemIndicator />
                   </Select.Item>
@@ -217,12 +219,12 @@ export function TaskTable() {
                     <span
                       className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[task.status]}`}
                     >
-                      {statusLabels[task.status]}
+                      {statusLabel(task.status)}
                     </span>
                   </Table.Cell>
                   <Table.Cell>
-                    <span className={`text-sm capitalize ${priorityColors[task.priority]}`}>
-                      {task.priority}
+                    <span className={`text-sm ${priorityColors[task.priority]}`}>
+                      {priorityLabel(task.priority)}
                     </span>
                   </Table.Cell>
                   <Table.Cell>
