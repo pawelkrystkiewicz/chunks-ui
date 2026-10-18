@@ -107,7 +107,14 @@ export default defineConfig({
     // while no scanned spec imported one (a narrower run, or a spec that gained the import later)
     // is still valid, so Vite found it mid-run, re-bundled, and reloaded the page: the SSR specs
     // then failed with two copies of React (#488).
-    include: ["react-dom/client", "react-dom/server", "@testing-library/user-event"],
+    include: [
+      "react-dom/client",
+      "react-dom/server",
+      "@testing-library/user-event",
+      // The aria-hidden-focus audit in Toast.visual.spec.tsx (#597): a cache from before that
+      // spec imported it made Vite reload the test page mid-run
+      "axe-core",
+    ],
   },
   test: {
     globals: true,
