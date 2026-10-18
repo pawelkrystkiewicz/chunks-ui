@@ -27,7 +27,7 @@ export type CopyButtonProps = Omit<ComponentProps<typeof IconButton>, "children"
   timeout?: number;
   /**
    * Render prop function that receives the copied state object and returns custom ReactNode for button content.
-   * If not provided, a default icon/UI is rendered.
+   * If not provided, a default icon/UI is rendered, unless `render` is set.
    */
   children?: (state: { copied: boolean }) => ReactNode;
   /**
