@@ -11,8 +11,7 @@ export type ComboboxLabels = {
    */
   clear: string;
   /**
-   * Name of `Combobox.ChipRemove`, read with its chip's text. Text children inside a chip join
-   * that name ("Remove Apple Drop"), so pass an `aria-label` with them.
+   * Name of `Combobox.ChipRemove`, read with its chip's text.
    * `{chip}` marks where the text goes: `"{chip} を削除"` reads "Apple を削除". Without `{chip}`,
    * the text follows the label, so the default reads "Remove Apple".
    * Only the first `{chip}` counts.

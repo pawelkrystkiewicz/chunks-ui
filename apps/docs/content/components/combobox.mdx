@@ -271,11 +271,7 @@ The popup enters with a scale-up and fade (from `scale-95` and `opacity-0`): the
 <Combobox.ChipRemove aria-label={`Deselect ${item.label}`} />
 ```
 
-`Combobox.Clear` and `Combobox.ChipRemove` keep their name whatever you pass. `children` replace the X, and a `render` element with no children gets no X. If the children are visible text, pass an `aria-label` that contains it, so speech input users can say what they see:
-
-```tsx
-<Combobox.Clear aria-label="Clear all fruits">Clear all</Combobox.Clear>
-```
+`Combobox.Clear` and `Combobox.ChipRemove` keep their name whatever you pass. `children` replace the X, and a `render` element with no children gets no X. If the children are visible text, pass an `aria-label` that contains it, so speech input users can say what they see.
 
 `Combobox.Trigger` is different: in a trigger-style Combobox it shows the selected value. If you pass `children` or a `render` element, its default name and its chevron are not applied, and the content you pass names the button. Give icon-only content an `aria-label`:
 

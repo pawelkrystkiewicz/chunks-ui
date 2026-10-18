@@ -360,12 +360,8 @@ function ComboboxChipRemove({ className, children, ...props }: ComboboxChipRemov
   const labels = useContext(ComboboxLabelsContext);
   const chipId = useContext(ComboboxChipIdContext);
   const id = useId();
-  // An icon button: named by hidden text around the chip's text whatever its content, "Remove
-  // Apple" or "Apple を削除". The button sits inside the chip, so it has no aria-label: one would
-  // be read again as part of the chip's text. Without a Combobox.Chip around it, there is no chip
-  // text to read: it is named by aria-label, and `{chip}` is dropped. A consumer's aria-label
-  // replaces either name. Children replace the X; with `render` and no children, there is no X
-  // (#581). The hidden text sits beside the button, so a void `render` element can take its place.
+  // Inside a chip the name comes from `aria-labelledby` (the chip's text), not an aria-label.
+  // The hidden name text sits beside the button, not inside, so a void `render` element can mount.
   const name = removeButtonName(labels.chipRemove, chipId ?? "", id);
   const namedByChip = chipId !== undefined && props["aria-label"] === undefined;
   return (
