@@ -4,7 +4,7 @@ import type { ReactElement } from "react";
 import { describe, expect, it } from "vitest";
 import { TeamCard } from "../create/preview/TeamCard";
 import { ActivityFeed } from "./ActivityFeed";
-import { TEAM } from "./data";
+import { ACTIVITIES, TEAM } from "./data";
 import { TaskTable } from "./TaskTable";
 import { TeamPanel } from "./TeamPanel";
 
@@ -22,4 +22,10 @@ describe.each<[string, () => ReactElement]>([
     }
     expect(screen.getAllByText("AC").length).toBeGreaterThan(0);
   });
+});
+
+// ActivityFeed finds each person's photo by name, so a name that differs from TEAM's loses it
+it("names each activity's person as TEAM does", () => {
+  const names = TEAM.map((m) => m.name);
+  for (const { user } of ACTIVITIES) expect(names).toContain(user);
 });
