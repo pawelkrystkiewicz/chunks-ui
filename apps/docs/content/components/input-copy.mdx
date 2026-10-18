@@ -54,6 +54,8 @@ export default Props
 
 All other `Input` props are forwarded except `endAdornment` and `onClear` (reserved for the internal `CopyButton`). `readOnly` defaults to `true`. `aria-label` names the input, not the copy button.
 
+The text of the field is 16px below `md` (768px by default) and 14px from `md` up, as in `Input`. A string `className` goes on the wrapper, not the input; a function reaches the input. See [Text Size](/components/input#text-size) in `Input`.
+
 ## Labels
 
 `labels` replaces the built-in English text, for example to translate it. Keys you leave out keep their default from `DEFAULT_INPUT_COPY_LABELS`. They name the copy button, which reads "Copied" for a moment after a copy. See [Labels](/labels).

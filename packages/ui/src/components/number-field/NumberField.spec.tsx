@@ -450,6 +450,33 @@ describe("NumberField labels", () => {
   });
 });
 
+// What the docs list under "Mobile Keyboards". jsdom is not iOS, so Base UI keeps its default
+describe("NumberField mobile keyboard", () => {
+  const field = (inputProps: React.ComponentProps<typeof NumberField.Input> = {}) =>
+    render(
+      <NumberField.Root defaultValue={0}>
+        <NumberField.Input aria-label="Quantity" {...inputProps} />
+      </NumberField.Root>,
+    );
+
+  it("has inputmode=numeric by default", () => {
+    field();
+    expect(screen.getByRole("textbox", { name: "Quantity" })).toHaveAttribute(
+      "inputmode",
+      "numeric",
+    );
+  });
+
+  // Base UI merges the props of the part after its own
+  it("takes an inputMode passed to NumberField.Input in place of Base UI's", () => {
+    field({ inputMode: "decimal" });
+    expect(screen.getByRole("textbox", { name: "Quantity" })).toHaveAttribute(
+      "inputmode",
+      "decimal",
+    );
+  });
+});
+
 // The plus and minus are only the default content: children replace them, and the button keeps
 // its name (#564). The children here are an icon with aria-hidden, the intended use: text children
 // would need an aria-label that contains them, as the default name does not

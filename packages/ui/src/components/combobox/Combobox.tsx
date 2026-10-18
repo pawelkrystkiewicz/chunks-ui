@@ -13,7 +13,7 @@ import {
 import { usePopupRender } from "../../lib/use-popup-render";
 import { CloseIcon } from "../CloseIcon";
 import { removeButtonName } from "../chip/Chip";
-import { FOCUS_RING, FOCUS_RING_WITHIN, RING_TRANSITION } from "../shared";
+import { FIELD_TEXT_SIZE, FOCUS_RING, FOCUS_RING_WITHIN, RING_TRANSITION } from "../shared";
 import { type ComboboxLabels, DEFAULT_COMBOBOX_LABELS } from "./Combobox.Labels";
 
 const ComboboxLabelsContext = createContext(DEFAULT_COMBOBOX_LABELS);
@@ -102,7 +102,8 @@ function ComboboxInput({ className, ...props }: ComboboxInputProps) {
   return (
     <BaseCombobox.Input
       className={cnState(
-        "flex h-ui-height w-full rounded-md border border-input bg-background px-3 pe-12 text-sm",
+        "flex h-ui-height w-full rounded-md border border-input bg-background px-3 pe-12",
+        FIELD_TEXT_SIZE,
         "placeholder:text-muted-foreground",
         FOCUS_RING,
         RING_TRANSITION,

@@ -421,6 +421,30 @@ describe("Input labels", () => {
   });
 });
 
+// The props the docs list under "Mobile Keyboards"
+describe("Input mobile keyboard props", () => {
+  it.each([
+    ["without adornments", {}],
+    ["with an adornment", { startAdornment: "$" }],
+  ])("passes type, inputMode, enterKeyHint and autoComplete to the input %s", (_, props) => {
+    render(
+      <Input
+        aria-label="Query"
+        type="search"
+        inputMode="search"
+        enterKeyHint="search"
+        autoComplete="off"
+        {...props}
+      />,
+    );
+    // Only type="search" gives an input the searchbox role, so this also checks the type
+    const input = screen.getByRole("searchbox", { name: "Query" });
+    expect(input).toHaveAttribute("inputmode", "search");
+    expect(input).toHaveAttribute("enterkeyhint", "search");
+    expect(input).toHaveAttribute("autocomplete", "off");
+  });
+});
+
 describe("Input focus ring", () => {
   it("draws the library focus ring", () => {
     render(<Input data-testid="inp" />);

@@ -1,8 +1,9 @@
 import { cva } from "../../lib/cva";
-import { FOCUS_RING, RING_ANIMATION_CLASSES } from "../shared";
+import { FIELD_TEXT_SIZE, FOCUS_RING, RING_ANIMATION_CLASSES } from "../shared";
 
 export const inputVariants = cva([
-  "flex w-full rounded-md border border-input bg-background px-3 h-ui-height text-sm",
+  "flex w-full rounded-md border border-input bg-background px-3 h-ui-height",
+  FIELD_TEXT_SIZE,
   "text-foreground placeholder:text-muted-foreground",
   ...RING_ANIMATION_CLASSES,
   FOCUS_RING,

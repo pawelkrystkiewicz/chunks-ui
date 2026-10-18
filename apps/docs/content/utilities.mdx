@@ -41,7 +41,7 @@ This page is a server component, and it renders the link below with that code:
 `chunks-ui/utils` exports:
 
 - `cn` and `cnState`, with their `ClassInput` and `StateClassName` types;
-- `buttonVariants`, `chipVariants`, `iconButtonVariants` and `inputVariants`;
+- `buttonVariants`, `chipVariants`, `iconButtonVariants` and `inputVariants` (which carries the text size of `Input`, 16px below `md` and 14px from `md` up: see [Text Size](/components/input#text-size));
 - `springs`, the Motion spring presets;
 - [`mergeLabels`](#mergelabels), which merges a `labels` prop over a component's defaults;
 - the English label defaults, `DEFAULT_*_LABELS`, and their `<Component>Labels` types (see [Labels](/labels));
@@ -154,7 +154,7 @@ These put `className` on an element that has no Base UI state:
 - **Plain HTML components**, such as `Card`, `Empty`, `Skeleton` and `Table`, take a string.
 - **`Tabs.Content`, `Tabs.Contents`, `Tabs.Animate` and `DatePicker`** render or wrap a plain `<div>`, so they take a string.
 - **`Radio.Item`** puts it on its `<label>`, so it takes a string. Style the radio itself with `Radio.Root`.
-- **`Input`** with `startAdornment`, `endAdornment` or `onClear` (and `InputCopy`, which always has an end adornment) puts a string on the wrapper that positions the adornments, and a function on the input inside it:
+- **`Input`** with `startAdornment`, `endAdornment`, `clearable` or `onClear` (and `InputCopy`, which always has an end adornment) puts a string on the wrapper that positions the adornments, and a function on the input inside it:
 
 ```tsx
 import { Input } from "chunks-ui";

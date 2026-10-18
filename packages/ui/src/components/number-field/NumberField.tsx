@@ -7,7 +7,7 @@ import { cnState } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
 import { usePortalContainer } from "../../lib/portal-container";
 import { type PartRenderProp, useRenderPart } from "../../lib/use-render-part";
-import { FOCUS_RING_WITHIN, RING_TRANSITION } from "../shared";
+import { FIELD_TEXT_SIZE, FOCUS_RING_WITHIN, RING_TRANSITION } from "../shared";
 import { DEFAULT_NUMBER_FIELD_LABELS, type NumberFieldLabels } from "./NumberField.Labels";
 
 // ---------------------------------------------------------------------------
@@ -66,7 +66,8 @@ function NumberFieldInput({ className, ...props }: NumberFieldInputProps) {
     <BaseNumberField.Input
       aria-roledescription={labels.roleDescription}
       className={cnState(
-        "h-ui-height w-full min-w-16 flex-1 bg-transparent px-3 text-center text-foreground text-sm tabular-nums",
+        "h-ui-height w-full min-w-16 flex-1 bg-transparent px-3 text-center text-foreground tabular-nums",
+        FIELD_TEXT_SIZE,
         "placeholder:text-muted-foreground",
         "focus-visible:outline-none",
         "disabled:cursor-not-allowed",
