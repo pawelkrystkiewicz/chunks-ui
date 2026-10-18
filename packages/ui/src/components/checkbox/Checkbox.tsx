@@ -54,11 +54,36 @@ function CheckboxIndicator({ className, render, ...props }: CheckboxIndicatorPro
   );
 }
 
-// The same element and path with and without Motion, so they aren't remounted when Motion loads.
+// The default check and minus. Its own component, so its state starts fresh each time it mounts
+// (after children or `render` go away): the path then jumps to the right shape, not the one held
+// from before.
+function CheckboxGlyph({ d }: { d: string }) {
+  const [pathRef, pathDriven] = useMotionAnimate<SVGPathElement>(
+    { d },
+    { transition: springs.micro },
+  );
+  // Motion morphs `d` between the check and the minus; React keeps the value it had then
+  const pathD = useHeldWhileDriving(pathDriven, d);
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="3"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="size-3"
+      aria-hidden="true"
+    >
+      <path ref={pathRef} d={pathD} />
+    </svg>
+  );
+}
+
+// The same element with and without Motion, so it isn't remounted when Motion loads.
 // Children replace the check and the minus; with `render` and no children, there is neither: the
 // render element draws its own, and may be a void element (#581). The element still springs in
-// and out; the path, and its morph, are the default glyph's alone. Its hook never gets an element
-// then, and does nothing.
+// and out; the path, and its morph, are the default glyph's alone.
 function CheckboxIndicatorElement({
   state,
   render,
@@ -71,35 +96,17 @@ function CheckboxIndicatorElement({
   render: PartRenderProp<BaseCheckbox.Indicator.State>;
 }) {
   const shown = state.checked || state.indeterminate;
-  const d = state.indeterminate ? MINUS : CHECKMARK;
   const [indicatorRef] = useMotionAnimate<HTMLElement>(
     { opacity: shown ? 1 : 0, scale: shown ? 1 : 0.5 },
     { transition: springs.micro, clear: ["transform", "opacity"] },
     ref,
   );
-  const [pathRef, pathDriven] = useMotionAnimate<SVGPathElement>(
-    { d },
-    { transition: springs.micro },
-  );
-  // Motion morphs `d` between the check and the minus; React keeps the value it had then
-  const pathD = useHeldWhileDriving(pathDriven, d);
   return useRenderPart(render, state, indicatorRef, {
     ...props,
     className: cn("flex items-center justify-center text-current", className),
     children:
       children == null && !render ? (
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="size-3"
-          aria-hidden="true"
-        >
-          <path ref={pathRef} d={pathD} />
-        </svg>
+        <CheckboxGlyph d={state.indeterminate ? MINUS : CHECKMARK} />
       ) : (
         children
       ),

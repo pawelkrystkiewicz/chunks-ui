@@ -161,3 +161,24 @@ describe("Checkbox.Indicator children with Motion", () => {
     expect(indicator).toHaveTextContent(/^★$/);
   });
 });
+
+describe("Checkbox.Indicator default glyph with Motion", () => {
+  beforeAll(() => reloadMotion());
+
+  it("draws the minus, not a stale check, when children go away on an indeterminate box", async () => {
+    const ui = (indeterminate: boolean, children?: string) => (
+      <Checkbox.Root aria-label="Starred" defaultChecked indeterminate={indeterminate}>
+        <Checkbox.Indicator data-testid="ind">{children}</Checkbox.Indicator>
+      </Checkbox.Root>
+    );
+    const { rerender } = render(ui(false, "★"));
+    await frames(10);
+    rerender(ui(true, "★"));
+    await frames(10);
+    rerender(ui(true));
+    await frames(10);
+
+    expect(screen.getByRole("checkbox")).toHaveAttribute("aria-checked", "mixed");
+    expect(document.querySelector("path")).toHaveAttribute("d", "M4,12 L12,12 L20,12");
+  });
+});
