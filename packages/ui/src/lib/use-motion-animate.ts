@@ -22,6 +22,21 @@ function runningTransitions(element: Element) {
   return element.getAnimations().filter((animation) => animation instanceof CSSTransition);
 }
 
+/**
+ * Keyframes for a jump: each value twice. A fresh element has no motion value, so a 0 ms jump
+ * to one value becomes a WAAPI animation from the value read off the element, and when the first
+ * frame comes late it holds that first keyframe for a frame or two (#632). Two equal keyframes
+ * leave nothing to animate: Motion sets the value.
+ */
+function jumpTo(values: AnimatedValues) {
+  return Object.fromEntries(
+    Object.entries(values).map(([key, value]): [string, AnimatedValues[string][]] => [
+      key,
+      [value, value],
+    ]),
+  );
+}
+
 /** Removes inline properties Motion set, for the CSS fallback */
 function clearProperties(element: HTMLElement | SVGElement, names?: string[]) {
   if (!names?.length) return;
@@ -110,7 +125,7 @@ export function useMotionAnimate<E extends HTMLElement | SVGElement>(
         // A hand-off cancelled earlier in this frame must not strip the values written now
         if (pendingUndo.current) m.cancelFrame(pendingUndo.current);
         pendingUndo.current = null;
-        controls.current = m.animate(node, JSON.parse(target), { duration: 0 });
+        controls.current = m.animate(node, jumpTo(JSON.parse(target)), { duration: 0 });
         // Render all values, so the ones Motion still holds come back after the CSS fallback
         // removed them
         renderNow(m, node);
@@ -177,9 +192,10 @@ export function useMotionAnimate<E extends HTMLElement | SVGElement>(
     const first = animated.current !== node;
     if (first) controls.current?.stop();
     animated.current = node;
+    const values: AnimatedValues = JSON.parse(target);
     controls.current = m.animate(
       node,
-      JSON.parse(target),
+      first ? jumpTo(values) : values,
       first ? { duration: 0 } : latest.current.transition,
     );
     // On a jump, render all values, as in the hand-off above
