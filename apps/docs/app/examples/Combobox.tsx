@@ -26,13 +26,13 @@ export function ComboboxTriggerSearchExample() {
         </Combobox.Trigger>
         <Combobox.Portal>
           <Combobox.Positioner>
-            <Combobox.Popup aria-label="Fruits">
+            <Combobox.Popup aria-label="Fruits" className="flex flex-col overflow-hidden">
               <Combobox.Input
                 placeholder="Search..."
                 aria-label="Search fruits"
-                className="mb-1 pe-3"
+                className="mb-1 shrink-0 pe-3"
               />
-              <Combobox.List>
+              <Combobox.List className="min-h-0 overflow-y-auto overscroll-contain scroll-py-1">
                 {(item: Option) => (
                   <Combobox.Item key={item.value} value={item}>
                     {item.label}
