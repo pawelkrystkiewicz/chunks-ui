@@ -372,16 +372,17 @@ describe.each([
     };
   };
 
-  // A Tab after the exit passes without the fix; skipped for reduced motion's one frame
+  // A Tab after the exit passes without the fix; skipped for reduced motion's one frame. Base UI
+  // keeps the popup mounted after the exit, hidden: shown means still leaving.
   const recordTab = (popup: HTMLElement) => {
-    let mounted: boolean | undefined;
+    let shown: boolean | undefined;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Tab") mounted = popup.isConnected;
+      if (event.key === "Tab") shown = popup.checkVisibility();
     };
     document.addEventListener("keydown", onKeyDown, true);
     return () => {
       document.removeEventListener("keydown", onKeyDown, true);
-      if (!reduce) expect(mounted, "the popup was still closing when Tab went down").toBe(true);
+      if (!reduce) expect(shown, "the popup was still closing when Tab went down").toBe(true);
     };
   };
 

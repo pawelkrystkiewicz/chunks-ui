@@ -42,6 +42,8 @@ export function useCloseFocusRoot<Details extends OpenChangeDetails>(
     }
     const close = { event: details.event, reason: details.reason };
     closeFocus.close.current = close;
+    // ponytail: a parent that closes after the task (an await, a transition) loses the event, so
+    // its close counts as one by the prop: focus inside goes to the trigger. Accepted.
     setTimeout(() => {
       if (closeFocus.close.current === close) closeFocus.close.current = undefined;
     });
@@ -93,7 +95,9 @@ export function useFocusOnClose<T extends HTMLElement>(
       doc.removeEventListener("keypress", handOff, true);
       doc.removeEventListener("keyup", handOff, true);
     };
-    // Checks again after a wait: the popup may have reopened
+    // Checks again after a wait: the popup may have reopened.
+    // ponytail: a pick that opens a Dialog gives the trigger focus for a frame, until the Dialog
+    // takes it (its focus and blur handlers fire). Accepted for now.
     const handOff = () => {
       stopWaiting();
       if (closing() && focusInside()) closeFocus.trigger.current?.focus({ preventScroll: true });
@@ -103,14 +107,18 @@ export function useFocusOnClose<T extends HTMLElement>(
       const close = closeFocus.close.current;
       closeFocus.close.current = undefined;
       const event = close?.event;
-      // A mouse or pen press closes it before the browser moves focus to what was pressed: leave
-      // focus to the browser, not through the trigger (its focus and blur handlers would fire).
-      // A hover close keeps Base UI's choice not to return focus.
+      // A mouse or pen press closes it before the browser moves focus to what was pressed, and a
+      // touch outside (a tap or a scroll) would scroll the page to the trigger where `preventScroll`
+      // is unsupported: leave focus to the browser and Base UI, not through the trigger (its focus
+      // and blur handlers would fire). A hover close keeps Base UI's choice not to return focus.
       if (event?.type === "pointerdown" || event?.type === "mousedown") return;
+      if (close?.reason === "outside-press" && event?.type !== "click") return;
       if (close?.reason === "trigger-hover") return;
       // Enter with nothing highlighted is not default-prevented: its keypress would click the
-      // trigger and reopen the popup, so wait for that keypress (or the keyup)
-      if (event?.type === "keydown" && !event.defaultPrevented) {
+      // trigger and reopen the popup. A click made by Enter or Space (no click count) still has its
+      // keyup to come, which a browser may turn into a click on the trigger. Wait for either.
+      const keyClick = event?.type === "click" && "detail" in event && event.detail === 0;
+      if ((event?.type === "keydown" && !event.defaultPrevented) || keyClick) {
         doc.addEventListener("keypress", handOff, true);
         doc.addEventListener("keyup", handOff, true);
       } else {

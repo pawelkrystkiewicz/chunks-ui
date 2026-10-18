@@ -1,6 +1,6 @@
 import { Menu as BaseMenu } from "@base-ui/react/menu";
 import { render, screen } from "@testing-library/react";
-import { createRef } from "react";
+import { createRef, useState } from "react";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import {
@@ -11,6 +11,7 @@ import {
   settled,
   waitForStable,
 } from "../../VisualTest.utils";
+import { Dialog } from "../dialog";
 import { Menu } from "./index";
 
 /*
@@ -254,6 +255,48 @@ describe("Menu focus as the popup closes, Base UI's own handling", () => {
     await unmounted(popup);
     expect(triggerFocused(), "the trigger took focus").toBe(false);
     expect(document.activeElement).toBe(after);
+  });
+
+  // The trigger has focus for a frame, until the Dialog takes it (accepted); the Dialog then
+  // gives it back to the trigger
+  it("lets a Dialog opened by a pick take focus, and return it to the trigger", async () => {
+    function MenuWithDialog() {
+      const [open, setOpen] = useState(false);
+      return (
+        <>
+          <Menu.Root>
+            <Menu.Trigger>Options</Menu.Trigger>
+            <Menu.Content data-testid="popup">
+              <Menu.Item onClick={() => setOpen(true)}>Delete</Menu.Item>
+            </Menu.Content>
+          </Menu.Root>
+          <Dialog.Root open={open} onOpenChange={setOpen}>
+            <Dialog.Portal>
+              <Dialog.Popup data-testid="dialog">
+                <Dialog.Title>Delete the file?</Dialog.Title>
+                <Dialog.Close>Cancel</Dialog.Close>
+              </Dialog.Popup>
+            </Dialog.Portal>
+          </Dialog.Root>
+        </>
+      );
+    }
+    const view = render(<MenuWithDialog />);
+    const trigger = view.getByRole("button", { name: "Options" });
+    await userEvent.click(trigger);
+    const popup = await view.findByTestId("popup");
+    await settled(popup);
+    await userEvent.keyboard("{ArrowDown}{Enter}");
+    const dialog = await view.findByTestId("dialog");
+    await expect
+      .poll(() => dialog.contains(document.activeElement), { timeout: SETTLE_TIMEOUT_MS })
+      .toBe(true);
+    await unmounted(popup);
+    expect(dialog.contains(document.activeElement), "the Dialog keeps focus").toBe(true);
+    await settled(dialog);
+    await userEvent.keyboard("{Escape}");
+    await unmounted(dialog);
+    expect(document.activeElement).toBe(trigger);
   });
 
   // Hovered items take focus; Base UI returns none after a hover close, and nor does the popup
