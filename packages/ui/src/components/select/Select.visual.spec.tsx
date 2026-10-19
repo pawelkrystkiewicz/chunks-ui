@@ -1,6 +1,6 @@
 import { render } from "@testing-library/react";
 import { createRef } from "react";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import {
   contentSpan,
@@ -111,6 +111,64 @@ describe("Select", () => {
       </Select.Root>,
     );
     expectNotAllowed(getByRole("combobox"));
+  });
+
+  // #706. A modal select puts Base UI's invisible backdrop over the page: a press outside closes
+  // the popup and reaches nothing under it, an element with a z-index of its own included.
+  it("closes on a press on a sticky header, which the press does not reach", async () => {
+    const onClick = vi.fn();
+    const { getByRole, getByTestId } = render(
+      <>
+        <header className="sticky top-0 z-10">
+          <button type="button" onClick={onClick}>
+            Header
+          </button>
+        </header>
+        <div style={{ padding: 40 }}>{closedSelect()}</div>
+      </>,
+    );
+    // Found before the popup opens, as Base UI hides the page from the accessibility tree then
+    const header = page.elementLocator(getByRole("button", { name: "Header" }));
+    await userEvent.click(getByRole("combobox", { name: "Fruit" }));
+    const popup = getByTestId("popup");
+    await settled(popup);
+    // Forced: Playwright would otherwise wait for the button to be the element under the pointer
+    await header.click({ force: true });
+    expect(onClick).not.toHaveBeenCalled();
+    await exited(popup, { stillClosing: isShown });
+  });
+
+  // The backdrop takes the `z-dropdowns` layer only beside a positioner on it: one moved lower by
+  // its className keeps the popup above the backdrop
+  it("takes a press on an item in a positioner below z-dropdowns", async () => {
+    const { getByRole, getByTestId } = render(
+      <div style={{ padding: 40 }}>
+        <Select.Root defaultValue="apple">
+          <Select.Trigger aria-label="Fruit">
+            <Select.Value />
+            <Select.Icon />
+          </Select.Trigger>
+          <Select.Portal>
+            <Select.Positioner className="z-10">
+              <Select.Popup data-testid="popup">
+                {fruits.map((f) => (
+                  <Select.Item key={f.value} value={f.value}>
+                    <Select.ItemText>{f.label}</Select.ItemText>
+                  </Select.Item>
+                ))}
+              </Select.Popup>
+            </Select.Positioner>
+          </Select.Portal>
+        </Select.Root>
+      </div>,
+    );
+    const trigger = getByRole("combobox", { name: "Fruit" });
+    await userEvent.click(trigger);
+    await settled(getByTestId("popup"));
+    // Forced, as above: on the backdrop, the press would close the popup and pick nothing
+    await page.getByRole("option", { name: "Cherry" }).click({ force: true });
+    // The value as given: the Root has no `items` to label it with
+    await expect.element(trigger).toHaveTextContent("cherry");
   });
 });
 

@@ -1,4 +1,5 @@
-import { describe, it } from "vitest";
+import { render } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { commands, page, userEvent } from "vitest/browser";
 import { renderFixture, renderPage } from "../../VisualTest.utils";
 import { Menu } from "./index";
@@ -68,5 +69,37 @@ describe("Menu", () => {
     const popup = page.getByRole("menu");
     await expect.poll(() => popup.element().matches(":focus-visible")).toBe(true);
     await expect(body).toMatchScreenshot();
+  });
+
+  // #706. A modal menu puts Base UI's invisible backdrop over the page: a press outside closes the
+  // menu and reaches nothing under it, an element with a z-index of its own included.
+  it("closes on a press on a sticky header, which the press does not reach", async () => {
+    const onClick = vi.fn();
+    const { getByRole } = render(
+      <>
+        <header className="sticky top-0 z-10">
+          <button type="button" onClick={onClick}>
+            Header
+          </button>
+        </header>
+        <div style={{ padding: 40 }}>
+          <Menu.Root>
+            <Menu.Trigger>Options</Menu.Trigger>
+            <Menu.Content>
+              <Menu.Item>Edit</Menu.Item>
+            </Menu.Content>
+          </Menu.Root>
+        </div>
+      </>,
+    );
+    // Found before the menu opens, as Base UI hides the page from the accessibility tree then
+    const header = page.elementLocator(getByRole("button", { name: "Header" }));
+    await userEvent.click(page.getByRole("button", { name: "Options" }));
+    const menu = page.getByRole("menu");
+    await expect.element(menu).toBeVisible();
+    // Forced: Playwright would otherwise wait for the button to be the element under the pointer
+    await header.click({ force: true });
+    expect(onClick).not.toHaveBeenCalled();
+    await expect.element(menu).not.toBeInTheDocument();
   });
 });
