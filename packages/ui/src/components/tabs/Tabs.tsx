@@ -230,19 +230,21 @@ function TabsIndicatorElement({
     let stops: (() => void)[] = [];
     // The list's own tabs: not those of a Tabs list inside one of them, which that list's
     // indicator observes
-    const ownTabs = () =>
-      Array.from(list.querySelectorAll('[role="tab"]')).filter(
-        (tab) => tab.closest('[role="tablist"]') === list,
-      );
+    let ownTabs: Element[] = [];
     // A new observation's first notification measures every tab: this catches tabs that mount
     // or remount
     const observeTabs = () => {
       for (const stop of stops) stop();
+      // Scanned once per observation: the set only changes through a node added or removed
+      // outside a tab, which observes again
+      ownTabs = Array.from(list.querySelectorAll('[role="tab"]')).filter(
+        (tab) => tab.closest('[role="tablist"]') === list,
+      );
       stops = [
         observeResize(list, "border-box", onTabResize),
         // Padding on a list sized from outside changes its content box alone
         observeResize(list, "content-box", onTabResize),
-        ...ownTabs().map((tab) => observeResize(tab, "border-box", onTabResize)),
+        ...ownTabs.map((tab) => observeResize(tab, "border-box", onTabResize)),
       ];
     };
     observeTabs();
@@ -250,7 +252,7 @@ function TabsIndicatorElement({
     // again (gap, order), and a node added or removed beside the tabs observes them again (a tab
     // mounts or unmounts). Not a change inside a tab, such as a swapped icon (its resize is
     // observed), or to the indicator, nor an indicator mounting or unmounting.
-    const holdsTab = (node: Node) => node === list || ownTabs().some((tab) => node.contains(tab));
+    const holdsTab = (node: Node) => node === list || ownTabs.some((tab) => node.contains(tab));
     const insideTab = (node: Node) => {
       const tab = node instanceof Element ? node.closest('[role="tab"]') : null;
       // A list inside a tab of another list has that tab above it
@@ -262,7 +264,7 @@ function TabsIndicatorElement({
           ? !indicator.contains(target) &&
             !insideTab(target) &&
             (holdsNonIndicator(addedNodes) || holdsNonIndicator(removedNodes))
-          : holdsTab(target),
+          : !indicator.contains(target) && holdsTab(target),
       );
       if (outside.length === 0) return;
       if (outside.some((record) => record.type === "childList")) observeTabs();
