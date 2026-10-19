@@ -49,8 +49,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               // The landing's name for its GitHub link; Nextra's default icon says "Project repository"
               projectIcon={<GitHubIcon height="24" aria-label="GitHub repository" />}
             >
-              {/* Nextra draws the icon at 12px; 24px matches the GitHub icon beside it */}
-              <ThemeSwitch lite className="*:size-6" />
+              {/* Nextra draws the icon at 12px. 24px matches the GitHub icon beside it, set in px
+                  like that icon's height, so the two still match with a larger default font. */}
+              <ThemeSwitch lite className="*:size-[24px]" />
             </Navbar>
           }
           pageMap={await getPageMap()}
