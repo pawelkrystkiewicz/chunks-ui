@@ -178,6 +178,11 @@ describe("physicalTokens", () => {
       [],
     ],
     [
+      "nothing for what the scan does not read, a limit: the resize cursors and the angle and conic gradients",
+      "cursor-e-resize cursor-w-resize cursor-ne-resize cursor-nw-resize cursor-se-resize cursor-sw-resize bg-linear-90 mask-linear-90 -mask-linear-90 bg-conic-90 mask-conic-90",
+      [],
+    ],
+    [
       "nothing for what is left out on purpose: a translate, the side Base UI sets, and the slides Tailwind does not have",
       "-translate-x-1/2 translate-x-4 data-[side=left]:ms-2 slide-in-from-left slide-out-to-right",
       [],
@@ -532,6 +537,11 @@ describe("checkDocsDirection", () => {
       "joins what a comment in an @apply splits, as Tailwind does",
       [".a { @apply m/**/l-4 pr-/* x */2 ms-/* ml-4 */2; }"],
       ["1: ml-4", "1: pr-2"],
+    ],
+    [
+      "flags a class in an @apply inside @variant rtl, the CSS spelling of rtl:, which is no exemption",
+      [".a {", "  @variant rtl {", "    @apply mr-2;", "  }", "}"],
+      ["3: mr-2"],
     ],
     [
       "reads an @apply on past a / in a class, such as w-1/2, and stops at its ;",
