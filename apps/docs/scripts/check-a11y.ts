@@ -93,14 +93,6 @@ const ALLOWED: Allowed[] = [
     pages: ["/components/chip", "/kitchen-sink"],
     themes: ["light"],
   },
-  // Upstream Base UI behaviour in the library's own components
-  {
-    rule: "aria-hidden-focus",
-    selector: '.Toast[role="alertdialog"][aria-hidden="true"][tabindex="0"]',
-    why: 'mui/base-ui#5659: Base UI 1.9 keeps a priority: "high" toast aria-hidden, but in the tab order, until keyboard focus enters the viewport (Tab or F6)',
-    pages: ["/components/toast"],
-    themes: ["light", "dark"],
-  },
 ];
 
 type Role = Parameters<Page["getByRole"]>[0];
