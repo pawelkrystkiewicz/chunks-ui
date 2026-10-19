@@ -70,6 +70,17 @@ describe("while a colour editor is open", () => {
     await waitFor(() => expect(lit()).toEqual([]));
   });
 
+  it("outlines an off switch for the input colour, but not an on one, which paints the primary", () => {
+    render(<PreviewPanel theme={DEFAULT_THEME} onChange={vi.fn()} />);
+    const preview = screen.getByRole("region", { name: "Preview" });
+    fireEvent.click(within(preview).getByRole("button", { name: /^Accessibility/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^Edit colours: Input border, Light/ }));
+    const lit = (name: string) =>
+      within(preview).getByRole("switch", { name }).hasAttribute("data-lit");
+    expect(lit("Weekly digest")).toBe(true);
+    expect(lit("Deployments")).toBe(false);
+  });
+
   it("outlines nothing for the other mode's colours, which the preview doesn't paint", () => {
     render(<PreviewPanel theme={DEFAULT_THEME} onChange={vi.fn()} />);
     const preview = screen.getByRole("region", { name: "Preview" });

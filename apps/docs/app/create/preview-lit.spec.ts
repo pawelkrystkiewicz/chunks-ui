@@ -40,6 +40,20 @@ describe("paintsWith", () => {
     const ring = paintsWith(["primary", "ring"]);
     expect(ring(el("hover:bg-primary/90 focus-visible:outline-ring"))).toBe(false);
     expect(primary(el("group-hover:bg-primary"))).toBe(false);
+    // A focus inside the element: Slider.Thumb's, Combobox.Control's and NumberField.Group's ring
+    expect(ring(el("has-[:focus-visible]:outline-ring"))).toBe(false);
+  });
+
+  it("lets a state class replace a plain colour of its kind, as it does in the CSS", () => {
+    const input = paintsWith(["input"]);
+    // A checked checkbox's border and fill, and a checked switch's fill, are the primary
+    const checkbox = "border border-input data-checked:border-primary data-checked:bg-primary";
+    expect(input(el(checkbox, { "data-checked": "" }))).toBe(false);
+    expect(input(el(checkbox))).toBe(true);
+    expect(input(el("bg-input aria-pressed:bg-primary", { "aria-pressed": "true" }))).toBe(false);
+    // Only a colour of the same kind: a border colour leaves the fill, a border width the colour
+    expect(input(el("bg-input data-checked:border-primary", { "data-checked": "" }))).toBe(true);
+    expect(input(el("border-input data-checked:border-2", { "data-checked": "" }))).toBe(true);
   });
 
   it("reads Base UI's data-active state as a state, not as the pointer's :active", () => {
