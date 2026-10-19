@@ -688,7 +688,7 @@ describe("Toast.Root render", () => {
       </Toast.Provider>,
     );
     act(() => {
-      manager.add({ title: "Connection lost", priority: "high" });
+      manager.add({ title: "Connection lost", priority: "high", type: "error" });
     });
     // aria-hidden, so only a query with `hidden` finds it
     return screen.findByRole("alertdialog", { hidden: true });
@@ -703,13 +703,11 @@ describe("Toast.Root render", () => {
   it.each<{ kind: string; renderProp: ToastRootProps["render"]; marker: string }>([
     // Keeps its own props
     { kind: "an element", renderProp: <section data-marker="element" />, marker: "element" },
-    // Gets the root's state too
+    // Gets the root's state too: `type` is set on the toast, so it is there only if the state is
     {
       kind: "a function",
-      renderProp: (props, state) => (
-        <section {...props} data-marker={state.expanded ? "expanded" : "collapsed"} />
-      ),
-      marker: "collapsed",
+      renderProp: (props, state) => <section {...props} data-marker={state.type} />,
+      marker: "error",
     },
   ])("renders the root through $kind", async ({ renderProp, marker }) => {
     const user = userEvent.setup();
