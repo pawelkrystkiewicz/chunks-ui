@@ -1,6 +1,6 @@
 import { render } from "@testing-library/react";
 import { createRef } from "react";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { commands, page, userEvent } from "vitest/browser";
 import {
   describeExitPaths,
@@ -110,6 +110,17 @@ describeExitPaths("Popover focus as the popup closes", (reduce) => {
     expect(document.activeElement).toBe(after);
   });
 
+  // The repeat's keypress ends the hand-off's wait. Chromium still clicked Done, the keypress's
+  // target, after the hand-off had moved focus to the trigger: a second click. With reduced
+  // motion the repeat may land after the unmount, on the trigger, and open the popup again: still
+  // one click.
+  it("clicks Popover.Close once when the closing Enter repeats during the exit", async () => {
+    const onDone = vi.fn();
+    await openPopover({ onDone });
+    await userEvent.keyboard("{Tab}{Enter>2}{/Enter}");
+    expect(onDone).toHaveBeenCalledOnce();
+  });
+
   // A click and a key press are two calls, too far apart for the one frame of reduced motion
   it.skipIf(reduce)(
     "moves a Tab pressed during the exit past the trigger, after Popover.Close by click",
@@ -201,7 +212,15 @@ describe("Popover focus as the popup closes, focus moved away", () => {
 });
 
 // Text fields around the trigger, as WebKit's Tab and click skip buttons
-function popoverFixture({ finalFocusBefore = false, openOnHover = false } = {}) {
+function popoverFixture({
+  finalFocusBefore = false,
+  openOnHover = false,
+  onDone,
+}: {
+  finalFocusBefore?: boolean;
+  openOnHover?: boolean;
+  onDone?: () => void;
+} = {}) {
   const beforeRef = createRef<HTMLInputElement>();
   return (
     <div className="flex w-60 flex-col items-start gap-2" style={{ padding: 40 }}>
@@ -213,7 +232,7 @@ function popoverFixture({ finalFocusBefore = false, openOnHover = false } = {}) 
         </Popover.Trigger>
         <Popover.Content data-testid="popup" finalFocus={finalFocusBefore ? beforeRef : undefined}>
           <input aria-label="Name" />
-          <Popover.Close>Done</Popover.Close>
+          <Popover.Close onClick={onDone}>Done</Popover.Close>
         </Popover.Content>
       </Popover.Root>
       <input aria-label="After" />
