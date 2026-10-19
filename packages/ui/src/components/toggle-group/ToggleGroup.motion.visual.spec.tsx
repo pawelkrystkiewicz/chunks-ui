@@ -1047,11 +1047,34 @@ describe("ToggleGroup indicator under the pressed item disabled at runtime", () 
   // fades on its own curve and duration, and the pill under it fades with it.
   it("dims the indicator with an item disabled mid-slide, on the CSS fallback", async () => {
     const { indicator, item, rerender } = await renderSized(false);
+    /** The indicator's transitions: what each animates, for how long and on what curve */
+    const transitions = () =>
+      indicator()
+        .getAnimations()
+        .map((transition) => ({
+          property: (transition as CSSTransition).transitionProperty,
+          duration: transition.effect?.getComputedTiming().duration,
+          easing: transition.effect?.getTiming().easing,
+        }));
     rerender(sized({ value: "b" }));
     await untilChanged(() => edgesOf(indicator()));
-    expect(offBy(item("Beta"), indicator()), "the slide is under way").toBeGreaterThan(1);
+    // Held mid-slide, so no frame can end it first. A paused transition of a box edge still
+    // counts as a slide: a few frames on, the slide's transitions are still on.
+    for (const transition of indicator().getAnimations()) transition.pause();
+    await eachPaintedFrame(() => null, 5);
+    const snappy = { duration: 200, easing: "cubic-bezier(0.2, 0, 0, 1)" };
+    expect(transitions()).toEqual([
+      { property: "left", ...snappy },
+      { property: "width", ...snappy },
+    ]);
 
     rerender(sized({ value: "b", disabled: true }));
+    // The item's fade: 300ms on Tailwind's default curve
+    expect(transitions()).toContainEqual({
+      property: "opacity",
+      duration: 300,
+      easing: "cubic-bezier(0.4, 0, 0.2, 1)",
+    });
     const { faded, log } = await expectFadesWith(item("Beta"), indicator);
     expect(faded, log).toBe(true);
   });

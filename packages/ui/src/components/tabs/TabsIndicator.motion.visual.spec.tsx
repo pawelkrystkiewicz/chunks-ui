@@ -332,6 +332,22 @@ describe.each(MOTION_PATHS)("Tabs.Indicator, $path", ({ withMotion }) => {
 describe("Tabs.Indicator under the selected tab disabled at runtime", () => {
   const opacityOf = (el: Element) => Number(getComputedStyle(el).opacity);
 
+  /** Both opacities in the next 40 painted frames, asserted within 0.01 of each other in each */
+  async function expectFadesWith(tab: Element, indicator: Element) {
+    const frames = await eachPaintedFrame(
+      () => ({ tab: opacityOf(tab), indicator: opacityOf(indicator) }),
+      40,
+    );
+    const log = JSON.stringify(frames);
+    expect(
+      frames.every((frame) => Math.abs(frame.indicator - frame.tab) < 0.01),
+      log,
+    ).toBe(true);
+    // Values between the two ends: it faded rather than jumped
+    const faded = frames.some(({ indicator: opacity }) => opacity > 0.5 && opacity < 1);
+    return { faded, log };
+  }
+
   afterEach(() => emulateReducedMotion(false));
 
   it.each([
@@ -343,18 +359,8 @@ describe("Tabs.Indicator under the selected tab disabled at runtime", () => {
     const beta = tab("Beta");
 
     rerender(tabs({ value: "b", disabled: true }));
-    const frames = await eachPaintedFrame(
-      () => ({ tab: opacityOf(beta), indicator: opacityOf(indicator) }),
-      40,
-    );
-    const log = JSON.stringify(frames);
-    expect(
-      frames.every((frame) => Math.abs(frame.indicator - frame.tab) < 0.01),
-      log,
-    ).toBe(true);
-    // Values between the two ends: it faded rather than jumped, unless reduced motion is on
-    const between = frames.filter(({ indicator: opacity }) => opacity > 0.5 && opacity < 1);
-    expect(between.length > 0, log).toBe(!reduced);
+    const { faded, log } = await expectFadesWith(beta, indicator);
+    expect(faded, log).toBe(!reduced);
     expect(await waitForStable(() => opacityOf(indicator))).toBe(0.5);
   });
 
@@ -368,19 +374,8 @@ describe("Tabs.Indicator under the selected tab disabled at runtime", () => {
       const beta = tab("Beta");
 
       rerender(tabs({ ...linear, value: "b", disabled: true }));
-      const frames = await eachPaintedFrame(
-        () => ({ tab: opacityOf(beta), indicator: opacityOf(indicator) }),
-        40,
-      );
-      const log = JSON.stringify(frames);
-      expect(
-        frames.every((frame) => Math.abs(frame.indicator - frame.tab) < 0.01),
-        log,
-      ).toBe(true);
-      expect(
-        frames.some(({ indicator: opacity }) => opacity > 0.5 && opacity < 1),
-        log,
-      ).toBe(true);
+      const { faded, log } = await expectFadesWith(beta, indicator);
+      expect(faded, log).toBe(true);
     },
   );
 
