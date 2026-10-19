@@ -6,8 +6,8 @@
  * In a .css file it reads each `@apply`, its continuation lines too, and each
  * `@source inline("…")` string only. A class behind `rtl:` or `ltr:` is set for one direction on
  * purpose and passes. A marker `direction: physical, <reason>` on the same line, or in a comment
- * alone on its lines directly above, exempts a deliberate one. An empty scan, or one with no .mdx
- * file, fails. Full list and limits: TESTING_STRATEGY.md
+ * alone on its lines directly above (a run of `//` lines is one comment), exempts a deliberate one.
+ * An empty scan, or one with no .mdx file, fails. Full list and limits: TESTING_STRATEGY.md
  *
  * Run: bun run check:docs-direction
  */
@@ -66,10 +66,12 @@ function stylesheetClasses(css: string): string {
   );
 }
 
-/** The comment that ends on the line above `index` and is alone on its lines, or "". */
+/** The comment that ends on the line above `index` and is alone on its lines (a run of `//` lines is one), or "". */
 function commentAbove(lines: string[], index: number): string {
+  let first = index;
+  while (/^\s*\/\//.test(lines[first - 1] ?? "")) first--;
+  if (first < index) return lines.slice(first, index).join("\n");
   const above = lines[index - 1] ?? "";
-  if (/^\s*\/\//.test(above)) return above;
   if (!/\*\/\}?\s*$/.test(above)) return "";
   for (let start = index - 1; start >= 0; start--) {
     const text = lines[start] ?? "";

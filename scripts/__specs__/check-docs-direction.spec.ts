@@ -326,6 +326,23 @@ describe("checkDocsDirection", () => {
       [],
     ],
     [
+      "counts a run of // lines directly above as one comment",
+      [
+        "// direction: physical, the tiles compose one drawing",
+        "// and keep their arrangement in RTL",
+        'const A = "left-3";',
+        "// direction: physical, a blank line cuts this run off",
+        "",
+        "// the run above B",
+        'const B = "left-0";',
+        "const C = 1; // direction: physical, after code",
+        "// the run above D",
+        'const D = "left-1";',
+      ],
+      {},
+      ["7: left-0", "10: left-1"],
+    ],
+    [
       "needs a reason that starts with a word character",
       [
         "{/* direction: physical, */}",
