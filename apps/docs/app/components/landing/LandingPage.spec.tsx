@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import {
   AppRouterContext,
   type AppRouterInstance,
 } from "next/dist/shared/lib/app-router-context.shared-runtime";
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 import { LandingPage } from "./LandingPage";
 
 // Nextra's Search reads the App Router, which only Next mounts. No test navigates.
@@ -46,8 +46,14 @@ it("the open mobile menu hangs from the header, nothing clips it, and it locks p
   const menu = container.querySelector("#landing-menu");
   const headerEl = container.querySelector("header");
   if (!menu || !headerEl) throw new Error("no open menu or header");
+  // It ends at the screen's bottom edge, so links past it scroll inside it under large text
   expect([...menu.classList]).toEqual(
-    expect.arrayContaining(["absolute", "top-[calc(100%+1px)]", "h-dvh"]),
+    expect.arrayContaining([
+      "absolute",
+      "top-[calc(100%+1px)]",
+      "h-[calc(100dvh-100%-1px)]",
+      "overflow-y-auto",
+    ]),
   );
   // The header is the menu's containing block. No element between them has a Tailwind utility
   // that makes one: relative, absolute, fixed or sticky; transform, translate, scale, rotate, skew
@@ -71,6 +77,70 @@ it("the open mobile menu hangs from the header, nothing clips it, and it locks p
   expect(document.documentElement.style.overflow).toBe("hidden");
   fireEvent.keyDown(window, { key: "Escape" });
   expect(container.querySelector("#landing-menu")).toBeNull();
+  expect(document.documentElement.style.overflow).toBe("");
+});
+
+// The menu ends at the screen's bottom edge only with the header at the top of the screen. The
+// header isn't sticky, so the button shows only while the page is scrolled less than its height.
+it("opening the menu scrolls the page to the top", () => {
+  // jsdom has no layout, so its scrollTop stays 0: watch the write
+  const scrollTop = vi.spyOn(document.documentElement, "scrollTop", "set");
+  try {
+    renderPage();
+    fireEvent.click(screen.getByRole("button", { name: "Menu" }));
+    expect(scrollTop).toHaveBeenCalledWith(0);
+  } finally {
+    scrollTop.mockRestore();
+  }
+});
+
+// Past Tailwind's lg, `lg:hidden` hides the menu and its button, but nothing unmounts them
+it("growing the window past lg closes the open menu and releases the scroll lock", () => {
+  const LG = "(width >= 64rem)";
+  const lg = Object.assign(new EventTarget(), { matches: false, media: LG });
+  const { matchMedia } = window;
+  window.matchMedia = (query) => (query === LG ? (lg as never) : matchMedia(query));
+  try {
+    const { container } = renderPage();
+    fireEvent.click(screen.getByRole("button", { name: "Menu" }));
+    expect(document.documentElement.style.overflow).toBe("hidden");
+    act(() => {
+      lg.matches = true;
+      lg.dispatchEvent(new Event("change"));
+    });
+    expect(container.querySelector("#landing-menu")).toBeNull();
+    expect(document.documentElement.style.overflow).toBe("");
+  } finally {
+    window.matchMedia = matchMedia;
+  }
+});
+
+// The page under the open menu is hidden (WCAG 2.4.11), so focus that leaves the menu and its
+// button closes the menu. Focus that goes nowhere, as on a tap on the menu's empty space, does not.
+it("focus leaving the open menu closes it; focus moving within it or going nowhere does not", () => {
+  const { container } = renderPage();
+  const button = screen.getByRole("button", { name: "Menu" });
+  fireEvent.click(button);
+  const menu = () => container.querySelector("#landing-menu");
+  const links = [...(menu()?.querySelectorAll("a") ?? [])];
+  const [first, last] = [links.at(0), links.at(-1)];
+  if (!first || !last) throw new Error("no menu links");
+  act(() => {
+    button.focus();
+    first.focus();
+    last.focus();
+    last.blur();
+  });
+  expect(menu()).not.toBeNull();
+  // Tab from the last link: the next link or button in the page, under the menu
+  const focusable = [...container.querySelectorAll<HTMLElement>("a[href], button")];
+  const next = focusable[focusable.indexOf(last) + 1];
+  expect(next?.closest("header")).toBeNull();
+  act(() => {
+    last.focus();
+    next?.focus();
+  });
+  expect(menu()).toBeNull();
   expect(document.documentElement.style.overflow).toBe("");
 });
 

@@ -7,7 +7,7 @@ import { Check, Copy, Menu, Moon, Sun, X } from "lucide-react";
 import Link from "next/link";
 import { useMounted } from "nextra/hooks";
 import { useTheme } from "nextra-theme-docs";
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { type FocusEvent, type ReactNode, useEffect, useRef, useState } from "react";
 import {
   DEFAULT_THEME,
   fontOf,
@@ -59,17 +59,33 @@ export function ThemeButton() {
 export function MobileMenu({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
 
-  // The header isn't sticky: lock page scroll so the open menu and its close button stay put.
+  // The header isn't sticky: lock page scroll so the open menu and its close button stay put. The
+  // menu ends at the screen's bottom edge only with the header at the top: scroll there first.
+  // That is at most the header's height away, as the button scrolls off with it.
+  // Past Tailwind's lg, `lg:hidden` hides both but unmounts neither, so the menu closes there.
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    const lg = window.matchMedia("(width >= 64rem)");
+    const onLg = () => lg.matches && setOpen(false);
+    document.documentElement.scrollTop = 0;
     document.documentElement.style.overflow = "hidden";
     window.addEventListener("keydown", onKey);
+    lg.addEventListener("change", onLg);
     return () => {
       document.documentElement.style.overflow = "";
       window.removeEventListener("keydown", onKey);
+      lg.removeEventListener("change", onLg);
     };
   }, [open]);
+
+  // The page under the open menu is hidden (WCAG 2.4.11), so focus that leaves the menu and its
+  // button closes the menu, as in the APG disclosure navigation. Focus that goes nowhere (a tap on
+  // the menu's empty space, a switch to another window) keeps it open.
+  const onBlur = (e: FocusEvent) => {
+    if (e.relatedTarget && !e.relatedTarget.closest("#landing-menu, [aria-controls=landing-menu]"))
+      setOpen(false);
+  };
 
   return (
     <>
@@ -79,18 +95,20 @@ export function MobileMenu({ children }: { children: ReactNode }) {
         aria-expanded={open}
         aria-controls="landing-menu"
         onClick={() => setOpen((o) => !o)}
+        onBlur={onBlur}
         className={`${ICON_BUTTON} cursor-pointer transition-colors duration-300 ${FOCUS_RING} lg:hidden`}
       >
         {open ? <X className="size-[18px]" /> : <Menu className="size-[18px]" />}
       </button>
       {open && (
         // Hangs from the `relative` header, below its 1px border, so it follows the header's height
-        // under text zoom. A screen tall, it reaches the bottom; the scroll lock keeps the rest off
-        // screen.
+        // under text zoom. It ends at the screen's bottom edge (100% is the header's height) and
+        // scrolls on its own: under large text its links outgrow the screen, and the page is locked.
         <nav
           id="landing-menu"
           aria-label="Primary"
-          className="absolute inset-x-0 top-[calc(100%+1px)] z-50 flex h-dvh flex-col gap-1 bg-black px-[22px] py-6 lg:hidden"
+          onBlur={onBlur}
+          className="absolute inset-x-0 top-[calc(100%+1px)] z-50 flex h-[calc(100dvh-100%-1px)] flex-col gap-1 overflow-y-auto overscroll-contain bg-black px-[22px] py-6 lg:hidden"
         >
           {children}
         </nav>
