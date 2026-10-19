@@ -203,3 +203,35 @@ describe("the contrast panel", { timeout: 15_000 }, () => {
     );
   });
 });
+
+describe("redo", { timeout: 15_000 }, () => {
+  const redoButton = () => screen.getByRole("button", { name: "Redo" });
+
+  it("puts an undone edit back with ⇧⌘Z, Ctrl+Y and the Redo button", () => {
+    render(<Harness />);
+    openEditor();
+    typeBlack();
+    for (const redo of [
+      () => fireEvent.keyDown(resetAll(), { key: "Z", metaKey: true, shiftKey: true }),
+      () => fireEvent.keyDown(resetAll(), { key: "y", ctrlKey: true }),
+      () => fireEvent.click(redoButton()),
+    ]) {
+      ctrlZ(resetAll());
+      expect(screen.queryByText(/custom colour/)).toBeNull();
+      redo();
+      expect(screen.getByText(/1 custom colour/)).toBeTruthy();
+    }
+    expect(redoButton().getAttribute("aria-disabled")).toBe("true");
+  });
+
+  it("forgets the undone edits when a new edit is made", () => {
+    render(<Harness />);
+    openEditor();
+    typeBlack();
+    ctrlZ(resetAll());
+    expect(redoButton().getAttribute("aria-disabled")).toBeNull();
+    fireEvent.change(field(), { target: { value: "#ffffff" } });
+    fireEvent.keyDown(field(), { key: "Enter" });
+    expect(redoButton().getAttribute("aria-disabled")).toBe("true");
+  });
+});

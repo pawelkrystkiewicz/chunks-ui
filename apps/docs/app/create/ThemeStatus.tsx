@@ -1,7 +1,7 @@
 "use client";
 
 import { Collapsible, cn, Field, Select, ToggleGroup } from "chunks-ui";
-import { ChevronRight, ChevronsUpDown, Undo2 } from "lucide-react";
+import { ChevronRight, ChevronsUpDown, Redo2, Undo2 } from "lucide-react";
 import { type KeyboardEvent, type ReactNode, useEffect, useRef, useState } from "react";
 import { PairEditor } from "./PairEditor";
 import { countOverrides, type Mode, type Overrides, type Theme } from "./theme-model";
@@ -22,7 +22,7 @@ import {
   WCAG_LEVELS,
   type WcagLevel,
 } from "./theme-status";
-import { EMPTY_TRAIL, nextTrail, undoTrail } from "./undo-trail";
+import { EMPTY_TRAIL, nextTrail, redoTrail, undoTrail } from "./undo-trail";
 
 const GROUPS = ["Text", "Controls", "Charts"] as const;
 const TH = "py-1.5 pe-3 text-start font-medium";
@@ -67,7 +67,9 @@ export function ThemeStatus({
     null,
   );
   const [trail, setTrail] = useState(EMPTY_TRAIL);
-  const history = trail.steps.length > 0 && trail.last === theme.overrides ? trail.steps : [];
+  const own = trail.last === theme.overrides;
+  const history = own ? trail.steps : [];
+  const undone = own ? (trail.redo ?? []) : [];
   const dragging = useRef(false);
   // The last editor opened stays listed under "Failures only" after it closes, so focus can go
   // back to its swatch even when the pair now passes
@@ -101,12 +103,23 @@ export function ThemeStatus({
     setTrail((t) => undoTrail(t, current));
     onChange({ overrides: history.at(-1) });
   };
-  // ⌘Z / Ctrl+Z anywhere in the panel or an open editor, except in a text field's own undo
+  const redo = () => {
+    if (undone.length === 0) return;
+    const current = theme.overrides;
+    dragging.current = false;
+    setTrail((t) => redoTrail(t, current));
+    onChange({ overrides: undone.at(-1) });
+  };
+  // ⌘Z / Ctrl+Z undoes and ⇧⌘Z / Ctrl+Y redoes anywhere in the panel or an open editor, except in a
+  // text field's own history
   const onKeyDown = (e: KeyboardEvent) => {
     const typing = e.target instanceof HTMLInputElement && e.target.type === "text";
-    if (e.key.toLowerCase() !== "z" || !(e.metaKey || e.ctrlKey) || e.shiftKey || typing) return;
+    const key = e.key.toLowerCase();
+    if (typing || !(e.metaKey || e.ctrlKey)) return;
+    const action = key === "z" ? (e.shiftKey ? redo : undo) : key === "y" && e.ctrlKey && redo;
+    if (!action) return;
     e.preventDefault();
-    undo();
+    action();
   };
 
   const checks = themeChecks(theme, prefs);
@@ -185,7 +198,7 @@ export function ThemeStatus({
           differ for text: Bronze asks Lc 75 of body text and Lc 60 of other text; Silver and Gold
           look the target up by each row's size and weight, and Gold needs text of 16px or more.
           Non-text marks need Lc 30. Click a swatch to change its colours; ⌘Z or Ctrl+Z undoes a
-          change.
+          change, and ⇧⌘Z or Ctrl+Y redoes it.
         </p>
 
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
@@ -225,6 +238,15 @@ export function ThemeStatus({
           >
             <Undo2 aria-hidden className="size-3.5" />
             Undo
+          </button>
+          <button
+            type="button"
+            aria-disabled={undone.length === 0 || undefined}
+            onClick={() => undone.length > 0 && redo()}
+            className="flex items-center gap-1 rounded-sm text-[12px] hover:text-foreground aria-disabled:opacity-50"
+          >
+            <Redo2 aria-hidden className="size-3.5" />
+            Redo
           </button>
           <span className="flex items-center gap-2 text-[12px] text-muted-foreground">
             {custom > 0 && (
