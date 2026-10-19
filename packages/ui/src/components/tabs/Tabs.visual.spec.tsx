@@ -6,7 +6,10 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { userEvent } from "vitest/browser";
 // The script Base UI renders after the indicator in server HTML. Base UI imports it as
 // `#prehydration/tabs/indicator`, which browser builds, this suite's too, map to an empty stub:
-// imported by path, the real script reaches the spec that runs it and no other.
+// imported by path, the real script reaches the spec that runs it and no other. The path goes
+// into node_modules, as Base UI's `exports` doesn't expose the file. It exists there because
+// bunfig.toml sets the isolated linker, which links each package's dependencies into its own
+// node_modules.
 import { script as prehydrationScript } from "../../../node_modules/@base-ui/react/tabs/indicator/prehydrationScript.min.mjs";
 import {
   boxOf,
