@@ -1,7 +1,15 @@
 "use client";
 
 import { Select as BaseSelect } from "@base-ui/react/select";
-import { type ComponentProps, createContext, useContext } from "react";
+import {
+  type ComponentProps,
+  createContext,
+  useContext,
+  useImperativeHandle,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import {
@@ -10,6 +18,7 @@ import {
   usePortalNode,
 } from "../../lib/portal-container";
 import { type CloseFocus, useCloseFocusRoot, useFocusOnClose } from "../../lib/use-focus-on-close";
+import { useMergedRef } from "../../lib/use-merged-ref";
 import { usePopupRender } from "../../lib/use-popup-render";
 import { FIELD_TEXT_SIZE, FOCUS_RING, RING_TRANSITION } from "../shared";
 
@@ -29,13 +38,69 @@ export type SelectGroupLabelProps = ComponentProps<typeof BaseSelect.GroupLabel>
 const SelectCloseFocusContext = createContext<CloseFocus | null>(null);
 
 function SelectRoot<Value, Multiple extends boolean | undefined = false>({
+  open,
+  defaultOpen,
   onOpenChange,
+  onValueChange,
+  disabled,
+  inputRef,
+  actionsRef,
   ...props
 }: BaseSelect.Root.Props<Value, Multiple>) {
-  const [closeFocus, handleOpenChange] = useCloseFocusRoot(onOpenChange);
+  // A disabled trigger cannot be pressed, and `open` is not a press: as on DatePicker, the listbox
+  // stays closed whatever `open` and `defaultOpen` say. Base UI refuses a pick while the Select's
+  // own `disabled` or its Field's is on, but not under a native <fieldset disabled>, which only the
+  // browser knows. So this reads `:disabled` on Base UI's form input, which all three disable,
+  // after every commit and at a pick. A disabled uncontrolled Select also forgets that it was open,
+  // so enabling it later does not pop the listbox open. A listbox open when that read finds the
+  // Select disabled goes at once, with no exit: Base UI 1.9 cannot take back an open in the commit
+  // after it (a Select that mounts open in a disabled Field) before its portal has the popup, which
+  // then stays mounted and closing.
+  // ponytail: only the Select's own `disabled` counts in the render that sets it; the others count
+  // from its next render, or from a pick. So a Select that mounts open in a disabled Field or
+  // fieldset is open for its first commit, gone before it paints, and calls `onOpenChangeComplete`
+  // with `false`. A Field that disables an open Select without rendering it leaves the listbox open
+  // (Base UI refuses a pick in it). A `disabled` on the Trigger alone leaves the Select enabled, as
+  // it leaves its value in the form. Accepted.
+  const formInputRef = useRef<HTMLInputElement>(null);
+  const mergedInputRef = useMergedRef(formInputRef, inputRef);
+  const ownActionsRef = useRef<BaseSelect.Root.Actions>(null);
+  useImperativeHandle(actionsRef, () => ownActionsRef.current as BaseSelect.Root.Actions);
+  const [internalOpen, setInternalOpen] = useState(defaultOpen ?? false);
+  const [formDisabled, setFormDisabled] = useState(false);
+  const isOpen = !(disabled || formDisabled) && (open ?? internalOpen);
+  const syncDisabled = () => {
+    const next = formInputRef.current?.matches(":disabled") ?? false;
+    if (next !== formDisabled) setFormDisabled(next);
+    if (next && internalOpen) setInternalOpen(false);
+    // Takes effect with the close this batch commits
+    if (next && isOpen) ownActionsRef.current?.unmount();
+    return next;
+  };
+  useLayoutEffect(() => {
+    syncDisabled();
+  });
+  // Only an uncontrolled Select keeps the state: a controlled one shows `open`
+  const [closeFocus, handleOpenChange] = useCloseFocusRoot(
+    (next: boolean, eventDetails: BaseSelect.Root.OpenChangeEventDetails) => {
+      onOpenChange?.(next, eventDetails);
+      if (open === undefined && !eventDetails.isCanceled) setInternalOpen(next);
+    },
+  );
   return (
     <SelectCloseFocusContext.Provider value={closeFocus}>
-      <BaseSelect.Root<Value, Multiple> {...props} onOpenChange={handleOpenChange} />
+      <BaseSelect.Root<Value, Multiple>
+        {...props}
+        disabled={disabled}
+        inputRef={mergedInputRef}
+        actionsRef={ownActionsRef}
+        open={isOpen}
+        onOpenChange={handleOpenChange}
+        onValueChange={(value, eventDetails) => {
+          if (syncDisabled()) eventDetails.cancel();
+          else onValueChange?.(value, eventDetails);
+        }}
+      />
     </SelectCloseFocusContext.Provider>
   );
 }
