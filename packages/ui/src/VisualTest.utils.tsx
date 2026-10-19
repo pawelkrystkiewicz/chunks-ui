@@ -1,7 +1,7 @@
 import { type RenderResult, render } from "@testing-library/react";
 import { cancelFrame, frame } from "motion/react";
 import type { ReactElement, ReactNode } from "react";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { commands, page } from "vitest/browser";
 import { reloadMotion, useMotion } from "./lib/use-motion";
 import { SETTLE_TIMEOUT_MS } from "./VisualTest.timeouts";
@@ -160,14 +160,16 @@ export const DIRS: Dir[] = ["ltr", "rtl"];
 
 /**
  * Runs `define` once per direction, with `dir` on <html> through each test, as an app sets it, so
- * portalled popups inherit it. `name` takes the direction at `%s`, as in `describe.each`.
+ * portalled popups inherit it. `name` takes the direction at `%s`, as in `describe.each`. Base UI's
+ * `DirectionProvider` (keyboard navigation, logical popup sides) is the spec's to add, as
+ * `renderIn` in Rtl.visual.spec.tsx does.
  */
 export function describeDirs(name: string, define: (dir: Dir) => void) {
   describe.each(DIRS)(name, (dir) => {
     beforeEach(() => {
       document.documentElement.dir = dir;
-      return () => document.documentElement.removeAttribute("dir");
     });
+    afterEach(() => document.documentElement.removeAttribute("dir"));
     define(dir);
   });
 }
