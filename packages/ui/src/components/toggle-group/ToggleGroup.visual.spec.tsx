@@ -5,6 +5,15 @@ import { userEvent } from "vitest/browser";
 import { expectNotAllowed, focusVisible, renderFixture } from "../../VisualTest.utils";
 import { ToggleGroup } from "./index";
 
+/** The indicator of `group`: the span it renders before its items; null without one */
+const indicatorOf = (group: Element) => group.querySelector<HTMLElement>(":scope > span");
+
+/** `el`, which a poll has seen; throws if it is gone */
+function shown<T>(el: T | null): T {
+  if (!el) throw new Error("No indicator");
+  return el;
+}
+
 describe("ToggleGroup", () => {
   it("single selection", async () => {
     const { fixture } = await renderFixture(
@@ -57,6 +66,29 @@ describe("ToggleGroup", () => {
     );
     focusVisible(getByRole("button", { name: "Bold", pressed: false }));
     await expect(fixture).toMatchScreenshot();
+  });
+
+  // The docs' rule for a dim of your own, in `@layer utilities`: it must outweigh the specificity
+  // of the library's dim, which sits in the same layer
+  it("dims the pill by a rule of your own in @layer utilities", async () => {
+    const style = document.createElement("style");
+    style.textContent =
+      "@layer utilities { .my-group:has([data-pressed]:disabled) > span:first-child { opacity: 0.7 } }";
+    document.head.append(style);
+    try {
+      const { getByRole } = render(
+        <ToggleGroup.Root value={["a"]} className="my-group">
+          <ToggleGroup.Item value="a" disabled>
+            A
+          </ToggleGroup.Item>
+          <ToggleGroup.Item value="b">B</ToggleGroup.Item>
+        </ToggleGroup.Root>,
+      );
+      await expect.poll(() => indicatorOf(getByRole("group"))).not.toBeNull();
+      expect(getComputedStyle(shown(indicatorOf(getByRole("group")))).opacity).toBe("0.7");
+    } finally {
+      style.remove();
+    }
   });
 
   it("shows a not-allowed cursor on a disabled item", () => {
@@ -131,9 +163,8 @@ describe("ToggleGroup nested in another", () => {
 
   function renderNested(nesting: Nesting) {
     const { getByRole } = render(nested(nesting));
-    const indicatorOf = (name: string) =>
-      getByRole("group", { name }).querySelector<HTMLElement>(":scope > span");
-    return { getByRole, indicatorOf };
+    const pillOf = (name: string) => indicatorOf(getByRole("group", { name }));
+    return { getByRole, pillOf };
   }
 
   const opacityOf = (el: Element | null) => (el ? getComputedStyle(el).opacity : null);
@@ -142,27 +173,27 @@ describe("ToggleGroup nested in another", () => {
     { wrapped: false, where: "in the outer group" },
     { wrapped: true, where: "in an element of the outer group" },
   ])("keeps the inner pill bright under a disabled outer item, $where", async ({ wrapped }) => {
-    const { indicatorOf } = renderNested({ outerDisabled: true, wrapped });
-    await expect.poll(() => indicatorOf("Inner")).not.toBeNull();
-    expect(opacityOf(indicatorOf("Outer")), "the outer pill dims").toBe("0.5");
-    expect(opacityOf(indicatorOf("Inner")), "the inner pill").toBe("1");
+    const { pillOf } = renderNested({ outerDisabled: true, wrapped });
+    await expect.poll(() => pillOf("Inner")).not.toBeNull();
+    expect(opacityOf(pillOf("Outer")), "the outer pill dims").toBe("0.5");
+    expect(opacityOf(pillOf("Inner")), "the inner pill").toBe("1");
   });
 
   it.each([
     { wrapped: false, where: "in the outer group" },
     { wrapped: true, where: "in an element of the outer group" },
   ])("keeps the outer pill bright under a disabled inner item, $where", async ({ wrapped }) => {
-    const { indicatorOf } = renderNested({ innerDisabled: true, wrapped });
-    await expect.poll(() => indicatorOf("Inner")).not.toBeNull();
-    expect(opacityOf(indicatorOf("Inner")), "the inner pill dims").toBe("0.5");
-    expect(opacityOf(indicatorOf("Outer")), "the outer pill").toBe("1");
+    const { pillOf } = renderNested({ innerDisabled: true, wrapped });
+    await expect.poll(() => pillOf("Inner")).not.toBeNull();
+    expect(opacityOf(pillOf("Inner")), "the inner pill dims").toBe("0.5");
+    expect(opacityOf(pillOf("Outer")), "the outer pill").toBe("1");
   });
 
   it("dims both pills when both pressed items are disabled", async () => {
-    const { indicatorOf } = renderNested({ outerDisabled: true, innerDisabled: true });
-    await expect.poll(() => indicatorOf("Inner")).not.toBeNull();
-    expect(opacityOf(indicatorOf("Outer")), "the outer pill").toBe("0.5");
-    expect(opacityOf(indicatorOf("Inner")), "the inner pill").toBe("0.5");
+    const { pillOf } = renderNested({ outerDisabled: true, innerDisabled: true });
+    await expect.poll(() => pillOf("Inner")).not.toBeNull();
+    expect(opacityOf(pillOf("Outer")), "the outer pill").toBe("0.5");
+    expect(opacityOf(pillOf("Inner")), "the inner pill").toBe("0.5");
   });
 
   // Until a group has an indicator its pressed item draws the pill in a ::before; the inner
@@ -174,9 +205,9 @@ describe("ToggleGroup nested in another", () => {
   ] as const)(
     "draws the inner pill once, in an outer group with no indicator ($outer, wrapped: $wrapped)",
     async ({ outer, wrapped }) => {
-      const { getByRole, indicatorOf } = renderNested({ outer, wrapped });
-      await expect.poll(() => indicatorOf("Inner")).not.toBeNull();
-      expect(indicatorOf("Outer"), "the outer group has no indicator").toBeNull();
+      const { getByRole, pillOf } = renderNested({ outer, wrapped });
+      await expect.poll(() => pillOf("Inner")).not.toBeNull();
+      expect(pillOf("Outer"), "the outer group has no indicator").toBeNull();
       const before = getComputedStyle(getByRole("button", { name: "Inner" }), "::before");
       expect({ position: before.position, background: before.backgroundColor }).toEqual({
         position: "static",
@@ -201,9 +232,8 @@ describe("ToggleGroup with its pressed item in an element of its own", () => {
 
   it("dims the pill under the item when it is disabled", async () => {
     const { getByRole } = render(group(true));
-    const indicator = () => getByRole("group").querySelector(":scope > span");
-    await expect.poll(indicator).not.toBeNull();
-    expect(getComputedStyle(indicator() ?? document.body).opacity).toBe("0.5");
+    await expect.poll(() => indicatorOf(getByRole("group"))).not.toBeNull();
+    expect(getComputedStyle(shown(indicatorOf(getByRole("group")))).opacity).toBe("0.5");
   });
 
   it("draws the pill on the item in server HTML", () => {

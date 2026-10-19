@@ -356,11 +356,12 @@ function ToggleGroupIndicator({ box, value }: { box: IndicatorBox; value: string
         "absolute z-0 rounded-md bg-background shadow-sm",
         // Dimmed as the pressed item is, and the pill it draws before hydration with it. Only the
         // items of its own group, the parent, count: one that is the group's child, or one in
-        // another element of it while no group inside holds a pressed, disabled item.
+        // another element of it while no group inside holds a pressed, disabled item. The
+        // `:where()` keeps the specificity a consumer's documented `:has(…) > span` rule beats.
         // ponytail: a group inside that holds one keeps this pill bright under a disabled item of
         // this group that sits in an element of its own
         "[:has(>[data-pressed]:disabled)>&]:opacity-50",
-        "[:has([data-pressed]:disabled):not(:has([class~='group/toggle-group']_[data-pressed]:disabled))>&]:opacity-50",
+        "[:has([data-pressed]:disabled):where(:not(:has([class~='group/toggle-group']_[data-pressed]:disabled)))>&]:opacity-50",
         // The CSS fallback slides the indicator to another item with a transition
         !driven && "micro-interactions",
         // The box slides on its own 200ms snappy curve. The opacity fades as the item's does, over
