@@ -104,13 +104,15 @@ article:has(> main > .landing) {
  * rule keeps. The mobile menu's footer, and the bar Nextra's page footer adds on pages without a
  * sidebar (/create, /kitchen-sink), hold nothing but the switch, so the whole bar goes. The
  * Layout's `darkMode={false}` would remove the navbar's switch too.
- * ponytail: depends on Nextra 4.6's markup. The titles are its English "Change theme" and
- * "Collapse sidebar". With no i18n its LocaleSwitch renders nothing, so a footer's switch is its
- * bar's only child; the navbar's and the sidebar's never are. An upgrade that changes either
- * brings the copies back or moves the button, and no check fails.
+ * ponytail: depends on Nextra 4.6's markup: its English titles "Change theme" and "Collapse
+ * sidebar"; with no i18n, its LocaleSwitch rendering nothing, so a footer's switch is its bar's
+ * only child; and the page footer's bar coming right before the footer's hr.nextra-border
+ * (footer/index.js). An upgrade that changes any of these brings a copy back or moves the button,
+ * and no check fails.
  */
 .nextra-sidebar .nextra-sidebar-footer > [title="Change theme"],
-div:has(> [title="Change theme"]:only-child) {
+.nextra-mobile-nav .nextra-sidebar-footer:has(> [title="Change theme"]:only-child),
+div:has(> [title="Change theme"]:only-child):has(+ hr.nextra-border) {
   display: none;
 }
 
