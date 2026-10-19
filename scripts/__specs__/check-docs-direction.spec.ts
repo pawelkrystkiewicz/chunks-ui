@@ -154,8 +154,8 @@ describe("physicalTokens", () => {
     ],
     [
       "a class whose rtl: is not its own variant: on another class, in a longer variant, in prose, before a brace",
-      "rtl:x ml-4 data-rtl:ml-4 'rtl:' pr-2 rtl: pl-2 {,rtl:}mr-4",
-      ["ml-4", "ml-4", "pr-2", "pl-2", "mr-4"],
+      "rtl:x ml-4 data-rtl:ml-4 group-rtl:ml-4 in-rtl:ml-4 'rtl:' pr-2 rtl: pl-2 {,rtl:}mr-4",
+      ["ml-4", "ml-4", "ml-4", "ml-4", "pr-2", "pl-2", "mr-4"],
     ],
     [
       "a class joined with no space to an rtl: class by a quote, a comma, a semicolon or a pipe",
@@ -591,6 +591,21 @@ describe("checkDocsDirection", () => {
         ".c { @apply mr-4; }",
       ],
       ["2: ml-4", "5: mr-4"],
+    ],
+    [
+      "opens no comment at a /* in a single-quoted @source glob",
+      ["@source '../ui/src/*.tsx';", ".a { @apply ml-4; }", "/* a note */"],
+      ["2: ml-4"],
+    ],
+    [
+      "ends no string at an escaped quote",
+      ['.a::after { content: "a\\"/*"; }', ".b { @apply ml-4; }", "/* a note */"],
+      ["2: ml-4"],
+    ],
+    [
+      "ends a string at the end of its line, so a stray apostrophe blanks nothing after it",
+      ["// it's a note", ".a { @apply ml-4; }", ".b::after { content: 'x'; }"],
+      ["2: ml-4"],
     ],
   ])("%s", async (_name, lines, expected) => {
     const dir = tree({ "apps/docs/app/x.css": `${lines.join("\n")}\n` });
