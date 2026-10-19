@@ -1,12 +1,8 @@
 import { screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
-import { contentSpan, type Dir, inlineSpan, renderFixture } from "../../VisualTest.utils";
+import { expect, it } from "vitest";
+import { contentSpan, describeDirs, inlineSpan, renderFixture } from "../../VisualTest.utils";
 import { Checkbox } from "../checkbox";
 import { Table } from "./index";
-
-afterEach(() => {
-  document.documentElement.removeAttribute("dir");
-});
 
 function SelectAll() {
   return (
@@ -16,8 +12,7 @@ function SelectAll() {
   );
 }
 
-function renderTable(dir: Dir) {
-  document.documentElement.dir = dir;
+function renderTable() {
   return renderFixture(
     <div style={{ width: 360 }}>
       <Table.Root>
@@ -56,15 +51,15 @@ function renderTable(dir: Dir) {
   );
 }
 
-describe.each(["ltr", "rtl"] as const)("Table in %s", (dir) => {
+describeDirs("Table in %s", (dir) => {
   it("with a checkbox column", async () => {
-    const { fixture } = await renderTable(dir);
+    const { fixture } = await renderTable();
     await expect(fixture).toMatchScreenshot();
   });
 
   // Needs the header cell wider than its text: true at width 360 with three columns
   it("aligns a header's text to the cell's inline start", async () => {
-    await renderTable(dir);
+    await renderTable();
     const head = screen.getByTestId("head");
     const text = document.createRange();
     text.selectNodeContents(head);
@@ -72,7 +67,7 @@ describe.each(["ltr", "rtl"] as const)("Table in %s", (dir) => {
   });
 
   it("drops only the inline-end padding of a cell holding a checkbox", async () => {
-    await renderTable(dir);
+    await renderTable();
     for (const cell of [screen.getByTestId("check-head"), screen.getByTestId("check-cell")]) {
       const { paddingInlineStart, paddingInlineEnd } = getComputedStyle(cell);
       expect(paddingInlineEnd).toBe("0px");

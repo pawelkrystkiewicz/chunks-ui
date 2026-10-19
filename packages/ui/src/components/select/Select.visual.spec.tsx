@@ -4,6 +4,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import {
   contentSpan,
+  describeDirs,
   describeExitPaths,
   describePopupCssPath,
   emulateReducedMotion,
@@ -111,6 +112,36 @@ describe("Select", () => {
     );
     expectNotAllowed(getByRole("combobox"));
   });
+});
+
+// Each case runs in both directions: the value's `text-start` and the chevron's `ms-auto` follow
+// the direction, and the value, the badge and the chevron keep their inline order.
+describeDirs("Select.Value in a trigger, %s", (dir) => {
+  // Three of the cases below in one picture: a short and a long value in a 140px trigger, and a long
+  // value beside a badge in a 200px one. In RTL the value starts at the right edge and its ellipsis,
+  // the badge and the chevron sit to its left. A Latin value shows its last words there: its text
+  // keeps to the right edge, so its first words are what overflows
+  it("shows a short value, a cut value and a badge before the chevron", async () => {
+    const rows = [
+      { fruit: "Fig", width: 140 },
+      { fruit: "Dragon fruit from the far end of the orchard", width: 140 },
+      { fruit: "Dragon fruit from the far end of the orchard", width: 200, badge: "Pro plan" },
+    ];
+    const { fixture } = await renderFixture(
+      <div className="flex flex-col items-start gap-2">
+        {rows.map(({ fruit, width, badge }) => (
+          <Select.Root key={`${width} ${fruit}`} defaultValue={fruit}>
+            <Select.Trigger aria-label="Fruit" style={{ width }}>
+              <Select.Value />
+              {badge && <span className="ms-2">{badge}</span>}
+              <Select.Icon />
+            </Select.Trigger>
+          </Select.Root>
+        ))}
+      </div>,
+    );
+    await expect(fixture).toMatchScreenshot();
+  });
 
   // A value wider than the trigger stays on one line and ends in an ellipsis before the chevron,
   // and the chevron keeps its size at the trigger's end, as beside a short value (#518). Before,
@@ -131,14 +162,14 @@ describe("Select", () => {
       </div>,
     );
     const trigger = getByRole("combobox");
-    const content = contentSpan(trigger, "ltr");
+    const content = contentSpan(trigger, dir);
     const value = getByTestId("value");
-    const icon = inlineSpan(getByTestId("icon"), "ltr");
+    const icon = inlineSpan(getByTestId("icon"), dir);
     const { top, bottom } = insetsWithin(trigger, value);
     expect(top).toBeGreaterThanOrEqual(0);
     expect(bottom).toBeGreaterThanOrEqual(0);
-    expect(inlineSpan(value, "ltr").start).toBeCloseTo(content.start, 1);
-    expect(inlineSpan(value, "ltr").end).toBeLessThanOrEqual(icon.start);
+    expect(inlineSpan(value, dir).start).toBeCloseTo(content.start, 1);
+    expect(inlineSpan(value, dir).end).toBeLessThanOrEqual(icon.start);
     expect(icon.end).toBeCloseTo(content.end, 1);
     expect(icon.end - icon.start).toBe(16);
     // Cut at the value's box, with an ellipsis: the text is wider than what shows
@@ -171,18 +202,18 @@ describe("Select", () => {
       </div>,
     );
     const trigger = getByRole("combobox");
-    const content = contentSpan(trigger, "ltr");
+    const content = contentSpan(trigger, dir);
     const value = getByTestId("value");
     const badge = getByTestId("badge");
-    const icon = inlineSpan(getByTestId("icon"), "ltr");
+    const icon = inlineSpan(getByTestId("icon"), dir);
     const reference = getByTestId("reference").getBoundingClientRect();
     expect(badge.getBoundingClientRect().width).toBeCloseTo(reference.width, 1);
     // The text keeps to the start of the value's box, which the trigger's <button> would centre
     const text = document.createRange();
     text.selectNodeContents(value);
-    expect(inlineSpan(text, "ltr").start).toBeCloseTo(content.start, 1);
-    expect(inlineSpan(value, "ltr").end).toBeLessThanOrEqual(inlineSpan(badge, "ltr").start);
-    expect(inlineSpan(badge, "ltr").end).toBeLessThanOrEqual(icon.start);
+    expect(inlineSpan(text, dir).start).toBeCloseTo(content.start, 1);
+    expect(inlineSpan(value, dir).end).toBeLessThanOrEqual(inlineSpan(badge, dir).start);
+    expect(inlineSpan(badge, dir).end).toBeLessThanOrEqual(icon.start);
     expect(icon.end).toBeCloseTo(content.end, 1);
     expect(value.scrollWidth > value.clientWidth).toBe(truncated);
   });
@@ -199,11 +230,11 @@ describe("Select", () => {
         </Select.Root>
       </div>,
     );
-    const content = contentSpan(getByRole("combobox"), "ltr");
+    const content = contentSpan(getByRole("combobox"), dir);
     const value = getByTestId("value");
-    const icon = inlineSpan(getByTestId("icon"), "ltr");
+    const icon = inlineSpan(getByTestId("icon"), dir);
     expect(value.scrollWidth).toBeGreaterThan(value.clientWidth);
-    expect(inlineSpan(value, "ltr").end).toBeLessThanOrEqual(icon.start);
+    expect(inlineSpan(value, dir).end).toBeLessThanOrEqual(icon.start);
     expect(icon.end).toBeCloseTo(content.end, 1);
   });
 
@@ -230,9 +261,10 @@ describe("Select", () => {
         </div>
       </div>,
     );
-    const box = getByTestId("box");
-    expect(insetsWithin(box, getByRole("combobox")).right).toBeGreaterThanOrEqual(0);
-    if (row) expect(insetsWithin(box, getByRole("button")).right).toBeGreaterThanOrEqual(0);
+    // An overflow would pass the box's inline end: its right edge in LTR, its left edge in RTL
+    const box = inlineSpan(getByTestId("box"), dir);
+    expect(inlineSpan(getByRole("combobox"), dir).end).toBeLessThanOrEqual(box.end);
+    if (row) expect(inlineSpan(getByRole("button"), dir).end).toBeLessThanOrEqual(box.end);
     const value = getByTestId("value");
     expect(getComputedStyle(value).textOverflow).toBe("ellipsis");
     expect(value.scrollWidth).toBeGreaterThan(value.clientWidth);

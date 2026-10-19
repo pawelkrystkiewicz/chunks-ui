@@ -4,7 +4,7 @@ import axe from "axe-core";
 import { type ComponentPropsWithoutRef, type ReactNode, useEffect } from "react";
 import { afterAll, beforeAll, describe, expect, it, onTestFinished } from "vitest";
 import { page, userEvent } from "vitest/browser";
-import { type Dir, emulateReducedMotion, withViewport } from "../../VisualTest.utils";
+import { type Dir, describeDirs, emulateReducedMotion, withViewport } from "../../VisualTest.utils";
 import { Toast } from "./index";
 import { AddToasts } from "./Toast.TestUtils";
 
@@ -161,10 +161,8 @@ describe.each(LAYOUTS)("Toast viewport, $layout", (layout) => {
   });
 });
 
-describe.each(["ltr", "rtl"] as const)("Toast action in %s", (dir) => {
+describeDirs("Toast action in %s", (dir) => {
   it("is as wide as its label and sits at the content's start edge", async () => {
-    document.documentElement.dir = dir;
-    onTestFinished(() => document.documentElement.removeAttribute("dir"));
     render(
       <Toast.Provider>
         <AddToast
