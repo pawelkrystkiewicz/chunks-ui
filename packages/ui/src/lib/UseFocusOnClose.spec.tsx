@@ -248,6 +248,46 @@ describe("useFocusOnClose", () => {
     expectCancelledUntilKeyup(trigger);
   });
 
+  // A close Base UI does not report is matched with the Enter or Space keydown of its own task
+  describe("an unreported close and the keydown before it", () => {
+    const closeAfter = async (key: string, between?: () => Promise<void> | void) => {
+      const view = render(<Popup />);
+      const trigger = view.getByRole("button", { name: "Trigger" });
+      const popup = view.getByTestId("popup");
+      openChange(true, details("trigger-press", new MouseEvent("click"), trigger));
+      const field = view.getByRole("textbox", { name: "Inside" });
+      field.focus();
+      const focus = vi.spyOn(trigger, "focus");
+      field.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true }));
+      await between?.();
+      await act(async () => popup.setAttribute("data-closed", ""));
+      return focus;
+    };
+
+    it("waits for the keypress or keyup after an Enter or Space keydown in its task", async () => {
+      expect(await closeAfter("Enter")).not.toHaveBeenCalled();
+      cleanup();
+      expect(await closeAfter(" ")).not.toHaveBeenCalled();
+    });
+
+    it("hands over at once in a later task, after the keydown's timer", async () => {
+      const focus = await closeAfter("Enter", () => new Promise((r) => setTimeout(r)));
+      expect(focus).toHaveBeenCalledOnce();
+    });
+
+    it("hands over at once after the keydown's keyup", async () => {
+      const focus = await closeAfter("Enter", () => {
+        document.dispatchEvent(new KeyboardEvent("keyup", { key: "Enter" }));
+      });
+      expect(focus).toHaveBeenCalledOnce();
+    });
+
+    it.each(["Tab", "Escape", "ArrowDown", "a"])("does not record a %s keydown", async (key) => {
+      const focus = await closeAfter(key);
+      expect(focus).toHaveBeenCalledOnce();
+    });
+  });
+
   // Select keeps its popup mounted: a close that hands over at once left its listeners behind
   it("drops the last close's key listeners when the popup reopens", async () => {
     const { trigger, popup, getByRole } = await openThenClose(
