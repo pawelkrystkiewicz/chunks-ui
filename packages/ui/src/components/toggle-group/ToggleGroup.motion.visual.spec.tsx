@@ -419,6 +419,8 @@ type Layout = {
   width?: number;
   /** Classes of item "b" */
   itemClassName?: string;
+  /** Item "b" is disabled */
+  disabled?: boolean;
   /** An item before the others, which a change can remove */
   lead?: boolean;
   /** Item "b" before item "a": the same keyed items, re-sorted */
@@ -434,6 +436,7 @@ const sized = ({
   groupSize,
   width = 400,
   itemClassName,
+  disabled,
   lead,
   reversed,
 }: Layout = {}) => {
@@ -443,7 +446,7 @@ const sized = ({
       Alpha
     </ToggleGroup.Item>,
     // The label in an element of its own, for a spec to write as Motion would an icon
-    <ToggleGroup.Item key="b" value="b" className={itemClassName}>
+    <ToggleGroup.Item key="b" value="b" className={itemClassName} disabled={disabled}>
       <span>Beta</span>
     </ToggleGroup.Item>,
   ];
@@ -1007,18 +1010,8 @@ describe("ToggleGroup indicator under the pressed item disabled at runtime", () 
   );
   const opacityOf = (el: Element) => Number(getComputedStyle(el).opacity);
 
-  afterEach(() => emulateReducedMotion(false));
-
-  it.each([
-    ...MOTION_PATHS.map(({ path, withMotion }) => ({ path, withMotion, reduced: false })),
-    { path: "reduced motion", withMotion: false, reduced: true },
-  ])("dims the indicator with the item, on $path", async ({ withMotion, reduced }) => {
-    await emulateReducedMotion(reduced);
-    const { indicator, rerender, getByRole } = await renderGroup(ui(false), withMotion);
-    const item = getByRole("button", { name: "Beta" });
-    await waitForStable(() => offBy(item, indicator()));
-
-    rerender(ui(true));
+  /** Both opacities in the next 40 painted frames, asserted within 0.01 of each other in each */
+  async function expectFadesWith(item: Element, indicator: () => Element) {
     const frames = await eachPaintedFrame(
       () => ({ item: opacityOf(item), indicator: opacityOf(indicator()) }),
       40,
@@ -1028,10 +1021,59 @@ describe("ToggleGroup indicator under the pressed item disabled at runtime", () 
       frames.every((frame) => Math.abs(frame.indicator - frame.item) < 0.01),
       log,
     ).toBe(true);
-    // Values between the two ends: it faded rather than jumped, unless reduced motion is on
-    const between = frames.filter(({ indicator: opacity }) => opacity > 0.5 && opacity < 1);
-    expect(between.length > 0, log).toBe(!reduced);
+    // Values between the two ends: it faded rather than jumped
+    const faded = frames.some(({ indicator: opacity }) => opacity > 0.5 && opacity < 1);
+    return { faded, log };
+  }
+
+  afterEach(() => emulateReducedMotion(false));
+
+  // The root sets a linear default curve, as a consumer's theme could. A part that hard-codes
+  // Tailwind's default curve would fade apart from the other.
+  it.each([
+    ...MOTION_PATHS.map(({ path, withMotion }) => ({ path, withMotion, reduced: false })),
+    { path: "reduced motion", withMotion: false, reduced: true },
+  ])("dims the indicator with the item, on $path", async ({ withMotion, reduced }) => {
+    const linear = "[--default-transition-timing-function:linear]";
+    await emulateReducedMotion(reduced);
+    const { indicator, rerender, getByRole } = await renderGroup(ui(false, linear), withMotion);
+    const item = getByRole("button", { name: "Beta" });
+    await waitForStable(() => offBy(item, indicator()));
+
+    rerender(ui(true, linear));
+    const { faded, log } = await expectFadesWith(item, indicator);
+    expect(faded, log).toBe(!reduced);
     expect(await waitForStable(() => opacityOf(indicator()))).toBe(0.5);
+  });
+
+  // Without Motion the indicator slides on its own 200ms snappy curve. An item disabled on the way
+  // fades on its own curve and duration, and the pill under it fades with it.
+  it("dims the indicator with an item disabled mid-slide, on the CSS fallback", async () => {
+    const { indicator, item, rerender } = await renderSized(false);
+    /** The indicator's transitions: what each animates, for how long and on what curve */
+    const transitions = () =>
+      indicator()
+        .getAnimations()
+        .map((transition) => ({
+          property: (transition as CSSTransition).transitionProperty,
+          duration: transition.effect?.getComputedTiming().duration,
+          easing: transition.effect?.getTiming().easing,
+        }));
+    rerender(sized({ value: "b" }));
+    await untilChanged(() => edgesOf(indicator()));
+    // Held mid-slide, so no frame can end it first. A paused transition of a box edge still
+    // counts as a slide: a few frames on, the slide's transitions are still on.
+    for (const transition of indicator().getAnimations()) transition.pause();
+    await eachPaintedFrame(() => null, 5);
+    const snappy = { duration: 200, easing: "cubic-bezier(0.2, 0, 0, 1)" };
+    expect(transitions()).toEqual([
+      { property: "left", ...snappy },
+      { property: "width", ...snappy },
+    ]);
+
+    rerender(sized({ value: "b", disabled: true }));
+    const { faded, log } = await expectFadesWith(item("Beta"), indicator);
+    expect(faded, log).toBe(true);
   });
 
   // The item snaps because `.micro-interactions` is `transition: none !important` under reduced
@@ -1064,5 +1106,26 @@ describe("ToggleGroup indicator under the pressed item disabled at runtime", () 
       frames.some((frame) => frame.item === 0.5),
       log,
     ).toBe(true);
+  });
+
+  // The slide ends with the spring. The pill's fade under an item disabled on the way is no slide:
+  // a resize after the spring moves the indicator at once, as at rest.
+  it("jumps on a resize after the spring, while the pill still fades", async () => {
+    // 10s outlasts the spring. The indicator is internal: a class on the root reaches it.
+    const slowFade = { groupClassName: "[&>span]:duration-[10s]" };
+    const { group, indicator, item, rerender } = await renderSized(true, slowFade);
+    rerender(sized({ ...slowFade, value: "b", disabled: true }));
+    const beta = item("Beta");
+    await waitForStable(() => offBy(beta, indicator()));
+    expect(opacityOf(indicator()), "the pill still fades").toBeGreaterThan(0.5);
+
+    const start = edgesOf(indicator());
+    const read = () => ({ indicator: edgesOf(indicator()), off: offBy(beta, indicator()) });
+    const firstFrame = beforePaintOnceResized(
+      { items: [item("Alpha"), beta], container: group },
+      read,
+    );
+    rerender(sized({ ...slowFade, value: "b", disabled: true, itemClassName: "px-6" }));
+    await expectFollowsFromFirstFrame(firstFrame, read, start, near);
   });
 });

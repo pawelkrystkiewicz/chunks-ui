@@ -561,8 +561,8 @@ describe("ToggleGroup in server HTML", () => {
 
   /** The item's own pill, drawn until the group has an indicator */
   const OWN_PILL = [
-    "group-not-data-indicator/toggle-group:data-pressed:before:bg-background",
-    "group-not-data-indicator/toggle-group:data-pressed:before:shadow-sm",
+    "group-not-data-indicator/toggle-group:[:not([data-indicator])>&]:data-pressed:before:bg-background",
+    "group-not-data-indicator/toggle-group:[:not([data-indicator])>&]:data-pressed:before:shadow-sm",
   ];
 
   it("gives the pressed item the pill's look, with no indicator yet", () => {

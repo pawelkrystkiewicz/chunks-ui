@@ -84,7 +84,9 @@ function ControlledToggleGroup() {
 
 A disabled item dims to 50%. In single-select mode the indicator dims with the pressed item when that item or the group is disabled, and fades with the item when it becomes disabled.
 
-The indicator is internal, so it does not follow a disabled opacity of your own on the item (for example `disabled:opacity-70`): it stays at 50%. To match the item's opacity, add a rule of your own for the indicator, the `span` that `ToggleGroup.Root` renders before its items: with `className="my-group"` on the root, `.my-group:has([data-pressed]:disabled) > span:first-child { opacity: 0.7 }`. The rule must sit outside any `@layer`, or in `@layer utilities`: in `@layer components` it loses to the library's `opacity-50` whatever its specificity.
+The indicator is internal, so it does not follow a disabled opacity of your own on the item (for example `disabled:opacity-70`): it stays at 50%. To match the item's opacity, add a rule of your own for the indicator, the `span` that `ToggleGroup.Root` renders before its items: with `className="my-group"` on the root, `.my-group:has([data-pressed]:disabled) > span:first-child { opacity: 0.7 }`. The rule must sit outside any `@layer`, or in `@layer utilities`: in `@layer components` it loses to the library's `opacity-50` whatever its specificity. For a group that holds another group, use `.my-group:has(> [data-pressed]:disabled) > span:first-child` instead: it has the same specificity, but counts only the items placed directly in the group, not those of the group inside.
+
+When one group is nested in another, each takes its indicator state from its own items; an item wrapped in an element of its own, rather than placed directly in its group, can still take the other group's state.
 
 ## Compound Parts
 

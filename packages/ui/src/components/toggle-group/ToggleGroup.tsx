@@ -354,13 +354,24 @@ function ToggleGroupIndicator({ box, value }: { box: IndicatorBox; value: string
       ref={indicatorRef}
       className={cn(
         "absolute z-0 rounded-md bg-background shadow-sm",
-        // Dimmed as the pressed item is, and the pill it draws before hydration with it
-        "group-has-[[data-pressed]:disabled]/toggle-group:opacity-50",
+        // Dimmed as the pressed item is, and the pill it draws before hydration with it. Only the
+        // items of its own group, the parent, count: one that is the group's child, or one in
+        // another element of it while no group inside holds a pressed, disabled item. The
+        // `:where()` keeps the specificity a consumer's documented `:has(…) > span` rule beats.
+        // ponytail: a group inside that holds one keeps this pill bright under a disabled item of
+        // this group that sits in an element of its own
+        "[:has(>[data-pressed]:disabled)>&]:opacity-50",
+        "[:has([data-pressed]:disabled):where(:not(:has([class~='group/toggle-group']_[data-pressed]:disabled)))>&]:opacity-50",
         // The CSS fallback slides the indicator to another item with a transition
         !driven && "micro-interactions",
-        // Outside a slide only the opacity fades, as the item's does; the box jumps
+        // `opacity` is listed after `all`, so the item's 300ms default-curve fade wins over the
+        // slide's 200ms snappy one, and outside a slide only `opacity` fades
         !driven && sliding && !reduced
-          ? "duration-200 ease-snappy"
+          ? [
+              "[transition-property:all,opacity]",
+              "[transition-duration:200ms,300ms]",
+              "[transition-timing-function:var(--ease-snappy),var(--default-transition-timing-function)]",
+            ]
           : "transition-opacity duration-300 motion-reduce:transition-none",
       )}
       style={style}
@@ -407,13 +418,16 @@ function ToggleGroupItem({ className, value, ref, ...props }: ToggleGroupItemPro
         // Until the group has an indicator the pressed item draws the pill in a ::before: the
         // item's own background transitions, so it would fade. Disabled, it takes the item's 50%
         // opacity, as the indicator does. A consumer ::before merges with it before hydration.
+        // `group-not-data-indicator` matches any group around the item; the parent's indicator
+        // wins, so an item of a group nested in one without an indicator draws no second pill.
+        // ponytail: an item in an element of its own inside such a nested group still draws it
         ctx?.multiple === false && [
-          "group-not-data-indicator/toggle-group:data-pressed:before:absolute",
-          "group-not-data-indicator/toggle-group:data-pressed:before:inset-0",
-          "group-not-data-indicator/toggle-group:data-pressed:before:-z-10",
-          "group-not-data-indicator/toggle-group:data-pressed:before:rounded-md",
-          "group-not-data-indicator/toggle-group:data-pressed:before:bg-background",
-          "group-not-data-indicator/toggle-group:data-pressed:before:shadow-sm",
+          "group-not-data-indicator/toggle-group:[:not([data-indicator])>&]:data-pressed:before:absolute",
+          "group-not-data-indicator/toggle-group:[:not([data-indicator])>&]:data-pressed:before:inset-0",
+          "group-not-data-indicator/toggle-group:[:not([data-indicator])>&]:data-pressed:before:-z-10",
+          "group-not-data-indicator/toggle-group:[:not([data-indicator])>&]:data-pressed:before:rounded-md",
+          "group-not-data-indicator/toggle-group:[:not([data-indicator])>&]:data-pressed:before:bg-background",
+          "group-not-data-indicator/toggle-group:[:not([data-indicator])>&]:data-pressed:before:shadow-sm",
         ],
         className,
       )}

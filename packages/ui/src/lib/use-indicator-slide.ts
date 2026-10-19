@@ -12,12 +12,16 @@ export type IndicatorBox = Record<(typeof BOX_EDGES)[number], number>;
 const SNAP: MotionOptions = { duration: 0 };
 
 /**
- * Whether the indicator is still sliding: the CSS fallback runs a transition, or Motion has not
- * written `box` inline yet. A Motion spring ends exactly on its target.
+ * Whether the indicator is still sliding: the CSS fallback transitions a box edge, or Motion has
+ * not written `box` inline yet. A Motion spring ends exactly on its target. Another transition,
+ * such as the opacity fade under an item disabled on the way, is no slide.
  */
 function isSliding(node: HTMLElement, box: IndicatorBox | null) {
   if (typeof node.getAnimations === "function" && typeof CSSTransition !== "undefined") {
-    if (node.getAnimations().some((animation) => animation instanceof CSSTransition)) return true;
+    const slides = (animation: Animation) =>
+      animation instanceof CSSTransition &&
+      BOX_EDGES.some((edge) => edge === animation.transitionProperty);
+    if (node.getAnimations().some(slides)) return true;
   }
   return (
     box !== null &&

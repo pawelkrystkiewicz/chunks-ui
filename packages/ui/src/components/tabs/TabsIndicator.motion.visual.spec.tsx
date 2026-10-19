@@ -341,15 +341,18 @@ describe("Tabs.Indicator under the selected tab disabled at runtime", () => {
 
   afterEach(() => emulateReducedMotion(false));
 
+  // The list sets a linear default curve, as a consumer's theme could. A part that hard-codes
+  // Tailwind's default curve would fade apart from the other.
   it.each([
     ...MOTION_PATHS.map(({ path, withMotion }) => ({ path, withMotion, reduced: false })),
     { path: "reduced motion", withMotion: false, reduced: true },
   ])("dims the indicator with the tab, on $path", async ({ withMotion, reduced }) => {
+    const linear = { listClassName: "[--default-transition-timing-function:linear]" };
     await emulateReducedMotion(reduced);
-    const { rerender, indicator, tab } = await renderTabs(withMotion, { value: "b" });
+    const { rerender, indicator, tab } = await renderTabs(withMotion, { ...linear, value: "b" });
     const beta = tab("Beta");
 
-    rerender(tabs({ value: "b", disabled: true }));
+    rerender(tabs({ ...linear, value: "b", disabled: true }));
     const frames = await eachPaintedFrame(
       () => ({ tab: opacityOf(beta), indicator: opacityOf(indicator) }),
       40,

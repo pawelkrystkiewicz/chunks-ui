@@ -257,6 +257,10 @@
  * The outline entries come after `all`, so rings show at once. A part with a `[transition-property:…]`
  * list of two or more next to this class also sets one duration (`duration-300`), or the
  * three durations repeat over its list and some properties take the ring's 0s.
+ *
+ * The curve is Tailwind's default, which `transition-*` utilities take too: the indicators fade
+ * with `transition-opacity` beside items with this class, so a default curve set in the theme
+ * reaches both.
  */
 @layer components {
   .micro-interactions {
@@ -264,7 +268,7 @@
       all 300ms,
       outline 0s,
       outline-offset 0s;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-timing-function: var(--default-transition-timing-function);
   }
 
   /*
