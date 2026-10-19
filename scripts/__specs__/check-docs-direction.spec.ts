@@ -149,7 +149,7 @@ describe("physicalTokens", () => {
     ],
     [
       "nothing behind an rtl: or ltr: variant, anywhere in its chain, but the unprefixed twin",
-      "object-left rtl:object-right ltr:ml-4 md:rtl:origin-left rtl:md:hover:bg-right [&>img]:ltr:left-0 rtl:[&>img]:pl-2 rtl:mr-2! group-hover:ltr:mask-l-from-50%",
+      "object-left rtl:object-right ltr:ml-4 md:rtl:origin-left rtl:md:hover:bg-right [&>img]:ltr:left-0 rtl:[&>img]:pl-2 rtl:mr-2! group-hover:ltr:mask-l-from-50% rtl:!-ml-2 [&:is(.a,.b)]:rtl:pl-2",
       ["object-left"],
     ],
     [
@@ -158,8 +158,13 @@ describe("physicalTokens", () => {
       ["ml-4", "ml-4", "pr-2", "pl-2", "mr-4"],
     ],
     [
+      "a class joined with no space to an rtl: class by a quote, a comma, a semicolon or a pipe",
+      `cn("rtl:pl-2","md:ml-4") cn('rtl:pl-2','md:ml-2') rtl:pl-2,md:mr-4 rtl:pl-2;mr-2 |rtl:pl-2|md:pr-2| rtl:pl-2,pr-4`,
+      ["ml-4", "ml-2", "mr-4", "mr-2", "pr-2", "pr-4"],
+    ],
+    [
       "nothing for the logical classes and the look-alikes",
-      "ms-4 pe-2 start-0 -end-2 text-start rounded-s-lg rounded-ee-sm border-e-2 inset-x-0 rounded-lg border-left translate-x-2 float-none clear-both scroll-ms-4 scroll-mx-2 overfloat-left space-x-4 space-x-reverse divide-x divide-x-reverse mask-s-from-0 bg-linear-to-e",
+      "ms-4 pe-2 start-0 -end-2 text-start rounded-s-lg rounded-ee-sm border-e-2 inset-x-0 rounded-lg border-left translate-x-2 float-none clear-both scroll-ms-4 scroll-mx-2 overfloat-left space-x-4 space-x-reverse divide-x divide-x-reverse",
       [],
     ],
     [
@@ -169,7 +174,7 @@ describe("physicalTokens", () => {
     ],
     [
       "nothing for the vertical and two-sided masks and gradients, and the forms Tailwind does not generate",
-      "perspective-origin-top perspective-origin-center mask-top mask-center mask-radial-at-bottom mask-x-from-10% mask-t-to-0 bg-linear-to-t bg-gradient-to-b perspective-origin-left-top -perspective-origin-left mask-left-top -mask-left mask-l mask-r-from -mask-l-from-2 -bg-linear-to-l bg-linear-to-left",
+      "perspective-origin-top perspective-origin-center mask-top mask-center mask-radial-at-bottom mask-x-from-10% mask-t-to-0 bg-linear-to-t bg-gradient-to-b perspective-origin-left-top -perspective-origin-left mask-left-top -mask-left mask-l mask-r-from -mask-l-from-2 -bg-linear-to-l bg-linear-to-left mask-s-from-0 bg-linear-to-e",
       [],
     ],
     [

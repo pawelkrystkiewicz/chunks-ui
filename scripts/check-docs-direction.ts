@@ -22,9 +22,18 @@ const SCANNED = /\.(?:jsx?|tsx?|mdx?|css)$/;
 
 /** A spacing or inset value: `4`, `0.5`, `1/2`, `px`, `auto`, `full`, `[calc(…)]`, `(--var)`. */
 const VALUE = /\d+(?:\.\d+)?(?:\/\d+)?|px|auto|full|\[[^\]\s]*\]|\([^)\s]*\)/.source;
-/** A physical class as a whole token: nothing of a class before it or after it (`overfloat-left` is another class). */
+/**
+ * An `rtl:` or `ltr:` variant right before a class, or before more variants and a leading `!`
+ * (`rtl:md:`, `rtl:[&>img]:`, `rtl:!`). A space, quote, brace, comma, semicolon or pipe ends the
+ * chain, so `rtl:pl-2,md:ml-4` does not reach `ml-4`.
+ */
+const DIRECTION_VARIANT = /(?<![\w-])(?:rtl|ltr):(?:[^\s"'`{},;|]*:)?!?/.source;
+/**
+ * A physical class as a whole token: nothing of a class before it or after it (`overfloat-left` is
+ * another class). One behind `rtl:` or `ltr:` is set for that direction on purpose and is not one.
+ */
 const PHYSICAL = new RegExp(
-  `(?<![\\w-])(?:${[
+  `(?<![\\w-])(?<!${DIRECTION_VARIANT})(?:${[
     `-?(?:scroll-)?(?:ml|mr|pl|pr)-(?:${VALUE})`,
     `-?(?:left|right)-(?:${VALUE})`,
     "(?:rounded-[lr]|rounded-[tb][lr]|border-[lr])(?:-(?:\\w+(?:\\.\\w+)*|\\[[^\\]\\s]*\\]|\\([^)\\s]*\\)))?",
@@ -37,8 +46,6 @@ const PHYSICAL = new RegExp(
   ].join("|")})(?![\\w-])`,
   "g",
 );
-/** An `rtl:` or `ltr:` variant whose chain runs to the end of the text: no space, quote or brace after it. */
-const DIRECTION_VARIANT = /(?<![\w-])(?:rtl|ltr):[^\s"'`{}]*$/;
 /**
  * In a stylesheet, what Tailwind reads as classes, kept as group 1: each `@apply` up to its `;` or
  * `}`, across lines and past its comments (Tailwind skips them), and each `@source inline` string.
@@ -60,11 +67,9 @@ const MARKER = /direction:\s*physical,\s*\w/;
 /** One `/* … *\/` or `{/* … *\/}`, on one line or several, and nothing else. */
 const COMMENT = /^\s*(?:\/\*(?:(?!\*\/)[\s\S])*\*\/|\{\/\*(?:(?!\*\/)[\s\S])*\*\/\})\s*$/;
 
-/** The physical direction classes in `line`, in order, except one behind `rtl:` or `ltr:`: it is set for that direction. */
+/** The physical direction classes in `line`, in order. */
 export function physicalTokens(line: string): string[] {
-  return [...line.matchAll(PHYSICAL)]
-    .filter(({ index }) => !DIRECTION_VARIANT.test(line.slice(0, index)))
-    .map(([token]) => token);
+  return [...line.matchAll(PHYSICAL)].map(([token]) => token);
 }
 
 /** `css` with all but the classes Tailwind reads blanked, so each class keeps its line. */
