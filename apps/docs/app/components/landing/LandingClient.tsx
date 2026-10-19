@@ -107,6 +107,8 @@ export function MobileMenu({ children }: { children: ReactNode }) {
         <nav
           id="landing-menu"
           aria-label="Primary"
+          // Firefox makes a scrolling nav a Tab stop of its own; links still scroll into view.
+          tabIndex={-1}
           onBlur={onBlur}
           className="absolute inset-x-0 top-[calc(100%+1px)] z-50 flex h-[calc(100dvh-100%-1px)] flex-col gap-1 overflow-y-auto overscroll-contain bg-black px-[22px] py-6 lg:hidden"
         >

@@ -132,6 +132,12 @@ it("focus leaving the open menu closes it; focus moving within it or going nowhe
     last.blur();
   });
   expect(menu()).not.toBeNull();
+  // Back to the button from a link: still inside the pair
+  act(() => {
+    first.focus();
+    button.focus();
+  });
+  expect(menu()).not.toBeNull();
   // Tab from the last link: the next link or button in the page, under the menu
   const focusable = [...container.querySelectorAll<HTMLElement>("a[href], button")];
   const next = focusable[focusable.indexOf(last) + 1];
@@ -142,6 +148,21 @@ it("focus leaving the open menu closes it; focus moving within it or going nowhe
   });
   expect(menu()).toBeNull();
   expect(document.documentElement.style.overflow).toBe("");
+  // The button's own blur: out to the page, it closes
+  fireEvent.click(button);
+  expect(menu()).not.toBeNull();
+  act(() => {
+    button.focus();
+    next?.focus();
+  });
+  expect(menu()).toBeNull();
+});
+
+// Firefox makes a scrolling nav a Tab stop of its own; the hero's overflow clip hides its outline.
+it("the open menu is not a Tab stop of its own", () => {
+  const { container } = renderPage();
+  fireEvent.click(screen.getByRole("button", { name: "Menu" }));
+  expect(container.querySelector("#landing-menu")?.getAttribute("tabindex")).toBe("-1");
 });
 
 it.each([

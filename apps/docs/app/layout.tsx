@@ -45,7 +45,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   {/* One line or none: wrapped, it spills out of the 64px navbar. Nextra's padding,
                       gaps and three icon controls take 7rem + 72px, the mark, gap and name 5.4rem +
                       30px. Below their sum, as at 390px wide with a 32px default font, only the
-                      mark shows, with the name as its alt text.
+                      mark shows; the link keeps Nextra's name, "Home page".
                       ponytail: the sum is measured on Nextra 4.6's navbar; a change to its padding,
                       gaps or controls moves it. */}
                   <b className="whitespace-nowrap max-[calc(12.5rem+102px)]:hidden">
