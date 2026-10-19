@@ -248,4 +248,17 @@ describe("ToggleGroup with its pressed item in an element of its own", () => {
       host.remove();
     }
   });
+
+  // Once the group has an indicator the item draws no pill of its own. The element around the item
+  // has no indicator, so only the `group-not-data-indicator/toggle-group:` half of the item's pill
+  // classes stops a second pill here
+  it("draws no pill on the item once the group has an indicator", async () => {
+    const { getByRole } = render(group());
+    await expect.poll(() => indicatorOf(getByRole("group"))).not.toBeNull();
+    const before = getComputedStyle(getByRole("button", { name: "A", pressed: true }), "::before");
+    expect({ position: before.position, background: before.backgroundColor }).toEqual({
+      position: "static",
+      background: "rgba(0, 0, 0, 0)",
+    });
+  });
 });
