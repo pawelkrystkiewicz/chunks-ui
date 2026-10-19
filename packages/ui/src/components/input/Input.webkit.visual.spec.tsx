@@ -25,18 +25,28 @@ async function paintsNativeClear(input: HTMLElement) {
 }
 
 // The browser's clear button showed beside ours in a type="search" input (#686). WebKit paints its
-// button while the input has text, focused or not.
+// button while the input has text, focused or not, read-only and disabled too, where ours hides.
 describe("Input type=search in WebKit", () => {
   it.each([
-    { has: "with the clear button, shows only ours", clearable: true, native: false },
-    { has: "without it, keeps the browser's", clearable: false, native: true },
-  ])("$has", async ({ clearable, native }) => {
+    { has: "with the clear button, shows only ours", props: { clearable: true }, ours: 1 },
+    { has: "without it, keeps the browser's", props: {}, ours: 0, native: true },
+    {
+      has: "read-only, with the clear button, shows none",
+      props: { clearable: true, readOnly: true },
+      ours: 0,
+    },
+    {
+      has: "disabled, with the clear button, shows none",
+      props: { clearable: true, disabled: true },
+      ours: 0,
+    },
+  ])("$has", async ({ props, ours, native = false }) => {
     render(
       <div style={{ padding: 40, width: 300 }}>
-        <Input type="search" aria-label="Search" defaultValue="Hello" clearable={clearable} />
+        <Input type="search" aria-label="Search" defaultValue="Hello" {...props} />
       </div>,
     );
     expect(await paintsNativeClear(screen.getByRole("searchbox"))).toBe(native);
-    expect(screen.queryAllByRole("button", { name: "Clear" })).toHaveLength(clearable ? 1 : 0);
+    expect(screen.queryAllByRole("button", { name: "Clear" })).toHaveLength(ours);
   });
 });

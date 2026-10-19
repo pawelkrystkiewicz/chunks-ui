@@ -131,7 +131,8 @@ describe("Input", () => {
 });
 
 // The browser's clear button showed beside ours in a type="search" input (#686). Chromium paints
-// its button while the input has text and focus or the pointer.
+// its button while the input has text and focus or the pointer, never on a read-only or disabled
+// input: those rows are in the WebKit spec.
 describe("Input type=search", () => {
   it.each([
     { has: "with the clear button, shows only ours", clearable: true, native: false },
