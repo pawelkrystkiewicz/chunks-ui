@@ -63,6 +63,18 @@
   --x-color-nextra-bg: rgb(var(--nextra-bg));
 }
 
+/* The header search draws Nextra's focus ring, a box-shadow in its primary blue: about 2.5:1 on the
+   hero in the light theme. It takes the ring of the header's other controls instead (FOCUS_RING in
+   app/components/landing/focus.ts): a 2px --ring outline, 2px out, on :focus-visible. */
+.landing .nextra-search input {
+  box-shadow: none;
+
+  &:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+}
+
 /* The header search's results are portalled out of the dark hero but cover it: Nextra's 70% bg
    lets the hero darken the light theme's popup, so make it opaque. */
 :root:has(.landing) .nextra-search-results {
@@ -84,6 +96,28 @@ article:has(> main > .landing) {
   & > main ~ div {
     display: none;
   }
+}
+
+/*
+ * The navbar's theme switch shows at every width, so Nextra's copies go. In the desktop sidebar's
+ * footer only the switch goes: it grew and so kept the collapse button at the end, which the last
+ * rule keeps. The mobile menu's footer, and the bar Nextra's page footer adds on pages without a
+ * sidebar (/create, /kitchen-sink), hold nothing but the switch, so the whole bar goes. The
+ * Layout's `darkMode={false}` would remove the navbar's switch too.
+ * ponytail: depends on Nextra 4.6's markup: its English titles "Change theme" and "Collapse
+ * sidebar"; with no i18n, its LocaleSwitch rendering nothing, so a footer's switch is its bar's
+ * only child; and the page footer's bar coming right before the footer's hr.nextra-border
+ * (footer/index.js). An upgrade that changes any of these brings a copy back or moves the button,
+ * and no check fails.
+ */
+.nextra-sidebar .nextra-sidebar-footer > [title="Change theme"],
+.nextra-mobile-nav .nextra-sidebar-footer:has(> [title="Change theme"]:only-child),
+div:has(> [title="Change theme"]:only-child):has(+ hr.nextra-border) {
+  display: none;
+}
+
+.nextra-sidebar .nextra-sidebar-footer > [title="Collapse sidebar"] {
+  margin-inline-start: auto;
 }
 
 /*

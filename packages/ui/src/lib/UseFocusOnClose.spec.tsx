@@ -187,6 +187,34 @@ describe("useFocusOnClose", () => {
     expect(document.activeElement).toBe(trigger);
   });
 
+  // A held Enter repeats its keypress too: Chromium activates its target, the picked item, even
+  // after focus has moved, which picked it again
+  it.each([
+    { keypress: "the repeated keypress of a held key, which it cancels", repeat: true },
+    { keypress: "a keypress, which it leaves alone", repeat: false },
+  ])("hands over at $keypress", async ({ repeat }) => {
+    const { trigger, getByRole } = await openThenClose(
+      details("item-press", new MouseEvent("click", { detail: 0 })),
+    );
+    const keypress = new KeyboardEvent("keypress", { key: "Enter", repeat, cancelable: true });
+    getByRole("textbox", { name: "Inside" }).dispatchEvent(keypress);
+    expect(document.activeElement).toBe(trigger);
+    expect(keypress.defaultPrevented).toBe(repeat);
+  });
+
+  // Focus the consumer moved out of the closing popup keeps the key's own action
+  it("leaves a repeated keypress outside the closing popup alone", async () => {
+    const { getByRole } = await openThenClose(
+      details("item-press", new MouseEvent("click", { detail: 0 })),
+    );
+    const outside = getByRole("textbox", { name: "Outside" });
+    outside.focus();
+    const keypress = new KeyboardEvent("keypress", { repeat: true, cancelable: true });
+    outside.dispatchEvent(keypress);
+    expect(keypress.defaultPrevented).toBe(false);
+    expect(document.activeElement).toBe(outside);
+  });
+
   // The DOM stays, with focus inside: only the cleanup keeps the keyup from moving it
   it("stops waiting when its effect cleans up", async () => {
     const { getByRole, rerender, focus } = await openThenClose(
