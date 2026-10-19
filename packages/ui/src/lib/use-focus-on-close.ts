@@ -137,13 +137,26 @@ export function useFocusOnClose<T extends HTMLElement>(
         event.preventDefault();
       }
     };
+    // The Enter or Space keydown being dispatched: a close Base UI does not report that lands in
+    // its task (the observer runs right after the handler that set `open`) was made by that key.
+    // Probed in Chromium: capture keydown, the handler, this observer (a microtask), the bubble
+    // keydown, keypress, keyup, and a `setTimeout(0)` set in the capture keydown runs after them.
+    // ponytail: a consumer that closes after an await, a transition or a frame is not seen.
+    let keyDown: KeyboardEvent | undefined;
+    const onKeyDownCapture = (event: KeyboardEvent) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      keyDown = event;
+      setTimeout(() => {
+        if (keyDown === event) keyDown = undefined;
+      });
+    };
     const observer = new MutationObserver(() => {
       // The last close's listeners go: a kept-mounted popup (Select) may have reopened since
       stopWaiting();
       if (!closing()) return;
       const close = closeFocus.close.current;
       closeFocus.close.current = undefined;
-      const event = close?.event;
+      const event = close?.event ?? keyDown;
       // A mouse or pen press closes it before the browser moves focus to what was pressed, and a
       // touch outside (a scroll, or a tap, which closes a Combobox on its click) would scroll the
       // page to the trigger where `preventScroll` is unsupported: leave focus to the browser and
@@ -174,10 +187,12 @@ export function useFocusOnClose<T extends HTMLElement>(
       if (!((event?.type === "keydown" && !event.defaultPrevented) || keyClick)) handOff();
     });
     observer.observe(popup, { attributeFilter: ["data-closed"] });
+    doc.addEventListener("keydown", onKeyDownCapture, true);
     inside.addEventListener("focusout", onFocusOut);
     inside.addEventListener("focusin", onFocusIn);
     return () => {
       observer.disconnect();
+      doc.removeEventListener("keydown", onKeyDownCapture, true);
       inside.removeEventListener("focusout", onFocusOut);
       inside.removeEventListener("focusin", onFocusIn);
       stopWaiting();
