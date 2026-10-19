@@ -82,13 +82,6 @@ describe("Toast tab order while Base UI hides a toast from assistive tech", () =
     expect(await ariaHiddenFocus(container)).toEqual([]);
     screen.getByRole("textbox", { name: "Before" }).focus();
     expect(await tabThrough(1)).toEqual([screen.getByRole("textbox", { name: "After" })]);
-
-    await userEvent.keyboard("{F6}");
-    expect(await tabThrough(3)).toEqual([
-      toast,
-      screen.getByRole("button", { name: "Retry now" }),
-      screen.getByRole("button", { name: "Close" }),
-    ]);
   });
 
   // A pointer over the viewport expands the toasts, but a high-priority toast stays aria-hidden

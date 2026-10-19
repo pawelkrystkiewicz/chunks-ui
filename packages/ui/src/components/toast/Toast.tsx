@@ -269,11 +269,8 @@ function ToastAction({ className, render, ...props }: ToastActionProps) {
         className,
       )}
       {...props}
-      // ponytail: Base UI renders an action only if the element its render function returns has
-      // children, and a wrapper element has none of a consumer `render`'s own. So the wrapper is
-      // for the built-in viewport only, which passes no `render`. Not covered: a consumer `render`
-      // together with `actionProps.tabIndex`, which beats the -1. Base UI merges `actionProps`
-      // after these props, so for the wrapper the -1 goes on in the render function.
+      // ponytail: Base UI drops an action whose render result has no children, so a consumer
+      // `render` skips the wrapper. Its `actionProps.tabIndex` still beats the -1 (merged after).
       {...(render === undefined
         ? {
             render: (actionProps: HTMLProps, state: BaseToast.Action.State) => (
