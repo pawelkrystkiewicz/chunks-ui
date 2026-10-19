@@ -6,8 +6,8 @@
  * (the `#NNN` that starts its `why`) was closed as completed or as a duplicate. An issue closed as
  * not planned keeps its entry.
  *
- * Covers the pages built from content/**\/*.mdx (the landing page, /create and /kitchen-sink
- * among them), every other page under app/, and the 404 page, which it gets by requesting a URL
+ * Covers the pages built from content/**\/*.mdx (the landing page and /create among them),
+ * /create's kitchen-sink tab (/create?preview=kitchen-sink), every other page under app/, and the 404 page, which it gets by requesting a URL
  * no page answers on: that one must answer 404, every other page 200. A page DISCLOSURES lists is
  * audited with each disclosure listed open (/create's Accessibility panel). On the pages POPUPS
  * lists, it then opens each popup listed and audits it alone, open; on the pages TOASTS lists, it
@@ -57,6 +57,13 @@ export type Allowed = {
   themes?: Theme[];
 };
 
+/**
+ * /create's second preview tab, audited as a page of its own: no .mdx file backs it, so pages()
+ * adds it, and the run waits for `KITCHEN_SINK_READY` as the tab is selected after hydration
+ */
+const KITCHEN_SINK = "/create?preview=kitchen-sink";
+const KITCHEN_SINK_READY = { role: "heading", name: "Acme Dashboard" } as const;
+
 const ALLOWED: Allowed[] = [
   // Upstream Nextra chrome and default styling, which the docs render but don't write
   {
@@ -92,7 +99,7 @@ const ALLOWED: Allowed[] = [
     rule: "color-contrast",
     selector: ".bg-success\\/10.text-success-text",
     why: "#254: success-text on a /10 tint over Nextra's #fafafa (Chip, kitchen-sink badge), 4.47:1, 0.03 short of 4.5:1",
-    pages: ["/components/chip", "/kitchen-sink"],
+    pages: ["/components/chip", KITCHEN_SINK],
     themes: ["light"],
   },
   // On purpose: a swatch is an aria-hidden sample of a colour pair, and its row gives the ratio in
@@ -265,7 +272,7 @@ function pages() {
   assertOnlyCatchAll([
     ...new Bun.Glob("**/page.{js,jsx,ts,tsx,md,mdx}").scanSync(join(DOCS_DIR, "app")),
   ]);
-  return [...new Set(content)].sort().concat(NOT_FOUND_ROUTE);
+  return [...new Set(content), KITCHEN_SINK].sort().concat(NOT_FOUND_ROUTE);
 }
 
 /** Whether anything answers HTTP on the port within 2s, whatever the status */
@@ -593,6 +600,12 @@ async function audit(
           `no html[data-hydrated] within ${HYDRATION_MS / 1000} s: is HydrationMarker in app/layout.tsx, and does the page hydrate?`,
         );
       });
+    // /create reads the tab from the URL after mount
+    if (route === KITCHEN_SINK) {
+      await page
+        .getByRole(KITCHEN_SINK_READY.role, { name: KITCHEN_SINK_READY.name })
+        .waitFor({ timeout: HYDRATION_MS });
+    }
     const problems: Problem[] = [];
     // Before the fonts wait, as what a panel shows can load more. A disclosure that won't open is a
     // problem of its own; the page is still audited as it is.
