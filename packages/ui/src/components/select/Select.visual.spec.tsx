@@ -138,9 +138,13 @@ describe("Select", () => {
     await exited(popup, { stillClosing: isShown });
   });
 
-  // The backdrop takes the `z-dropdowns` layer only beside a positioner on it: one moved lower by
-  // its className keeps the popup above the backdrop
-  it("takes a press on an item in a positioner below z-dropdowns", async () => {
+  // A positioner lowered by its className, an inline style or a `!` class keeps the popup above
+  // the backdrop: the press lands on the item
+  it.each([
+    { how: "className", positioner: { className: "z-10" } },
+    { how: "an inline z-index", positioner: { style: { zIndex: 10 } } },
+    { how: "an important class", positioner: { className: "z-10!" } },
+  ])("takes a press on an item in a positioner lowered by $how", async ({ positioner }) => {
     const { getByRole, getByTestId } = render(
       <div style={{ padding: 40 }}>
         <Select.Root defaultValue="apple">
@@ -149,7 +153,7 @@ describe("Select", () => {
             <Select.Icon />
           </Select.Trigger>
           <Select.Portal>
-            <Select.Positioner className="z-10">
+            <Select.Positioner {...positioner}>
               <Select.Popup data-testid="popup">
                 {fruits.map((f) => (
                   <Select.Item key={f.value} value={f.value}>
@@ -165,71 +169,9 @@ describe("Select", () => {
     const trigger = getByRole("combobox", { name: "Fruit" });
     await userEvent.click(trigger);
     await settled(getByTestId("popup"));
-    // Forced, as above: on the backdrop, the press would close the popup and pick nothing
+    // Forced: on the backdrop, the press would close the popup and pick nothing
     await page.getByRole("option", { name: "Cherry" }).click({ force: true });
     // The value as given: the Root has no `items` to label it with
-    await expect.element(trigger).toHaveTextContent("cherry");
-  });
-
-  // Same for a positioner lowered by an inline style: it keeps the `z-dropdowns` class, but the
-  // backdrop must not rise above the popup
-  it("takes a press on an item in a positioner lowered by an inline z-index", async () => {
-    const { getByRole, getByTestId } = render(
-      <div style={{ padding: 40 }}>
-        <Select.Root defaultValue="apple">
-          <Select.Trigger aria-label="Fruit">
-            <Select.Value />
-            <Select.Icon />
-          </Select.Trigger>
-          <Select.Portal>
-            <Select.Positioner style={{ zIndex: 10 }}>
-              <Select.Popup data-testid="popup">
-                {fruits.map((f) => (
-                  <Select.Item key={f.value} value={f.value}>
-                    <Select.ItemText>{f.label}</Select.ItemText>
-                  </Select.Item>
-                ))}
-              </Select.Popup>
-            </Select.Positioner>
-          </Select.Portal>
-        </Select.Root>
-      </div>,
-    );
-    const trigger = getByRole("combobox", { name: "Fruit" });
-    await userEvent.click(trigger);
-    await settled(getByTestId("popup"));
-    await page.getByRole("option", { name: "Cherry" }).click({ force: true });
-    await expect.element(trigger).toHaveTextContent("cherry");
-  });
-
-  // Same for a positioner with a `!` class (`z-10!`): it keeps the `z-dropdowns` class, but the
-  // backdrop must not rise above the popup
-  it("takes a press on an item in a positioner lowered by an important class", async () => {
-    const { getByRole, getByTestId } = render(
-      <div style={{ padding: 40 }}>
-        <Select.Root defaultValue="apple">
-          <Select.Trigger aria-label="Fruit">
-            <Select.Value />
-            <Select.Icon />
-          </Select.Trigger>
-          <Select.Portal>
-            <Select.Positioner className="z-10!">
-              <Select.Popup data-testid="popup">
-                {fruits.map((f) => (
-                  <Select.Item key={f.value} value={f.value}>
-                    <Select.ItemText>{f.label}</Select.ItemText>
-                  </Select.Item>
-                ))}
-              </Select.Popup>
-            </Select.Positioner>
-          </Select.Portal>
-        </Select.Root>
-      </div>,
-    );
-    const trigger = getByRole("combobox", { name: "Fruit" });
-    await userEvent.click(trigger);
-    await settled(getByTestId("popup"));
-    await page.getByRole("option", { name: "Cherry" }).click({ force: true });
     await expect.element(trigger).toHaveTextContent("cherry");
   });
 });

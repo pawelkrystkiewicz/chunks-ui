@@ -83,8 +83,7 @@ describe("Popover", () => {
     await expect(fixture).toMatchScreenshot();
   });
 
-  // #706. A modal popover puts Base UI's invisible backdrop over the page: a press outside closes
-  // the popup and reaches nothing under it, an element with a z-index of its own included.
+  // #706
   it("modal: closes on a press on a sticky header, which the press does not reach", async () => {
     const onClick = vi.fn();
     const { getByRole, getByTestId } = render(
