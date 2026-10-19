@@ -21,7 +21,7 @@
     "lint:scripts": "biome check scripts",
     "check-types:scripts": "tsc -p scripts",
     "changeset": "changeset",
-    "version-packages": "changeset version",
+    "version-packages": "changeset version && bun install --lockfile-only",
     "release": "turbo run build --filter=chunks-ui && bun run --cwd packages/ui check:exports && bun run --cwd packages/ui check:dist && changeset publish",
     "update:screenshots": "sh scripts/update-screenshots.sh",
     "check:playwright": "bun scripts/check-playwright-version.ts",
