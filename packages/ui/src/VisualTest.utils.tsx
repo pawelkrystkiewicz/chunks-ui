@@ -155,6 +155,23 @@ export async function renderPage(children: ReactNode) {
   return page.elementLocator(document.body);
 }
 
+/** Both inline directions, left to right first */
+export const DIRS: Dir[] = ["ltr", "rtl"];
+
+/**
+ * Runs `define` once per direction, with `dir` on <html> through each test, as an app sets it, so
+ * portalled popups inherit it. `name` takes the direction at `%s`, as in `describe.each`.
+ */
+export function describeDirs(name: string, define: (dir: Dir) => void) {
+  describe.each(DIRS)(name, (dir) => {
+    beforeEach(() => {
+      document.documentElement.dir = dir;
+      return () => document.documentElement.removeAttribute("dir");
+    });
+    define(dir);
+  });
+}
+
 /** Asserts `disabledEl` is dimmed and ignores the pointer, and `enabledEl` is neither */
 export function expectDimmed(disabledEl: Element, enabledEl: Element) {
   const style = (el: Element) => {

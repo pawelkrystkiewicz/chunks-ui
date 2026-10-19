@@ -14,6 +14,7 @@ import { Toast } from "./components/toast";
 import { reloadMotion } from "./lib/use-motion";
 import {
   contentSpan,
+  DIRS,
   type Dir,
   eachPaintedFrame,
   emulateReducedMotion,
@@ -28,8 +29,6 @@ import {
  * in both directions, and state their expectations along the inline axis, so the same assertion
  * holds in LTR and mirrors in RTL.
  */
-
-const DIRS: Dir[] = ["ltr", "rtl"];
 
 /** Renders `ui` the way an app sets a direction: `dir` on <html>, which portalled popups inherit */
 function renderIn(dir: Dir, ui: ReactNode) {

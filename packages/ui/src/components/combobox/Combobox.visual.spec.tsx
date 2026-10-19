@@ -1,11 +1,12 @@
 import { render } from "@testing-library/react";
 import { createRef } from "react";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import { cn } from "../../lib/cn";
 import {
   boxOf,
   contentSpan,
+  describeDirs,
   describePopupCssPath,
   emulateReducedMotion,
   enterMotionPath,
@@ -336,14 +337,7 @@ describe("Combobox.Trigger beside an input, with nothing selected", () => {
 // element, so a wide value wrapped or ran past the trigger and pushed the chevron out (#541). Each
 // case runs in both directions: the value's `text-start` follows the direction, and the value, the
 // badge and the chevron keep their inline order.
-describe.each(["ltr", "rtl"] as const)("Combobox.Value in a trigger, %s", (dir) => {
-  beforeEach(() => {
-    document.documentElement.dir = dir;
-  });
-  afterEach(() => {
-    document.documentElement.removeAttribute("dir");
-  });
-
+describeDirs("Combobox.Value in a trigger, %s", (dir) => {
   // The Trigger's defaults are a chevron over an input's end (`absolute inset-y-0 end-0`): this
   // makes it a Select-like button
   const SELECT_LIKE =
