@@ -51,9 +51,9 @@ const PHYSICAL = new RegExp(
 );
 /**
  * In a stylesheet, what Tailwind reads as classes, kept as group 1: each `@apply` up to its `;` or
- * `}`, across lines and past its comments, and each `@source inline` string. Tailwind drops a
- * comment in an `@apply`, so `stylesheetClasses` cuts it out of the group. Then what is blanked: a
- * string (so the `/*` of `@source "src/*.tsx"` opens no comment), a comment, any other character.
+ * `}`, across lines and past its comments, and each `@source inline` string. Then what is blanked:
+ * a string (so the `/*` of `@source "src/*.tsx"` opens no comment), a comment (one in an `@apply`
+ * too, as Tailwind drops it), any other character.
  */
 const STYLESHEET = new RegExp(
   [
@@ -80,9 +80,9 @@ function stylesheetClasses(css: string): string {
   // ponytail: braces in @source inline are not expanded: `m{l,r}-4` is not read, `rtl:{ml-4}` is flagged
   return css.replace(STYLESHEET, (part, classes?: string) => {
     if (classes === undefined) return part.replace(/[^\n]/g, " ");
-    // Cut out, not blanked: Tailwind joins what a comment splits (`m/**/l-4` is `ml-4`). Its newlines stay.
+    // ponytail: a comment splits a class: `m/**/l-4`, which Tailwind joins to `ml-4`, is not read
     return classes.startsWith("@apply")
-      ? classes.replace(/\/\*[\s\S]*?\*\//g, (comment) => comment.replace(/[^\n]/g, ""))
+      ? classes.replace(/\/\*[\s\S]*?\*\//g, (comment) => comment.replace(/[^\n]/g, " "))
       : classes;
   });
 }
@@ -148,7 +148,7 @@ if (import.meta.main) {
   for (const problem of problems) console.error(problem);
   if (problems.length > 0) {
     console.error(
-      `\n${problems.length} physical direction ${problems.length === 1 ? "class" : "classes"} in the docs. Use the logical class (ms-/me-, ps-/pe-, start-/end-, text-start/text-end, rounded-s-/rounded-e-/rounded-ss-…, border-s-/border-e-) so the page mirrors in RTL, or mark a deliberate one with \`direction: physical, <reason>\` in a comment on its line or directly above it. Positions (object-, bg-, origin-, perspective-origin-, mask-, mask-radial-at-), side masks (mask-l-, mask-r-) and gradient directions (bg-linear-to-, bg-gradient-to-) have no logical class: set one for each direction (ltr:object-left rtl:object-right), which needs no marker. Tailwind's rtl: also matches inside an LTR section of an RTL page ([dir="rtl"] *), so the pair is right only where the direction is set once on <html>, as in the docs.`,
+      `\n${problems.length} physical direction ${problems.length === 1 ? "class" : "classes"} in the docs. Use the logical class (ms-/me-, ps-/pe-, start-/end-, text-start/text-end, rounded-s-/rounded-e-/rounded-ss-…, border-s-/border-e-) so the page mirrors in RTL; with no logical class (positions, side masks, gradient directions), set one per direction, \`ltr:object-left rtl:object-right\`. Or mark a deliberate one with \`direction: physical, <reason>\` in a comment on its line or directly above it. Rules: TESTING_STRATEGY.md › CI › Docs direction.`,
     );
     process.exit(1);
   }

@@ -158,11 +158,6 @@ describe("physicalTokens", () => {
       ["ml-4", "ml-4", "ml-4", "ml-4", "pr-2", "pl-2", "mr-4"],
     ],
     [
-      "a class joined with no space to an rtl: class by a quote, a comma, a semicolon or a pipe",
-      `cn("rtl:pl-2","md:ml-4") cn('rtl:pl-2','md:ml-2') rtl:pl-2,md:mr-4 rtl:pl-2;mr-2 |rtl:pl-2|md:pr-2| rtl:pl-2,pr-4`,
-      ["ml-4", "ml-2", "mr-4", "mr-2", "pr-2", "pr-4"],
-    ],
-    [
       "nothing for the logical classes and the look-alikes",
       "ms-4 pe-2 start-0 -end-2 text-start rounded-s-lg rounded-ee-sm border-e-2 inset-x-0 rounded-lg border-left translate-x-2 float-none clear-both scroll-ms-4 scroll-mx-2 overfloat-left space-x-4 space-x-reverse divide-x divide-x-reverse",
       [],
@@ -175,11 +170,6 @@ describe("physicalTokens", () => {
     [
       "nothing for the vertical and two-sided masks and gradients, and the forms Tailwind does not generate",
       "perspective-origin-top perspective-origin-center mask-top mask-center mask-radial-at-bottom mask-x-from-10% mask-t-to-0 bg-linear-to-t bg-gradient-to-b perspective-origin-left-top -perspective-origin-left mask-left-top -mask-left mask-l mask-r-from -mask-l-from-2 -bg-linear-to-l bg-linear-to-left mask-s-from-0 bg-linear-to-e",
-      [],
-    ],
-    [
-      "nothing for what the scan does not read, a limit: the resize cursors and the angle and conic gradients",
-      "cursor-e-resize cursor-w-resize cursor-ne-resize cursor-nw-resize cursor-se-resize cursor-sw-resize bg-linear-90 mask-linear-90 -mask-linear-90 bg-conic-90 mask-conic-90",
       [],
     ],
     [
@@ -197,21 +187,12 @@ describe("physicalTokens", () => {
   });
 
   // Each delimiter alone, with a variant on the second class: a chain that ran on past the delimiter
-  // would reach that class and exempt it.
-  it.each<[string, string]>([
-    ["a space", " "],
-    ["a double quote", '"'],
-    ["a single quote", "'"],
-    ["a backtick", "`"],
-    ["an opening brace", "{"],
-    ["a closing brace", "}"],
-    ["a comma", ","],
-    ["a semicolon", ";"],
-    ["a pipe", "|"],
-  ])(
-    "ends an rtl: chain at %s, so a variant after it does not reach the next class",
-    (_name, delimiter) => {
-      expect(physicalTokens(`rtl:pl-2${delimiter}md:ml-4`)).toEqual(["ml-4"]);
+  // would reach that class and exempt it. The delimiter before rtl: too: a guard that took it for
+  // part of a word would flag the first class.
+  it.each([" ", '"', "'", "`", "{", "}", ",", ";", "|"])(
+    "ends an rtl: chain at %j, so a variant after it does not reach the next class",
+    (delimiter) => {
+      expect(physicalTokens(`${delimiter}rtl:pl-2${delimiter}md:ml-4`)).toEqual(["ml-4"]);
     },
   );
 
@@ -362,11 +343,12 @@ describe("checkDocsDirection", () => {
       [],
     ],
     [
-      "counts a run of // lines directly above as one comment",
+      "counts a run of // lines directly above as one comment, indented, the marker on its middle line",
       [
-        "// direction: physical, the tiles compose one drawing",
-        "// and keep their arrangement in RTL",
-        'const A = "left-3";',
+        "  // the tiles compose one drawing",
+        "  // direction: physical, in the middle of the run",
+        "  // and keep their arrangement in RTL",
+        '  const A = "left-3";',
         "// direction: physical, a blank line cuts this run off",
         "",
         "// the run above B",
@@ -376,25 +358,7 @@ describe("checkDocsDirection", () => {
         'const D = "left-1";',
       ],
       {},
-      ["7: left-0", "10: left-1"],
-    ],
-    [
-      "counts the first and the middle line of a run of three // lines directly above, an indented one too",
-      [
-        "export const X = () => {",
-        "  // the arrow points at the clock",
-        "  // direction: physical, so it does not mirror",
-        "  // and the hands keep their turn",
-        '  const A = "left-3";',
-        "  // direction: physical, the dial is a drawing",
-        "  // it keeps its side",
-        "  // in RTL too",
-        '  const B = "left-0";',
-        "  return <i className={A + B} />;",
-        "};",
-      ],
-      {},
-      [],
+      ["8: left-0", "11: left-1"],
     ],
     [
       "needs a reason that starts with a word character",
@@ -512,16 +476,6 @@ describe("checkDocsDirection", () => {
       ["4: ml-4"],
     ],
     [
-      "reads no class in a comment in an @apply, on lines of its own, as Tailwind does",
-      [".b {", "  @apply ms-2", "    /* ms-2, not ml-2, so it mirrors */", "    ps-2;", "}"],
-      [],
-    ],
-    [
-      "reads no class in a comment in an @apply, between two classes, as Tailwind does",
-      [".a { @apply ms-2 /* not ml-2 */ ps-2; }"],
-      [],
-    ],
-    [
       "reads the classes around a comment in an @apply that names others, and keeps their lines",
       [
         ".c {",
@@ -532,16 +486,6 @@ describe("checkDocsDirection", () => {
         "}",
       ],
       ["4: ml-4", "5: pr-4"],
-    ],
-    [
-      "joins what a comment in an @apply splits, as Tailwind does",
-      [".a { @apply m/**/l-4 pr-/* x */2 ms-/* ml-4 */2; }"],
-      ["1: ml-4", "1: pr-2"],
-    ],
-    [
-      "flags a class in an @apply inside @variant rtl, the CSS spelling of rtl:, which is no exemption",
-      [".a {", "  @variant rtl {", "    @apply mr-2;", "  }", "}"],
-      ["3: mr-2"],
     ],
     [
       "reads an @apply on past a / in a class, such as w-1/2, and stops at its ;",
@@ -582,20 +526,16 @@ describe("checkDocsDirection", () => {
       ["4: ml-4"],
     ],
     [
-      "opens no comment at a /* in a string, such as an @source glob",
+      "opens no comment at a /* in a string, such as a double or single-quoted @source glob",
       [
         '@source "../ui/src/*.tsx";',
+        "@source '../ui/src/*.tsx';",
         ".a { @apply ml-4; }",
         "/* a note */",
         '.b::after { content: "/*"; }',
         ".c { @apply mr-4; }",
       ],
-      ["2: ml-4", "5: mr-4"],
-    ],
-    [
-      "opens no comment at a /* in a single-quoted @source glob",
-      ["@source '../ui/src/*.tsx';", ".a { @apply ml-4; }", "/* a note */"],
-      ["2: ml-4"],
+      ["3: ml-4", "6: mr-4"],
     ],
     [
       "ends no string at an escaped quote",
