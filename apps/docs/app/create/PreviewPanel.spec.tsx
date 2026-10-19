@@ -1,8 +1,18 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { PreviewPanel } from "./PreviewPanel";
 import { DEFAULT_THEME } from "./theme-model";
+
+it("narrows the preview's columns to 768px when Tablet is pressed", () => {
+  render(<PreviewPanel theme={DEFAULT_THEME} onChange={vi.fn()} />);
+  const preview = screen.getByRole("region", { name: "Preview" });
+  // The columns are the one element in the preview with an inline max-width
+  const maxWidth = () => preview.querySelector<HTMLElement>("[style*='max-width']")?.style.maxWidth;
+  expect(maxWidth()).toBe("100%");
+  fireEvent.click(within(preview).getByRole("button", { name: "Tablet" }));
+  expect(maxWidth()).toBe("768px");
+});
 
 // `focus`: the role and name that receives focus on open, never the close button
 const OVERLAYS = [
@@ -40,3 +50,104 @@ it.each(OVERLAYS)(
     await waitFor(() => expect(document.activeElement).toBe(button));
   },
 );
+
+// ponytail: getByRole names every button in the contrast table and the preview, so a test takes
+// about 1s here and 5-6s on a CI runner, past Vitest's 5s default. Query within a row or card if
+// these grow slower.
+describe("while a colour editor is open", { timeout: 15_000 }, () => {
+  it("outlines the preview's components that use its colour, until it closes", async () => {
+    render(<PreviewPanel theme={DEFAULT_THEME} onChange={vi.fn()} />);
+    const preview = screen.getByRole("region", { name: "Preview" });
+    const lit = () => [...preview.querySelectorAll("[data-lit]")];
+    fireEvent.click(within(preview).getByRole("button", { name: /^Accessibility/ }));
+    expect(lit()).toEqual([]);
+    // Chart 1's editor starts on its own colour; VelocityCard paints a bar series and its key with it
+    fireEvent.click(screen.getByRole("button", { name: /^Edit colours: Chart 1, Light/ }));
+    expect(lit().length).toBeGreaterThan(1);
+    expect(lit().every((el) => el.classList.contains("bg-chart-1"))).toBe(true);
+    // The editor's own swatch is in the panel, not the preview's cards: the panel is never outlined
+    expect(lit().every((el) => !el.closest("table"))).toBe(true);
+    fireEvent.keyDown(screen.getByRole("textbox", { name: /^Foreground colour/ }), {
+      key: "Escape",
+    });
+    await waitFor(() => expect(lit()).toEqual([]));
+  });
+
+  it("outlines the shades that follow its colour, as primary-text follows the primary", () => {
+    render(<PreviewPanel theme={DEFAULT_THEME} onChange={vi.fn()} />);
+    const preview = screen.getByRole("region", { name: "Preview" });
+    fireEvent.click(within(preview).getByRole("button", { name: /^Accessibility/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^Edit colours: Primary button, Light/ }));
+    // The editor starts on the button's text; its background side is the primary
+    fireEvent.focus(screen.getByRole("textbox", { name: /^Background colour/ }));
+    // "Forgot?" paints with primary-text alone
+    const forgot = within(preview).getByRole("button", { name: "Forgot?" });
+    expect(forgot.hasAttribute("data-lit")).toBe(true);
+  });
+
+  it("outlines an off switch for the input colour, but not an on one, which paints the primary", () => {
+    render(<PreviewPanel theme={DEFAULT_THEME} onChange={vi.fn()} />);
+    const preview = screen.getByRole("region", { name: "Preview" });
+    fireEvent.click(within(preview).getByRole("button", { name: /^Accessibility/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^Edit colours: Input border, Light/ }));
+    const lit = (name: string) =>
+      within(preview).getByRole("switch", { name }).hasAttribute("data-lit");
+    expect(lit("Weekly digest")).toBe(true);
+    expect(lit("Deployments")).toBe(false);
+  });
+
+  it("outlines nothing for the other mode's colours, which the preview doesn't paint", () => {
+    render(<PreviewPanel theme={DEFAULT_THEME} onChange={vi.fn()} />);
+    const preview = screen.getByRole("region", { name: "Preview" });
+    fireEvent.click(within(preview).getByRole("button", { name: /^Accessibility/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^Edit colours: Chart 1, Dark/ }));
+    expect(screen.getByRole("textbox", { name: /^Foreground colour/ })).toBeTruthy();
+    expect(preview.querySelectorAll("[data-lit]")).toHaveLength(0);
+  });
+});
+
+describe("touch targets", () => {
+  it("give the preview's checkboxes, radios and switches touch-target, popups included", () => {
+    const { rerender } = render(<PreviewPanel theme={DEFAULT_THEME} onChange={vi.fn()} />);
+    // The scope and the popup layer on <body> both carry the theme's tokens
+    const scopes = () => [...document.querySelectorAll<HTMLElement>("[style*='--radius']")];
+    expect(scopes()).toHaveLength(2);
+    expect(scopes().some((el) => el.className.includes("touch-target"))).toBe(false);
+    rerender(<PreviewPanel theme={{ ...DEFAULT_THEME, touchTargets: true }} onChange={vi.fn()} />);
+    for (const el of scopes()) expect(el.className).toContain(":touch-target");
+  });
+});
+
+describe("text spacing", () => {
+  it("applies WCAG 1.4.12's four overrides to the preview, popups included, while on", () => {
+    render(<PreviewPanel theme={DEFAULT_THEME} onChange={vi.fn()} />);
+    const scopes = () => [...document.querySelectorAll<HTMLElement>("[style*='--radius']")];
+    const overrides = [
+      "[&_*]:leading-[1.5]!",
+      "[&_*]:tracking-[0.12em]!",
+      "[&_*]:[word-spacing:0.16em]!",
+      "[&_p]:mb-[2em]!",
+    ];
+    fireEvent.click(screen.getByRole("button", { name: /^Accessibility/ }));
+    const toggle = screen.getByRole("switch", { name: "Override text spacing" });
+    fireEvent.click(toggle);
+    for (const el of scopes()) {
+      for (const cls of overrides) expect(el.classList.contains(cls), cls).toBe(true);
+    }
+    fireEvent.click(toggle);
+    for (const el of scopes()) expect(el.className).not.toContain("word-spacing");
+  });
+
+  it("says the overrides are on in the Accessibility button once the panel collapses", async () => {
+    render(<PreviewPanel theme={DEFAULT_THEME} onChange={vi.fn()} />);
+    const trigger = screen.getByRole("button", { name: /^Accessibility/ });
+    expect(trigger.textContent).not.toContain("Text spacing overridden");
+    fireEvent.click(trigger);
+    fireEvent.click(screen.getByRole("switch", { name: "Override text spacing" }));
+    fireEvent.click(trigger);
+    await waitFor(() =>
+      expect(screen.queryByRole("switch", { name: "Override text spacing" })).toBeNull(),
+    );
+    expect(trigger.textContent).toContain("Text spacing overridden");
+  });
+});

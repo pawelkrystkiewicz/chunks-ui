@@ -23,6 +23,8 @@ export type Theme = {
   chart: ChartId;
   /** Colours set by hand in the contrast table, by mode and token name (no `--`) */
   overrides?: Overrides;
+  /** `touch-target` on every checkbox, radio and switch, in the preview and Get code */
+  touchTargets?: boolean;
 };
 
 export type Overrides = Partial<Record<Mode, Record<string, Oklch>>>;

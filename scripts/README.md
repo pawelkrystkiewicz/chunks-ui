@@ -24,13 +24,15 @@ Runs in the `lint` job of `quality-gates.yml`. Tests: `scripts/__specs__/check-b
 
 ## check-docs-direction.ts
 
-Fails on a physical direction class (`ml-*`, `left-*`, `text-left`, `object-left`, `origin-top-left` and the like) in the docs source, so the docs mirror in RTL. It reads the `.ts`, `.tsx` and `.mdx` files in all of `apps/docs`, except `node_modules` and the build output, and the `@apply` lines of the `.css` files there. A deliberate one carries a `direction: physical, <reason>` marker, on its line or in a comment directly above it. The full class list, marker rules and limits: `TESTING_STRATEGY.md` › CI › Docs direction.
+Fails on a physical direction class (`ml-*`, `left-*`, `text-left`, `object-left`, `origin-top-left`, `mask-l-from-*`, `bg-linear-to-r` and the like) in the docs source, so the docs mirror in RTL. It reads the `.js`, `.jsx`, `.ts`, `.tsx`, `.md` and `.mdx` files in all of `apps/docs`, except `node_modules` and the build output. In the `.css` files there it reads each `@apply` (its continuation lines too) and each `@source inline("…")` string. A class behind an `rtl:` or `ltr:` variant is set for one direction on purpose and passes. A deliberate one carries a `direction: physical, <reason>` marker, on its line or in a comment directly above it (a run of `//` lines counts as one comment). The full class list, marker rules and limits: `TESTING_STRATEGY.md` › CI › Docs direction.
 
 Left out on purpose:
 
 - `translate-x-*`: centring with `left-1/2 -translate-x-1/2` is a physical idiom, so a translate is not a direction bug by itself.
+- `space-x-*`, `space-x-reverse`, `divide-x-*` and `divide-x-reverse`: Tailwind 4 writes them with `margin-inline-*` and `border-inline-*-width`, so they mirror. A `-reverse` class only swaps those two logical sides for `flex-row-reverse`.
 - `data-[side=left]:` and the like: Base UI sets the side from the real placement, so the variant already follows it.
 - `slide-in-from-left` and the like: Tailwind does not generate them; they come from an animation plugin such as `tw-animate-css`, which the docs do not load.
+- Braces in `@source inline`: they are not expanded, so a class built across them (`m{l,r}-4`, `ml-{1..4}`) is not read, and a variant before a brace does not reach the classes in it (`rtl:{ml-4,mr-4}` is flagged). The docs have no `@source inline`, so an expander waits until they do.
 - A marker for one class of a line: a marker exempts its whole line, which keeps the marker rule short.
 
 ```bash

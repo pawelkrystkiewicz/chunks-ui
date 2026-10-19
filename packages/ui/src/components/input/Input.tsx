@@ -201,6 +201,9 @@ export function Input({
           "peer/input",
           startAdornment && "ps-9",
           (endAdornment || hasClearButton) && "pe-9",
+          // type="search" draws the browser's own clear button too: ours replaces it, so it never
+          // shows, also where ours hides (disabled, read-only)
+          hasClearButton && "[&::-webkit-search-cancel-button]:hidden",
           typeof className === "function" ? className : undefined,
         )}
         ref={mergedRef}
