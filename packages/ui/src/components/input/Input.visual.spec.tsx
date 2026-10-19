@@ -1,6 +1,11 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { expectNotAllowed, focusVisible, renderFixture } from "../../VisualTest.utils";
+import {
+  expectNotAllowed,
+  focusVisible,
+  paintedPixels,
+  renderFixture,
+} from "../../VisualTest.utils";
 import { Field } from "../field";
 import { Input } from "./index";
 
@@ -105,5 +110,26 @@ describe("Input", () => {
     );
     expect(getByRole("button", { name: /clear/i })).toBeVisible();
     expect(getByText("USD")).not.toBeVisible();
+  });
+});
+
+// The browser's clear button showed beside ours in a type="search" input (#686). Chromium paints
+// its button while the input has text and focus or the pointer, never on a read-only or disabled
+// input: those rows are in the WebKit spec. Neither engine reports the computed style of the
+// button, so the rows count the pixels it paints.
+describe("Input type=search", () => {
+  it.each([
+    { has: "with the clear button, hides the browser's", clearable: true, native: false },
+    { has: "without it, keeps the browser's", clearable: false, native: true },
+  ])("$has", async ({ clearable, native }) => {
+    const { getByRole } = render(
+      <div style={{ padding: 40, width: 300 }}>
+        <Input type="search" aria-label="Search" defaultValue="Hello" clearable={clearable} />
+      </div>,
+    );
+    const input = getByRole("searchbox");
+    input.focus();
+    const painted = await paintedPixels(input, "::-webkit-search-cancel-button");
+    expect(painted > 0, "the browser paints its clear button").toBe(native);
   });
 });

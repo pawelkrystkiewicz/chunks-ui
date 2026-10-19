@@ -132,7 +132,7 @@ export function ComboboxMultiDemo() {
   return (
     <Combobox.Root multiple items={frameworks} value={value} onValueChange={setValue}>
       <Combobox.Control>
-        <Combobox.Chips className="flex-1">
+        <Combobox.Chips>
           {value.map((item) => (
             <Combobox.Chip key={item.value}>
               {item.label}
