@@ -23,6 +23,11 @@ import { Menu } from "./index";
  * the page. Chromium keeps keyboard modality until a mouse press, so after a keyboard open that
  * focus matches `:focus-visible`, and the popup drew its ring under the mouse. The popup now
  * turns its ring off from the first pointer move over it until the next key press.
+ *
+ * ponytail: the pointer-leave rows below cannot pass in Playwright's WebKit, so they run in
+ * Chromium only. Its mouse moves carry movementX/Y = 0, and Base UI 1.9 ignores a stationary
+ * pointer move in WebKit (`isStationaryWebKitPointer`, mui/base-ui#4002): the popup never takes
+ * focus there. A real Safari mouse moves with non-zero deltas and is not affected.
  */
 
 /** The popup's ring: on its outline, or on its `::after` overlay when it holds an arrow */
