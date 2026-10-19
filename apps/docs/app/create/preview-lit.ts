@@ -11,22 +11,26 @@ const COLOR =
 const INTERACTION =
   /^(group-|peer-|has-)?(\[:)?(hover|focus|focus-visible|focus-within|active)\]?(\/[\w-]+)?$/;
 
-/** The state variants: Base UI's `data-*` and `aria-*` */
-const STATE = /^(data|aria)-/;
+/** The state variants the scan reads: `data-x`, `data-[x]`, `data-[x=y]` (Base UI's) and `aria-x` */
+const DATA = /^data-\[?([\w-]+)(?:=([\w-]+))?\]?$/;
+const ARIA = /^aria-([\w-]+)$/;
+const isState = (variant: string) => DATA.test(variant) || ARIA.test(variant);
 
 /**
- * Whether a variant applies to `el` while an editor is open. A `data-*` or `aria-*` variant applies
- * in its state (`data-active` is Base UI's state, not the pointer's). Pointer and focus variants,
- * `has-[:focus-visible]` among them, never do: the pointer and focus are in the editor. ponytail:
- * every other variant (`dark:`, breakpoints, `group-*`, `in-*`, other `has-*`) counts as applying.
+ * Whether a variant applies to `el` while an editor is open. A state variant applies in its state
+ * (`data-active` is Base UI's state, not the pointer's). Pointer and focus variants (hover, focus,
+ * focus-visible, focus-within, active), a group's, a peer's or a descendant's (`has-*`) too, never
+ * do: the pointer and focus are in the editor. ponytail: every other variant (`dark:`, breakpoints,
+ * `group-*`, `in-*`, any other `has-*`, a state it can't read such as `aria-[current=page]`)
+ * counts as applying.
  */
 function applies(el: Element, variant: string) {
-  const data = /^data-\[?([\w-]+)(?:=([\w-]+))?\]?$/.exec(variant);
+  const data = DATA.exec(variant);
   if (data) {
     const value = el.getAttribute(`data-${data[1]}`);
     return data[2] ? value === data[2] : value !== null;
   }
-  const aria = /^aria-([\w-]+)$/.exec(variant);
+  const aria = ARIA.exec(variant);
   if (aria) return el.getAttribute(`aria-${aria[1]}`) === "true";
   return !INTERACTION.test(variant);
 }
@@ -38,7 +42,10 @@ const parts = (cls: string) => cls.split(/:(?![^[]*\])/);
  * A test of whether an element's classes, or its inline style, paint with one of `tokens`. Built
  * once per scan of the preview. ponytail: a colour an element inherits (most text takes
  * `--foreground` that way), sets in a stylesheet or reaches through `currentColor` is not seen, and
- * an ancestor's `overflow: hidden` clips the outline (the Progress indicator's).
+ * an ancestor's `overflow: hidden` clips the outline (the Progress indicator's). A state class drops
+ * a plain one of its kind only with the same other variants (`dark:`, `md:`) and importance (`!`),
+ * and two state classes on one property go by class order, not CSS order. In the library and the
+ * preview neither changes an outline.
  */
 export function paintsWith(tokens: string[]) {
   // `var(--x)`, `var(--x, …)` or Tailwind's `bg-(--x)`
@@ -54,7 +61,7 @@ export function paintsWith(tokens: string[]) {
       const variants = parts(cls);
       const utility = variants.pop() ?? "";
       if (!variants.every((v) => applies(el, v))) continue;
-      const rest = variants.filter((v) => !STATE.test(v));
+      const rest = variants.filter((v) => !isState(v));
       if (rest.length < variants.length) state.push([...rest, utility].join(":"));
       else plain.push(cls);
     }

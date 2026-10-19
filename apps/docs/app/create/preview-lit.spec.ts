@@ -46,7 +46,7 @@ describe("paintsWith", () => {
 
   it("lets a state class replace a plain colour of its kind, as it does in the CSS", () => {
     const input = paintsWith(["input"]);
-    // A checked checkbox's border and fill, and a checked switch's fill, are the primary
+    // A checked checkbox's border and fill, and a pressed toggle's fill, are the primary
     const checkbox = "border border-input data-checked:border-primary data-checked:bg-primary";
     expect(input(el(checkbox, { "data-checked": "" }))).toBe(false);
     expect(input(el(checkbox))).toBe(true);
@@ -54,6 +54,8 @@ describe("paintsWith", () => {
     // Only a colour of the same kind: a border colour leaves the fill, a border width the colour
     expect(input(el("bg-input data-checked:border-primary", { "data-checked": "" }))).toBe(true);
     expect(input(el("border-input data-checked:border-2", { "data-checked": "" }))).toBe(true);
+    // A state the scan can't read stays plain: it may outline too much, never too little
+    expect(input(el("bg-input aria-[current=page]:bg-primary"))).toBe(true);
   });
 
   it("reads Base UI's data-active state as a state, not as the pointer's :active", () => {
