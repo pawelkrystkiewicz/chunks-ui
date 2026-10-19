@@ -209,11 +209,7 @@ describe("useFocusOnClose", () => {
     );
     const outside = getByRole("textbox", { name: "Outside" });
     outside.focus();
-    const keypress = new KeyboardEvent("keypress", {
-      key: "Enter",
-      repeat: true,
-      cancelable: true,
-    });
+    const keypress = new KeyboardEvent("keypress", { repeat: true, cancelable: true });
     outside.dispatchEvent(keypress);
     expect(keypress.defaultPrevented).toBe(false);
     expect(document.activeElement).toBe(outside);

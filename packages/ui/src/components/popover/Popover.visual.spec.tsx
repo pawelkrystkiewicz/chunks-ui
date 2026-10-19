@@ -110,15 +110,14 @@ describeExitPaths("Popover focus as the popup closes", (reduce) => {
     expect(document.activeElement).toBe(after);
   });
 
-  // The repeat's keypress ends the hand-off's wait. Chromium still clicked Done, the keypress's
-  // target, after the hand-off had moved focus to the trigger: a second click. With reduced
-  // motion the repeat may land after the unmount, on the trigger, and open the popup again: still
-  // one click.
+  // Chromium used to click Done again on the repeat's keypress, after focus had moved to the
+  // trigger. Counted on the popup: Done's clicks bubble to it, the trigger's reopen click does not.
   it("clicks Popover.Close once when the closing Enter repeats during the exit", async () => {
-    const onDone = vi.fn();
-    await openPopover({ onDone });
+    const { popup } = await openPopover();
+    const onClick = vi.fn();
+    popup.addEventListener("click", onClick);
     await userEvent.keyboard("{Tab}{Enter>2}{/Enter}");
-    expect(onDone).toHaveBeenCalledOnce();
+    expect(onClick).toHaveBeenCalledOnce();
   });
 
   // A click and a key press are two calls, too far apart for the one frame of reduced motion
@@ -212,15 +211,7 @@ describe("Popover focus as the popup closes, focus moved away", () => {
 });
 
 // Text fields around the trigger, as WebKit's Tab and click skip buttons
-function popoverFixture({
-  finalFocusBefore = false,
-  openOnHover = false,
-  onDone,
-}: {
-  finalFocusBefore?: boolean;
-  openOnHover?: boolean;
-  onDone?: () => void;
-} = {}) {
+function popoverFixture({ finalFocusBefore = false, openOnHover = false } = {}) {
   const beforeRef = createRef<HTMLInputElement>();
   return (
     <div className="flex w-60 flex-col items-start gap-2" style={{ padding: 40 }}>
@@ -232,7 +223,7 @@ function popoverFixture({
         </Popover.Trigger>
         <Popover.Content data-testid="popup" finalFocus={finalFocusBefore ? beforeRef : undefined}>
           <input aria-label="Name" />
-          <Popover.Close onClick={onDone}>Done</Popover.Close>
+          <Popover.Close>Done</Popover.Close>
         </Popover.Content>
       </Popover.Root>
       <input aria-label="After" />

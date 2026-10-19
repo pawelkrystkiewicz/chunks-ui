@@ -566,11 +566,7 @@ describe("Select and Popover focus as the popup closes, in WebKit", () => {
 describe("DatePicker focus as the popup closes, in WebKit", () => {
   it("picks once when the picking Enter repeats during the exit", async () => {
     const onValueChange = vi.fn();
-    render(
-      <div className="flex w-72 flex-col items-start gap-2" style={{ padding: 40 }}>
-        <DatePicker defaultValue={new Date(2026, 2, 15)} onValueChange={onValueChange} />
-      </div>,
-    );
+    render(<DatePicker defaultValue={new Date(2026, 2, 15)} onValueChange={onValueChange} />);
     await userEvent.click(screen.getByRole("button", { name: "March 15, 2026" }));
     const day = await screen.findByRole("button", { name: "Sunday, March 15, 2026" });
     await expect.poll(() => document.activeElement).toBe(day);

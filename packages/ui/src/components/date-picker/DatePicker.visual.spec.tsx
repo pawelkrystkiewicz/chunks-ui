@@ -185,10 +185,13 @@ describe.each([
   // (#652): with reduced motion the popup unmounts a frame after the pick and Base UI focuses the
   // trigger, so this repeat lands on either side by load.
   it.skipIf(reduce)(
-    "keeps the calendar closed and the trigger focused when the picking Enter repeats once during the exit",
+    "keeps the calendar closed and the trigger focused, and picks once, when the picking Enter repeats once during the exit",
     async () => {
-      const { popup, trigger } = await open();
+      const onValueChange = vi.fn();
+      const { popup, trigger } = await open(onValueChange);
       await userEvent.keyboard("{ArrowDown}{Enter>2}{/Enter}");
+      // Once: Chromium used to pick the day again on the repeat's keypress
+      expect(onValueChange).toHaveBeenCalledExactlyOnceWith(new Date(2026, 2, 22));
       expect(trigger).toHaveAttribute("aria-expanded", "false");
       expect(document.activeElement).toBe(trigger);
       expect(trigger.matches(":focus-visible"), "the trigger shows its ring").toBe(true);
@@ -197,17 +200,6 @@ describe.each([
       expect(document.activeElement).toBe(trigger);
     },
   );
-
-  // The repeat's keypress ends the hand-off's wait. Chromium still clicked the day, the
-  // keypress's target, after the hand-off had moved focus to the trigger: a second pick. With
-  // reduced motion the repeat may land after the unmount, on the trigger, and open the calendar
-  // again (see above): still one pick.
-  it("picks once when the picking Enter repeats during the exit", async () => {
-    const onValueChange = vi.fn();
-    await open(onValueChange);
-    await userEvent.keyboard("{ArrowDown}{Enter>2}{/Enter}");
-    expect(onValueChange).toHaveBeenCalledExactlyOnceWith(new Date(2026, 2, 22));
-  });
 
   // A click and a key press are two calls, too far apart for the one frame of reduced motion
   it.skipIf(reduce)(
