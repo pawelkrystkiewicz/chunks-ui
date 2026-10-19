@@ -58,6 +58,7 @@ export function ThemeButton() {
 /** Hamburger and full-screen menu below the header. Every link leaves the page, which unmounts it. */
 export function MobileMenu({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   // The header isn't sticky: lock page scroll so the open menu and its close button stay put. The
   // menu ends at the screen's bottom edge only with the header at the top: scroll there first.
@@ -65,7 +66,12 @@ export function MobileMenu({ children }: { children: ReactNode }) {
   // Past Tailwind's lg, `lg:hidden` hides both but unmounts neither, so the menu closes there.
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    // Focus in the menu would fall to <body> when the nav unmounts: the button takes it (APG disclosure).
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (document.activeElement?.closest("#landing-menu")) buttonRef.current?.focus();
+      setOpen(false);
+    };
     const lg = window.matchMedia("(width >= 64rem)");
     const onLg = () => lg.matches && setOpen(false);
     document.documentElement.scrollTop = 0;
@@ -90,6 +96,7 @@ export function MobileMenu({ children }: { children: ReactNode }) {
   return (
     <>
       <button
+        ref={buttonRef}
         type="button"
         aria-label="Menu"
         aria-expanded={open}
