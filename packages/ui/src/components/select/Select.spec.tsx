@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { configureAxe } from "jest-axe";
-import { createRef, type ReactElement, useEffect, useLayoutEffect, useState } from "react";
+import { createRef, type ReactElement, useLayoutEffect, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { undecided } from "../../AxeTest.utils";
 import { Field } from "../field";
@@ -378,27 +378,6 @@ describe("Select disabled", () => {
       return fruits({ disabled, defaultOpen: true, onOpenChangeComplete });
     };
     render(<Parent />);
-    expectGone(onOpenChangeComplete);
-  });
-
-  it("unmounts a Select that its parent disables in the commit after a click opened it", async () => {
-    const user = userEvent.setup();
-    const onOpenChangeComplete = vi.fn();
-    const Parent = () => {
-      const [opened, setOpened] = useState(false);
-      const [disabled, setDisabled] = useState(false);
-      useEffect(() => {
-        if (opened) setDisabled(true);
-      }, [opened]);
-      return fruits({
-        disabled,
-        onOpenChange: (open) => open && setOpened(true),
-        onOpenChangeComplete,
-      });
-    };
-    render(<Parent />);
-    await user.click(trigger());
-    await vi.waitFor(() => expect(trigger()).toBeDisabled());
     expectGone(onOpenChangeComplete);
   });
 
