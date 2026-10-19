@@ -95,14 +95,6 @@ const ALLOWED: Allowed[] = [
     pages: ["/components/chip", "/kitchen-sink"],
     themes: ["light"],
   },
-  // Upstream Base UI behaviour in the library's own components
-  {
-    rule: "aria-hidden-focus",
-    selector: '.Toast[role="alertdialog"][aria-hidden="true"][tabindex="0"]',
-    why: 'mui/base-ui#5659: Base UI 1.9 keeps a priority: "high" toast aria-hidden, but in the tab order, until keyboard focus enters the viewport (Tab or F6)',
-    pages: ["/components/toast"],
-    themes: ["light", "dark"],
-  },
   // On purpose: a swatch is an aria-hidden sample of a colour pair, and its row gives the ratio in
   // text. Only the swatch's "Aa" is excused, not the text around it.
   {
