@@ -80,7 +80,7 @@ jobs:
       # After the Slack ping, so the publish is reported even when this fails. gh makes the tag
       # at the run commit on GitHub's side; the action no longer pushes it.
       - name: Create GitHub release
-        if: steps.changesets.outputs.published == 'true'
+        if: ${{ !cancelled() && steps.changesets.outputs.published == 'true' }}
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
           VERSION: ${{ fromJSON(steps.changesets.outputs.publishedPackages)[0].version }}
@@ -97,7 +97,7 @@ jobs:
           fi
           # wc -c counts bytes, never fewer than characters, so this errs on the safe side of the cap
           if [ "$(wc -c < "$notes")" -gt 125000 ]; then
-            echo "These notes are longer than a GitHub release allows: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$tag/packages/ui/CHANGELOG.md" > "$notes"
+            echo "These notes are longer than a GitHub release allows: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$tag/packages/ui/CHANGELOG.md#${VERSION//./}" > "$notes"
           fi
           pre=()
           if [[ $VERSION == *-* ]]; then pre=(--prerelease); fi
