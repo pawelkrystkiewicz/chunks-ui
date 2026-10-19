@@ -33,6 +33,7 @@ Left out on purpose:
 - `data-[side=left]:` and the like: Base UI sets the side from the real placement, so the variant already follows it.
 - `slide-in-from-left` and the like: Tailwind does not generate them; they come from an animation plugin such as `tw-animate-css`, which the docs do not load.
 - Braces in `@source inline`: they are not expanded, so a class built across them (`m{l,r}-4`, `ml-{1..4}`) is not read, and a variant before a brace does not reach the classes in it (`rtl:{ml-4,mr-4}` is flagged). The docs have no `@source inline`, so an expander waits until they do.
+- Gradient and mask angles, print `break-before/after-left/right`, `touch-pan-left/right` and the resize cursors: the reasons are in the comment above `PHYSICAL` in `check-docs-direction.ts`.
 - A marker for one class of a line: a marker exempts its whole line, which keeps the marker rule short.
 
 ```bash

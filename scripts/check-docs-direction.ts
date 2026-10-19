@@ -36,11 +36,13 @@ const DIRECTION_VARIANT = /(?<![\w-])(?:rtl|ltr):(?:[^\s"'`{},;|]{0,100}:)?!?/.s
  * another class). One behind `rtl:` or `ltr:` is set for that direction on purpose and is not one.
  *
  * Left out on purpose, so `PHYSICAL` does not match them (the spec pins each one):
- * - `bg-linear-<angle>`, `-bg-linear-<angle>`, `mask-linear-<angle>`, `bg-conic-<angle>`,
- *   `mask-conic-<angle>`: an angle points one physical way, and flipping it is a design choice.
- * - `break-before-left/right`, `break-after-left/right`: print page sides, not reading order.
- * - `touch-pan-left/right`: a gesture axis, not reading order.
- * - `cursor-e/w/ne/nw/se/sw-resize`: the cursor names a physical edge.
+ * - `bg-linear-<angle>`, `-bg-linear-<angle>`, `mask-linear-<angle>`, `-mask-linear-<angle>`,
+ *   `bg-conic-<angle>`, `-bg-conic-<angle>`, `mask-conic-<angle>`, `-mask-conic-<angle>`: the check
+ *   would have to parse the number, as `bg-linear-180` is vertical and needs no mirroring. A
+ *   horizontal angle is set once per direction, like `bg-linear-to-r`.
+ * - `break-before-left/right`, `break-after-left/right` (print sides), `touch-pan-left/right`,
+ *   `cursor-e/w/ne/nw/se/sw/nesw/nwse-resize`: physical, with no logical value in Tailwind (or in
+ *   `break-before`, `touch-action` and `cursor`). The docs use none: flag one when a page first needs it.
  * ponytail: a docs page with one of these does not mirror in RTL, and the check does not say so.
  */
 const PHYSICAL = new RegExp(

@@ -189,7 +189,7 @@ describe("physicalTokens", () => {
     ],
     [
       "nothing for the patterns left out on purpose: gradient angles, print page sides, touch-pan and resize cursors",
-      "bg-linear-45 -bg-linear-45 mask-linear-90 bg-conic-180 mask-conic-90 break-before-left break-before-right break-after-left break-after-right touch-pan-left touch-pan-right cursor-e-resize cursor-w-resize cursor-ne-resize cursor-nw-resize cursor-se-resize cursor-sw-resize",
+      "bg-linear-45 -bg-linear-45 mask-linear-90 -mask-linear-90 bg-conic-180 -bg-conic-180 mask-conic-90 -mask-conic-90 break-before-left break-before-right break-after-left break-after-right touch-pan-left touch-pan-right cursor-e-resize cursor-w-resize cursor-ne-resize cursor-nw-resize cursor-se-resize cursor-sw-resize cursor-nesw-resize cursor-nwse-resize",
       [],
     ],
     [
