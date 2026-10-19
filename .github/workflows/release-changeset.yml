@@ -59,6 +59,8 @@ jobs:
         uses: changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1.9.0
         with:
           publish: bun run release
+          # changeset version alone leaves the packages/ui version in bun.lock stale
+          version: bun run version-packages
           # GitHub caps a release body at 125000 characters and the action (v2.1.2 too) sends the
           # entry untruncated; "Create GitHub release" below makes the tag and the release instead.
           createGithubReleases: false
