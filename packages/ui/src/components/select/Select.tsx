@@ -80,10 +80,17 @@ function SelectRoot<Value, Multiple extends boolean | undefined = false>({
     if (next && (isOpen || wasOpen.current)) actions.current?.unmount();
     return next;
   };
+  const lastOpen = useRef(open ?? defaultOpen ?? false);
   useLayoutEffect(() => {
     syncDisabled();
     wasOpen.current = isOpen;
+    if (!isOpen) lastOpen.current = false;
   });
+  // ponytail: Base UI 1.9's FloatingFocusManager closes a popup that is already closing, as
+  // "focus-out", when focus leaves during the exit. Skip that second close, before
+  // `useCloseFocusRoot` so it does not replace the real close event the focus hand-off keeps.
+  // A controlled Select is open by `open`; an uncontrolled one by the last change not cancelled
+  // (`lastOpen`, forgotten above while the Select is not open, as when disabling closes it).
   // Only an uncontrolled Select keeps the state: a controlled one shows `open`
   const [closeFocus, handleOpenChange] = useCloseFocusRoot(
     (next: boolean, eventDetails: BaseSelect.Root.OpenChangeEventDetails) => {
@@ -91,6 +98,11 @@ function SelectRoot<Value, Multiple extends boolean | undefined = false>({
       if (open === undefined && !eventDetails.isCanceled) setInternalOpen(next);
     },
   );
+  const reportOpenChange: typeof handleOpenChange = (next, eventDetails) => {
+    if (!next && !(open ?? lastOpen.current)) return;
+    handleOpenChange(next, eventDetails);
+    if (!eventDetails.isCanceled) lastOpen.current = next;
+  };
   return (
     <SelectCloseFocusContext.Provider value={closeFocus}>
       <BaseSelect.Root<Value, Multiple>
@@ -99,7 +111,7 @@ function SelectRoot<Value, Multiple extends boolean | undefined = false>({
         inputRef={mergedInputRef}
         actionsRef={actions}
         open={isOpen}
-        onOpenChange={handleOpenChange}
+        onOpenChange={reportOpenChange}
         onValueChange={(value, eventDetails) => {
           if (syncDisabled()) eventDetails.cancel();
           else onValueChange?.(value, eventDetails);

@@ -591,3 +591,69 @@ describeExitPaths("Select focus as the popup closes", (reduce) => {
     expect(document.activeElement).toBe(before);
   });
 });
+
+// Base UI 1.9 reports a close a second time, as "focus-out", when focus leaves during the exit
+describe("Select onOpenChange as the popup closes", () => {
+  beforeEach(() => emulateReducedMotion(false));
+  afterAll(() => emulateReducedMotion(true));
+
+  const open = async () => {
+    const onOpenChange = vi.fn();
+    const view = render(
+      <div className="flex w-60 flex-col items-start gap-2" style={{ padding: 40 }}>
+        <Select.Root defaultValue="apple" onOpenChange={(o, d) => onOpenChange(o, d.reason)}>
+          <Select.Trigger aria-label="Fruit">
+            <Select.Value />
+            <Select.Icon />
+          </Select.Trigger>
+          <Select.Portal>
+            <Select.Positioner alignItemWithTrigger={false}>
+              <Select.Popup data-testid="popup">
+                {fruits.map((f) => (
+                  <Select.Item key={f.value} value={f.value}>
+                    <Select.ItemText>{f.label}</Select.ItemText>
+                  </Select.Item>
+                ))}
+              </Select.Popup>
+            </Select.Positioner>
+          </Select.Portal>
+        </Select.Root>
+        <input aria-label="After" />
+      </div>,
+    );
+    const trigger = view.getByRole("combobox", { name: "Fruit" });
+    const reveal = async () => {
+      await userEvent.click(trigger);
+      const popup = await vi.waitFor(() => {
+        const found = document.querySelector<HTMLElement>("[data-testid=popup]");
+        if (!found) throw new Error("not open");
+        return found;
+      });
+      await expect.poll(() => popup.contains(document.activeElement)).toBe(true);
+      await settled(popup);
+      return popup;
+    };
+    return { onOpenChange, trigger, reveal, after: view.getByRole("textbox", { name: "After" }) };
+  };
+
+  it("reports a close by Escape once, though a Tab moves focus on during the exit", async () => {
+    const { onOpenChange, reveal, after } = await open();
+    const popup = await reveal();
+    onOpenChange.mockClear();
+    await userEvent.keyboard("{Escape}{Tab}");
+    await exited(popup, { stillClosing: isShown });
+    expect(document.activeElement).toBe(after);
+    expect(onOpenChange.mock.calls).toEqual([[false, "escape-key"]]);
+  });
+
+  it("reports a close that follows a reopen", async () => {
+    const { onOpenChange, reveal } = await open();
+    const first = await reveal();
+    await userEvent.keyboard("{Escape}");
+    await exited(first, { stillClosing: isShown });
+    const second = await reveal();
+    await userEvent.keyboard("{Escape}");
+    await exited(second, { stillClosing: isShown });
+    expect(onOpenChange.mock.calls.map(([o]) => o)).toEqual([true, false, true, false]);
+  });
+});
