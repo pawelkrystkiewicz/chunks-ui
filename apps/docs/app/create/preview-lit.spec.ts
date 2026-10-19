@@ -10,39 +10,41 @@ const el = (className: string, attrs: Record<string, string> = {}) => {
 };
 
 describe("paintsWith", () => {
+  const primary = paintsWith(["primary"]);
+
   it("reads a colour utility with the token's name, with or without opacity", () => {
-    expect(paintsWith(el("flex bg-primary"), ["primary"])).toBe(true);
-    expect(paintsWith(el("border-primary/40"), ["primary"])).toBe(true);
-    expect(paintsWith(el("text-primary-text"), ["primary-text"])).toBe(true);
-    expect(paintsWith(el("bg-chart-1"), ["chart-1"])).toBe(true);
+    expect(primary(el("flex bg-primary"))).toBe(true);
+    expect(primary(el("border-primary/40"))).toBe(true);
+    expect(paintsWith(["primary-text"])(el("text-primary-text"))).toBe(true);
+    expect(paintsWith(["chart-1"])(el("bg-chart-1"))).toBe(true);
   });
 
   it("does not take a longer token, or a utility that is not a colour, for the token", () => {
-    expect(paintsWith(el("text-primary-foreground"), ["primary"])).toBe(false);
-    expect(paintsWith(el("text-muted-foreground"), ["foreground"])).toBe(false);
-    expect(paintsWith(el("rounded-primary"), ["primary"])).toBe(false);
+    expect(primary(el("text-primary-foreground"))).toBe(false);
+    expect(paintsWith(["foreground"])(el("text-muted-foreground"))).toBe(false);
+    expect(primary(el("rounded-primary"))).toBe(false);
   });
 
   it("finds the token in an arbitrary value and in the inline style", () => {
     const mixed = "bg-[color-mix(in_oklch,var(--primary)_14%,var(--card))]";
-    expect(paintsWith(el(mixed), ["card"])).toBe(true);
-    expect(paintsWith(el(mixed), ["primary-text"])).toBe(false);
-    expect(paintsWith(el("", { style: "background: var(--chart-2)" }), ["chart-2"])).toBe(true);
+    expect(paintsWith(["card"])(el(mixed))).toBe(true);
+    expect(paintsWith(["primary-text"])(el(mixed))).toBe(false);
+    expect(paintsWith(["chart-2"])(el("", { style: "background: var(--chart-2)" }))).toBe(true);
   });
 
   it("counts a state variant only in that state, and never a pointer or focus one", () => {
-    expect(paintsWith(el("data-checked:bg-primary"), ["primary"])).toBe(false);
-    expect(paintsWith(el("data-checked:bg-primary", { "data-checked": "" }), ["primary"])).toBe(
-      true,
-    );
-    expect(paintsWith(el("data-[side=top]:bg-primary", { "data-side": "top" }), ["primary"])).toBe(
-      true,
-    );
-    expect(
-      paintsWith(el("aria-pressed:bg-primary", { "aria-pressed": "false" }), ["primary"]),
-    ).toBe(false);
-    expect(
-      paintsWith(el("hover:bg-primary/90 focus-visible:outline-ring"), ["primary", "ring"]),
-    ).toBe(false);
+    expect(primary(el("data-checked:bg-primary"))).toBe(false);
+    expect(primary(el("data-checked:bg-primary", { "data-checked": "" }))).toBe(true);
+    expect(primary(el("data-[side=top]:bg-primary", { "data-side": "top" }))).toBe(true);
+    expect(primary(el("aria-pressed:bg-primary", { "aria-pressed": "false" }))).toBe(false);
+    const ring = paintsWith(["primary", "ring"]);
+    expect(ring(el("hover:bg-primary/90 focus-visible:outline-ring"))).toBe(false);
+    expect(primary(el("group-hover:bg-primary"))).toBe(false);
+  });
+
+  it("reads Base UI's data-active state as a state, not as the pointer's :active", () => {
+    const foreground = paintsWith(["foreground"]);
+    expect(foreground(el("data-active:text-foreground", { "data-active": "" }))).toBe(true);
+    expect(foreground(el("data-active:text-foreground"))).toBe(false);
   });
 });

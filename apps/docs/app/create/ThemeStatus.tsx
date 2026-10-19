@@ -99,14 +99,17 @@ export function ThemeStatus({
   useEffect(() => setPrefs(loadPrefs()), []);
 
   // The preview is not React state of this panel: mark its elements by hand, and unmark them when
-  // the tokens change or the editor closes. ponytail: an element a card mounts while the editor is
-  // open stays unmarked until the active colour changes.
-  const litTokens = editing?.token ? followers(theme, editing.mode, editing.token).join(" ") : "";
+  // the tokens change or the editor closes. Only for the previewed mode: the other mode's colours
+  // change nothing there. ponytail: an element a card mounts while the editor is open stays
+  // unmarked until the active colour changes.
+  const litTokens =
+    editing?.token && editing.mode === theme.mode
+      ? followers(theme, editing.mode, editing.token).join(" ")
+      : "";
   useEffect(() => {
     const root = preview?.current;
     if (!root || !litTokens) return;
-    const tokens = litTokens.split(" ");
-    const marked = [...root.querySelectorAll("*")].filter((el) => paintsWith(el, tokens));
+    const marked = [...root.querySelectorAll("*")].filter(paintsWith(litTokens.split(" ")));
     for (const el of marked) el.setAttribute("data-lit", "");
     return () => {
       for (const el of marked) el.removeAttribute("data-lit");

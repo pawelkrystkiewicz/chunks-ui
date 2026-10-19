@@ -59,6 +59,15 @@ describe("while a colour editor is open", () => {
     });
     await waitFor(() => expect(lit()).toEqual([]));
   });
+
+  it("outlines nothing for the other mode's colours, which the preview doesn't paint", () => {
+    render(<PreviewPanel theme={DEFAULT_THEME} onChange={vi.fn()} />);
+    const preview = screen.getByRole("region", { name: "Preview" });
+    fireEvent.click(within(preview).getByRole("button", { name: /^Accessibility/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^Edit colours: Chart 1, Dark/ }));
+    expect(screen.getByRole("textbox", { name: /^Foreground colour/ })).toBeTruthy();
+    expect(preview.querySelectorAll("[data-lit]")).toHaveLength(0);
+  });
 });
 
 describe("touch targets", () => {
