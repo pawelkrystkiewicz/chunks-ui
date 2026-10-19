@@ -1,10 +1,11 @@
+import { Toast as BaseToast } from "@base-ui/react/toast";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { expectOnlyFocusGuardsUndecided, undecided } from "../../AxeTest.utils";
 import { FOCUS_RING } from "../shared";
-import { createToastManager, Toast, type ToastCloseProps } from "./Toast";
+import { createToastManager, Toast, type ToastCloseProps, type ToastRootProps } from "./Toast";
 import { DEFAULT_TOAST_LABELS } from "./Toast.Labels";
 
 afterEach(cleanup);
@@ -375,11 +376,13 @@ describe("Toast", () => {
     expect(undecided(results, "aria-hidden-focus")).toHaveLength(guards.length);
   });
 
-  // Base UI 1.9 keeps a high-priority toast aria-hidden but in the tab order while keyboard focus
-  // is outside the viewport; the note under Props in toast.mdx says so. If a Base UI upgrade
-  // fails this test, update the note. Alone on purpose: next to a toast of the default `low`
-  // priority (a role="dialog", which axe takes for an open modal) it lands in `incomplete`
-  it("reports aria-hidden-focus on a lone high-priority toast", async () => {
+  // Base UI 1.9 keeps a high-priority toast aria-hidden while keyboard focus is outside the
+  // viewport, but in the tab order (mui/base-ui#5659). Toast.Root, Toast.Close and Toast.Action
+  // take themselves out of it for that time (#685); the note under Props in toast.mdx says so.
+  // Alone on purpose: next to a toast of the default `low` priority (a role="dialog", which axe
+  // takes for an open modal) a stray tab stop lands in `incomplete`
+  it("keeps a lone high-priority toast and its buttons out of the tab order while aria-hidden", async () => {
+    const user = userEvent.setup();
     const manager = createToastManager();
     const { container } = render(
       <Toast.Provider toastManager={manager}>
@@ -387,16 +390,27 @@ describe("Toast", () => {
       </Toast.Provider>,
     );
     act(() => {
-      manager.add({ title: "Connection lost", priority: "high" });
+      manager.add({
+        title: "Connection lost",
+        priority: "high",
+        dismissible: true,
+        actionProps: { children: "Retry now" },
+      });
     });
     // aria-hidden, so only a query with `hidden` finds it
     const toast = await screen.findByRole("alertdialog", { hidden: true });
+    const action = screen.getByRole("button", { name: "Retry now", hidden: true });
+    const close = screen.getByLabelText(DEFAULT_TOAST_LABELS.close, { selector: "button" });
     expect(toast).toHaveAttribute("aria-hidden", "true");
+    expect([toast, action, close].map((el) => el.tabIndex)).toEqual([-1, -1, -1]);
     const results = await axe(container);
-    expect(results.violations.map((rule) => rule.id)).toEqual(["aria-hidden-focus"]);
-    expect(results.violations[0]?.nodes.map((node) => node.html)).toEqual([
-      expect.stringContaining('role="alertdialog"'),
-    ]);
+    expect(results).toHaveNoViolations();
+    expect(undecided(results, "aria-hidden-focus")).toEqual([]);
+
+    // F6 moves focus into the viewport: Base UI shows the toast, and its tab stops come back
+    await user.keyboard("{F6}");
+    expect(toast).not.toHaveAttribute("aria-hidden");
+    expect([toast, action, close].map((el) => el.tabIndex)).toEqual([0, 0, 0]);
   });
 });
 
@@ -616,4 +630,54 @@ describe("Toast closeProps", () => {
     });
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+});
+
+// Toast.Root renders its element in a render function of its own, to read Base UI's aria-hidden
+// (#685). A `render` you pass still replaces the element, with Base UI's props, state and ref.
+describe("Toast.Root render", () => {
+  it.each<{ kind: string; renderProp: ToastRootProps["render"]; marker: string }>([
+    // Keeps its own props
+    { kind: "an element", renderProp: <section data-marker="element" />, marker: "element" },
+    // Gets the root's state too
+    {
+      kind: "a function",
+      renderProp: (props, state) => (
+        <section {...props} data-marker={state.expanded ? "expanded" : "collapsed"} />
+      ),
+      marker: "collapsed",
+    },
+  ])("renders the root through $kind", async ({ renderProp, marker }) => {
+    const user = userEvent.setup();
+    const manager = createToastManager();
+    render(
+      <Toast.Provider toastManager={manager}>
+        <BaseToast.Viewport>
+          <Roots render={renderProp} />
+        </BaseToast.Viewport>
+      </Toast.Provider>,
+    );
+    act(() => {
+      manager.add({ title: "Connection lost", priority: "high" });
+    });
+    // aria-hidden, so only a query with `hidden` finds it
+    const toast = await screen.findByRole("alertdialog", { hidden: true });
+    expect(toast.tagName).toBe("SECTION");
+    expect(toast).toHaveClass("Toast");
+    expect(toast).toHaveAttribute("data-marker", marker);
+    expect(toast).toHaveAttribute("tabindex", "-1");
+    // Escape closes the toast only when Base UI's ref finds focus inside it
+    toast.focus();
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("alertdialog", { hidden: true })).toBeNull();
+  });
+
+  function Roots({ render: renderProp }: { render: ToastRootProps["render"] }) {
+    return (
+      <>
+        {Toast.useToast().toasts.map((toast) => (
+          <Toast.Root key={toast.id} toast={toast} render={renderProp} />
+        ))}
+      </>
+    );
+  }
 });

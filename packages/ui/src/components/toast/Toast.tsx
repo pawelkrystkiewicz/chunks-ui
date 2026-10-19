@@ -1,7 +1,9 @@
 "use client";
 
 import { Toast as BaseToast } from "@base-ui/react/toast";
-import type { ComponentProps, ComponentType } from "react";
+import type { HTMLProps } from "@base-ui/react/types";
+import { useRender } from "@base-ui/react/use-render";
+import { type ComponentProps, type ComponentType, createContext, useContext } from "react";
 import { cn, cnState } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
 import { useReducedMotion } from "../../lib/use-motion";
@@ -137,7 +139,15 @@ function ToastViewport({ className, labels, ...props }: ToastViewportProps) {
   );
 }
 
-function ToastRoot({ className, toast, ...props }: ToastRootProps) {
+/**
+ * What Base UI aria-hides in a toast while leaving it in the tab order: the whole toast (high
+ * priority, until keyboard focus enters the viewport), its close button alone (while the toasts
+ * are collapsed), or nothing. Base UI also shows that button while it has focus; its tab stop
+ * makes no difference then.
+ */
+const ToastHiddenContext = createContext<"toast" | "close" | null>(null);
+
+function ToastRoot({ className, toast, render, ...props }: ToastRootProps) {
   const reduced = useReducedMotion();
   return (
     <BaseToast.Root
@@ -168,7 +178,34 @@ function ToastRoot({ className, toast, ...props }: ToastRootProps) {
         className,
       )}
       {...props}
+      render={(rootProps, state) => (
+        <ToastRootElement {...rootProps} state={state} render={render} />
+      )}
     />
+  );
+}
+
+// ponytail: mui/base-ui#5659. Base UI 1.9 aria-hides a high-priority toast and a collapsed toast's
+// close button but leaves them in the tab order. No state or data attribute carries the toast's
+// aria-hidden, so the root reads it from Base UI's render props, and the root, Toast.Close and
+// Toast.Action leave the tab order while hidden. Goes once Base UI stops making hidden toasts
+// focusable. A focusable element of yours inside the toast keeps its tab stop.
+function ToastRootElement({
+  state,
+  render,
+  ref,
+  ...props
+}: HTMLProps & { state: BaseToast.Root.State; render: ToastRootProps["render"] }) {
+  const hidden = props["aria-hidden"] === true;
+  const element = useRender({
+    render: typeof render === "function" ? (renderProps) => render(renderProps, state) : render,
+    ref,
+    props: hidden ? { ...props, tabIndex: -1 } : props,
+  });
+  return (
+    <ToastHiddenContext.Provider value={hidden ? "toast" : state.expanded ? null : "close"}>
+      {element}
+    </ToastHiddenContext.Provider>
   );
 }
 
@@ -193,6 +230,7 @@ function ToastDescription({ className, ...props }: ToastDescriptionProps) {
 // An icon button: it keeps its aria-label whatever its content. Children replace the X; with
 // `render` and no children, there is no X: the render element draws its own (#581).
 function ToastClose({ className, children, ...props }: ToastCloseProps) {
+  const hidden = useContext(ToastHiddenContext) !== null;
   return (
     <BaseToast.Close
       aria-label={DEFAULT_TOAST_LABELS.close}
@@ -203,6 +241,9 @@ function ToastClose({ className, children, ...props }: ToastCloseProps) {
         className,
       )}
       {...props}
+      // Only while hidden: `tabIndex: undefined` would also override Base UI's `tabIndex: 0`, and
+      // take a `render` element that is not a button out of the tab order
+      {...(hidden && { tabIndex: -1 })}
     >
       {children == null && !props.render ? <CloseIcon className="size-3.5" /> : children}
     </BaseToast.Close>
@@ -210,6 +251,7 @@ function ToastClose({ className, children, ...props }: ToastCloseProps) {
 }
 
 function ToastAction({ className, ...props }: ToastActionProps) {
+  const hidden = useContext(ToastHiddenContext) === "toast";
   return (
     <BaseToast.Action
       className={cnState(
@@ -219,6 +261,7 @@ function ToastAction({ className, ...props }: ToastActionProps) {
         className,
       )}
       {...props}
+      {...(hidden && { tabIndex: -1 })}
     />
   );
 }

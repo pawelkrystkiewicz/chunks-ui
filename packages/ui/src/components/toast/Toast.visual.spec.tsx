@@ -95,11 +95,13 @@ describe("Toast", () => {
   // Base UI 1.9 drops a high-priority toast's aria-hidden only on F6, or when focus in the
   // viewport is :focus-visible (handleGlobalKeyDown and handleFocus in ToastViewport.js). A mouse
   // click focuses the root without :focus-visible, so the root keeps aria-hidden while it has
-  // focus. The jsdom spec can't show this: Base UI takes every focus there for :focus-visible.
-  // A failure of the aria-hidden or axe check means Base UI changed this (a fix for
-  // mui/base-ui#5659, say): update this row and the high-priority note under Props in
+  // focus. Toast.Root keeps it out of the tab order all that time (#685), so axe passes it. The
+  // jsdom spec can't show this: Base UI takes every focus there for :focus-visible. A failure of
+  // the aria-hidden check means Base UI changed this (a fix for mui/base-ui#5659, say): update
+  // this row, the ponytail comment in Toast.tsx and the high-priority note under Props in
   // apps/docs/content/components/toast.mdx. Alone on purpose, as in the jsdom spec: next to a
-  // `low` toast (a role="dialog", which axe takes for an open modal) axe lists it as `incomplete`
+  // `low` toast (a role="dialog", which axe takes for an open modal) axe would list a tab stop
+  // left in the toast as `incomplete`, which this check doesn't read
   it("keeps a high-priority toast aria-hidden when a click focuses it", async () => {
     const { container } = render(
       <Toast.Provider>
@@ -119,11 +121,9 @@ describe("Toast", () => {
     // A frame later, so a change that unhides the root a tick or a frame after focus still fails
     await new Promise((resolve) => requestAnimationFrame(resolve));
     expect(toast).toHaveAttribute("aria-hidden", "true");
+    expect(toast).toHaveAttribute("tabindex", "-1");
     const results = await axe.run(container, { runOnly: ["aria-hidden-focus"] });
-    expect(results.violations.map((rule) => rule.id)).toEqual(["aria-hidden-focus"]);
-    expect(results.violations[0]?.nodes.map((node) => node.html)).toEqual([
-      expect.stringContaining('role="alertdialog"'),
-    ]);
+    expect(results.violations).toEqual([]);
   });
 });
 
