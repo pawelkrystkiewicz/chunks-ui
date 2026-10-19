@@ -228,15 +228,12 @@ function TabsIndicatorElement({
     const list = indicator?.closest('[role="tablist"]');
     if (!indicator || !list) return;
     let stops: (() => void)[] = [];
-    // The list's own tabs: not those of a Tabs list inside one of them, which that list's
-    // indicator observes
+    // not the tabs of a nested Tabs list
     let ownTabs: Element[] = [];
     // A new observation's first notification measures every tab: this catches tabs that mount
     // or remount
     const observeTabs = () => {
       for (const stop of stops) stop();
-      // Scanned once per observation: the set only changes through a node added or removed
-      // outside a tab, which observes again
       ownTabs = Array.from(list.querySelectorAll('[role="tab"]')).filter(
         (tab) => tab.closest('[role="tablist"]') === list,
       );
@@ -264,7 +261,8 @@ function TabsIndicatorElement({
           ? !indicator.contains(target) &&
             !insideTab(target) &&
             (holdsNonIndicator(addedNodes) || holdsNonIndicator(removedNodes))
-          : !indicator.contains(target) && holdsTab(target),
+          : // short-circuit: the indicator's own style writes are most records
+            !indicator.contains(target) && holdsTab(target),
       );
       if (outside.length === 0) return;
       if (outside.some((record) => record.type === "childList")) observeTabs();

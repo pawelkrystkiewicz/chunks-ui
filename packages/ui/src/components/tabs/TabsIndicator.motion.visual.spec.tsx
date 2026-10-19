@@ -45,6 +45,8 @@ type Layout = {
    * many px
    */
   nestedWidth?: number;
+  /** The selected tab of the nested list */
+  nestedValue?: "x" | "y";
   /** A second indicator in the list */
   extraIndicator?: boolean;
 };
@@ -60,6 +62,7 @@ const tabs = ({
   disabled,
   badge,
   nestedWidth,
+  nestedValue = "x",
   extraIndicator,
 }: Layout = {}) => (
   <div style={{ width }}>
@@ -78,7 +81,7 @@ const tabs = ({
           Alpha
           {badge && <span data-testid="badge" style={{ display: "inline-block", width: 4 }} />}
           {nestedWidth !== undefined && (
-            <Tabs.Root defaultValue="x">
+            <Tabs.Root value={nestedValue}>
               <Tabs.List style={{ position: "absolute", top: 0, left: 0 }}>
                 <Tabs.Tab
                   value="x"
@@ -87,6 +90,7 @@ const tabs = ({
                 >
                   X
                 </Tabs.Tab>
+                <Tabs.Tab value="y">Y</Tabs.Tab>
               </Tabs.List>
             </Tabs.Root>
           )}
@@ -260,7 +264,7 @@ describe.each(MOTION_PATHS)("Tabs.Indicator, $path", ({ withMotion }) => {
   });
 
   // The tabs of a list nested inside a tab are that list's own: resizing one costs the outer
-  // indicator nothing. The inner list has no indicator, so only the outer one could measure.
+  // indicator nothing.
   it("does not observe the tabs of a list nested inside a tab", async () => {
     const { getByTestId, rerender } = await renderTabs(withMotion, { ...FIXED, nestedWidth: 50 });
     const batches = resizeBatches.count;
@@ -270,12 +274,20 @@ describe.each(MOTION_PATHS)("Tabs.Indicator, $path", ({ withMotion }) => {
     expect(resizeBatches.count).toBe(batches);
   });
 
+  // Nor does selecting another tab of that list, which sets aria-selected and classes on its tabs
+  it("does not measure again for a selection in a list nested inside a tab", async () => {
+    const { rerender } = await renderTabs(withMotion, { ...FIXED, nestedWidth: 50 });
+    const batches = resizeBatches.count;
+    rerender(tabs({ ...FIXED, nestedWidth: 50, nestedValue: "y" }));
+    await eachPaintedFrame(() => 0, 3);
+    expect(resizeBatches.count).toBe(batches);
+  });
+
   // Another indicator in the list mounts and unmounts beside the tabs: not a tab, so the tabs
   // are not observed again, which would measure each once
   it("does not observe the tabs again when an indicator mounts or unmounts", async () => {
     await enterMotionPath(withMotion);
-    // The mount is a state set outside act, so the first indicator's MutationObserver runs before
-    // the extra indicator's effects, as in an app. The unmount is a rerender, in act.
+    // The mount is state set outside act, as in an app; the unmount is a rerender
     let setExtra: (extra: boolean) => void = () => {};
     const Harness = ({ forced }: { forced?: boolean }) => {
       const [extra, set] = useState(false);
