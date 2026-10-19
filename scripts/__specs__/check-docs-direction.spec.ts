@@ -108,13 +108,68 @@ describe("physicalTokens", () => {
       ],
     ],
     [
+      "a physical perspective origin, mask position and radial mask position, a corner too, behind a variant too",
+      "perspective-origin-left perspective-origin-top-right mask-right mask-bottom-left mask-radial-at-left mask-radial-at-top-right md:perspective-origin-bottom-left hover:mask-top-right!",
+      [
+        "perspective-origin-left",
+        "perspective-origin-top-right",
+        "mask-right",
+        "mask-bottom-left",
+        "mask-radial-at-left",
+        "mask-radial-at-top-right",
+        "perspective-origin-bottom-left",
+        "mask-top-right",
+      ],
+    ],
+    [
+      "a physical side mask with a number, a percentage, a colour, an arbitrary value or a variable, behind a variant too, without its / modifier",
+      "mask-l-from-0 mask-r-to-50% mask-l-to-0.5 mask-r-from-red-500 mask-l-from-primary/50 mask-r-to-[10px] mask-l-from-(--x) md:mask-r-from-20%",
+      [
+        "mask-l-from-0",
+        "mask-r-to-50%",
+        "mask-l-to-0.5",
+        "mask-r-from-red-500",
+        "mask-l-from-primary",
+        "mask-r-to-[10px]",
+        "mask-l-from-(--x)",
+        "mask-r-from-20%",
+      ],
+    ],
+    [
+      "a physical gradient direction, by its v3 name too, behind a variant too, without its / modifier",
+      "bg-linear-to-l bg-linear-to-tr bg-linear-to-bl/oklch bg-gradient-to-r bg-gradient-to-br dark:bg-linear-to-r",
+      [
+        "bg-linear-to-l",
+        "bg-linear-to-tr",
+        "bg-linear-to-bl",
+        "bg-gradient-to-r",
+        "bg-gradient-to-br",
+        "bg-linear-to-r",
+      ],
+    ],
+    [
+      "nothing behind an rtl: or ltr: variant, anywhere in its chain, but the unprefixed twin",
+      "object-left rtl:object-right ltr:ml-4 md:rtl:origin-left rtl:md:hover:bg-right [&>img]:ltr:left-0 rtl:[&>img]:pl-2 rtl:mr-2! group-hover:ltr:mask-l-from-50% rtl:!-ml-2 [&:is(.a,.b)]:rtl:pl-2",
+      ["object-left"],
+    ],
+    [
+      "a class whose rtl: is not its own variant: on another class, in a longer variant, in prose, before a brace",
+      "rtl:x ml-4 data-rtl:ml-4 group-rtl:ml-4 in-rtl:ml-4 'rtl:' pr-2 rtl: pl-2 {,rtl:}mr-4",
+      ["ml-4", "ml-4", "ml-4", "ml-4", "pr-2", "pl-2", "mr-4"],
+    ],
+    [
       "nothing for the logical classes and the look-alikes",
-      "ms-4 pe-2 start-0 -end-2 text-start rounded-s-lg rounded-ee-sm border-e-2 inset-x-0 rounded-lg border-left translate-x-2 float-none clear-both scroll-ms-4 scroll-mx-2 overfloat-left",
+      "ms-4 pe-2 start-0 -end-2 text-start rounded-s-lg rounded-ee-sm border-e-2 inset-x-0 rounded-lg border-left translate-x-2 float-none clear-both scroll-ms-4 scroll-mx-2 overfloat-left space-x-4 space-x-reverse divide-x divide-x-reverse",
       [],
     ],
     [
       "nothing for the other positions and the forms Tailwind does not generate",
       "object-cover object-top object-center object-[25%_75%] bg-top bg-center bg-cover bg-left-4 origin-top origin-center origin-[33%_75%] origin-left-top -origin-left -object-left -bg-right",
+      [],
+    ],
+    [
+      "nothing for the vertical and two-sided masks and gradients, and the forms Tailwind does not generate",
+      "perspective-origin-top perspective-origin-center mask-top mask-center mask-radial-at-bottom mask-x-from-10% mask-t-to-0 bg-linear-to-t bg-gradient-to-b perspective-origin-left-top -perspective-origin-left mask-left-top -mask-left mask-l mask-r-from -mask-l-from-2 -bg-linear-to-l bg-linear-to-left mask-s-from-0 bg-linear-to-e",
       [],
     ],
     [
@@ -129,6 +184,23 @@ describe("physicalTokens", () => {
     ],
   ])("finds %s", (_name, line, expected) => {
     expect(physicalTokens(line)).toEqual(expected);
+  });
+
+  // Each delimiter alone, with a variant on the second class: a chain that ran on past the delimiter
+  // would reach that class and exempt it. The delimiter before rtl: too: a guard that took it for
+  // part of a word would flag the first class.
+  it.each([" ", '"', "'", "`", "{", "}", ",", ";", "|"])(
+    "ends an rtl: chain at %j, so a variant after it does not reach the next class",
+    (delimiter) => {
+      expect(physicalTokens(`${delimiter}rtl:pl-2${delimiter}md:ml-4`)).toEqual(["ml-4"]);
+    },
+  );
+
+  // The cap keeps the lookbehind from rescanning a long line without a delimiter at every colon.
+  it("reads an rtl: chain of 100 characters before a class, and flags the class behind a longer one", () => {
+    const behind = (chain: number) => `rtl:${"x".repeat(chain)}:ml-4`;
+    expect(physicalTokens(behind(100))).toEqual([]);
+    expect(physicalTokens(behind(101))).toEqual(["ml-4"]);
   });
 });
 
@@ -271,6 +343,24 @@ describe("checkDocsDirection", () => {
       [],
     ],
     [
+      "counts a run of // lines directly above as one comment, indented, the marker on its middle line",
+      [
+        "  // the tiles compose one drawing",
+        "  // direction: physical, in the middle of the run",
+        "  // and keep their arrangement in RTL",
+        '  const A = "left-3";',
+        "// direction: physical, a blank line cuts this run off",
+        "",
+        "// the run above B",
+        'const B = "left-0";',
+        "const C = 1; // direction: physical, after code",
+        "// the run above D",
+        'const D = "left-1";',
+      ],
+      {},
+      ["8: left-0", "11: left-1"],
+    ],
+    [
       "needs a reason that starts with a word character",
       [
         "{/* direction: physical, */}",
@@ -301,6 +391,19 @@ describe("checkDocsDirection", () => {
       "apps/docs/new/deep/w.mdx:1: ml-4",
       "apps/docs/public/y.tsx:1: ml-4",
       "apps/docs/scripts/z.ts:1: ml-4",
+    ]);
+  });
+
+  it("scans the .js, .jsx and .md files too", async () => {
+    const dir = tree({
+      "apps/docs/app/a.js": 'export const A = "ml-4";\n',
+      "apps/docs/app/b.jsx": 'export const B = () => <div className="pr-2" />;\n',
+      "apps/docs/content/c.md": "# C\n\nAlign with `text-left`.\n",
+    });
+    expect(await checkDocsDirection(dir)).toEqual([
+      "apps/docs/app/a.js:1: ml-4",
+      "apps/docs/app/b.jsx:1: pr-2",
+      "apps/docs/content/c.md:3: text-left",
     ]);
   });
 
@@ -346,6 +449,109 @@ describe("checkDocsDirection", () => {
     ]);
   });
 
+  // [name, lines of apps/docs/app/x.css, expected "line: token" problems]
+  it.each<[string, string[], string[]]>([
+    [
+      "reads an @apply on its continuation lines, up to its ; or }",
+      [
+        ".a {",
+        "  @apply ms-2",
+        "    ml-4",
+        "    text-start;",
+        "}",
+        ".b { @apply pe-2",
+        "  pr-2 }",
+        ".left-0 { color: red; }",
+        ".c {",
+        "  @apply ms-1",
+        "    /* direction: physical, the arrow points at the clock */",
+        "    float-left;",
+        "}",
+      ],
+      ["3: ml-4", "7: pr-2"],
+    ],
+    [
+      "reads on past a comment in an @apply, a ; or } in it too, as Tailwind does",
+      [".a {", "  @apply ms-2", "    /* the gap; see #12 } */", "    ml-4;", "}"],
+      ["4: ml-4"],
+    ],
+    [
+      "reads the classes around a comment in an @apply that names others, and keeps their lines",
+      [
+        ".c {",
+        "  @apply ms-2 /* not ml-2,",
+        "    nor mr-2 */",
+        "    ml-4",
+        "    /* not pl-2 */ pr-4;",
+        "}",
+      ],
+      ["4: ml-4", "5: pr-4"],
+    ],
+    [
+      "reads an @apply on past a / in a class, such as w-1/2, and stops at its ;",
+      [
+        '.d { @apply w-1/2 ml-4; content: "mr-4"; }',
+        ".e {",
+        "  @apply h-1/2",
+        "    mr-2;",
+        '  content: "pl-4";',
+        "}",
+      ],
+      ["1: ml-4", "4: mr-2"],
+    ],
+    [
+      "reads the string of each @source inline, not of an @source not inline or an @source path",
+      [
+        '@source inline("ms-2 mr-4");',
+        "@source inline('rounded-l');",
+        '@source not inline("pl-2");',
+        '@source "./left-0";',
+        '@source inline("rtl:pr-2 pr-2");',
+      ],
+      ["1: mr-4", "2: rounded-l", "5: pr-2"],
+    ],
+    [
+      "reads a /* in an @source inline string as text, which is no comment there",
+      ['@source inline("/* ml-4 */ ms-2");'],
+      ["1: ml-4"],
+    ],
+    [
+      "does not read an @apply in a comment, or what follows it, and keeps the lines after it",
+      [
+        "/* we never @apply here:",
+        "   .right-0 is plain CSS */",
+        ".right-0 { right: 0; }",
+        ".a { @apply ml-4; }",
+      ],
+      ["4: ml-4"],
+    ],
+    [
+      "opens no comment at a /* in a string, such as a double or single-quoted @source glob",
+      [
+        '@source "../ui/src/*.tsx";',
+        "@source '../ui/src/*.tsx';",
+        ".a { @apply ml-4; }",
+        "/* a note */",
+        '.b::after { content: "/*"; }',
+        ".c { @apply mr-4; }",
+      ],
+      ["3: ml-4", "6: mr-4"],
+    ],
+    [
+      "ends no string at an escaped quote",
+      ['.a::after { content: "a\\"/*"; }', ".b { @apply ml-4; }", "/* a note */"],
+      ["2: ml-4"],
+    ],
+    [
+      "ends a string at the end of its line, so a stray apostrophe blanks nothing after it",
+      ["// it's a note", ".a { @apply ml-4; }", ".b::after { content: 'x'; }"],
+      ["2: ml-4"],
+    ],
+  ])("%s", async (_name, lines, expected) => {
+    const dir = tree({ "apps/docs/app/x.css": `${lines.join("\n")}\n` });
+    expect(await checkDocsDirection(dir)).toEqual(expected.map((p) => `apps/docs/app/x.css:${p}`));
+  });
+
   it("fails when apps/docs is missing, so an empty scan cannot pass", async () => {
     const dir = tree();
     rmSync(join(dir, "apps/docs"), { recursive: true });
@@ -353,16 +559,16 @@ describe("checkDocsDirection", () => {
   });
 
   it("fails when apps/docs holds no scanned file outside the skipped folders, so an empty scan cannot pass", async () => {
-    // .js and .md are not scanned, so a hit in them does not count as a scanned file
+    // .json and .txt are not scanned, so a hit in them does not count as a scanned file
     const dir = tree({
       "apps/docs/node_modules/x.ts": "export {};\n",
-      "apps/docs/x.js": 'export const X = "ml-4";\n',
-      "apps/docs/x.md": "`ml-4`\n",
+      "apps/docs/x.json": '{ "x": "ml-4" }\n',
+      "apps/docs/x.txt": "ml-4\n",
     });
     rmSync(join(dir, "apps/docs/seed.ts"));
     rmSync(join(dir, "apps/docs/seed.mdx"));
     expect(await checkDocsDirection(dir)).toEqual([
-      expect.stringMatching(/^apps\/docs: no \.ts, /),
+      expect.stringMatching(/^apps\/docs: no \.js, /),
     ]);
   });
 
