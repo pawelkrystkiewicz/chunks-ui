@@ -330,7 +330,7 @@ With the input inside the popup, as in [Trigger with Search](#trigger-with-searc
 
 Inside `Field.Root`, Base UI sets `aria-labelledby` on `Combobox.Trigger` to the field label. That label takes precedence over `aria-label`, so the default "Show options" name does not apply there.
 
-When `Combobox.Input` is outside the popup, Base UI hides everything but the popup, the input and live regions from assistive technology (`aria-hidden`) while the popup is open. That includes `Combobox.Clear`, `Combobox.Trigger` and, in a multi-select, the chips and their `Combobox.ChipRemove` buttons, so a screen reader user can reach them only after the popup closes.
+When `Combobox.Input` is outside the popup, Base UI hides everything but the popup, the input and elements with `aria-live` from assistive technology (`aria-hidden`) while the popup is open. That includes `Combobox.Clear`, `Combobox.Trigger` and, in a multi-select, the chips and their `Combobox.ChipRemove` buttons, so a screen reader user can reach them only after the popup closes.
 
 ## Touch Targets
 
