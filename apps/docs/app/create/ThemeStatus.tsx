@@ -1,6 +1,6 @@
 "use client";
 
-import { Collapsible, cn, Field, Select, ToggleGroup } from "chunks-ui";
+import { Collapsible, cn, Field, Select, Switch, ToggleGroup } from "chunks-ui";
 import { ChevronRight, ChevronsUpDown, Redo2, Undo2 } from "lucide-react";
 import {
   type KeyboardEvent,
@@ -443,8 +443,21 @@ export function ThemeStatus({
             . A smaller control can still pass AA through WCAG's spacing exception, when a 24px
             circle centred on it overlaps no other target, which this table can't measure. The{" "}
             <code className="font-mono text-[11.5px]">touch-target</code> class grows a control's
-            area to 44px. Sizes follow Control height and Spacing.
+            area to 44px without changing its size; Use touch targets adds it to every checkbox,
+            radio and switch, in the preview and in Get code. Where two of them sit closer than 44px
+            centre to centre, their areas overlap and a press there goes to the later one. Sizes
+            follow Control height and Spacing.
           </p>
+          {/* biome-ignore lint/a11y/noLabelWithoutControl: wraps Base UI Switch (button-based control) */}
+          <label className="flex items-center gap-2 self-start text-[12.5px]">
+            <Switch.Root
+              checked={!!theme.touchTargets}
+              onCheckedChange={(touchTargets) => onChange({ touchTargets })}
+            >
+              <Switch.Thumb />
+            </Switch.Root>
+            Use touch targets
+          </label>
           <SizeTable
             heads={["Control", "Size", "Target"]}
             rows={targets

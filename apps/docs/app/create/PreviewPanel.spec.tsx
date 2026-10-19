@@ -60,3 +60,19 @@ describe("while a colour editor is open", () => {
     await waitFor(() => expect(lit()).toEqual([]));
   });
 });
+
+describe("touch targets", () => {
+  it("give the preview's checkboxes, radios and switches touch-target, popups included", () => {
+    const { rerender } = render(<PreviewPanel theme={DEFAULT_THEME} onChange={vi.fn()} />);
+    // The scope and the popup layer on <body> both carry the theme's tokens
+    const scopes = () => [...document.querySelectorAll<HTMLElement>("[style*='--radius']")];
+    expect(scopes()).toHaveLength(2);
+    expect(scopes().some((el) => el.className.includes("touch-target"))).toBe(false);
+    rerender(<PreviewPanel theme={{ ...DEFAULT_THEME, touchTargets: true }} onChange={vi.fn()} />);
+    for (const el of scopes()) {
+      expect(el.className).toContain(
+        "[&_:is([role=checkbox],[role=radio],[role=switch])]:touch-target",
+      );
+    }
+  });
+});

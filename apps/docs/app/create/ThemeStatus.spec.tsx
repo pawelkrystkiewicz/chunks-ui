@@ -293,3 +293,17 @@ describe("the edited pair's cells", { timeout: 15_000 }, () => {
     expect(tints("Muted text", "Dark")).toEqual([null, null]);
   });
 });
+
+describe("Use touch targets", { timeout: 15_000 }, () => {
+  it("measures checkbox, radio and switch by touch-target's 44px area once on", () => {
+    render(<Harness />);
+    fireEvent.click(screen.getByRole("button", { name: /Accessibility/ }));
+    const size = (label: string) =>
+      screen.getByRole("rowheader", { name: label }).nextElementSibling?.textContent;
+    expect(size("Checkbox, radio")).toMatch(/^16px/);
+    fireEvent.click(screen.getByRole("switch", { name: "Use touch targets" }));
+    expect(size("Checkbox, radio")).toMatch(/^44px/);
+    expect(size("Switch")).toMatch(/^44px/);
+    expect(size("Slider thumb")).toMatch(/^16px/);
+  });
+});
