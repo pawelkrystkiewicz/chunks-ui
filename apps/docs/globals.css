@@ -63,11 +63,16 @@
   --x-color-nextra-bg: rgb(var(--nextra-bg));
 }
 
-/* The header search draws Nextra's focus ring, in its primary blue: about 2.5:1 on the hero in the
-   light theme. Both of the ring's colours take the --ring of the header's other controls. */
+/* The header search draws Nextra's focus ring, a box-shadow in its primary blue: about 2.5:1 on the
+   hero in the light theme. It takes the ring of the header's other controls instead (FOCUS_RING in
+   app/components/landing/focus.ts): a 2px --ring outline, 2px out, on :focus-visible. */
 .landing .nextra-search input {
-  --tw-ring-color: var(--ring);
-  --tw-ring-offset-color: var(--ring);
+  box-shadow: none;
+
+  &:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
 }
 
 /* The header search's results are portalled out of the dark hero but cover it: Nextra's 70% bg
