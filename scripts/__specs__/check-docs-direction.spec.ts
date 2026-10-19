@@ -608,14 +608,14 @@ describe("checkDocsDirection", () => {
       ["3: ml-4", "6: mr-4"],
     ],
     [
-      "ends no string at an escaped quote",
-      ['.a::after { content: "a\\"/*"; }', ".b { @apply ml-4; }", "/* a note */"],
-      ["2: ml-4"],
-    ],
-    [
-      "ends no single-quoted string at an escaped quote",
-      [".a::after { content: 'a\\'/*'; }", ".b { @apply ml-4; }", "/* a note */"],
-      ["2: ml-4"],
+      "ends no double or single-quoted string at an escaped quote",
+      [
+        '.a::after { content: "a\\"/*"; }',
+        ".b::after { content: 'a\\'/*'; }",
+        ".c { @apply ml-4; }",
+        "/* a note */",
+      ],
+      ["3: ml-4"],
     ],
     [
       "ends a string at the end of its line, so a stray apostrophe blanks nothing on the lines after it",

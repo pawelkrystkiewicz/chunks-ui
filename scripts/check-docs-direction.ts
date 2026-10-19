@@ -65,7 +65,7 @@ const CSS_COMMENT = /\/\*[\s\S]*?\*\//.source;
  */
 const STYLESHEET = new RegExp(
   [
-    `(@apply\\b(?:${STRING}|${CSS_COMMENT}|\\/(?!\\*)|[^;}/])*|${/@source\s+inline\(\s*(?:"[^"]*"|'[^']*')/.source})`,
+    `(@apply\\b(?:${STRING}|${CSS_COMMENT}|\\/(?!\\*)|[^;}/])*|@source\\s+inline\\(\\s*(?:"[^"]*"|'[^']*'))`,
     STRING,
     CSS_COMMENT,
     /[^\n]/.source,
@@ -107,15 +107,15 @@ function commentAbove(lines: string[], index: number): string {
   const above = lines[index - 1] ?? "";
   if (!/(?:\*\/\}?|-->)\s*$/.test(above)) return "";
   // The kind of comment that closes on the line above: the other kind's closer inside it ends nothing.
-  const html = /-->\s*$/.test(above);
+  const [open, close] = /-->\s*$/.test(above) ? [/^\s*<!--/, "-->"] : [/^\s*\{?\/\*/, "*/"];
   for (let start = index - 1; start >= 0; start--) {
     const text = lines[start] ?? "";
-    if (html ? /^\s*<!--/.test(text) : /^\s*\{?\/\*/.test(text)) {
+    if (open.test(text)) {
       const comment = lines.slice(start, index).join("\n");
       return COMMENT.test(comment) ? comment : "";
     }
     // The end of an earlier comment: the one above has no opener of its own.
-    if (start < index - 1 && text.includes(html ? "-->" : "*/")) return "";
+    if (start < index - 1 && text.includes(close)) return "";
   }
   return "";
 }
