@@ -1,5 +1,5 @@
 import { render } from "@testing-library/react";
-import { createRef, type ReactNode, useState } from "react";
+import { createRef, type ReactNode, useEffect, useState } from "react";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { commands, page, userEvent } from "vitest/browser";
 import {
@@ -344,6 +344,65 @@ describe("Popover onOpenChange as the popup closes", () => {
     checkTab();
     expect(document.activeElement).toBe(after);
     expect(onOpenChange.mock.calls).toEqual([[false, "escape-key"]]);
+  });
+
+  // A controlled parent keeps `open`; the popup opened by the user, then closed by a prop alone
+  function Controlled({ onOpenChange }: { onOpenChange: (open: boolean, reason: string) => void }) {
+    const [open, setOpen] = useState(false);
+    // The parent's own shortcut: a key is not an outside press
+    useEffect(() => {
+      const onKeyDown = (event: KeyboardEvent) => event.key === "F2" && setOpen(false);
+      document.addEventListener("keydown", onKeyDown);
+      return () => document.removeEventListener("keydown", onKeyDown);
+    }, []);
+    return (
+      <div style={{ padding: 40 }}>
+        <Popover.Root
+          open={open}
+          onOpenChange={(next, details) => {
+            onOpenChange(next, details.reason);
+            setOpen(next);
+          }}
+        >
+          <Popover.Trigger>Settings</Popover.Trigger>
+          <Popover.Content data-testid="popup">
+            <input aria-label="Name" />
+          </Popover.Content>
+        </Popover.Root>
+        <input aria-label="After" />
+      </div>
+    );
+  }
+
+  const openControlledPopover = async () => {
+    const onOpenChange = vi.fn();
+    const view = render(<Controlled onOpenChange={onOpenChange} />);
+    await userEvent.click(view.getByRole("button", { name: "Settings" }));
+    const popup = await view.findByTestId("popup");
+    await settled(popup);
+    return { view, popup, onOpenChange, after: view.getByRole("textbox", { name: "After" }) };
+  };
+
+  it("reports a controlled close by Escape once, though a Tab moves focus on from the trigger during the exit", async () => {
+    const { popup, onOpenChange, after } = await openControlledPopover();
+    onOpenChange.mockClear();
+    const checkTab = recordTabDuringExit(popup, { reduce: false });
+    await userEvent.keyboard("{Escape}{Tab}");
+    await exited(popup);
+    checkTab();
+    expect(document.activeElement).toBe(after);
+    expect(onOpenChange.mock.calls).toEqual([[false, "escape-key"]]);
+  });
+
+  it("reports no close when the parent closes a controlled popover by its prop and a Tab leaves the trigger during the exit", async () => {
+    const { popup, onOpenChange, after } = await openControlledPopover();
+    onOpenChange.mockClear();
+    const checkTab = recordTabDuringExit(popup, { reduce: false });
+    await userEvent.keyboard("{F2}{Tab}");
+    await exited(popup);
+    checkTab();
+    expect(document.activeElement).toBe(after);
+    expect(onOpenChange.mock.calls).toEqual([]);
   });
 
   it("reports a close that follows a reopen", async () => {

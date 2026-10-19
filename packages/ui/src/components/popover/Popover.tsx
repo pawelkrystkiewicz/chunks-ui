@@ -1,7 +1,7 @@
 "use client";
 
 import { Popover as BasePopover } from "@base-ui/react/popover";
-import { type ComponentProps, createContext, useContext, useRef } from "react";
+import { type ComponentProps, createContext, useContext, useLayoutEffect, useRef } from "react";
 import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { arrowClasses, arrowPopupClasses } from "../../lib/popup-arrow";
@@ -63,6 +63,10 @@ function PopoverRoot<Payload>({ onOpenChange, ...props }: BasePopover.Root.Props
   // open if `open` says so or the last change not cancelled did: a controlled parent may not have
   // re-rendered yet when an open and a close come in one batch.
   const lastOpen = useRef(props.open ?? props.defaultOpen ?? false);
+  // A controlled parent also changes `open` by the prop alone, which reports nothing.
+  useLayoutEffect(() => {
+    if (props.open !== undefined) lastOpen.current = props.open;
+  });
   const reportOpenChange: typeof handleOpenChange = (open, details) => {
     if (!open && !(props.open || lastOpen.current)) return;
     handleOpenChange(open, details);
