@@ -16,7 +16,9 @@ import { Tooltip } from "./components/tooltip";
 import {
   emulateReducedMotion,
   enterMotionPath,
+  exited,
   insetsWithin,
+  isShown,
   outlineTransitions,
   ringColor,
   waitForStable,
@@ -478,7 +480,7 @@ describe("Combobox focus as its popup closes, in WebKit", () => {
     const { popup } = await openInPopup();
     await userEvent.click(screen.getByRole("option", { name: "Banana" }));
     await userEvent.keyboard("{Tab}");
-    await expect.poll(() => popup.isConnected).toBe(false);
+    await exited(popup);
     expect(document.activeElement).toBe(screen.getByRole("textbox", { name: "Next field" }));
   });
 });
@@ -526,7 +528,7 @@ describe("Select and Popover focus as the popup closes, in WebKit", () => {
     const next = screen.getByRole("textbox", { name: "Next field" });
     expect(document.activeElement).toBe(next);
     // Base UI keeps the popup mounted, hidden, while the trigger has focus
-    await expect.poll(() => popup.checkVisibility()).toBe(false);
+    await exited(popup, { stillClosing: isShown });
     expect(document.activeElement).toBe(next);
   });
 
@@ -552,7 +554,7 @@ describe("Select and Popover focus as the popup closes, in WebKit", () => {
     await userEvent.keyboard("{Tab}");
     const next = screen.getByRole("textbox", { name: "Next field" });
     expect(document.activeElement).toBe(next);
-    await expect.poll(() => popup.isConnected).toBe(false);
+    await exited(popup);
     expect(document.activeElement).toBe(next);
   });
 });

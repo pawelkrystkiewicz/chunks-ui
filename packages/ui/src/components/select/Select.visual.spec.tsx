@@ -4,18 +4,23 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import {
   contentSpan,
+  describeExitPaths,
   describePopupCssPath,
   emulateReducedMotion,
   enterMotionPath,
+  exited,
   expectNotAllowed,
   focusVisible,
   framesOf,
   inlineSpan,
   insetsWithin,
+  isShown,
   MOTION_PATHS,
+  recordTabDuringExit,
   renderFixture,
   renderPage,
   settled,
+  tookFocus,
 } from "../../VisualTest.utils";
 import { FIELD_TEXT_SIZE } from "../shared";
 import { Select } from "./index";
@@ -300,18 +305,7 @@ describe("Select.Popup below its trigger, Motion", () => {
 // Base UI returns focus to the trigger only at the unmount, after the exit: a Tab during it went
 // to a focus guard in the closing popup, then <body> (#633). The exit is about 0.5s with Motion,
 // 0.3s on the CSS path, and a frame with reduced motion.
-describe.each([
-  { path: "Motion", withMotion: true, reduce: false },
-  { path: "CSS fallback", withMotion: false, reduce: false },
-  { path: "reduced motion", withMotion: true, reduce: true },
-])("Select focus as the popup closes, $path", ({ withMotion, reduce }) => {
-  beforeAll(() => enterMotionPath(withMotion));
-  beforeEach(() => emulateReducedMotion(reduce));
-  afterAll(async () => {
-    await emulateReducedMotion(true);
-    await enterMotionPath(true);
-  });
-
+describeExitPaths("Select focus as the popup closes", (reduce) => {
   // Text fields around the trigger, as WebKit's Tab and click skip buttons
   const fixture = ({
     alignItemWithTrigger,
@@ -367,32 +361,6 @@ describe.each([
     };
   };
 
-  // A Tab after the exit passes without the fix; skipped for reduced motion's one frame. Base UI
-  // keeps the popup mounted after the exit, hidden: shown means still leaving.
-  const recordTab = (popup: HTMLElement) => {
-    let shown: boolean | undefined;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Tab") shown = popup.checkVisibility();
-    };
-    document.addEventListener("keydown", onKeyDown, true);
-    return () => {
-      document.removeEventListener("keydown", onKeyDown, true);
-      if (!reduce) expect(shown, "the popup was still closing when Tab went down").toBe(true);
-    };
-  };
-
-  /** Whether `el` has taken focus since the call */
-  const tookFocus = (el: HTMLElement) => {
-    let focused = false;
-    el.addEventListener("focus", () => {
-      focused = true;
-    });
-    return () => focused;
-  };
-
-  // The exit is over: Base UI keeps the popup mounted, hidden, while the trigger has focus
-  const exited = (popup: HTMLElement) => expect.poll(() => popup.checkVisibility()).toBe(false);
-
   // Enter and Tab go in one call: with reduced motion the popup leaves a frame after the pick
   it.each([
     { alignment: "aligned with its trigger", alignItemWithTrigger: undefined },
@@ -402,11 +370,11 @@ describe.each([
     async ({ alignItemWithTrigger }) => {
       const { popup, after } = await open({ alignItemWithTrigger });
       await userEvent.keyboard("{ArrowDown}");
-      const checkTab = recordTab(popup);
+      const checkTab = recordTabDuringExit(popup, { reduce, stillClosing: isShown });
       await userEvent.keyboard("{Enter}{Tab}");
       checkTab();
       expect(document.activeElement).toBe(after);
-      await exited(popup);
+      await exited(popup, { stillClosing: isShown });
       expect(document.activeElement).toBe(after);
     },
   );
@@ -416,12 +384,12 @@ describe.each([
     "moves a Tab pressed during the exit past the trigger, after a pick by click",
     async () => {
       const { popup, after } = await open();
-      const checkTab = recordTab(popup);
+      const checkTab = recordTabDuringExit(popup, { reduce, stillClosing: isShown });
       await userEvent.click(page.getByRole("option", { name: "Cherry" }));
       await userEvent.keyboard("{Tab}");
       checkTab();
       expect(document.activeElement).toBe(after);
-      await exited(popup);
+      await exited(popup, { stillClosing: isShown });
       expect(document.activeElement).toBe(after);
     },
   );
@@ -431,7 +399,7 @@ describe.each([
     const { popup, trigger } = await open();
     await userEvent.keyboard("{Escape}");
     expect(document.activeElement).toBe(trigger);
-    await exited(popup);
+    await exited(popup, { stillClosing: isShown });
     expect(document.activeElement).toBe(trigger);
   });
 
@@ -443,7 +411,7 @@ describe.each([
     await userEvent.click(before);
     expect(triggerFocused(), "the trigger took focus on the way").toBe(false);
     expect(document.activeElement).toBe(before);
-    await exited(popup);
+    await exited(popup, { stillClosing: isShown });
     expect(document.activeElement).toBe(before);
   });
 
@@ -452,7 +420,7 @@ describe.each([
     const { popup, trigger, before } = await open({ finalFocusBefore: true });
     const triggerFocused = tookFocus(trigger);
     await userEvent.keyboard("{Escape}");
-    await exited(popup);
+    await exited(popup, { stillClosing: isShown });
     expect(triggerFocused(), "the trigger took focus").toBe(false);
     expect(document.activeElement).toBe(before);
   });
