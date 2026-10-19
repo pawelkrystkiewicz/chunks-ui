@@ -148,7 +148,7 @@ if (import.meta.main) {
   for (const problem of problems) console.error(problem);
   if (problems.length > 0) {
     console.error(
-      `\n${problems.length} physical direction ${problems.length === 1 ? "class" : "classes"} in the docs. Use the logical class (ms-/me-, ps-/pe-, start-/end-, text-start/text-end, rounded-s-/rounded-e-/rounded-ss-…, border-s-/border-e-) so the page mirrors in RTL, or mark a deliberate one with \`direction: physical, <reason>\` in a comment on its line or directly above it. Positions (object-, bg-, origin-, perspective-origin-, mask-, mask-radial-at-), side masks (mask-l-, mask-r-) and gradient directions (bg-linear-to-, bg-gradient-to-) have no logical class: set one for each direction (ltr:object-left rtl:object-right), which needs no marker.`,
+      `\n${problems.length} physical direction ${problems.length === 1 ? "class" : "classes"} in the docs. Use the logical class (ms-/me-, ps-/pe-, start-/end-, text-start/text-end, rounded-s-/rounded-e-/rounded-ss-…, border-s-/border-e-) so the page mirrors in RTL, or mark a deliberate one with \`direction: physical, <reason>\` in a comment on its line or directly above it. Positions (object-, bg-, origin-, perspective-origin-, mask-, mask-radial-at-), side masks (mask-l-, mask-r-) and gradient directions (bg-linear-to-, bg-gradient-to-) have no logical class: set one for each direction (ltr:object-left rtl:object-right), which needs no marker. Tailwind's rtl: also matches inside an LTR section of an RTL page ([dir="rtl"] *), so the pair is right only where the direction is set once on <html>, as in the docs.`,
     );
     process.exit(1);
   }
