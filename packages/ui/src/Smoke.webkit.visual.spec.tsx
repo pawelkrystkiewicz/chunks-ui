@@ -29,10 +29,12 @@ import {
 } from "./VisualTest.utils";
 
 /*
- * WebKit smoke set (vitest.webkit.config.ts): geometry and paint checks, no screenshot
- * baselines. "Painted" is read from a screenshot: the pixels in an element's box that change
- * when the element is hidden. 0 means WebKit laid the element out but painted none of it in its
- * box.
+ * WebKit smoke set (vitest.webkit.config.ts), no screenshot baselines. This file holds geometry,
+ * paint and focus-ring checks, focus and pick-count rows for popups that close, and the time-zone
+ * canary. The project also runs Input.webkit.visual.spec.tsx (paint) and
+ * ToastTabOrder.webkit.visual.spec.tsx (tab order and axe). "Painted" is read from a screenshot:
+ * the pixels in an element's box that change when the element is hidden. 0 means WebKit laid the
+ * element out but painted none of it in its box.
  */
 
 /** Waits until `el` stops moving, resizing and fading */

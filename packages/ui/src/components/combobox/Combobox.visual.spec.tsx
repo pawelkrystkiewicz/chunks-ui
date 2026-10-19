@@ -739,6 +739,11 @@ describeExitPaths("Combobox with the input in the popup, closing", (reduce) => {
     const { popup, trigger, before } = await openInPopup({ finalFocusBefore: true });
     const triggerFocused = tookFocus(trigger);
     await userEvent.click(page.getByRole("option", { name: "Vue" }));
+    // Not as the exit starts. Reduced motion's exit of a frame may be over by now.
+    if (!reduce) {
+      expect(popup.isConnected, "the popup is still closing").toBe(true);
+      expect(document.activeElement).not.toBe(before);
+    }
     await exited(popup);
     expect(triggerFocused(), "the trigger took focus").toBe(false);
     expect(document.activeElement).toBe(before);
