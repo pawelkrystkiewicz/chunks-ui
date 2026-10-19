@@ -188,6 +188,11 @@ describe("physicalTokens", () => {
       [],
     ],
     [
+      "nothing for the patterns left out on purpose: gradient angles, print page sides, touch-pan and resize cursors",
+      "bg-linear-45 -bg-linear-45 mask-linear-90 bg-conic-180 mask-conic-90 break-before-left break-before-right break-after-left break-after-right touch-pan-left touch-pan-right cursor-e-resize cursor-w-resize cursor-ne-resize cursor-nw-resize cursor-se-resize cursor-sw-resize",
+      [],
+    ],
+    [
       "nothing for prose and other words with left, right, ml, pl or pr in them",
       "Toasts stack left-to-right or right-to-left; the `pl-PL` locale; left-right arrows; html-2; `left-*` offsets. Toasts stack left-to-right, or right-to-left in RTL. The label is on the left.",
       [],

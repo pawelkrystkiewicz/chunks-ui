@@ -32,6 +32,15 @@ const VALUE = /\d+(?:\.\d+)?(?:\/\d+)?|px|auto|full|\[[^\]\s]*\]|\([^)\s]*\)/.so
  */
 const DIRECTION_VARIANT = /(?<![\w-])(?:rtl|ltr):(?:[^\s"'`{},;|]{0,100}:)?!?/.source;
 /**
+ * Left out on purpose, so `PHYSICAL` does not match them (the spec pins each one):
+ * - `bg-linear-<angle>`, `-bg-linear-<angle>`, `mask-linear-<angle>`, `bg-conic-<angle>`,
+ *   `mask-conic-<angle>`: an angle points one physical way, and flipping it is a design choice.
+ * - `break-before-left/right`, `break-after-left/right`: print page sides, not reading order.
+ * - `touch-pan-left/right`: a gesture axis, not reading order.
+ * - `cursor-e/w/ne/nw/se/sw-resize`: the cursor names a physical edge.
+ * ponytail: a docs page with one of these does not mirror in RTL, and the check does not say so.
+ */
+/**
  * A physical class as a whole token: nothing of a class before it or after it (`overfloat-left` is
  * another class). One behind `rtl:` or `ltr:` is set for that direction on purpose and is not one.
  */
