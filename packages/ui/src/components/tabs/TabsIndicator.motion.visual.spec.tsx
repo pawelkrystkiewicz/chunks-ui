@@ -358,6 +358,32 @@ describe("Tabs.Indicator under the selected tab disabled at runtime", () => {
     expect(await waitForStable(() => opacityOf(indicator))).toBe(0.5);
   });
 
+  // A consumer's own default curve (`--default-transition-timing-function` in their theme) reaches
+  // the tab's fade and the indicator's alike
+  it.each(MOTION_PATHS)(
+    "dims the indicator on the tab's curve when the default curve changes, on $path",
+    async ({ withMotion }) => {
+      const linear = { listClassName: "[--default-transition-timing-function:linear]" };
+      const { rerender, indicator, tab } = await renderTabs(withMotion, { ...linear, value: "b" });
+      const beta = tab("Beta");
+
+      rerender(tabs({ ...linear, value: "b", disabled: true }));
+      const frames = await eachPaintedFrame(
+        () => ({ tab: opacityOf(beta), indicator: opacityOf(indicator) }),
+        40,
+      );
+      const log = JSON.stringify(frames);
+      expect(
+        frames.every((frame) => Math.abs(frame.indicator - frame.tab) < 0.01),
+        log,
+      ).toBe(true);
+      expect(
+        frames.some(({ indicator: opacity }) => opacity > 0.5 && opacity < 1),
+        log,
+      ).toBe(true);
+    },
+  );
+
   // The tab snaps because `.micro-interactions` is `transition: none !important` under reduced
   // motion. Motion drives the indicator without that class, so its `motion-reduce:transition-none`
   // has to snap it too, or it fades on until Motion hands it back.

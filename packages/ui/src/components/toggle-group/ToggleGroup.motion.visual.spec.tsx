@@ -1010,6 +1010,22 @@ describe("ToggleGroup indicator under the pressed item disabled at runtime", () 
   );
   const opacityOf = (el: Element) => Number(getComputedStyle(el).opacity);
 
+  /** Both opacities in the next 40 painted frames, asserted within 0.01 of each other in each */
+  async function expectFadesWith(item: Element, indicator: () => Element) {
+    const frames = await eachPaintedFrame(
+      () => ({ item: opacityOf(item), indicator: opacityOf(indicator()) }),
+      40,
+    );
+    const log = JSON.stringify(frames);
+    expect(
+      frames.every((frame) => Math.abs(frame.indicator - frame.item) < 0.01),
+      log,
+    ).toBe(true);
+    // Values between the two ends: it faded rather than jumped
+    const faded = frames.some(({ indicator: opacity }) => opacity > 0.5 && opacity < 1);
+    return { faded, log };
+  }
+
   afterEach(() => emulateReducedMotion(false));
 
   it.each([
@@ -1022,20 +1038,39 @@ describe("ToggleGroup indicator under the pressed item disabled at runtime", () 
     await waitForStable(() => offBy(item, indicator()));
 
     rerender(ui(true));
-    const frames = await eachPaintedFrame(
-      () => ({ item: opacityOf(item), indicator: opacityOf(indicator()) }),
-      40,
-    );
-    const log = JSON.stringify(frames);
-    expect(
-      frames.every((frame) => Math.abs(frame.indicator - frame.item) < 0.01),
-      log,
-    ).toBe(true);
-    // Values between the two ends: it faded rather than jumped, unless reduced motion is on
-    const between = frames.filter(({ indicator: opacity }) => opacity > 0.5 && opacity < 1);
-    expect(between.length > 0, log).toBe(!reduced);
+    const { faded, log } = await expectFadesWith(item, indicator);
+    expect(faded, log).toBe(!reduced);
     expect(await waitForStable(() => opacityOf(indicator()))).toBe(0.5);
   });
+
+  // Without Motion the indicator slides on its own 200ms snappy curve. An item disabled on the way
+  // fades on its own curve and duration, and the pill under it fades with it.
+  it("dims the indicator with an item disabled mid-slide, on the CSS fallback", async () => {
+    const { indicator, item, rerender } = await renderSized(false);
+    rerender(sized({ value: "b" }));
+    await untilChanged(() => edgesOf(indicator()));
+    expect(offBy(item("Beta"), indicator()), "the slide is under way").toBeGreaterThan(1);
+
+    rerender(sized({ value: "b", disabled: true }));
+    const { faded, log } = await expectFadesWith(item("Beta"), indicator);
+    expect(faded, log).toBe(true);
+  });
+
+  // A consumer's own default curve (`--default-transition-timing-function` in their theme) reaches
+  // the item's fade and the pill's alike
+  it.each(MOTION_PATHS)(
+    "dims the indicator on the item's curve when the default curve changes, on $path",
+    async ({ withMotion }) => {
+      const linear = "[--default-transition-timing-function:linear]";
+      const { indicator, rerender, getByRole } = await renderGroup(ui(false, linear), withMotion);
+      const item = getByRole("button", { name: "Beta" });
+      await waitForStable(() => offBy(item, indicator()));
+
+      rerender(ui(true, linear));
+      const { faded, log } = await expectFadesWith(item, indicator);
+      expect(faded, log).toBe(true);
+    },
+  );
 
   // The item snaps because `.micro-interactions` is `transition: none !important` under reduced
   // motion. Motion drives the indicator without that class, so its `motion-reduce:transition-none`

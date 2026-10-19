@@ -363,9 +363,16 @@ function ToggleGroupIndicator({ box, value }: { box: IndicatorBox; value: string
         "[:has([data-pressed]:disabled):not(:has([class~='group/toggle-group']_[data-pressed]:disabled))>&]:opacity-50",
         // The CSS fallback slides the indicator to another item with a transition
         !driven && "micro-interactions",
-        // Outside a slide only the opacity fades, as the item's does; the box jumps
+        // The box slides on its own 200ms snappy curve. The opacity fades as the item's does, over
+        // 300ms on the default curve, so the pill under an item disabled on the way fades with it:
+        // listed after `all`, its own timing wins. Outside a slide only the opacity fades; the box
+        // jumps.
         !driven && sliding && !reduced
-          ? "duration-200 ease-snappy"
+          ? [
+              "[transition-property:all,opacity]",
+              "[transition-duration:200ms,300ms]",
+              "[transition-timing-function:var(--ease-snappy),var(--default-transition-timing-function)]",
+            ]
           : "transition-opacity duration-300 motion-reduce:transition-none",
       )}
       style={style}
