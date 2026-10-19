@@ -3,6 +3,7 @@
 import { Tabs, ToggleGroup } from "chunks-ui";
 import { Monitor, Smartphone, Tablet } from "lucide-react";
 import dynamic from "next/dynamic";
+import { useSearchParams } from "next/navigation";
 import { memo, useEffect, useRef, useState } from "react";
 import { AlertsCard } from "./preview/AlertsCard";
 import { ButtonsCard } from "./preview/ButtonsCard";
@@ -32,7 +33,8 @@ const VIEWPORTS = [
 
 type ViewportId = (typeof VIEWPORTS)[number]["id"];
 
-// Loaded when its tab is first opened, so /create's first load does not carry it. The fallback
+// ponytail: a failed chunk load (a tab left open across a deploy) falls to Next's root error
+// boundary. Loaded when its tab is first opened, so /create's first load does not carry it. The fallback
 // has the panel's min height, so the canvas does not jump.
 const KitchenSink = dynamic(() => import("../kitchen-sink").then((m) => m.KitchenSink), {
   loading: () => (
@@ -47,6 +49,22 @@ type PreviewId = "cards" | "kitchen-sink";
 /** `?preview=kitchen-sink` in the URL selects the kitchen sink; anything else, the cards */
 const PREVIEW_PARAM = "preview";
 
+/**
+ * Sets the tab from the URL on mount and on every search-param change: Next keeps the page's state
+ * on a soft navigation within /create (a link to ?preview=kitchen-sink), so reading once would
+ * miss it. Rendered after mount only, as useSearchParams in the prerender needs a Suspense
+ * boundary. It reads window.location, as useSearchParams is null outside the app router (jsdom).
+ */
+function UrlPreview({ onRead }: { onRead: (id: PreviewId) => void }) {
+  const params = useSearchParams();
+  // biome-ignore lint/correctness/useExhaustiveDependencies: params only re-runs the read
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get(PREVIEW_PARAM);
+    onRead(id === "kitchen-sink" ? "kitchen-sink" : "cards");
+  }, [params, onRead]);
+  return null;
+}
+
 export function PreviewPanel({
   theme,
   onChange,
@@ -59,12 +77,9 @@ export function PreviewPanel({
   const [preview, setPreview] = useState<PreviewId>("cards");
   const [textSpacing, setTextSpacing] = useState(false);
 
-  // Read after mount, like the theme: the page is server-rendered
-  useEffect(() => {
-    if (new URLSearchParams(window.location.search).get(PREVIEW_PARAM) === "kitchen-sink") {
-      setPreview("kitchen-sink");
-    }
-  }, []);
+  // After mount, like the theme: the page is server-rendered
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const selectPreview = (next: PreviewId) => {
     setPreview(next);
@@ -72,7 +87,8 @@ export function PreviewPanel({
     const url = new URL(window.location.href);
     if (next === "cards") url.searchParams.delete(PREVIEW_PARAM);
     else url.searchParams.set(PREVIEW_PARAM, next);
-    window.history.replaceState(window.history.state, "", url);
+    // null state: Next's own state carries a flag that makes its patched replaceState skip the sync
+    window.history.replaceState(null, "", url);
   };
 
   const summary = [
@@ -92,6 +108,7 @@ export function PreviewPanel({
       // --lit keeps the page's primary for the outlines: the preview scope sets its own
       className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-[14px] border border-border bg-background shadow-[0_1px_2px_oklch(0_0_0/0.04)] [--lit:var(--primary)]"
     >
+      {mounted && <UrlPreview onRead={setPreview} />}
       <Tabs.Root
         value={preview}
         onValueChange={(v) => selectPreview(v as PreviewId)}
@@ -105,7 +122,10 @@ export function PreviewPanel({
               {summary}
             </span>
           </div>
-          <Tabs.List className="gap-0 rounded-[9px] bg-secondary p-[3px]">
+          <Tabs.List
+            aria-label="Preview content"
+            className="gap-0 rounded-[9px] bg-secondary p-[3px]"
+          >
             <Tabs.Tab value="cards" className="h-[26px] px-2 py-0 text-xs sm:px-3">
               Cards
             </Tabs.Tab>
