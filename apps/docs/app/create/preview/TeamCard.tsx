@@ -37,8 +37,11 @@ export function TeamCard() {
               }
             />
             <span className="flex min-w-0 flex-1 flex-col gap-px">
-              <span className="font-medium text-sm">{m.name}</span>
-              <span className="text-muted-foreground text-xs">{m.email}</span>
+              <span className="truncate font-medium text-sm">{m.name}</span>
+              {/* One line with an ellipsis, never a break inside the address: the title keeps it whole */}
+              <span className="truncate text-muted-foreground text-xs" title={m.email}>
+                {m.email}
+              </span>
             </span>
             {m.role === "Owner" ? (
               <span className="text-muted-foreground text-xs">Owner</span>
