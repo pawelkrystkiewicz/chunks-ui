@@ -286,13 +286,19 @@
 /*
  * A modal popup's invisible backdrop (#706). Base UI renders it (`InternalBackdrop`) right before
  * the positioner, so a press outside the popup closes it and reaches nothing. Base UI gives it no
- * z-index, so a page element with one of its own, such as a sticky header, would paint over it
- * and take the press. This rule gives it the layer of the positioner after it.
- * ponytail: only a positioner on `z-dropdowns` lifts it. One moved to another layer by its
- * `className` (`Select.Positioner`) leaves it with no z-index, so it never covers the popup.
+ * z-index, so a page element above the auto layer, such as a `sticky z-10` header, would paint
+ * over it and take the press. This rule gives it the layer of the positioner after it. It covers
+ * `Menu`, `Select`, a `modal` `Popover` and a `modal` `Combobox`.
+ * ponytail: only a positioner that sits on `z-dropdowns` lifts it. A positioner moved to another
+ * layer by its `className` (`z-50`) or by an inline `z-index` leaves the backdrop with none. So
+ * does any positioner with a `!` in a class (`z-10!` is the case meant), and its backdrop then
+ * can sit under a sticky header again. Page elements at or above the dropdowns layer (200) still
+ * paint over the backdrop.
  */
 @layer base {
-  [data-base-ui-inert][role="presentation"]:has(+ .z-dropdowns) {
+  [data-base-ui-inert][role="presentation"]:has(
+    + .z-dropdowns:not([style*="z-index"]):not([class*="!"])
+  ) {
     z-index: var(--z-index-dropdowns);
   }
 }

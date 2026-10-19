@@ -7,6 +7,7 @@ import {
   emulateReducedMotion,
   enterMotionPath,
   exited,
+  isShown,
   recordTabDuringExit,
   renderFixture,
   renderPage,
@@ -80,6 +81,38 @@ describe("Popover", () => {
       </Popover.Root>,
     );
     await expect(fixture).toMatchScreenshot();
+  });
+
+  // #706. A modal popover puts Base UI's invisible backdrop over the page: a press outside closes
+  // the popup and reaches nothing under it, an element with a z-index of its own included.
+  it("modal: closes on a press on a sticky header, which the press does not reach", async () => {
+    const onClick = vi.fn();
+    const { getByRole, getByTestId } = render(
+      <>
+        <header className="sticky top-0 z-10">
+          <button type="button" onClick={onClick}>
+            Header
+          </button>
+        </header>
+        <div style={{ padding: 40 }}>
+          <Popover.Root modal>
+            <Popover.Trigger>Settings</Popover.Trigger>
+            <Popover.Content data-testid="popup">
+              <Popover.Description>Content</Popover.Description>
+            </Popover.Content>
+          </Popover.Root>
+        </div>
+      </>,
+    );
+    // Found before the popup opens, as a modal popover hides the page from the accessibility tree
+    const header = page.elementLocator(getByRole("button", { name: "Header" }));
+    await userEvent.click(getByRole("button", { name: "Settings" }));
+    const popup = getByTestId("popup");
+    await settled(popup);
+    // Forced: Playwright would otherwise wait for the button to be the element under the pointer
+    await header.click({ force: true });
+    expect(onClick).not.toHaveBeenCalled();
+    await exited(popup, { stillClosing: isShown });
   });
 });
 
