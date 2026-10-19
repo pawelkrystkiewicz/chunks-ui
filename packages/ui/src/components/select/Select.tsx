@@ -49,7 +49,6 @@ function SelectTrigger({ className, ...props }: SelectTriggerProps) {
         // Within its container, however long the value: it shrinks in a flex row, and stops at the
         // container's width when sized by its value (`w-auto`)
         "min-w-0 max-w-full",
-        "placeholder:text-muted-foreground",
         FOCUS_RING,
         RING_TRANSITION,
         "disabled:cursor-not-allowed disabled:opacity-50",

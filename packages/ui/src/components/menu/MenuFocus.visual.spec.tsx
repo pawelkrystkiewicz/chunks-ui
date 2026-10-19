@@ -4,10 +4,14 @@ import { useState } from "react";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import {
+  describeExitPaths,
   describeMotionPaths,
   emulateReducedMotion,
   enterMotionPath,
+  exited,
+  recordTabDuringExit,
   settled,
+  tookFocus,
   waitForStable,
 } from "../../VisualTest.utils";
 import { Dialog } from "../dialog";
@@ -118,42 +122,17 @@ describeMotionPaths("Menu popup pointer flag", () => {
 });
 
 // Base UI returns focus to the trigger only at the unmount, after the exit: a Tab during it went
-// to a focus guard in the closing popup, then <body> (#633). The exit is about 0.5s with Motion,
-// 0.3s on the CSS path, and a frame with reduced motion.
-describe.each([
-  { path: "Motion", withMotion: true, reduce: false },
-  { path: "CSS fallback", withMotion: false, reduce: false },
-  { path: "reduced motion", withMotion: true, reduce: true },
-])("Menu focus as the popup closes, $path", ({ withMotion, reduce }) => {
-  beforeAll(() => enterMotionPath(withMotion));
-  beforeEach(() => emulateReducedMotion(reduce));
-  afterAll(async () => {
-    await emulateReducedMotion(true);
-    await enterMotionPath(true);
-  });
-
-  // A Tab after the exit passes without the fix; skipped for reduced motion's one frame
-  const recordTab = (popup: HTMLElement) => {
-    let mounted: boolean | undefined;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Tab") mounted = popup.isConnected;
-    };
-    document.addEventListener("keydown", onKeyDown, true);
-    return () => {
-      document.removeEventListener("keydown", onKeyDown, true);
-      if (!reduce) expect(mounted, "the popup was still closing when Tab went down").toBe(true);
-    };
-  };
-
+// to a focus guard in the closing popup, then <body> (#633)
+describeExitPaths("Menu focus as the popup closes", (reduce) => {
   // Enter and Tab go in one call: with reduced motion the popup leaves a frame after the pick
   it("moves a Tab pressed during the exit past the trigger, after a pick by Enter", async () => {
     const { popup, after } = await openMenu();
     await userEvent.keyboard("{ArrowDown}");
-    const checkTab = recordTab(popup);
+    const checkTab = recordTabDuringExit(popup, { reduce });
     await userEvent.keyboard("{Enter}{Tab}");
     checkTab();
     expect(document.activeElement).toBe(after);
-    await unmounted(popup);
+    await exited(popup);
     expect(document.activeElement).toBe(after);
   });
 
@@ -161,11 +140,11 @@ describe.each([
   it("moves a Tab pressed during the exit past the trigger, with Enter held over it", async () => {
     const { popup, after } = await openMenu();
     await userEvent.keyboard("{ArrowDown}");
-    const checkTab = recordTab(popup);
+    const checkTab = recordTabDuringExit(popup, { reduce });
     await userEvent.keyboard("{Enter>}{Tab}{/Enter}");
     checkTab();
     expect(document.activeElement).toBe(after);
-    await unmounted(popup);
+    await exited(popup);
     expect(document.activeElement).toBe(after);
   });
 
@@ -174,12 +153,12 @@ describe.each([
     "moves a Tab pressed during the exit past the trigger, after a pick by click",
     async () => {
       const { popup, after } = await openMenu();
-      const checkTab = recordTab(popup);
+      const checkTab = recordTabDuringExit(popup, { reduce });
       await userEvent.click(page.getByRole("menuitem", { name: "Copy" }));
       await userEvent.keyboard("{Tab}");
       checkTab();
       expect(document.activeElement).toBe(after);
-      await unmounted(popup);
+      await exited(popup);
       expect(document.activeElement).toBe(after);
     },
   );
@@ -191,11 +170,11 @@ describe.each([
     const submenu = await screen.findByTestId("submenu");
     await expect.poll(() => submenu.contains(document.activeElement)).toBe(true);
     await settled(submenu);
-    const checkTab = recordTab(popup);
+    const checkTab = recordTabDuringExit(popup, { reduce });
     await userEvent.keyboard("{Enter}{Tab}");
     checkTab();
     expect(document.activeElement).toBe(after);
-    await unmounted(popup);
+    await exited(popup);
     expect(document.activeElement).toBe(after);
   });
 
@@ -204,7 +183,7 @@ describe.each([
     const { popup, trigger } = await openMenu();
     await userEvent.keyboard("{Escape}");
     expect(document.activeElement).toBe(trigger);
-    await unmounted(popup);
+    await exited(popup);
     expect(document.activeElement).toBe(trigger);
   });
 
@@ -216,7 +195,7 @@ describe.each([
     await userEvent.click(before);
     expect(triggerFocused(), "the trigger took focus on the way").toBe(false);
     expect(document.activeElement).toBe(before);
-    await unmounted(popup);
+    await exited(popup);
     expect(document.activeElement).toBe(before);
   });
 });
@@ -237,7 +216,7 @@ describe("Menu focus as the popup closes, Base UI's own handling", () => {
     await userEvent.keyboard("{ArrowLeft}");
     const share = screen.getByRole("menuitem", { name: "Share" });
     expect(document.activeElement).toBe(share);
-    await unmounted(submenu);
+    await exited(submenu);
     expect(document.activeElement).toBe(share);
     expect(popup).toHaveAttribute("data-open");
     await userEvent.keyboard("{ArrowUp}");
@@ -252,7 +231,7 @@ describe("Menu focus as the popup closes, Base UI's own handling", () => {
     const triggerFocused = tookFocus(trigger);
     await userEvent.keyboard("{Tab}");
     expect(document.activeElement).toBe(after);
-    await unmounted(popup);
+    await exited(popup);
     expect(triggerFocused(), "the trigger took focus").toBe(false);
     expect(document.activeElement).toBe(after);
   });
@@ -289,11 +268,11 @@ describe("Menu focus as the popup closes, Base UI's own handling", () => {
     await userEvent.keyboard("{ArrowDown}{Enter}");
     const dialog = await view.findByTestId("dialog");
     await expect.poll(() => dialog.contains(document.activeElement)).toBe(true);
-    await unmounted(popup);
+    await exited(popup);
     expect(dialog.contains(document.activeElement), "the Dialog keeps focus").toBe(true);
     await settled(dialog);
     await userEvent.keyboard("{Escape}");
-    await unmounted(dialog);
+    await exited(dialog);
     expect(document.activeElement).toBe(trigger);
   });
 
@@ -309,7 +288,7 @@ describe("Menu focus as the popup closes, Base UI's own handling", () => {
     await settled(popup);
     await userEvent.hover(view.getByRole("menuitem", { name: "Edit" }));
     await userEvent.hover(before);
-    await unmounted(popup);
+    await exited(popup);
     expect(triggerFocused(), "the trigger took focus").toBe(false);
   });
 });
@@ -362,14 +341,3 @@ async function openMenu(props?: Parameters<typeof menuFixture>[0]) {
     after: view.getByRole("textbox", { name: "After" }),
   };
 }
-
-/** Whether `el` has taken focus since the call */
-function tookFocus(el: HTMLElement) {
-  let focused = false;
-  el.addEventListener("focus", () => {
-    focused = true;
-  });
-  return () => focused;
-}
-
-const unmounted = (popup: HTMLElement) => expect.poll(() => popup.isConnected).toBe(false);
