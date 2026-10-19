@@ -229,14 +229,21 @@ function TabsIndicatorElement({
     };
     observeTabs();
     // A selection or a class/style change on the list, a tab or an element holding one measures
-    // again (gap, order). Not a change inside a tab (its resize is observed) or to the indicator.
+    // again (gap, order), and a node added or removed beside the tabs observes them again (a tab
+    // mounts or unmounts). Not a change inside a tab, such as a swapped icon (its resize is
+    // observed), or to the indicator.
     const holdsTab = (node: Node) =>
       node === list ||
       (node instanceof Element &&
         (node.matches('[role="tab"]') || node.querySelector('[role="tab"]') !== null));
+    const insideTab = (node: Node) => {
+      const tab = node instanceof Element ? node.closest('[role="tab"]') : null;
+      // A list inside a tab of another list has that tab above it
+      return tab !== null && list.contains(tab);
+    };
     const mutation = new MutationObserver((records) => {
       const outside = records.filter(({ target, type }) =>
-        type === "childList" ? !indicator.contains(target) : holdsTab(target),
+        type === "childList" ? !indicator.contains(target) && !insideTab(target) : holdsTab(target),
       );
       if (outside.length === 0) return;
       if (outside.some((record) => record.type === "childList")) observeTabs();
