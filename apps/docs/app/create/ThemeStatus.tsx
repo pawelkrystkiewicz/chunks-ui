@@ -207,6 +207,8 @@ export function ThemeStatus({
             <span>
               Targets {targetsPassing}/{targets.length}
             </span>
+            {/* The switch unmounts with the panel; the preview keeps the overrides */}
+            {textSpacing && <span>Text spacing overridden</span>}
           </span>
         </Collapsible.Trigger>
       </h2>

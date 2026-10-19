@@ -111,4 +111,17 @@ describe("text spacing", () => {
     fireEvent.click(toggle);
     for (const el of scopes()) expect(el.className).not.toContain("word-spacing");
   });
+
+  it("says the overrides are on in the Accessibility button once the panel collapses", async () => {
+    render(<PreviewPanel theme={DEFAULT_THEME} onChange={vi.fn()} />);
+    const trigger = screen.getByRole("button", { name: /^Accessibility/ });
+    expect(trigger.textContent).not.toContain("Text spacing overridden");
+    fireEvent.click(trigger);
+    fireEvent.click(screen.getByRole("switch", { name: "Override text spacing" }));
+    fireEvent.click(trigger);
+    await waitFor(() =>
+      expect(screen.queryByRole("switch", { name: "Override text spacing" })).toBeNull(),
+    );
+    expect(trigger.textContent).toContain("Text spacing overridden");
+  });
 });
