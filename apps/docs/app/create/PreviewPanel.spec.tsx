@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { PreviewPanel } from "./PreviewPanel";
 import { DEFAULT_THEME } from "./theme-model";
 
@@ -12,6 +12,55 @@ it("narrows the preview's columns to 768px when Tablet is pressed", () => {
   expect(maxWidth()).toBe("100%");
   fireEvent.click(within(preview).getByRole("button", { name: "Tablet" }));
   expect(maxWidth()).toBe("768px");
+});
+
+describe("preview tabs", () => {
+  afterEach(() => window.history.replaceState(null, "", "/"));
+
+  it("shows the cards, and mounts the kitchen sink only while its tab is selected", async () => {
+    render(<PreviewPanel theme={DEFAULT_THEME} onChange={vi.fn()} />);
+    const preview = screen.getByRole("region", { name: "Preview" });
+    expect(within(preview).getByRole("tab", { name: "Cards", selected: true })).toBeTruthy();
+    expect(within(preview).queryByRole("heading", { name: "Acme Dashboard" })).toBeNull();
+
+    fireEvent.click(within(preview).getByRole("tab", { name: "Kitchen sink" }));
+    expect(
+      await within(preview).findByRole("heading", { level: 2, name: "Acme Dashboard" }),
+    ).toBeTruthy();
+    expect(within(preview).queryByRole("heading", { name: "Sign in" })).toBeNull();
+    expect(window.location.search).toBe("?preview=kitchen-sink");
+
+    fireEvent.click(within(preview).getByRole("tab", { name: "Cards" }));
+    await waitFor(() =>
+      expect(within(preview).queryByRole("heading", { name: "Acme Dashboard" })).toBeNull(),
+    );
+    expect(window.location.search).toBe("");
+  });
+
+  it("selects the kitchen sink from ?preview=kitchen-sink, and carries the viewport width", async () => {
+    window.history.replaceState(null, "", "/?preview=kitchen-sink&x=1");
+    render(<PreviewPanel theme={DEFAULT_THEME} onChange={vi.fn()} />);
+    const preview = screen.getByRole("region", { name: "Preview" });
+    expect(
+      await within(preview).findByRole("tab", { name: "Kitchen sink", selected: true }),
+    ).toBeTruthy();
+    expect(within(preview).getByRole("heading", { level: 2, name: "Acme Dashboard" })).toBeTruthy();
+    fireEvent.click(within(preview).getByRole("button", { name: "Mobile" }));
+    expect(preview.querySelector<HTMLElement>("[style*='max-width']")?.style.maxWidth).toBe(
+      "390px",
+    );
+    fireEvent.click(within(preview).getByRole("tab", { name: "Cards" }));
+    expect(window.location.search).toBe("?x=1");
+  });
+
+  it("keeps the breadcrumb links of the kitchen sink on the page", async () => {
+    window.history.replaceState(null, "", "/?preview=kitchen-sink");
+    render(<PreviewPanel theme={DEFAULT_THEME} onChange={vi.fn()} />);
+    const preview = screen.getByRole("region", { name: "Preview" });
+    const link = await within(preview).findByRole("link", { name: "Projects" });
+    expect(link.getAttribute("href")).toBe("#");
+    expect(fireEvent.click(link)).toBe(false); // preventDefault called
+  });
 });
 
 // `focus`: the role and name that receives focus on open, never the close button
@@ -71,6 +120,17 @@ describe("while a colour editor is open", { timeout: 15_000 }, () => {
       key: "Escape",
     });
     await waitFor(() => expect(lit()).toEqual([]));
+  });
+
+  it("outlines the kitchen sink's components too, when its tab is selected", async () => {
+    render(<PreviewPanel theme={DEFAULT_THEME} onChange={vi.fn()} />);
+    const preview = screen.getByRole("region", { name: "Preview" });
+    fireEvent.click(within(preview).getByRole("tab", { name: "Kitchen sink" }));
+    await within(preview).findByRole("heading", { level: 2, name: "Acme Dashboard" });
+    fireEvent.click(within(preview).getByRole("button", { name: /^Accessibility/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^Edit colours: Primary button, Light/ }));
+    fireEvent.focus(screen.getByRole("textbox", { name: /^Background colour/ }));
+    await waitFor(() => expect(preview.querySelectorAll("[data-lit]").length).toBeGreaterThan(0));
   });
 
   it("outlines the shades that follow its colour, as primary-text follows the primary", () => {

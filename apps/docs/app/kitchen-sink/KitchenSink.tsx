@@ -2,6 +2,7 @@
 
 import { Breadcrumb, Card, Separator, Tabs, Toast } from "chunks-ui";
 import { Home } from "lucide-react";
+import type { MouseEvent } from "react";
 import { ActivityFeed } from "./ActivityFeed";
 import { CreateTaskDialog } from "./CreateTaskDialog";
 import { FaqSection } from "./FaqSection";
@@ -11,6 +12,9 @@ import { StatsCards } from "./StatsCards";
 import { TaskTable } from "./TaskTable";
 import { TeamPanel } from "./TeamPanel";
 
+// The kitchen sink also renders inside /create, so its links must not leave the page
+const stay = (e: MouseEvent) => e.preventDefault();
+
 export function KitchenSink() {
   return (
     <Toast.Provider>
@@ -19,13 +23,15 @@ export function KitchenSink() {
         <Breadcrumb.Root>
           <Breadcrumb.List>
             <Breadcrumb.Item>
-              <Breadcrumb.Link href="/" aria-label="Home">
+              <Breadcrumb.Link href="#" aria-label="Home" onClick={stay}>
                 <Home className="size-3.5" />
               </Breadcrumb.Link>
             </Breadcrumb.Item>
             <Breadcrumb.Separator />
             <Breadcrumb.Item>
-              <Breadcrumb.Link href="/">Projects</Breadcrumb.Link>
+              <Breadcrumb.Link href="#" onClick={stay}>
+                Projects
+              </Breadcrumb.Link>
             </Breadcrumb.Item>
             <Breadcrumb.Separator />
             <Breadcrumb.Item>
@@ -37,7 +43,7 @@ export function KitchenSink() {
         {/* Header row */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="font-semibold text-2xl tracking-tight">Acme Dashboard</h1>
+            <h2 className="font-semibold text-2xl tracking-tight">Acme Dashboard</h2>
             <p className="text-muted-foreground text-sm">
               Sprint 14 &middot; Mar 3 &ndash; Mar 17, 2026
             </p>

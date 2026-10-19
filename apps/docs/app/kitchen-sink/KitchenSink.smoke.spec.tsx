@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-// Imported as content/kitchen-sink.mdx does; the page renders nothing else
+// Imported as the /create preview does
 import { KitchenSink } from "@/kitchen-sink";
 
 let error: ReturnType<typeof vi.spyOn>;
@@ -27,5 +27,5 @@ it("renders the kitchen sink without a React error", async () => {
   render(<KitchenSink />, { reactStrictMode: true });
   // Tabs.Content keeps every panel mounted, so this one render covers all four
   await act(async () => {});
-  expect(screen.getByRole("heading", { level: 1, name: "Acme Dashboard" })).toBeTruthy();
+  expect(screen.getByRole("heading", { level: 2, name: "Acme Dashboard" })).toBeTruthy();
 });

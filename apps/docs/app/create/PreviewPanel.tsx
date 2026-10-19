@@ -1,8 +1,9 @@
 "use client";
 
-import { ToggleGroup } from "chunks-ui";
+import { Tabs, ToggleGroup } from "chunks-ui";
 import { Monitor, Smartphone, Tablet } from "lucide-react";
-import { memo, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
+import { KitchenSink } from "../kitchen-sink";
 import { AlertsCard } from "./preview/AlertsCard";
 import { ButtonsCard } from "./preview/ButtonsCard";
 import { CalendarCard } from "./preview/CalendarCard";
@@ -31,6 +32,11 @@ const VIEWPORTS = [
 
 type ViewportId = (typeof VIEWPORTS)[number]["id"];
 
+type PreviewId = "cards" | "kitchen-sink";
+
+/** `?preview=kitchen-sink` in the URL selects the kitchen sink; anything else, the cards */
+const PREVIEW_PARAM = "preview";
+
 export function PreviewPanel({
   theme,
   onChange,
@@ -39,8 +45,26 @@ export function PreviewPanel({
   onChange: (patch: Partial<Theme>) => void;
 }) {
   const [viewport, setViewport] = useState<ViewportId>("desktop");
-  const columns = useRef<HTMLDivElement>(null);
+  const content = useRef<HTMLDivElement>(null);
+  const [preview, setPreview] = useState<PreviewId>("cards");
   const [textSpacing, setTextSpacing] = useState(false);
+
+  // Read after mount, like the theme: the page is server-rendered
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get(PREVIEW_PARAM) === "kitchen-sink") {
+      setPreview("kitchen-sink");
+    }
+  }, []);
+
+  const selectPreview = (next: PreviewId) => {
+    setPreview(next);
+    // Not a navigation: the tab is shareable, but Back should not step through tab switches
+    const url = new URL(window.location.href);
+    if (next === "cards") url.searchParams.delete(PREVIEW_PARAM);
+    else url.searchParams.set(PREVIEW_PARAM, next);
+    window.history.replaceState(window.history.state, "", url);
+  };
+
   const summary = [
     theme.fontHeading === theme.fontBody
       ? theme.fontHeading
@@ -86,37 +110,56 @@ export function PreviewPanel({
       <ThemeStatus
         theme={theme}
         onChange={onChange}
-        preview={columns}
+        preview={content}
         textSpacing={textSpacing}
         onTextSpacingChange={setTextSpacing}
       />
 
-      <ThemeScope
-        theme={theme}
-        textSpacing={textSpacing}
-        className="min-h-[calc(100vh-200px)] bg-(--canvas) p-[28px] leading-[1.45] transition-[background] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] motion-reduce:transition-none"
+      <Tabs.Root
+        value={preview}
+        onValueChange={(v) => selectPreview(v as PreviewId)}
+        className="flex flex-col"
       >
-        {/* will-change: opacity composites the columns to work around WebKit W80 (#341,
-            https://bugs.webkit.org/show_bug.cgi?id=327820): a composited element in a later
-            column paints under column 1, below the grid. Not transform, which would make the
-            columns the containing block of Base UI's fixed hidden inputs. Keep every descendant
-            off its own layer (no will-change, translateZ(0) or translate3d): a composited
-            descendant in a later column is misplaced, workaround or not.
-            Remove once the Safari versions we support ship the fix (the W80 bug spec in
-            Smoke.webkit.visual.spec.tsx fails first). Details: TESTING_STRATEGY.md, WebKit
-            Smoke Tests. */}
-        {/* data-lit: the elements that paint with the colour being edited (ThemeStatus) */}
-        <div
-          ref={columns}
-          style={{
-            maxWidth: VIEWPORTS.find((vp) => vp.id === viewport)?.width,
-            columnWidth: previewColumnWidth(theme),
-          }}
-          className="mx-auto gap-5 transition-[max-width] duration-400 ease-fluid will-change-[opacity] motion-reduce:transition-none [&_[data-lit]]:outline-offset-2 [&_[data-lit]]:[outline:2px_dashed_var(--lit)]"
+        <Tabs.List className="mx-[18px] my-3 w-fit">
+          <Tabs.Tab value="cards">Cards</Tabs.Tab>
+          <Tabs.Tab value="kitchen-sink">Kitchen sink</Tabs.Tab>
+          <Tabs.Indicator />
+        </Tabs.List>
+
+        <ThemeScope
+          theme={theme}
+          textSpacing={textSpacing}
+          className="min-h-[calc(100vh-200px)] bg-(--canvas) p-[28px] leading-[1.45] transition-[background] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] motion-reduce:transition-none"
         >
-          <PreviewCards fontHeading={theme.fontHeading} fontBody={theme.fontBody} />
-        </div>
-      </ThemeScope>
+          {/* data-lit: the elements that paint with the colour being edited (ThemeStatus) */}
+          <div
+            ref={content}
+            style={{ maxWidth: VIEWPORTS.find((vp) => vp.id === viewport)?.width }}
+            className="mx-auto transition-[max-width] duration-400 ease-fluid motion-reduce:transition-none [&_[data-lit]]:outline-offset-2 [&_[data-lit]]:[outline:2px_dashed_var(--lit)]"
+          >
+            <Tabs.Panel value="cards">
+              {/* will-change: opacity composites the columns to work around WebKit W80 (#341,
+                  https://bugs.webkit.org/show_bug.cgi?id=327820): a composited element in a later
+                  column paints under column 1, below the grid. Not transform, which would make the
+                  columns the containing block of Base UI's fixed hidden inputs. Keep every
+                  descendant off its own layer (no will-change, translateZ(0) or translate3d): a
+                  composited descendant in a later column is misplaced, workaround or not.
+                  Remove once the Safari versions we support ship the fix (the W80 bug spec in
+                  Smoke.webkit.visual.spec.tsx fails first). Details: TESTING_STRATEGY.md, WebKit
+                  Smoke Tests. */}
+              <div
+                style={{ columnWidth: previewColumnWidth(theme) }}
+                className="gap-5 will-change-[opacity]"
+              >
+                <PreviewCards fontHeading={theme.fontHeading} fontBody={theme.fontBody} />
+              </div>
+            </Tabs.Panel>
+            <Tabs.Panel value="kitchen-sink">
+              <KitchenSink />
+            </Tabs.Panel>
+          </div>
+        </ThemeScope>
+      </Tabs.Root>
     </section>
   );
 }
