@@ -104,7 +104,7 @@ function OpenDatePicker() {
 
 A disabled `DatePicker` is dimmed and shows the not-allowed cursor. The `disabled` prop disables it, and so does a disabled `Field.Root`, Base UI's `Fieldset` or a `<fieldset disabled>`. A disabled picker stays closed whatever `open` and `defaultOpen` say, and it ignores a pick. Disabling a picker with an open calendar closes the calendar without calling `onOpenChange`. When it is enabled again, a controlled calendar opens if `open` is `true`; an uncontrolled one stays closed.
 
-The `disabled` prop does all this at once. The other causes take effect when the picker next renders, because the picker reads the disabled state of its trigger after each render. Until then an open calendar stays open, but a pick in it is already ignored, and closes the calendar.
+The `disabled` prop does all this at once. The other causes take effect when the picker next renders, because the picker reads the disabled state of its trigger after each render. Until then an open calendar stays open, but a pick in it is already ignored, and closes the calendar. When a disabled picker's calendar closes with focus in it, focus moves to the page, as it does when any focused control is disabled.
 
 ```tsx
 <DatePicker disabled />
