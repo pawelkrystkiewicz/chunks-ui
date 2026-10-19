@@ -138,7 +138,7 @@ function ControlledSelect() {
 
 ## Disabled
 
-A disabled `Select` is dimmed and shows the not-allowed cursor. The `disabled` prop disables it, and so does a disabled `Field.Root`, Base UI's `Fieldset` or a `<fieldset disabled>`. A disabled `Select` stays closed whatever `open` and `defaultOpen` say, and it ignores a pick. Disabling a `Select` with an open listbox closes the listbox without calling `onOpenChange`. When it is enabled again, a controlled listbox opens if `open` is `true`; an uncontrolled one stays closed. The `disabled` prop acts at once; the other causes act when the `Select` next renders, because it reads the disabled state of its form input after each render, and until then a pick in an open listbox is ignored and closes it.
+A disabled `Select` is dimmed and shows the not-allowed cursor. The `disabled` prop disables it, and so does a disabled `Field.Root`, Base UI's `Fieldset` or a `<fieldset disabled>`. A disabled `Select` stays closed whatever `open` and `defaultOpen` say, and it ignores a pick. Disabling a `Select` with an open listbox closes the listbox without calling `onOpenChange`. When it is enabled again, a controlled listbox opens if `open` is `true`; an uncontrolled one stays closed. The `disabled` prop acts at once; the other causes act when the `Select` next renders, because it reads the disabled state of its form input after each render, and until then a pick in an open listbox is ignored and closes it. Disabling an open `Select` while focus is in its listbox moves focus to the page, as disabling any focused control does.
 
 ## Animation
 

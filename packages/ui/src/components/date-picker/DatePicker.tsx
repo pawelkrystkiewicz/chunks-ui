@@ -212,6 +212,8 @@ export function DatePicker({
   // from its next render, or from a pick (which reads the DOM too). A picker that mounts open
   // inside a disabled Field or fieldset mounts its calendar for its first commit, gone before it
   // paints and without taking focus. Accepted.
+  // ponytail: focus inside the calendar falls to <body> when the picker is disabled, because the
+  // disabled trigger cannot take it. A native control does the same. Accepted.
   const [triggerDisabled, setTriggerDisabled] = useState(false);
   const isOpen = !(disabled || triggerDisabled) && (open ?? internalOpen);
   const syncDisabled = () => {

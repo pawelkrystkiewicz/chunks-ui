@@ -58,6 +58,8 @@ function SelectRoot<Value, Multiple extends boolean | undefined = false>({
   // with `false`. A Field that disables an open Select without rendering it leaves the listbox open
   // (Base UI refuses a pick in it). A `disabled` on the Trigger alone leaves the Select enabled, as
   // it leaves its value in the form. Accepted.
+  // ponytail: focus inside the listbox falls to <body> when the Select is disabled, because the
+  // disabled trigger cannot take it. A native control does the same. Accepted.
   const formInputRef = useRef<HTMLInputElement>(null);
   const mergedInputRef = useMergedRef(formInputRef, inputRef);
   const ownActionsRef = useRef<BaseSelect.Root.Actions>(null);
@@ -69,7 +71,7 @@ function SelectRoot<Value, Multiple extends boolean | undefined = false>({
     const next = formInputRef.current?.matches(":disabled") ?? false;
     if (next !== formDisabled) setFormDisabled(next);
     if (next && internalOpen) setInternalOpen(false);
-    // Takes effect with the close this batch commits
+    // Takes effect with the close this batch commits (Base UI 1.9 bug, mui/base-ui#6031)
     if (next && isOpen) actions.current?.unmount();
     return next;
   };
