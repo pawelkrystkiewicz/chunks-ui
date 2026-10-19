@@ -94,6 +94,16 @@ article:has(> main > .landing) {
 }
 
 /*
+ * One theme switch at each width: the navbar's. Nextra repeats it in the desktop sidebar's footer,
+ * beside the collapse button, and in the mobile menu's footer, which holds nothing else. The
+ * Layout's `darkMode={false}` would remove the navbar's too.
+ */
+.nextra-sidebar .nextra-sidebar-footer > [title="Change theme"],
+.nextra-mobile-nav .nextra-sidebar-footer:has(> [title="Change theme"]:only-child) {
+  display: none;
+}
+
+/*
  * iOS Safari zooms into a focused text field under 16px. Nextra's search inputs (navbar and
  * landing header) are 14px from 768px up (`x:md:text-sm`), so a tablet or a phone held sideways
  * zooms on focus. Keep them at 16px on touch screens at every width. This rule is unlayered, so it
