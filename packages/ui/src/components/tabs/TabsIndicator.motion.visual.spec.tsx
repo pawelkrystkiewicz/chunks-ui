@@ -126,6 +126,13 @@ const RESIZES: [string, Layout, Layout][] = [
 /**
  * Each move: its name, the layout before it, and the layout after it. Nothing resizes: a class
  * or inline style change on the list or a tab moves the tabs within the list's fixed size.
+ *
+ * ponytail: no move adds or removes a node in the list (W219, #679). That has `observeTabs()`
+ * drop every subscription and subscribe again, and as the only Tabs on the page it gets new
+ * shared ResizeObservers, created after `beforePaint`'s: the helper then reads before the
+ * indicator renders, a false stale frame. A spacer added before the active tab fails that way. A
+ * tab added or removed passes, but only because Base UI renders the indicator again as the tab
+ * registers or unregisters.
  */
 const MOVES: [string, Layout, Layout][] = [
   [
