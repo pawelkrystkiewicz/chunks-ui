@@ -243,6 +243,45 @@ describe("useFocusOnClose", () => {
     },
   );
 
+  // Base UI's Combobox closes on an Enter with nothing highlighted without preventing it: the
+  // keypress follows, and the repeats of the held key come after it
+  it("goes on cancelling a held Enter's repeats at the trigger after the closing keydown's keypress, until the keyup", async () => {
+    const { trigger, getByRole } = await openThenClose(
+      details("none", new KeyboardEvent("keydown", { key: "Enter", cancelable: true })),
+    );
+    getByRole("textbox", { name: "Inside" }).dispatchEvent(
+      new KeyboardEvent("keypress", { key: "Enter", bubbles: true, cancelable: true }),
+    );
+    expect(document.activeElement).toBe(trigger);
+    const first = repeat("Enter");
+    trigger.dispatchEvent(first);
+    expect(first.defaultPrevented).toBe(true);
+    document.dispatchEvent(new KeyboardEvent("keyup"));
+    const afterKeyUp = repeat("Enter");
+    trigger.dispatchEvent(afterKeyUp);
+    expect(afterKeyUp.defaultPrevented).toBe(false);
+  });
+
+  // Select keeps its popup mounted: a close that hands over at once left its listeners behind
+  it("drops the last close's key listeners when the popup reopens", async () => {
+    const { trigger, popup, getByRole } = await openThenClose(
+      details("item-press", new MouseEvent("click", { detail: 1 })),
+    );
+    openChange(true, details("trigger-press", new MouseEvent("click", { detail: 1 }), trigger));
+    await act(async () => {
+      popup.removeAttribute("data-closed");
+      popup.setAttribute("data-open", "");
+    });
+    const inside = getByRole("textbox", { name: "Inside" });
+    inside.focus();
+    openChange(false, details("outside-press", new PointerEvent("pointerdown")));
+    popup.removeAttribute("data-open");
+    await act(async () => popup.setAttribute("data-closed", ""));
+    expect(document.activeElement).toBe(inside);
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab" }));
+    expect(document.activeElement).toBe(inside);
+  });
+
   // A held Shift+Tab out of a Select or Menu closes it and goes on from the trigger; focus the
   // consumer moved out of the popup keeps the key's own action
   it("leaves alone the repeats of other keys, and repeats aimed elsewhere", async () => {

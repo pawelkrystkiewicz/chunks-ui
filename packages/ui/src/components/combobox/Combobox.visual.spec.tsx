@@ -711,6 +711,23 @@ describeExitPaths("Combobox with the input in the popup, closing", (reduce) => {
     expect(trigger).toHaveAttribute("aria-expanded", "false");
   });
 
+  // The keypress of that Enter handed focus to the trigger and ended the wait: the repeats then
+  // reached the trigger, and their keypress clicked it. Motion and CSS only, as the pick's row.
+  it.skipIf(reduce)(
+    "keeps the popup closed when an Enter with nothing highlighted repeats during the exit",
+    async () => {
+      const { popup, trigger } = await openInPopup();
+      const onTriggerClick = vi.fn();
+      trigger.addEventListener("click", onTriggerClick);
+      await userEvent.keyboard("{Enter>3}{/Enter}");
+      expect(onTriggerClick, "the trigger was clicked").not.toHaveBeenCalled();
+      expect(trigger).toHaveAttribute("aria-expanded", "false");
+      expect(document.activeElement).toBe(trigger);
+      await exited(popup);
+      expect(trigger).toHaveAttribute("aria-expanded", "false");
+    },
+  );
+
   it("moves focus to the trigger on Escape", async () => {
     const { popup, trigger } = await openInPopup();
     await userEvent.keyboard("{Escape}");
