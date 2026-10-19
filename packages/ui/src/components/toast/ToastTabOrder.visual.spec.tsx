@@ -6,10 +6,11 @@ import { Toast } from "./index";
 import { AddToasts } from "./Toast.TestUtils";
 
 /*
- * Base UI 1.9 aria-hides a high-priority toast until keyboard focus enters the viewport, and a
- * toast's close button while the toasts are collapsed, but leaves both in the tab order
- * (mui/base-ui#5659). Toast.Root, Toast.Close and Toast.Action take themselves out of it for that
- * time (#685). ToastTabOrder.webkit.visual.spec.tsx runs these rows in WebKit too.
+ * Base UI 1.9 aria-hides a high-priority toast until keyboard focus enters the viewport
+ * (mui/base-ui#5659), and a toast's close button while the toasts are collapsed
+ * (mui/base-ui#5731), but leaves both in the tab order. Toast.Root, Toast.Close and Toast.Action
+ * take themselves out of it for that time (#685). ToastTabOrder.webkit.visual.spec.tsx runs
+ * these rows in WebKit too.
  */
 
 /**

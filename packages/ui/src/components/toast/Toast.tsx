@@ -190,11 +190,13 @@ function ToastRoot({ className, toast, render, ...props }: ToastRootProps) {
   );
 }
 
-// ponytail: mui/base-ui#5659. Base UI 1.9 aria-hides a high-priority toast and a collapsed toast's
-// close button but leaves them in the tab order. No state or data attribute carries the toast's
-// aria-hidden, so the root reads it from Base UI's render props, and the root, Toast.Close and
-// Toast.Action leave the tab order while hidden. Goes once Base UI stops making hidden toasts
-// focusable. A focusable element of yours inside the toast keeps its tab stop.
+// ponytail: Base UI 1.9 aria-hides a high-priority toast and a collapsed toast's close button but
+// leaves both in the tab order. No state or data attribute carries the toast's aria-hidden, so the
+// root reads it from Base UI's render props, and the root, Toast.Action and Toast.Close leave the
+// tab order while hidden. The root and Toast.Action go once mui/base-ui#5659 is fixed (the
+// high-priority toast, aria-hidden but focusable); Toast.Close goes once mui/base-ui#5731 stops
+// aria-hiding it (`!expanded && !hasFocus`). A focusable element of yours inside the toast keeps
+// its tab stop.
 function ToastRootElement({
   state,
   render,
