@@ -527,7 +527,6 @@ describe("Select and Popover focus as the popup closes, in WebKit", () => {
     await userEvent.keyboard("{Tab}");
     const next = screen.getByRole("textbox", { name: "Next field" });
     expect(document.activeElement).toBe(next);
-    // Base UI keeps the popup mounted, hidden, while the trigger has focus
     await exited(popup, { stillClosing: isShown });
     expect(document.activeElement).toBe(next);
   });

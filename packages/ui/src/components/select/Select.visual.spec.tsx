@@ -302,9 +302,9 @@ describe("Select.Popup below its trigger, Motion", () => {
   });
 });
 
-// Base UI returns focus to the trigger only at the unmount, after the exit: a Tab during it went
-// to a focus guard in the closing popup, then <body> (#633). The exit is about 0.5s with Motion,
-// 0.3s on the CSS path, and a frame with reduced motion.
+// Base UI returns focus to the trigger only at the end of the exit, as it hides the popup (kept
+// mounted once the trigger has had focus): a Tab during the exit went to a focus guard in the
+// closing popup, then <body> (#633)
 describeExitPaths("Select focus as the popup closes", (reduce) => {
   // Text fields around the trigger, as WebKit's Tab and click skip buttons
   const fixture = ({
@@ -415,7 +415,8 @@ describeExitPaths("Select focus as the popup closes", (reduce) => {
     expect(document.activeElement).toBe(before);
   });
 
-  // An element as `finalFocus` keeps Base UI's timing: focus moves there at the unmount
+  // An element as `finalFocus` keeps Base UI's timing: focus moves there at the end of the exit,
+  // as the popup hides
   it("moves focus only at the unmount, to an element passed as finalFocus", async () => {
     const { popup, trigger, before } = await open({ finalFocusBefore: true });
     const triggerFocused = tookFocus(trigger);

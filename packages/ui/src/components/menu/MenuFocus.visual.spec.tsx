@@ -122,8 +122,7 @@ describeMotionPaths("Menu popup pointer flag", () => {
 });
 
 // Base UI returns focus to the trigger only at the unmount, after the exit: a Tab during it went
-// to a focus guard in the closing popup, then <body> (#633). The exit is about 0.5s with Motion,
-// 0.3s on the CSS path, and a frame with reduced motion.
+// to a focus guard in the closing popup, then <body> (#633)
 describeExitPaths("Menu focus as the popup closes", (reduce) => {
   // Enter and Tab go in one call: with reduced motion the popup leaves a frame after the pick
   it("moves a Tab pressed during the exit past the trigger, after a pick by Enter", async () => {

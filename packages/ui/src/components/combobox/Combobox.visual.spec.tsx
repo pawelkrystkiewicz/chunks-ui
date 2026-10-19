@@ -542,8 +542,7 @@ describe("Combobox.Popup closing, Motion", () => {
   });
 });
 
-// Trigger-style, input in the popup: a Tab during the exit landed on <body> (#627). The exit is
-// about 0.5s with Motion, 0.3s on the CSS path, and a frame with reduced motion.
+// Trigger-style, input in the popup: a Tab during the exit landed on <body> (#627)
 describeExitPaths("Combobox with the input in the popup, closing", (reduce) => {
   // Text fields around the trigger, as WebKit's Tab and click skip buttons; `open` ignores changes
   const fixture = ({

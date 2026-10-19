@@ -674,8 +674,9 @@ export function resetTheme(vars: Theme["vars"]) {
   for (const name of Object.keys(vars)) document.documentElement.style.removeProperty(name);
 }
 
-// Focus as a popup closes: Base UI returns focus to the trigger only at the unmount, after the
-// exit, so the popups' specs press Tab during the exit, on each of its paths (#633)
+// Focus as a popup closes: Base UI returns focus to the trigger only at the end of the exit, as
+// the popup unmounts or hides (`isShown`), so the popups' specs press Tab during the exit, on each
+// of its paths (#633)
 
 /** Whether a popup is still closing */
 type StillClosing = (popup: HTMLElement) => boolean;
@@ -684,7 +685,7 @@ const mounted: StillClosing = (popup) => popup.isConnected;
 
 /**
  * Still closing while it shows, for a popup that stays mounted after its exit, hidden: Base UI
- * keeps a Select popup mounted while its trigger has focus
+ * keeps a Select popup mounted once its trigger has had focus
  */
 export const isShown: StillClosing = (popup) => popup.checkVisibility();
 
