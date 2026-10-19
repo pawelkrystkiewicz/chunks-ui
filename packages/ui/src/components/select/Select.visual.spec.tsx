@@ -24,7 +24,9 @@ import {
   tookFocus,
 } from "../../VisualTest.utils";
 import { FIELD_TEXT_SIZE } from "../shared";
-import { Select } from "./index";
+import { Select, type SelectRootProps } from "./index";
+
+type OpenChangeDetails = Parameters<NonNullable<SelectRootProps["onOpenChange"]>>[1];
 
 const fruits = [
   { value: "apple", label: "Apple" },
@@ -597,11 +599,24 @@ describe("Select onOpenChange as the popup closes", () => {
   beforeEach(() => emulateReducedMotion(false));
   afterAll(() => emulateReducedMotion(true));
 
-  const open = async () => {
+  const open = async ({
+    onClose,
+    onOpenChangeComplete,
+  }: {
+    onClose?: (details: OpenChangeDetails) => void;
+    onOpenChangeComplete?: (open: boolean) => void;
+  } = {}) => {
     const onOpenChange = vi.fn();
     const view = render(
       <div className="flex w-60 flex-col items-start gap-2" style={{ padding: 40 }}>
-        <Select.Root defaultValue="apple" onOpenChange={(o, d) => onOpenChange(o, d.reason)}>
+        <Select.Root
+          defaultValue="apple"
+          onOpenChangeComplete={onOpenChangeComplete}
+          onOpenChange={(o, d) => {
+            onOpenChange(o, d.reason);
+            if (!o) onClose?.(d);
+          }}
+        >
           <Select.Trigger aria-label="Fruit">
             <Select.Value />
             <Select.Icon />
@@ -640,10 +655,59 @@ describe("Select onOpenChange as the popup closes", () => {
     const { onOpenChange, reveal, after } = await open();
     const popup = await reveal();
     onOpenChange.mockClear();
+    const checkTab = recordTabDuringExit(popup, { reduce: false, stillClosing: isShown });
     await userEvent.keyboard("{Escape}{Tab}");
+    checkTab();
     await exited(popup, { stillClosing: isShown });
     expect(document.activeElement).toBe(after);
     expect(onOpenChange.mock.calls).toEqual([[false, "escape-key"]]);
+  });
+
+  it("reports a pick's close once, though a Tab moves focus on during the exit", async () => {
+    const { onOpenChange, reveal } = await open();
+    const popup = await reveal();
+    onOpenChange.mockClear();
+    const checkTab = recordTabDuringExit(popup, { reduce: false, stillClosing: isShown });
+    await userEvent.keyboard("{ArrowDown}{Enter}{Tab}");
+    checkTab();
+    await exited(popup, { stillClosing: isShown });
+    expect(onOpenChange.mock.calls).toEqual([[false, "item-press"]]);
+  });
+
+  it("reports the close after one that the consumer cancelled", async () => {
+    let first = true;
+    const { onOpenChange, reveal } = await open({
+      onClose: (details) => {
+        if (first) details.cancel();
+        first = false;
+      },
+    });
+    const popup = await reveal();
+    onOpenChange.mockClear();
+    await userEvent.keyboard("{Escape}");
+    expect(isShown(popup)).toBe(true);
+    await userEvent.keyboard("{Escape}");
+    await exited(popup, { stillClosing: isShown });
+    expect(onOpenChange.mock.calls).toEqual([
+      [false, "escape-key"],
+      [false, "escape-key"],
+    ]);
+  });
+
+  it("keeps the popup mounted when the consumer prevents the unmount, though a Tab follows the exit", async () => {
+    const onOpenChangeComplete = vi.fn();
+    const { reveal } = await open({
+      onClose: (details) => details.preventUnmountOnClose(),
+      onOpenChangeComplete,
+    });
+    const popup = await reveal();
+    onOpenChangeComplete.mockClear();
+    await userEvent.keyboard("{Escape}");
+    await new Promise((r) => setTimeout(r, 600));
+    await userEvent.keyboard("{Tab}");
+    await new Promise((r) => setTimeout(r, 600));
+    expect(popup.isConnected).toBe(true);
+    expect(onOpenChangeComplete).not.toHaveBeenCalledWith(false);
   });
 
   it("reports a close that follows a reopen", async () => {
