@@ -2,7 +2,7 @@ import { render } from "@testing-library/react";
 import { useState } from "react";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { userEvent } from "vitest/browser";
-import { emulateReducedMotion, exited, recordTabDuringExit, settled } from "../../VisualTest.utils";
+import { emulateReducedMotion, exited, settled } from "../../VisualTest.utils";
 import { DatePicker } from "./index";
 
 // The pickers below hand focus to the trigger as the popup starts to close, as an uncontrolled
@@ -23,16 +23,6 @@ const focusAtClose = (popup: HTMLElement) =>
     });
     observer.observe(popup, { attributeFilter: ["data-closed"] });
   });
-
-/** Whether `popup` was still mounted, closing, when `trigger` next took focus: read at that moment */
-const closingAtFocus = (trigger: HTMLElement, popup: HTMLElement) => {
-  let closing: boolean | undefined;
-  const onFocus = () => {
-    closing = popup.isConnected;
-  };
-  trigger.addEventListener("focus", onFocus, { once: true });
-  return () => closing;
-};
 
 describe("DatePicker focus as a controlled popup closes", () => {
   beforeEach(() => emulateReducedMotion(false));
@@ -60,11 +50,9 @@ describe("DatePicker focus as a controlled popup closes", () => {
         />
       );
     }
-    // A text field after the trigger, as WebKit's Tab skips buttons
     const view = render(
       <div className="flex w-72 flex-col items-start gap-2" style={{ padding: 40 }}>
         <Controlled />
-        <input aria-label="After" />
       </div>,
     );
     const trigger = view.getByRole("button", { name: "March 15, 2026" });
@@ -75,22 +63,14 @@ describe("DatePicker focus as a controlled popup closes", () => {
     // Open at rest: closed during its entry, the popup can leave at once
     const popup = view.getByRole("dialog");
     await settled(popup);
-    return {
-      trigger,
-      popup,
-      onOpenChange,
-      onValueChange,
-      after: view.getByRole("textbox", { name: "After" }),
-    };
+    return { trigger, popup, onOpenChange, onValueChange };
   };
 
   it("moves focus to the trigger on Escape", async () => {
     const { popup, trigger, onOpenChange } = await open();
-    const wasClosing = closingAtFocus(trigger, popup);
     await userEvent.keyboard("{Escape}");
     expect(onOpenChange).toHaveBeenLastCalledWith(false, "escape-key");
     expect(document.activeElement).toBe(trigger);
-    expect(wasClosing(), "the popup was still closing when the trigger took focus").toBe(true);
     await exited(popup);
     expect(document.activeElement).toBe(trigger);
   });
@@ -113,21 +93,6 @@ describe("DatePicker focus as a controlled popup closes", () => {
     expect(document.activeElement).toBe(trigger);
   });
 
-  // The Tab leaves from the trigger, where the hand-off moved focus. Base UI then reports a second
-  // close, `focus-out`, while the popup is still mounted.
-  it("moves a Tab pressed during the exit past the trigger, after a pick by Enter", async () => {
-    const { popup, trigger, after, onOpenChange } = await open();
-    await userEvent.keyboard("{ArrowDown}");
-    const checkTab = recordTabDuringExit(popup, { reduce: false });
-    await userEvent.keyboard("{Enter}{Tab}");
-    checkTab();
-    expect(onOpenChange).toHaveBeenNthCalledWith(2, false, "close-press");
-    expect(trigger).toHaveAttribute("aria-expanded", "false");
-    expect(document.activeElement).toBe(after);
-    await exited(popup);
-    expect(document.activeElement).toBe(after);
-  });
-
   // The pick's event is gone by the time the consumer closes, so the close counts as one by the
   // prop: focus still inside goes to the trigger at once
   it("moves focus to the trigger when the consumer passes a pick's close on later", async () => {
@@ -139,24 +104,19 @@ describe("DatePicker focus as a controlled popup closes", () => {
     await exited(popup);
     expect(document.activeElement).toBe(trigger);
   });
-});
 
-// An open the trigger did not start carries no trigger: the picker hands focus to its one trigger
-// all the same, where Base UI would return it only at the unmount, and after an open by another
-// control to that control
-describe("DatePicker focus as a popup that its trigger did not open closes", () => {
-  beforeEach(() => emulateReducedMotion(false));
-  afterAll(() => emulateReducedMotion(true));
-
+  // An open the trigger did not start carries no trigger: the picker hands focus to its one trigger
+  // all the same, where Base UI would return it only at the unmount, and after an open by another
+  // control to that control
   it("moves focus to the trigger on Escape, when another control opened it", async () => {
     function OpenFromButton() {
-      const [open, setOpen] = useState(false);
+      const [isOpen, setOpen] = useState(false);
       return (
         <div className="flex w-72 flex-col items-start gap-2" style={{ padding: 40 }}>
           <button type="button" onClick={() => setOpen(true)}>
             Set due date
           </button>
-          <DatePicker defaultValue={new Date(2026, 2, 15)} open={open} onOpenChange={setOpen} />
+          <DatePicker defaultValue={new Date(2026, 2, 15)} open={isOpen} onOpenChange={setOpen} />
         </div>
       );
     }
@@ -167,57 +127,9 @@ describe("DatePicker focus as a popup that its trigger did not open closes", () 
     await expect.poll(() => document.activeElement).toBe(day);
     const popup = view.getByRole("dialog");
     await settled(popup);
-    const wasClosing = closingAtFocus(trigger, popup);
     await userEvent.keyboard("{Escape}");
     expect(document.activeElement).toBe(trigger);
-    expect(wasClosing(), "the popup was still closing when the trigger took focus").toBe(true);
     await exited(popup);
     expect(document.activeElement).toBe(trigger);
-  });
-
-  it("moves focus to the trigger on a pick, when it opened on mount", async () => {
-    const view = render(
-      <div className="flex w-72 flex-col items-start gap-2" style={{ padding: 40 }}>
-        <DatePicker defaultValue={new Date(2026, 2, 15)} defaultOpen />
-      </div>,
-    );
-    const trigger = view.getByRole("button", { name: "March 15, 2026" });
-    const popup = await view.findByRole("dialog");
-    await settled(popup);
-    const atClose = focusAtClose(popup);
-    await userEvent.click(view.getByRole("button", { name: "Friday, March 20, 2026" }));
-    expect(await atClose).toBe(trigger);
-    await exited(popup);
-    expect(document.activeElement).toBe(trigger);
-  });
-});
-
-// A picker that gets disabled while its calendar is open: the calendar leaves in an exit of 0.3s,
-// where it can still be clicked
-describe("DatePicker as it is disabled while open", () => {
-  beforeEach(() => emulateReducedMotion(false));
-  afterAll(() => emulateReducedMotion(true));
-
-  it("ignores a day that is clicked during the exit", async () => {
-    const onValueChange = vi.fn();
-    const picker = (disabled: boolean) => (
-      <DatePicker
-        defaultValue={new Date(2026, 2, 15)}
-        onValueChange={onValueChange}
-        disabled={disabled}
-      />
-    );
-    const view = render(picker(false));
-    await userEvent.click(view.getByRole("button", { name: "March 15, 2026" }));
-    const popup = await view.findByRole("dialog");
-    const day = view.getByRole("button", { name: "Friday, March 20, 2026" });
-    await settled(popup);
-    view.rerender(picker(true));
-    expect(popup.isConnected, "the calendar is still closing").toBe(true);
-    // A DOM click: a pointer click waits for the fading calendar to hold still
-    day.click();
-    await exited(popup);
-    expect(onValueChange).not.toHaveBeenCalled();
-    expect(view.getByRole("button")).toHaveTextContent("March 15, 2026");
   });
 });

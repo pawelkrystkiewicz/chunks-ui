@@ -149,12 +149,9 @@ function getForm(
 }
 
 /**
- * The event details of the close a pick asks for, as Base UI gives them for a press on
- * `Popover.Close`: the click, and the trigger.
- * ponytail: the close goes through `open`, not through Base UI, so `preventUnmountOnClose()` does
- * nothing, and a member that a later Base UI adds to the details is missing from a pick's until
- * this adds it. Accepted: the picker has no `actionsRef` that a kept-mounted calendar would need,
- * and Base UI's own builder is internal.
+ * The details of a pick's close, as Base UI gives them for a press on `Popover.Close`.
+ * ponytail: built by hand (Base UI's builder is internal): `preventUnmountOnClose()` does nothing,
+ * and a member that a later Base UI adds is missing from a pick's. Accepted.
  */
 function pickCloseDetails(event: Event, trigger: Element | undefined) {
   const details: BasePopover.Root.ChangeEventDetails = {
@@ -206,18 +203,15 @@ export function DatePicker({
   const mergedTriggerRef = useMergedRef(triggerRef, ref);
   const [internalOpen, setInternalOpen] = useState(defaultOpen ?? false);
   // A disabled trigger cannot be pressed, and `open` is not a press: the calendar stays closed
-  // whatever `open` says, and a pick cannot change the value of a disabled control. The picker's
-  // `disabled` is not all that disables the trigger: a disabled Field.Root or Base UI Fieldset
-  // does, and a native <fieldset disabled>, which only the browser knows. So this reads the DOM
-  // after every commit, as the label ids below do. A disabled uncontrolled picker also forgets
-  // that it was open, so enabling it later does not pop the calendar open, and take focus, out of
-  // nowhere.
+  // whatever `open` says, and a pick changes nothing. The picker's `disabled` is not all that
+  // disables the trigger: a disabled Field.Root or Base UI Fieldset does, and a native
+  // <fieldset disabled>, which only the browser knows. So this reads the DOM after every commit, as
+  // the label ids below do. A disabled uncontrolled picker also forgets that it was open, so
+  // enabling it later does not pop the calendar open, and take focus, out of nowhere.
   // ponytail: only the picker's own `disabled` counts in the render that sets it; the others count
-  // from the next commit, or from the next pick, which reads the DOM too. So an open calendar
-  // stays open after a Field.Root, a Base UI Fieldset or a <fieldset> is disabled, until the
-  // picker next renders or a day is picked (that pick is ignored and closes it); enabling counts
-  // the same way. A picker that mounts open inside a disabled Field or fieldset mounts its
-  // calendar for its first commit, gone before it paints and without taking focus. Accepted.
+  // from its next render, or from a pick (which reads the DOM too). A picker that mounts open
+  // inside a disabled Field or fieldset mounts its calendar for its first commit, gone before it
+  // paints and without taking focus. Accepted.
   const [triggerDisabled, setTriggerDisabled] = useState(false);
   const isOpen = !(disabled || triggerDisabled) && (open ?? internalOpen);
   const syncDisabled = () => {
@@ -253,9 +247,6 @@ export function DatePicker({
   const selectedDate = validDate(value !== undefined ? value : internalDate);
 
   const handleDateSelect = (date: Date | null) => {
-    // The calendar can outlive the disabling: its exit takes 0.3s, and the picker does not render
-    // when only its Field.Root's state changes, so it may still be open. Reading the DOM here also
-    // closes it.
     if (syncDisabled()) return;
     if (value === undefined) setInternalDate(date);
     onValueChange?.(date);
