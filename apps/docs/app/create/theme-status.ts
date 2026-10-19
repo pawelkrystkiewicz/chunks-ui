@@ -184,6 +184,14 @@ function reads(t: Theme, mode: Mode, side: Side): string[] {
 export const affects = (t: Theme, mode: Mode, check: Check, token: string) =>
   [check.fg, check.bg].some((s) => s.token === token || reads(t, mode, s).includes(token));
 
+/** The tokens setting `token` in `mode` changes: itself, and the shades that follow it while unset */
+export function followers(t: Theme, mode: Mode, token: string): string[] {
+  const shades = ROWS.flatMap((r) => [r.fg, r.bg]).filter(
+    (s) => !s.locked && s.token !== token && reads(t, mode, s).includes(token),
+  );
+  return [...new Set([token, ...shades.map((s) => s.token)])];
+}
+
 export const MODE_NAME: Record<Mode, string> = { light: "Light", dark: "Dark" };
 const T = (token: string): Side => ({ token });
 const BG = T("background");
@@ -364,17 +372,29 @@ export const formatRatio = (ratio: number) => (Math.floor(ratio * 100) / 100).to
 /** Lc without its polarity sign, rounded down like formatRatio */
 export const formatLc = (lc: number) => (Math.floor(Math.abs(lc) * 10) / 10).toFixed(1);
 
+/** What a nudge makes the pair pass: WCAG 2, APCA, or both */
+export type Measure = "both" | "wcag" | "apca";
+
 /**
- * The nearest lightness, same chroma and hue, at which `side` makes the pair pass both measures in
+ * The nearest lightness, same chroma and hue, at which `side` makes the pair pass `measure` in
  * `mode`, searched in 0.005 steps both ways; null when none does or the side is locked.
  */
-export function nudge(t: Theme, levels: Levels, mode: Mode, id: string, side: Side): Oklch | null {
+export function nudge(
+  t: Theme,
+  levels: Levels,
+  mode: Mode,
+  id: string,
+  side: Side,
+  measure: Measure = "both",
+): Oklch | null {
   const start = sideColor(t, mode, side);
   if (!start) return null;
   const passes = (l: number) => {
     const trial = { ...t, overrides: withOverride(t.overrides, mode, side.token, { ...start, l }) };
     const c = themeChecks(trial, levels).find((x) => x.id === id);
-    return !!c && passWcag(c, mode) && passApca(c, mode);
+    return (
+      !!c && (measure === "apca" || passWcag(c, mode)) && (measure === "wcag" || passApca(c, mode))
+    );
   };
   for (let i = 0; i <= 200; i++) {
     // Rounded as oklch() is written, so the value found is the value painted

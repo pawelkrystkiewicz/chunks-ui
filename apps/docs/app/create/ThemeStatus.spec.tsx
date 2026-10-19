@@ -15,7 +15,12 @@ function Harness({ initial = DEFAULT_THEME }: { initial?: Theme }) {
   const [theme, setTheme] = useState(initial);
   return (
     <>
-      <ThemeStatus theme={theme} onChange={(patch) => setTheme((t) => applyPatch(t, patch))} />
+      <ThemeStatus
+        theme={theme}
+        onChange={(patch) => setTheme((t) => applyPatch(t, patch))}
+        textSpacing={false}
+        onTextSpacingChange={() => {}}
+      />
       <button
         type="button"
         onClick={() => setTheme((t) => applyPatch(t, { overrides: undefined }))}
@@ -231,5 +236,195 @@ describe("the contrast panel", { timeout: 15_000 }, () => {
         failsOnly: true,
       }),
     );
+  });
+});
+
+describe("redo", { timeout: 15_000 }, () => {
+  const redoButton = () => screen.getByRole("button", { name: "Redo" });
+
+  it("puts an undone edit back with ⇧⌘Z, Ctrl+Y and the Redo button", () => {
+    render(<Harness />);
+    openEditor();
+    typeBlack();
+    for (const redo of [
+      () => fireEvent.keyDown(resetAll(), { key: "Z", metaKey: true, shiftKey: true }),
+      () => fireEvent.keyDown(resetAll(), { key: "y", ctrlKey: true }),
+      () => fireEvent.click(redoButton()),
+    ]) {
+      ctrlZ(resetAll());
+      expect(screen.queryByText(/custom colour/)).toBeNull();
+      redo();
+      expect(screen.getByText(/1 custom colour/)).toBeTruthy();
+    }
+    expect(redoButton().getAttribute("aria-disabled")).toBe("true");
+  });
+
+  it("forgets its steps when a preset, shuffle or reset sets the colours after an undo", () => {
+    render(<Harness />);
+    openEditor();
+    typeBlack();
+    ctrlZ(resetAll());
+    fireEvent.click(screen.getByRole("button", { name: "Outside reset" }));
+    expect(redoButton().getAttribute("aria-disabled")).toBe("true");
+    // Reset all, then a reset from outside: the hand-set colours must not come back
+    typeBlack();
+    fireEvent.click(resetAll());
+    fireEvent.click(screen.getByRole("button", { name: "Outside reset" }));
+    expect(undoButton().getAttribute("aria-disabled")).toBe("true");
+  });
+
+  it("leaves ⇧⌘Z and Ctrl+Y inside a text field to the field's own history", () => {
+    render(<Harness />);
+    openEditor();
+    typeBlack();
+    ctrlZ(resetAll());
+    for (const keys of [
+      { key: "Z", metaKey: true, shiftKey: true },
+      { key: "y", ctrlKey: true },
+    ]) {
+      // Not prevented: the browser redoes the field's typing
+      expect(fireEvent.keyDown(field(), keys)).toBe(true);
+      expect(screen.queryByText(/custom colour/)).toBeNull();
+    }
+    expect(redoButton().getAttribute("aria-disabled")).toBeNull();
+  });
+
+  it("forgets the undone edits when a new edit is made", () => {
+    render(<Harness />);
+    openEditor();
+    typeBlack();
+    ctrlZ(resetAll());
+    expect(redoButton().getAttribute("aria-disabled")).toBeNull();
+    fireEvent.change(field(), { target: { value: "#ffffff" } });
+    fireEvent.keyDown(field(), { key: "Enter" });
+    expect(redoButton().getAttribute("aria-disabled")).toBe("true");
+  });
+});
+
+describe("nudge by measure", { timeout: 15_000 }, () => {
+  const openMeasures = (label: string, mode: "Light" | "Dark") => {
+    fireEvent.click(screen.getByRole("button", { name: /Accessibility/ }));
+    fireEvent.click(swatchOf(label, mode));
+    // The text side's menu comes first
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Nudge to pass one measure" })[0] as HTMLElement,
+    );
+  };
+
+  it("nudges for WCAG 2 alone from the menu beside Nudge to pass, and keeps the editor open", async () => {
+    // 14px text is too small for APCA Gold, so only WCAG 2 can pass
+    localStorage.setItem(
+      "chunks-create-contrast-v1",
+      JSON.stringify({ wcag: "AAA", apca: "Gold", failsOnly: false }),
+    );
+    render(<Harness />);
+    openMeasures("Muted text", "Light");
+    fireEvent.click(screen.getByRole("button", { name: "WCAG 2 only" }));
+    const notes = screen.getAllByRole("status").map((n) => n.textContent);
+    expect(
+      notes.some((n) => /^Lightness set to \d\.\d{3}; the pair passes WCAG 2\.$/.test(n ?? "")),
+    ).toBe(true);
+    await waitFor(() => expect(screen.queryByRole("button", { name: "WCAG 2 only" })).toBeNull());
+    expect(field()).toBeTruthy();
+  });
+
+  it("disables a measure the pair already passes", () => {
+    // Dark muted text passes WCAG AA and fails APCA Bronze
+    render(<Harness />);
+    openMeasures("Muted text", "Dark");
+    const disabled = (name: string) =>
+      screen.getByRole("button", { name }).getAttribute("aria-disabled");
+    expect(disabled("WCAG 2 only")).toBe("true");
+    expect(disabled("APCA only")).toBeNull();
+  });
+
+  const notes = () => screen.getAllByRole("status").map((n) => n.textContent);
+
+  it("says when no lightness of the colour passes APCA alone, and leaves it alone", () => {
+    // Dark: Lc 55 of Bronze's 60, and the hover fill behind the text is locked
+    render(<Harness />);
+    openMeasures("Success button, hover", "Dark");
+    fireEvent.click(screen.getByRole("button", { name: "APCA only" }));
+    expect(notes()).toContain("No lightness of this colour passes APCA.");
+    expect(screen.queryByText(/custom colour/)).toBeNull();
+  });
+
+  it("says APCA only can't help text too small for the APCA level", () => {
+    localStorage.setItem(
+      "chunks-create-contrast-v1",
+      JSON.stringify({ wcag: "AA", apca: "Silver", failsOnly: false }),
+    );
+    render(<Harness />);
+    // 12px at the default Base size, under Silver's 14px minimum
+    openMeasures("Destructive text", "Light");
+    fireEvent.click(screen.getByRole("button", { name: "APCA only" }));
+    expect(notes()).toContain("The text is too small for APCA Silver. Raise Base size.");
+    expect(screen.queryByText(/custom colour/)).toBeNull();
+  });
+});
+
+describe("the edited pair's cells", { timeout: 15_000 }, () => {
+  // The tint of a pair's two cells in a mode: the swatch's WCAG cell and the APCA cell after it
+  const tints = (label: string, mode: "Light" | "Dark") => {
+    const cell = swatchOf(label, mode).closest("td");
+    return [cell, cell?.nextElementSibling].map(
+      (c) => c?.className.match(/bg-primary\/\d+/)?.[0] ?? null,
+    );
+  };
+
+  it("are tinted more strongly than the pairs its colour changes", () => {
+    render(<Harness />);
+    fireEvent.click(screen.getByRole("button", { name: /Accessibility/ }));
+    fireEvent.click(swatchOf("Muted text", "Light"));
+    // The tint's opacity, 0 for none. Its text, muted-foreground, is also "Muted text on muted"'s.
+    const alpha = (label: string, mode: "Light" | "Dark") =>
+      tints(label, mode).map((t) => Number(t?.split("/")[1] ?? 0));
+    const [own, affected] = [alpha("Muted text", "Light"), alpha("Muted text on muted", "Light")];
+    expect(affected.every((a) => a > 0)).toBe(true);
+    expect(own.every((a, i) => a > (affected[i] ?? 0))).toBe(true);
+    expect(alpha("Muted text", "Dark")).toEqual([0, 0]);
+  });
+});
+
+describe("Use touch targets", { timeout: 15_000 }, () => {
+  it("measures checkbox, radio and switch by touch-target's 44px area once on", () => {
+    render(<Harness />);
+    fireEvent.click(screen.getByRole("button", { name: /Accessibility/ }));
+    const size = (label: string) =>
+      screen.getByRole("rowheader", { name: label }).nextElementSibling?.textContent;
+    expect(size("Checkbox, radio")).toMatch(/^16px/);
+    fireEvent.click(screen.getByRole("switch", { name: "Use touch targets" }));
+    expect(size("Checkbox, radio")).toMatch(/^44px/);
+    expect(size("Switch")).toMatch(/^44px/);
+    expect(size("Slider thumb")).toMatch(/^16px/);
+  });
+});
+
+describe("text spacing", { timeout: 15_000 }, () => {
+  it("says what WCAG 1.4.12 asks, offers the overrides, and claims no pass for them", () => {
+    const changes: boolean[] = [];
+    render(
+      <ThemeStatus
+        theme={DEFAULT_THEME}
+        onChange={() => {}}
+        textSpacing={false}
+        onTextSpacingChange={(on) => changes.push(on)}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Accessibility/ }));
+    const section = screen.getByRole("region", { name: "Type scale" });
+    const copy = [...section.querySelectorAll("p")].find((p) =>
+      /1\.4\.12/.test(p.textContent ?? ""),
+    );
+    expect(copy?.textContent).toMatch(/does not ask the theme for any spacing/);
+    expect(copy?.textContent).toMatch(/no content or function is lost/);
+    expect(copy?.textContent).toMatch(/at least 1\.5, 2, 0\.12 and 0\.16 times the font size/);
+    // What the text spacing part says and offers claims no result
+    const toggle = screen.getByRole("switch", { name: "Override text spacing" });
+    for (const part of [copy, toggle.closest("label")]) {
+      expect(part?.textContent).not.toMatch(/pass|fail/i);
+    }
+    fireEvent.click(toggle);
+    expect(changes).toEqual([true]);
   });
 });

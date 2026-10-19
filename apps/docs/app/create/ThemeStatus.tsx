@@ -1,9 +1,17 @@
 "use client";
 
-import { Collapsible, cn, Field, Select, ToggleGroup } from "chunks-ui";
-import { ChevronRight, ChevronsUpDown, Undo2 } from "lucide-react";
-import { type KeyboardEvent, type ReactNode, useEffect, useRef, useState } from "react";
+import { Collapsible, cn, Field, Select, Switch, ToggleGroup } from "chunks-ui";
+import { ChevronRight, ChevronsUpDown, Redo2, Undo2 } from "lucide-react";
+import {
+  type KeyboardEvent,
+  type ReactNode,
+  type RefObject,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { PairEditor } from "./PairEditor";
+import { paintsWith } from "./preview-lit";
 import { countOverrides, type Mode, type Overrides, type Theme } from "./theme-model";
 import { minTextPx, targetGoal, targetSizes, typeScale } from "./theme-sizes";
 import {
@@ -12,6 +20,7 @@ import {
   affects,
   type Check,
   DEFAULT_LEVELS,
+  followers,
   formatLc,
   formatRatio,
   type Levels,
@@ -22,13 +31,14 @@ import {
   WCAG_LEVELS,
   type WcagLevel,
 } from "./theme-status";
-import { EMPTY_TRAIL, nextTrail, undoTrail } from "./undo-trail";
+import { EMPTY_TRAIL, NONE, nextTrail, redoTrail, undoTrail } from "./undo-trail";
 
 const GROUPS = ["Text", "Controls", "Charts"] as const;
 const TH = "py-1.5 pe-3 text-start font-medium";
 const CELL = "py-1.5 ps-2 pe-3 transition-colors motion-reduce:transition-none";
-// The pairs the open editor's active colour changes
+// The pairs the open editor's active colour changes, and the editor's own pair more strongly
 const LIT = "bg-primary/10";
+const OWN = "bg-primary/20";
 const SEGMENT = "h-[26px] px-2.5 text-[12px] text-foreground";
 const LINK = "underline decoration-border underline-offset-2 hover:decoration-current";
 
@@ -52,13 +62,23 @@ function loadPrefs(): Prefs {
 
 const fails = (c: Check, modes: Mode[]) => modes.some((m) => !passWcag(c, m) || !passApca(c, m));
 
-/** Contrast of the theme in both modes, the previewed mode first, by WCAG 2 and by APCA. */
+/**
+ * Contrast of the theme in both modes, the previewed mode first, by WCAG 2 and by APCA. While a
+ * colour editor is open, the elements in `preview` that paint with its colour are outlined.
+ * `textSpacing` is the preview's WCAG 1.4.12 text spacing override, switched in the type scale.
+ */
 export function ThemeStatus({
   theme,
   onChange,
+  preview,
+  textSpacing,
+  onTextSpacingChange,
 }: {
   theme: Theme;
   onChange: (patch: Partial<Theme>) => void;
+  preview?: RefObject<HTMLElement | null>;
+  textSpacing: boolean;
+  onTextSpacingChange: (on: boolean) => void;
 }) {
   const [prefs, setPrefs] = useState(DEFAULT_PREFS);
   // The open editor: its pair (listed under "Failures only" once it passes), mode and the token
@@ -67,7 +87,9 @@ export function ThemeStatus({
     null,
   );
   const [trail, setTrail] = useState(EMPTY_TRAIL);
-  const history = trail.steps.length > 0 && trail.last === theme.overrides ? trail.steps : [];
+  const own = trail.last === theme.overrides;
+  const history = own ? trail.steps : [];
+  const undone = own ? (trail.redo ?? []) : [];
   const dragging = useRef(false);
   // The last editor opened stays listed under "Failures only" after it closes, so focus can go
   // back to its swatch even when the pair now passes
@@ -75,6 +97,24 @@ export function ThemeStatus({
 
   // Read after mount, like the theme: the page is server-rendered
   useEffect(() => setPrefs(loadPrefs()), []);
+
+  // The preview is not React state of this panel: mark its elements by hand, and unmark them when
+  // the tokens change or the editor closes. Only for the previewed mode: the other mode's colours
+  // change nothing there. ponytail: an element a card mounts while the editor is open stays
+  // unmarked until the active colour changes.
+  const litTokens =
+    editing?.token && editing.mode === theme.mode
+      ? followers(theme, editing.mode, editing.token).join(" ")
+      : "";
+  useEffect(() => {
+    const root = preview?.current;
+    if (!root || !litTokens) return;
+    const marked = [...root.querySelectorAll("*")].filter(paintsWith(litTokens.split(" ")));
+    for (const el of marked) el.setAttribute("data-lit", "");
+    return () => {
+      for (const el of marked) el.removeAttribute("data-lit");
+    };
+  }, [preview, litTokens]);
 
   const setPref = (patch: Partial<Prefs>) => {
     const next = { ...prefs, ...patch };
@@ -87,26 +127,39 @@ export function ThemeStatus({
     }
   };
 
+  // The panel writes "no colours" as NONE: see the trail
   const edit = (overrides: Overrides | undefined, drag = false) => {
     const current = theme.overrides;
+    const next = overrides ?? NONE;
     const dragged = dragging.current;
-    setTrail((t) => nextTrail(t, current, overrides, drag, dragged));
+    setTrail((t) => nextTrail(t, current, next, drag, dragged));
     dragging.current = drag;
-    onChange({ overrides });
+    onChange({ overrides: next });
   };
   const undo = () => {
     if (history.length === 0) return;
     const current = theme.overrides;
     dragging.current = false;
     setTrail((t) => undoTrail(t, current));
-    onChange({ overrides: history.at(-1) });
+    onChange({ overrides: history.at(-1) ?? NONE });
   };
-  // ⌘Z / Ctrl+Z anywhere in the panel or an open editor, except in a text field's own undo
+  const redo = () => {
+    if (undone.length === 0) return;
+    const current = theme.overrides;
+    dragging.current = false;
+    setTrail((t) => redoTrail(t, current));
+    onChange({ overrides: undone.at(-1) ?? NONE });
+  };
+  // ⌘Z / Ctrl+Z undoes and ⇧⌘Z / Ctrl+Y redoes anywhere in the panel or an open editor, except in a
+  // text field's own history
   const onKeyDown = (e: KeyboardEvent) => {
     const typing = e.target instanceof HTMLInputElement && e.target.type === "text";
-    if (e.key.toLowerCase() !== "z" || !(e.metaKey || e.ctrlKey) || e.shiftKey || typing) return;
+    const key = e.key.toLowerCase();
+    if (typing || !(e.metaKey || e.ctrlKey)) return;
+    const action = key === "z" ? (e.shiftKey ? redo : undo) : key === "y" && e.ctrlKey && redo;
+    if (!action) return;
     e.preventDefault();
-    undo();
+    action();
   };
 
   const checks = themeChecks(theme, prefs);
@@ -114,6 +167,8 @@ export function ThemeStatus({
   const shown = prefs.failsOnly ? checks.filter((c) => fails(c, modes) || c.id === pinned) : checks;
   const lit = (c: Check, mode: Mode) =>
     !!editing?.token && editing.mode === mode && affects(theme, mode, c, editing.token);
+  const tint = (c: Check, mode: Mode) =>
+    editing?.id === c.id && editing.mode === mode ? OWN : lit(c, mode) && LIT;
   const pairs = (mode: Mode) => (token: string) =>
     checks.filter((c) => affects(theme, mode, c, token)).length;
   const custom = countOverrides(theme.overrides);
@@ -152,6 +207,8 @@ export function ThemeStatus({
             <span>
               Targets {targetsPassing}/{targets.length}
             </span>
+            {/* The switch unmounts with the panel; the preview keeps the overrides */}
+            {textSpacing && <span>Text spacing overridden</span>}
           </span>
         </Collapsible.Trigger>
       </h2>
@@ -185,7 +242,7 @@ export function ThemeStatus({
           differ for text: Bronze asks Lc 75 of body text and Lc 60 of other text; Silver and Gold
           look the target up by each row's size and weight, and Gold needs text of 16px or more.
           Non-text marks need Lc 30. Click a swatch to change its colours; ⌘Z or Ctrl+Z undoes a
-          change.
+          change, and ⇧⌘Z or Ctrl+Y redoes it.
         </p>
 
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
@@ -225,6 +282,15 @@ export function ThemeStatus({
           >
             <Undo2 aria-hidden className="size-3.5" />
             Undo
+          </button>
+          <button
+            type="button"
+            aria-disabled={undone.length === 0 || undefined}
+            onClick={() => undone.length > 0 && redo()}
+            className="flex items-center gap-1 rounded-sm text-[12px] hover:text-foreground aria-disabled:opacity-50"
+          >
+            <Redo2 aria-hidden className="size-3.5" />
+            Redo
           </button>
           <span className="flex items-center gap-2 text-[12px] text-muted-foreground">
             {custom > 0 && (
@@ -315,7 +381,7 @@ export function ThemeStatus({
                             : "text too small"}
                         </td>
                         {modes.map((mode) => [
-                          <td key={`${mode}-wcag`} className={cn(CELL, lit(check, mode) && LIT)}>
+                          <td key={`${mode}-wcag`} className={cn(CELL, tint(check, mode))}>
                             <span className="flex items-center gap-2">
                               <PairEditor
                                 check={check}
@@ -352,7 +418,7 @@ export function ThemeStatus({
                               </Value>
                             </span>
                           </td>,
-                          <td key={`${mode}-apca`} className={cn(CELL, lit(check, mode) && LIT)}>
+                          <td key={`${mode}-apca`} className={cn(CELL, tint(check, mode))}>
                             <Value pass={passApca(check, mode)}>
                               Lc {formatLc(check.apca[mode])}
                             </Value>
@@ -389,8 +455,22 @@ export function ThemeStatus({
             . A smaller control can still pass AA through WCAG's spacing exception, when a 24px
             circle centred on it overlaps no other target, which this table can't measure. The{" "}
             <code className="font-mono text-[11.5px]">touch-target</code> class grows a control's
-            area to 44px. Sizes follow Control height and Spacing.
+            hit area to at least 44×44px without changing its size; Use touch targets adds it to
+            every checkbox, radio and switch, in the preview and in Get code. The area also takes
+            the presses meant for any control it covers, so the 44px holds only where neighbouring
+            targets sit at least 44px apart, centre to centre. Sizes follow Control height and
+            Spacing.
           </p>
+          {/* biome-ignore lint/a11y/noLabelWithoutControl: wraps Base UI Switch (button-based control) */}
+          <label className="flex items-center gap-2 self-start text-[12.5px]">
+            <Switch.Root
+              checked={!!theme.touchTargets}
+              onCheckedChange={(touchTargets) => onChange({ touchTargets })}
+            >
+              <Switch.Thumb />
+            </Switch.Root>
+            Use touch targets
+          </label>
           <SizeTable
             heads={["Control", "Size", "Target"]}
             rows={targets
@@ -428,6 +508,34 @@ export function ThemeStatus({
               }))}
             empty="Every step meets the minimum."
           />
+          <p className="max-w-[75ch] pt-2 text-[12.5px] text-muted-foreground leading-relaxed">
+            WCAG's{" "}
+            <a
+              className={LINK}
+              href="https://www.w3.org/WAI/WCAG22/Understanding/text-spacing.html"
+            >
+              text spacing
+            </a>{" "}
+            criterion (1.4.12, AA) does not ask the theme for any spacing. It asks that no content
+            or function is lost when a reader sets line height, the space after paragraphs, letter
+            spacing and word spacing to at least 1.5, 2, 0.12 and 0.16 times the font size. Line
+            spacing of 1.5 within paragraphs is part of{" "}
+            <a
+              className={LINK}
+              href="https://www.w3.org/WAI/WCAG22/Understanding/visual-presentation.html"
+            >
+              1.4.8
+            </a>{" "}
+            (AAA), which asks only for a way to get it. No table can check this: turn on Override
+            text spacing and look for text in the preview that is cut off or overlaps.
+          </p>
+          {/* biome-ignore lint/a11y/noLabelWithoutControl: wraps Base UI Switch (button-based control) */}
+          <label className="flex items-center gap-2 self-start text-[12.5px]">
+            <Switch.Root checked={textSpacing} onCheckedChange={(on) => onTextSpacingChange(on)}>
+              <Switch.Thumb />
+            </Switch.Root>
+            Override text spacing
+          </label>
         </section>
       </Collapsible.Panel>
     </Collapsible.Root>

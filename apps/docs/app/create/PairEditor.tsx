@@ -1,7 +1,7 @@
 "use client";
 
-import { Button, cn, Input, Popover, Slider } from "chunks-ui";
-import { Lock, Pencil } from "lucide-react";
+import { Button, cn, IconButton, Input, Popover, Slider } from "chunks-ui";
+import { ChevronDown, Lock, Pencil } from "lucide-react";
 import { useRef, useState } from "react";
 import { parseColor, type Rgb, toHex } from "./palette";
 import { type Mode, type Oklch, type Overrides, ok, type Theme, withOverride } from "./theme-model";
@@ -11,6 +11,7 @@ import {
   formatRatio,
   isCustom,
   type Levels,
+  type Measure,
   MODE_NAME,
   nudge,
   passApca,
@@ -23,6 +24,11 @@ import {
 // parseColor and loadTheme clamp chroma to the same 0.4
 const MAX_CHROMA = 0.4;
 const NOTE = "text-[11.5px] text-muted-foreground leading-snug";
+/** The measures a nudge can aim for alone, besides both */
+const MEASURES = [
+  { measure: "wcag", name: "WCAG 2" },
+  { measure: "apca", name: "APCA" },
+] as const;
 
 const css = ([r, g, b]: Rgb) => `rgb(${r} ${g} ${b})`;
 const stops = (n: number, at: (x: number) => string) =>
@@ -133,6 +139,7 @@ function SideEditor({
   pairs,
 }: Omit<Props, "onOpenChange" | "side"> & { name: string; side: Side; failing: boolean }) {
   const [note, setNote] = useState<string | null>(null);
+  const [measures, setMeasures] = useState(false);
   const color = sideColor(theme, mode, side);
   const custom = isCustom(theme, mode, side.token);
   const from = side.from ? title(side.from) : "";
@@ -141,18 +148,19 @@ function SideEditor({
     setNote(null);
     onEdit(withOverride(theme.overrides, mode, side.token, value), drag);
   };
-  const nudgeToPass = () => {
-    if (!Number.isFinite(check.target.apca)) {
+  const nudgeToPass = (measure: Measure) => {
+    if (measure !== "wcag" && !Number.isFinite(check.target.apca)) {
       setNote(`The text is too small for APCA ${levels.apca}. Raise Base size.`);
       return;
     }
-    const found = nudge(theme, levels, mode, check.id, side);
+    const found = nudge(theme, levels, mode, check.id, side, measure);
+    const alone = MEASURES.find((m) => m.measure === measure)?.name;
     if (!found) {
-      setNote("No lightness of this colour passes both measures.");
+      setNote(`No lightness of this colour passes ${alone ?? "both measures"}.`);
       return;
     }
     set(found);
-    setNote(`Lightness set to ${found.l.toFixed(3)}; the pair passes.`);
+    setNote(`Lightness set to ${found.l.toFixed(3)}; the pair passes${alone ? ` ${alone}` : ""}.`);
   };
 
   // Hovering or focusing a side points the table's highlight at the pairs it changes
@@ -240,16 +248,62 @@ function SideEditor({
           <div className="flex flex-col gap-2">
             <ColorField name={name} color={color} onSet={set} />
             {/* aria-disabled, not unmounted, once the pair passes: focus stays here after a nudge */}
-            <Button
-              variant="outlined"
-              color="secondary"
-              aria-disabled={!failing || undefined}
-              title={failing ? undefined : "The pair passes"}
-              onClick={() => failing && nudgeToPass()}
-              className="h-8 self-start px-2.5 text-[12px] aria-disabled:opacity-50"
-            >
-              Nudge to pass
-            </Button>
+            <div className="flex gap-1">
+              <Button
+                variant="outlined"
+                color="secondary"
+                aria-disabled={!failing || undefined}
+                title={failing ? undefined : "The pair passes"}
+                onClick={() => failing && nudgeToPass("both")}
+                className="h-8 px-2.5 text-[12px] aria-disabled:opacity-50"
+              >
+                Nudge to pass
+              </Button>
+              {/* One measure alone: APCA often can't pass where WCAG 2 can */}
+              <Popover.Root open={measures} onOpenChange={(open) => setMeasures(open && failing)}>
+                <Popover.Trigger
+                  render={
+                    <IconButton
+                      variant="outlined"
+                      color="secondary"
+                      aria-label="Nudge to pass one measure"
+                      aria-disabled={!failing || undefined}
+                      className="size-8 aria-disabled:opacity-50"
+                    />
+                  }
+                >
+                  <ChevronDown aria-hidden className="size-3.5" />
+                </Popover.Trigger>
+                <Popover.Content
+                  side="bottom"
+                  align="end"
+                  aria-label="Nudge to pass one measure"
+                  className="flex flex-col p-1"
+                >
+                  {MEASURES.map(({ measure, name: alone }) => {
+                    const passes =
+                      measure === "wcag" ? passWcag(check, mode) : passApca(check, mode);
+                    return (
+                      <Button
+                        key={measure}
+                        variant="text"
+                        color="secondary"
+                        aria-disabled={passes || undefined}
+                        title={passes ? `The pair passes ${alone}` : undefined}
+                        onClick={() => {
+                          if (passes) return;
+                          setMeasures(false);
+                          nudgeToPass(measure);
+                        }}
+                        className="h-8 justify-start px-2.5 text-[12px] aria-disabled:opacity-50"
+                      >
+                        {alone} only
+                      </Button>
+                    );
+                  })}
+                </Popover.Content>
+              </Popover.Root>
+            </div>
           </div>
           <p role="status" className={NOTE}>
             {note}

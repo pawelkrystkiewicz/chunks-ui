@@ -9,23 +9,25 @@ export const targetGoal = (level: WcagLevel) => (level === "AA" ? 24 : 44);
 
 /**
  * Interactive parts by the shorter side of their box: `h-ui-height` follows Control height, a
- * spacing unit (`size-8`) is 4px × Spacing.
+ * spacing unit (`size-8`) is 4px × Spacing. `touch` marks the parts Use touch targets gives
+ * `touch-target`, which grows the area to at least 44px each way.
  */
-const TARGETS: { id: string; label: string; units?: number }[] = [
+const TARGETS: { id: string; label: string; units?: number; touch?: boolean }[] = [
   { id: "control", label: "Button, input, select" },
   { id: "pagination", label: "Pagination link", units: 9 },
   { id: "icon-button", label: "Icon button, calendar day", units: 8 },
   { id: "calendar-nav", label: "Calendar month arrows", units: 7 },
   { id: "close", label: "Clear button, toast close", units: 6 },
-  { id: "switch", label: "Switch", units: 5 },
-  { id: "checkbox", label: "Checkbox, radio, slider thumb", units: 4 },
+  { id: "switch", label: "Switch", units: 5, touch: true },
+  { id: "checkbox", label: "Checkbox, radio", units: 4, touch: true },
+  { id: "slider-thumb", label: "Slider thumb", units: 4 },
 ];
 
-export const targetSizes = (t: Pick<Theme, "height" | "spacing">) =>
-  TARGETS.map(({ units, ...target }) => ({
-    ...target,
-    px: units ? units * 4 * t.spacing : t.height,
-  }));
+export const targetSizes = (t: Pick<Theme, "height" | "spacing" | "touchTargets">) =>
+  TARGETS.map(({ units, touch, ...target }) => {
+    const px = units ? units * 4 * t.spacing : t.height;
+    return { ...target, px: touch && t.touchTargets ? Math.max(px, 44) : px };
+  });
 
 /** Where the components use each text step; the rest only size your own content */
 const USED_BY: Partial<Record<keyof typeof TEXT_STEPS, string>> = {
