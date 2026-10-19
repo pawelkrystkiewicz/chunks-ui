@@ -9,6 +9,7 @@ import { FOCUS_RING } from "../shared";
 import {
   createToastManager,
   Toast,
+  type ToastActionProps,
   type ToastCloseProps,
   type ToastRootProps,
   type ToastViewportProps,
@@ -728,4 +729,110 @@ describe("Toast.Root render", () => {
       </>
     );
   }
+});
+
+// Toast.Action renders its element in a render function of its own, to keep it out of the tab order
+// while Base UI hides the toast. A `render` you pass still replaces the element, with its own label.
+describe("Toast.Action render", () => {
+  /** Shows a toast on a custom root with an action that takes `renderProp` */
+  async function showAction(
+    renderProp?: ToastActionProps["render"],
+    toastOptions: Record<string, unknown> = {},
+  ) {
+    const manager = createToastManager();
+    render(
+      <Toast.Provider toastManager={manager}>
+        <BaseToast.Viewport>
+          <Actions render={renderProp} />
+        </BaseToast.Viewport>
+      </Toast.Provider>,
+    );
+    act(() => {
+      manager.add({ title: "Saved", type: "info", actionProps: {}, ...toastOptions });
+    });
+    await screen.findByRole(toastOptions.priority ? "alertdialog" : "dialog", { hidden: true });
+  }
+
+  function Actions({ render: renderProp }: { render: ToastActionProps["render"] }) {
+    return (
+      <>
+        {Toast.useToast().toasts.map((toast) => (
+          <Toast.Root key={toast.id} toast={toast}>
+            <Toast.Action
+              render={renderProp}
+              nativeButton={renderProp === undefined}
+              className="mine"
+              data-testid="action"
+            >
+              {renderProp === undefined ? "Undo" : undefined}
+            </Toast.Action>
+          </Toast.Root>
+        ))}
+      </>
+    );
+  }
+
+  it.each<{ kind: string; renderProp: ToastActionProps["render"] }>([
+    { kind: "an element", renderProp: <a href="/x">Docs</a> },
+    {
+      kind: "a function",
+      renderProp: (props) => (
+        <a {...props} href="/y">
+          Docs
+        </a>
+      ),
+    },
+  ])("renders the label of $kind that carries its own", async ({ renderProp }) => {
+    await showAction(renderProp);
+    const action = screen.getByTestId("action");
+    expect(action.tagName).toBe("A");
+    expect(action).toHaveTextContent("Docs");
+    expect(action).toHaveClass("mine");
+  });
+
+  it("renders a button without a render prop, with the library classes and the consumer's", async () => {
+    await showAction();
+    const action = screen.getByTestId("action");
+    expect(action.tagName).toBe("BUTTON");
+    expect(action).toHaveTextContent("Undo");
+    expect(action).toHaveClass("mine", "inline-flex");
+    expect(action).toHaveAttribute("data-type");
+  });
+
+  it("runs onClick once and passes the ref to the element", async () => {
+    const user = userEvent.setup();
+    const onClick = vi.fn();
+    const manager = createToastManager();
+    const ref = { current: null as HTMLElement | null };
+    render(
+      <Toast.Provider toastManager={manager}>
+        <BaseToast.Viewport>
+          <Refs actionRef={ref} />
+        </BaseToast.Viewport>
+      </Toast.Provider>,
+    );
+    act(() => {
+      manager.add({ title: "Saved", actionProps: { children: "Undo", onClick } });
+    });
+    await user.click(await screen.findByRole("button", { name: "Undo" }));
+    expect(onClick).toHaveBeenCalledTimes(1);
+    expect(ref.current).toBe(screen.getByRole("button", { name: "Undo" }));
+  });
+
+  function Refs({ actionRef }: { actionRef: { current: HTMLElement | null } }) {
+    return (
+      <>
+        {Toast.useToast().toasts.map((toast) => (
+          <Toast.Root key={toast.id} toast={toast}>
+            <Toast.Action ref={actionRef as never} />
+          </Toast.Root>
+        ))}
+      </>
+    );
+  }
+
+  it("takes a hidden high-priority toast's action out of the tab order", async () => {
+    await showAction(undefined, { priority: "high" });
+    expect(screen.getByTestId("action")).toHaveAttribute("tabindex", "-1");
+  });
 });
