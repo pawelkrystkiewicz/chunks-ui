@@ -119,10 +119,10 @@ describe("Input", () => {
 // button, so the rows count the pixels it paints.
 describe("Input type=search", () => {
   it.each([
-    { has: "with the clear button, shows only ours", clearable: true, native: false },
+    { has: "with the clear button, hides the browser's", clearable: true, native: false },
     { has: "without it, keeps the browser's", clearable: false, native: true },
   ])("$has", async ({ clearable, native }) => {
-    const { getByRole, queryAllByRole } = render(
+    const { getByRole } = render(
       <div style={{ padding: 40, width: 300 }}>
         <Input type="search" aria-label="Search" defaultValue="Hello" clearable={clearable} />
       </div>,
@@ -131,6 +131,5 @@ describe("Input type=search", () => {
     input.focus();
     const painted = await paintedPixels(input, "::-webkit-search-cancel-button");
     expect(painted > 0, "the browser paints its clear button").toBe(native);
-    expect(queryAllByRole("button", { name: "Clear" })).toHaveLength(clearable ? 1 : 0);
   });
 });

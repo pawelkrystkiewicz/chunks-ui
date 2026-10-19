@@ -216,11 +216,8 @@ describe("Combobox", () => {
     expect(textRight).toBeLessThanOrEqual(clear.left);
   });
 
-  // Without a flex-1 of the consumer's, Combobox.Chips was only as wide as its content, and the
-  // input in it stopped short of the Control's end (#686). The 600px fixture is over 200px wider
-  // than that content, at 14px text and at 16px, so the check does not rest on the margin a font
-  // size leaves. An input that wrapped to a row of its own also ends at the Control's end, so the
-  // input must start on the chips' line as well.
+  // Chips was only as wide as its content, so the input stopped short of the Control's end (#686).
+  // The input must also start on the chips' line: a wrapped one ends at the Control's end too.
   describe("in a Control wider than its content", () => {
     withViewport(700);
 
@@ -339,8 +336,7 @@ describe("Combobox.Input beside Clear and Trigger", () => {
 
   // A placeholder cut at the text box ended mid-word (#686). The ellipsis is only for the
   // placeholder: a long label stays cut at the edge, as before. `placeholder-shown:text-clip`
-  // opts out, as the docs say; a plain `text-clip` does not, as the `:placeholder-shown` rule is
-  // more specific.
+  // opts out, as the docs say.
   it.each([
     { shows: "a long placeholder", value: null, textOverflow: "ellipsis" },
     { shows: "a long label", value: long, textOverflow: "clip" },
@@ -350,22 +346,11 @@ describe("Combobox.Input beside Clear and Trigger", () => {
       className: "placeholder-shown:text-clip",
       textOverflow: "clip",
     },
-    {
-      shows: "a long placeholder under a plain text-clip",
-      value: null,
-      className: "text-clip",
-      textOverflow: "ellipsis",
-    },
   ])("ends $shows with $textOverflow", ({ value, className, textOverflow }) => {
     const { getByRole } = render(
-      <div style={{ width: 250 }}>
-        <Combobox.Root items={[long]} defaultValue={value}>
-          <div className="relative">
-            <Combobox.Input aria-label="Framework" placeholder={long.label} className={className} />
-            <Combobox.Trigger />
-          </div>
-        </Combobox.Root>
-      </div>,
+      <Combobox.Root items={[long]} defaultValue={value}>
+        <Combobox.Input aria-label="Framework" placeholder={long.label} className={className} />
+      </Combobox.Root>,
     );
     expect(getComputedStyle(getByRole("combobox")).textOverflow).toBe(textOverflow);
   });

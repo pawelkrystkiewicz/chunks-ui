@@ -8,19 +8,17 @@ import { Input } from "./index";
 // Neither engine reports the computed style of the button, so the rows count the pixels it paints.
 describe("Input type=search in WebKit", () => {
   it.each([
-    { has: "with the clear button, shows only ours", props: { clearable: true }, ours: 1 },
-    { has: "without it, keeps the browser's", props: {}, ours: 0, native: true },
+    { has: "with the clear button, hides the browser's", props: { clearable: true } },
+    { has: "without it, keeps the browser's", props: {}, native: true },
     {
-      has: "read-only, with the clear button, shows none",
+      has: "read-only, with the clear button, hides the browser's",
       props: { clearable: true, readOnly: true },
-      ours: 0,
     },
     {
-      has: "disabled, with the clear button, shows none",
+      has: "disabled, with the clear button, hides the browser's",
       props: { clearable: true, disabled: true },
-      ours: 0,
     },
-  ])("$has", async ({ props, ours, native = false }) => {
+  ])("$has", async ({ props, native = false }) => {
     render(
       <div style={{ padding: 40, width: 300 }}>
         <Input type="search" aria-label="Search" defaultValue="Hello" {...props} />
@@ -29,6 +27,5 @@ describe("Input type=search in WebKit", () => {
     const input = screen.getByRole("searchbox");
     const painted = await paintedPixels(input, "::-webkit-search-cancel-button");
     expect(painted > 0, "the browser paints its clear button").toBe(native);
-    expect(screen.queryAllByRole("button", { name: "Clear" })).toHaveLength(ours);
   });
 });

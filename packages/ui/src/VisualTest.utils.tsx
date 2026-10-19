@@ -325,9 +325,7 @@ function changedPixels(a: Uint8ClampedArray, b: Uint8ClampedArray) {
 /**
  * How many pixels of its box (or of `box`) `el` paints: those that change when it and everything
  * inside it is hidden. Hiding `el` alone leaves a descendant that sets its own `visibility:
- * visible` painting. With `pseudo`, e.g. "::after", only that pseudo-element is hidden. Neither
- * Chromium nor WebKit reports the computed style of a search input's
- * `::-webkit-search-cancel-button`, so this count is the check that the browser paints it.
+ * visible` painting. With `pseudo`, e.g. "::after", only that pseudo-element is hidden.
  *
  * Reads a screenshot of the page, so `el` must lie in the viewport, and the page must have one
  * image px per CSS px: the default page, or one that `withViewport` set.
