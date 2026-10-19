@@ -186,6 +186,7 @@ describe("the contrast panel", { timeout: 15_000 }, () => {
       screen.getByText("The text is too small for APCA Silver. Raise Base size."),
     ).toBeTruthy();
     expect(screen.queryByText(/custom colour/)).toBeNull();
+    expect(undoButton().getAttribute("aria-disabled")).toBe("true");
   });
 
   it("names a swatch with a hand-set colour in its mode a custom colour", () => {
