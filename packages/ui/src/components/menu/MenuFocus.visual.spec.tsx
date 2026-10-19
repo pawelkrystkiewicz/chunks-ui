@@ -23,6 +23,12 @@ import { Menu } from "./index";
  * the page. Chromium keeps keyboard modality until a mouse press, so after a keyboard open that
  * focus matches `:focus-visible`, and the popup drew its ring under the mouse. The popup now
  * turns its ring off from the first pointer move over it until the next key press.
+ *
+ * ponytail: the pointer-leave rows below cannot pass in Playwright's WebKit, so this file stays out
+ * of the WebKit project (do not import it into a `*.webkit` spec, as ToastTabOrder's is). Its
+ * mouse moves carry movementX/Y = 0, and Base UI 1.9 ignores a stationary
+ * pointer move in WebKit (`isStationaryWebKitPointer`, mui/base-ui#4002): the popup never takes
+ * focus there. A real Safari mouse moves with non-zero deltas and is not affected.
  */
 
 /** The popup's ring: on its outline, or on its `::after` overlay when it holds an arrow */
@@ -36,7 +42,6 @@ function ringOf(popup: Element) {
 async function openedFromTheKeyboardThenHovered(arrow: boolean) {
   render(
     <div style={{ padding: 40 }}>
-      <button type="button">Before</button>
       <Menu.Root>
         <Menu.Trigger>Options</Menu.Trigger>
         <Menu.Content>
@@ -49,9 +54,9 @@ async function openedFromTheKeyboardThenHovered(arrow: boolean) {
       </Menu.Root>
     </div>,
   );
-  await userEvent.tab();
-  await userEvent.tab();
-  expect(document.activeElement).toBe(screen.getByRole("button", { name: "Options" }));
+  // Focused directly, not by Tab: WebKit's Tab skips a <button> with no tabindex, so the number of
+  // presses that reach the trigger differs between browsers. The arrow key makes it a keyboard open.
+  screen.getByRole("button", { name: "Options" }).focus();
   await userEvent.keyboard("{ArrowDown}");
   const popup = await screen.findByRole("menu");
   await waitForStable(() => JSON.stringify(popup.getBoundingClientRect()));
@@ -81,7 +86,7 @@ describe("Menu popup focused as the pointer leaves an item", () => {
     const popup = await openedFromTheKeyboardThenHovered(false);
     await expectNoRing(popup, "padding", hoverPadding(popup));
     await expectNoRing(popup, "separator", () => userEvent.hover(screen.getByTestId("separator")));
-    // The page's corner: Base UI's backdrop takes the pointer there, not the "Before" button
+    // The page's corner: Base UI's backdrop takes the pointer there
     await expectNoRing(popup, "outside", () =>
       userEvent.hover(document.body, { position: { x: 5, y: 5 } }),
     );

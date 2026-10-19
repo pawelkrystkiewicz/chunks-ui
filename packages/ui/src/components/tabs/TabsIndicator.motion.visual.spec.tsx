@@ -127,7 +127,7 @@ const RESIZES: [string, Layout, Layout][] = [
  * Each move: its name, the layout before it, and the layout after it. Nothing resizes: a class
  * or inline style change on the list or a tab moves the tabs within the list's fixed size.
  *
- * ponytail: no move adds or removes a node in the list (W219, #679). That has `observeTabs()`
+ * ponytail: no move adds or removes a node beside the tabs (W219, #679). That has `observeTabs()`
  * drop every subscription and subscribe again, and as the only Tabs on the page it gets new
  * shared ResizeObservers, created after `beforePaint`'s: the helper then reads before the
  * indicator renders, a false stale frame. A spacer added or removed before the active tab fails
@@ -211,6 +211,23 @@ describe.each(MOTION_PATHS)("Tabs.Indicator, $path", ({ withMotion }) => {
     expect(resizeBatches.count).toBe(batches);
   });
 
+  // Nor does a node added to or removed from a tab, as a swapped icon is: it neither measures
+  // again nor drops the subscriptions, whose new observations would each measure once
+  it("does not measure again for a node added to or removed from a tab", async () => {
+    const { tab, getByTestId } = await renderTabs(withMotion, { ...FIXED, badge: true });
+    const batches = resizeBatches.count;
+    for (const parent of [tab("Alpha"), getByTestId("badge")]) {
+      // Out of flow, so the tab keeps its size
+      const extra = document.createElement("i");
+      extra.style.position = "absolute";
+      parent.append(extra);
+      await eachPaintedFrame(() => 0, 2);
+      extra.remove();
+      await eachPaintedFrame(() => 0, 2);
+    }
+    expect(resizeBatches.count).toBe(batches);
+  });
+
   it("still slides to a newly selected tab", async () => {
     const { indicator, tab, rerender } = await renderTabs(withMotion);
     const start = indicator.getBoundingClientRect().left;
@@ -275,17 +292,22 @@ describe.each(MOTION_PATHS)("Tabs.Indicator, $path", ({ withMotion }) => {
     expect(offBy(tab("Beta"), indicator)).toBeLessThanOrEqual(1);
   });
 
-  // A new key remounts the active tab; the value stays the same.
+  // A new key remounts the active tab; the value stays the same. Its padding then changes from a
+  // variable set outside the list: nothing in the list mutates and only the tab's border box
+  // grows, so only an observation of the new tab sees it.
   it("follows a padding change of the active tab after it remounts", async () => {
-    const { indicator, tab, rerender } = await renderTabs(withMotion);
+    const tabStyle = { paddingInline: "var(--tab-padding, 16px)" };
+    const { container, indicator, tab, rerender } = await renderTabs(withMotion, { tabStyle });
     const mounted = tab("Alpha");
 
-    rerender(tabs({ tabKey: "remounted" }));
+    rerender(tabs({ tabKey: "remounted", tabStyle }));
     expect(tab("Alpha")).not.toBe(mounted);
     await waitForStable(() => offBy(tab("Alpha"), indicator));
     expect(offBy(tab("Alpha"), indicator)).toBeLessThanOrEqual(1);
 
-    rerender(tabs({ tabKey: "remounted", tabStyle: { paddingInline: 24 } }));
+    const width = tab("Alpha").getBoundingClientRect().width;
+    (container.firstElementChild as HTMLElement).style.setProperty("--tab-padding", "24px");
+    expect(tab("Alpha").getBoundingClientRect().width).toBeGreaterThan(width + 1);
     await waitForStable(() => offBy(tab("Alpha"), indicator));
     expect(offBy(tab("Alpha"), indicator)).toBeLessThanOrEqual(1);
   });
