@@ -7,9 +7,9 @@ const withNextra = nextra({
 export default withNextra({
   // Next 16.4 `next dev` writes an AGENTS.md here when it detects an AI agent
   agentRules: false,
-  // The kitchen sink is a tab of /create. Temporary: the tab's URL may still change.
+  // The kitchen sink is a tab of /create
   redirects: async () => [
-    { source: "/kitchen-sink", destination: "/create?preview=kitchen-sink", permanent: false },
+    { source: "/kitchen-sink", destination: "/create?preview=kitchen-sink", permanent: true },
   ],
   turbopack: {
     resolveAlias: {

@@ -2,8 +2,8 @@
 
 import { Tabs, ToggleGroup } from "chunks-ui";
 import { Monitor, Smartphone, Tablet } from "lucide-react";
+import dynamic from "next/dynamic";
 import { memo, useEffect, useRef, useState } from "react";
-import { KitchenSink } from "../kitchen-sink";
 import { AlertsCard } from "./preview/AlertsCard";
 import { ButtonsCard } from "./preview/ButtonsCard";
 import { CalendarCard } from "./preview/CalendarCard";
@@ -31,6 +31,16 @@ const VIEWPORTS = [
 ] as const;
 
 type ViewportId = (typeof VIEWPORTS)[number]["id"];
+
+// Loaded when its tab is first opened, so /create's first load does not carry it. The fallback
+// has the panel's min height, so the canvas does not jump.
+const KitchenSink = dynamic(() => import("../kitchen-sink").then((m) => m.KitchenSink), {
+  loading: () => (
+    <div role="status" className="min-h-[60vh] py-8 text-muted-foreground text-sm">
+      Loading the kitchen sink…
+    </div>
+  ),
+});
 
 type PreviewId = "cards" | "kitchen-sink";
 
@@ -82,49 +92,55 @@ export function PreviewPanel({
       // --lit keeps the page's primary for the outlines: the preview scope sets its own
       className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-[14px] border border-border bg-background shadow-[0_1px_2px_oklch(0_0_0/0.04)] [--lit:var(--primary)]"
     >
-      <div className="flex h-[50px] items-center justify-between gap-4 border-border border-b pe-2.5 ps-[18px]">
-        <div className="flex min-w-0 items-center gap-3">
-          <span className="font-semibold text-[13px]">Preview</span>
-          <span className="truncate font-mono text-[11.5px] text-muted-foreground">{summary}</span>
-        </div>
-        <ToggleGroup.Root
-          aria-label="Preview width"
-          value={[viewport]}
-          onValueChange={(v) => v[0] && setViewport(v[0])}
-          className="rounded-[9px] bg-secondary p-[3px]"
-        >
-          {VIEWPORTS.map(({ id, label, Icon }) => (
-            <ToggleGroup.Item
-              key={id}
-              value={id}
-              aria-label={label}
-              title={label}
-              className="h-[26px] w-8 p-0 text-foreground"
-            >
-              <Icon className="size-[15px]" />
-            </ToggleGroup.Item>
-          ))}
-        </ToggleGroup.Root>
-      </div>
-
-      <ThemeStatus
-        theme={theme}
-        onChange={onChange}
-        preview={content}
-        textSpacing={textSpacing}
-        onTextSpacingChange={setTextSpacing}
-      />
-
       <Tabs.Root
         value={preview}
         onValueChange={(v) => selectPreview(v as PreviewId)}
         className="flex flex-col"
       >
-        <Tabs.List className="mx-[18px] my-3 w-fit">
-          <Tabs.Tab value="cards">Cards</Tabs.Tab>
-          <Tabs.Tab value="kitchen-sink">Kitchen sink</Tabs.Tab>
-          <Tabs.Indicator />
-        </Tabs.List>
+        <div className="grid h-[50px] grid-cols-[1fr_auto_1fr] items-center gap-3 border-border border-b pe-2.5 ps-[18px]">
+          <div className="flex min-w-0 items-center gap-3">
+            {/* Hidden on a phone, where the tabs and the toggle need the row: the section is named Preview */}
+            <span className="font-semibold text-[13px] max-[440px]:hidden">Preview</span>
+            <span className="truncate font-mono text-[11.5px] text-muted-foreground">
+              {summary}
+            </span>
+          </div>
+          <Tabs.List className="gap-0 rounded-[9px] bg-secondary p-[3px]">
+            <Tabs.Tab value="cards" className="h-[26px] px-2 py-0 text-xs sm:px-3">
+              Cards
+            </Tabs.Tab>
+            <Tabs.Tab value="kitchen-sink" className="h-[26px] px-2 py-0 text-xs sm:px-3">
+              Kitchen sink
+            </Tabs.Tab>
+            <Tabs.Indicator />
+          </Tabs.List>
+          <ToggleGroup.Root
+            aria-label="Preview width"
+            value={[viewport]}
+            onValueChange={(v) => v[0] && setViewport(v[0])}
+            className="justify-self-end rounded-[9px] bg-secondary p-[3px]"
+          >
+            {VIEWPORTS.map(({ id, label, Icon }) => (
+              <ToggleGroup.Item
+                key={id}
+                value={id}
+                aria-label={label}
+                title={label}
+                className="h-[26px] w-8 p-0 text-foreground"
+              >
+                <Icon className="size-[15px]" />
+              </ToggleGroup.Item>
+            ))}
+          </ToggleGroup.Root>
+        </div>
+
+        <ThemeStatus
+          theme={theme}
+          onChange={onChange}
+          preview={content}
+          textSpacing={textSpacing}
+          onTextSpacingChange={setTextSpacing}
+        />
 
         <ThemeScope
           theme={theme}
