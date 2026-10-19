@@ -1,7 +1,7 @@
 import { Menu as BaseMenu } from "@base-ui/react/menu";
 import { render, screen } from "@testing-library/react";
 import { useState } from "react";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import {
   describeExitPaths,
@@ -151,6 +151,25 @@ describeExitPaths("Menu focus as the popup closes", (reduce) => {
     expect(document.activeElement).toBe(after);
     await exited(popup);
     expect(document.activeElement).toBe(after);
+  });
+
+  // A Base UI item clicks on each Enter or Space keydown, and the hand-off's wait let the repeats
+  // reach the item: Menu.Item's onClick ran once per keydown. Counted on the popup: the item's
+  // clicks bubble to it, the trigger's do not. Skipped with reduced motion: see
+  // Select.visual.spec.tsx.
+  it.skipIf(reduce).each([
+    { key: "Enter", keys: "{Enter>3}{/Enter}" },
+    { key: "Space", keys: "[Space>3][/Space]" },
+  ])("clicks the item once when the picking $key repeats during the exit", async ({ keys }) => {
+    const { popup, trigger } = await openMenu();
+    const onClick = vi.fn();
+    popup.addEventListener("click", onClick);
+    await userEvent.keyboard(`{ArrowDown}${keys}`);
+    expect(onClick).toHaveBeenCalledOnce();
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    expect(document.activeElement).toBe(trigger);
+    await exited(popup);
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
   });
 
   // A click and a key press are two calls, too far apart for the one frame of reduced motion

@@ -709,6 +709,25 @@ describeExitPaths("Combobox with the input in the popup, closing", (reduce) => {
     },
   );
 
+  // The pick's keydown is default-prevented, so the hand-off moved focus at once, and each repeat
+  // clicked the trigger, which opened the popup again, then closed it. Skipped with reduced
+  // motion: see Select.visual.spec.tsx.
+  it.skipIf(reduce)(
+    "keeps the popup closed when the picking Enter repeats during the exit",
+    async () => {
+      const { popup, trigger } = await openInPopup();
+      const onTriggerClick = vi.fn();
+      trigger.addEventListener("click", onTriggerClick);
+      await userEvent.keyboard("{ArrowDown}{Enter>3}{/Enter}");
+      expect(trigger).toHaveTextContent("React");
+      expect(onTriggerClick, "the trigger was clicked").not.toHaveBeenCalled();
+      expect(trigger).toHaveAttribute("aria-expanded", "false");
+      expect(document.activeElement).toBe(trigger);
+      await exited(popup);
+      expect(trigger).toHaveAttribute("aria-expanded", "false");
+    },
+  );
+
   // Its keypress, on a trigger that already had focus, clicked it and reopened the popup
   it("keeps the popup closed and moves a Tab past the trigger, after Enter with nothing highlighted", async () => {
     const { popup, trigger, after } = await openInPopup();
@@ -719,6 +738,22 @@ describeExitPaths("Combobox with the input in the popup, closing", (reduce) => {
     expect(document.activeElement).toBe(after);
     expect(trigger).toHaveAttribute("aria-expanded", "false");
   });
+
+  // The keypress of that Enter handed focus to the trigger and ended the wait: the repeats then
+  // reached the trigger, and their keypress clicked it. Motion and CSS only, as the pick's row.
+  it.skipIf(reduce)(
+    "keeps the popup closed when an Enter with nothing highlighted repeats during the exit",
+    async () => {
+      const { popup, trigger } = await openInPopup();
+      const onTriggerClick = vi.fn();
+      trigger.addEventListener("click", onTriggerClick);
+      await userEvent.keyboard("{Enter>3}{/Enter}");
+      expect(onTriggerClick, "the trigger was clicked").not.toHaveBeenCalled();
+      expect(trigger).toHaveAttribute("aria-expanded", "false");
+      expect(document.activeElement).toBe(trigger);
+      await exited(popup);
+    },
+  );
 
   it("moves focus to the trigger on Escape", async () => {
     const { popup, trigger } = await openInPopup();

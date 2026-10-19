@@ -41,10 +41,11 @@ const details = (reason: string, event: Event, trigger?: Element): Details => ({
 
 /**
  * Opens from the trigger, focuses the field inside, closes with `close`, and lets the observer
- * run. `focus` counts the trigger's focus() calls from the close on.
+ * run. `focus` counts the trigger's focus() calls from the close on. With no `close`, it closes as
+ * a consumer that sets `open` to false does: Base UI reports nothing.
  */
 async function openThenClose(
-  close: Details,
+  close: Details | undefined,
   { strict = false, finalFocus }: { strict?: boolean; finalFocus?: unknown } = {},
 ) {
   const ui = <Popup finalFocus={finalFocus} />;
@@ -54,7 +55,7 @@ async function openThenClose(
   openChange(true, details("trigger-press", new MouseEvent("click"), trigger));
   view.getByRole("textbox", { name: "Inside" }).focus();
   const focus = vi.spyOn(trigger, "focus");
-  openChange(false, close);
+  if (close) openChange(false, close);
   popup.removeAttribute("data-open");
   // A microtask: the observer's callback
   await act(async () => popup.setAttribute("data-closed", ""));
@@ -187,31 +188,100 @@ describe("useFocusOnClose", () => {
     expect(document.activeElement).toBe(trigger);
   });
 
-  // A held Enter repeats its keypress too: Chromium activates its target, the picked item, even
-  // after focus has moved, which picked it again
-  it.each([
-    { keypress: "the repeated keypress of a held key, which it cancels", repeat: true },
-    { keypress: "a keypress, which it leaves alone", repeat: false },
-  ])("hands over at $keypress", async ({ repeat }) => {
+  it("hands over at a keypress, and leaves it alone", async () => {
     const { trigger, getByRole } = await openThenClose(
       details("item-press", new MouseEvent("click", { detail: 0 })),
     );
-    const keypress = new KeyboardEvent("keypress", { key: "Enter", repeat, cancelable: true });
+    const keypress = new KeyboardEvent("keypress", { key: "Enter", cancelable: true });
     getByRole("textbox", { name: "Inside" }).dispatchEvent(keypress);
     expect(document.activeElement).toBe(trigger);
-    expect(keypress.defaultPrevented).toBe(repeat);
+    expect(keypress.defaultPrevented).toBe(false);
   });
 
-  // Focus the consumer moved out of the closing popup keeps the key's own action
-  it("leaves a repeated keypress outside the closing popup alone", async () => {
-    const { getByRole } = await openThenClose(
-      details("item-press", new MouseEvent("click", { detail: 0 })),
+  const repeat = (key: string) =>
+    new KeyboardEvent("keydown", { key, repeat: true, bubbles: true, cancelable: true });
+
+  // A Base UI item acts on each Enter or Space keydown, and Chromium's button on each keypress,
+  // which a cancelled keydown does not send
+  it.each(["Enter", " "])(
+    "cancels the repeated keydown of a held %j inside the closing popup, and goes on waiting",
+    async (key) => {
+      const { trigger, getByRole } = await openThenClose(
+        details("item-press", new MouseEvent("click", { detail: 0 })),
+      );
+      const inside = getByRole("textbox", { name: "Inside" });
+      const keydown = repeat(key);
+      inside.dispatchEvent(keydown);
+      expect(keydown.defaultPrevented).toBe(true);
+      expect(document.activeElement).toBe(inside);
+      document.dispatchEvent(new KeyboardEvent("keyup"));
+      expect(document.activeElement).toBe(trigger);
+    },
+  );
+
+  // Hands over at once: the trigger, focused, would open the popup again
+  const expectCancelledUntilKeyup = (trigger: Element) => {
+    expect(document.activeElement).toBe(trigger);
+    const first = repeat("Enter");
+    trigger.dispatchEvent(first);
+    expect(first.defaultPrevented).toBe(true);
+    document.dispatchEvent(new KeyboardEvent("keyup"));
+    const afterKeyUp = repeat("Enter");
+    trigger.dispatchEvent(afterKeyUp);
+    expect(afterKeyUp.defaultPrevented).toBe(false);
+  };
+
+  it("cancels a held Enter's repeats at the trigger after a close Base UI does not report, until the keyup", async () => {
+    const { trigger } = await openThenClose(undefined);
+    expectCancelledUntilKeyup(trigger);
+  });
+
+  // Base UI's Combobox closes on an Enter with nothing highlighted without preventing it: the
+  // keypress follows, and the repeats of the held key come after it
+  it("goes on cancelling a held Enter's repeats at the trigger after the closing keydown's keypress, until the keyup", async () => {
+    const { trigger, getByRole } = await openThenClose(
+      details("none", new KeyboardEvent("keydown", { key: "Enter", cancelable: true })),
     );
+    getByRole("textbox", { name: "Inside" }).dispatchEvent(
+      new KeyboardEvent("keypress", { key: "Enter", bubbles: true, cancelable: true }),
+    );
+    expectCancelledUntilKeyup(trigger);
+  });
+
+  // Select keeps its popup mounted: a close that hands over at once left its listeners behind
+  it("drops the last close's key listeners when the popup reopens", async () => {
+    const { trigger, popup, getByRole } = await openThenClose(
+      details("item-press", new MouseEvent("click", { detail: 1 })),
+    );
+    openChange(true, details("trigger-press", new MouseEvent("click", { detail: 1 }), trigger));
+    await act(async () => {
+      popup.removeAttribute("data-closed");
+      popup.setAttribute("data-open", "");
+    });
+    const inside = getByRole("textbox", { name: "Inside" });
+    inside.focus();
+    openChange(false, details("outside-press", new PointerEvent("pointerdown")));
+    popup.removeAttribute("data-open");
+    await act(async () => popup.setAttribute("data-closed", ""));
+    expect(document.activeElement).toBe(inside);
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab" }));
+    expect(document.activeElement).toBe(inside);
+  });
+
+  // A held Shift+Tab out of a Select or Menu closes it and goes on from the trigger; focus the
+  // consumer moved out of the popup keeps the key's own action
+  it("leaves alone the repeats of other keys, and repeats aimed elsewhere", async () => {
+    const { trigger, getByRole } = await openThenClose(
+      details("item-press", new MouseEvent("click", { detail: 1 })),
+    );
+    const tab = repeat("Tab");
+    trigger.dispatchEvent(tab);
+    expect(tab.defaultPrevented).toBe(false);
     const outside = getByRole("textbox", { name: "Outside" });
     outside.focus();
-    const keypress = new KeyboardEvent("keypress", { repeat: true, cancelable: true });
-    outside.dispatchEvent(keypress);
-    expect(keypress.defaultPrevented).toBe(false);
+    const enter = repeat("Enter");
+    outside.dispatchEvent(enter);
+    expect(enter.defaultPrevented).toBe(false);
     expect(document.activeElement).toBe(outside);
   });
 

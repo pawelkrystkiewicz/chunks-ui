@@ -181,9 +181,8 @@ describe.each([
 
   // The picking Enter repeats its keydown and keypress once, inside the exit. Without the
   // hand-off's wait the repeat would land on the trigger, which has focus by then, and open the
-  // calendar again. A second repeat clicks the trigger, as on any button. The CSS path only
-  // (#652): with reduced motion the popup unmounts a frame after the pick and Base UI focuses the
-  // trigger, so this repeat lands on either side by load.
+  // calendar again. The CSS path only (#652): with reduced motion the popup unmounts a frame after
+  // the pick and Base UI focuses the trigger, so this repeat lands on either side by load.
   it.skipIf(reduce)(
     "keeps the calendar closed and the trigger focused, and picks once, when the picking Enter repeats once during the exit",
     async () => {

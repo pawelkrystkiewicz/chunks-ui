@@ -8,6 +8,7 @@ import { Checkbox } from "./components/checkbox";
 import { Combobox } from "./components/combobox";
 import { DatePicker } from "./components/date-picker";
 import { Input } from "./components/input";
+import { Menu } from "./components/menu";
 import { Popover } from "./components/popover";
 import { Select } from "./components/select";
 import { Switch } from "./components/switch";
@@ -502,8 +503,8 @@ describe("Select and Popover focus as the popup closes, in WebKit", () => {
   });
 });
 
-// #684: the hand-off cancels the repeated keypress of a held key while the popup closes after a
-// key's pick. Without it Chromium activated the picked day again (DatePicker.visual.spec.tsx);
+// #684: the hand-off cancels the repeats of a held Enter while the popup closes after a key's
+// pick. Without it Chromium activated the picked day again (DatePicker.visual.spec.tsx);
 // WebKit picks once either way, so this row holds that, and that the cancel leaves the real pick
 // alone. The day takes focus from code, so no Tab is needed: WebKit's Tab skips buttons.
 describe("DatePicker focus as the popup closes, in WebKit", () => {
@@ -518,6 +519,61 @@ describe("DatePicker focus as the popup closes, in WebKit", () => {
     await userEvent.keyboard("{ArrowDown}{Enter>2}{/Enter}");
     expect(popup.isConnected, "the popup is still leaving").toBe(true);
     expect(onValueChange).toHaveBeenCalledExactlyOnceWith(new Date(2026, 2, 22));
+  });
+});
+
+// W365: a Base UI item acts on each Enter keydown, and a held Enter's repeats reached it while the
+// popup left: WebKit picked again on each repeat, as Chromium did (Select.visual.spec.tsx,
+// MenuFocus.visual.spec.tsx). The hand-off cancels those repeats. The items take focus from code
+// (ArrowDown), so no Tab is needed: WebKit's Tab skips buttons.
+describe("Select and Menu items on a held Enter as the popup closes, in WebKit", () => {
+  it("picks a Select item once", async () => {
+    const onValueChange = vi.fn();
+    render(
+      <Select.Root defaultValue="apple" onValueChange={onValueChange}>
+        <Select.Trigger aria-label="Fruit">
+          <Select.Value />
+        </Select.Trigger>
+        <Select.Portal>
+          <Select.Positioner>
+            <Select.Popup data-testid="popup">
+              {["Apple", "Banana", "Cherry"].map((fruit) => (
+                <Select.Item key={fruit} value={fruit.toLowerCase()}>
+                  <Select.ItemText>{fruit}</Select.ItemText>
+                </Select.Item>
+              ))}
+            </Select.Popup>
+          </Select.Positioner>
+        </Select.Portal>
+      </Select.Root>,
+    );
+    await userEvent.click(screen.getByRole("combobox", { name: "Fruit" }));
+    const popup = screen.getByTestId("popup");
+    await expect.poll(() => popup.contains(document.activeElement)).toBe(true);
+    await settle(popup);
+    await userEvent.keyboard("{ArrowDown}{Enter>3}{/Enter}");
+    expect(isShown(popup), "the popup is still leaving").toBe(true);
+    expect(onValueChange).toHaveBeenCalledExactlyOnceWith("banana", expect.anything());
+  });
+
+  it("clicks a Menu.Item once", async () => {
+    const onClick = vi.fn();
+    render(
+      <Menu.Root>
+        <Menu.Trigger>Options</Menu.Trigger>
+        <Menu.Content data-testid="popup">
+          <Menu.Item onClick={onClick}>Edit</Menu.Item>
+          <Menu.Item>Copy</Menu.Item>
+        </Menu.Content>
+      </Menu.Root>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Options" }));
+    const popup = await screen.findByTestId("popup");
+    await expect.poll(() => popup.contains(document.activeElement)).toBe(true);
+    await settle(popup);
+    await userEvent.keyboard("{ArrowDown}{Enter>3}{/Enter}");
+    expect(popup.isConnected, "the popup is still leaving").toBe(true);
+    expect(onClick).toHaveBeenCalledOnce();
   });
 });
 
