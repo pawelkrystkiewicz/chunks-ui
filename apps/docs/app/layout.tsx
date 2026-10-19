@@ -55,12 +55,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           }
           pageMap={await getPageMap()}
           // Nextra names the search box only by its placeholder, which not every screen reader
-          // reads as a label, and a full theme switch by the current theme alone ("Light"). The
-          // Search `aria-label` passes through to the input. `themeSwitch` sets the text of the
-          // options and of a full switch ("Light theme" etc.), which names it: Nextra renders one
-          // in the footer of pages without a sidebar. The navbar's switch is `lite` (icon only):
-          // the Select's `title="Change theme"` names it. globals.css hides the copies in the
-          // sidebar and mobile menu footers.
+          // reads as a label. The Search `aria-label` passes through to the input. `themeSwitch`
+          // sets the text of the theme options ("Light theme" etc.). The navbar's switch, the one
+          // globals.css leaves on screen, is `lite` (icon only): the Select's
+          // `title="Change theme"` names it.
           search={<Search aria-label="Search documentation" />}
           themeSwitch={{ light: "Light theme", dark: "Dark theme", system: "System theme" }}
           // Base of the "Edit this page" and feedback links; Nextra appends the file path

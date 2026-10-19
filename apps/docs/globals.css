@@ -99,15 +99,18 @@ article:has(> main > .landing) {
 }
 
 /*
- * The navbar's theme switch shows at every width. Nextra repeats it in the desktop sidebar's footer,
- * where it grew and so kept the collapse button at the end (the second rule keeps it there), and in
- * the mobile menu's footer, which holds nothing else. The Layout's `darkMode={false}` would remove
- * the navbar's too.
- * ponytail: keyed to Nextra's English titles. An upgrade that renames them brings the copies back
- * and moves the collapse button to the start, and no check fails.
+ * The navbar's theme switch shows at every width, so Nextra's copies go. In the desktop sidebar's
+ * footer only the switch goes: it grew and so kept the collapse button at the end, which the last
+ * rule keeps. The mobile menu's footer, and the bar Nextra's page footer adds on pages without a
+ * sidebar (/create, /kitchen-sink), hold nothing but the switch, so the whole bar goes. The
+ * Layout's `darkMode={false}` would remove the navbar's switch too.
+ * ponytail: depends on Nextra 4.6's markup. The titles are its English "Change theme" and
+ * "Collapse sidebar". With no i18n its LocaleSwitch renders nothing, so a footer's switch is its
+ * bar's only child; the navbar's and the sidebar's never are. An upgrade that changes either
+ * brings the copies back or moves the button, and no check fails.
  */
 .nextra-sidebar .nextra-sidebar-footer > [title="Change theme"],
-.nextra-mobile-nav .nextra-sidebar-footer:has(> [title="Change theme"]:only-child) {
+div:has(> [title="Change theme"]:only-child) {
   display: none;
 }
 
