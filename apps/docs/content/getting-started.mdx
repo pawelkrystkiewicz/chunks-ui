@@ -22,6 +22,24 @@ The examples use icons from `lucide-react`, which you install yourself (`bun add
 
 Installing `motion` in any dependency field turns the animations on. The types do not need Motion. For Motion's full types, cast in your own code: `useMotion() as typeof import("motion/react") | null`.
 
+`useReducedMotion()` returns `true` when the user has asked for reduced motion (`prefers-reduced-motion: reduce`) and `false` otherwise. It follows the setting if the user changes it while the page is open. Use it to skip an animation that you start from JavaScript, or to show a static fallback:
+
+```tsx
+import { Button, useReducedMotion } from "chunks-ui";
+
+export function BackToTop() {
+  const reduced = useReducedMotion();
+
+  return (
+    <Button onClick={() => window.scrollTo({ top: 0, behavior: reduced ? "instant" : "smooth" })}>
+      Back to top
+    </Button>
+  );
+}
+```
+
+On the server and while hydrating, the hook returns `false`, so the client markup matches what the server sent. For a user who asks for reduced motion, it switches to `true` right after hydration. A component that mounts after hydration, such as a popup that opens later, reads the real value on its first render. An animation that must be off from the first paint belongs in CSS (the `motion-reduce:` variant), not in the hook.
+
 ## Setup
 
 Add the theme to the CSS file that imports Tailwind (e.g. `app/globals.css`):
