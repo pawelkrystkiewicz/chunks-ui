@@ -180,7 +180,7 @@ Browser specs (Vitest browser mode, Playwright Chromium) in `packages/ui`. They 
 
 ## WebKit Smoke Tests (`*.webkit.visual.spec.tsx`)
 
-The visual suite runs in Chromium only, so a bug that only Safari has does not show there. A small set of browser specs runs in WebKit (Playwright's Safari engine) to catch such bugs: `src/Smoke.webkit.visual.spec.tsx`, in its own project (`vitest.webkit.config.ts`).
+The visual suite runs in Chromium only, so a bug that only Safari has does not show there. A small set of browser specs runs in WebKit (Playwright's Safari engine) to catch such bugs: `src/Smoke.webkit.visual.spec.tsx` and `src/components/input/Input.webkit.visual.spec.tsx`, in their own project (`vitest.webkit.config.ts`).
 
 - **Geometry and paint, no screenshot baselines.** There is no second set of PNGs to keep up to date. A paint check reads a screenshot as data: it counts the pixels in an element's box that change when the element is hidden. 0 means that WebKit laid the element out but painted none of it in its box. A geometry check alone does not find that.
 - **A known WebKit bug is asserted by a plain `it`** (W80, #341, filed as [WebKit bug 327820](https://bugs.webkit.org/show_bug.cgi?id=327820)).

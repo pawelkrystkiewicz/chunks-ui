@@ -25,6 +25,7 @@ import {
   settled,
   tookFocus,
   waitForStable,
+  withViewport,
 } from "../../VisualTest.utils";
 import { Combobox, type ComboboxPositionerProps } from "./index";
 
@@ -82,7 +83,7 @@ const chipsCombobox = ({
 } = {}) => (
   <Combobox.Root multiple items={options} defaultValue={options.slice(0, 2)} defaultOpen={open}>
     <Combobox.Control data-testid="control">
-      <Combobox.Chips className="flex-1">
+      <Combobox.Chips>
         {options.slice(0, 2).map((item) => (
           <Combobox.Chip key={item.value}>
             {item.label}
@@ -159,6 +160,13 @@ describe("Combobox", () => {
     await expect(fixture).toMatchScreenshot();
   });
 
+  // The placeholder cut at the text box ends in an ellipsis (#686). Chromium drops the ellipsis
+  // while the input has focus, so the focus-visible shot below shows it cut
+  it("control closed", async () => {
+    const { fixture } = await renderFixture(<div style={{ width: 300 }}>{chipsCombobox()}</div>);
+    await expect(fixture).toMatchScreenshot();
+  });
+
   // The same ring on the Control, 2px outside the wrapper around the chips and the input, and
   // none on the input: two rings showed before
   it("control focus-visible", async () => {
@@ -206,6 +214,28 @@ describe("Combobox", () => {
       input.getBoundingClientRect().right - parseFloat(paddingRight) - parseFloat(borderRightWidth);
     const clear = getByRole("button", { name: "Clear selection" }).getBoundingClientRect();
     expect(textRight).toBeLessThanOrEqual(clear.left);
+  });
+
+  // Chips was only as wide as its content, so the input stopped short of the Control's end (#686).
+  // The input must also start on the chips' line: a wrapped one ends at the Control's end too.
+  describe("in a Control wider than its content", () => {
+    withViewport(700);
+
+    it("lets the input take the rest of the Control's row, with no class on Combobox.Chips", () => {
+      const { getByRole, getByTestId, getByText } = render(
+        <div style={{ width: 600 }}>{chipsCombobox()}</div>,
+      );
+      const control = getByTestId("control");
+      const { paddingRight, borderRightWidth } = getComputedStyle(control);
+      const contentRight =
+        control.getBoundingClientRect().right -
+        parseFloat(paddingRight) -
+        parseFloat(borderRightWidth);
+      const input = getByRole("combobox").getBoundingClientRect();
+      // 4px after the last chip (the gap of the chips): a wrapped input starts at the row's start
+      expect(input.left).toBeCloseTo(getByText("Vue").getBoundingClientRect().right + 4, 1);
+      expect(input.right).toBeCloseTo(contentRight, 1);
+    });
   });
 
   // The chips sat flush against each other: Combobox.Chips had no gap (#478)
@@ -302,6 +332,27 @@ describe("Combobox.Input beside Clear and Trigger", () => {
       input.getBoundingClientRect().right - parseFloat(paddingRight) - parseFloat(borderRightWidth);
     const button = getByRole("button", { name: first }).getBoundingClientRect();
     expect(textRight).toBeLessThanOrEqual(button.left);
+  });
+
+  // A placeholder cut at the text box ended mid-word (#686). The ellipsis is only for the
+  // placeholder: a long label stays cut at the edge, as before. `placeholder-shown:text-clip`
+  // opts out, as the docs say.
+  it.each([
+    { shows: "a long placeholder", value: null, textOverflow: "ellipsis" },
+    { shows: "a long label", value: long, textOverflow: "clip" },
+    {
+      shows: "a long placeholder under placeholder-shown:text-clip",
+      value: null,
+      className: "placeholder-shown:text-clip",
+      textOverflow: "clip",
+    },
+  ])("ends $shows with $textOverflow", ({ value, className, textOverflow }) => {
+    const { getByRole } = render(
+      <Combobox.Root items={[long]} defaultValue={value}>
+        <Combobox.Input aria-label="Framework" placeholder={long.label} className={className} />
+      </Combobox.Root>,
+    );
+    expect(getComputedStyle(getByRole("combobox")).textOverflow).toBe(textOverflow);
   });
 });
 
