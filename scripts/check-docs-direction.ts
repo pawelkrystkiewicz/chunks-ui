@@ -3,9 +3,10 @@
  * Fails on a physical margin, padding, inset, text-align, rounded, border, float, clear, scroll,
  * object, background, transform-origin, perspective-origin, mask or gradient direction class in
  * apps/docs. It needs a Tailwind value (`ml-4`, `left-1/2`), so prose like `left-to-right` passes.
- * In a .css file it reads the `@apply` classes only. A marker `direction: physical, <reason>` on
- * the same line, or in a comment alone on its lines directly above, exempts a deliberate one. An
- * empty scan, or one with no .mdx file, fails. Full list and limits: TESTING_STRATEGY.md
+ * In a .css file it reads the `@apply` classes only. A class behind `rtl:` or `ltr:` is set for one
+ * direction on purpose and passes. A marker `direction: physical, <reason>` on the same line, or
+ * in a comment alone on its lines directly above, exempts a deliberate one. An empty scan, or one
+ * with no .mdx file, fails. Full list and limits: TESTING_STRATEGY.md
  *
  * Run: bun run check:docs-direction
  */
@@ -35,6 +36,8 @@ const PHYSICAL = new RegExp(
   ].join("|")})(?![\\w-])`,
   "g",
 );
+/** An `rtl:` or `ltr:` variant whose chain runs to the end of the text: no space, quote or brace after it. */
+const DIRECTION_VARIANT = /(?<![\w-])(?:rtl|ltr):[^\s"'`{}]*$/;
 /** The classes Tailwind reads from a stylesheet line: each `@apply` up to its `;` or `}`. */
 const APPLY = /@apply\b[^;}]*/g;
 /** A reason has to start with a word character, so `direction: physical,` closed at once by `*\/` names none. */
@@ -42,9 +45,11 @@ const MARKER = /direction:\s*physical,\s*\w/;
 /** One `/* … *\/` or `{/* … *\/}`, on one line or several, and nothing else. */
 const COMMENT = /^\s*(?:\/\*(?:(?!\*\/)[\s\S])*\*\/|\{\/\*(?:(?!\*\/)[\s\S])*\*\/\})\s*$/;
 
-/** The physical direction classes in `line`, in order. */
+/** The physical direction classes in `line`, in order, except one behind `rtl:` or `ltr:`: it is set for that direction. */
 export function physicalTokens(line: string): string[] {
-  return [...line.matchAll(PHYSICAL)].map(([token]) => token);
+  return [...line.matchAll(PHYSICAL)]
+    .filter(({ index }) => !DIRECTION_VARIANT.test(line.slice(0, index)))
+    .map(([token]) => token);
 }
 
 /** The comment that ends on the line above `index` and is alone on its lines, or "". */
@@ -103,7 +108,7 @@ if (import.meta.main) {
   for (const problem of problems) console.error(problem);
   if (problems.length > 0) {
     console.error(
-      `\n${problems.length} physical direction ${problems.length === 1 ? "class" : "classes"} in the docs. Use the logical class (ms-/me-, ps-/pe-, start-/end-, text-start/text-end, rounded-s-/rounded-e-/rounded-ss-…, border-s-/border-e-) so the page mirrors in RTL, or mark a deliberate one with \`direction: physical, <reason>\` in a comment on its line or directly above it. Positions (object-, bg-, origin-, perspective-origin-, mask-, mask-radial-at-), side masks (mask-l-, mask-r-) and gradient directions (bg-linear-to-, bg-gradient-to-) have no logical class: mirror one with an rtl: twin and mark the line.`,
+      `\n${problems.length} physical direction ${problems.length === 1 ? "class" : "classes"} in the docs. Use the logical class (ms-/me-, ps-/pe-, start-/end-, text-start/text-end, rounded-s-/rounded-e-/rounded-ss-…, border-s-/border-e-) so the page mirrors in RTL, or mark a deliberate one with \`direction: physical, <reason>\` in a comment on its line or directly above it. Positions (object-, bg-, origin-, perspective-origin-, mask-, mask-radial-at-), side masks (mask-l-, mask-r-) and gradient directions (bg-linear-to-, bg-gradient-to-) have no logical class: set one for each direction (ltr:object-left rtl:object-right), which needs no marker.`,
     );
     process.exit(1);
   }

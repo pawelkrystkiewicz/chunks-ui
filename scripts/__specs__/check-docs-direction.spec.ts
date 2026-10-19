@@ -148,6 +148,16 @@ describe("physicalTokens", () => {
       ],
     ],
     [
+      "nothing behind an rtl: or ltr: variant, anywhere in its chain, but the unprefixed twin",
+      "object-left rtl:object-right ltr:ml-4 md:rtl:origin-left rtl:md:hover:bg-right [&>img]:ltr:left-0 rtl:[&>img]:pl-2 rtl:mr-2! group-hover:ltr:mask-l-from-50%",
+      ["object-left"],
+    ],
+    [
+      "a class whose rtl: is not its own variant: on another class, in a longer variant, in prose, before a brace",
+      "rtl:x ml-4 data-rtl:ml-4 'rtl:' pr-2 rtl: pl-2 {,rtl:}mr-4",
+      ["ml-4", "ml-4", "pr-2", "pl-2", "mr-4"],
+    ],
+    [
       "nothing for the logical classes and the look-alikes",
       "ms-4 pe-2 start-0 -end-2 text-start rounded-s-lg rounded-ee-sm border-e-2 inset-x-0 rounded-lg border-left translate-x-2 float-none clear-both scroll-ms-4 scroll-mx-2 overfloat-left space-x-4 space-x-reverse divide-x divide-x-reverse mask-s-from-0 bg-linear-to-e",
       [],

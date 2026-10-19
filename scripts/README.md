@@ -24,7 +24,7 @@ Runs in the `lint` job of `quality-gates.yml`. Tests: `scripts/__specs__/check-b
 
 ## check-docs-direction.ts
 
-Fails on a physical direction class (`ml-*`, `left-*`, `text-left`, `object-left`, `origin-top-left`, `mask-l-from-*`, `bg-linear-to-r` and the like) in the docs source, so the docs mirror in RTL. It reads the `.ts`, `.tsx` and `.mdx` files in all of `apps/docs`, except `node_modules` and the build output, and the `@apply` lines of the `.css` files there. A deliberate one carries a `direction: physical, <reason>` marker, on its line or in a comment directly above it. The full class list, marker rules and limits: `TESTING_STRATEGY.md` › CI › Docs direction.
+Fails on a physical direction class (`ml-*`, `left-*`, `text-left`, `object-left`, `origin-top-left`, `mask-l-from-*`, `bg-linear-to-r` and the like) in the docs source, so the docs mirror in RTL. It reads the `.ts`, `.tsx` and `.mdx` files in all of `apps/docs`, except `node_modules` and the build output, and the `@apply` lines of the `.css` files there. A class behind an `rtl:` or `ltr:` variant is set for one direction on purpose and passes. Positions, side masks and gradient directions have no logical class, so this is how they mirror: `ltr:object-left rtl:object-right` needs no marker, but in `object-left rtl:object-right` the `object-left` still needs one. A deliberate one carries a `direction: physical, <reason>` marker, on its line or in a comment directly above it. The full class list, marker rules and limits: `TESTING_STRATEGY.md` › CI › Docs direction.
 
 Left out on purpose:
 
