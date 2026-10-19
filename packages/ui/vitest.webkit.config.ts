@@ -2,10 +2,11 @@ import { defineConfig } from "vitest/config";
 import visual, { playwrightProvider } from "./vitest.visual.config.ts";
 
 /**
- * WebKit (Playwright's Safari engine) smoke project: a few geometry and paint checks, and the
- * tab-order and axe rows of the toast, no screenshot baselines. It shares the plugins, CSS, setup
- * file, commands, runner window and time zone of the Chromium visual suite, and runs only the
- * `*.webkit.visual.spec.tsx` specs, which that suite excludes.
+ * WebKit (Playwright's Safari engine) smoke project, no screenshot baselines: geometry, paint and
+ * focus-ring checks, focus and pick-count rows for closing popups, the time-zone canary, the
+ * Input's paint rows, and the tab-order and axe rows of the toast. It shares the plugins, CSS,
+ * setup file, commands, runner window and time zone of the Chromium visual suite, and runs only
+ * the `*.webkit.visual.spec.tsx` specs, which that suite excludes.
  */
 export default defineConfig({
   ...visual,
