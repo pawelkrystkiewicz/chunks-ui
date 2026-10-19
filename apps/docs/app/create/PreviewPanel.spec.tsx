@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { SearchParamsContext } from "next/dist/shared/lib/hooks-client-context.shared-runtime";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PreviewPanel } from "./PreviewPanel";
 import { DEFAULT_THEME } from "./theme-model";
@@ -42,7 +43,7 @@ describe("preview tabs", () => {
     expect(window.location.search).toBe("");
   });
 
-  it("selects the kitchen sink from ?preview=kitchen-sink, and carries the viewport width", async () => {
+  it("selects the kitchen sink from ?preview=kitchen-sink, applies the width toggle to it and keeps other params", async () => {
     window.history.replaceState(null, "", "/?preview=kitchen-sink&x=1");
     render(<PreviewPanel theme={DEFAULT_THEME} onChange={vi.fn()} />);
     const preview = screen.getByRole("region", { name: "Preview" });
@@ -56,6 +57,28 @@ describe("preview tabs", () => {
     );
     fireEvent.click(within(preview).getByRole("tab", { name: "Cards" }));
     expect(window.location.search).toBe("?x=1");
+  });
+
+  it("follows the search params on a soft navigation, both ways", async () => {
+    // Next keeps the page's state when only the search params change; useSearchParams reads this context
+    const panel = (params: string) => (
+      <SearchParamsContext.Provider value={new URLSearchParams(params)}>
+        <PreviewPanel theme={DEFAULT_THEME} onChange={vi.fn()} />
+      </SearchParamsContext.Provider>
+    );
+    const { rerender } = render(panel(""));
+    const preview = screen.getByRole("region", { name: "Preview" });
+    expect(within(preview).getByRole("tab", { name: "Cards", selected: true })).toBeTruthy();
+
+    window.history.replaceState(null, "", "/?preview=kitchen-sink");
+    rerender(panel("preview=kitchen-sink"));
+    expect(
+      await within(preview).findByRole("tab", { name: "Kitchen sink", selected: true }),
+    ).toBeTruthy();
+
+    window.history.replaceState(null, "", "/");
+    rerender(panel(""));
+    expect(await within(preview).findByRole("tab", { name: "Cards", selected: true })).toBeTruthy();
   });
 
   it("keeps the breadcrumb links of the kitchen sink on the page", async () => {
