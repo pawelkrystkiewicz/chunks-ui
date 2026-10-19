@@ -80,6 +80,17 @@ describe("Toast tab order while Base UI hides a toast from assistive tech", () =
     ]);
   });
 
+  // A pointer over the viewport expands the toasts, but a high-priority toast stays aria-hidden
+  // until keyboard focus enters it: its Action and Close must not get their tab stops back
+  it("keeps the action and the close button of a hidden high-priority toast out of it under the pointer", async () => {
+    const { container, toast } = await renderUrgentToast();
+    await userEvent.hover(toast);
+    // The pointer expanded the toasts: without this, the checks below would pass for any hover
+    await expect.poll(() => toast.hasAttribute("data-expanded")).toBe(true);
+    expect(toast).toHaveAttribute("aria-hidden", "true");
+    expect(await ariaHiddenFocus(container)).toEqual([]);
+  });
+
   it("keeps the close buttons of a collapsed stack out of it", async () => {
     const { container } = render(
       <Toast.Provider>
