@@ -33,6 +33,22 @@ describe("Select", () => {
     expect(screen.getByTestId("trigger")).toHaveClass("custom");
   });
 
+  it("mutes the Trigger with data-placeholder only while nothing is selected", () => {
+    const select = (value: string | null) => (
+      <Select.Root value={value}>
+        <Select.Trigger aria-label="Fruit">
+          <Select.Value placeholder="Pick a fruit" />
+        </Select.Trigger>
+      </Select.Root>
+    );
+    const { rerender } = render(select(null));
+    const trigger = screen.getByRole("combobox", { name: "Fruit" });
+    expect(trigger).toHaveAttribute("data-placeholder", "");
+    expect(trigger).toHaveClass("data-placeholder:text-muted-foreground");
+    rerender(select("apple"));
+    expect(trigger).not.toHaveAttribute("data-placeholder");
+  });
+
   it.each([
     { kind: "string", className: "custom" },
     { kind: "function", className: () => "custom" },

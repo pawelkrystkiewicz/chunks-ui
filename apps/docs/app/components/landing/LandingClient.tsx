@@ -84,10 +84,13 @@ export function MobileMenu({ children }: { children: ReactNode }) {
         {open ? <X className="size-[18px]" /> : <Menu className="size-[18px]" />}
       </button>
       {open && (
+        // Hangs from the `relative` header, below its 1px border, so it follows the header's height
+        // under text zoom. A screen tall, it reaches the bottom; the scroll lock keeps the rest off
+        // screen.
         <nav
           id="landing-menu"
           aria-label="Primary"
-          className="fixed inset-x-0 top-[72px] bottom-0 z-50 flex flex-col gap-1 bg-black px-[22px] py-6 lg:hidden"
+          className="absolute inset-x-0 top-[calc(100%+1px)] z-50 flex h-dvh flex-col gap-1 bg-black px-[22px] py-6 lg:hidden"
         >
           {children}
         </nav>

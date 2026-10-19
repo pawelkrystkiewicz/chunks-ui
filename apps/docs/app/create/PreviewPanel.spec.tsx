@@ -4,6 +4,16 @@ import { describe, expect, it, vi } from "vitest";
 import { PreviewPanel } from "./PreviewPanel";
 import { DEFAULT_THEME } from "./theme-model";
 
+it("narrows the preview's columns to 768px when Tablet is pressed", () => {
+  render(<PreviewPanel theme={DEFAULT_THEME} onChange={vi.fn()} />);
+  const preview = screen.getByRole("region", { name: "Preview" });
+  // The columns are the one element in the preview with an inline max-width
+  const maxWidth = () => preview.querySelector<HTMLElement>("[style*='max-width']")?.style.maxWidth;
+  expect(maxWidth()).toBe("100%");
+  fireEvent.click(within(preview).getByRole("button", { name: "Tablet" }));
+  expect(maxWidth()).toBe("768px");
+});
+
 // `focus`: the role and name that receives focus on open, never the close button
 const OVERLAYS = [
   { trigger: "Continue with Pro", title: "Payment details", focus: ["textbox", "Card number"] },
