@@ -59,7 +59,9 @@ jobs:
         uses: changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1.9.0
         with:
           publish: bun run release
-          createGithubReleases: true
+          # GitHub caps a release body at 125000 characters and the action (v2.1.2 too) sends the
+          # entry untruncated; "Create GitHub release" below makes the tag and the release instead.
+          createGithubReleases: false
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
           # NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -74,6 +76,32 @@ jobs:
           payload: |
             channel: "${{ secrets.SLACK_CHANNEL_ID }}"
             text: "Published ${{ fromJSON(steps.changesets.outputs.publishedPackages)[0].name }}@${{ fromJSON(steps.changesets.outputs.publishedPackages)[0].version }} to npm\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>"
+
+      # After the Slack ping, so the publish is reported even when this fails. gh makes the tag
+      # at the run commit on GitHub's side; the action no longer pushes it.
+      - name: Create GitHub release
+        if: steps.changesets.outputs.published == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          VERSION: ${{ fromJSON(steps.changesets.outputs.publishedPackages)[0].version }}
+        run: |
+          set -o pipefail
+          tag="chunks-ui@$VERSION"
+          notes="$RUNNER_TEMP/release-notes.md"
+          # Read at the run's commit, which the tag points at, not from the workspace
+          git show "$GITHUB_SHA:packages/ui/CHANGELOG.md" |
+            awk -v h="## $VERSION" '/^## / { on = ($0 == h); next } on' > "$notes"
+          if ! grep -q '[^[:space:]]' "$notes"; then
+            echo "::error::packages/ui/CHANGELOG.md at $GITHUB_SHA has no '## $VERSION' entry"
+            exit 1
+          fi
+          # wc -c counts bytes, never fewer than characters, so this errs on the safe side of the cap
+          if [ "$(wc -c < "$notes")" -gt 125000 ]; then
+            echo "These notes are longer than a GitHub release allows: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$tag/packages/ui/CHANGELOG.md" > "$notes"
+          fi
+          pre=()
+          if [[ $VERSION == *-* ]]; then pre=(--prerelease); fi
+          gh release create "$tag" --target "$GITHUB_SHA" --title "$tag" --notes-file "$notes" "${pre[@]}"
 
       # Nothing published: when this fires and what to do are in TESTING_STRATEGY.md, CI, Release.
       - name: Check npm has the version master is at
