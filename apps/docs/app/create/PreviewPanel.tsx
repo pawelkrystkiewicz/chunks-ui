@@ -33,9 +33,9 @@ const VIEWPORTS = [
 
 type ViewportId = (typeof VIEWPORTS)[number]["id"];
 
-// ponytail: a failed chunk load (a tab left open across a deploy) falls to Next's root error
-// boundary. Loaded when its tab is first opened, so /create's first load does not carry it. The fallback
-// has the panel's min height, so the canvas does not jump.
+// Loaded when its tab is first opened, so /create's first load does not carry it. The fallback
+// holds some height, so the canvas jumps less. ponytail: a failed chunk load (a tab left open
+// across a deploy) falls to Next's root error boundary.
 const KitchenSink = dynamic(() => import("../kitchen-sink").then((m) => m.KitchenSink), {
   loading: () => (
     <div role="status" className="min-h-[60vh] py-8 text-muted-foreground text-sm">
@@ -77,7 +77,9 @@ export function PreviewPanel({
   const [preview, setPreview] = useState<PreviewId>("cards");
   const [textSpacing, setTextSpacing] = useState(false);
 
-  // After mount, like the theme: the page is server-rendered
+  // After mount, like the theme: the page is server-rendered. ponytail: a direct
+  // /create?preview=kitchen-sink load (the redirect's target) hydrates the Cards panel first, then
+  // swaps it for the loading fallback and the lazy chunk. Accepted: the page is static.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 

@@ -7,8 +7,8 @@
  * not planned keeps its entry.
  *
  * Covers the pages built from content/**\/*.mdx (the landing page and /create among them),
- * /create's kitchen-sink tab (/create?preview=kitchen-sink), every other page under app/, and the 404 page, which it gets by requesting a URL
- * no page answers on: that one must answer 404, every other page 200. A page DISCLOSURES lists is
+ * /create's kitchen-sink tab (/create?preview=kitchen-sink), every other page under app/, and the
+ * 404 page, which it gets by requesting a URL no page answers on: that one must answer 404, every other page 200. A page DISCLOSURES lists is
  * audited with each disclosure listed open (/create's Accessibility panel). On the pages POPUPS
  * lists, it then opens each popup listed and audits it alone, open; on the pages TOASTS lists, it
  * adds each toast and audits it alone, one at a time. Both add aria-dialog-name (see Popup and
@@ -612,7 +612,12 @@ async function audit(
     if (route === KITCHEN_SINK) {
       await page
         .getByRole(KITCHEN_SINK_READY.role, { name: KITCHEN_SINK_READY.name })
-        .waitFor({ timeout: HYDRATION_MS });
+        .waitFor({ timeout: HYDRATION_MS })
+        .catch(() => {
+          throw new Error(
+            `${KITCHEN_SINK} did not show the kitchen sink within ${HYDRATION_MS / 1000} s: does /create select its tab from the URL after mount?`,
+          );
+        });
     }
     const problems: Problem[] = [];
     // Before the fonts wait, as what a panel shows can load more. A disclosure that won't open is a
