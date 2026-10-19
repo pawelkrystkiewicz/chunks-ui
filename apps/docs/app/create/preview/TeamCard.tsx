@@ -36,7 +36,7 @@ export function TeamCard() {
                   : "bg-muted text-muted-foreground"
               }
             />
-            <span className="flex min-w-[7rem] flex-1 flex-col gap-px">
+            <span className="flex min-w-[8em] flex-1 flex-col gap-px">
               <span className="truncate font-medium text-sm">{m.name}</span>
               {/* One line with an ellipsis, never a break inside the address: the title keeps it whole */}
               <span className="truncate text-muted-foreground text-xs" title={m.email}>
@@ -44,12 +44,14 @@ export function TeamCard() {
               </span>
             </span>
             {m.role === "Owner" ? (
-              <span className="ms-auto text-muted-foreground text-xs">Owner</span>
+              <span className="ms-auto min-w-[9.5em] text-end text-muted-foreground text-xs">
+                Owner
+              </span>
             ) : (
               <Select.Root defaultValue={m.role}>
                 <Select.Trigger
                   aria-label={`Role for ${m.name}`}
-                  className="h-[calc(var(--spacing-ui-height)-7px)] ms-auto w-auto gap-1 pe-2 ps-3 text-xs"
+                  className="h-[calc(var(--spacing-ui-height)-7px)] ms-auto w-auto min-w-[9.5em] gap-1 pe-2 ps-3 text-xs"
                 >
                   <Select.Value />
                   <Select.Icon />
