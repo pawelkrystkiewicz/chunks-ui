@@ -181,3 +181,33 @@ describe("DatePicker focus as a popup that its trigger did not open closes", () 
     expect(document.activeElement).toBe(trigger);
   });
 });
+
+// A picker that gets disabled while its calendar is open: the calendar leaves in an exit of 0.3s,
+// where it can still be clicked
+describe("DatePicker as it is disabled while open", () => {
+  beforeEach(() => emulateReducedMotion(false));
+  afterAll(() => emulateReducedMotion(true));
+
+  it("ignores a day that is clicked during the exit", async () => {
+    const onValueChange = vi.fn();
+    const picker = (disabled: boolean) => (
+      <DatePicker
+        defaultValue={new Date(2026, 2, 15)}
+        onValueChange={onValueChange}
+        disabled={disabled}
+      />
+    );
+    const view = render(picker(false));
+    await userEvent.click(view.getByRole("button", { name: "March 15, 2026" }));
+    const popup = await view.findByRole("dialog");
+    const day = view.getByRole("button", { name: "Friday, March 20, 2026" });
+    await settled(popup);
+    view.rerender(picker(true));
+    expect(popup.isConnected, "the calendar is still closing").toBe(true);
+    // A DOM click: a pointer click waits for the fading calendar to hold still
+    day.click();
+    await exited(popup);
+    expect(onValueChange).not.toHaveBeenCalled();
+    expect(view.getByRole("button")).toHaveTextContent("March 15, 2026");
+  });
+});

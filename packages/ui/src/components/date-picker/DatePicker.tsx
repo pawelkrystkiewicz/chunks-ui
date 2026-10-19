@@ -71,7 +71,8 @@ type DatePickerOwnProps = Pick<
    */
   placeholder?: string;
   /**
-   * Whether the date picker trigger is disabled.
+   * Whether the date picker trigger is disabled. A disabled picker stays closed whatever `open`
+   * and `defaultOpen` say.
    */
   disabled?: boolean;
   /**
@@ -203,6 +204,27 @@ export function DatePicker({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const mergedTriggerRef = useMergedRef(triggerRef, ref);
   const [internalOpen, setInternalOpen] = useState(defaultOpen ?? false);
+  // A disabled trigger cannot be pressed, and `open` is not a press: the calendar stays closed
+  // whatever `open` says, and a pick cannot change the value of a disabled control. The picker's
+  // `disabled` is not all that disables the trigger: a disabled Field.Root or Fieldset does, and a
+  // native <fieldset disabled>, which only the browser knows. So this reads the DOM after every
+  // commit, as the label ids below do. A disabled uncontrolled picker also forgets that it was
+  // open, so enabling it later does not pop the calendar open, and take focus, out of nowhere.
+  // ponytail: only the picker's own `disabled` counts in the render that sets it; the others count
+  // from the next commit, or from the next pick, which reads the DOM too. A picker that mounts
+  // open inside a disabled Field or fieldset therefore mounts its calendar for its first commit,
+  // gone before it paints and without taking focus. Accepted.
+  const [triggerDisabled, setTriggerDisabled] = useState(false);
+  const isOpen = !(disabled || triggerDisabled) && (open ?? internalOpen);
+  const syncDisabled = () => {
+    const next = triggerRef.current?.matches(":disabled") ?? false;
+    if (next !== triggerDisabled) setTriggerDisabled(next);
+    if (next && internalOpen) setInternalOpen(false);
+    return next;
+  };
+  useLayoutEffect(() => {
+    syncDisabled();
+  });
   // Focus moves to the trigger as the popup starts to close, not at the unmount after the exit.
   // Only an uncontrolled picker keeps the state: a controlled one shows `open`, so the consumer
   // can refuse a change by not passing it on.
@@ -227,6 +249,10 @@ export function DatePicker({
   const selectedDate = validDate(value !== undefined ? value : internalDate);
 
   const handleDateSelect = (date: Date | null) => {
+    // The calendar can outlive the disabling: its exit takes 0.3s, and the picker does not render
+    // when only its Field.Root's state changes, so it may still be open. Reading the DOM here also
+    // closes it.
+    if (syncDisabled()) return;
     if (value === undefined) setInternalDate(date);
     onValueChange?.(date);
     const event = pickRef.current ?? new Event("base-ui");
@@ -276,7 +302,7 @@ export function DatePicker({
 
   return (
     <div className={cn("relative", className)}>
-      <BasePopover.Root open={open ?? internalOpen} onOpenChange={handleOpenChange}>
+      <BasePopover.Root open={isOpen} onOpenChange={handleOpenChange}>
         {/* Field.Control registers the trigger as the control of a surrounding Field.Root, so
             Field.Label names it and Field.Description describes it. Outside a Field it only
             passes the props through. */}

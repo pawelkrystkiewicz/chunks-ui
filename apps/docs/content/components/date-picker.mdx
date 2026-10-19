@@ -102,7 +102,7 @@ function OpenDatePicker() {
 
 ## Disabled
 
-A disabled `DatePicker` is dimmed and shows the not-allowed cursor.
+A disabled `DatePicker` is dimmed and shows the not-allowed cursor. It stays closed whatever `open` and `defaultOpen` say, whether the `disabled` prop, a disabled `Field.Root` or `Fieldset`, or a `<fieldset disabled>` disables it. Disabling a picker with an open calendar closes it without calling `onOpenChange`. When it is enabled again, a controlled calendar opens if `open` is `true`; an uncontrolled one stays closed.
 
 ```tsx
 <DatePicker disabled />

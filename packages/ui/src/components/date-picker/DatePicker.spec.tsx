@@ -2,7 +2,7 @@ import { Form } from "@base-ui/react/form";
 import { cleanup, isInaccessible, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
-import { createRef } from "react";
+import { createRef, type ReactElement } from "react";
 import {
   afterEach,
   beforeEach,
@@ -925,6 +925,85 @@ describe("DatePicker open state", () => {
     await user.click(getButton(MARCH_15_LABEL));
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(triggerIn(container)).toHaveTextContent("March 15, 2026");
+  });
+
+  // `open` and `defaultOpen` are not a press, and a disabled trigger cannot be pressed: the disabled
+  // state wins over them, whoever set it. A Base UI Fieldset.Root renders a native fieldset and
+  // disables the Field.Root inside it, so the last two cases cover it too.
+  describe.each<[string, (disabled: boolean, props: DatePickerProps) => ReactElement]>([
+    ["its own disabled", (disabled, props) => <DatePicker disabled={disabled} {...props} />],
+    [
+      "a disabled Field.Root",
+      (disabled, props) => (
+        <Field.Root disabled={disabled}>
+          <DatePicker {...props} />
+        </Field.Root>
+      ),
+    ],
+    [
+      "a native fieldset",
+      (disabled, props) => (
+        <fieldset disabled={disabled}>
+          <DatePicker {...props} />
+        </fieldset>
+      ),
+    ],
+  ])("disabled by %s", (_, picker) => {
+    it("does not open from defaultOpen, nor when it is enabled again", () => {
+      const onOpenChange = vi.fn<OnOpenChange>();
+      const props = { defaultOpen: true, onOpenChange };
+      const { container, rerender } = render(picker(true, props));
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      expect(triggerIn(container)).toHaveAttribute("aria-expanded", "false");
+      rerender(picker(false, props));
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      expect(onOpenChange).not.toHaveBeenCalled();
+    });
+
+    it("does not open from a controlled open until it is enabled, and closes again when disabled", () => {
+      const onOpenChange = vi.fn<OnOpenChange>();
+      const props = { open: true, onOpenChange };
+      const { rerender } = render(picker(true, props));
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      rerender(picker(false, props));
+      expect(screen.getByRole("dialog")).toBeInTheDocument();
+      rerender(picker(true, props));
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      expect(onOpenChange).not.toHaveBeenCalled();
+    });
+
+    it("closes an open calendar when it is disabled, and does not reopen it when it is enabled again", async () => {
+      const user = userEvent.setup();
+      const onOpenChange = vi.fn<OnOpenChange>();
+      const props = { onOpenChange };
+      const { container, rerender } = render(picker(false, props));
+      await user.click(triggerIn(container));
+      expect(screen.getByRole("dialog")).toBeInTheDocument();
+      rerender(picker(true, props));
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      rerender(picker(false, props));
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      // Only the press that opened it: a close that disabling asks for is not the user's
+      expect(changes(onOpenChange)).toEqual(["open: trigger-press"]);
+    });
+  });
+
+  // A calendar can outlive the disabling: its exit takes time, and the picker may not render when
+  // only its Field.Root's state changes (same `picker` element below, so React skips it). A pick
+  // then must not change the value of a disabled control.
+  it("ignores a pick once the trigger is disabled, and closes the calendar", async () => {
+    const user = userEvent.setup();
+    const onValueChange = vi.fn();
+    const picker = <DatePicker onValueChange={onValueChange} />;
+    const { container, rerender } = render(<Field.Root>{picker}</Field.Root>);
+    await user.click(triggerIn(container));
+    const day = getButton(MARCH_15_LABEL);
+    rerender(<Field.Root disabled>{picker}</Field.Root>);
+    expect(triggerIn(container)).toBeDisabled();
+    await user.click(day);
+    expect(onValueChange).not.toHaveBeenCalled();
+    expect(triggerIn(container)).toHaveTextContent("Pick a date");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });
 
