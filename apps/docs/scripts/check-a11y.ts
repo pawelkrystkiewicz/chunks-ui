@@ -8,9 +8,11 @@
  *
  * Covers the pages built from content/**\/*.mdx (the landing page, /create and /kitchen-sink
  * among them), every other page under app/, and the 404 page, which it gets by requesting a URL
- * no page answers on: that one must answer 404, every other page 200. On the pages POPUPS lists, it
- * then opens each popup listed and audits it alone, open; on the pages TOASTS lists, it adds each
- * toast and audits it alone, one at a time. Both add aria-dialog-name (see Popup and ToastCheck).
+ * no page answers on: that one must answer 404, every other page 200. A page DISCLOSURES lists is
+ * audited with each disclosure listed open (/create's Accessibility panel). On the pages POPUPS
+ * lists, it then opens each popup listed and audits it alone, open; on the pages TOASTS lists, it
+ * adds each toast and audits it alone, one at a time. Both add aria-dialog-name (see Popup and
+ * ToastCheck).
  * axe's `incomplete` results (checks it could not decide, often contrast over images or gradients)
  * are not failed. A page is audited once React has hydrated it (`html[data-hydrated]`, set by
  * app/HydrationMarker.tsx) and its fonts have loaded.
@@ -101,9 +103,31 @@ const ALLOWED: Allowed[] = [
     pages: ["/components/toast"],
     themes: ["light", "dark"],
   },
+  // On purpose: a swatch is an aria-hidden sample of a colour pair, and its row gives the ratio in
+  // text. Only the swatch's "Aa" is excused, not the text around it.
+  {
+    rule: "color-contrast",
+    selector: 'button[aria-label^="Edit colours:"] > span[aria-hidden="true"]:first-child',
+    why: "#688: /create's contrast swatches show each pair in its own colours, failing ones too: the default theme's Primary and Destructive button hover in the Light column, 3.91:1 and 4.13:1",
+    pages: ["/create"],
+  },
 ];
 
 type Role = Parameters<Page["getByRole"]>[0];
+
+/**
+ * A Collapsible the run opens on its page before the page's audit, so the audit covers what it
+ * shows: it clicks the button named `name`, which must be a `Collapsible.Trigger`, and waits until
+ * the panel that the button's aria-controls names is open at its full height. The wait reads
+ * `--collapsible-panel-height`, which only a Collapsible panel sets (an Accordion panel sets
+ * `--accordion-panel-height`).
+ */
+type Disclosure = { page: string; name: RegExp };
+
+const DISCLOSURES: Disclosure[] = [
+  // The contrast, target size and type scale tables. Its name goes on with the pass counts.
+  { page: "/create", name: /^Accessibility/ },
+];
 
 /**
  * A popup the run opens and audits on its own, after its page, in every theme: it clicks the first
@@ -393,6 +417,23 @@ const HYDRATION_MS = 10_000;
  */
 const NON_EMPTY_SUSPENSE = /<!--\$[!?]?-->(?!<!--\/\$-->)/;
 
+/** Opens `disclosure` on its loaded page and waits until its panel is open at its full height */
+async function expand(page: Page, disclosure: Disclosure) {
+  await page.getByRole("button", { name: disclosure.name }).click({ timeout: POPUP_MS });
+  // Base UI sets aria-controls in the render that sets aria-expanded
+  const id = await page
+    .getByRole("button", { name: disclosure.name, expanded: true })
+    .getAttribute("aria-controls", { timeout: POPUP_MS });
+  if (!id) throw new Error(`The ${disclosure.name} button controls no panel once pressed`);
+  // Base UI sets the height to auto once the panel has opened. Until then a pixel height, or 0px
+  // under data-starting-style, can clip what it shows.
+  await page
+    .locator(
+      `[id="${id}"][data-open]:not([data-starting-style])[style*="--collapsible-panel-height: auto"]`,
+    )
+    .waitFor({ timeout: POPUP_MS });
+}
+
 /** Opens `popup` on its loaded page, runs axe on it alone, and closes it with Escape */
 async function auditPopup(
   page: Page,
@@ -560,6 +601,22 @@ async function audit(
           `no html[data-hydrated] within ${HYDRATION_MS / 1000} s: is HydrationMarker in app/layout.tsx, and does the page hydrate?`,
         );
       });
+    const problems: Problem[] = [];
+    // Before the fonts wait, as what a panel shows can load more. A disclosure that won't open is a
+    // problem of its own; the page is still audited as it is.
+    for (const disclosure of DISCLOSURES.filter((entry) => entry.page === route)) {
+      try {
+        await expand(page, disclosure);
+      } catch (error) {
+        problems.push({
+          page: route,
+          theme,
+          rule: "disclosure",
+          help: "The disclosure could not be opened",
+          targets: [String(error)],
+        });
+      }
+    }
     await page.waitForFunction(() => document.fonts.status === "loaded", undefined, {
       timeout: HYDRATION_MS,
     });
@@ -570,7 +627,7 @@ async function audit(
         `${route} did not switch to the ${theme} theme (<html class="${htmlClass}">)`,
       );
     }
-    const problems = await axe(page, route, theme, matched);
+    problems.push(...(await axe(page, route, theme, matched)));
     for (const popup of POPUPS.filter((entry) => entry.page === route)) {
       const label = `${route} with ${popup.name} open`;
       // A popup that won't open or close is a problem of its own; the page's results still count
@@ -613,12 +670,14 @@ async function audit(
 // Not on import, so the spec can test the pure functions above
 if (import.meta.main) {
   const routes = pages();
-  // A renamed page would otherwise drop its popup or toast from the run without a word
-  const lost = [...POPUPS, ...TOASTS]
+  // A renamed page would otherwise drop its disclosure, popup or toast from the run without a word
+  const lost = [...DISCLOSURES, ...POPUPS, ...TOASTS]
     .filter((entry) => !routes.includes(entry.page))
     .map((entry) => entry.page);
   if (lost.length > 0) {
-    throw new Error(`POPUPS or TOASTS name pages the docs don't have: ${lost.join(", ")}`);
+    throw new Error(
+      `DISCLOSURES, POPUPS or TOASTS name pages the docs don't have: ${lost.join(", ")}`,
+    );
   }
   const issues = [...new Set(ALLOWED.flatMap((entry) => linkedIssue(entry) ?? []))].sort(
     (a, b) => a - b,
