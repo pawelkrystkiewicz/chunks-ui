@@ -14,25 +14,30 @@ it("narrows the preview's columns to 768px when Tablet is pressed", () => {
   expect(maxWidth()).toBe("768px");
 });
 
-describe("preview tabs", () => {
-  afterEach(() => window.history.replaceState(null, "", "/"));
+// The preview tab lives in the URL: no spec may leave ?preview= for the next one
+afterEach(() => window.history.replaceState(null, "", "/"));
 
+describe("preview tabs", () => {
   it("shows the cards, and mounts the kitchen sink only while its tab is selected", async () => {
     render(<PreviewPanel theme={DEFAULT_THEME} onChange={vi.fn()} />);
     const preview = screen.getByRole("region", { name: "Preview" });
     expect(within(preview).getByRole("tab", { name: "Cards", selected: true })).toBeTruthy();
-    expect(within(preview).queryByRole("heading", { name: "Acme Dashboard" })).toBeNull();
+    expect(
+      within(preview).queryByRole("heading", { name: "Acme Dashboard", hidden: true }),
+    ).toBeNull();
 
     fireEvent.click(within(preview).getByRole("tab", { name: "Kitchen sink" }));
     expect(
       await within(preview).findByRole("heading", { level: 2, name: "Acme Dashboard" }),
     ).toBeTruthy();
-    expect(within(preview).queryByRole("heading", { name: "Sign in" })).toBeNull();
+    expect(within(preview).queryByRole("heading", { name: "Sign in", hidden: true })).toBeNull();
     expect(window.location.search).toBe("?preview=kitchen-sink");
 
     fireEvent.click(within(preview).getByRole("tab", { name: "Cards" }));
     await waitFor(() =>
-      expect(within(preview).queryByRole("heading", { name: "Acme Dashboard" })).toBeNull(),
+      expect(
+        within(preview).queryByRole("heading", { name: "Acme Dashboard", hidden: true }),
+      ).toBeNull(),
     );
     expect(window.location.search).toBe("");
   });
