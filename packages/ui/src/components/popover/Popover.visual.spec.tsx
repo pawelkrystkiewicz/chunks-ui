@@ -328,14 +328,56 @@ describe("Popover focus as the popup closes, focus moved away", () => {
   });
 });
 
+// Base UI 1.9 reports a close a second time, as "focus-out", when focus leaves the trigger during
+// the exit
+describe("Popover onOpenChange as the popup closes", () => {
+  beforeEach(() => emulateReducedMotion(false));
+  afterAll(() => emulateReducedMotion(true));
+
+  it("reports a close by Escape once, though a Tab moves focus on from the trigger during the exit", async () => {
+    const onOpenChange = vi.fn();
+    const { popup, after } = await openPopover({ onOpenChange });
+    onOpenChange.mockClear();
+    await userEvent.keyboard("{Escape}{Tab}");
+    await exited(popup);
+    expect(document.activeElement).toBe(after);
+    expect(onOpenChange.mock.calls).toEqual([[false, "escape-key"]]);
+  });
+
+  it("reports a close that follows a reopen", async () => {
+    const onOpenChange = vi.fn();
+    const { popup, trigger } = await openPopover({ onOpenChange });
+    await userEvent.keyboard("{Escape}");
+    await exited(popup);
+    await userEvent.click(trigger);
+    const reopened = await vi.waitFor(() => {
+      const found = document.querySelector<HTMLElement>("[data-testid=popup]");
+      if (!found) throw new Error("not open");
+      return found;
+    });
+    await settled(reopened);
+    await userEvent.keyboard("{Escape}");
+    await exited(reopened);
+    expect(onOpenChange.mock.calls.map(([open]) => open)).toEqual([true, false, true, false]);
+  });
+});
+
 // Text fields around the trigger, as WebKit's Tab and click skip buttons
-function popoverFixture({ finalFocusBefore = false, openOnHover = false } = {}) {
+function popoverFixture({
+  finalFocusBefore = false,
+  openOnHover = false,
+  onOpenChange,
+}: {
+  finalFocusBefore?: boolean;
+  openOnHover?: boolean;
+  onOpenChange?: (open: boolean, reason: string) => void;
+} = {}) {
   const beforeRef = createRef<HTMLInputElement>();
   return (
     <div className="flex w-60 flex-col items-start gap-2" style={{ padding: 40 }}>
       <input ref={beforeRef} aria-label="Before" />
       <div data-testid="blank" className="h-6 w-full" />
-      <Popover.Root>
+      <Popover.Root onOpenChange={(open, details) => onOpenChange?.(open, details.reason)}>
         <Popover.Trigger openOnHover={openOnHover} delay={0} closeDelay={0}>
           Settings
         </Popover.Trigger>

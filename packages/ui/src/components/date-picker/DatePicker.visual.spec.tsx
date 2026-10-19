@@ -101,6 +101,49 @@ describe("DatePicker keyboard", () => {
 });
 
 // Only a real browser validates a form on submit and tracks :focus-visible. No screenshots.
+// Base UI 1.9 reports a close a second time, as "focus-out", when focus leaves the trigger during
+// the exit
+describe("DatePicker onOpenChange as the popup closes", () => {
+  beforeEach(() => emulateReducedMotion(false));
+  afterAll(() => emulateReducedMotion(true));
+
+  const open = async () => {
+    const onOpenChange = vi.fn();
+    const view = render(
+      <div className="flex w-72 flex-col items-start gap-2" style={{ padding: 40 }}>
+        <DatePicker
+          defaultValue={new Date(2026, 2, 15)}
+          onOpenChange={(next, details) => onOpenChange(next, details.reason)}
+        />
+        <input aria-label="After" />
+      </div>,
+    );
+    await userEvent.click(view.getByRole("button", { name: "March 15, 2026" }));
+    const day = await view.findByRole("button", { name: "Sunday, March 15, 2026" });
+    await expect.poll(() => document.activeElement).toBe(day);
+    const popup = view.getByRole("dialog");
+    await settled(popup);
+    onOpenChange.mockClear();
+    return { popup, onOpenChange, after: view.getByRole("textbox", { name: "After" }) };
+  };
+
+  it("reports a close by Escape once, though a Tab moves focus on from the trigger during the exit", async () => {
+    const { popup, onOpenChange, after } = await open();
+    await userEvent.keyboard("{Escape}{Tab}");
+    await exited(popup);
+    expect(document.activeElement).toBe(after);
+    expect(onOpenChange.mock.calls).toEqual([[false, "escape-key"]]);
+  });
+
+  it("reports a pick's close once, though a Tab moves focus on from the trigger during the exit", async () => {
+    const { popup, onOpenChange, after } = await open();
+    await userEvent.keyboard("{ArrowDown}{Enter}{Tab}");
+    await exited(popup);
+    expect(document.activeElement).toBe(after);
+    expect(onOpenChange.mock.calls).toEqual([[false, "close-press"]]);
+  });
+});
+
 describe("DatePicker in a form", () => {
   it("shows the trigger's focus ring when a mouse submit finds it required and empty", async () => {
     render(
