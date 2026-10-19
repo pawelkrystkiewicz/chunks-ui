@@ -155,7 +155,7 @@ add({
 
 <ToastHighPriorityExample />
 
-Base UI 1.9 hides a high-priority toast from screen readers until keyboard focus enters the viewport, and Tab passes over the toast for that time: press F6 to reach it. See the note under [Props](#props).
+Base UI 1.9 hides a high-priority toast from screen readers until keyboard focus enters the viewport, and Tab passes over the toast for that time: press F6, then Tab, to reach it. See the note under [Props](#props).
 
 ## Dismissible Toasts
 
@@ -304,7 +304,7 @@ export default Props
 
 > **Note**: Base UI 1.9 hides a toast added with `priority: "high"` from screen readers (`aria-hidden`) and announces it through a visually hidden alert instead. The toast stays hidden until keyboard focus enters the viewport, and is hidden again when focus leaves it. While it is hidden, chunks-ui keeps the toast, its `Toast.Close` and its `Toast.Action` out of the tab order, so Tab passes over the toast: press F6, then Tab, to reach the toast and its buttons. A mouse click still focuses the toast and leaves it hidden. Other focusable elements that you put in a high-priority `Toast.Root` keep their tab stops ([mui/base-ui#5659](https://github.com/mui/base-ui/issues/5659)).
 >
-> Base UI also hides the close button of every toast from screen readers while the toasts are collapsed, with no pointer over them and no keyboard focus in them. chunks-ui keeps the button out of the tab order for that time. Keyboard focus on a toast expands the toasts, so the next Tab reaches its close button.
+> Base UI also hides the close button of every toast from screen readers while the toasts are collapsed, with no pointer over them and no keyboard focus in them. chunks-ui keeps the button out of the tab order for that time. Keyboard focus on a toast expands the toasts and brings the button back: from the toast, Tab reaches its action first when it has one, then its close button.
 >
 > You no longer need `tabIndex={-1}` on `Toast.Root` for this. If your own viewport sets it on its toasts, remove it: it also keeps a toast out of the tab order after F6.
 
@@ -331,7 +331,7 @@ export default Props
 
 ### Compound parts
 
-All other compound parts (`Toast.Provider`, `Toast.Root`, `Toast.Title`, `Toast.Description`, `Toast.Close`, `Toast.Action`) are thin style wrappers and forward their props to the corresponding Base UI primitive. See the [Base UI Toast reference](https://base-ui.com/react/components/toast#api-reference) for the full prop surface.
+All other compound parts (`Toast.Provider`, `Toast.Root`, `Toast.Title`, `Toast.Description`, `Toast.Close`, `Toast.Action`) are thin style wrappers and forward their props to the corresponding Base UI primitive, except that `Toast.Root`, `Toast.Close` and `Toast.Action` replace a `tabIndex` you pass with `-1` while Base UI hides them from screen readers, which for `Toast.Close` includes the time the toasts are collapsed (see the note under [Props](#props)). See the [Base UI Toast reference](https://base-ui.com/react/components/toast#api-reference) for the full prop surface.
 
 ## Labels
 
