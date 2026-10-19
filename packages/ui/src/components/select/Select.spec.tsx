@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { configureAxe } from "jest-axe";
-import { createRef, type ReactElement } from "react";
+import { createRef, type ReactElement, useLayoutEffect, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { undecided } from "../../AxeTest.utils";
 import { Field } from "../field";
@@ -360,6 +360,20 @@ describe("Select disabled", () => {
     const onOpenChangeComplete = vi.fn();
     render(fruits({ disabled: true, defaultOpen: true, onOpenChangeComplete }));
     expect(onOpenChangeComplete).not.toHaveBeenCalled();
+  });
+
+  // Disabled in the commit after it opened, before the portal mounted the popup (mui/base-ui#6031)
+  it("unmounts a defaultOpen Select that its parent disables in the commit after mount", () => {
+    const onOpenChangeComplete = vi.fn();
+    const Parent = () => {
+      const [disabled, setDisabled] = useState(false);
+      useLayoutEffect(() => setDisabled(true), []);
+      return fruits({ disabled, defaultOpen: true, onOpenChangeComplete });
+    };
+    render(<Parent />);
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+    expect(document.querySelector("[data-base-ui-inert]")).toBeNull();
+    expect(onOpenChangeComplete).toHaveBeenCalledWith(false);
   });
 
   describe.each<[string, (disabled: boolean, props: SelectRootProps) => ReactElement]>([

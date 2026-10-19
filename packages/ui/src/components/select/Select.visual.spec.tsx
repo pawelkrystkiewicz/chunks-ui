@@ -1,5 +1,5 @@
 import { render } from "@testing-library/react";
-import { createRef } from "react";
+import { createRef, useEffect, useState } from "react";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import {
@@ -136,6 +136,53 @@ describe("Select", () => {
     await header.click({ force: true });
     expect(onClick).not.toHaveBeenCalled();
     await exited(popup, { stillClosing: isShown });
+  });
+
+  // #727. A parent that disables the Select in the commit after a click opened it: Base UI gets a
+  // close before its portal mounted the popup, and (mui/base-ui#6031) would leave it mounted in
+  // its closing state, with the backdrop and the listbox.
+  it("unmounts a Select that a parent disables right after a click opened it", async () => {
+    const onOpenChangeComplete = vi.fn();
+    const Parent = () => {
+      const [opened, setOpened] = useState(false);
+      const [disabled, setDisabled] = useState(false);
+      useEffect(() => {
+        if (opened) setDisabled(true);
+      }, [opened]);
+      return (
+        <Select.Root
+          defaultValue="apple"
+          disabled={disabled}
+          onOpenChange={(open) => open && setOpened(true)}
+          onOpenChangeComplete={onOpenChangeComplete}
+        >
+          <Select.Trigger aria-label="Fruit">
+            <Select.Value />
+          </Select.Trigger>
+          <Select.Portal>
+            <Select.Positioner>
+              <Select.Popup>
+                {fruits.map((f) => (
+                  <Select.Item key={f.value} value={f.value}>
+                    <Select.ItemText>{f.label}</Select.ItemText>
+                  </Select.Item>
+                ))}
+              </Select.Popup>
+            </Select.Positioner>
+          </Select.Portal>
+        </Select.Root>
+      );
+    };
+    const { getByRole } = render(<Parent />);
+    await userEvent.click(getByRole("combobox", { name: "Fruit" }));
+    await expect.element(getByRole("combobox", { name: "Fruit" })).toBeDisabled();
+    await vi.waitFor(() => expect(onOpenChangeComplete).toHaveBeenCalledWith(false), {
+      timeout: 1000,
+    });
+    // Unmounted, or kept by Base UI inside a hidden positioner
+    const listbox = document.querySelector("[role=listbox]");
+    expect(listbox?.parentElement?.hidden ?? true).toBe(true);
+    expect(document.querySelector("[data-base-ui-inert]")).toBeNull();
   });
 
   // A positioner lowered by its className, an inline style or a `!` class keeps the popup above
