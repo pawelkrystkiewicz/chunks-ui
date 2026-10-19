@@ -235,7 +235,8 @@ export function DatePicker({
     },
   );
   // ponytail: Base UI 1.9's FloatingFocusManager closes a popup that is already closing, as
-  // "focus-out", when focus leaves the trigger during the exit. Skip that second close.
+  // "focus-out", when focus leaves the trigger during the exit. So every close is dropped while the
+  // popup is not open; remove this once Base UI checks `open` before its focus-out close.
   const handleOpenChange: typeof reportOpenChange = (next, eventDetails) => {
     if (!next && !isOpen) return;
     reportOpenChange(next, eventDetails);

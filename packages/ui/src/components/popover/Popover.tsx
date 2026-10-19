@@ -58,11 +58,13 @@ const PopoverCloseFocusContext = createContext<CloseFocus | null>(null);
 function PopoverRoot<Payload>({ onOpenChange, ...props }: BasePopover.Root.Props<Payload>) {
   const [closeFocus, handleOpenChange] = useCloseFocusRoot(onOpenChange);
   // ponytail: Base UI 1.9's FloatingFocusManager closes a popup that is already closing, as
-  // "focus-out", when focus leaves the trigger during the exit. Skip that second close. A
-  // controlled popover is open by its `open`; an uncontrolled one by the last change not cancelled.
+  // "focus-out", when focus leaves the trigger during the exit. So every close is dropped while the
+  // popup is not open; remove this once Base UI checks `open` before its focus-out close. It is
+  // open if `open` says so or the last change not cancelled did: a controlled parent may not have
+  // re-rendered yet when an open and a close come in one batch.
   const lastOpen = useRef(props.open ?? props.defaultOpen ?? false);
   const reportOpenChange: typeof handleOpenChange = (open, details) => {
-    if (!open && !(props.open ?? lastOpen.current)) return;
+    if (!open && !(props.open || lastOpen.current)) return;
     handleOpenChange(open, details);
     if (!details.isCanceled) lastOpen.current = open;
   };
