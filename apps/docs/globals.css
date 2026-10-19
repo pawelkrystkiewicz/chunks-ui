@@ -94,13 +94,20 @@ article:has(> main > .landing) {
 }
 
 /*
- * One theme switch at each width: the navbar's. Nextra repeats it in the desktop sidebar's footer,
- * beside the collapse button, and in the mobile menu's footer, which holds nothing else. The
- * Layout's `darkMode={false}` would remove the navbar's too.
+ * The navbar's theme switch shows at every width. Nextra repeats it in the desktop sidebar's footer,
+ * where it grew and so kept the collapse button at the end (the second rule keeps it there), and in
+ * the mobile menu's footer, which holds nothing else. The Layout's `darkMode={false}` would remove
+ * the navbar's too.
+ * ponytail: keyed to Nextra's English titles. An upgrade that renames them brings the copies back
+ * and moves the collapse button to the start, and no check fails.
  */
 .nextra-sidebar .nextra-sidebar-footer > [title="Change theme"],
 .nextra-mobile-nav .nextra-sidebar-footer:has(> [title="Change theme"]:only-child) {
   display: none;
+}
+
+.nextra-sidebar .nextra-sidebar-footer > [title="Collapse sidebar"] {
+  margin-inline-start: auto;
 }
 
 /*
