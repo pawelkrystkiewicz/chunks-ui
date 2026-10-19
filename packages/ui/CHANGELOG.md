@@ -1,5 +1,35 @@
 # chunks-ui
 
+## 0.3.0
+
+### Minor Changes
+
+- [#697](https://github.com/pawelkrystkiewicz/chunks-ui/pull/697) [`8e1432c`](https://github.com/pawelkrystkiewicz/chunks-ui/commit/8e1432c9c811a3bddeed433039871c0ceef958f0) - Changed: in a multi-select `Combobox`, the input now takes the rest of the Control's row without a `flex-1` class on `Combobox.Chips`. Before, the row was only as wide as its content, and the input stopped short of the Control's end. If your `Combobox.Input` sits beside `Combobox.Chips`, not inside it, as in the 0.1.x multi-select snippet, both are now `flex-1` (`Combobox.Chips` has it by default) and split the row: move the input inside `Combobox.Chips`, or add `flex-initial` to the `className` of `Combobox.Chips`, which also restores the old content-sized row.
+
+  Fixed: a long placeholder in a `Combobox.Input`, in a single-select or a multi-select, was cut mid-word at the end of the text box. It now ends in an ellipsis (`placeholder-shown:text-ellipsis`), except while the input has focus in Chromium browsers and Safari, which cut it there. A cut value still has no ellipsis. `placeholder-shown:text-clip` in `className` removes the ellipsis.
+
+  Fixed: an `Input` with `type="search"` and `clearable` or `onClear` showed two clear buttons in Chromium browsers and Safari, the browser's own and the built-in one, and Safari kept showing its own while the input was disabled or read-only. The browser's button now never shows on such an input, so the `inputMode="search"` workaround is no longer needed. A `type="search"` input without `clearable` or `onClear` keeps the browser's button.
+
+- [#701](https://github.com/pawelkrystkiewicz/chunks-ui/pull/701) [`28f39b0`](https://github.com/pawelkrystkiewicz/chunks-ui/commit/28f39b09b9d0037c1344b8d70218df2e58456f7a) - Added: `DatePicker` takes `open`, `defaultOpen` and `onOpenChange`, with the names and the `onOpenChange(open, eventDetails)` signature of Base UI's `Popover.Root`, so you can open the calendar from another control, open it on mount, or follow it opening and closing. A pick closes the calendar with the reason `close-press`. A Tab pressed while the calendar closes after a pick or Escape can make Base UI call `onOpenChange` again, with the reason `focus-out`. A disabled picker (its `disabled` prop, a disabled `Field.Root`, Base UI's `Fieldset` or a `<fieldset disabled>`) stays closed whatever `open` says, and ignores a pick. The `disabled` prop takes effect at once; the others take effect when the picker next renders, but a pick is ignored at once. See "Open State" in the DatePicker docs.
+
+  Changed: a `DatePicker` that is disabled while its calendar is open now closes the calendar, without calling `onOpenChange`, and ignores a pick. In 0.2.0 the calendar stayed open, and a pick changed the value.
+
+### Patch Changes
+
+- [#695](https://github.com/pawelkrystkiewicz/chunks-ui/pull/695) [`fa55270`](https://github.com/pawelkrystkiewicz/chunks-ui/commit/fa552709b758ea363aa6ba122ea2780a74fd6482) - Fixed: in Chrome and other Chromium browsers, holding Enter on a `DatePicker` day or a `Popover.Close` button could activate it twice. The key's first repeat, when it came while the popup was closing, clicked the same button again after focus had moved to the trigger, so `onValueChange` or the button's `onClick` ran a second time. That repeat no longer acts inside the closing popup.
+
+- [#702](https://github.com/pawelkrystkiewicz/chunks-ui/pull/702) [`63662e9`](https://github.com/pawelkrystkiewicz/chunks-ui/commit/63662e98e570d6b0f8b7c300e76d5271bc892178) - Fixed: without Motion, a `ToggleGroup` item disabled while the pill slid to it faded over 300ms, but the pill under it faded over the slide's 200ms `ease-snappy`, so the pill dimmed ahead of the item. The pill now fades with the item, and the slide keeps its own timing.
+
+  Fixed: a `ToggleGroup` or `Tabs` indicator that kept fading after its slide ended, as under an item disabled on the way, still counted as sliding. A resize during that fade animated the indicator to its new size, where it should move at once. The slide now ends when the indicator stops moving.
+
+  Changed: the `micro-interactions` class takes its curve from Tailwind's `--default-transition-timing-function` instead of its own copy of `cubic-bezier(0.4, 0, 0.2, 1)`. That is the same curve unless your theme sets another. The `ToggleGroup` and `Tabs` indicators already faded on that variable, so with a curve of your own an item and the pill under it faded on different curves. Every part that uses the class, your own elements included, now follows a curve set in your theme. To keep the old curve on a part, add `ease-[cubic-bezier(0.4,0,0.2,1)]` to its `className`.
+
+- [#698](https://github.com/pawelkrystkiewicz/chunks-ui/pull/698) [`8b643f7`](https://github.com/pawelkrystkiewicz/chunks-ui/commit/8b643f7a37afa4465f0ac0d7e9b1cf0f8938eee9) - Fixed: `Toast.Root`, `Toast.Close` and `Toast.Action` stayed in the tab order while Base UI hid them from screen readers, so Tab landed on a toast that screen readers could not see and axe reported `aria-hidden-focus`. Base UI hides a toast added with `priority: "high"` (`aria-hidden`) until keyboard focus enters the viewport, and the close button of every toast while the toasts are collapsed. The three parts now leave the tab order for that time. Tab passes over a hidden high-priority toast: press F6, then Tab, to reach the toast and its buttons. Keyboard focus on a toast still expands the toasts and brings the close buttons back: from a toast, Tab reaches its action first when it has one, then its close button. If you passed `tabIndex={-1}` to `Toast.Root` to work around this, remove it: it also keeps the toast out of the tab order after F6.
+
+  Fixed: the action button that `Toast.Viewport` renders for a toast's `actionProps` ran every event handler in `actionProps` twice, not only `onClick`: an "Undo" ran twice per click, and `onFocus`, `onBlur` and `onKeyDown` ran twice too. Each now runs once. The label, `className` and the other `actionProps` work as before.
+
+- [#702](https://github.com/pawelkrystkiewicz/chunks-ui/pull/702) [`f57bdca`](https://github.com/pawelkrystkiewicz/chunks-ui/commit/f57bdca38066f03fc8f1a1874f1adec2b96043ab) - Fixed: a `ToggleGroup` nested inside another `ToggleGroup` took its pill state from the other group. A disabled pressed item in one group dimmed the pill of the other. In an outer group without a pill (a `multiple` group, or one with no item pressed), the pressed item of the inner group also drew a pill of its own, which jumped to a newly pressed item while the inner pill slid. Each group now dims and draws its pill from its own items. An item wrapped in an element of its own, rather than placed directly in its group, can still take the other group's state.
+
 ## 0.2.0
 
 ### Minor Changes
