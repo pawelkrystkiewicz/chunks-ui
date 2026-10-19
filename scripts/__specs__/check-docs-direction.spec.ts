@@ -209,6 +209,13 @@ describe("physicalTokens", () => {
       expect(physicalTokens(`rtl:pl-2${delimiter}md:ml-4`)).toEqual(["ml-4"]);
     },
   );
+
+  // The cap keeps the lookbehind from rescanning a long line without a delimiter at every colon.
+  it("reads an rtl: chain of 100 characters before a class, and flags the class behind a longer one", () => {
+    const behind = (chain: number) => `rtl:${"x".repeat(chain)}:ml-4`;
+    expect(physicalTokens(behind(100))).toEqual([]);
+    expect(physicalTokens(behind(101))).toEqual(["ml-4"]);
+  });
 });
 
 describe("checkDocsDirection", () => {

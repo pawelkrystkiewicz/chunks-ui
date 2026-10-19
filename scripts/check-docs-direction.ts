@@ -26,8 +26,11 @@ const VALUE = /\d+(?:\.\d+)?(?:\/\d+)?|px|auto|full|\[[^\]\s]*\]|\([^)\s]*\)/.so
  * An `rtl:` or `ltr:` variant right before a class, or before more variants and a leading `!`
  * (`rtl:md:`, `rtl:[&>img]:`, `rtl:!`). A space, quote, brace, comma, semicolon or pipe ends the
  * chain, so `rtl:pl-2,md:ml-4` does not reach `ml-4`.
+ * ponytail: the chain is capped at 100 characters, so a class behind a longer one is flagged. The
+ * cap keeps the lookbehind from scanning far back: without it a line with no delimiter cost the
+ * square of its length (80 000 characters of `m:` took 1.4 s, now 4 ms).
  */
-const DIRECTION_VARIANT = /(?<![\w-])(?:rtl|ltr):(?:[^\s"'`{},;|]*:)?!?/.source;
+const DIRECTION_VARIANT = /(?<![\w-])(?:rtl|ltr):(?:[^\s"'`{},;|]{0,100}:)?!?/.source;
 /**
  * A physical class as a whole token: nothing of a class before it or after it (`overfloat-left` is
  * another class). One behind `rtl:` or `ltr:` is set for that direction on purpose and is not one.
