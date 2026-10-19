@@ -125,6 +125,8 @@ export function useFocusOnClose<T extends HTMLElement>(
     // Shift+Tab closes a Select or Menu and goes on from the trigger.
     // ponytail: a popup that unmounts stops listening, so a key held past the exit reaches the
     // trigger and opens the popup again, as on any button. Accepted.
+    // ponytail: a keyup of another key held with it (a modifier, a rollover) ends the wait too, and
+    // the held key's next repeats reach the trigger. Accepted: rare.
     const onNextKeyDown = (event: KeyboardEvent) => {
       if (!event.repeat) endWait();
       else if (
