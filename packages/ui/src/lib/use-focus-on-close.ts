@@ -111,7 +111,8 @@ export function useFocusOnClose<T extends HTMLElement>(
       closeFocus.trigger.current?.focus(options as FocusOptions);
     };
     // A new key's keydown ends the wait, as does any keypress or keyup. A held key repeats its
-    // keydown and its keypress: the repeat's keydown does not end the wait, its keypress does.
+    // keydown, and its keypress too if it has one (Enter, Space, characters, not Escape, Tab or
+    // the arrows): the repeat's keydown does not end the wait, its keypress does.
     // With focus inside the closing popup, that keypress is also cancelled: Chromium activates its
     // target even after the hand-off has moved focus, and a held Enter would pick a DatePicker day
     // twice.
