@@ -67,6 +67,10 @@ describe('Button', () => {
 
 Local midnight, which nearly every date chunks-ui handles is (`createDate`, `startOfDay`, every picked day), is the previous day in UTC there, so a spec that reads a local date through UTC fails on the UTC GitHub runner as it would for a user. Build dates with `new Date(y, m, d)` or `createDate` from `calendar/date.ts` and assert the local fields. The pin catches the midnight and early-morning reads (00:30 is the previous UTC day); a late-evening read (23:59 is the next UTC day) is guarded only when a developer runs west of UTC, so the date specs keep a 23:59 case beside the 00:30 one. The rule: never format or compare a local date through UTC (`toISOString`, `getUTC*`).
 
+### Popups that open on a click
+
+In jsdom, Base UI's `useClick` opens a Select, and other popups that open on a click, on the next animation frame, not during the click. After `await user.click(trigger)` the popup is not in the DOM yet, so `getByRole("listbox")` passes or fails depending on the order the specs run in. Query it with `await screen.findByRole("listbox")`, which waits for it.
+
 ## Animation Testing
 
 Components with Motion animations need two test paths:
