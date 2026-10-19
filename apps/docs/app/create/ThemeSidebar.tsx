@@ -480,7 +480,7 @@ function FontPicker({
                   className="h-9 gap-2.5 rounded-md px-2 data-highlighted:bg-secondary data-selected:bg-secondary"
                 >
                   <Select.ItemText
-                    className="min-w-0 flex-1 truncate text-sm"
+                    className="flex-1 truncate text-sm"
                     style={{ fontFamily: f.stack }}
                   >
                     {f.name}
