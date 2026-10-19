@@ -16,7 +16,7 @@ import {
 import { expectOnlyFocusGuardsUndecided } from "../../AxeTest.utils";
 import { createDate } from "../calendar/date";
 import { Field } from "../field";
-import { DatePicker } from "./DatePicker";
+import { DatePicker, type DatePickerProps } from "./DatePicker";
 import { DEFAULT_DATE_PICKER_LABELS } from "./DatePicker.Labels";
 
 const MARCH_15_LABEL = "Sunday, March 15, 2026";
@@ -824,6 +824,107 @@ describe("DatePicker keyboard", () => {
     expect(screen.queryByRole("grid")).not.toBeInTheDocument();
     expect(onValueChange).not.toHaveBeenCalled();
     expect(trigger).toHaveTextContent("March 15, 2026");
+  });
+});
+
+// Focus as the popup closes needs the exit transition: see DatePicker.controlled.visual.spec.tsx
+describe("DatePicker open state", () => {
+  type OnOpenChange = NonNullable<DatePickerProps["onOpenChange"]>;
+  // The trigger is the one button outside the portalled popup. A named getByRole is slow with the
+  // calendar open.
+  const triggerIn = (container: HTMLElement) => within(container).getByRole("button");
+  const changes = (onOpenChange: { mock: { calls: Parameters<OnOpenChange>[] } }) =>
+    onOpenChange.mock.calls.map(
+      ([open, details]) => `${open ? "open" : "close"}: ${details.reason}`,
+    );
+
+  it("renders the calendar open on mount with defaultOpen, and a pick closes it", async () => {
+    const { container } = render(<DatePicker defaultOpen />);
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(triggerIn(container)).toHaveAttribute("aria-expanded", "true");
+    await userEvent.click(getButton(MARCH_15_LABEL));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("opens and closes the calendar with a controlled open, without calling onOpenChange", async () => {
+    const onOpenChange = vi.fn<OnOpenChange>();
+    const { container, rerender } = render(<DatePicker open onOpenChange={onOpenChange} />);
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(triggerIn(container)).toHaveAttribute("aria-expanded", "true");
+    rerender(<DatePicker open={false} onOpenChange={onOpenChange} />);
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(triggerIn(container)).toHaveAttribute("aria-expanded", "false");
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
+
+  it("calls onOpenChange with Base UI's event details for a trigger press, a pick, Escape and an outside press", async () => {
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn<OnOpenChange>();
+    const { container } = render(<DatePicker onOpenChange={onOpenChange} />);
+    const trigger = triggerIn(container);
+    await user.click(trigger);
+    const day = getButton(MARCH_15_LABEL);
+    await user.click(day);
+    await user.click(trigger);
+    await user.keyboard("{Escape}");
+    await user.click(trigger);
+    await user.click(document.body);
+    expect(changes(onOpenChange)).toEqual([
+      "open: trigger-press",
+      "close: close-press",
+      "open: trigger-press",
+      "close: escape-key",
+      "open: trigger-press",
+      "close: outside-press",
+    ]);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    // A pick closes it as a press on Popover.Close does: with the click, and the trigger
+    const pick = onOpenChange.mock.calls[1]?.[1];
+    expect(pick?.event.type).toBe("click");
+    expect(pick?.event.target).toBe(day);
+    expect(pick?.trigger).toBe(trigger);
+    expect(pick?.isCanceled).toBe(false);
+  });
+
+  it("keeps a controlled calendar as the consumer sets it, focus on a day it keeps open", async () => {
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn<OnOpenChange>();
+    const onValueChange = vi.fn();
+    const props = { onOpenChange, onValueChange };
+    const { container, rerender } = render(<DatePicker open={false} {...props} />);
+    await user.click(triggerIn(container));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    rerender(<DatePicker open {...props} />);
+    await user.keyboard("{Escape}");
+    const day = getButton(MARCH_15_LABEL);
+    await user.click(day);
+    expect(document.activeElement).toBe(day);
+    await user.click(document.body);
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(onValueChange).toHaveBeenCalledOnce();
+    expect(changes(onOpenChange)).toEqual([
+      "open: trigger-press",
+      "close: escape-key",
+      "close: close-press",
+      "close: outside-press",
+    ]);
+  });
+
+  it("stays open when onOpenChange cancels the close of Escape or a pick", async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <DatePicker
+        onOpenChange={(open, eventDetails) => {
+          if (!open) eventDetails.cancel();
+        }}
+      />,
+    );
+    await user.click(triggerIn(container));
+    await user.keyboard("{Escape}");
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    await user.click(getButton(MARCH_15_LABEL));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(triggerIn(container)).toHaveTextContent("March 15, 2026");
   });
 });
 

@@ -40,11 +40,30 @@ type DatePickerOwnProps = Pick<
   defaultValue?: Date | null;
   /**
    * Called with the picked date, at local midnight, when the user picks an enabled day (click,
-   * Enter or Space). Picking the selected day again also calls it. The calendar then closes. It
-   * is never called with `null`: the picker cannot clear a date. A change to `value` from outside
-   * does not call it.
+   * Enter or Space). Picking the selected day again also calls it. The pick then asks to close the
+   * calendar: an uncontrolled one closes unless `onOpenChange` cancels it, a controlled one when you
+   * set `open` to `false`. It is never called with `null`: the picker cannot clear a date. A change
+   * to `value` from outside does not call it.
    */
   onValueChange?: (date: Date | null) => void;
+  /**
+   * Whether the calendar is open (controlled). An open or close by the user then calls
+   * `onOpenChange` and waits for a new `open`.
+   */
+  open?: boolean;
+  /**
+   * Whether the calendar is open on mount, when uncontrolled.
+   * @default false
+   */
+  defaultOpen?: boolean;
+  /**
+   * Called when the user opens or closes the calendar, with the event details of Base UI's
+   * `Popover.Root`. A pick closes it with the reason `close-press`, as a press on `Popover.Close`
+   * does. `eventDetails.cancel()` keeps an uncontrolled calendar as it is. A change to `open` from
+   * outside does not call it. Do not call `eventDetails.preventUnmountOnClose()`: the picker has
+   * no `actionsRef` to unmount the calendar after it.
+   */
+  onOpenChange?: (open: boolean, eventDetails: BasePopover.Root.ChangeEventDetails) => void;
   /**
    * Placeholder text shown in the trigger when no date is selected. Takes precedence over
    * `labels.placeholder`.
@@ -127,10 +146,39 @@ function getForm(
   return element?.tagName === "FORM" ? (element as HTMLFormElement) : null;
 }
 
+/**
+ * The event details of the close a pick asks for, as Base UI gives them for a press on
+ * `Popover.Close`: the click, and the trigger.
+ * ponytail: the close goes through `open`, not through Base UI, so `preventUnmountOnClose()` does
+ * nothing, and a member that a later Base UI adds to the details is missing from a pick's until
+ * this adds it. Accepted: the picker has no `actionsRef` that a kept-mounted calendar would need,
+ * and Base UI's own builder is internal.
+ */
+function pickCloseDetails(event: Event, trigger: Element | undefined) {
+  const details: BasePopover.Root.ChangeEventDetails = {
+    reason: "close-press",
+    event: event as MouseEvent,
+    trigger,
+    isCanceled: false,
+    isPropagationAllowed: false,
+    cancel() {
+      details.isCanceled = true;
+    },
+    allowPropagation() {
+      details.isPropagationAllowed = true;
+    },
+    preventUnmountOnClose() {},
+  };
+  return details;
+}
+
 export function DatePicker({
   value,
   defaultValue,
   onValueChange,
+  open,
+  defaultOpen,
+  onOpenChange,
   placeholder,
   disabled,
   min,
@@ -154,10 +202,23 @@ export function DatePicker({
   const popupRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const mergedTriggerRef = useMergedRef(triggerRef, ref);
-  const [open, setOpen] = useState(false);
-  // Focus moves to the trigger as the popup starts to close, not at the unmount after the exit
-  const [closeFocus, handleOpenChange] = useCloseFocusRoot(setOpen);
+  const [internalOpen, setInternalOpen] = useState(defaultOpen ?? false);
+  // Focus moves to the trigger as the popup starts to close, not at the unmount after the exit.
+  // Only an uncontrolled picker keeps the state: a controlled one shows `open`, so the consumer
+  // can refuse a change by not passing it on.
+  const [closeFocus, handleOpenChange] = useCloseFocusRoot(
+    (next: boolean, eventDetails: BasePopover.Root.ChangeEventDetails) => {
+      onOpenChange?.(next, eventDetails);
+      if (open === undefined && !eventDetails.isCanceled) setInternalOpen(next);
+    },
+  );
   const focusOnCloseRef = useFocusOnClose(popupRef, closeFocus);
+  // The picker has one trigger, so focus goes back to it after an open it did not start too
+  // (`defaultOpen`, `open` from another control), as the popup starts to close. Base UI would
+  // return it only at the unmount, and to another control that opened it.
+  useLayoutEffect(() => {
+    closeFocus.trigger.current = triggerRef.current;
+  });
   // The click that picks a day, by mouse, Enter or Space: the close goes through the hand-off with
   // it, which waits after a key's click, so a held Enter's first repeat does not click the trigger
   // if it comes during the exit. A later repeat does, as on any button.
@@ -169,7 +230,7 @@ export function DatePicker({
     if (value === undefined) setInternalDate(date);
     onValueChange?.(date);
     const event = pickRef.current ?? new Event("base-ui");
-    handleOpenChange(false, { event, reason: "item-press", isCanceled: false });
+    handleOpenChange(false, pickCloseDetails(event, triggerRef.current ?? undefined));
   };
 
   // A form reset restores the default date, as it restores an input's default value. A
@@ -215,7 +276,7 @@ export function DatePicker({
 
   return (
     <div className={cn("relative", className)}>
-      <BasePopover.Root open={open} onOpenChange={handleOpenChange}>
+      <BasePopover.Root open={open ?? internalOpen} onOpenChange={handleOpenChange}>
         {/* Field.Control registers the trigger as the control of a surrounding Field.Root, so
             Field.Label names it and Field.Description describes it. Outside a Field it only
             passes the props through. */}
