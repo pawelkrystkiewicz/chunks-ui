@@ -80,28 +80,39 @@ function SelectRoot<Value, Multiple extends boolean | undefined = false>({
     if (next && (isOpen || wasOpen.current)) actions.current?.unmount();
     return next;
   };
-  const lastOpen = useRef(open ?? defaultOpen ?? false);
   useLayoutEffect(() => {
     syncDisabled();
     wasOpen.current = isOpen;
-    if (!isOpen) lastOpen.current = false;
   });
-  // ponytail: Base UI 1.9's FloatingFocusManager closes a popup that is already closing, as
-  // "focus-out", when focus leaves during the exit. Skip that second close, before
-  // `useCloseFocusRoot` so it does not replace the real close event the focus hand-off keeps.
-  // A controlled Select is open by `open`; an uncontrolled one by the last change not cancelled
-  // (`lastOpen`, forgotten above while the Select is not open, as when disabling closes it).
   // Only an uncontrolled Select keeps the state: a controlled one shows `open`
-  const [closeFocus, handleOpenChange] = useCloseFocusRoot(
+  const keepMounted = useRef(false);
+  const [closeFocus, reportOpenChange] = useCloseFocusRoot(
     (next: boolean, eventDetails: BaseSelect.Root.OpenChangeEventDetails) => {
+      if (!next) {
+        // Remember the consumer's choice, to repeat it for a close dropped below
+        keepMounted.current = false;
+        const prevent = eventDetails.preventUnmountOnClose;
+        eventDetails.preventUnmountOnClose = () => {
+          keepMounted.current = true;
+          prevent.call(eventDetails);
+        };
+      }
       onOpenChange?.(next, eventDetails);
       if (open === undefined && !eventDetails.isCanceled) setInternalOpen(next);
     },
   );
-  const reportOpenChange: typeof handleOpenChange = (next, eventDetails) => {
-    if (!next && !(open ?? lastOpen.current)) return;
-    handleOpenChange(next, eventDetails);
-    if (!eventDetails.isCanceled) lastOpen.current = next;
+  // ponytail: Base UI 1.9's FloatingFocusManager closes a popup that is already closing, as
+  // "focus-out", when focus leaves the trigger during the exit, or after it while the popup is kept
+  // mounted. So every close is dropped while the Select is not open; remove this once Base UI checks
+  // `open` before its focus-out close. The guard comes before `useCloseFocusRoot`'s handler, which
+  // calls `onOpenChange`. Base UI still resets `preventUnmountOnClose` for the dropped close, so
+  // the consumer's last choice is repeated.
+  const handleOpenChange: typeof reportOpenChange = (next, eventDetails) => {
+    if (!next && !isOpen) {
+      if (keepMounted.current) eventDetails.preventUnmountOnClose();
+      return;
+    }
+    reportOpenChange(next, eventDetails);
   };
   return (
     <SelectCloseFocusContext.Provider value={closeFocus}>
@@ -111,7 +122,7 @@ function SelectRoot<Value, Multiple extends boolean | undefined = false>({
         inputRef={mergedInputRef}
         actionsRef={actions}
         open={isOpen}
-        onOpenChange={reportOpenChange}
+        onOpenChange={handleOpenChange}
         onValueChange={(value, eventDetails) => {
           if (syncDisabled()) eventDetails.cancel();
           else onValueChange?.(value, eventDetails);
