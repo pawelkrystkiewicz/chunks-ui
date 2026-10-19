@@ -119,7 +119,8 @@ export function useFocusOnClose<T extends HTMLElement>(
     // Space's keyup is cancelled there. It outlives the effect: with reduced motion the popup is
     // gone first.
     // ponytail: a stray cancel needs a Space keyup whose keydown this document never saw (an iframe,
-    // or a window-capture handler that stops propagation). A lost keyup leaves one idle listener.
+    // or a window-capture handler that stops propagation). A close at Space's keyup, or a lost
+    // keyup, leaves one idle listener until the next Space keydown.
     const cancelSpaceKeyup = () => {
       const done = () => {
         doc.removeEventListener("keyup", onSpaceUp, true);
