@@ -89,7 +89,8 @@ export function PreviewPanel({
     const url = new URL(window.location.href);
     if (next === "cards") url.searchParams.delete(PREVIEW_PARAM);
     else url.searchParams.set(PREVIEW_PARAM, next);
-    // null state: Next's own state carries a flag that makes its patched replaceState skip the sync
+    // null state: Next's patched replaceState copies its own state into the entry and syncs
+    // useSearchParams to the URL; passing window.history.state (Next's __NA flag) would skip that sync
     window.history.replaceState(null, "", url);
   };
 
