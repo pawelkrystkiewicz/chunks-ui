@@ -116,9 +116,11 @@ const ALLOWED: Allowed[] = [
 type Role = Parameters<Page["getByRole"]>[0];
 
 /**
- * A disclosure the run opens on its page before the page's audit, so the audit covers what it
- * shows: it clicks the button named `name` and waits until the panel that the button's
- * aria-controls names is open at its full height.
+ * A Collapsible the run opens on its page before the page's audit, so the audit covers what it
+ * shows: it clicks the button named `name`, which must be a `Collapsible.Trigger`, and waits until
+ * the panel that the button's aria-controls names is open at its full height. The wait reads
+ * `--collapsible-panel-height`, which only a Collapsible panel sets (an Accordion panel sets
+ * `--accordion-panel-height`).
  */
 type Disclosure = { page: string; name: RegExp };
 

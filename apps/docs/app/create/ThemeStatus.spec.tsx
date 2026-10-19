@@ -182,9 +182,10 @@ describe("the contrast panel", { timeout: 15_000 }, () => {
     // Destructive text is text-xs: 12px at the default Base size, under Silver's 14px minimum
     fireEvent.click(swatchOf("Destructive text", "Light"));
     fireEvent.click(screen.getAllByRole("button", { name: "Nudge to pass" })[0] as HTMLElement);
-    expect(
-      screen.getByText("The text is too small for APCA Silver. Raise Base size."),
-    ).toBeTruthy();
+    const note = screen
+      .getAllByRole("status")
+      .find((n) => n.textContent === "The text is too small for APCA Silver. Raise Base size.");
+    expect(note).toBeDefined();
     expect(screen.queryByText(/custom colour/)).toBeNull();
     expect(undoButton().getAttribute("aria-disabled")).toBe("true");
   });
