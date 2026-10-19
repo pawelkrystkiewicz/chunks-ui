@@ -26,3 +26,12 @@ describe("typeScale", () => {
     expect([minTextPx("Bronze"), minTextPx("Silver"), minTextPx("Gold")]).toEqual([0, 14, 16]);
   });
 });
+
+describe("targetSizes with touch targets", () => {
+  it("measure checkbox, radio and switch by touch-target's 44px area, and leave the rest", () => {
+    const on = { ...DEFAULT_THEME, touchTargets: true };
+    expect([px(on, "checkbox"), px(on, "switch")]).toEqual([44, 44]);
+    expect([px(on, "slider-thumb"), px(on, "close")]).toEqual([16, 24]);
+    expect([px(DEFAULT_THEME, "switch"), px(DEFAULT_THEME, "slider-thumb")]).toEqual([20, 16]);
+  });
+});
