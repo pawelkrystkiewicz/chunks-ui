@@ -46,12 +46,10 @@ function DialogPortal({ className, children, ref, ...props }: DialogPortalProps)
       // height (#664), scrolls or is scroll-locked. `inset-x-0` keeps it as wide as the
       // viewport, so a popup can grow to fit its content.
       // ponytail: a positioner with `disableAnchorTracking` (no chunks-ui part sets it) lands
-      // scrollY px off on a scrolled page: Base UI renders it fixed until placed, so Floating
-      // UI's first pass measures it against the document, and only anchor tracking places it
-      // again. A popup taller than the viewport in a `modal={false}` overlay is clipped, not
-      // scrollable into view: a fixed box adds no page height (Menu and Combobox cap at
-      // `--available-height`). A position class in `className` replaces `fixed`, and the box
-      // drifts again (#664).
+      // scrollY px off on a scrolled page: Floating UI's first pass measures it against the
+      // document. A popup taller than the viewport in a `modal={false}` overlay is clipped, as a
+      // fixed box adds no page height (Menu and Combobox cap at `--available-height`). A position
+      // class in `className` replaces `fixed`, and the box drifts again.
       className={cnState("fixed inset-x-0 top-0 z-modals", className)}
       {...props}
     >

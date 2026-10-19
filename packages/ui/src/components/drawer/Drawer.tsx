@@ -62,8 +62,7 @@ function DrawerPortal({ className, children, ref, ...props }: DrawerPortalProps)
       ref={portalRef}
       container={container}
       // The portal node carries the z-layer, not the popup: whatever opens from the drawer
-      // portals in here and stacks above it. Fixed and as wide as the viewport, as on
-      // DialogPortal. ponytail: as DialogPortal
+      // portals in here and stacks above it. ponytail: as DialogPortal
       className={cnState("fixed inset-x-0 top-0 z-drawers", className)}
       {...props}
     >
