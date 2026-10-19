@@ -61,10 +61,9 @@ function DrawerPortal({ className, children, ref, ...props }: DrawerPortalProps)
     <BaseDialog.Portal
       ref={portalRef}
       container={container}
-      // The portal node carries the z-layer, not the popup: whatever opens from the drawer portals in here and stacks above it.
-      // Popups from the drawer are placed against this box, which Floating UI does not watch: fixed across the top of the
-      // viewport, it stays put when the page behind changes height (#664), scrolls or is scroll-locked, and as wide as the
-      // viewport it lets a popup grow to fit its content
+      // The portal node carries the z-layer, not the popup: whatever opens from the drawer
+      // portals in here and stacks above it. Fixed and as wide as the viewport, as on
+      // DialogPortal. ponytail: as DialogPortal
       className={cnState("fixed inset-x-0 top-0 z-drawers", className)}
       {...props}
     >

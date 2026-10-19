@@ -87,28 +87,25 @@ async function openMenu(name: keyof typeof overlays, dir: Dir, scroll = 0) {
 }
 
 describe.each(["ltr", "rtl"] as Dir[])("in %s", (dir) => {
-  it.each([
-    ["Dialog", "the page", 0],
-    ["Drawer", "the page", 0],
-    ["Dialog", "a page scrolled by 300px", 300],
-    ["Drawer", "a page scrolled by 300px", 300],
-  ] as const)(
-    "keeps a Menu opened from a %s at its trigger while %s grows behind it",
-    async (name, _page, scroll) => {
-      const { content, offset, at } = await openMenu(name, dir, scroll);
+  it.each(["Dialog", "Drawer"] as const)(
+    "keeps a Menu opened from a %s at its trigger while the page behind it grows",
+    async (name) => {
+      const { content, offset, at } = await openMenu(name, dir);
       // Content before the overlay's portal node in the document grows, as a list that loads does
       content.style.height = "20px";
       expect(await waitForStable(offset)).toEqual(near(at));
     },
   );
 
-  // The user scrolls the page behind a non-modal overlay, or the app's code behind a modal one
+  // Opened on a scrolled page: Base UI renders the positioner fixed until it is placed, so Floating
+  // UI's first pass measures it against the document. Then the page scrolls on: the user scrolls it
+  // behind a non-modal overlay, or the app's code behind a modal one
   it.each(["Dialog", "Drawer"] as const)(
-    "keeps a Menu opened from a %s at its trigger when the page scrolls, before Floating UI hears of it",
+    "puts a Menu opened from a %s on a scrolled page at its trigger, and keeps it there on scroll",
     async (name) => {
-      const { offset, at } = await openMenu(name, dir);
-      scrollTo(0, 100);
-      expect(scrollY).toBe(100);
+      const { offset, at } = await openMenu(name, dir, 300);
+      scrollTo(0, 400);
+      expect(scrollY).toBe(400);
       // Read in the task of the scroll: Floating UI hears of it at the next frame, so a box that
       // scrolls with the page carries the menu off its trigger until then
       expect(offset()).toEqual(near(at));

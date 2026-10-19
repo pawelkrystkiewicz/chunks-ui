@@ -40,10 +40,18 @@ function DialogPortal({ className, children, ref, ...props }: DialogPortalProps)
     <BaseDialog.Portal
       ref={portalRef}
       container={container}
-      // The portal node carries the z-layer, not the popup: whatever opens from the dialog portals in here and stacks above it.
-      // Popups from the dialog are placed against this box, which Floating UI does not watch: fixed across the top of the
-      // viewport, it stays put when the page behind changes height (#664), scrolls or is scroll-locked, and as wide as the
-      // viewport it lets a popup grow to fit its content
+      // The portal node carries the z-layer, not the popup: whatever opens from the dialog
+      // portals in here and stacks above it. Those popups are placed against this box, which
+      // Floating UI does not watch, so it is fixed: it stays put when the page behind changes
+      // height (#664), scrolls or is scroll-locked. `inset-x-0` keeps it as wide as the
+      // viewport, so a popup can grow to fit its content.
+      // ponytail: a positioner with `disableAnchorTracking` (no chunks-ui part sets it) lands
+      // scrollY px off on a scrolled page: Base UI renders it fixed until placed, so Floating
+      // UI's first pass measures it against the document, and only anchor tracking places it
+      // again. A popup taller than the viewport in a `modal={false}` overlay is clipped, not
+      // scrollable into view: a fixed box adds no page height (Menu and Combobox cap at
+      // `--available-height`). A position class in `className` replaces `fixed`, and the box
+      // drifts again (#664).
       className={cnState("fixed inset-x-0 top-0 z-modals", className)}
       {...props}
     >
