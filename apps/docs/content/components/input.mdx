@@ -51,16 +51,16 @@ Use `startAdornment` and `endAdornment` to place icons or text at the edges of t
 
 ## Clear Button
 
-Add `clearable` to show a built-in clear button (the `ClearButton` component). The button shows while the input has text and can be edited: it hides while the input is disabled or read-only, whichever sets it (`disabled`, `readOnly`, or a disabled `Field.Root`). While it is visible it takes the place of `endAdornment`, so the two don't show together.
+Add `clearable` to show a built-in clear button (the `ClearButton` component). The button shows while the input has text and can be edited: it hides while the input is disabled or read-only, whichever sets it (`disabled`, `readOnly`, or a disabled `Field.Root`). While it is visible it takes the place of `endAdornment`, so the two don't show together. On a `type="search"` input, Chromium browsers and Safari also draw a clear button of their own: it hides while the built-in one shows.
 
 Clearing empties the input the way typing does: `onChange` and `onValueChange` fire with `''`. With a mouse click, focus stays in the input, because the click doesn't blur it, so a `Field.Root` with `validationMode="onBlur"` doesn't validate in the middle of a clear. With the keyboard (Tab to the button, then Enter or Space), the input blurs, and focus then returns to it.
 
 ```tsx
-<Input defaultValue="Hello" clearable placeholder="Search..." aria-label="Search" />
+<Input type="search" defaultValue="Hello" clearable placeholder="Search..." aria-label="Search" />
 ```
 
 <Container>
-  <Input defaultValue="Hello" clearable placeholder="Search..." aria-label="Search" />
+  <Input type="search" defaultValue="Hello" clearable placeholder="Search..." aria-label="Search" />
 </Container>
 
 An uncontrolled input shows the button while it has text, also after a form reset. React Hook Form's `reset()` and `setValue()` write `input.value` from code, which fires no event: the button follows such a write when the input next renders, for example when the component that holds the form re-renders.
@@ -146,8 +146,6 @@ Wrap `Input` in a `Field` for labels, descriptions, and validation:
 <Container>
   <Input type="search" enterKeyHint="search" placeholder="Search..." aria-label="Search" />
 </Container>
-
-With `clearable` or `onClear`, use `inputMode="search"` on a text input instead. The browser adds its own clear button to `type="search"`, so two clear buttons would show.
 
 A decimal value, such as an amount, gets a number keypad with a decimal separator:
 
