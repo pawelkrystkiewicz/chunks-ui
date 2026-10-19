@@ -160,6 +160,13 @@ The popup enters with a scale-up and fade (from `scale-95` and `opacity-0`). Wit
 
 `render` on `Dialog.Popup` or `Dialog.Backdrop` replaces the element the spring animates, so a popup or backdrop with `render` uses the CSS transition even with Motion installed. To restyle either, pass `className`; to change the element of the content, put `render` on `Dialog.Body`.
 
+## Popups in a dialog
+
+A Menu, Select, Popover or other popup opened from the dialog is placed against `Dialog.Portal`, a box fixed to the top of the viewport, so it stays at its trigger when the page behind scrolls or changes height. That has two limits:
+
+- In a `modal={false}` dialog, a popup taller than the viewport is clipped at the viewport's edge, and scrolling the page does not bring the rest into view: the fixed box adds no height to the page. Menu and Combobox limit their height to the space available and scroll; a Popover, or a Select that opens below its trigger, does not.
+- A position class in the Portal's `className`, such as `absolute`, replaces `fixed`, and the popups move away from their triggers again when the page behind scrolls.
+
 ## Compound Parts
 
 | Part | Description |
