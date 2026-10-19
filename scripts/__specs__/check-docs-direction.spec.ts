@@ -190,6 +190,25 @@ describe("physicalTokens", () => {
   ])("finds %s", (_name, line, expected) => {
     expect(physicalTokens(line)).toEqual(expected);
   });
+
+  // Each delimiter alone, with a variant on the second class: a chain that ran on past the delimiter
+  // would reach that class and exempt it.
+  it.each<[string, string]>([
+    ["a space", " "],
+    ["a double quote", '"'],
+    ["a single quote", "'"],
+    ["a backtick", "`"],
+    ["an opening brace", "{"],
+    ["a closing brace", "}"],
+    ["a comma", ","],
+    ["a semicolon", ";"],
+    ["a pipe", "|"],
+  ])(
+    "ends an rtl: chain at %s, so a variant after it does not reach the next class",
+    (_name, delimiter) => {
+      expect(physicalTokens(`rtl:pl-2${delimiter}md:ml-4`)).toEqual(["ml-4"]);
+    },
+  );
 });
 
 describe("checkDocsDirection", () => {
@@ -348,6 +367,24 @@ describe("checkDocsDirection", () => {
       ["7: left-0", "10: left-1"],
     ],
     [
+      "counts the first and the middle line of a run of three // lines directly above, an indented one too",
+      [
+        "export const X = () => {",
+        "  // the arrow points at the clock",
+        "  // direction: physical, so it does not mirror",
+        "  // and the hands keep their turn",
+        '  const A = "left-3";',
+        "  // direction: physical, the dial is a drawing",
+        "  // it keeps its side",
+        "  // in RTL too",
+        '  const B = "left-0";',
+        "  return <i className={A + B} />;",
+        "};",
+      ],
+      {},
+      [],
+    ],
+    [
       "needs a reason that starts with a word character",
       [
         "{/* direction: physical, */}",
@@ -488,6 +525,18 @@ describe("checkDocsDirection", () => {
       "joins what a comment in an @apply splits, as Tailwind does",
       [".a { @apply m/**/l-4 pr-/* x */2 ms-/* ml-4 */2; }"],
       ["1: ml-4", "1: pr-2"],
+    ],
+    [
+      "reads an @apply on past a / in a class, such as w-1/2, and stops at its ;",
+      [
+        '.d { @apply w-1/2 ml-4; content: "mr-4"; }',
+        ".e {",
+        "  @apply h-1/2",
+        "    mr-2;",
+        '  content: "pl-4";',
+        "}",
+      ],
+      ["1: ml-4", "4: mr-2"],
     ],
     [
       "reads the string of each @source inline, not of an @source not inline or an @source path",
