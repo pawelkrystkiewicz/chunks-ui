@@ -1,5 +1,5 @@
 import { render, screen, within } from "@testing-library/react";
-import type { CSSProperties } from "react";
+import { type CSSProperties, useState } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { userEvent } from "vitest/browser";
 import { Button } from "./components/button";
@@ -500,6 +500,42 @@ describe("Select and Popover focus as the popup closes, in WebKit", () => {
     expect(document.activeElement).toBe(next);
     await exited(popup);
     expect(document.activeElement).toBe(next);
+  });
+
+  // #725: a consumer's keydown closes a controlled popover without preventing Enter, whose keypress
+  // then clicked the trigger
+  it("keeps a controlled Popover closed when a keydown handler closes it on Enter", async () => {
+    function Controlled() {
+      const [open, setOpen] = useState(false);
+      return (
+        <div className="flex w-60 flex-col items-start gap-2" style={{ padding: 40 }}>
+          <Popover.Root open={open} onOpenChange={setOpen}>
+            <Popover.Trigger>Settings</Popover.Trigger>
+            <Popover.Content data-testid="popup">
+              <Input
+                aria-label="Name"
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") setOpen(false);
+                }}
+              />
+            </Popover.Content>
+          </Popover.Root>
+        </div>
+      );
+    }
+    render(<Controlled />);
+    const trigger = screen.getByRole("button", { name: "Settings" });
+    await userEvent.click(trigger);
+    const name = await screen.findByRole("textbox", { name: "Name" });
+    await expect.poll(() => document.activeElement).toBe(name);
+    const popup = screen.getByTestId("popup");
+    await settle(popup);
+    const onTriggerClick = vi.fn();
+    trigger.addEventListener("click", onTriggerClick);
+    await userEvent.keyboard("{Enter}");
+    await exited(popup);
+    expect(onTriggerClick, "the trigger was clicked").not.toHaveBeenCalled();
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
   });
 });
 
