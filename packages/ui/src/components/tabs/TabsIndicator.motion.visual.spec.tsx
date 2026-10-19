@@ -1,5 +1,5 @@
 import { render } from "@testing-library/react";
-import { type CSSProperties, Profiler } from "react";
+import { type CSSProperties, Profiler, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { resizeBatches } from "../../lib/shared-resize";
 import {
@@ -40,6 +40,15 @@ type Layout = {
   disabled?: boolean;
   /** Content inside tab "a": an empty span of fixed size, e.g. an animated badge */
   badge?: boolean;
+  /**
+   * A Tabs list inside tab "a", out of flow so the tab keeps its size; its tab's width is this
+   * many px
+   */
+  nestedWidth?: number;
+  /** The selected tab of the nested list */
+  nestedValue?: "x" | "y";
+  /** A second indicator in the list */
+  extraIndicator?: boolean;
 };
 
 const tabs = ({
@@ -52,19 +61,45 @@ const tabs = ({
   tabClassName,
   disabled,
   badge,
+  nestedWidth,
+  nestedValue = "x",
+  extraIndicator,
 }: Layout = {}) => (
   <div style={{ width }}>
     <Tabs.Root value={value}>
       <Tabs.List className={`justify-center ${listClassName ?? ""}`} style={listStyle}>
         {/* No transition of its own, so the tab takes its new size at once */}
-        <Tabs.Tab key={tabKey} value="a" style={{ transition: "none", ...tabStyle }}>
+        <Tabs.Tab
+          key={tabKey}
+          value="a"
+          // A button inside a button is invalid; the nested list's tab is the button
+          {...(nestedWidth !== undefined && { render: <div />, nativeButton: false })}
+          // The nested list's tab would add its name to this one
+          aria-label={nestedWidth === undefined ? undefined : "Alpha"}
+          style={{ transition: "none", ...tabStyle }}
+        >
           Alpha
           {badge && <span data-testid="badge" style={{ display: "inline-block", width: 4 }} />}
+          {nestedWidth !== undefined && (
+            <Tabs.Root value={nestedValue}>
+              <Tabs.List style={{ position: "absolute", top: 0, left: 0 }}>
+                <Tabs.Tab
+                  value="x"
+                  data-testid="inner-tab"
+                  style={{ flex: "none", transition: "none", width: nestedWidth }}
+                >
+                  X
+                </Tabs.Tab>
+                <Tabs.Tab value="y">Y</Tabs.Tab>
+              </Tabs.List>
+            </Tabs.Root>
+          )}
         </Tabs.Tab>
         <Tabs.Tab value="b" className={tabClassName} disabled={disabled}>
           Beta
         </Tabs.Tab>
         <Tabs.Indicator data-testid="indicator" />
+        {extraIndicator && <Tabs.Indicator data-testid="extra-indicator" />}
       </Tabs.List>
     </Tabs.Root>
   </div>
@@ -93,7 +128,7 @@ async function renderTabs(withMotion: boolean, layout?: Layout) {
   const active = activeTab(layout);
   await waitForStable(() => offBy(tab(active), indicator));
   expect(offBy(tab(active), indicator)).toBeLessThanOrEqual(1);
-  return { ...result, indicator, tab, list: result.getByRole("tablist") };
+  return { ...result, indicator, tab, list: result.getAllByRole("tablist")[0] as HTMLElement };
 }
 
 /** A list that keeps its size whatever its tabs do; `justify-center` centres them in it */
@@ -226,6 +261,50 @@ describe.each(MOTION_PATHS)("Tabs.Indicator, $path", ({ withMotion }) => {
       await eachPaintedFrame(() => 0, 2);
     }
     expect(resizeBatches.count).toBe(batches);
+  });
+
+  // The tabs of a list nested inside a tab are that list's own: resizing one costs the outer
+  // indicator nothing.
+  it("does not observe the tabs of a list nested inside a tab", async () => {
+    const { getByTestId, rerender } = await renderTabs(withMotion, { ...FIXED, nestedWidth: 50 });
+    const batches = resizeBatches.count;
+    rerender(tabs({ ...FIXED, nestedWidth: 90 }));
+    await eachPaintedFrame(() => 0, 3);
+    expect(getByTestId("inner-tab").getBoundingClientRect().width).toBeGreaterThan(89);
+    expect(resizeBatches.count).toBe(batches);
+  });
+
+  // Nor does selecting another tab of that list, which sets aria-selected and classes on its tabs
+  it("does not measure again for a selection in a list nested inside a tab", async () => {
+    const { rerender } = await renderTabs(withMotion, { ...FIXED, nestedWidth: 50 });
+    const batches = resizeBatches.count;
+    rerender(tabs({ ...FIXED, nestedWidth: 50, nestedValue: "y" }));
+    await eachPaintedFrame(() => 0, 3);
+    expect(resizeBatches.count).toBe(batches);
+  });
+
+  // Another indicator in the list mounts and unmounts beside the tabs: not a tab, so the tabs
+  // are not observed again, which would measure each once
+  it("does not observe the tabs again when an indicator mounts or unmounts", async () => {
+    await enterMotionPath(withMotion);
+    // The mount is state set outside act, as in an app; the unmount is a rerender
+    let setExtra: (extra: boolean) => void = () => {};
+    const Harness = ({ forced }: { forced?: boolean }) => {
+      const [extra, set] = useState(false);
+      setExtra = set;
+      return tabs({ ...FIXED, extraIndicator: forced ?? extra });
+    };
+    const { getByTestId, getByRole, rerender } = render(<Harness />);
+    await waitForStable(() => offBy(getByRole("tab", { name: "Alpha" }), getByTestId("indicator")));
+    let batches = resizeBatches.count;
+    setExtra(true);
+    await eachPaintedFrame(() => 0, 3);
+    expect(resizeBatches.count, "mount").toBe(batches);
+
+    batches = resizeBatches.count;
+    rerender(<Harness forced={false} />);
+    await eachPaintedFrame(() => 0, 3);
+    expect(resizeBatches.count, "unmount").toBe(batches);
   });
 
   it("still slides to a newly selected tab", async () => {
