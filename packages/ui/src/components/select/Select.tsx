@@ -50,8 +50,9 @@ function SelectRoot<Value, Multiple extends boolean | undefined = false>({
   // Select stays closed whatever `open` and `defaultOpen` say. `:disabled` is read from Base UI's
   // form input after every commit and at a pick, because only the browser knows a native fieldset
   // disabled it. A disabled uncontrolled Select forgets it was open, so enabling it later does not
-  // pop the listbox open. The close skips the exit: Base UI 1.9 cannot take back an open in the
-  // commit after it, so the popup would stay mounted and closing.
+  // pop the listbox open. The close skips the exit, for the Select's own `disabled` as for a Field
+  // or fieldset: Base UI 1.9 cannot take back an open in the commit after it, so the popup would
+  // stay mounted and closing.
   // ponytail: only the Select's own `disabled` counts in the render that sets it; the others count
   // from its next render, or from a pick. So a Select that mounts open in a disabled Field or
   // fieldset is open for its first commit, gone before it paints, and calls `onOpenChangeComplete`
@@ -67,16 +68,19 @@ function SelectRoot<Value, Multiple extends boolean | undefined = false>({
   const [internalOpen, setInternalOpen] = useState(defaultOpen ?? false);
   const [formDisabled, setFormDisabled] = useState(false);
   const isOpen = !(disabled || formDisabled) && (open ?? internalOpen);
+  const wasOpen = useRef(false);
   const syncDisabled = () => {
     const next = formInputRef.current?.matches(":disabled") ?? false;
     if (next !== formDisabled) setFormDisabled(next);
     if (next && internalOpen) setInternalOpen(false);
     // Takes effect with the close this batch commits (Base UI 1.9 bug, mui/base-ui#6031; remove once it is fixed)
-    if (next && isOpen) actions.current?.unmount();
+    // `wasOpen`: the commit that turned `disabled` on already has `isOpen` false
+    if ((next || disabled) && (isOpen || wasOpen.current)) actions.current?.unmount();
     return next;
   };
   useLayoutEffect(() => {
     syncDisabled();
+    wasOpen.current = isOpen;
   });
   // Only an uncontrolled Select keeps the state: a controlled one shows `open`
   const [closeFocus, handleOpenChange] = useCloseFocusRoot(

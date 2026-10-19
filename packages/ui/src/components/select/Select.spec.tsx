@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { configureAxe } from "jest-axe";
-import { createRef, type ReactElement } from "react";
+import { createRef, type ReactElement, useEffect, useLayoutEffect, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { undecided } from "../../AxeTest.utils";
 import { Field } from "../field";
@@ -360,6 +360,46 @@ describe("Select disabled", () => {
     const onOpenChangeComplete = vi.fn();
     render(fruits({ disabled: true, defaultOpen: true, onOpenChangeComplete }));
     expect(onOpenChangeComplete).not.toHaveBeenCalled();
+  });
+
+  // The commit right after an open: the Select's own `disabled` turns on, so Base UI gets a close
+  // before its portal mounted the popup (mui/base-ui#6031). The popup must still go.
+  const expectGone = (onOpenChangeComplete: ReturnType<typeof vi.fn>) => {
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+    expect(document.querySelector("[data-base-ui-inert]")).toBeNull();
+    expect(onOpenChangeComplete).toHaveBeenCalledWith(false);
+  };
+
+  it("unmounts a defaultOpen Select that its parent disables in the commit after mount", () => {
+    const onOpenChangeComplete = vi.fn();
+    const Parent = () => {
+      const [disabled, setDisabled] = useState(false);
+      useLayoutEffect(() => setDisabled(true), []);
+      return fruits({ disabled, defaultOpen: true, onOpenChangeComplete });
+    };
+    render(<Parent />);
+    expectGone(onOpenChangeComplete);
+  });
+
+  it("unmounts a Select that its parent disables in the commit after a click opened it", async () => {
+    const user = userEvent.setup();
+    const onOpenChangeComplete = vi.fn();
+    const Parent = () => {
+      const [opened, setOpened] = useState(false);
+      const [disabled, setDisabled] = useState(false);
+      useEffect(() => {
+        if (opened) setDisabled(true);
+      }, [opened]);
+      return fruits({
+        disabled,
+        onOpenChange: (open) => open && setOpened(true),
+        onOpenChangeComplete,
+      });
+    };
+    render(<Parent />);
+    await user.click(trigger());
+    await vi.waitFor(() => expect(trigger()).toBeDisabled());
+    expectGone(onOpenChangeComplete);
   });
 
   describe.each<[string, (disabled: boolean, props: SelectRootProps) => ReactElement]>([
