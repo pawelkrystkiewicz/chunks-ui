@@ -108,7 +108,7 @@ const ALLOWED: Allowed[] = [
   {
     rule: "color-contrast",
     selector: 'button[aria-label^="Edit colours:"] > span[aria-hidden="true"]:first-child',
-    why: "/create's contrast swatches show each pair in its own colours, failing ones too: the default theme's Primary and Destructive button hover in the Light column, 3.91:1 and 4.13:1",
+    why: "#688: /create's contrast swatches show each pair in its own colours, failing ones too: the default theme's Primary and Destructive button hover in the Light column, 3.91:1 and 4.13:1",
     pages: ["/create"],
   },
 ];
