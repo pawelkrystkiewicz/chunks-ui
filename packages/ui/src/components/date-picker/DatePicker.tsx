@@ -228,12 +228,17 @@ export function DatePicker({
   // Focus moves to the trigger as the popup starts to close, not at the unmount after the exit.
   // Only an uncontrolled picker keeps the state: a controlled one shows `open`, so the consumer
   // can refuse a change by not passing it on.
-  const [closeFocus, handleOpenChange] = useCloseFocusRoot(
+  const [closeFocus, reportOpenChange] = useCloseFocusRoot(
     (next: boolean, eventDetails: BasePopover.Root.ChangeEventDetails) => {
       onOpenChange?.(next, eventDetails);
       if (open === undefined && !eventDetails.isCanceled) setInternalOpen(next);
     },
   );
+  // ponytail: drop a close while not open; see Popover.tsx (Base UI focus-out re-close; remove once Base UI checks open first).
+  const handleOpenChange: typeof reportOpenChange = (next, eventDetails) => {
+    if (!next && !isOpen) return;
+    reportOpenChange(next, eventDetails);
+  };
   const focusOnCloseRef = useFocusOnClose(popupRef, closeFocus);
   // The picker has one trigger, so focus goes back to it after an open it did not start too
   // (`defaultOpen`, `open` from another control), as the popup starts to close. Base UI would
