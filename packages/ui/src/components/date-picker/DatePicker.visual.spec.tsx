@@ -1,6 +1,6 @@
 import { Form } from "@base-ui/react/form";
 import { render } from "@testing-library/react";
-import { afterAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import {
   emulateReducedMotion,
@@ -144,11 +144,11 @@ describe.each([
   afterAll(() => emulateReducedMotion(true));
 
   // Text fields around the trigger, as WebKit's Tab and click skip buttons
-  const open = async () => {
+  const open = async (onValueChange?: (date: Date | null) => void) => {
     const view = render(
       <div className="flex w-72 flex-col items-start gap-2" style={{ padding: 40 }}>
         <input aria-label="Before" />
-        <DatePicker defaultValue={new Date(2026, 2, 15)} />
+        <DatePicker defaultValue={new Date(2026, 2, 15)} onValueChange={onValueChange} />
         <input aria-label="After" />
       </div>,
     );
@@ -197,6 +197,17 @@ describe.each([
       expect(document.activeElement).toBe(trigger);
     },
   );
+
+  // The repeat's keypress ends the hand-off's wait. Chromium still clicked the day, the
+  // keypress's target, after the hand-off had moved focus to the trigger: a second pick. With
+  // reduced motion the repeat may land after the unmount, on the trigger, and open the calendar
+  // again (see above): still one pick.
+  it("picks once when the picking Enter repeats during the exit", async () => {
+    const onValueChange = vi.fn();
+    await open(onValueChange);
+    await userEvent.keyboard("{ArrowDown}{Enter>2}{/Enter}");
+    expect(onValueChange).toHaveBeenCalledExactlyOnceWith(new Date(2026, 2, 22));
+  });
 
   // A click and a key press are two calls, too far apart for the one frame of reduced motion
   it.skipIf(reduce)(

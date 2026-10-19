@@ -97,7 +97,7 @@ export function useFocusOnClose<T extends HTMLElement>(
     let byKey = false;
     const stopWaiting = () => {
       doc.removeEventListener("keydown", onNextKeyDown, true);
-      doc.removeEventListener("keypress", handOff, true);
+      doc.removeEventListener("keypress", onKeyPress, true);
       doc.removeEventListener("keyup", handOff, true);
     };
     // Checks again after a wait: the popup may have reopened.
@@ -110,9 +110,17 @@ export function useFocusOnClose<T extends HTMLElement>(
       const options = { preventScroll: true, ...(byKey && { focusVisible: true }) };
       closeFocus.trigger.current?.focus(options as FocusOptions);
     };
-    // A held key repeats its keydown: only a new key ends the wait
+    // A new key's keydown ends the wait, as does any keypress or keyup. A held key repeats its
+    // keydown and its keypress: the repeat's keydown does not end the wait, its keypress does.
+    // With focus inside the closing popup, that keypress is also cancelled: Chromium activates its
+    // target even after the hand-off has moved focus, and a held Enter would pick a DatePicker day
+    // twice.
     const onNextKeyDown = (event: KeyboardEvent) => {
       if (!event.repeat) handOff();
+    };
+    const onKeyPress = (event: KeyboardEvent) => {
+      if (event.repeat && closing() && focusInside()) event.preventDefault();
+      handOff();
     };
     const observer = new MutationObserver(() => {
       if (!closing()) return;
@@ -143,7 +151,7 @@ export function useFocusOnClose<T extends HTMLElement>(
       byKey = keyClick || event?.type.startsWith("key") === true;
       if ((event?.type === "keydown" && !event.defaultPrevented) || keyClick) {
         doc.addEventListener("keydown", onNextKeyDown, true);
-        doc.addEventListener("keypress", handOff, true);
+        doc.addEventListener("keypress", onKeyPress, true);
         doc.addEventListener("keyup", handOff, true);
       } else {
         handOff();
