@@ -17,6 +17,7 @@ import {
   framesOf,
   inlineSpan,
   insetsWithin,
+  isShown,
   MOTION_PATHS,
   recordTabDuringExit,
   renderFixture,
@@ -302,6 +303,34 @@ describe("Combobox", () => {
       await userEvent.hover(button);
       expect(getComputedStyle(button).color, name).toBe(rest);
     }
+  });
+
+  // #706
+  it("modal: closes on a press on a sticky header, which the press does not reach", async () => {
+    const onClick = vi.fn();
+    const { getByRole, getByTestId } = render(
+      <>
+        <header className="sticky top-0 z-10">
+          <button type="button" data-testid="header" onClick={onClick}>
+            Header
+          </button>
+        </header>
+        <div style={{ padding: 40 }}>
+          <Combobox.Root items={options} modal>
+            <Combobox.Input placeholder="Search framework..." />
+            {popup()}
+          </Combobox.Root>
+        </div>
+      </>,
+    );
+    await userEvent.click(getByRole("combobox"));
+    const popupEl = getByTestId("popup");
+    await settled(popupEl);
+    // By test id, as a modal combobox hides the page from the accessibility tree. Forced:
+    // Playwright would otherwise wait for the button to be the element under the pointer
+    await page.getByTestId("header").click({ force: true });
+    expect(onClick).not.toHaveBeenCalled();
+    await exited(popupEl, { stillClosing: isShown });
   });
 });
 
