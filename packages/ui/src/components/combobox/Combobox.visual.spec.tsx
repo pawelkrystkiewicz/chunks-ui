@@ -25,6 +25,7 @@ import {
   settled,
   tookFocus,
   waitForStable,
+  withViewport,
 } from "../../VisualTest.utils";
 import { Combobox, type ComboboxPositionerProps } from "./index";
 
@@ -216,17 +217,28 @@ describe("Combobox", () => {
   });
 
   // Without a flex-1 of the consumer's, Combobox.Chips was only as wide as its content, and the
-  // input in it stopped short of the Control's end (#686). 400px is wider than the chips and the
-  // input's own width together, which fill a 300px Control either way.
-  it("lets the input take the rest of the Control's row, with no class on Combobox.Chips", () => {
-    const { getByRole, getByTestId } = render(<div style={{ width: 400 }}>{chipsCombobox()}</div>);
-    const control = getByTestId("control");
-    const { paddingRight, borderRightWidth } = getComputedStyle(control);
-    const contentRight =
-      control.getBoundingClientRect().right -
-      parseFloat(paddingRight) -
-      parseFloat(borderRightWidth);
-    expect(getByRole("combobox").getBoundingClientRect().right).toBeCloseTo(contentRight, 1);
+  // input in it stopped short of the Control's end (#686). The 600px fixture is over 200px wider
+  // than that content, at 14px text and at 16px, so the check does not rest on the margin a font
+  // size leaves. An input that wrapped to a row of its own also ends at the Control's end, so the
+  // input must start on the chips' line as well.
+  describe("in a Control wider than its content", () => {
+    withViewport(700);
+
+    it("lets the input take the rest of the Control's row, with no class on Combobox.Chips", () => {
+      const { getByRole, getByTestId, getByText } = render(
+        <div style={{ width: 600 }}>{chipsCombobox()}</div>,
+      );
+      const control = getByTestId("control");
+      const { paddingRight, borderRightWidth } = getComputedStyle(control);
+      const contentRight =
+        control.getBoundingClientRect().right -
+        parseFloat(paddingRight) -
+        parseFloat(borderRightWidth);
+      const input = getByRole("combobox").getBoundingClientRect();
+      // 4px after the last chip (the gap of the chips): a wrapped input starts at the row's start
+      expect(input.left).toBeCloseTo(getByText("Vue").getBoundingClientRect().right + 4, 1);
+      expect(input.right).toBeCloseTo(contentRight, 1);
+    });
   });
 
   // The chips sat flush against each other: Combobox.Chips had no gap (#478)
