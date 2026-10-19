@@ -14,9 +14,11 @@ export function TeamCard() {
     <PreviewCard>
       <PreviewCardHeading title="Team" description="Invite collaborators to this project." />
       <div className="flex gap-2">
+        {/* A short placeholder: in the narrowest column, with text spacing overridden, the field
+            shows about 120px of text, and an address such as name@acme.dev is wider */}
         <Input
           type="email"
-          placeholder="name@company.com"
+          placeholder="Email"
           aria-label="Email address"
           className="min-w-0 flex-1"
         />
