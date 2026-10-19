@@ -677,6 +677,29 @@ describe("Toast closeProps", () => {
 // Toast.Root renders its element in a render function of its own, to read Base UI's aria-hidden
 // (#685). A `render` you pass still replaces the element, with Base UI's props, state and ref.
 describe("Toast.Root render", () => {
+  /** Shows a high-priority toast on a root with the given `render` prop and returns the root */
+  async function showRoot(renderProp?: ToastRootProps["render"]) {
+    const manager = createToastManager();
+    render(
+      <Toast.Provider toastManager={manager}>
+        <BaseToast.Viewport>
+          <Roots render={renderProp} />
+        </BaseToast.Viewport>
+      </Toast.Provider>,
+    );
+    act(() => {
+      manager.add({ title: "Connection lost", priority: "high" });
+    });
+    // aria-hidden, so only a query with `hidden` finds it
+    return screen.findByRole("alertdialog", { hidden: true });
+  }
+
+  it("renders a div without a render prop", async () => {
+    const toast = await showRoot();
+    expect(toast.tagName).toBe("DIV");
+    expect(toast).toHaveClass("Toast");
+  });
+
   it.each<{ kind: string; renderProp: ToastRootProps["render"]; marker: string }>([
     // Keeps its own props
     { kind: "an element", renderProp: <section data-marker="element" />, marker: "element" },
@@ -690,19 +713,7 @@ describe("Toast.Root render", () => {
     },
   ])("renders the root through $kind", async ({ renderProp, marker }) => {
     const user = userEvent.setup();
-    const manager = createToastManager();
-    render(
-      <Toast.Provider toastManager={manager}>
-        <BaseToast.Viewport>
-          <Roots render={renderProp} />
-        </BaseToast.Viewport>
-      </Toast.Provider>,
-    );
-    act(() => {
-      manager.add({ title: "Connection lost", priority: "high" });
-    });
-    // aria-hidden, so only a query with `hidden` finds it
-    const toast = await screen.findByRole("alertdialog", { hidden: true });
+    const toast = await showRoot(renderProp);
     expect(toast.tagName).toBe("SECTION");
     expect(toast).toHaveClass("Toast");
     expect(toast).toHaveAttribute("data-marker", marker);

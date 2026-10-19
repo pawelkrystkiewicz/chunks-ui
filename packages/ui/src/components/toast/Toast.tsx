@@ -2,11 +2,11 @@
 
 import { Toast as BaseToast } from "@base-ui/react/toast";
 import type { HTMLProps } from "@base-ui/react/types";
-import { useRender } from "@base-ui/react/use-render";
 import { type ComponentProps, type ComponentType, createContext, useContext } from "react";
 import { cn, cnState } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
 import { useReducedMotion } from "../../lib/use-motion";
+import { type PartRenderProp, useRenderPart } from "../../lib/use-render-part";
 import { CloseIcon } from "../CloseIcon";
 import { FOCUS_RING, RING_ANIMATION_CLASSES, TOAST_CONTENT_CLASS } from "../shared";
 import { DEFAULT_TOAST_LABELS, type ToastLabels } from "./Toast.Labels";
@@ -200,13 +200,15 @@ function ToastRootElement({
   render,
   ref,
   ...props
-}: HTMLProps & { state: BaseToast.Root.State; render: ToastRootProps["render"] }) {
+}: HTMLProps & { state: BaseToast.Root.State; render: PartRenderProp<BaseToast.Root.State> }) {
   const hidden = props["aria-hidden"] === true;
-  const element = useRender({
-    render: typeof render === "function" ? (renderProps) => render(renderProps, state) : render,
-    ref,
-    props: hidden ? { ...props, tabIndex: -1 } : props,
-  });
+  const element = useRenderPart(
+    render,
+    state,
+    ref ?? null,
+    hidden ? { ...props, tabIndex: -1 } : props,
+    "div",
+  );
   return (
     <ToastHiddenContext.Provider value={hidden ? "toast" : state.expanded ? null : "close"}>
       {element}
