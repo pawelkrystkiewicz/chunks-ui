@@ -40,13 +40,23 @@ it("the open mobile menu hangs from the header, and the hero does not clip it", 
   fireEvent.click(screen.getByRole("button", { name: "Menu" }));
   const menu = container.querySelector("#landing-menu");
   const headerEl = container.querySelector("header");
-  expect(headerEl?.classList).toContain("relative");
-  expect(menu?.parentElement?.closest(".relative")).toBe(headerEl);
-  expect([...(menu?.classList ?? [])]).toEqual(
+  if (!menu || !headerEl) throw new Error("no open menu or header");
+  const matching = (el: Element | null, re: RegExp) =>
+    [...(el?.classList ?? [])].filter((c) => re.test(c));
+  // The header is the menu's containing block: no positioned element sits between them
+  expect(headerEl.classList).toContain("relative");
+  for (let el = menu.parentElement; el && el !== headerEl; el = el.parentElement) {
+    expect(matching(el, /(^|:)(relative|absolute|fixed|sticky)$/)).toEqual([]);
+  }
+  expect([...menu.classList]).toEqual(
     expect.arrayContaining(["absolute", "top-[calc(100%+1px)]", "h-dvh"]),
   );
-  expect(headerEl?.parentElement?.classList).toContain("overflow-x-clip");
-  expect(headerEl?.parentElement?.classList).not.toContain("overflow-hidden");
+  // `overflow-x-clip` alone: x hidden, auto or scroll turn y's visible into auto, a scroll box
+  const hero = headerEl.parentElement;
+  expect(hero?.classList).toContain("overflow-x-clip");
+  expect(
+    matching(hero, /(^|:)overflow-(hidden|clip|auto|scroll|y-|x-(hidden|auto|scroll))/),
+  ).toEqual([]);
 });
 
 it.each([
