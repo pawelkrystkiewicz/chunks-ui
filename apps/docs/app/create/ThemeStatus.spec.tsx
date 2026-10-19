@@ -273,6 +273,22 @@ describe("redo", { timeout: 15_000 }, () => {
     expect(undoButton().getAttribute("aria-disabled")).toBe("true");
   });
 
+  it("leaves ⇧⌘Z and Ctrl+Y inside a text field to the field's own history", () => {
+    render(<Harness />);
+    openEditor();
+    typeBlack();
+    ctrlZ(resetAll());
+    for (const keys of [
+      { key: "Z", metaKey: true, shiftKey: true },
+      { key: "y", ctrlKey: true },
+    ]) {
+      // Not prevented: the browser redoes the field's typing
+      expect(fireEvent.keyDown(field(), keys)).toBe(true);
+      expect(screen.queryByText(/custom colour/)).toBeNull();
+    }
+    expect(redoButton().getAttribute("aria-disabled")).toBeNull();
+  });
+
   it("forgets the undone edits when a new edit is made", () => {
     render(<Harness />);
     openEditor();
@@ -320,6 +336,30 @@ describe("nudge by measure", { timeout: 15_000 }, () => {
       screen.getByRole("button", { name }).getAttribute("aria-disabled");
     expect(disabled("WCAG 2 only")).toBe("true");
     expect(disabled("APCA only")).toBeNull();
+  });
+
+  const notes = () => screen.getAllByRole("status").map((n) => n.textContent);
+
+  it("says when no lightness of the colour passes APCA alone, and leaves it alone", () => {
+    // Dark: Lc 55 of Bronze's 60, and the hover fill behind the text is locked
+    render(<Harness />);
+    openMeasures("Success button, hover", "Dark");
+    fireEvent.click(screen.getByRole("button", { name: "APCA only" }));
+    expect(notes()).toContain("No lightness of this colour passes APCA.");
+    expect(screen.queryByText(/custom colour/)).toBeNull();
+  });
+
+  it("says APCA only can't help text too small for the APCA level", () => {
+    localStorage.setItem(
+      "chunks-create-contrast-v1",
+      JSON.stringify({ wcag: "AA", apca: "Silver", failsOnly: false }),
+    );
+    render(<Harness />);
+    // 12px at the default Base size, under Silver's 14px minimum
+    openMeasures("Destructive text", "Light");
+    fireEvent.click(screen.getByRole("button", { name: "APCA only" }));
+    expect(notes()).toContain("The text is too small for APCA Silver. Raise Base size.");
+    expect(screen.queryByText(/custom colour/)).toBeNull();
   });
 });
 
