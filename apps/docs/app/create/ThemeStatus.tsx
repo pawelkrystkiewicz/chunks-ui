@@ -2,8 +2,16 @@
 
 import { Collapsible, cn, Field, Select, ToggleGroup } from "chunks-ui";
 import { ChevronRight, ChevronsUpDown, Redo2, Undo2 } from "lucide-react";
-import { type KeyboardEvent, type ReactNode, useEffect, useRef, useState } from "react";
+import {
+  type KeyboardEvent,
+  type ReactNode,
+  type RefObject,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { PairEditor } from "./PairEditor";
+import { paintsWith } from "./preview-lit";
 import { countOverrides, type Mode, type Overrides, type Theme } from "./theme-model";
 import { minTextPx, targetGoal, targetSizes, typeScale } from "./theme-sizes";
 import {
@@ -12,6 +20,7 @@ import {
   affects,
   type Check,
   DEFAULT_LEVELS,
+  followers,
   formatLc,
   formatRatio,
   type Levels,
@@ -53,13 +62,18 @@ function loadPrefs(): Prefs {
 
 const fails = (c: Check, modes: Mode[]) => modes.some((m) => !passWcag(c, m) || !passApca(c, m));
 
-/** Contrast of the theme in both modes, the previewed mode first, by WCAG 2 and by APCA. */
+/**
+ * Contrast of the theme in both modes, the previewed mode first, by WCAG 2 and by APCA. While a
+ * colour editor is open, the elements in `preview` that paint with its colour are outlined.
+ */
 export function ThemeStatus({
   theme,
   onChange,
+  preview,
 }: {
   theme: Theme;
   onChange: (patch: Partial<Theme>) => void;
+  preview?: RefObject<HTMLElement | null>;
 }) {
   const [prefs, setPrefs] = useState(DEFAULT_PREFS);
   // The open editor: its pair (listed under "Failures only" once it passes), mode and the token
@@ -78,6 +92,21 @@ export function ThemeStatus({
 
   // Read after mount, like the theme: the page is server-rendered
   useEffect(() => setPrefs(loadPrefs()), []);
+
+  // The preview is not React state of this panel: mark its elements by hand, and unmark them when
+  // the tokens change or the editor closes. ponytail: an element a card mounts while the editor is
+  // open stays unmarked until the active colour changes.
+  const litTokens = editing?.token ? followers(theme, editing.mode, editing.token).join(" ") : "";
+  useEffect(() => {
+    const root = preview?.current;
+    if (!root || !litTokens) return;
+    const tokens = litTokens.split(" ");
+    const marked = [...root.querySelectorAll("*")].filter((el) => paintsWith(el, tokens));
+    for (const el of marked) el.setAttribute("data-lit", "");
+    return () => {
+      for (const el of marked) el.removeAttribute("data-lit");
+    };
+  }, [preview, litTokens]);
 
   const setPref = (patch: Partial<Prefs>) => {
     const next = { ...prefs, ...patch };

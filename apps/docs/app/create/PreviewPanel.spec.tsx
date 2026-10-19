@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { PreviewPanel } from "./PreviewPanel";
 import { DEFAULT_THEME } from "./theme-model";
 
@@ -40,3 +40,23 @@ it.each(OVERLAYS)(
     await waitFor(() => expect(document.activeElement).toBe(button));
   },
 );
+
+describe("while a colour editor is open", () => {
+  it("outlines the preview's components that use its colour, until it closes", async () => {
+    render(<PreviewPanel theme={DEFAULT_THEME} onChange={vi.fn()} />);
+    const preview = screen.getByRole("region", { name: "Preview" });
+    const lit = () => [...preview.querySelectorAll("[data-lit]")];
+    fireEvent.click(within(preview).getByRole("button", { name: /^Accessibility/ }));
+    expect(lit()).toEqual([]);
+    // Chart 1's editor starts on its own colour; VelocityCard paints a bar series and its key with it
+    fireEvent.click(screen.getByRole("button", { name: /^Edit colours: Chart 1, Light/ }));
+    expect(lit().length).toBeGreaterThan(1);
+    expect(lit().every((el) => el.classList.contains("bg-chart-1"))).toBe(true);
+    // The editor's own swatch is in the panel, not the preview's cards: the panel is never outlined
+    expect(lit().every((el) => !el.closest("table"))).toBe(true);
+    fireEvent.keyDown(screen.getByRole("textbox", { name: /^Foreground colour/ }), {
+      key: "Escape",
+    });
+    await waitFor(() => expect(lit()).toEqual([]));
+  });
+});

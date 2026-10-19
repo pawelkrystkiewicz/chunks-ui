@@ -2,7 +2,7 @@
 
 import { ToggleGroup } from "chunks-ui";
 import { Monitor, Smartphone, Tablet } from "lucide-react";
-import { memo, useState } from "react";
+import { memo, useRef, useState } from "react";
 import { AlertsCard } from "./preview/AlertsCard";
 import { ButtonsCard } from "./preview/ButtonsCard";
 import { CalendarCard } from "./preview/CalendarCard";
@@ -39,6 +39,7 @@ export function PreviewPanel({
   onChange: (patch: Partial<Theme>) => void;
 }) {
   const [viewport, setViewport] = useState<ViewportId>("desktop");
+  const columns = useRef<HTMLDivElement>(null);
   const summary = [
     theme.fontHeading === theme.fontBody
       ? theme.fontHeading
@@ -53,7 +54,8 @@ export function PreviewPanel({
     <section
       aria-label="Preview"
       data-pagefind-ignore
-      className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-[14px] border border-border bg-background shadow-[0_1px_2px_oklch(0_0_0/0.04)]"
+      // --lit keeps the page's primary for the outlines: the preview scope sets its own
+      className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-[14px] border border-border bg-background shadow-[0_1px_2px_oklch(0_0_0/0.04)] [--lit:var(--primary)]"
     >
       <div className="flex h-[50px] items-center justify-between gap-4 border-border border-b pe-2.5 ps-[18px]">
         <div className="flex min-w-0 items-center gap-3">
@@ -80,7 +82,7 @@ export function PreviewPanel({
         </ToggleGroup.Root>
       </div>
 
-      <ThemeStatus theme={theme} onChange={onChange} />
+      <ThemeStatus theme={theme} onChange={onChange} preview={columns} />
 
       <ThemeScope
         theme={theme}
@@ -95,12 +97,14 @@ export function PreviewPanel({
             Remove once the Safari versions we support ship the fix (the W80 bug spec in
             Smoke.webkit.visual.spec.tsx fails first). Details: TESTING_STRATEGY.md, WebKit
             Smoke Tests. */}
+        {/* data-lit: the elements that paint with the colour being edited (ThemeStatus) */}
         <div
+          ref={columns}
           style={{
             maxWidth: VIEWPORTS.find((vp) => vp.id === viewport)?.width,
             columnWidth: previewColumnWidth(theme),
           }}
-          className="mx-auto gap-5 transition-[max-width] duration-400 ease-fluid will-change-[opacity] motion-reduce:transition-none"
+          className="mx-auto gap-5 transition-[max-width] duration-400 ease-fluid will-change-[opacity] motion-reduce:transition-none [&_[data-lit]]:outline-offset-2 [&_[data-lit]]:[outline:2px_dashed_var(--lit)]"
         >
           <PreviewCards fontHeading={theme.fontHeading} fontBody={theme.fontBody} />
         </div>

@@ -5,6 +5,7 @@ import {
   affects,
   apcaTarget,
   type Check,
+  followers,
   formatLc,
   formatRatio,
   isCustom,
@@ -239,5 +240,21 @@ describe("nudge by measure", () => {
     const levels = { wcag: "AA", apca: "Bronze" } as const;
     const start = sideColor(DEFAULT_THEME, "dark", muted);
     expect(nudge(DEFAULT_THEME, levels, "dark", "muted", muted, "wcag")).toEqual(start);
+  });
+});
+
+describe("followers", () => {
+  it("name the token and the shades derived from it while they have no colour of their own", () => {
+    expect(followers(DEFAULT_THEME, "light", "primary")).toEqual([
+      "primary",
+      "primary-text",
+      "ring",
+    ]);
+    expect(followers(DEFAULT_THEME, "light", "background")).toEqual(["background", "ring"]);
+    expect(followers(DEFAULT_THEME, "light", "chart-1")).toEqual(["chart-1"]);
+    const red = { l: 0.5, c: 0.2, h: 25 };
+    const t = { ...DEFAULT_THEME, overrides: { light: { "primary-text": red } } };
+    expect(followers(t, "light", "primary")).toEqual(["primary", "ring"]);
+    expect(followers(t, "dark", "primary")).toEqual(["primary", "primary-text", "ring"]);
   });
 });

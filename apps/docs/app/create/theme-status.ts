@@ -184,6 +184,14 @@ function reads(t: Theme, mode: Mode, side: Side): string[] {
 export const affects = (t: Theme, mode: Mode, check: Check, token: string) =>
   [check.fg, check.bg].some((s) => s.token === token || reads(t, mode, s).includes(token));
 
+/** The tokens setting `token` in `mode` changes: itself, and the shades that follow it while unset */
+export function followers(t: Theme, mode: Mode, token: string): string[] {
+  const shades = ROWS.flatMap((r) => [r.fg, r.bg]).filter(
+    (s) => !s.locked && s.token !== token && reads(t, mode, s).includes(token),
+  );
+  return [...new Set([token, ...shades.map((s) => s.token)])];
+}
+
 export const MODE_NAME: Record<Mode, string> = { light: "Light", dark: "Dark" };
 const T = (token: string): Side => ({ token });
 const BG = T("background");
