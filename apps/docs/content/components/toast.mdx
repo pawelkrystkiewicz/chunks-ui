@@ -302,7 +302,7 @@ export default Props
   })}
 />
 
-> **Note**: Base UI 1.9 hides a toast added with `priority: "high"` from screen readers (`aria-hidden`) and announces it through a visually hidden alert instead. The toast stays hidden until keyboard focus enters the viewport, and is hidden again when focus leaves it. While it is hidden, chunks-ui keeps the toast, its `Toast.Close` and its `Toast.Action` out of the tab order, so Tab passes over the toast: press F6, then Tab, to reach the toast and its buttons. A mouse click still focuses the toast and leaves it hidden. Other focusable elements that you put in a high-priority `Toast.Root` keep their tab stops ([mui/base-ui#5659](https://github.com/mui/base-ui/issues/5659)).
+> **Note**: Base UI 1.9 hides a toast added with `priority: "high"` from screen readers (`aria-hidden`) and announces it through a visually hidden alert instead. The toast stays hidden until keyboard focus enters the viewport, and is hidden again when focus leaves it. While it is hidden, chunks-ui keeps the toast, its `Toast.Close` and its `Toast.Action` out of the tab order, so Tab passes over the toast: press F6, then Tab, to reach the toast and its buttons. A mouse click still focuses the toast and leaves it hidden. Other focusable elements that you put in a high-priority `Toast.Root` keep their tab stops ([mui/base-ui#5659](https://github.com/mui/base-ui/issues/5659)). This includes a link in the `title` or `description` of a high-priority toast: Base UI also renders those in a hidden announcement copy, which is an invisible tab stop. Put the link in `Toast.Action` instead.
 >
 > Base UI also hides the close button of every toast from screen readers while the toasts are collapsed, with no pointer over them and no keyboard focus in them. chunks-ui keeps the button out of the tab order for that time. Keyboard focus on a toast expands the toasts and brings the button back: from the toast, Tab reaches its action first when it has one, then its close button.
 
@@ -329,7 +329,7 @@ export default Props
 
 ### Compound parts
 
-All other compound parts (`Toast.Provider`, `Toast.Root`, `Toast.Title`, `Toast.Description`, `Toast.Close`, `Toast.Action`) are thin style wrappers and forward their props to the corresponding Base UI primitive, except that `Toast.Root`, `Toast.Close` and `Toast.Action` set `tabIndex` to `-1` while Base UI hides them from screen readers, replacing a `tabIndex` you pass (a `tabIndex` in `actionProps` wins; see the note under [Props](#props)). See the [Base UI Toast reference](https://base-ui.com/react/components/toast#api-reference) for the full prop surface.
+All other compound parts (`Toast.Provider`, `Toast.Root`, `Toast.Title`, `Toast.Description`, `Toast.Close`, `Toast.Action`) are thin style wrappers and forward their props to the corresponding Base UI primitive, except that `Toast.Root`, `Toast.Close` and `Toast.Action` set `tabIndex` to `-1` while Base UI hides them from screen readers, replacing a `tabIndex` you pass (see the note under [Props](#props)). See the [Base UI Toast reference](https://base-ui.com/react/components/toast#api-reference) for the full prop surface.
 
 ## Labels
 

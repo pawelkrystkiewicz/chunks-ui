@@ -194,7 +194,8 @@ function ToastRoot({ className, toast, render, ...props }: ToastRootProps) {
 // tab order while hidden. The root and Toast.Action go once mui/base-ui#5659 is fixed (the
 // high-priority toast, aria-hidden but focusable); Toast.Close goes once mui/base-ui#5731 stops
 // aria-hiding it (`!expanded && !hasFocus`: Base UI shows the button while it has focus, when its
-// tab stop is moot). A focusable element of yours inside the toast keeps its tab stop.
+// tab stop is moot). Limit: a focusable element of yours inside the hidden toast keeps its tab
+// stop, and so does its twin in Base UI's hidden announcement copy of the title and description.
 function ToastRootElement({
   state,
   render,
@@ -257,7 +258,7 @@ function ToastClose({ className, children, ...props }: ToastCloseProps) {
   );
 }
 
-function ToastAction({ className, ...props }: ToastActionProps) {
+function ToastAction({ className, render, ...props }: ToastActionProps) {
   const hidden = useContext(ToastHiddenContext) === "toast";
   return (
     <BaseToast.Action
@@ -268,8 +269,32 @@ function ToastAction({ className, ...props }: ToastActionProps) {
         className,
       )}
       {...props}
-      {...(hidden && { tabIndex: -1 })}
+      // Base UI merges `toast.actionProps` after these props, so a `tabIndex` there would win:
+      // the -1 goes on in the render function, after the merge
+      render={(actionProps, state) => (
+        <ToastActionElement {...actionProps} state={state} render={render} hidden={hidden} />
+      )}
     />
+  );
+}
+
+function ToastActionElement({
+  state,
+  render,
+  hidden,
+  ref,
+  ...props
+}: HTMLProps & {
+  state: BaseToast.Action.State;
+  render: PartRenderProp<BaseToast.Action.State>;
+  hidden: boolean;
+}) {
+  return useRenderPart(
+    render,
+    state,
+    ref ?? null,
+    hidden ? { ...props, tabIndex: -1 } : props,
+    "button",
   );
 }
 
