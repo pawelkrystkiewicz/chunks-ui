@@ -40,11 +40,21 @@ const PHYSICAL = new RegExp(
 /** An `rtl:` or `ltr:` variant whose chain runs to the end of the text: no space, quote or brace after it. */
 const DIRECTION_VARIANT = /(?<![\w-])(?:rtl|ltr):[^\s"'`{}]*$/;
 /**
- * In a stylesheet: what Tailwind reads as classes (each `@apply` up to its `;` or `}`, across lines
- * too, and each `@source inline` string), else a comment or one other character, which are blanked.
+ * In a stylesheet, what Tailwind reads as classes, kept as group 1: each `@apply` up to its `;` or
+ * `}`, across lines and past its comments (Tailwind skips them), and each `@source inline` string.
+ * Then what is blanked: a string (so the `/*` of `@source "src/*.tsx"` opens no comment), a
+ * comment, any other character.
  */
-const STYLESHEET =
-  /(@apply\b[^;}]*|@source\s+inline\(\s*(?:"[^"]*"|'[^']*'))|\/\*[\s\S]*?\*\/|[^\n]/g;
+const STYLESHEET = new RegExp(
+  [
+    /(@apply\b(?:[^;}/]|\/(?!\*)|\/\*[\s\S]*?\*\/)*|@source\s+inline\(\s*(?:"[^"]*"|'[^']*'))/
+      .source,
+    /"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'/.source,
+    /\/\*[\s\S]*?\*\//.source,
+    /[^\n]/.source,
+  ].join("|"),
+  "g",
+);
 /** A reason has to start with a word character, so `direction: physical,` closed at once by `*\/` names none. */
 const MARKER = /direction:\s*physical,\s*\w/;
 /** One `/* … *\/` or `{/* … *\/}`, on one line or several, and nothing else. */
@@ -59,7 +69,7 @@ export function physicalTokens(line: string): string[] {
 
 /** `css` with all but the classes Tailwind reads blanked, so each class keeps its line. */
 function stylesheetClasses(css: string): string {
-  // ponytail: braces in @source inline are not expanded, so `m{l,r}-4` or `ml-{1..4}` is not read
+  // ponytail: braces in @source inline are not expanded: `m{l,r}-4` is not read, `rtl:{ml-4}` is flagged
   return css.replace(
     STYLESHEET,
     (part, classes?: string) => classes ?? part.replace(/[^\n]/g, " "),

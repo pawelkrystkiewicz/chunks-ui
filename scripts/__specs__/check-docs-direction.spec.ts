@@ -453,20 +453,41 @@ describe("checkDocsDirection", () => {
       ["3: ml-4", "7: pr-2"],
     ],
     [
+      "reads an @apply on past a comment in it, a ; or } in the comment too, as Tailwind does",
+      [".a {", "  @apply ms-2", "    /* the gap; see #12 } */", "    ml-4;", "}"],
+      ["4: ml-4"],
+    ],
+    [
       "reads the string of each @source inline, not of an @source not inline or an @source path",
       [
         '@source inline("ms-2 mr-4");',
         "@source inline('rounded-l');",
         '@source not inline("pl-2");',
         '@source "./left-0";',
-        '@source inline("rtl:pr-2 pr-2"); /* direction: physical, the twin of rtl:pr-2 */',
+        '@source inline("rtl:pr-2 pr-2");',
       ],
-      ["1: mr-4", "2: rounded-l"],
+      ["1: mr-4", "2: rounded-l", "5: pr-2"],
     ],
     [
-      "does not read an @apply in a comment, or what follows it",
-      ["/* we never @apply here:", "   .right-0 is plain CSS */", ".right-0 { right: 0; }"],
-      [],
+      "does not read an @apply in a comment, or what follows it, and keeps the lines after it",
+      [
+        "/* we never @apply here:",
+        "   .right-0 is plain CSS */",
+        ".right-0 { right: 0; }",
+        ".a { @apply ml-4; }",
+      ],
+      ["4: ml-4"],
+    ],
+    [
+      "opens no comment at a /* in a string, such as an @source glob",
+      [
+        '@source "../ui/src/*.tsx";',
+        ".a { @apply ml-4; }",
+        "/* a note */",
+        '.b::after { content: "/*"; }',
+        ".c { @apply mr-4; }",
+      ],
+      ["2: ml-4", "5: mr-4"],
     ],
   ])("%s", async (_name, lines, expected) => {
     const dir = tree({ "apps/docs/app/x.css": `${lines.join("\n")}\n` });

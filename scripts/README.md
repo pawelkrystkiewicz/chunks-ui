@@ -32,7 +32,7 @@ Left out on purpose:
 - `space-x-*`, `space-x-reverse`, `divide-x-*` and `divide-x-reverse`: Tailwind 4 writes them with `margin-inline-*` and `border-inline-*-width`, so they mirror. A `-reverse` class only swaps those two logical sides for `flex-row-reverse`.
 - `data-[side=left]:` and the like: Base UI sets the side from the real placement, so the variant already follows it.
 - `slide-in-from-left` and the like: Tailwind does not generate them; they come from an animation plugin such as `tw-animate-css`, which the docs do not load.
-- Braces in `@source inline` (`m{l,r}-4`, `ml-{1..4}`): they are not expanded, so the classes they make are not read. The docs have no `@source inline`, so an expander waits until they do.
+- Braces in `@source inline`: they are not expanded, so a class built across them (`m{l,r}-4`, `ml-{1..4}`) is not read, and a variant before a brace does not reach the classes in it (`rtl:{ml-4,mr-4}` is flagged). The docs have no `@source inline`, so an expander waits until they do.
 - A marker for one class of a line: a marker exempts its whole line, which keeps the marker rule short.
 
 ```bash
