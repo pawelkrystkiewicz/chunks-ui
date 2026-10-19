@@ -1,5 +1,5 @@
 import { render } from "@testing-library/react";
-import { createRef, useState } from "react";
+import { createRef, type ReactNode, useState } from "react";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { commands, page, userEvent } from "vitest/browser";
 import {
@@ -202,31 +202,14 @@ describeExitPaths("Popover focus as the popup closes", (reduce) => {
   // The same close, made from a keydown that is not prevented: the hook cannot tell a key made it,
   // so it handed over at once and the keypress clicked the trigger.
   it("keeps a controlled popover closed when a keydown handler closes it on Enter", async () => {
-    function Controlled() {
-      const [open, setOpen] = useState(false);
-      return (
-        <div style={{ padding: 40 }}>
-          <Popover.Root open={open} onOpenChange={setOpen}>
-            <Popover.Trigger>Settings</Popover.Trigger>
-            <Popover.Content data-testid="popup">
-              <input
-                aria-label="Name"
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") setOpen(false);
-                }}
-              />
-            </Popover.Content>
-          </Popover.Root>
-        </div>
-      );
-    }
-    const view = render(<Controlled />);
-    const trigger = view.getByRole("button", { name: "Settings" });
-    await userEvent.click(trigger);
-    const name = await view.findByRole("textbox", { name: "Name" });
-    await expect.poll(() => document.activeElement).toBe(name);
-    const popup = view.getByTestId("popup");
-    await settled(popup);
+    const { trigger, popup } = await openControlled((setOpen) => (
+      <input
+        aria-label="Name"
+        onKeyDown={(event) => {
+          if (event.key === "Enter") setOpen(false);
+        }}
+      />
+    ));
     const onTriggerClick = vi.fn();
     trigger.addEventListener("click", onTriggerClick);
     await userEvent.keyboard("{Enter}");
@@ -239,28 +222,11 @@ describeExitPaths("Popover focus as the popup closes", (reduce) => {
   // A native button clicks on Space's keyup: the keydown is over by then, so nothing is left to
   // wait for and focus goes to the trigger at once, as in 0.3.0
   it("hands focus to the trigger at once when a button that closes a controlled popover is pressed with Space", async () => {
-    function Controlled() {
-      const [open, setOpen] = useState(false);
-      return (
-        <div style={{ padding: 40 }}>
-          <Popover.Root open={open} onOpenChange={setOpen}>
-            <Popover.Trigger>Settings</Popover.Trigger>
-            <Popover.Content data-testid="popup">
-              <button type="button" onClick={() => setOpen(false)}>
-                Save
-              </button>
-            </Popover.Content>
-          </Popover.Root>
-        </div>
-      );
-    }
-    const view = render(<Controlled />);
-    const trigger = view.getByRole("button", { name: "Settings" });
-    await userEvent.click(trigger);
-    const save = await view.findByRole("button", { name: "Save" });
-    await expect.poll(() => document.activeElement).toBe(save);
-    const popup = view.getByTestId("popup");
-    await settled(popup);
+    const { trigger, popup } = await openControlled((setOpen) => (
+      <button type="button" onClick={() => setOpen(false)}>
+        Save
+      </button>
+    ));
     await userEvent.keyboard(" ");
     expect(document.activeElement, "focus waited for the exit").toBe(trigger);
     await exited(popup);
@@ -381,6 +347,28 @@ function popoverFixture({ finalFocusBefore = false, openOnHover = false } = {}) 
       <input aria-label="After" />
     </div>
   );
+}
+
+/** A controlled popover whose content is `content`, opened by click with its first control focused and the popup at rest */
+async function openControlled(content: (setOpen: (open: boolean) => void) => ReactNode) {
+  function Controlled() {
+    const [open, setOpen] = useState(false);
+    return (
+      <div style={{ padding: 40 }}>
+        <Popover.Root open={open} onOpenChange={setOpen}>
+          <Popover.Trigger>Settings</Popover.Trigger>
+          <Popover.Content data-testid="popup">{content(setOpen)}</Popover.Content>
+        </Popover.Root>
+      </div>
+    );
+  }
+  const view = render(<Controlled />);
+  const trigger = view.getByRole("button", { name: "Settings" });
+  await userEvent.click(trigger);
+  const popup = await view.findByTestId("popup");
+  await expect.poll(() => popup.contains(document.activeElement)).toBe(true);
+  await settled(popup);
+  return { trigger, popup };
 }
 
 /** Renders the fixture and opens it by click: the first field inside takes focus */

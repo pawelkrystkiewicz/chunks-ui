@@ -137,13 +137,11 @@ export function useFocusOnClose<T extends HTMLElement>(
         event.preventDefault();
       }
     };
-    // The Enter or Space keydown of the task now running, kept until its keyup or its timer. A close
-    // Base UI does not report that lands while it is kept (the observer runs right after the
-    // handler that set `open`) counts as a close by that key: its keypress and keyup are still to
-    // come, and the keypress would click the trigger. Probed in Chromium: capture keydown, the
-    // handler, this observer (a microtask), keypress, keyup.
-    // ponytail: a close in a later task is matched only until the timer or the keyup; after that it
-    // hands over at once, as in 0.3.0.
+    // The Enter or Space keydown of the task now running. An unreported close that lands while it is
+    // kept is a close by that key: its keypress and keyup are still to come. In Chromium the order
+    // is capture keydown, the handler, this observer (a microtask), keypress, keyup.
+    // ponytail: a close in a later task is not matched: the key is dropped at its keyup or the
+    // timer, and that close hands over at once, as in 0.3.0.
     let keyDown: KeyboardEvent | undefined;
     const onKeyDownCapture = (event: KeyboardEvent) => {
       if (popup.hasAttribute("data-closed")) return;
@@ -183,6 +181,9 @@ export function useFocusOnClose<T extends HTMLElement>(
       // ponytail: an assistive technology's click or a script's `.click()` has no click count too;
       // its close waits for a key that may not come, and Base UI's return at the unmount moves
       // focus instead. Accepted.
+      // Enter that activates a native button inside the popup (a DatePicker day, a Save button) is a
+      // key close too: its click comes from the keypress in the keydown's task, so the hand-off
+      // waits for the keyup or the next key, where it went at once before.
       const keyClick = event?.type === "click" && "detail" in event && event.detail === 0;
       byKey = keyClick || event?.type.startsWith("key") === true;
       // Other closes hand over at once, and still listen until the next key's events, for the
