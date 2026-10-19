@@ -107,8 +107,8 @@ function ComboboxControl({ className, ...props }: ComboboxControlProps) {
 
 // In a single-select, Clear and Trigger sit over its end, 42px of it: pe-12 keeps its text out
 // from under them, as on the Control (#520). A px-* replaces it: inside the Control, the input's
-// px-0 does. A cut placeholder ends in an ellipsis, except while the input has focus (the
-// browser's rule); a cut value has none, as before (#686).
+// px-0 does. A cut placeholder ends in an ellipsis, except in Chromium browsers and Safari while
+// the input has focus, which drop it; a cut value has none, as before (#686).
 function ComboboxInput({ className, ...props }: ComboboxInputProps) {
   return (
     <BaseCombobox.Input

@@ -1,7 +1,9 @@
 ---
-"chunks-ui": patch
+"chunks-ui": minor
 ---
 
-Fixed: in a multi-select `Combobox`, `Combobox.Chips` without a `flex-1` class of yours was only as wide as its content, so in a `Combobox.Control` wider than the chips and the input, the input stopped short of the Control's end. `Combobox.Chips` now fills the Control's free width (`flex-1`), and an input with `flex-1`, as in the docs example, takes the rest of the row; `flex-initial` in its `className` restores the old sizing. A `Combobox.Input` placeholder cut at the end of the text box now ends in an ellipsis instead of mid-word (`placeholder-shown:text-ellipsis`), except while the input has focus, where browsers cut it. A cut value still has no ellipsis.
+Changed: in a multi-select `Combobox`, the input now takes the rest of the Control's row without a `flex-1` class on `Combobox.Chips`. `Combobox.Chips` has `flex-1` by default, so it fills the free width of `Combobox.Control`, and an input inside it with `flex-1`, as in the docs example, takes what the chips leave. Before, the row was only as wide as its content, and the input stopped short of the Control's end. If your `Combobox.Input` sits beside `Combobox.Chips`, not inside it, as in the 0.1.x multi-select snippet, both are now `flex-1` and split the row: move the input inside `Combobox.Chips`, or add `flex-initial` to the `className` of `Combobox.Chips`. `flex-initial` there also gives the old, content-sized row back.
+
+Fixed: a long placeholder in a `Combobox.Input`, in a single-select or a multi-select, was cut mid-word at the end of the text box. It now ends in an ellipsis (`placeholder-shown:text-ellipsis`), except while the input has focus in Chromium browsers and Safari, which cut it there. A cut value still has no ellipsis. `placeholder-shown:text-clip` in `className` removes the ellipsis; a plain `text-clip` does not, because the `:placeholder-shown` rule is more specific.
 
 Fixed: an `Input` with `type="search"` and `clearable` or `onClear` showed two clear buttons in Chromium browsers and Safari, the browser's own and the built-in one, and Safari kept showing its own while the input was disabled or read-only. The browser's button now never shows on such an input, so the `inputMode="search"` workaround is no longer needed. A `type="search"` input without `clearable` or `onClear` keeps the browser's button.

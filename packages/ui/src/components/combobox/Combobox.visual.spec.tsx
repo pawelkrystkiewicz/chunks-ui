@@ -160,7 +160,7 @@ describe("Combobox", () => {
     await expect(fixture).toMatchScreenshot();
   });
 
-  // The placeholder cut at the text box ends in an ellipsis (#686). Browsers drop the ellipsis
+  // The placeholder cut at the text box ends in an ellipsis (#686). Chromium drops the ellipsis
   // while the input has focus, so the focus-visible shot below shows it cut
   it("control closed", async () => {
     const { fixture } = await renderFixture(<div style={{ width: 300 }}>{chipsCombobox()}</div>);
@@ -338,16 +338,30 @@ describe("Combobox.Input beside Clear and Trigger", () => {
   });
 
   // A placeholder cut at the text box ended mid-word (#686). The ellipsis is only for the
-  // placeholder: a long label stays cut at the edge, as before
+  // placeholder: a long label stays cut at the edge, as before. `placeholder-shown:text-clip`
+  // opts out, as the docs say; a plain `text-clip` does not, as the `:placeholder-shown` rule is
+  // more specific.
   it.each([
     { shows: "a long placeholder", value: null, textOverflow: "ellipsis" },
     { shows: "a long label", value: long, textOverflow: "clip" },
-  ])("ends $shows with $textOverflow", ({ value, textOverflow }) => {
+    {
+      shows: "a long placeholder under placeholder-shown:text-clip",
+      value: null,
+      className: "placeholder-shown:text-clip",
+      textOverflow: "clip",
+    },
+    {
+      shows: "a long placeholder under a plain text-clip",
+      value: null,
+      className: "text-clip",
+      textOverflow: "ellipsis",
+    },
+  ])("ends $shows with $textOverflow", ({ value, className, textOverflow }) => {
     const { getByRole } = render(
       <div style={{ width: 250 }}>
         <Combobox.Root items={[long]} defaultValue={value}>
           <div className="relative">
-            <Combobox.Input aria-label="Framework" placeholder={long.label} />
+            <Combobox.Input aria-label="Framework" placeholder={long.label} className={className} />
             <Combobox.Trigger />
           </div>
         </Combobox.Root>
