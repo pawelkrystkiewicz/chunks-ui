@@ -158,6 +158,25 @@ it("focus leaving the open menu closes it; focus moving within it or going nowhe
   expect(menu()).toBeNull();
 });
 
+// Escape unmounts the nav, so focus on a link would fall to <body>: it goes back to the button.
+it("Escape closes the menu and puts focus on the button, from a menu link or from the button", () => {
+  const { container } = renderPage();
+  const button = screen.getByRole("button", { name: "Menu" });
+  fireEvent.click(button);
+  const link = container.querySelector<HTMLElement>("#landing-menu a");
+  if (!link) throw new Error("no menu link");
+  act(() => link.focus());
+  fireEvent.keyDown(link, { key: "Escape" });
+  expect(container.querySelector("#landing-menu")).toBeNull();
+  expect(document.activeElement).toBe(button);
+  // Focus on the button itself: Escape closes and focus stays there
+  fireEvent.click(button);
+  act(() => button.focus());
+  fireEvent.keyDown(button, { key: "Escape" });
+  expect(container.querySelector("#landing-menu")).toBeNull();
+  expect(document.activeElement).toBe(button);
+});
+
 // Firefox makes a scrolling nav a Tab stop of its own; the hero's overflow clip hides its outline.
 it("the open menu is not a Tab stop of its own", () => {
   const { container } = renderPage();
