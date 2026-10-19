@@ -1,7 +1,7 @@
 "use client";
 
 import { Popover as BasePopover } from "@base-ui/react/popover";
-import { type ComponentProps, createContext, useContext } from "react";
+import { type ComponentProps, createContext, useContext, useLayoutEffect, useRef } from "react";
 import { cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
 import { arrowClasses, arrowPopupClasses } from "../../lib/popup-arrow";
@@ -57,9 +57,23 @@ const PopoverCloseFocusContext = createContext<CloseFocus | null>(null);
 
 function PopoverRoot<Payload>({ onOpenChange, ...props }: BasePopover.Root.Props<Payload>) {
   const [closeFocus, handleOpenChange] = useCloseFocusRoot(onOpenChange);
+  // ponytail: Base UI 1.9 closes a popup that is already closing ("focus-out", focus leaving the
+  // trigger in the exit), so a close is dropped while not open; remove once Base UI checks `open`.
+  // The ref is the open state the consumer was last shown and did not cancel: it covers the gap
+  // between a reported change and the parent's re-render, and after each commit a controlled `open`
+  // is the truth (the effect), as the parent may close or refuse by the prop alone.
+  const lastOpen = useRef(props.open ?? props.defaultOpen ?? false);
+  useLayoutEffect(() => {
+    if (props.open !== undefined) lastOpen.current = props.open;
+  });
+  const reportOpenChange: typeof handleOpenChange = (open, details) => {
+    if (!open && !(props.open || lastOpen.current)) return;
+    handleOpenChange(open, details);
+    if (!details.isCanceled) lastOpen.current = open;
+  };
   return (
     <PopoverCloseFocusContext.Provider value={closeFocus}>
-      <BasePopover.Root<Payload> {...props} onOpenChange={handleOpenChange} />
+      <BasePopover.Root<Payload> {...props} onOpenChange={reportOpenChange} />
     </PopoverCloseFocusContext.Provider>
   );
 }
