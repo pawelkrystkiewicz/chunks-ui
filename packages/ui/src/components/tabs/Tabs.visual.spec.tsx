@@ -4,6 +4,10 @@ import { hydrateRoot, type Root } from "react-dom/client";
 import { renderToString } from "react-dom/server";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { userEvent } from "vitest/browser";
+// The script Base UI renders after the indicator in server HTML. Base UI imports it as
+// `#prehydration/tabs/indicator`, which browser builds, this suite's too, map to an empty stub:
+// imported by path, the real script reaches the spec that runs it and no other.
+import { script as prehydrationScript } from "../../../node_modules/@base-ui/react/tabs/indicator/prehydrationScript.min.mjs";
 import {
   boxOf,
   emulateReducedMotion,
@@ -213,6 +217,40 @@ describe("Tabs.Indicator under a selected disabled tab, in server HTML", () => {
     expect(indicator()).toBe(serverIndicator);
     await expectIndicatorOverActiveTab();
     expect(opacityOf(indicator())).toBe("0.5");
+  });
+});
+
+// Server HTML has the indicator hidden, and Base UI's script after it shows it over the active tab
+// as the browser parses the page, before React hydrates
+describe("Tabs.Indicator in server HTML, before hydration", () => {
+  let host: HTMLDivElement | null = null;
+  afterEach(() => {
+    host?.remove();
+    host = null;
+  });
+
+  // The second tab is active: an indicator that loses its `left` sits over the first one
+  it("is placed over the active tab by Base UI's script", () => {
+    const html = renderToString(
+      <Tabs.Root defaultValue="tab-2">
+        <Tabs.List>
+          <Tabs.Tab value="tab-1">General</Tabs.Tab>
+          <Tabs.Tab value="tab-2">Advanced settings</Tabs.Tab>
+          <Tabs.Indicator data-testid="indicator" />
+        </Tabs.List>
+      </Tabs.Root>,
+    );
+    // A fragment's scripts run as it goes into the page, as a parsed page's do; innerHTML's don't
+    const fragment = document.createRange().createContextualFragment(html);
+    const script = fragment.querySelector('[data-testid="indicator"] + script');
+    expect(script, "Base UI's script after the indicator").not.toBeNull();
+    // Empty here, rendered from the stub: the server renders the real script
+    script!.textContent = prehydrationScript;
+    host = document.createElement("div");
+    document.body.append(host);
+    host.append(fragment);
+    expect(indicator()).not.toHaveAttribute("hidden");
+    expect(offset()).toBeLessThanOrEqual(1);
   });
 });
 
