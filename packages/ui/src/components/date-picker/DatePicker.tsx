@@ -159,7 +159,8 @@ export function DatePicker({
   const [closeFocus, handleOpenChange] = useCloseFocusRoot(setOpen);
   const focusOnCloseRef = useFocusOnClose(popupRef, closeFocus);
   // The click that picks a day, by mouse, Enter or Space: the close goes through the hand-off with
-  // it, which waits after a key's click (a held Enter's repeat would click the trigger)
+  // it, which waits after a key's click, so a held Enter's first repeat does not click the trigger
+  // if it comes during the exit. A later repeat does, as on any button.
   const pickRef = useRef<Event>(undefined);
   const [internalDate, setInternalDate] = useState<Date | null>(defaultValue ?? null);
   const selectedDate = validDate(value !== undefined ? value : internalDate);
