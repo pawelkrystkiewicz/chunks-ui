@@ -170,14 +170,14 @@ Browser specs (Vitest browser mode, Playwright Chromium) in `packages/ui`. They 
 
   ```bash
   D=<scratchpad>/ui-visual; rm -rf $D && mkdir -p $D && git -C <wt> archive HEAD | tar -x -C $D
-  docker run --rm --platform linux/amd64 -v $D:/work -w /work mcr.microsoft.com/playwright:v1.64.0-noble@sha256:bc72a8df40831ded821e3cbc79c318c21b44d6e51dff9fd89ace7a8249c5b462 bash -lc \
+  docker run --rm --platform linux/amd64 -v $D:/work -w /work mcr.microsoft.com/playwright:v1.64.1-noble@sha256:bdfda2a8fdf48707c5e50a49bd3e06d8d0c759153dc8ee057d8a81c3450bb3e9 bash -lc \
     'npm i -g bun@1.4.3 >/dev/null 2>&1 && bun install --frozen-lockfile >/dev/null 2>&1 && cd packages/ui && bun run test:visual:update'
   rsync -am --include='*/' --include='*-linux.png' --exclude='*' $D/packages/ui/src/ <wt>/packages/ui/src/
   ```
 
   - The tag is the version `bun run check:playwright` compares; Docker accepts it together with the digest and `--platform`.
   - The bun version is the root `packageManager`, which CI's setup-bun reads; `bun run check:bun` fails when the recipe names another. An older bun can fail to read `bun.lock`.
-  - The digest in the command is the `linux/amd64` manifest of `mcr.microsoft.com/playwright:v1.64.0-noble`; CI pins the multi-arch index in the workflows' `container:`. The check compares no digest.
+  - The digest in the command is the `linux/amd64` manifest of `mcr.microsoft.com/playwright:v1.64.1-noble`; CI pins the multi-arch index in the workflows' `container:`. The check compares no digest.
   - Bump the tag and both digests with `@playwright/test`. `docker buildx imagetools inspect` on the new `-noble` tag lists the manifests.
   - `bun run update:screenshots` does the same on GitHub Actions for the current branch.
 - Look at every changed PNG before you commit it.
@@ -199,7 +199,7 @@ The visual suite runs in Chromium only, so a bug that only Safari has does not s
   bun run test:webkit
   ```
 
-  On macOS this runs Playwright's macOS WebKit. CI runs the Linux build from the Playwright image. The suite was run in the pinned `linux/amd64` image (v1.64.0-noble) too: all specs pass, and W80 reproduces there with 0 pixels painted in the field's box, as on macOS.
+  On macOS this runs Playwright's macOS WebKit. CI runs the Linux build from the Playwright image. The suite was run in the pinned `linux/amd64` image (v1.64.1-noble) too: all specs pass, and W80 reproduces there with 0 pixels painted in the field's box, as on macOS.
 - **Name new specs `*.webkit.visual.spec.tsx`.** The Chromium projects exclude them, and the unit run and `tsconfig.json` skip every `*.visual.spec.tsx` file. `check-types` compiles them with `tsconfig.visual.json`, and the Vitest and tsup configs with `tsconfig.node.json`. Keep the set small. It is a smoke test, not a second visual suite.
 
 ## Coverage Targets
