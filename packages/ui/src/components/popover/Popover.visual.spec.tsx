@@ -267,6 +267,28 @@ describeExitPaths("Popover focus as the popup closes", (reduce) => {
     expect(trigger).toHaveAttribute("aria-expanded", "false");
   });
 
+  // Key rollover: another key goes down before Space comes up, and that keyup must still be cancelled
+  it("keeps a controlled popover closed when another key goes down between the closing Space's keydown and keyup", async () => {
+    const { trigger, popup } = await openControlled(
+      (setOpen) => (
+        <input
+          aria-label="Name"
+          onKeyDown={(event) => {
+            if (event.key === " ") setOpen(false);
+          }}
+        />
+      ),
+      { nativeTrigger: false },
+    );
+    const onTriggerClick = vi.fn();
+    trigger.addEventListener("click", onTriggerClick);
+    await userEvent.keyboard("{ >}{Shift>}");
+    await exited(popup);
+    await userEvent.keyboard("{/ }{/Shift}");
+    expect(onTriggerClick, "the trigger was clicked").not.toHaveBeenCalled();
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+  });
+
   // With reduced motion the popup has unmounted, and Base UI has returned focus to the trigger,
   // when a real tap's keyup comes some 100 ms after its keydown
   it.runIf(reduce)(

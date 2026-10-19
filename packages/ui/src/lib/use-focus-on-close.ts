@@ -115,30 +115,28 @@ export function useFocusOnClose<T extends HTMLElement>(
       stopWaiting();
       handOff();
     };
-    // Base UI's `useButton` clicks a non-native trigger (`nativeButton={false}`) on any Space keyup
-    // that reaches it, wherever the key began. So a close by Space cancels that keyup when it lands
-    // on the trigger, whether focus got there by the hand-off or by Base UI's return after the
-    // exit. This outlives the effect: with reduced motion the popup is gone before the key comes up.
-    // ponytail: a keyup lost with no later keydown (window blur) leaves the cancel waiting; the
-    // next Space keyup on the trigger is then cancelled once. Accepted.
+    // `useButton` clicks a non-native trigger on any Space keyup that reaches it, so the closing
+    // Space's keyup is cancelled there. It outlives the effect: with reduced motion the popup is
+    // gone first.
+    // ponytail: a stray cancel needs a Space keyup whose keydown this document never saw (an iframe,
+    // or a window-capture handler that stops propagation). A lost keyup leaves one idle listener.
     const cancelSpaceKeyup = () => {
       const done = () => {
         doc.removeEventListener("keyup", onSpaceUp, true);
-        doc.removeEventListener("keydown", onAnyDown, true);
+        doc.removeEventListener("keydown", onSpaceDown, true);
       };
       const onSpaceUp = (event: KeyboardEvent) => {
         if (event.key !== " ") return;
         done();
-        if (event.target === closeFocus.trigger.current) event.preventDefault();
+        if (event.composedPath()[0] === closeFocus.trigger.current) event.preventDefault();
       };
-      const onAnyDown = (event: KeyboardEvent) => {
-        if (!event.repeat) done();
+      const onSpaceDown = (event: KeyboardEvent) => {
+        if (!event.repeat && event.key === " ") done();
       };
       doc.addEventListener("keyup", onSpaceUp, true);
-      doc.addEventListener("keydown", onAnyDown, true);
+      doc.addEventListener("keydown", onSpaceDown, true);
     };
-    // The wait ends at a new key's keydown or at any keyup. A keypress hands off but the wait goes
-    // on, to the keyup, to cancel the repeats of the held key.
+    // A new key's keydown or any keyup ends the wait; a keypress hands off and goes on listening.
     // A held key repeats its keydown, and its keypress too if it has one (Enter, Space, characters,
     // not Escape, Tab or the arrows): a repeat does not end the wait.
     // A held Enter or Space acts again on each repeat: a Base UI item on the keydown, a button on
@@ -199,7 +197,7 @@ export function useFocusOnClose<T extends HTMLElement>(
       // may be to come (a Base UI item clicks on the keydown), and a browser may turn it into a
       // click on the trigger. So wait for the keypress, the keyup or the next key's keydown: a
       // native button's Space clicks on its keyup, and with key rollover the Tab goes down before
-      // Enter comes up. The Tab then leaves from the trigger. Any keypress hands off, and the wait
+      // Enter comes up. The Tab then leaves from the trigger. The keypress hands off, and the wait
       // goes on to the keyup, to cancel the repeats of the held key.
       // ponytail: an assistive technology's click or a script's `.click()` has no click count too;
       // its close waits for a key that may not come, and Base UI's return at the unmount moves
