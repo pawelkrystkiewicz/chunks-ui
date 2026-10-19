@@ -419,6 +419,8 @@ type Layout = {
   width?: number;
   /** Classes of item "b" */
   itemClassName?: string;
+  /** Item "b" is disabled */
+  disabled?: boolean;
   /** An item before the others, which a change can remove */
   lead?: boolean;
   /** Item "b" before item "a": the same keyed items, re-sorted */
@@ -434,6 +436,7 @@ const sized = ({
   groupSize,
   width = 400,
   itemClassName,
+  disabled,
   lead,
   reversed,
 }: Layout = {}) => {
@@ -443,7 +446,7 @@ const sized = ({
       Alpha
     </ToggleGroup.Item>,
     // The label in an element of its own, for a spec to write as Motion would an icon
-    <ToggleGroup.Item key="b" value="b" className={itemClassName}>
+    <ToggleGroup.Item key="b" value="b" className={itemClassName} disabled={disabled}>
       <span>Beta</span>
     </ToggleGroup.Item>,
   ];
@@ -1064,5 +1067,26 @@ describe("ToggleGroup indicator under the pressed item disabled at runtime", () 
       frames.some((frame) => frame.item === 0.5),
       log,
     ).toBe(true);
+  });
+
+  // The slide ends with the spring. The pill's fade under an item disabled on the way is no slide:
+  // a resize after the spring moves the indicator at once, as at rest.
+  it("jumps on a resize after the spring, while the pill still fades", async () => {
+    // 10s outlasts the spring. The indicator is internal: a class on the root reaches it.
+    const slowFade = { groupClassName: "[&>span]:duration-[10s]" };
+    const { group, indicator, item, rerender } = await renderSized(true, slowFade);
+    rerender(sized({ ...slowFade, value: "b", disabled: true }));
+    const beta = item("Beta");
+    await waitForStable(() => offBy(beta, indicator()));
+    expect(opacityOf(indicator()), "the pill still fades").toBeGreaterThan(0.5);
+
+    const start = edgesOf(indicator());
+    const read = () => ({ indicator: edgesOf(indicator()), off: offBy(beta, indicator()) });
+    const firstFrame = beforePaintOnceResized(
+      { items: [item("Alpha"), beta], container: group },
+      read,
+    );
+    rerender(sized({ ...slowFade, value: "b", disabled: true, itemClassName: "px-6" }));
+    await expectFollowsFromFirstFrame(firstFrame, read, start, near);
   });
 });

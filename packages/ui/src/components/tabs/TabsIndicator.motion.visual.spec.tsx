@@ -387,4 +387,25 @@ describe("Tabs.Indicator under the selected tab disabled at runtime", () => {
       log,
     ).toBe(true);
   });
+
+  // The slide ends with the spring. The indicator's fade under a tab disabled on the way is no
+  // slide: a resize after the spring moves the indicator at once, as at rest.
+  it("jumps on a resize after the spring, while the indicator still fades", async () => {
+    // 10s outlasts the spring
+    const slowFade = { listClassName: "[&>span]:duration-[10s]" };
+    const { rerender, indicator, tab, list } = await renderTabs(true, slowFade);
+    rerender(tabs({ ...slowFade, value: "b", disabled: true }));
+    const beta = tab("Beta");
+    await waitForStable(() => offBy(beta, indicator));
+    expect(opacityOf(indicator), "the indicator still fades").toBeGreaterThan(0.5);
+
+    const start = boxOf(indicator);
+    const read = () => ({ indicator: boxOf(indicator), off: offBy(beta, indicator) });
+    const firstFrame = beforePaintOnceResized(
+      { items: [tab("Alpha"), beta], container: list },
+      read,
+    );
+    rerender(tabs({ ...slowFade, value: "b", disabled: true, tabClassName: "px-8" }));
+    await expectFollowsFromFirstFrame(firstFrame, read, start, near);
+  });
 });
