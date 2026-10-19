@@ -235,3 +235,41 @@ describe("redo", { timeout: 15_000 }, () => {
     expect(redoButton().getAttribute("aria-disabled")).toBe("true");
   });
 });
+
+describe("nudge by measure", { timeout: 15_000 }, () => {
+  const openMeasures = (label: string, mode: "Light" | "Dark") => {
+    fireEvent.click(screen.getByRole("button", { name: /Accessibility/ }));
+    fireEvent.click(swatchOf(label, mode));
+    // The text side's menu comes first
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Nudge to pass one measure" })[0] as HTMLElement,
+    );
+  };
+
+  it("nudges for WCAG 2 alone from the menu beside Nudge to pass, and keeps the editor open", async () => {
+    // 14px text is too small for APCA Gold, so only WCAG 2 can pass
+    localStorage.setItem(
+      "chunks-create-contrast-v1",
+      JSON.stringify({ wcag: "AAA", apca: "Gold", failsOnly: false }),
+    );
+    render(<Harness />);
+    openMeasures("Muted text", "Light");
+    fireEvent.click(screen.getByRole("button", { name: "WCAG 2 only" }));
+    const notes = screen.getAllByRole("status").map((n) => n.textContent);
+    expect(
+      notes.some((n) => /^Lightness set to \d\.\d{3}; the pair passes WCAG 2\.$/.test(n ?? "")),
+    ).toBe(true);
+    await waitFor(() => expect(screen.queryByRole("button", { name: "WCAG 2 only" })).toBeNull());
+    expect(field()).toBeTruthy();
+  });
+
+  it("disables a measure the pair already passes", () => {
+    // Dark muted text passes WCAG AA and fails APCA Bronze
+    render(<Harness />);
+    openMeasures("Muted text", "Dark");
+    const disabled = (name: string) =>
+      screen.getByRole("button", { name }).getAttribute("aria-disabled");
+    expect(disabled("WCAG 2 only")).toBe("true");
+    expect(disabled("APCA only")).toBeNull();
+  });
+});

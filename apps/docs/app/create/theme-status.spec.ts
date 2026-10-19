@@ -4,9 +4,11 @@ import { EDITABLE } from "./theme-model";
 import {
   affects,
   apcaTarget,
+  type Check,
   formatLc,
   formatRatio,
   isCustom,
+  type Levels,
   nudge,
   passApca,
   passWcag,
@@ -202,5 +204,40 @@ describe("nudge", () => {
     expect(nudge(DEFAULT_THEME, gold, "light", "body", { token: "foreground" })).toBeNull();
     const hover = { token: "primary-hover", from: "primary", locked: true };
     expect(nudge(DEFAULT_THEME, levels, "light", "on-primary-hover", hover)).toBeNull();
+  });
+});
+
+describe("nudge by measure", () => {
+  const muted = { token: "muted-foreground" };
+  const checkWith = (levels: Levels, mode: "light" | "dark", found: Oklch | null) =>
+    themeChecks(
+      { ...DEFAULT_THEME, overrides: { [mode]: { "muted-foreground": found as Oklch } } },
+      levels,
+    ).find((c) => c.id === "muted") as Check;
+
+  it("reaches WCAG 2 alone where no lightness passes both, at the nearest lightness", () => {
+    // 14px text is too small for APCA Gold, so nothing passes both; AAA asks 7:1 of WCAG
+    const levels = { wcag: "AAA", apca: "Gold" } as const;
+    expect(nudge(DEFAULT_THEME, levels, "light", "muted", muted)).toBeNull();
+    const found = nudge(DEFAULT_THEME, levels, "light", "muted", muted, "wcag");
+    expect(passWcag(checkWith(levels, "light", found), "light")).toBe(true);
+    const closer = { ...(found as Oklch), l: +((found?.l ?? 0) + 0.005).toFixed(4) };
+    expect(passWcag(checkWith(levels, "light", closer), "light")).toBe(false);
+  });
+
+  it("reaches APCA alone, and both measures by default", () => {
+    // Dark muted text passes WCAG AA and fails APCA Bronze (Lc 51 of 60)
+    const levels = { wcag: "AA", apca: "Bronze" } as const;
+    for (const measure of ["apca", "both"] as const) {
+      const found = nudge(DEFAULT_THEME, levels, "dark", "muted", muted, measure);
+      const check = checkWith(levels, "dark", found);
+      expect(passApca(check, "dark") && passWcag(check, "dark"), measure).toBe(true);
+    }
+  });
+
+  it("leaves the colour as it is when it already passes the measure asked for", () => {
+    const levels = { wcag: "AA", apca: "Bronze" } as const;
+    const start = sideColor(DEFAULT_THEME, "dark", muted);
+    expect(nudge(DEFAULT_THEME, levels, "dark", "muted", muted, "wcag")).toEqual(start);
   });
 });
