@@ -219,6 +219,103 @@ describeExitPaths("Popover focus as the popup closes", (reduce) => {
     expect(trigger).toHaveAttribute("aria-expanded", "false");
   });
 
+  // Base UI's `useButton` clicks a non-native button on any Space keyup that reaches it. The
+  // hand-off at Space's keypress moved focus to the trigger before that keyup, and it clicked the
+  // trigger: the popover opened again.
+  it("keeps a controlled popover closed when a keydown handler closes it on Space and the trigger is not a native button", async () => {
+    const { trigger, popup } = await openControlled(
+      (setOpen) => (
+        <input
+          aria-label="Name"
+          onKeyDown={(event) => {
+            if (event.key === " ") setOpen(false);
+          }}
+        />
+      ),
+      { nativeTrigger: false },
+    );
+    const onTriggerClick = vi.fn();
+    trigger.addEventListener("click", onTriggerClick);
+    await userEvent.keyboard("{ }");
+    expect(onTriggerClick, "the trigger was clicked").not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(trigger);
+    await exited(popup);
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+  });
+
+  // The keydown is prevented, so the hand-off went at once, and Space's keyup then clicked the
+  // trigger
+  it("keeps a controlled popover closed when a prevented keydown closes it on Space and the trigger is not a native button", async () => {
+    const { trigger, popup } = await openControlled(
+      (setOpen) => (
+        <input
+          aria-label="Name"
+          onKeyDown={(event) => {
+            if (event.key !== " ") return;
+            event.preventDefault();
+            setOpen(false);
+          }}
+        />
+      ),
+      { nativeTrigger: false },
+    );
+    const onTriggerClick = vi.fn();
+    trigger.addEventListener("click", onTriggerClick);
+    await userEvent.keyboard("{ }");
+    expect(onTriggerClick, "the trigger was clicked").not.toHaveBeenCalled();
+    await exited(popup);
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+  });
+
+  // Key rollover: another key goes down before Space comes up, and that keyup must still be cancelled
+  it("keeps a controlled popover closed when another key goes down between the closing Space's keydown and keyup", async () => {
+    const { trigger, popup } = await openControlled(
+      (setOpen) => (
+        <input
+          aria-label="Name"
+          onKeyDown={(event) => {
+            if (event.key === " ") setOpen(false);
+          }}
+        />
+      ),
+      { nativeTrigger: false },
+    );
+    const onTriggerClick = vi.fn();
+    trigger.addEventListener("click", onTriggerClick);
+    await userEvent.keyboard("{ >}{Shift>}");
+    await exited(popup);
+    await userEvent.keyboard("{/ }{/Shift}");
+    expect(onTriggerClick, "the trigger was clicked").not.toHaveBeenCalled();
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+  });
+
+  // With reduced motion the popup has unmounted, and Base UI has returned focus to the trigger,
+  // when a real tap's keyup comes some 100 ms after its keydown
+  it.runIf(reduce)(
+    "keeps a controlled popover closed when Space is held across the exit and the trigger is not a native button",
+    async () => {
+      const { trigger, popup } = await openControlled(
+        (setOpen) => (
+          <input
+            aria-label="Name"
+            onKeyDown={(event) => {
+              if (event.key === " ") setOpen(false);
+            }}
+          />
+        ),
+        { nativeTrigger: false },
+      );
+      const onTriggerClick = vi.fn();
+      trigger.addEventListener("click", onTriggerClick);
+      await userEvent.keyboard("{ >}");
+      await exited(popup);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      await userEvent.keyboard("{/ }");
+      expect(onTriggerClick, "the trigger was clicked").not.toHaveBeenCalled();
+      expect(trigger).toHaveAttribute("aria-expanded", "false");
+    },
+  );
+
   // A native button clicks on Space's keyup: the keydown is over by then, so nothing is left to
   // wait for and focus goes to the trigger at once, as in 0.3.0
   it("hands focus to the trigger at once when a button that closes a controlled popover is pressed with Space", async () => {
@@ -453,13 +550,18 @@ function popoverFixture({
 }
 
 /** A controlled popover whose content is `content`, opened by click with its first control focused and the popup at rest */
-async function openControlled(content: (setOpen: (open: boolean) => void) => ReactNode) {
+async function openControlled(
+  content: (setOpen: (open: boolean) => void) => ReactNode,
+  { nativeTrigger = true } = {},
+) {
   function Controlled() {
     const [open, setOpen] = useState(false);
     return (
       <div style={{ padding: 40 }}>
         <Popover.Root open={open} onOpenChange={setOpen}>
-          <Popover.Trigger>Settings</Popover.Trigger>
+          <Popover.Trigger {...(!nativeTrigger && { nativeButton: false, render: <span /> })}>
+            Settings
+          </Popover.Trigger>
           <Popover.Content data-testid="popup">{content(setOpen)}</Popover.Content>
         </Popover.Root>
       </div>
