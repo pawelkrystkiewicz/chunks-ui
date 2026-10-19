@@ -1,4 +1,5 @@
 import { render } from "@testing-library/react";
+import { renderToString } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { userEvent } from "vitest/browser";
 import { expectNotAllowed, focusVisible, renderFixture } from "../../VisualTest.utils";
@@ -87,6 +88,134 @@ describe("ToggleGroup", () => {
       const rest = getComputedStyle(item).color;
       await userEvent.hover(item);
       expect(getComputedStyle(item).color, name).toBe(rest);
+    }
+  });
+});
+
+// Each group draws its pill from its own state, never from the group around it or one inside it.
+// Reduced motion: the opacity changes at once.
+describe("ToggleGroup nested in another", () => {
+  type Nesting = {
+    /** The outer group's pressed item is disabled */
+    outerDisabled?: boolean;
+    /** The inner group's pressed item is disabled */
+    innerDisabled?: boolean;
+    /** What the outer group is: one with a pressed item, a `multiple` one, or one with none pressed */
+    outer?: "single" | "multiple" | "none pressed";
+    /** The inner group sits in an element of its own inside the outer one */
+    wrapped?: boolean;
+  };
+
+  const nested = ({ outerDisabled, innerDisabled, outer = "single", wrapped }: Nesting = {}) => {
+    const inner = (
+      <ToggleGroup.Root value={["i"]} aria-label="Inner">
+        <ToggleGroup.Item value="i" disabled={innerDisabled}>
+          Inner
+        </ToggleGroup.Item>
+        <ToggleGroup.Item value="j">Other inner</ToggleGroup.Item>
+      </ToggleGroup.Root>
+    );
+    return (
+      <ToggleGroup.Root
+        value={outer === "none pressed" ? [] : ["o"]}
+        multiple={outer === "multiple"}
+        aria-label="Outer"
+      >
+        <ToggleGroup.Item value="o" disabled={outerDisabled}>
+          Outer
+        </ToggleGroup.Item>
+        {wrapped ? <div>{inner}</div> : inner}
+      </ToggleGroup.Root>
+    );
+  };
+
+  function renderNested(nesting: Nesting) {
+    const { getByRole } = render(nested(nesting));
+    const indicatorOf = (name: string) =>
+      getByRole("group", { name }).querySelector<HTMLElement>(":scope > span");
+    return { getByRole, indicatorOf };
+  }
+
+  const opacityOf = (el: Element | null) => (el ? getComputedStyle(el).opacity : null);
+
+  it.each([
+    { wrapped: false, where: "in the outer group" },
+    { wrapped: true, where: "in an element of the outer group" },
+  ])("keeps the inner pill bright under a disabled outer item, $where", async ({ wrapped }) => {
+    const { indicatorOf } = renderNested({ outerDisabled: true, wrapped });
+    await expect.poll(() => indicatorOf("Inner")).not.toBeNull();
+    expect(opacityOf(indicatorOf("Outer")), "the outer pill dims").toBe("0.5");
+    expect(opacityOf(indicatorOf("Inner")), "the inner pill").toBe("1");
+  });
+
+  it.each([
+    { wrapped: false, where: "in the outer group" },
+    { wrapped: true, where: "in an element of the outer group" },
+  ])("keeps the outer pill bright under a disabled inner item, $where", async ({ wrapped }) => {
+    const { indicatorOf } = renderNested({ innerDisabled: true, wrapped });
+    await expect.poll(() => indicatorOf("Inner")).not.toBeNull();
+    expect(opacityOf(indicatorOf("Inner")), "the inner pill dims").toBe("0.5");
+    expect(opacityOf(indicatorOf("Outer")), "the outer pill").toBe("1");
+  });
+
+  it("dims both pills when both pressed items are disabled", async () => {
+    const { indicatorOf } = renderNested({ outerDisabled: true, innerDisabled: true });
+    await expect.poll(() => indicatorOf("Inner")).not.toBeNull();
+    expect(opacityOf(indicatorOf("Outer")), "the outer pill").toBe("0.5");
+    expect(opacityOf(indicatorOf("Inner")), "the inner pill").toBe("0.5");
+  });
+
+  // Until a group has an indicator its pressed item draws the pill in a ::before; the inner
+  // group has one, so its item draws none of its own, whatever the outer group has
+  it.each([
+    { outer: "multiple", wrapped: false },
+    { outer: "none pressed", wrapped: false },
+    { outer: "multiple", wrapped: true },
+  ] as const)(
+    "draws the inner pill once, in an outer group with no indicator ($outer, wrapped: $wrapped)",
+    async ({ outer, wrapped }) => {
+      const { getByRole, indicatorOf } = renderNested({ outer, wrapped });
+      await expect.poll(() => indicatorOf("Inner")).not.toBeNull();
+      expect(indicatorOf("Outer"), "the outer group has no indicator").toBeNull();
+      const before = getComputedStyle(getByRole("button", { name: "Inner" }), "::before");
+      expect({ position: before.position, background: before.backgroundColor }).toEqual({
+        position: "static",
+        background: "rgba(0, 0, 0, 0)",
+      });
+    },
+  );
+});
+
+// An item can sit in an element of its own inside the group: it still is the group's item
+describe("ToggleGroup with its pressed item in an element of its own", () => {
+  const group = (disabled = false) => (
+    <ToggleGroup.Root value={["a"]}>
+      <div>
+        <ToggleGroup.Item value="a" disabled={disabled}>
+          A
+        </ToggleGroup.Item>
+      </div>
+      <ToggleGroup.Item value="b">B</ToggleGroup.Item>
+    </ToggleGroup.Root>
+  );
+
+  it("dims the pill under the item when it is disabled", async () => {
+    const { getByRole } = render(group(true));
+    const indicator = () => getByRole("group").querySelector(":scope > span");
+    await expect.poll(indicator).not.toBeNull();
+    expect(getComputedStyle(indicator() ?? document.body).opacity).toBe("0.5");
+  });
+
+  it("draws the pill on the item in server HTML", () => {
+    const host = document.createElement("div");
+    host.innerHTML = renderToString(group());
+    document.body.append(host);
+    try {
+      const pressed = host.querySelector("[data-pressed]");
+      if (!pressed) throw new Error("No pressed item in the server HTML");
+      expect(getComputedStyle(pressed, "::before").position).toBe("absolute");
+    } finally {
+      host.remove();
     }
   });
 });
