@@ -205,7 +205,7 @@ describe("Combobox.Popup", () => {
         width,
         <Combobox.Root multiple items={LABELS} defaultValue={LABELS.slice(0, 1)} defaultOpen>
           <Combobox.Control data-testid="control">
-            <Combobox.Chips className="flex-1">
+            <Combobox.Chips>
               <Combobox.Chip>
                 {LABELS[0]}
                 <Combobox.ChipRemove />

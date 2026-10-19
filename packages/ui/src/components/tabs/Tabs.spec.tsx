@@ -14,6 +14,9 @@ import {
   type MockInstance,
   vi,
 } from "vitest";
+// The file `#prehydration/tabs/indicator` resolves to outside browser builds, by the path
+// Tabs.visual.spec.tsx imports it from
+import { script as prehydrationScript } from "../../../node_modules/@base-ui/react/tabs/indicator/prehydrationScript.min.mjs";
 import { useIndicatorSlide } from "../../lib/use-indicator-slide";
 import { FOCUS_RING } from "../shared";
 import { Tabs, type TabsRootProps, useTabsValue } from "./Tabs";
@@ -289,12 +292,13 @@ describe("Tabs.Indicator in server HTML", () => {
   }
 
   // Base UI's script finds the indicator as its previous sibling, measures the active tab, and
-  // shows the indicator over it before React hydrates
+  // shows the indicator over it before React hydrates. It is the file the browser spec runs: a
+  // Base UI that renders another one fails here, not with a stale script there.
   it("is followed by the script that places it before hydration", () => {
     const html = serverHtml(tabs(<Tabs.Indicator data-testid="indicator" />));
     const script = html.querySelector('[data-testid="indicator"]')?.nextElementSibling;
     expect(script?.tagName).toBe("SCRIPT");
-    expect(script?.textContent).toContain("--active-tab-");
+    expect(script?.textContent).toBe(prehydrationScript);
   });
 
   it("has no script with renderBeforeHydration={false}", () => {
