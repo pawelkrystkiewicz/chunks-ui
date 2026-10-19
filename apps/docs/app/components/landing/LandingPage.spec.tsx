@@ -33,6 +33,22 @@ it("the header has the docs search box", () => {
   expect(header(container).getByRole("combobox", { name: "Search documentation" })).toBeTruthy();
 });
 
+// The header grows with text zoom, so the menu hangs from it instead of a fixed offset. The hero
+// clips only sideways: on a screen taller than the hero the menu still reaches the bottom.
+it("the open mobile menu hangs from the header, and the hero does not clip it", () => {
+  const { container } = renderPage();
+  fireEvent.click(screen.getByRole("button", { name: "Menu" }));
+  const menu = container.querySelector("#landing-menu");
+  const headerEl = container.querySelector("header");
+  expect(headerEl?.classList).toContain("relative");
+  expect(menu?.parentElement?.closest(".relative")).toBe(headerEl);
+  expect([...(menu?.classList ?? [])]).toEqual(
+    expect.arrayContaining(["absolute", "top-[calc(100%+1px)]", "h-dvh"]),
+  );
+  expect(headerEl?.parentElement?.classList).toContain("overflow-x-clip");
+  expect(headerEl?.parentElement?.classList).not.toContain("overflow-hidden");
+});
+
 it.each([
   ["Read the docs", "/getting-started"],
   ["Open Create", "/create"],
