@@ -99,8 +99,15 @@ const ALLOWED: Allowed[] = [
     rule: "color-contrast",
     selector: ".bg-success\\/10.text-success-text",
     why: "#254: success-text on a /10 tint over Nextra's #fafafa (Chip, kitchen-sink badge), 4.47:1, 0.03 short of 4.5:1",
-    pages: ["/components/chip", KITCHEN_SINK],
+    pages: ["/components/chip"],
     themes: ["light"],
+  },
+  // The same pair in /create's preview, which keeps its own mode (light by default) in either page theme
+  {
+    rule: "color-contrast",
+    selector: ".bg-success\\/10.text-success-text",
+    why: "#254: success-text on a /10 tint in the kitchen sink tab, 4.47:1, 0.03 short of 4.5:1",
+    pages: [KITCHEN_SINK],
   },
   // On purpose: a swatch is an aria-hidden sample of a colour pair, and its row gives the ratio in
   // text. Only the swatch's "Aa" is excused, not the text around it.
