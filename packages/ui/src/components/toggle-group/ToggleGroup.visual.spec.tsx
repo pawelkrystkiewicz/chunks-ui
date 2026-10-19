@@ -129,6 +129,8 @@ describe("ToggleGroup nested in another", () => {
     outer?: "single" | "multiple" | "none pressed";
   };
 
+  // The inner group sits in an element of its own, so a selector that looks only at the outer
+  // group's direct children misses it
   function renderNested({ outerDisabled, innerDisabled, outer = "single" }: Nesting) {
     const { getByRole } = render(
       <ToggleGroup.Root
@@ -139,12 +141,14 @@ describe("ToggleGroup nested in another", () => {
         <ToggleGroup.Item value="o" disabled={outerDisabled}>
           Outer
         </ToggleGroup.Item>
-        <ToggleGroup.Root value={["i"]} aria-label="Inner">
-          <ToggleGroup.Item value="i" disabled={innerDisabled}>
-            Inner
-          </ToggleGroup.Item>
-          <ToggleGroup.Item value="j">Other inner</ToggleGroup.Item>
-        </ToggleGroup.Root>
+        <div>
+          <ToggleGroup.Root value={["i"]} aria-label="Inner">
+            <ToggleGroup.Item value="i" disabled={innerDisabled}>
+              Inner
+            </ToggleGroup.Item>
+            <ToggleGroup.Item value="j">Other inner</ToggleGroup.Item>
+          </ToggleGroup.Root>
+        </div>
       </ToggleGroup.Root>,
     );
     const pillOf = (name: string) => indicatorOf(getByRole("group", { name }));
