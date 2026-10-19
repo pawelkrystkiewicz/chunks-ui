@@ -284,6 +284,72 @@ export function insetsWithin(outer: Element, inner: Element): Insets {
 export const offBy = (outer: Element, inner: Element) =>
   Math.max(...Object.values(insetsWithin(outer, inner)).map(Math.abs));
 
+export type PixelBox = { x: number; y: number; width: number; height: number };
+
+/** The viewport px `el` covers, cut to the viewport */
+function pixelBox(el: Element): PixelBox {
+  const box = el.getBoundingClientRect();
+  const x = Math.max(0, Math.floor(box.left));
+  const y = Math.max(0, Math.floor(box.top));
+  const width = Math.min(window.innerWidth, Math.ceil(box.right)) - x;
+  const height = Math.min(window.innerHeight, Math.ceil(box.bottom)) - y;
+  expect(width > 0 && height > 0, "the element is in the viewport").toBe(true);
+  return { x, y, width, height };
+}
+
+/** The RGBA pixels the page paints in `box`, from a screenshot */
+async function capture({ x, y, width, height }: PixelBox) {
+  const image = new Image();
+  image.src = `data:image/png;base64,${await page.screenshot({ save: false })}`;
+  await image.decode();
+  // One image px per CSS px, so a box in CSS px reads the same pixels
+  expect(image.naturalWidth).toBe(window.innerWidth);
+  const canvas = document.createElement("canvas");
+  canvas.width = image.naturalWidth;
+  canvas.height = image.naturalHeight;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) throw new Error("No 2D canvas context");
+  ctx.drawImage(image, 0, 0);
+  return ctx.getImageData(x, y, width, height).data;
+}
+
+/** How many pixels differ between two captures of the same box */
+function changedPixels(a: Uint8ClampedArray, b: Uint8ClampedArray) {
+  let changed = 0;
+  for (let i = 0; i < a.length; i += 4) {
+    if (a[i] !== b[i] || a[i + 1] !== b[i + 1] || a[i + 2] !== b[i + 2]) changed++;
+  }
+  return changed;
+}
+
+/**
+ * How many pixels of its box (or of `box`) `el` paints: those that change when it and everything
+ * inside it is hidden. Hiding `el` alone leaves a descendant that sets its own `visibility:
+ * visible` painting. With `pseudo`, e.g. "::after", only that pseudo-element is hidden. Neither
+ * Chromium nor WebKit reports the computed style of a search input's
+ * `::-webkit-search-cancel-button`, so this count is the check that the browser paints it.
+ *
+ * Reads a screenshot of the page, so `el` must lie in the viewport, and the page must have one
+ * image px per CSS px: the default page, or one that `withViewport` set.
+ */
+export async function paintedPixels(el: HTMLElement, pseudo = "", box = pixelBox(el)) {
+  const shown = await capture(box);
+  // micro-interactions transitions every property, visibility included: hide at once
+  const attribute = "data-paint-probe";
+  const probe = document.createElement("style");
+  probe.textContent = pseudo
+    ? `[${attribute}]${pseudo} { display: none !important; }`
+    : `[${attribute}], [${attribute}] * { transition: none !important; visibility: hidden !important; }`;
+  document.head.append(probe);
+  el.setAttribute(attribute, "");
+  try {
+    return changedPixels(shown, await capture(box));
+  } finally {
+    el.removeAttribute(attribute);
+    probe.remove();
+  }
+}
+
 /**
  * The two paths of a Motion-driven part with no reduced-motion preference: Motion animates it,
  * or Motion never arrives and the CSS fallback does. Pass `withMotion` to `enterMotionPath`.

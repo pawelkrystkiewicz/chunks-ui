@@ -1,30 +1,13 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { page } from "vitest/browser";
-import { expectNotAllowed, focusVisible, renderFixture } from "../../VisualTest.utils";
+import {
+  expectNotAllowed,
+  focusVisible,
+  paintedPixels,
+  renderFixture,
+} from "../../VisualTest.utils";
 import { Field } from "../field";
 import { Input } from "./index";
-
-/**
- * Whether the browser paints its own clear button in `input`: its screenshot changes when a style
- * hides that button. Neither Chromium nor WebKit reports the computed style of
- * `::-webkit-search-cancel-button`, so a screenshot is the check. Input.webkit.visual.spec.tsx
- * has a copy for its WebKit rows: the WebKit project runs only its own spec files.
- */
-async function paintsNativeClear(input: HTMLElement) {
-  const shot = () => page.screenshot({ element: input, save: false });
-  const shown = await shot();
-  const probe = document.createElement("style");
-  probe.textContent = "[data-probe]::-webkit-search-cancel-button { display: none !important; }";
-  document.head.append(probe);
-  input.setAttribute("data-probe", "");
-  try {
-    return (await shot()) !== shown;
-  } finally {
-    input.removeAttribute("data-probe");
-    probe.remove();
-  }
-}
 
 const searchIcon = (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
@@ -132,7 +115,8 @@ describe("Input", () => {
 
 // The browser's clear button showed beside ours in a type="search" input (#686). Chromium paints
 // its button while the input has text and focus or the pointer, never on a read-only or disabled
-// input: those rows are in the WebKit spec.
+// input: those rows are in the WebKit spec. Neither engine reports the computed style of the
+// button, so the rows count the pixels it paints.
 describe("Input type=search", () => {
   it.each([
     { has: "with the clear button, shows only ours", clearable: true, native: false },
@@ -145,7 +129,8 @@ describe("Input type=search", () => {
     );
     const input = getByRole("searchbox");
     input.focus();
-    expect(await paintsNativeClear(input)).toBe(native);
+    const painted = await paintedPixels(input, "::-webkit-search-cancel-button");
+    expect(painted > 0, "the browser paints its clear button").toBe(native);
     expect(queryAllByRole("button", { name: "Clear" })).toHaveLength(clearable ? 1 : 0);
   });
 });
