@@ -177,6 +177,17 @@ it("Escape closes the menu and puts focus on the button, from a menu link or fro
   expect(document.activeElement).toBe(button);
 });
 
+// Focus that was not in the menu (a mouse click leaves it on <body>) stays where it was.
+it("Escape with focus on <body> closes the menu and does not move focus to the button", () => {
+  const { container } = renderPage();
+  fireEvent.click(screen.getByRole("button", { name: "Menu" }));
+  act(() => (document.activeElement as HTMLElement | null)?.blur());
+  expect(document.activeElement).toBe(document.body);
+  fireEvent.keyDown(window, { key: "Escape" });
+  expect(container.querySelector("#landing-menu")).toBeNull();
+  expect(document.activeElement).toBe(document.body);
+});
+
 // Firefox makes a scrolling nav a Tab stop of its own; the hero's overflow clip hides its outline.
 it("the open menu is not a Tab stop of its own", () => {
   const { container } = renderPage();
