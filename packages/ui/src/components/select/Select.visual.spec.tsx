@@ -449,10 +449,15 @@ describeExitPaths("Select focus as the popup closes", (reduce) => {
 
   // An element as `finalFocus` keeps Base UI's timing: focus moves there at the end of the exit,
   // as the popup hides
-  it("moves focus only at the unmount, to an element passed as finalFocus", async () => {
+  it("moves focus only at the end of the exit, to an element passed as finalFocus", async () => {
     const { popup, trigger, before } = await open({ finalFocusBefore: true });
     const triggerFocused = tookFocus(trigger);
     await userEvent.keyboard("{Escape}");
+    // Not as the exit starts. Reduced motion's exit of a frame may be over by now.
+    if (!reduce) {
+      expect(isShown(popup), "the popup is still closing").toBe(true);
+      expect(document.activeElement).not.toBe(before);
+    }
     await exited(popup, { stillClosing: isShown });
     expect(triggerFocused(), "the trigger took focus").toBe(false);
     expect(document.activeElement).toBe(before);

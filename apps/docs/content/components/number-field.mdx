@@ -75,7 +75,7 @@ Wrap a label with `NumberField.ScrubArea` to allow click-and-drag adjustment. Wh
 
 <NumberFieldScrubExample />
 
-The cursor renders where the popups do: in the [`PortalContainerProvider`](/utilities#portalcontainerprovider)'s element, or in the portal of the `Dialog`, `Drawer`, `Popover`, `Combobox`, `Menu`, `Select` or `Tooltip` it sits in. Its layer is in [Z-Index Layers](/theme#z-index-layers). Unlike the popups, it has one limit, listed under [`PortalContainerProvider`](/utilities#portalcontainerprovider).
+The cursor renders where the popups do: in the [`PortalContainerProvider`](/utilities#portalcontainerprovider)'s element, or in the portal of the `Dialog`, `Drawer`, `Popover`, `Combobox`, `Menu`, `Select` or `Tooltip` it sits in. Its layer is in [Z-Index Layers](/theme#z-index-layers). Like a `Dialog`, it is placed against the viewport, so a `transform` or a similar property on the provider's element or an ancestor offsets it from the pointer: see [Container limits](/utilities#container-limits).
 
 ## Disabled
 
@@ -96,6 +96,8 @@ A disabled `NumberField` is dimmed and shows the not-allowed cursor over its inp
 ## Mobile Keyboards
 
 Base UI sets `inputMode` on `NumberField.Input` for you: `numeric`, except on iOS, whose number keypad has no minus key. There a `min` of 0 or more gives the decimal keypad, and without one, or with a negative `min`, the full keyboard shows, so a minus sign can be typed. Set `min={0}` when the value can't be negative, so iOS shows the keypad. An `inputMode` you pass to `NumberField.Input` replaces Base UI's.
+
+A `numeric` keypad need not have a decimal separator: the HTML spec suggests `numeric` for PIN entry and asks for the locale's separator only with `decimal`. When the value can have a fraction, for example with a fractional `step`, pass `inputMode="decimal"` to `NumberField.Input`. On iOS it also replaces the full keyboard that Base UI shows when `min` is negative or not set. The decimal keypad has no minus key, so the minus sign can't be typed on iOS. For a value that can be both negative and fractional, pass `inputMode="text"`: every platform then shows the full keyboard, which Base UI uses on iOS when `min` is negative or not set.
 
 ## Text Size
 

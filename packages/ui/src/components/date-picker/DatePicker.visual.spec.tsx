@@ -1,6 +1,6 @@
 import { Form } from "@base-ui/react/form";
 import { render } from "@testing-library/react";
-import { afterAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import {
   emulateReducedMotion,
@@ -144,11 +144,11 @@ describe.each([
   afterAll(() => emulateReducedMotion(true));
 
   // Text fields around the trigger, as WebKit's Tab and click skip buttons
-  const open = async () => {
+  const open = async (onValueChange?: (date: Date | null) => void) => {
     const view = render(
       <div className="flex w-72 flex-col items-start gap-2" style={{ padding: 40 }}>
         <input aria-label="Before" />
-        <DatePicker defaultValue={new Date(2026, 2, 15)} />
+        <DatePicker defaultValue={new Date(2026, 2, 15)} onValueChange={onValueChange} />
         <input aria-label="After" />
       </div>,
     );
@@ -185,10 +185,13 @@ describe.each([
   // (#652): with reduced motion the popup unmounts a frame after the pick and Base UI focuses the
   // trigger, so this repeat lands on either side by load.
   it.skipIf(reduce)(
-    "keeps the calendar closed and the trigger focused when the picking Enter repeats once during the exit",
+    "keeps the calendar closed and the trigger focused, and picks once, when the picking Enter repeats once during the exit",
     async () => {
-      const { popup, trigger } = await open();
+      const onValueChange = vi.fn();
+      const { popup, trigger } = await open(onValueChange);
       await userEvent.keyboard("{ArrowDown}{Enter>2}{/Enter}");
+      // Once: Chromium used to pick the day again on the repeat's keypress
+      expect(onValueChange).toHaveBeenCalledExactlyOnceWith(new Date(2026, 2, 22));
       expect(trigger).toHaveAttribute("aria-expanded", "false");
       expect(document.activeElement).toBe(trigger);
       expect(trigger.matches(":focus-visible"), "the trigger shows its ring").toBe(true);
