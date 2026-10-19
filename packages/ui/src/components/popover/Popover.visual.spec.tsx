@@ -338,8 +338,10 @@ describe("Popover onOpenChange as the popup closes", () => {
     const onOpenChange = vi.fn();
     const { popup, after } = await openPopover({ onOpenChange });
     onOpenChange.mockClear();
+    const checkTab = recordTabDuringExit(popup, { reduce: false });
     await userEvent.keyboard("{Escape}{Tab}");
     await exited(popup);
+    checkTab();
     expect(document.activeElement).toBe(after);
     expect(onOpenChange.mock.calls).toEqual([[false, "escape-key"]]);
   });

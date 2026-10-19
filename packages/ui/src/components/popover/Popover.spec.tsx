@@ -1,4 +1,6 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { Popover as BasePopover } from "@base-ui/react/popover";
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { configureAxe } from "jest-axe";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { undecided } from "../../AxeTest.utils";
@@ -104,5 +106,54 @@ describe("Popover", () => {
     const results = await axe(document.body);
     expect(results).toHaveNoViolations();
     expect(undecided(results, "aria-hidden-focus")).toEqual([]);
+  });
+});
+
+// Base UI 1.9 closes a popup that is already closing, as "focus-out"; Popover drops a close while
+// the popup is not open, and keeps every other
+describe("Popover onOpenChange reports", () => {
+  const popover = (props: Parameters<typeof Popover.Root>[0]) => (
+    <Popover.Root {...props}>
+      <Popover.Trigger>Open</Popover.Trigger>
+      <Popover.Content>Content</Popover.Content>
+    </Popover.Root>
+  );
+
+  it("a close that comes in the batch of an open, on a controlled popover", () => {
+    const handle = BasePopover.createHandle();
+    const onOpenChange = vi.fn();
+    render(
+      <Popover.Root open={false} handle={handle} onOpenChange={onOpenChange}>
+        <Popover.Content>Content</Popover.Content>
+      </Popover.Root>,
+    );
+    render(<Popover.Trigger handle={handle} id="t1" />);
+    act(() => {
+      handle.open("t1");
+      handle.close();
+    });
+    expect(onOpenChange.mock.calls.map(([open]) => open)).toEqual([true, false]);
+  });
+
+  it("the next Escape, after a handler cancelled the first", async () => {
+    const onOpenChange = vi.fn((_open: boolean, details: { cancel: () => void }) => {
+      if (onOpenChange.mock.calls.length === 1) details.cancel();
+    });
+    render(popover({ defaultOpen: true, onOpenChange }));
+    await screen.findByRole("dialog");
+    await userEvent.keyboard("{Escape}");
+    expect(onOpenChange).toHaveBeenCalledTimes(1);
+    await userEvent.keyboard("{Escape}");
+    expect(onOpenChange).toHaveBeenCalledTimes(2);
+    expect(onOpenChange.mock.calls.map(([open]) => open)).toEqual([false, false]);
+  });
+
+  it("the next close, after a controlled parent ignored the first", async () => {
+    const onOpenChange = vi.fn();
+    render(popover({ open: true, onOpenChange }));
+    await screen.findByRole("dialog");
+    await userEvent.keyboard("{Escape}");
+    await userEvent.keyboard("{Escape}");
+    expect(onOpenChange.mock.calls.map(([open]) => open)).toEqual([false, false]);
   });
 });
