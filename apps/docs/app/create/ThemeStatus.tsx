@@ -232,17 +232,20 @@ export function ThemeStatus({
           </a>{" "}
           3:1 at either level. <strong className="font-medium text-foreground">APCA</strong> is a
           method proposed for WCAG 3. It weighs lightness the way eyes see it, so on dark
-          backgrounds it often asks for more than WCAG 2. It is not a standard yet. Its{" "}
+          backgrounds it often asks for more than WCAG 2. It is not a standard yet. Its levels
+          differ for text, and the panel takes them from the{" "}
           <a
             className={LINK}
             href="https://www.readtech.org/ARC/tests/visual-readability-contrast/?tn=criterion"
           >
-            levels
-          </a>{" "}
-          differ for text: Bronze asks Lc 75 of body text and Lc 60 of other text; Silver and Gold
-          look the target up by each row's size and weight, and Gold needs text of 16px or more.
-          Non-text marks need Lc 30. Click a swatch to change its colours; ⌘Z or Ctrl+Z undoes a
-          change, and ⇧⌘Z or Ctrl+Y redoes it.
+            Criterion tab of ARC
+          </a>
+          , APCA's readability guidelines: Bronze asks Lc 75 of body text and Lc 60 of other text;
+          Silver and Gold look the target up by each row's size and weight, and Gold needs text of
+          16px or more. ARC gives Bronze's Lc 60 to other text of 16px to 32px (Lc 45 above 32px)
+          and sets no level for smaller text that isn't body text, so the panel asks Lc 60 of it
+          too. Non-text marks need Lc 30. Click a swatch to change its colours; ⌘Z or Ctrl+Z undoes
+          a change, and ⇧⌘Z or Ctrl+Y redoes it.
         </p>
 
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
@@ -453,7 +456,8 @@ export function ThemeStatus({
               44×44px at AAA
             </a>
             . A smaller control can still pass AA through WCAG's spacing exception, when a 24px
-            circle centred on it overlaps no other target, which this table can't measure. The{" "}
+            circle centred on it overlaps no other target and no other undersized target's circle,
+            which this table can't measure. The{" "}
             <code className="font-mono text-[11.5px]">touch-target</code> class grows a control's
             hit area to at least 44×44px without changing its size; Use touch targets adds it to
             every checkbox, radio and switch, in the preview and in Get code. The area also takes
@@ -491,9 +495,10 @@ export function ThemeStatus({
             Type scale
           </h3>
           <p className="max-w-[75ch] text-[12.5px] text-muted-foreground leading-relaxed">
-            APCA asks for content text of at least 14px at Silver and 16px at Gold; Bronze and WCAG
-            2 set no minimum. Sizes follow Base size. Get code writes them in rem, so they grow with
-            the browser's font size.
+            ARC's Criterion tab asks for content text of at least 14px at Silver and 16px at Gold,
+            and the panel follows it; its Conformance tab says 13px and 18px. Bronze and WCAG 2 set
+            no minimum. Sizes follow Base size. Get code writes them in rem, so they grow with the
+            browser's font size.
           </p>
           <SizeTable
             heads={["Step", "Size", "Used by"]}
