@@ -12,10 +12,8 @@ export type PartRenderProp<State> = ReactElement | ComponentRenderFn<HTMLProps, 
  * as Base UI would. For parts that render their element themselves, inside Base UI's `render`, so
  * the consumer's `render` keeps the part's props, classes and ref.
  *
- * `useRender` gets no `state`: the data attributes for it are already in `props`, from Base UI's
- * own render props. A function `render` gets the part's `state` through an anonymous wrapper,
- * which hides Base UI's dev warning for `render={SomeComponent}` (a component where a function
- * belongs).
+ * The anonymous wrapper around a function `render` hides Base UI's dev warning for
+ * `render={SomeComponent}` (a component where a function belongs).
  */
 export function useRenderPart<State>(
   render: PartRenderProp<State>,

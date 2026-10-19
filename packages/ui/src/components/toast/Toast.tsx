@@ -145,10 +145,8 @@ function ToastViewport({ className, labels, ...props }: ToastViewportProps) {
 }
 
 /**
- * What Base UI aria-hides in a toast while leaving it in the tab order: the whole toast (high
- * priority, until keyboard focus enters the viewport), its close button alone (while the toasts
- * are collapsed), or nothing. Base UI also shows that button while it has focus; its tab stop
- * makes no difference then.
+ * What Base UI aria-hides in a toast: all of it ("toast"), its close button alone ("close"), or
+ * nothing. Why: the ponytail comment on ToastRootElement.
  */
 const ToastHiddenContext = createContext<"toast" | "close" | null>(null);
 
@@ -195,8 +193,8 @@ function ToastRoot({ className, toast, render, ...props }: ToastRootProps) {
 // root reads it from Base UI's render props, and the root, Toast.Action and Toast.Close leave the
 // tab order while hidden. The root and Toast.Action go once mui/base-ui#5659 is fixed (the
 // high-priority toast, aria-hidden but focusable); Toast.Close goes once mui/base-ui#5731 stops
-// aria-hiding it (`!expanded && !hasFocus`). A focusable element of yours inside the toast keeps
-// its tab stop.
+// aria-hiding it (`!expanded && !hasFocus`: Base UI shows the button while it has focus, when its
+// tab stop is moot). A focusable element of yours inside the toast keeps its tab stop.
 function ToastRootElement({
   state,
   render,

@@ -92,16 +92,12 @@ describe("Toast", () => {
     await expect(page.elementLocator(close.closest(".Toast") as HTMLElement)).toMatchScreenshot();
   });
 
-  // Base UI 1.9 drops a high-priority toast's aria-hidden only on F6, or when focus in the
-  // viewport is :focus-visible (handleGlobalKeyDown and handleFocus in ToastViewport.js). A mouse
-  // click focuses the root without :focus-visible, so the root keeps aria-hidden while it has
-  // focus. Toast.Root keeps it out of the tab order all that time (#685), so axe passes it. The
-  // jsdom spec can't show this: Base UI takes every focus there for :focus-visible. A failure of
-  // the aria-hidden check means Base UI changed this (a fix for mui/base-ui#5659, say): update
-  // this row, the ponytail comment in Toast.tsx and the high-priority note under Props in
-  // apps/docs/content/components/toast.mdx. Alone on purpose, as in the jsdom spec: next to a
-  // `low` toast (a role="dialog", which axe takes for an open modal) axe would list a tab stop
-  // left in the toast as `incomplete`, which this check doesn't read
+  // A mouse click focuses the root without :focus-visible, so Base UI keeps it aria-hidden while it
+  // has focus. The jsdom spec can't show this: it takes every focus for :focus-visible. If the
+  // aria-hidden check fails, Base UI changed this: see the ponytail comment in Toast.tsx (#685)
+  // and the high-priority note under Props in toast.mdx. Alone on purpose, as in the jsdom spec:
+  // next to a `low` toast (a role="dialog", which axe takes for an open modal) axe would list a
+  // tab stop left in the toast as `incomplete`, which this check doesn't read
   it("keeps a high-priority toast aria-hidden when a click focuses it", async () => {
     const { container } = render(
       <Toast.Provider>

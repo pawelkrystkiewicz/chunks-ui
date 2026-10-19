@@ -5,19 +5,13 @@ import { userEvent } from "vitest/browser";
 import { Toast } from "./index";
 import { AddToasts } from "./Toast.TestUtils";
 
-/*
- * Base UI 1.9 aria-hides a high-priority toast until keyboard focus enters the viewport
- * (mui/base-ui#5659), and a toast's close button while the toasts are collapsed
- * (mui/base-ui#5731), but leaves both in the tab order. Toast.Root, Toast.Close and Toast.Action
- * take themselves out of it for that time (#685). ToastTabOrder.webkit.visual.spec.tsx runs
- * these rows in WebKit too.
- */
+// Why these rows: the ponytail comment in Toast.tsx (#685). ToastTabOrder.webkit.visual.spec.tsx
+// runs them in WebKit too.
 
 /**
- * The nodes axe's aria-hidden-focus rule fails in `context`, and those it can't decide: with a
- * toast of the default priority (a role="dialog") on screen, axe takes it for an open modal and
- * lists a focusable aria-hidden node under `incomplete`. A rule that threw lands there with no
- * nodes, so it shows as its id.
+ * The nodes axe's aria-hidden-focus rule fails in `context` or can't decide (`incomplete`: axe
+ * takes a role="dialog" toast on screen for an open modal). A rule that threw has no nodes, so it
+ * shows as its id.
  */
 async function ariaHiddenFocus(context: Element) {
   const { violations, incomplete } = await axe.run(context, { runOnly: ["aria-hidden-focus"] });

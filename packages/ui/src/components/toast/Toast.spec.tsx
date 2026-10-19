@@ -6,7 +6,13 @@ import type { ComponentPropsWithoutRef } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { expectOnlyFocusGuardsUndecided, undecided } from "../../AxeTest.utils";
 import { FOCUS_RING } from "../shared";
-import { createToastManager, Toast, type ToastCloseProps, type ToastRootProps } from "./Toast";
+import {
+  createToastManager,
+  Toast,
+  type ToastCloseProps,
+  type ToastRootProps,
+  type ToastViewportProps,
+} from "./Toast";
 import { DEFAULT_TOAST_LABELS } from "./Toast.Labels";
 
 afterEach(cleanup);
@@ -47,6 +53,25 @@ function TypedToastHarness({
       Show {type} toast
     </button>
   );
+}
+
+type AddOptions = Parameters<ReturnType<typeof createToastManager>["add"]>[0];
+
+/** Renders a viewport with `viewportProps` and adds a toast titled "Saved" with `options` */
+async function addToast(options: AddOptions, viewportProps?: ToastViewportProps) {
+  const manager = createToastManager();
+  const { container } = render(
+    <Toast.Provider toastManager={manager}>
+      <Toast.Viewport {...viewportProps} />
+    </Toast.Provider>,
+  );
+  let id = "";
+  act(() => {
+    id = manager.add({ title: "Saved", ...options });
+  });
+  // By the heading: Base UI repeats a high-priority toast's title in a visually hidden alert
+  await screen.findByText("Saved", { selector: "h2" });
+  return { container, manager, id };
 }
 
 describe("Toast", () => {
@@ -377,29 +402,18 @@ describe("Toast", () => {
     expect(undecided(results, "aria-hidden-focus")).toHaveLength(guards.length);
   });
 
-  // Base UI 1.9 keeps a high-priority toast aria-hidden while keyboard focus is outside the
-  // viewport, but in the tab order (mui/base-ui#5659). Toast.Root, Toast.Close and Toast.Action
-  // take themselves out of it for that time (#685); the note under Props in toast.mdx says so.
-  // Alone on purpose: next to a toast of the default `low` priority (a role="dialog", which axe
-  // takes for an open modal) a stray tab stop lands in `incomplete`
+  // See the ponytail comment in Toast.tsx (#685). Alone on purpose: next to a toast of the default
+  // `low` priority (a role="dialog", which axe takes for an open modal) a stray tab stop lands in
+  // `incomplete`
   it("keeps a lone high-priority toast and its buttons out of the tab order while aria-hidden", async () => {
     const user = userEvent.setup();
-    const manager = createToastManager();
-    const { container } = render(
-      <Toast.Provider toastManager={manager}>
-        <Toast.Viewport />
-      </Toast.Provider>,
-    );
-    act(() => {
-      manager.add({
-        title: "Connection lost",
-        priority: "high",
-        dismissible: true,
-        actionProps: { children: "Retry now" },
-      });
+    const { container } = await addToast({
+      priority: "high",
+      dismissible: true,
+      actionProps: { children: "Retry now" },
     });
     // aria-hidden, so only a query with `hidden` finds it
-    const toast = await screen.findByRole("alertdialog", { hidden: true });
+    const toast = screen.getByRole("alertdialog", { hidden: true });
     const action = screen.getByRole("button", { name: "Retry now", hidden: true });
     const close = screen.getByLabelText(DEFAULT_TOAST_LABELS.close, { selector: "button" });
     expect(toast).toHaveAttribute("aria-hidden", "true");
@@ -414,29 +428,19 @@ describe("Toast", () => {
     expect([toast, action, close].map((el) => el.tabIndex)).toEqual([0, 0, 0]);
   });
 
-  // Base UI aria-hides the close button of every toast while the toasts are collapsed
-  // (mui/base-ui#5731), and Toast.Close takes itself out of the tab order for that time (#685).
-  // The toast of the default `low` priority is not aria-hidden: it and its action keep their
-  // tab stops
+  // See the ponytail comment in Toast.tsx (#685). Only the close button is aria-hidden: the toast
+  // of the default `low` priority and its action keep their tab stops
   it("keeps only the close button of a default-priority toast out of the tab order while collapsed", async () => {
     const user = userEvent.setup();
-    const manager = createToastManager();
-    render(
-      <Toast.Provider toastManager={manager}>
-        <Toast.Viewport data-testid="viewport" />
-      </Toast.Provider>,
-    );
-    act(() => {
-      manager.add({ title: "Saved", dismissible: true, actionProps: { children: "Undo" } });
-    });
-    const toast = await screen.findByRole("dialog");
+    await addToast({ dismissible: true, actionProps: { children: "Undo" } });
+    const toast = screen.getByRole("dialog");
     const action = screen.getByRole("button", { name: "Undo" });
     const close = screen.getByLabelText(DEFAULT_TOAST_LABELS.close, { selector: "button" });
     expect(close).toHaveAttribute("aria-hidden", "true");
     expect([toast, action, close].map((el) => el.tabIndex)).toEqual([0, 0, -1]);
 
     // The pointer over the viewport expands the toasts: Base UI shows the close button again
-    await user.hover(screen.getByTestId("viewport"));
+    await user.hover(screen.getByRole("region", { name: DEFAULT_TOAST_LABELS.viewport }));
     expect(close).not.toHaveAttribute("aria-hidden", "true");
     expect([toast, action, close].map((el) => el.tabIndex)).toEqual([0, 0, 0]);
   });
@@ -513,20 +517,7 @@ describe("Toast labels", () => {
 describe("Toast focus ring", () => {
   /** Shows a dismissible toast with an "Undo" action, `action` in the action's className */
   async function showToast(action?: string) {
-    const manager = createToastManager();
-    render(
-      <Toast.Provider toastManager={manager}>
-        <Toast.Viewport />
-      </Toast.Provider>,
-    );
-    act(() => {
-      manager.add({
-        title: "Saved",
-        dismissible: true,
-        actionProps: { children: "Undo", className: action },
-      });
-    });
-    await screen.findByText("Saved");
+    await addToast({ dismissible: true, actionProps: { children: "Undo", className: action } });
   }
 
   it("draws the library focus ring on Close", async () => {
@@ -550,18 +541,9 @@ describe("Toast focus ring", () => {
 });
 
 describe("Toast actionProps", () => {
-  /** Shows a toast titled "Deleted" with an "Undo" action that takes `actionProps` */
+  /** Shows a toast with an "Undo" action that takes `actionProps`, and returns the action */
   async function showToast(actionProps: ComponentPropsWithoutRef<"button">) {
-    const manager = createToastManager();
-    render(
-      <Toast.Provider toastManager={manager}>
-        <Toast.Viewport />
-      </Toast.Provider>,
-    );
-    act(() => {
-      manager.add({ title: "Deleted", actionProps: { children: "Undo", ...actionProps } });
-    });
-    await screen.findByText("Deleted");
+    await addToast({ actionProps: { children: "Undo", ...actionProps } });
     return screen.getByRole("button", { name: "Undo" });
   }
 
@@ -590,28 +572,13 @@ describe("Toast actionProps", () => {
   });
 });
 
-type AddOptions = Parameters<ReturnType<typeof createToastManager>["add"]>[0];
-
 describe("Toast closeProps", () => {
-  /** Renders a viewport labelled "Zamknij" and adds a toast titled "Saved" with the given options */
-  async function addToast(options: AddOptions) {
-    const manager = createToastManager();
-    render(
-      <Toast.Provider toastManager={manager}>
-        <Toast.Viewport labels={{ close: "Zamknij" }} />
-      </Toast.Provider>,
-    );
-    let id = "";
-    act(() => {
-      id = manager.add({ title: "Saved", ...options });
-    });
-    await screen.findByText("Saved");
-    return { manager, id };
-  }
+  // A close label that is not the default, so a test can tell where the button's name came from
+  const viewport = { labels: { close: "Zamknij" } };
 
   /** Shows a dismissible toast titled "Saved" with `closeProps` on its built-in close button */
   async function showToast(closeProps: ToastCloseProps, onClose?: () => void) {
-    await addToast({ dismissible: true, closeProps, onClose });
+    await addToast({ dismissible: true, closeProps, onClose }, viewport);
     // Base UI aria-hides the close button until the toast is focused or hovered, so by its label
     return screen.getByLabelText(closeProps["aria-label"] ?? "Zamknij", { selector: "button" });
   }
@@ -646,27 +613,30 @@ describe("Toast closeProps", () => {
 
   it("renders no X in a void closeProps render element, without an error", async () => {
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
-    await addToast({
-      dismissible: true,
-      closeProps: { nativeButton: false, render: <img alt="" src="data:," /> },
-    });
+    await addToast(
+      {
+        dismissible: true,
+        closeProps: { nativeButton: false, render: <img alt="" src="data:," /> },
+      },
+      viewport,
+    );
     expect(consoleError).not.toHaveBeenCalled();
     consoleError.mockRestore();
     expect(screen.getByLabelText("Zamknij", { selector: "img" })).toBeEmptyDOMElement();
   });
 
   it("renders no close button for closeProps alone", async () => {
-    await addToast({ closeProps: { className: "x" } });
+    await addToast({ closeProps: { className: "x" } }, viewport);
     expect(screen.queryByLabelText("Zamknij", { selector: "button" })).toBeNull();
   });
 
   it("renders the close button for onClose alone", async () => {
-    await addToast({ onClose: vi.fn() });
+    await addToast({ onClose: vi.fn() }, viewport);
     expect(screen.getByLabelText("Zamknij", { selector: "button" })).toBeInTheDocument();
   });
 
   it("renders no close button for dismissible: false, even with onClose", async () => {
-    await addToast({ dismissible: false, onClose: vi.fn() });
+    await addToast({ dismissible: false, onClose: vi.fn() }, viewport);
     expect(screen.queryByLabelText("Zamknij", { selector: "button" })).toBeNull();
   });
 
@@ -693,7 +663,7 @@ describe("Toast closeProps", () => {
 
   it("calls onClose once when manager.close closes the toast", async () => {
     const onClose = vi.fn();
-    const { manager, id } = await addToast({ onClose });
+    const { manager, id } = await addToast({ onClose }, viewport);
     act(() => {
       manager.close(id);
     });
