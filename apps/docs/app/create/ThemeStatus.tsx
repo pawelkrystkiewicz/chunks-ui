@@ -242,10 +242,10 @@ export function ThemeStatus({
           </a>
           , APCA's readability guidelines: Bronze asks Lc 75 of body text and Lc 60 of other text;
           Silver and Gold look the target up by each row's size and weight, and Gold needs text of
-          16px or more. ARC gives Bronze's Lc 60 to text of 16px or more and sets no level for
-          smaller text that isn't body text, so the panel asks Lc 60 of it too. Non-text marks need
-          Lc 30. Click a swatch to change its colours; ⌘Z or Ctrl+Z undoes a change, and ⇧⌘Z or
-          Ctrl+Y redoes it.
+          16px or more. ARC gives Bronze's Lc 60 to other text of 16px to 32px (Lc 45 above 32px)
+          and sets no level for smaller text that isn't body text, so the panel asks Lc 60 of it
+          too. Non-text marks need Lc 30. Click a swatch to change its colours; ⌘Z or Ctrl+Z undoes
+          a change, and ⇧⌘Z or Ctrl+Y redoes it.
         </p>
 
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">

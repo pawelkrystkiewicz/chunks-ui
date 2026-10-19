@@ -82,9 +82,9 @@ const LOOKUP: [number, number[]][] = [
  * The Lc text needs at an APCA level, by ARC's Criterion tab. Bronze uses fixed levels. Silver and
  * Gold read the lookup at the largest listed size not above `size` (the stricter row), with a 14px
  * (Silver) or 16px (Gold) minimum; Gold adds Lc 15 to body text under Lc 75.
- * ponytail: ARC gives Bronze's Lc 60 to other content text of 16px or more and sets no level for
- * smaller text that isn't body text; Bronze asks Lc 60 of it at any size. The Conformance tab's
- * minimums (13px Silver, 18px Gold) are not used.
+ * ponytail: ARC gives Bronze's Lc 60 to other content text of 16px to 32px (Lc 45 above 32px, which
+ * no row reaches) and sets no level for smaller text that isn't body text; Bronze asks Lc 60 of it
+ * at any size. The Conformance tab's minimums (13px Silver, 18px Gold) are not used.
  */
 export function apcaTarget(
   level: ApcaLevel,
