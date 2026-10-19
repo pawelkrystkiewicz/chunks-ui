@@ -27,8 +27,9 @@ import { EMPTY_TRAIL, nextTrail, redoTrail, undoTrail } from "./undo-trail";
 const GROUPS = ["Text", "Controls", "Charts"] as const;
 const TH = "py-1.5 pe-3 text-start font-medium";
 const CELL = "py-1.5 ps-2 pe-3 transition-colors motion-reduce:transition-none";
-// The pairs the open editor's active colour changes
+// The pairs the open editor's active colour changes, and the editor's own pair more strongly
 const LIT = "bg-primary/10";
+const OWN = "bg-primary/20";
 const SEGMENT = "h-[26px] px-2.5 text-[12px] text-foreground";
 const LINK = "underline decoration-border underline-offset-2 hover:decoration-current";
 
@@ -127,6 +128,8 @@ export function ThemeStatus({
   const shown = prefs.failsOnly ? checks.filter((c) => fails(c, modes) || c.id === pinned) : checks;
   const lit = (c: Check, mode: Mode) =>
     !!editing?.token && editing.mode === mode && affects(theme, mode, c, editing.token);
+  const tint = (c: Check, mode: Mode) =>
+    editing?.id === c.id && editing.mode === mode ? OWN : lit(c, mode) && LIT;
   const pairs = (mode: Mode) => (token: string) =>
     checks.filter((c) => affects(theme, mode, c, token)).length;
   const custom = countOverrides(theme.overrides);
@@ -337,7 +340,7 @@ export function ThemeStatus({
                             : "text too small"}
                         </td>
                         {modes.map((mode) => [
-                          <td key={`${mode}-wcag`} className={cn(CELL, lit(check, mode) && LIT)}>
+                          <td key={`${mode}-wcag`} className={cn(CELL, tint(check, mode))}>
                             <span className="flex items-center gap-2">
                               <PairEditor
                                 check={check}
@@ -374,7 +377,7 @@ export function ThemeStatus({
                               </Value>
                             </span>
                           </td>,
-                          <td key={`${mode}-apca`} className={cn(CELL, lit(check, mode) && LIT)}>
+                          <td key={`${mode}-apca`} className={cn(CELL, tint(check, mode))}>
                             <Value pass={passApca(check, mode)}>
                               Lc {formatLc(check.apca[mode])}
                             </Value>

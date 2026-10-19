@@ -273,3 +273,23 @@ describe("nudge by measure", { timeout: 15_000 }, () => {
     expect(disabled("APCA only")).toBeNull();
   });
 });
+
+describe("the edited pair's cells", { timeout: 15_000 }, () => {
+  // The tint of a pair's two cells in a mode: the swatch's WCAG cell and the APCA cell after it
+  const tints = (label: string, mode: "Light" | "Dark") => {
+    const cell = swatchOf(label, mode).closest("td");
+    return [cell, cell?.nextElementSibling].map(
+      (c) => c?.className.match(/bg-primary\/\d+/)?.[0] ?? null,
+    );
+  };
+
+  it("are tinted more strongly than the pairs its colour changes", () => {
+    render(<Harness />);
+    fireEvent.click(screen.getByRole("button", { name: /Accessibility/ }));
+    fireEvent.click(swatchOf("Muted text", "Light"));
+    // Its text, muted-foreground, is also the text of "Muted text on muted"
+    expect(tints("Muted text", "Light")).toEqual(["bg-primary/20", "bg-primary/20"]);
+    expect(tints("Muted text on muted", "Light")).toEqual(["bg-primary/10", "bg-primary/10"]);
+    expect(tints("Muted text", "Dark")).toEqual([null, null]);
+  });
+});
