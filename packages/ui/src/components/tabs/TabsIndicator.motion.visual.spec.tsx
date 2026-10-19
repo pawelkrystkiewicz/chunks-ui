@@ -1,5 +1,5 @@
 import { render } from "@testing-library/react";
-import { type CSSProperties, Profiler } from "react";
+import { type CSSProperties, Profiler, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { resizeBatches } from "../../lib/shared-resize";
 import {
@@ -69,6 +69,8 @@ const tabs = ({
         <Tabs.Tab
           key={tabKey}
           value="a"
+          // A button inside a button is invalid; the nested list's tab is the button
+          {...(nestedWidth !== undefined && { render: <div />, nativeButton: false })}
           // The nested list's tab would add its name to this one
           aria-label={nestedWidth === undefined ? undefined : "Alpha"}
           style={{ transition: "none", ...tabStyle }}
@@ -271,16 +273,26 @@ describe.each(MOTION_PATHS)("Tabs.Indicator, $path", ({ withMotion }) => {
   // Another indicator in the list mounts and unmounts beside the tabs: not a tab, so the tabs
   // are not observed again, which would measure each once
   it("does not observe the tabs again when an indicator mounts or unmounts", async () => {
-    const { rerender } = await renderTabs(withMotion, FIXED);
+    await enterMotionPath(withMotion);
+    // The mount is a state set outside act, so the first indicator's MutationObserver runs before
+    // the extra indicator's effects, as in an app. The unmount is a rerender, in act.
+    let setExtra: (extra: boolean) => void = () => {};
+    const Harness = ({ forced }: { forced?: boolean }) => {
+      const [extra, set] = useState(false);
+      setExtra = set;
+      return tabs({ ...FIXED, extraIndicator: forced ?? extra });
+    };
+    const { getByTestId, getByRole, rerender } = render(<Harness />);
+    await waitForStable(() => offBy(getByRole("tab", { name: "Alpha" }), getByTestId("indicator")));
     let batches = resizeBatches.count;
-    rerender(tabs({ ...FIXED, extraIndicator: true }));
+    setExtra(true);
     await eachPaintedFrame(() => 0, 3);
-    expect(resizeBatches.count).toBe(batches);
+    expect(resizeBatches.count, "mount").toBe(batches);
 
     batches = resizeBatches.count;
-    rerender(tabs(FIXED));
+    rerender(<Harness forced={false} />);
     await eachPaintedFrame(() => 0, 3);
-    expect(resizeBatches.count).toBe(batches);
+    expect(resizeBatches.count, "unmount").toBe(batches);
   });
 
   it("still slides to a newly selected tab", async () => {
