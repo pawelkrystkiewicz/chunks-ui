@@ -362,8 +362,7 @@ describe("Select disabled", () => {
     expect(onOpenChangeComplete).not.toHaveBeenCalled();
   });
 
-  // The commit right after an open: the Select's own `disabled` turns on, so Base UI gets a close
-  // before its portal mounted the popup (mui/base-ui#6031). The popup must still go.
+  // Disabled in the commit after it opened, before the portal mounted the popup (mui/base-ui#6031)
   it("unmounts a defaultOpen Select that its parent disables in the commit after mount", () => {
     const onOpenChangeComplete = vi.fn();
     const Parent = () => {
