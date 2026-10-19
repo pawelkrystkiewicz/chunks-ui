@@ -48,9 +48,9 @@ const PHYSICAL = new RegExp(
 );
 /**
  * In a stylesheet, what Tailwind reads as classes, kept as group 1: each `@apply` up to its `;` or
- * `}`, across lines and past its comments (Tailwind skips them), and each `@source inline` string.
- * Then what is blanked: a string (so the `/*` of `@source "src/*.tsx"` opens no comment), a
- * comment, any other character.
+ * `}`, across lines and past its comments, and each `@source inline` string. Tailwind drops a
+ * comment in an `@apply`, so `stylesheetClasses` cuts it out of the group. Then what is blanked: a
+ * string (so the `/*` of `@source "src/*.tsx"` opens no comment), a comment, any other character.
  */
 const STYLESHEET = new RegExp(
   [
@@ -75,10 +75,13 @@ export function physicalTokens(line: string): string[] {
 /** `css` with all but the classes Tailwind reads blanked, so each class keeps its line. */
 function stylesheetClasses(css: string): string {
   // ponytail: braces in @source inline are not expanded: `m{l,r}-4` is not read, `rtl:{ml-4}` is flagged
-  return css.replace(
-    STYLESHEET,
-    (part, classes?: string) => classes ?? part.replace(/[^\n]/g, " "),
-  );
+  return css.replace(STYLESHEET, (part, classes?: string) => {
+    if (classes === undefined) return part.replace(/[^\n]/g, " ");
+    // Cut out, not blanked: Tailwind joins what a comment splits (`m/**/l-4` is `ml-4`). Its newlines stay.
+    return classes.startsWith("@apply")
+      ? classes.replace(/\/\*[\s\S]*?\*\//g, (comment) => comment.replace(/[^\n]/g, ""))
+      : classes;
+  });
 }
 
 /** The comment that ends on the line above `index` and is alone on its lines (a run of `//` lines is one), or "". */

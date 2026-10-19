@@ -458,9 +458,36 @@ describe("checkDocsDirection", () => {
       ["3: ml-4", "7: pr-2"],
     ],
     [
-      "reads an @apply on past a comment in it, a ; or } in the comment too, as Tailwind does",
+      "reads on past a comment in an @apply, a ; or } in it too, as Tailwind does",
       [".a {", "  @apply ms-2", "    /* the gap; see #12 } */", "    ml-4;", "}"],
       ["4: ml-4"],
+    ],
+    [
+      "reads no class in a comment in an @apply, on lines of its own, as Tailwind does",
+      [".b {", "  @apply ms-2", "    /* ms-2, not ml-2, so it mirrors */", "    ps-2;", "}"],
+      [],
+    ],
+    [
+      "reads no class in a comment in an @apply, between two classes, as Tailwind does",
+      [".a { @apply ms-2 /* not ml-2 */ ps-2; }"],
+      [],
+    ],
+    [
+      "reads the classes around a comment in an @apply that names others, and keeps their lines",
+      [
+        ".c {",
+        "  @apply ms-2 /* not ml-2,",
+        "    nor mr-2 */",
+        "    ml-4",
+        "    /* not pl-2 */ pr-4;",
+        "}",
+      ],
+      ["4: ml-4", "5: pr-4"],
+    ],
+    [
+      "joins what a comment in an @apply splits, as Tailwind does",
+      [".a { @apply m/**/l-4 pr-/* x */2 ms-/* ml-4 */2; }"],
+      ["1: ml-4", "1: pr-2"],
     ],
     [
       "reads the string of each @source inline, not of an @source not inline or an @source path",
@@ -472,6 +499,11 @@ describe("checkDocsDirection", () => {
         '@source inline("rtl:pr-2 pr-2");',
       ],
       ["1: mr-4", "2: rounded-l", "5: pr-2"],
+    ],
+    [
+      "reads a /* in an @source inline string as text, which is no comment there",
+      ['@source inline("/* ml-4 */ ms-2");'],
+      ["1: ml-4"],
     ],
     [
       "does not read an @apply in a comment, or what follows it, and keeps the lines after it",
