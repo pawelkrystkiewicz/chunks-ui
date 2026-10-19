@@ -73,9 +73,11 @@ function SelectRoot<Value, Multiple extends boolean | undefined = false>({
     const next = formInputRef.current?.matches(":disabled") ?? false;
     if (next !== formDisabled) setFormDisabled(next);
     if (next && internalOpen) setInternalOpen(false);
-    // Takes effect with the close this batch commits (Base UI 1.9 bug, mui/base-ui#6031; remove once it is fixed)
-    // `wasOpen`: the commit that turned `disabled` on already has `isOpen` false
-    if ((next || disabled) && (isOpen || wasOpen.current)) actions.current?.unmount();
+    // Called while Base UI is still open (a Field or fieldset), it takes effect with the close this
+    // batch commits; called after the close (`disabled`, or the render after a Field's: `wasOpen`),
+    // it unmounts at once, so the exit is skipped. A second call does nothing.
+    // Base UI 1.9 bug, mui/base-ui#6031: remove once it is fixed, which brings back the exit.
+    if (next && (isOpen || wasOpen.current)) actions.current?.unmount();
     return next;
   };
   useLayoutEffect(() => {

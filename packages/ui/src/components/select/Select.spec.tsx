@@ -364,12 +364,6 @@ describe("Select disabled", () => {
 
   // The commit right after an open: the Select's own `disabled` turns on, so Base UI gets a close
   // before its portal mounted the popup (mui/base-ui#6031). The popup must still go.
-  const expectGone = (onOpenChangeComplete: ReturnType<typeof vi.fn>) => {
-    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
-    expect(document.querySelector("[data-base-ui-inert]")).toBeNull();
-    expect(onOpenChangeComplete).toHaveBeenCalledWith(false);
-  };
-
   it("unmounts a defaultOpen Select that its parent disables in the commit after mount", () => {
     const onOpenChangeComplete = vi.fn();
     const Parent = () => {
@@ -378,7 +372,9 @@ describe("Select disabled", () => {
       return fruits({ disabled, defaultOpen: true, onOpenChangeComplete });
     };
     render(<Parent />);
-    expectGone(onOpenChangeComplete);
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+    expect(document.querySelector("[data-base-ui-inert]")).toBeNull();
+    expect(onOpenChangeComplete).toHaveBeenCalledWith(false);
   });
 
   describe.each<[string, (disabled: boolean, props: SelectRootProps) => ReactElement]>([
