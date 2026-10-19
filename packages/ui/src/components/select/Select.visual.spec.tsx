@@ -415,7 +415,7 @@ describeExitPaths("Select focus as the popup closes", (reduce) => {
 
   // A Base UI item picks on each Enter or Space keydown, and the hand-off's wait let the repeats
   // reach the item: it picked once per keydown. Motion and CSS only: with reduced motion the popup
-  // may be gone before the repeats, by load.
+  // may be gone before the repeats, by load, and they then reach the trigger, as on any button.
   it.skipIf(reduce).each([
     { key: "Enter", keys: "{Enter>3}{/Enter}" },
     { key: "Space", keys: "[Space>3][/Space]" },
@@ -423,8 +423,7 @@ describeExitPaths("Select focus as the popup closes", (reduce) => {
     const onValueChange = vi.fn();
     const { popup, trigger } = await open({ onValueChange });
     await userEvent.keyboard(`{ArrowDown}${keys}`);
-    expect(onValueChange).toHaveBeenCalledOnce();
-    expect(onValueChange).toHaveBeenCalledWith("banana", expect.anything());
+    expect(onValueChange).toHaveBeenCalledExactlyOnceWith("banana", expect.anything());
     expect(trigger).toHaveAttribute("aria-expanded", "false");
     expect(document.activeElement).toBe(trigger);
     await exited(popup, { stillClosing: isShown });

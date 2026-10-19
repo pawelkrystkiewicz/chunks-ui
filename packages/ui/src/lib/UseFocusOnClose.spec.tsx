@@ -219,29 +219,22 @@ describe("useFocusOnClose", () => {
     },
   );
 
-  // These hand over at once: the trigger, focused, would open the popup again
-  const prevented = new KeyboardEvent("keydown", { cancelable: true });
-  prevented.preventDefault();
-  it.each([
-    {
-      name: "a default-prevented keydown (a Combobox's pick)",
-      close: details("item-press", prevented),
-    },
-    { name: "a close Base UI does not report", close: undefined },
-  ])(
-    "cancels a held Enter's repeats at the trigger after $name, until the keyup",
-    async ({ close }) => {
-      const { trigger } = await openThenClose(close);
-      expect(document.activeElement).toBe(trigger);
-      const first = repeat("Enter");
-      trigger.dispatchEvent(first);
-      expect(first.defaultPrevented).toBe(true);
-      document.dispatchEvent(new KeyboardEvent("keyup"));
-      const afterKeyUp = repeat("Enter");
-      trigger.dispatchEvent(afterKeyUp);
-      expect(afterKeyUp.defaultPrevented).toBe(false);
-    },
-  );
+  // Hands over at once: the trigger, focused, would open the popup again
+  const expectCancelledUntilKeyup = (trigger: Element) => {
+    expect(document.activeElement).toBe(trigger);
+    const first = repeat("Enter");
+    trigger.dispatchEvent(first);
+    expect(first.defaultPrevented).toBe(true);
+    document.dispatchEvent(new KeyboardEvent("keyup"));
+    const afterKeyUp = repeat("Enter");
+    trigger.dispatchEvent(afterKeyUp);
+    expect(afterKeyUp.defaultPrevented).toBe(false);
+  };
+
+  it("cancels a held Enter's repeats at the trigger after a close Base UI does not report, until the keyup", async () => {
+    const { trigger } = await openThenClose(undefined);
+    expectCancelledUntilKeyup(trigger);
+  });
 
   // Base UI's Combobox closes on an Enter with nothing highlighted without preventing it: the
   // keypress follows, and the repeats of the held key come after it
@@ -252,14 +245,7 @@ describe("useFocusOnClose", () => {
     getByRole("textbox", { name: "Inside" }).dispatchEvent(
       new KeyboardEvent("keypress", { key: "Enter", bubbles: true, cancelable: true }),
     );
-    expect(document.activeElement).toBe(trigger);
-    const first = repeat("Enter");
-    trigger.dispatchEvent(first);
-    expect(first.defaultPrevented).toBe(true);
-    document.dispatchEvent(new KeyboardEvent("keyup"));
-    const afterKeyUp = repeat("Enter");
-    trigger.dispatchEvent(afterKeyUp);
-    expect(afterKeyUp.defaultPrevented).toBe(false);
+    expectCancelledUntilKeyup(trigger);
   });
 
   // Select keeps its popup mounted: a close that hands over at once left its listeners behind

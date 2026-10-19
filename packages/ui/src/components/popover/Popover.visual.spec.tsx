@@ -122,8 +122,7 @@ describeExitPaths("Popover focus as the popup closes", (reduce) => {
 
   // A button that sets `open` to false: Base UI reports no close, so the hand-off moved focus at
   // once, and each repeat clicked the trigger, which opened the popover again, then closed it.
-  // Motion and CSS only: with reduced motion the popup may be gone before the repeats, by load,
-  // and they then reach the trigger, as on any button.
+  // Skipped with reduced motion: see Select.visual.spec.tsx.
   it.skipIf(reduce)(
     "keeps a controlled popover closed when Enter on a button that closes it repeats during the exit",
     async () => {

@@ -150,8 +150,8 @@ describeExitPaths("Menu focus as the popup closes", (reduce) => {
 
   // A Base UI item clicks on each Enter or Space keydown, and the hand-off's wait let the repeats
   // reach the item: Menu.Item's onClick ran once per keydown. Counted on the popup: the item's
-  // clicks bubble to it, the trigger's do not. Motion and CSS only: with reduced motion the popup
-  // may be gone before the repeats, by load, and they then reach the trigger, as on any button.
+  // clicks bubble to it, the trigger's do not. Skipped with reduced motion: see
+  // Select.visual.spec.tsx.
   it.skipIf(reduce).each([
     { key: "Enter", keys: "{Enter>3}{/Enter}" },
     { key: "Space", keys: "[Space>3][/Space]" },

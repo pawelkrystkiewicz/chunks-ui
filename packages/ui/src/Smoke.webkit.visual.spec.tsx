@@ -551,8 +551,7 @@ describe("Select and Menu items on a held Enter as the popup closes, in WebKit",
     await settle(popup);
     await userEvent.keyboard("{ArrowDown}{Enter>3}{/Enter}");
     expect(isShown(popup), "the popup is still leaving").toBe(true);
-    expect(onValueChange).toHaveBeenCalledOnce();
-    expect(onValueChange).toHaveBeenCalledWith("banana", expect.anything());
+    expect(onValueChange).toHaveBeenCalledExactlyOnceWith("banana", expect.anything());
   });
 
   it("clicks a Menu.Item once", async () => {
