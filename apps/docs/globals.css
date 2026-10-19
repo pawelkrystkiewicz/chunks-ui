@@ -102,7 +102,7 @@ article:has(> main > .landing) {
  * The navbar's theme switch shows at every width, so Nextra's copies go. In the desktop sidebar's
  * footer only the switch goes: it grew and so kept the collapse button at the end, which the last
  * rule keeps. The mobile menu's footer, and the bar Nextra's page footer adds on pages without a
- * sidebar (/create, /kitchen-sink), hold nothing but the switch, so the whole bar goes. The
+ * sidebar (/create), hold nothing but the switch, so the whole bar goes. The
  * Layout's `darkMode={false}` would remove the navbar's switch too.
  * ponytail: depends on Nextra 4.6's markup: its English titles "Change theme" and "Collapse
  * sidebar"; with no i18n, its LocaleSwitch rendering nothing, so a footer's switch is its bar's

@@ -27,14 +27,7 @@ export default {
       timestamp: false,
     },
   },
-  "kitchen-sink": {
-    title: "Kitchen Sink",
-    theme: {
-      layout: "full",
-      sidebar: false,
-      toc: false,
-    },
-  },
+  "kitchen-sink": { title: "Kitchen Sink", href: "/create?preview=kitchen-sink" },
   theme: { title: "Theme" },
   utilities: { title: "Utilities" },
   labels: { title: "Labels" },

@@ -100,8 +100,8 @@ export function ThemeStatus({
 
   // The preview is not React state of this panel: mark its elements by hand, and unmark them when
   // the tokens change or the editor closes. Only for the previewed mode: the other mode's colours
-  // change nothing there. ponytail: an element a card mounts while the editor is open stays
-  // unmarked until the active colour changes.
+  // change nothing there. ponytail: an element a card mounts while the editor is open, or the
+  // other preview tab, stays unmarked until the active colour changes.
   const litTokens =
     editing?.token && editing.mode === theme.mode
       ? followers(theme, editing.mode, editing.token).join(" ")

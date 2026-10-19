@@ -27,7 +27,9 @@ describe("allowedFor", () => {
     expect(allowedFor(entries, "link-name", "/", "dark")).toEqual([everywhere]);
     expect(allowedFor(entries, "color-contrast", "/components/chip", "light")).toEqual([onChip]);
     expect(allowedFor(entries, "color-contrast", "/components/chip", "dark")).toEqual([]);
-    expect(allowedFor(entries, "color-contrast", "/kitchen-sink", "light")).toEqual([]);
+    expect(allowedFor(entries, "color-contrast", "/create?preview=kitchen-sink", "light")).toEqual(
+      [],
+    );
   });
 });
 
@@ -48,12 +50,12 @@ describe("staleEntries", () => {
       rule: "color-contrast",
       selector: ".tint",
       why: "two pages, both themes",
-      pages: ["/components/chip", "/kitchen-sink"],
+      pages: ["/components/chip", "/create?preview=kitchen-sink"],
       themes: ["light", "dark"],
     };
     const matched = new Map([[twoPages, new Set(["/components/chip|light"])]]);
     expect(staleEntries([twoPages], matched)).toEqual([
-      expect.stringContaining("/kitchen-sink"),
+      expect.stringContaining("/create?preview=kitchen-sink"),
       expect.stringContaining("dark"),
     ]);
   });
