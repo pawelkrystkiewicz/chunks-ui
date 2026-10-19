@@ -76,3 +76,24 @@ describe("touch targets", () => {
     }
   });
 });
+
+describe("text spacing", () => {
+  it("applies WCAG 1.4.12's four overrides to the preview, popups included, while on", () => {
+    render(<PreviewPanel theme={DEFAULT_THEME} onChange={vi.fn()} />);
+    const scopes = () => [...document.querySelectorAll<HTMLElement>("[style*='--radius']")];
+    const overrides = [
+      "[&_*]:leading-[1.5]!",
+      "[&_*]:tracking-[0.12em]!",
+      "[&_*]:[word-spacing:0.16em]!",
+      "[&_p]:mb-[2em]!",
+    ];
+    fireEvent.click(screen.getByRole("button", { name: /^Accessibility/ }));
+    const toggle = screen.getByRole("switch", { name: "Override text spacing" });
+    fireEvent.click(toggle);
+    for (const el of scopes()) {
+      for (const cls of overrides) expect(el.classList.contains(cls), cls).toBe(true);
+    }
+    fireEvent.click(toggle);
+    for (const el of scopes()) expect(el.className).not.toContain("word-spacing");
+  });
+});

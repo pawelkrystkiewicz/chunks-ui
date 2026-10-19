@@ -65,15 +65,20 @@ const fails = (c: Check, modes: Mode[]) => modes.some((m) => !passWcag(c, m) || 
 /**
  * Contrast of the theme in both modes, the previewed mode first, by WCAG 2 and by APCA. While a
  * colour editor is open, the elements in `preview` that paint with its colour are outlined.
+ * `textSpacing` is the preview's WCAG 1.4.12 text spacing override, switched in the type scale.
  */
 export function ThemeStatus({
   theme,
   onChange,
   preview,
+  textSpacing,
+  onTextSpacingChange,
 }: {
   theme: Theme;
   onChange: (patch: Partial<Theme>) => void;
   preview?: RefObject<HTMLElement | null>;
+  textSpacing?: boolean;
+  onTextSpacingChange?: (on: boolean) => void;
 }) {
   const [prefs, setPrefs] = useState(DEFAULT_PREFS);
   // The open editor: its pair (listed under "Failures only" once it passes), mode and the token
@@ -495,6 +500,37 @@ export function ThemeStatus({
               }))}
             empty="Every step meets the minimum."
           />
+          <p className="max-w-[75ch] pt-2 text-[12.5px] text-muted-foreground leading-relaxed">
+            WCAG's{" "}
+            <a
+              className={LINK}
+              href="https://www.w3.org/WAI/WCAG22/Understanding/text-spacing.html"
+            >
+              text spacing
+            </a>{" "}
+            criterion (1.4.12, AA) does not ask the theme for any spacing. It asks that no content
+            or function is lost when a reader sets line height to 1.5 times the font size, the space
+            after paragraphs to 2 times, letter spacing to 0.12 times and word spacing to 0.16
+            times. Line spacing of at least 1.5 within paragraphs is another criterion,{" "}
+            <a
+              className={LINK}
+              href="https://www.w3.org/WAI/WCAG22/Understanding/visual-presentation.html"
+            >
+              1.4.8
+            </a>{" "}
+            at AAA. No table can check this: turn on Override text spacing and look for text in the
+            preview that is cut off or overlaps.
+          </p>
+          {/* biome-ignore lint/a11y/noLabelWithoutControl: wraps Base UI Switch (button-based control) */}
+          <label className="flex items-center gap-2 self-start text-[12.5px]">
+            <Switch.Root
+              checked={!!textSpacing}
+              onCheckedChange={(on) => onTextSpacingChange?.(on)}
+            >
+              <Switch.Thumb />
+            </Switch.Root>
+            Override text spacing
+          </label>
         </section>
       </Collapsible.Panel>
     </Collapsible.Root>

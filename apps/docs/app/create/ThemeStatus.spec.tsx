@@ -307,3 +307,25 @@ describe("Use touch targets", { timeout: 15_000 }, () => {
     expect(size("Slider thumb")).toMatch(/^16px/);
   });
 });
+
+describe("text spacing", { timeout: 15_000 }, () => {
+  it("says what WCAG 1.4.12 asks, offers the overrides, and claims no pass for them", () => {
+    const changes: boolean[] = [];
+    render(
+      <ThemeStatus
+        theme={DEFAULT_THEME}
+        onChange={() => {}}
+        textSpacing={false}
+        onTextSpacingChange={(on) => changes.push(on)}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Accessibility/ }));
+    const section = screen.getByRole("region", { name: "Type scale" });
+    expect(section.textContent).toMatch(/no content or function is lost/);
+    expect(section.textContent).toMatch(/does not ask the theme for any spacing/);
+    // At Bronze no size rule applies, so nothing in the section passes or fails
+    expect(section.textContent).not.toMatch(/Pass|Fail/);
+    fireEvent.click(screen.getByRole("switch", { name: "Override text spacing" }));
+    expect(changes).toEqual([true]);
+  });
+});

@@ -40,6 +40,7 @@ export function PreviewPanel({
 }) {
   const [viewport, setViewport] = useState<ViewportId>("desktop");
   const columns = useRef<HTMLDivElement>(null);
+  const [textSpacing, setTextSpacing] = useState(false);
   const summary = [
     theme.fontHeading === theme.fontBody
       ? theme.fontHeading
@@ -82,10 +83,17 @@ export function PreviewPanel({
         </ToggleGroup.Root>
       </div>
 
-      <ThemeStatus theme={theme} onChange={onChange} preview={columns} />
+      <ThemeStatus
+        theme={theme}
+        onChange={onChange}
+        preview={columns}
+        textSpacing={textSpacing}
+        onTextSpacingChange={setTextSpacing}
+      />
 
       <ThemeScope
         theme={theme}
+        textSpacing={textSpacing}
         className="min-h-[calc(100vh-200px)] bg-(--canvas) p-[28px] leading-[1.45] transition-[background] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] motion-reduce:transition-none"
       >
         {/* will-change: opacity composites the columns to work around WebKit W80 (#341,
