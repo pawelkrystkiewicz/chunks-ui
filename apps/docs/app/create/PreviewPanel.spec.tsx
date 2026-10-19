@@ -51,7 +51,10 @@ it.each(OVERLAYS)(
   },
 );
 
-describe("while a colour editor is open", () => {
+// ponytail: getByRole names every button in the contrast table and the preview, so a test takes
+// about 1s here and 5-6s on a CI runner, past Vitest's 5s default. Query within a row or card if
+// these grow slower.
+describe("while a colour editor is open", { timeout: 15_000 }, () => {
   it("outlines the preview's components that use its colour, until it closes", async () => {
     render(<PreviewPanel theme={DEFAULT_THEME} onChange={vi.fn()} />);
     const preview = screen.getByRole("region", { name: "Preview" });
