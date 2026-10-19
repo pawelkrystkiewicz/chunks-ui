@@ -268,4 +268,14 @@ export function ScopedPopover() {
 
 `usePortalContainer()` returns the current container as `HTMLElement | null | undefined`: `undefined` means no provider, `null` means not mounted yet. Inside `Popover`, `Combobox`, `Menu`, `Select`, `Tooltip`, `Dialog` or `Drawer` content it is that popup's own portal element.
 
-The scrub cursor has one limit that the popups do not: **the element must not establish a containing block.** Base UI positions the cursor with viewport coordinates (`position: fixed` and `translate3d`), and an ancestor with `transform`, `translate`, `rotate`, `scale`, `filter`, `backdrop-filter`, `perspective`, `contain`, `content-visibility`, `will-change` or `container-type` makes `fixed` relative to itself, so the cursor is offset from the pointer. The popups' portal elements have none of these.
+### Container limits
+
+Inside the element, the popups are positioned as they are in `<body>`, unless the element or an ancestor inside `<body>` has a `position` other than `static` or one of these properties: `transform`, `translate`, `rotate`, `scale`, `filter`, `backdrop-filter`, `perspective`, `contain`, `content-visibility`, `will-change` or `container-type`. The element in the example has neither. A box that has one limits the popups:
+
+- **The box must not move while a trigger stays put.** `Combobox`, `DatePicker`, `Menu`, `Popover` and `Tooltip`, and a `Select` that opens below its trigger, have `position: absolute`, and Base UI places them against the nearest such box. It places them again on a scroll, on a resize and when the trigger moves, but not when the box moves. A box after content that changes height moves with that content, and an open popup moves with it, away from a trigger above that content or in a fixed header.
+- **The box must be at least as wide as those popups.** A popup that sizes to its content, such as a `Menu`, is no wider than the box: in a narrower box it shrinks, down to its minimum width, and its text wraps.
+- **Around a `Dialog`, a `Drawer`, a `Select` aligned over its trigger or the scrub cursor, the box must have none of the listed properties.** These have `position: fixed`, so they are placed against the viewport, and a listed property makes `fixed` relative to the box: a dialog centres in it, a drawer pins to its edge, a backdrop covers only the box, and the select and the scrub cursor, which Base UI places with viewport coordinates, are offset from the trigger and the pointer. A `position` alone does not affect them.
+
+To avoid these limits, render an element with no `position` and none of the listed properties straight into `<body>`, for example with `createPortal`, and give it the theme class or variables of the region its popups open from.
+
+The popups' own portal elements add no limit for the popups and scrub cursors inside them. Those of `Dialog` and `Drawer` are `fixed inset-x-0 top-0`, a box that stays put and is as wide as the viewport, and the others have no `position`. None has a listed property.
