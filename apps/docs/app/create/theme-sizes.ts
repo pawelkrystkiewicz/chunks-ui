@@ -43,5 +43,8 @@ export const typeScale = (t: Pick<Theme, "fontSize">) =>
     usedBy: USED_BY[step],
   }));
 
-/** The smallest content text APCA allows: 14px at Silver, 16px at Gold; Bronze sets none */
+/**
+ * The smallest content text APCA allows: 14px at Silver, 16px at Gold, as ARC's Criterion tab says
+ * (its Conformance tab says 13px and 18px); Bronze sets none
+ */
 export const minTextPx = (level: ApcaLevel) => ({ Bronze: 0, Silver: 14, Gold: 16 })[level];
