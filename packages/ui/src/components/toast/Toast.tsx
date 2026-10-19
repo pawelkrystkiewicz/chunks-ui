@@ -269,28 +269,30 @@ function ToastAction({ className, render, ...props }: ToastActionProps) {
         className,
       )}
       {...props}
-      // Base UI merges `toast.actionProps` after these props, so a `tabIndex` there would win:
-      // the -1 goes on in the render function, after the merge
-      render={(actionProps, state) => (
-        <ToastActionElement {...actionProps} state={state} render={render} hidden={hidden} />
-      )}
+      // ponytail: Base UI renders an action only if the element its render function returns has
+      // children, and a wrapper element has none of a consumer `render`'s own. So the wrapper is
+      // for the built-in viewport only, which passes no `render`. Not covered: a consumer `render`
+      // together with `actionProps.tabIndex`, which beats the -1. Base UI merges `actionProps`
+      // after these props, so for the wrapper the -1 goes on in the render function.
+      {...(render === undefined
+        ? {
+            render: (actionProps: HTMLProps, state: BaseToast.Action.State) => (
+              <ToastActionElement {...actionProps} state={state} hidden={hidden} />
+            ),
+          }
+        : { render, ...(hidden && { tabIndex: -1 }) })}
     />
   );
 }
 
 function ToastActionElement({
   state,
-  render,
   hidden,
   ref,
   ...props
-}: HTMLProps & {
-  state: BaseToast.Action.State;
-  render: PartRenderProp<BaseToast.Action.State>;
-  hidden: boolean;
-}) {
+}: HTMLProps & { state: BaseToast.Action.State; hidden: boolean }) {
   return useRenderPart(
-    render,
+    undefined,
     state,
     ref ?? null,
     hidden ? { ...props, tabIndex: -1 } : props,
