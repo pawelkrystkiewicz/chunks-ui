@@ -83,9 +83,9 @@ function SelectRoot<Value, Multiple extends boolean | undefined = false>({
   const keepMounted = useRef(false);
   useLayoutEffect(() => {
     syncDisabled();
+    // Base UI clears its own copy when `open` changes, not on a render that still sees `open`
+    if (isOpen && !wasOpen.current) keepMounted.current = false;
     wasOpen.current = isOpen;
-    // Base UI clears its own copy on every open
-    if (isOpen) keepMounted.current = false;
   });
   const [closeFocus, reportOpenChange] = useCloseFocusRoot(
     (next: boolean, eventDetails: BaseSelect.Root.OpenChangeEventDetails) => {
@@ -99,17 +99,15 @@ function SelectRoot<Value, Multiple extends boolean | undefined = false>({
         };
       }
       onOpenChange?.(next, eventDetails);
+
       if (eventDetails.isCanceled) keepMounted.current = false;
       // Only an uncontrolled Select keeps the state: a controlled one shows `open`
       if (open === undefined && !eventDetails.isCanceled) setInternalOpen(next);
     },
   );
   // ponytail: Base UI 1.9's FloatingFocusManager closes a popup that is already closing, as
-  // "focus-out", when focus leaves the trigger during the exit, or after it while the popup is kept
-  // mounted. So every close is dropped while the Select is not open; remove this once Base UI checks
-  // `open` before its focus-out close. The guard comes before `useCloseFocusRoot`'s handler, which
-  // calls `onOpenChange`. Base UI still resets `preventUnmountOnClose` for the dropped close, so
-  // the consumer's last choice is repeated.
+  // "focus-out", when focus leaves the trigger during or after the exit. Drop it before
+  // `useCloseFocusRoot`, whose handler calls `onOpenChange`; remove once Base UI checks `open`.
   const handleOpenChange: typeof reportOpenChange = (next, eventDetails) => {
     if (!next && !isOpen) {
       if (keepMounted.current) eventDetails.preventUnmountOnClose();
