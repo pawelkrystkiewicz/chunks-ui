@@ -201,6 +201,37 @@ describe("Select", () => {
     await page.getByRole("option", { name: "Cherry" }).click({ force: true });
     await expect.element(trigger).toHaveTextContent("cherry");
   });
+
+  // Same for a positioner with a `!` class (`z-10!`): it keeps the `z-dropdowns` class, but the
+  // backdrop must not rise above the popup
+  it("takes a press on an item in a positioner lowered by an important class", async () => {
+    const { getByRole, getByTestId } = render(
+      <div style={{ padding: 40 }}>
+        <Select.Root defaultValue="apple">
+          <Select.Trigger aria-label="Fruit">
+            <Select.Value />
+            <Select.Icon />
+          </Select.Trigger>
+          <Select.Portal>
+            <Select.Positioner className="z-10!">
+              <Select.Popup data-testid="popup">
+                {fruits.map((f) => (
+                  <Select.Item key={f.value} value={f.value}>
+                    <Select.ItemText>{f.label}</Select.ItemText>
+                  </Select.Item>
+                ))}
+              </Select.Popup>
+            </Select.Positioner>
+          </Select.Portal>
+        </Select.Root>
+      </div>,
+    );
+    const trigger = getByRole("combobox", { name: "Fruit" });
+    await userEvent.click(trigger);
+    await settled(getByTestId("popup"));
+    await page.getByRole("option", { name: "Cherry" }).click({ force: true });
+    await expect.element(trigger).toHaveTextContent("cherry");
+  });
 });
 
 // Each case runs in both directions: the value's `text-start` and the chevron's `ms-auto` follow
