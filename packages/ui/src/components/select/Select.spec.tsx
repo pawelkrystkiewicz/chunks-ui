@@ -1,12 +1,14 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { configureAxe } from "jest-axe";
-import type { ReactElement } from "react";
+import { createRef, type ReactElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { undecided } from "../../AxeTest.utils";
 import { Field } from "../field";
 import { FOCUS_RING } from "../shared";
 import { Select, type SelectRootProps } from "./Select";
+
+type SelectRootActions = NonNullable<SelectRootProps["actionsRef"]>["current"] & {};
 
 afterEach(cleanup);
 
@@ -366,11 +368,14 @@ describe("Select disabled", () => {
       "a native fieldset",
       (disabled, props) => <fieldset disabled={disabled}>{fruits(props)}</fieldset>,
     ],
-  ])("disabled by %s", (_, select) => {
+  ])("disabled by %s", (cause, select) => {
     it("does not open from defaultOpen, nor when it is enabled again", () => {
       const onOpenChange = vi.fn();
-      const props = { defaultOpen: true, onOpenChange };
+      const onOpenChangeComplete = vi.fn();
+      const props = { defaultOpen: true, onOpenChange, onOpenChangeComplete };
       const { rerender } = render(select(true, props));
+      // Not even for a commit: the own `disabled` gates the first render
+      if (cause === "its own disabled") expect(onOpenChangeComplete).not.toHaveBeenCalled();
       expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
       expect(trigger()).toHaveAttribute("aria-expanded", "false");
       rerender(select(false, props));
@@ -409,11 +414,13 @@ describe("Select disabled", () => {
 
   // A listbox can outlive the disabling: the Select may not render when only its fieldset changes
   // (same element below, so React skips it, and the listbox stays open). Base UI refuses a pick
-  // while its own `disabled` or a Field's is on, but knows nothing of a native fieldset.
+  // while its own `disabled` or a Field's is on, but knows nothing of a native fieldset. It is
+  // `multiple` because Base UI closes a single Select after any pick, cancelled or not, and keeps a
+  // multiple one open: only the gate can close this listbox.
   it("ignores a pick once a native fieldset disables it, and closes the listbox", async () => {
     const user = userEvent.setup();
     const onValueChange = vi.fn();
-    const select = fruits({ onValueChange });
+    const select = fruits({ onValueChange, multiple: true });
     const { rerender } = render(<fieldset>{select}</fieldset>);
     await user.click(trigger());
     const banana = await screen.findByRole("option", { name: "Banana" });
@@ -423,6 +430,21 @@ describe("Select disabled", () => {
     await user.click(banana);
     expect(onValueChange).not.toHaveBeenCalled();
     expect(trigger()).toHaveTextContent("Pick a fruit");
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+  });
+
+  it("still fills a consumer actionsRef: it closes the listbox, and disabling unmounts through it", async () => {
+    const user = userEvent.setup();
+    const actionsRef = createRef<SelectRootActions>();
+    const { rerender } = render(<fieldset>{fruits({ actionsRef })}</fieldset>);
+    await user.click(trigger());
+    expect(await screen.findByRole("listbox")).toBeInTheDocument();
+    expect(actionsRef.current).not.toBeNull();
+    act(() => actionsRef.current?.close());
+    await waitFor(() => expect(screen.queryByRole("listbox")).not.toBeInTheDocument());
+    await user.click(trigger());
+    expect(await screen.findByRole("listbox")).toBeInTheDocument();
+    rerender(<fieldset disabled>{fruits({ actionsRef })}</fieldset>);
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
   });
 });

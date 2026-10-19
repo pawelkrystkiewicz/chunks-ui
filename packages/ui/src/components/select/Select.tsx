@@ -5,7 +5,6 @@ import {
   type ComponentProps,
   createContext,
   useContext,
-  useImperativeHandle,
   useLayoutEffect,
   useRef,
   useState,
@@ -65,7 +64,7 @@ function SelectRoot<Value, Multiple extends boolean | undefined = false>({
   const formInputRef = useRef<HTMLInputElement>(null);
   const mergedInputRef = useMergedRef(formInputRef, inputRef);
   const ownActionsRef = useRef<BaseSelect.Root.Actions>(null);
-  useImperativeHandle(actionsRef, () => ownActionsRef.current as BaseSelect.Root.Actions);
+  const actions = actionsRef ?? ownActionsRef;
   const [internalOpen, setInternalOpen] = useState(defaultOpen ?? false);
   const [formDisabled, setFormDisabled] = useState(false);
   const isOpen = !(disabled || formDisabled) && (open ?? internalOpen);
@@ -74,7 +73,7 @@ function SelectRoot<Value, Multiple extends boolean | undefined = false>({
     if (next !== formDisabled) setFormDisabled(next);
     if (next && internalOpen) setInternalOpen(false);
     // Takes effect with the close this batch commits
-    if (next && isOpen) ownActionsRef.current?.unmount();
+    if (next && isOpen) actions.current?.unmount();
     return next;
   };
   useLayoutEffect(() => {
@@ -93,7 +92,7 @@ function SelectRoot<Value, Multiple extends boolean | undefined = false>({
         {...props}
         disabled={disabled}
         inputRef={mergedInputRef}
-        actionsRef={ownActionsRef}
+        actionsRef={actions}
         open={isOpen}
         onOpenChange={handleOpenChange}
         onValueChange={(value, eventDetails) => {
