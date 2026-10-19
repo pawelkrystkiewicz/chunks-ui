@@ -33,6 +33,47 @@ it("the header has the docs search box", () => {
   expect(header(container).getByRole("combobox", { name: "Search documentation" })).toBeTruthy();
 });
 
+// A class's utility without its variants (`lg:`, `data-[side=top]:`, `[.dark_&]:`, `*:`)
+const utility = (c: string) => c.replace(/^(?:(?:[\w*-]+|[\w-]*\[[^\]]*\])(?:\/[\w-]+)?:)+/, "");
+const matching = (el: Element | null, re: RegExp) =>
+  [...(el?.classList ?? [])].filter((c) => re.test(utility(c)));
+
+// The header grows with text zoom, so the menu hangs from it instead of a fixed offset. The hero
+// clips only sideways: on a screen taller than the hero the menu still reaches the bottom.
+it("the open mobile menu hangs from the header, nothing clips it, and it locks page scroll", () => {
+  const { container } = renderPage();
+  fireEvent.click(screen.getByRole("button", { name: "Menu" }));
+  const menu = container.querySelector("#landing-menu");
+  const headerEl = container.querySelector("header");
+  if (!menu || !headerEl) throw new Error("no open menu or header");
+  expect([...menu.classList]).toEqual(
+    expect.arrayContaining(["absolute", "top-[calc(100%+1px)]", "h-dvh"]),
+  );
+  // The header is the menu's containing block. No element between them has a Tailwind utility
+  // that makes one: relative, absolute, fixed or sticky; transform, translate, scale, rotate, skew
+  // or perspective; filter, a filter function (blur, brightness and the rest) or backdrop-*;
+  // contain-*; will-change-transform. Arbitrary properties (`[transform:…]`) are not read.
+  expect(headerEl.classList).toContain("relative");
+  const containingBlock =
+    /^-?(relative|absolute|fixed|sticky|transform|translate-|scale-|rotate-|skew-|perspective-|filter|blur|brightness-|contrast-|drop-shadow|grayscale|hue-rotate-|invert|saturate-|sepia|backdrop-|contain-|will-change-transform)/;
+  for (let el = menu.parentElement; el && el !== headerEl; el = el.parentElement) {
+    expect(matching(el, containingBlock)).toEqual([]);
+  }
+  // The menu sits below the header's box, so the header has no overflow utility but visible. The
+  // hero has `overflow-x-clip` alone: x hidden, auto or scroll turn y's visible into auto.
+  expect(matching(headerEl, /^overflow-(?!(x-|y-)?visible$)/)).toEqual([]);
+  const hero = headerEl.parentElement;
+  expect(hero?.classList).toContain("overflow-x-clip");
+  expect(matching(hero, /^overflow-(hidden|clip|auto|scroll|y-|x-(hidden|auto|scroll))/)).toEqual(
+    [],
+  );
+  // Page scroll stays locked while the menu is open; Escape closes it and unlocks
+  expect(document.documentElement.style.overflow).toBe("hidden");
+  fireEvent.keyDown(window, { key: "Escape" });
+  expect(container.querySelector("#landing-menu")).toBeNull();
+  expect(document.documentElement.style.overflow).toBe("");
+});
+
 it.each([
   ["Read the docs", "/getting-started"],
   ["Open Create", "/create"],

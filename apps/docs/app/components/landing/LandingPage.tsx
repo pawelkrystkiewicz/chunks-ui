@@ -324,9 +324,11 @@ const BUILT_ON = [
 // The hero, the get-started band and the footer are dark in both modes. The `dark` class scopes the
 // theme to them, so any chunks-ui token inside resolves to its dark value, and globals.css gives
 // them a white --ring (`.landing .dark`). The scope also keeps a future `text-*-text` here at 4.5:1.
+// The hero clips only sideways, where the illustration overflows: on a screen taller than the hero,
+// the open mobile menu (LandingClient) runs past its bottom.
 function Hero() {
   return (
-    <section className="dark relative overflow-hidden bg-(image:--l-hero-bg) text-white">
+    <section className="dark relative overflow-x-clip bg-(image:--l-hero-bg) text-white">
       {/* 160px, with the BUILT ON row's pb-[120px] below: a taller fade (or less padding) brings the
           light theme's pale --l-bg up behind the BUILT ON links, and their text and ring drop under
           3:1 (200px gave 2.84 and 2.68). */}

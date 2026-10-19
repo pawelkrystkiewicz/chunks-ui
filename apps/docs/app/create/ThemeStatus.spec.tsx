@@ -172,6 +172,36 @@ describe("the contrast panel", { timeout: 15_000 }, () => {
     expect(screen.queryByText(/Lightness set to/)).toBeNull();
   });
 
+  it("says Nudge to pass can't help text too small for the APCA level, and leaves it alone", () => {
+    localStorage.setItem(
+      "chunks-create-contrast-v1",
+      JSON.stringify({ wcag: "AA", apca: "Silver", failsOnly: false }),
+    );
+    render(<Harness />);
+    fireEvent.click(screen.getByRole("button", { name: /Accessibility/ }));
+    // Destructive text is text-xs: 12px at the default Base size, under Silver's 14px minimum
+    fireEvent.click(swatchOf("Destructive text", "Light"));
+    fireEvent.click(screen.getAllByRole("button", { name: "Nudge to pass" })[0] as HTMLElement);
+    const note = screen
+      .getAllByRole("status")
+      .find((n) => n.textContent === "The text is too small for APCA Silver. Raise Base size.");
+    expect(note).toBeDefined();
+    expect(screen.queryByText(/custom colour/)).toBeNull();
+    expect(undoButton().getAttribute("aria-disabled")).toBe("true");
+  });
+
+  it("names a swatch with a hand-set colour in its mode a custom colour", () => {
+    render(<Harness />);
+    fireEvent.click(screen.getByRole("button", { name: /Accessibility/ }));
+    const light = `Edit colours: ${pair.label}, Light`;
+    const dark = `Edit colours: ${pair.label}, Dark`;
+    fireEvent.click(screen.getByRole("button", { name: light }));
+    typeBlack();
+    expect(screen.getByRole("button", { name: `${light}, custom colour` })).toBeTruthy();
+    // The colour was set in light mode only
+    expect(screen.getByRole("button", { name: dark })).toBeTruthy();
+  });
+
   it("puts Accessibility under the page's outline as an h2 button", () => {
     render(<Harness />);
     fireEvent.click(screen.getByRole("button", { name: /Accessibility/ }));

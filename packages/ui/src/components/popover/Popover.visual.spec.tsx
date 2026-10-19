@@ -1,6 +1,6 @@
 import { render } from "@testing-library/react";
 import { createRef } from "react";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { commands, page, userEvent } from "vitest/browser";
 import {
   describeExitPaths,
@@ -108,6 +108,16 @@ describeExitPaths("Popover focus as the popup closes", (reduce) => {
     expect(document.activeElement).toBe(after);
     await exited(popup);
     expect(document.activeElement).toBe(after);
+  });
+
+  // Chromium used to click Done again on the repeat's keypress, after focus had moved to the
+  // trigger. Counted on the popup: Done's clicks bubble to it, the trigger's reopen click does not.
+  it("clicks Popover.Close once when the closing Enter repeats during the exit", async () => {
+    const { popup } = await openPopover();
+    const onClick = vi.fn();
+    popup.addEventListener("click", onClick);
+    await userEvent.keyboard("{Tab}{Enter>2}{/Enter}");
+    expect(onClick).toHaveBeenCalledOnce();
   });
 
   // A click and a key press are two calls, too far apart for the one frame of reduced motion

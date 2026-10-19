@@ -1,11 +1,12 @@
 import { render, screen, within } from "@testing-library/react";
 import type { CSSProperties } from "react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { userEvent } from "vitest/browser";
 import { Button } from "./components/button";
 import { Card } from "./components/card";
 import { Checkbox } from "./components/checkbox";
 import { Combobox } from "./components/combobox";
+import { DatePicker } from "./components/date-picker";
 import { Input } from "./components/input";
 import { Popover } from "./components/popover";
 import { Select } from "./components/select";
@@ -496,6 +497,25 @@ describe("Select and Popover focus as the popup closes, in WebKit", () => {
     expect(document.activeElement).toBe(next);
     await exited(popup);
     expect(document.activeElement).toBe(next);
+  });
+});
+
+// #684: the hand-off cancels the repeated keypress of a held key while the popup closes after a
+// key's pick. Without it Chromium activated the picked day again (DatePicker.visual.spec.tsx);
+// WebKit picks once either way, so this row holds that, and that the cancel leaves the real pick
+// alone. The day takes focus from code, so no Tab is needed: WebKit's Tab skips buttons.
+describe("DatePicker focus as the popup closes, in WebKit", () => {
+  it("picks once when the picking Enter repeats during the exit", async () => {
+    const onValueChange = vi.fn();
+    render(<DatePicker defaultValue={new Date(2026, 2, 15)} onValueChange={onValueChange} />);
+    await userEvent.click(screen.getByRole("button", { name: "March 15, 2026" }));
+    const day = await screen.findByRole("button", { name: "Sunday, March 15, 2026" });
+    await expect.poll(() => document.activeElement).toBe(day);
+    const popup = screen.getByRole("dialog");
+    await settle(popup);
+    await userEvent.keyboard("{ArrowDown}{Enter>2}{/Enter}");
+    expect(popup.isConnected, "the popup is still leaving").toBe(true);
+    expect(onValueChange).toHaveBeenCalledExactlyOnceWith(new Date(2026, 2, 22));
   });
 });
 

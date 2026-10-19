@@ -49,16 +49,20 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               // The landing's name for its GitHub link; Nextra's default icon says "Project repository"
               projectIcon={<GitHubIcon height="24" aria-label="GitHub repository" />}
             >
-              <ThemeSwitch lite />
+              {/* Nextra draws the icon at 12px. 24px matches the GitHub icon beside it, set in px
+                  like that icon's height, so the two still match with a larger default font. */}
+              <ThemeSwitch lite className="*:size-[24px]" />
             </Navbar>
           }
           pageMap={await getPageMap()}
           // Nextra names the search box only by its placeholder, which not every screen reader
-          // reads as a label, and the theme switch by the current theme alone ("Light"). The
-          // Search `aria-label` passes through to the input. `themeSwitch` sets the visible text
-          // of the option and button ("Light theme" etc.), which names the expanded sidebar's
-          // switch. The navbar's switch, and the collapsed sidebar's, are `lite` (icon only): the
-          // Select's `title="Change theme"` names them.
+          // reads as a label. The Search `aria-label` passes through to the input. `themeSwitch`
+          // sets the text of the theme options ("Light theme" etc.). The navbar's switch, the one
+          // globals.css leaves on screen, is `lite` (icon only): the Select's
+          // `title="Change theme"` names it.
+          // ponytail: that name leaves out the current theme, which only the opened list shows.
+          // The full copies globals.css hides were the only switches whose name carried it
+          // ("Light theme").
           search={<Search aria-label="Search documentation" />}
           themeSwitch={{ light: "Light theme", dark: "Dark theme", system: "System theme" }}
           // Base of the "Edit this page" and feedback links; Nextra appends the file path
