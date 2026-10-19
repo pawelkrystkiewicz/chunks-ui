@@ -17,6 +17,7 @@ import {
   insetsWithin,
   isShown,
   MOTION_PATHS,
+  nextFrame,
   recordTabDuringExit,
   renderFixture,
   renderPage,
@@ -25,8 +26,6 @@ import {
 } from "../../VisualTest.utils";
 import { FIELD_TEXT_SIZE } from "../shared";
 import { Select, type SelectRootProps } from "./index";
-
-const nextFrame = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 
 const exitDone = (popup: HTMLElement) =>
   popup.hasAttribute("data-closed") &&
@@ -601,10 +600,42 @@ describeExitPaths("Select focus as the popup closes", (reduce) => {
   });
 });
 
-// Base UI 1.9 reports a close a second time, as "focus-out", when focus leaves during the exit
+// Base UI 1.9 reports a close a second time, as "focus-out", when focus leaves the trigger during
+// the exit
 describe("Select onOpenChange as the popup closes", () => {
   beforeEach(() => emulateReducedMotion(false));
   afterAll(() => emulateReducedMotion(true));
+
+  const FruitSelect = (props: SelectRootProps) => (
+    <div className="flex w-60 flex-col items-start gap-2" style={{ padding: 40 }}>
+      <Select.Root defaultValue="apple" {...props}>
+        <Select.Trigger aria-label="Fruit">
+          <Select.Value />
+          <Select.Icon />
+        </Select.Trigger>
+        <Select.Portal>
+          <Select.Positioner alignItemWithTrigger={false}>
+            <Select.Popup data-testid="popup">
+              {fruits.map((f) => (
+                <Select.Item key={f.value} value={f.value}>
+                  <Select.ItemText>{f.label}</Select.ItemText>
+                </Select.Item>
+              ))}
+            </Select.Popup>
+          </Select.Positioner>
+        </Select.Portal>
+      </Select.Root>
+      <input aria-label="After" />
+    </div>
+  );
+
+  const reveal = async (view: ReturnType<typeof render>) => {
+    await userEvent.click(view.getByRole("combobox", { name: "Fruit" }));
+    const popup = await view.findByTestId("popup");
+    await expect.poll(() => popup.contains(document.activeElement)).toBe(true);
+    await settled(popup);
+    return popup;
+  };
 
   const open = async ({
     onClose,
@@ -615,71 +646,38 @@ describe("Select onOpenChange as the popup closes", () => {
   } = {}) => {
     const onOpenChange = vi.fn();
     const view = render(
-      <div className="flex w-60 flex-col items-start gap-2" style={{ padding: 40 }}>
-        <Select.Root
-          defaultValue="apple"
-          onOpenChangeComplete={onOpenChangeComplete}
-          onOpenChange={(o, d) => {
-            onOpenChange(o, d.reason);
-            if (!o) onClose?.(d);
-          }}
-        >
-          <Select.Trigger aria-label="Fruit">
-            <Select.Value />
-            <Select.Icon />
-          </Select.Trigger>
-          <Select.Portal>
-            <Select.Positioner alignItemWithTrigger={false}>
-              <Select.Popup data-testid="popup">
-                {fruits.map((f) => (
-                  <Select.Item key={f.value} value={f.value}>
-                    <Select.ItemText>{f.label}</Select.ItemText>
-                  </Select.Item>
-                ))}
-              </Select.Popup>
-            </Select.Positioner>
-          </Select.Portal>
-        </Select.Root>
-        <input aria-label="After" />
-      </div>,
+      <FruitSelect
+        onOpenChangeComplete={onOpenChangeComplete}
+        onOpenChange={(o, d) => {
+          onOpenChange(o, d.reason);
+          if (!o) onClose?.(d);
+        }}
+      />,
     );
-    const trigger = view.getByRole("combobox", { name: "Fruit" });
-    const reveal = async () => {
-      await userEvent.click(trigger);
-      const popup = await vi.waitFor(() => {
-        const found = document.querySelector<HTMLElement>("[data-testid=popup]");
-        if (!found) throw new Error("not open");
-        return found;
-      });
-      await expect.poll(() => popup.contains(document.activeElement)).toBe(true);
-      await settled(popup);
-      return popup;
+    return {
+      onOpenChange,
+      reveal: () => reveal(view),
+      after: view.getByRole("textbox", { name: "After" }),
     };
-    return { onOpenChange, trigger, reveal, after: view.getByRole("textbox", { name: "After" }) };
   };
 
-  it("reports a close by Escape once, though a Tab moves focus on during the exit", async () => {
-    const { onOpenChange, reveal, after } = await open();
-    const popup = await reveal();
-    onOpenChange.mockClear();
-    const checkTab = recordTabDuringExit(popup, { reduce: false, stillClosing: isShown });
-    await userEvent.keyboard("{Escape}{Tab}");
-    checkTab();
-    await exited(popup, { stillClosing: isShown });
-    expect(document.activeElement).toBe(after);
-    expect(onOpenChange.mock.calls).toEqual([[false, "escape-key"]]);
-  });
-
-  it("reports a pick's close once, though a Tab moves focus on during the exit", async () => {
-    const { onOpenChange, reveal } = await open();
-    const popup = await reveal();
-    onOpenChange.mockClear();
-    const checkTab = recordTabDuringExit(popup, { reduce: false, stillClosing: isShown });
-    await userEvent.keyboard("{ArrowDown}{Enter}{Tab}");
-    checkTab();
-    await exited(popup, { stillClosing: isShown });
-    expect(onOpenChange.mock.calls).toEqual([[false, "item-press"]]);
-  });
+  it.each([
+    { name: "Escape", keys: "{Escape}{Tab}", reason: "escape-key" },
+    { name: "a pick", keys: "{ArrowDown}{Enter}{Tab}", reason: "item-press" },
+  ])(
+    "reports a close by $name once, though a Tab moves focus on during the exit",
+    async ({ keys, reason }) => {
+      const { onOpenChange, reveal, after } = await open();
+      const popup = await reveal();
+      onOpenChange.mockClear();
+      const checkTab = recordTabDuringExit(popup, { reduce: false, stillClosing: isShown });
+      await userEvent.keyboard(keys);
+      checkTab();
+      await exited(popup, { stillClosing: isShown });
+      expect(document.activeElement).toBe(after);
+      expect(onOpenChange.mock.calls).toEqual([[false, reason]]);
+    },
+  );
 
   it("reports the close after one that the consumer cancelled", async () => {
     let first = true;
@@ -711,86 +709,112 @@ describe("Select onOpenChange as the popup closes", () => {
     onOpenChangeComplete.mockClear();
     onOpenChange.mockClear();
     await userEvent.keyboard("{Escape}");
-    // The exit is over: faded out and nothing animates. Not `exited`, as it stays mounted (with
-    // `data-ending-style` kept on).
-    await expect.poll(() => exitDone(popup)).toBe(true);
-    await userEvent.keyboard("{Tab}");
-    await settled(popup);
-    // Nothing happens: a dropped close that unmounts does so within a few frames
-    for (let i = 0; i < 10; i++) await nextFrame();
-    expect(popup.isConnected).toBe(true);
-    expect(onOpenChangeComplete).not.toHaveBeenCalledWith(false);
+    await expectKeptMounted(popup, onOpenChangeComplete);
     expect(onOpenChange.mock.calls).toEqual([[false, "escape-key"]]);
   });
 
-  // A controlled Select that its parent closes by a key, which `onOpenChange` does not see
+  // The exit is over: faded out and nothing animates. Not `exited`, as it stays mounted (with
+  // `data-ending-style` kept on). Then a Tab, and nothing happens: a dropped close that unmounts
+  // does so within a few frames.
+  const expectKeptMounted = async (popup: HTMLElement, onOpenChangeComplete: () => void) => {
+    await expect.poll(() => exitDone(popup)).toBe(true);
+    await userEvent.keyboard("{Tab}");
+    await settled(popup);
+    for (let i = 0; i < 10; i++) await nextFrame();
+    expect(popup.isConnected).toBe(true);
+    expect(onOpenChangeComplete).not.toHaveBeenCalledWith(false);
+  };
+
+  // A controlled Select that its parent closes by F2, which `onOpenChange` does not see. F4
+  // renders the parent again. With `defer`, a close by the Select waits for F2.
   function Controlled({
-    onOpenChange,
+    onClose,
     onOpenChangeComplete,
+    defer = false,
   }: {
-    onOpenChange: (open: boolean, reason: string) => void;
+    onClose: (details: OpenChangeDetails) => void;
     onOpenChangeComplete: (open: boolean) => void;
+    defer?: boolean;
   }) {
     const [isOpen, setOpen] = useState(false);
+    const [renders, setRenders] = useState(0);
     useEffect(() => {
-      const onKeyDown = (event: KeyboardEvent) => event.key === "F2" && setOpen(false);
+      const onKeyDown = (event: KeyboardEvent) => {
+        if (event.key === "F2") setOpen(false);
+        if (event.key === "F4") setRenders((n) => n + 1);
+      };
       document.addEventListener("keydown", onKeyDown);
       return () => document.removeEventListener("keydown", onKeyDown);
     }, []);
     return (
-      <div className="flex w-60 flex-col items-start gap-2" style={{ padding: 40 }}>
-        <Select.Root
-          defaultValue="apple"
+      <div data-renders={renders}>
+        <FruitSelect
           open={isOpen}
           onOpenChangeComplete={onOpenChangeComplete}
           onOpenChange={(next, details) => {
-            onOpenChange(next, details.reason);
-            if (!next && details.reason === "escape-key") details.preventUnmountOnClose();
-            setOpen(next);
+            if (!next) onClose(details);
+            if (!details.isCanceled && !(defer && !next)) setOpen(next);
           }}
-        >
-          <Select.Trigger aria-label="Fruit">
-            <Select.Value />
-            <Select.Icon />
-          </Select.Trigger>
-          <Select.Portal>
-            <Select.Positioner alignItemWithTrigger={false}>
-              <Select.Popup data-testid="popup">
-                {fruits.map((f) => (
-                  <Select.Item key={f.value} value={f.value}>
-                    <Select.ItemText>{f.label}</Select.ItemText>
-                  </Select.Item>
-                ))}
-              </Select.Popup>
-            </Select.Positioner>
-          </Select.Portal>
-        </Select.Root>
-        <input aria-label="After" />
+        />
       </div>
     );
   }
 
+  const openControlled = async (props: Parameters<typeof Controlled>[0]) => {
+    const view = render(<Controlled {...props} />);
+    return { view, popup: await reveal(view) };
+  };
+
   it("unmounts after a close by the parent that follows a close with preventUnmountOnClose", async () => {
     const onOpenChangeComplete = vi.fn();
-    const view = render(
-      <Controlled onOpenChange={vi.fn()} onOpenChangeComplete={onOpenChangeComplete} />,
-    );
-    const trigger = view.getByRole("combobox", { name: "Fruit" });
-    await userEvent.click(trigger);
-    const popup = await view.findByTestId("popup");
-    await expect.poll(() => popup.contains(document.activeElement)).toBe(true);
-    await settled(popup);
+    const { view, popup } = await openControlled({
+      onClose: (d) => d.reason === "escape-key" && d.preventUnmountOnClose(),
+      onOpenChangeComplete,
+    });
     await userEvent.keyboard("{Escape}");
     await expect.poll(() => exitDone(popup)).toBe(true);
-    await userEvent.click(trigger);
-    await expect.poll(() => popup.contains(document.activeElement)).toBe(true);
-    await settled(popup);
+    await reveal(view);
     onOpenChangeComplete.mockClear();
     const checkTab = recordTabDuringExit(popup, { reduce: false, stillClosing: isShown });
     await userEvent.keyboard("{F2}{Tab}");
     checkTab();
     await exited(popup, { stillClosing: isShown });
     expect(onOpenChangeComplete).toHaveBeenCalledWith(false);
+  });
+
+  it("unmounts after a close by the parent that follows a cancelled close with preventUnmountOnClose", async () => {
+    const onOpenChangeComplete = vi.fn();
+    let first = true;
+    const { popup } = await openControlled({
+      onClose: (details) => {
+        if (!first) return;
+        first = false;
+        details.preventUnmountOnClose();
+        details.cancel();
+      },
+      onOpenChangeComplete,
+    });
+    await userEvent.keyboard("{Escape}");
+    expect(isShown(popup)).toBe(true);
+    const checkTab = recordTabDuringExit(popup, { reduce: false, stillClosing: isShown });
+    await userEvent.keyboard("{F2}{Tab}");
+    checkTab();
+    await exited(popup, { stillClosing: isShown });
+    expect(onOpenChangeComplete).toHaveBeenCalledWith(false);
+  });
+
+  it("keeps the popup mounted when the parent renders again before it closes", async () => {
+    const onOpenChangeComplete = vi.fn();
+    const { popup } = await openControlled({
+      onClose: (details) => details.preventUnmountOnClose(),
+      onOpenChangeComplete,
+      defer: true,
+    });
+    onOpenChangeComplete.mockClear();
+    await userEvent.keyboard("{Escape}");
+    await userEvent.keyboard("{F4}");
+    await userEvent.keyboard("{F2}");
+    await expectKeptMounted(popup, onOpenChangeComplete);
   });
 
   it("reports a close that follows a reopen", async () => {

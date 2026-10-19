@@ -495,7 +495,8 @@ export function emulateForcedColors(active: boolean) {
   });
 }
 
-const nextFrame = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+export const nextFrame = () =>
+  new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 
 /**
  * Calls `measure` once per animation frame until it returns the same value for `frames` frames
