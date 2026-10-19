@@ -120,6 +120,26 @@ describe("Combobox", () => {
     expect(chips).not.toHaveClass("gap-1");
   });
 
+  // Chips fills the Control's free width, so the input after the chips can take the rest of the
+  // row (#686)
+  it("renders Chips with flex-1, which a flex class in className replaces", () => {
+    const chips = (className?: string) => (
+      <Combobox.Root multiple items={items} defaultValue={[items[0]]}>
+        <Combobox.Control>
+          <Combobox.Chips className={className} data-testid="chips">
+            <Combobox.Chip>Apple</Combobox.Chip>
+            <Combobox.Input aria-label="Fruits" />
+          </Combobox.Chips>
+        </Combobox.Control>
+      </Combobox.Root>
+    );
+    const { rerender } = render(chips());
+    expect(screen.getByTestId("chips")).toHaveClass("flex-1");
+    rerender(chips("flex-initial"));
+    expect(screen.getByTestId("chips")).toHaveClass("flex-initial");
+    expect(screen.getByTestId("chips")).not.toHaveClass("flex-1");
+  });
+
   it("renders Input with custom className", () => {
     render(
       <Combobox.Root>
