@@ -80,12 +80,13 @@ function SelectRoot<Value, Multiple extends boolean | undefined = false>({
     if (next && (isOpen || wasOpen.current)) actions.current?.unmount();
     return next;
   };
+  const keepMounted = useRef(false);
   useLayoutEffect(() => {
     syncDisabled();
     wasOpen.current = isOpen;
+    // Base UI clears its own copy on every open
+    if (isOpen) keepMounted.current = false;
   });
-  // Only an uncontrolled Select keeps the state: a controlled one shows `open`
-  const keepMounted = useRef(false);
   const [closeFocus, reportOpenChange] = useCloseFocusRoot(
     (next: boolean, eventDetails: BaseSelect.Root.OpenChangeEventDetails) => {
       if (!next) {
@@ -98,6 +99,8 @@ function SelectRoot<Value, Multiple extends boolean | undefined = false>({
         };
       }
       onOpenChange?.(next, eventDetails);
+      if (eventDetails.isCanceled) keepMounted.current = false;
+      // Only an uncontrolled Select keeps the state: a controlled one shows `open`
       if (open === undefined && !eventDetails.isCanceled) setInternalOpen(next);
     },
   );
