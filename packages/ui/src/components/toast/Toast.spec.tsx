@@ -2,6 +2,7 @@ import { Toast as BaseToast } from "@base-ui/react/toast";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
+import type { ComponentPropsWithoutRef } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { expectOnlyFocusGuardsUndecided, undecided } from "../../AxeTest.utils";
 import { FOCUS_RING } from "../shared";
@@ -518,6 +519,47 @@ describe("Toast focus ring", () => {
       "focus-visible:outline-ring",
     );
     expect(action).not.toHaveClass("focus-visible:outline-offset-2");
+  });
+});
+
+describe("Toast actionProps", () => {
+  /** Shows a toast titled "Deleted" with an "Undo" action that takes `actionProps` */
+  async function showToast(actionProps: ComponentPropsWithoutRef<"button">) {
+    const manager = createToastManager();
+    render(
+      <Toast.Provider toastManager={manager}>
+        <Toast.Viewport />
+      </Toast.Provider>,
+    );
+    act(() => {
+      manager.add({ title: "Deleted", actionProps: { children: "Undo", ...actionProps } });
+    });
+    await screen.findByText("Deleted");
+    return screen.getByRole("button", { name: "Undo" });
+  }
+
+  // Base UI's Toast.Action merges the toast's actionProps itself: handing them to it as props too
+  // ran every handler twice, so an "Undo" undid twice (0.2.0 shipped this)
+  it("runs onClick once per click", async () => {
+    const user = userEvent.setup();
+    const onClick = vi.fn();
+    await user.click(await showToast({ onClick }));
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the label and the other props on the button", async () => {
+    const action = await showToast({ title: "Put it back", className: "custom" });
+    expect(action).toHaveAttribute("title", "Put it back");
+    expect(action).toHaveClass("custom");
+  });
+
+  it("does not run onClick of a disabled action", async () => {
+    const user = userEvent.setup();
+    const onClick = vi.fn();
+    const action = await showToast({ disabled: true, onClick });
+    expect(action).toBeDisabled();
+    await user.click(action);
+    expect(onClick).not.toHaveBeenCalled();
   });
 });
 

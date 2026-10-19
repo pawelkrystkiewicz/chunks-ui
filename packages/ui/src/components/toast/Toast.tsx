@@ -125,7 +125,12 @@ function ToastViewport({ className, labels, ...props }: ToastViewportProps) {
               {toast.description != null && (
                 <ToastDescription>{toast.description}</ToastDescription>
               )}
-              {toast.actionProps != null && <ToastAction {...toast.actionProps} />}
+              {toast.actionProps != null && (
+                // Base UI's Toast.Action merges `toast.actionProps` itself, label and handlers
+                // included: spreading them here too ran `onClick` twice. Only `className` is
+                // passed, so it merges with the library classes and replaces a conflicting one.
+                <ToastAction className={toast.actionProps.className} />
+              )}
             </BaseToast.Content>
             {(dismissible ?? Boolean(toast.onClose)) && (
               // `aria-label` goes after the spread so `{ "aria-label": undefined }` falls back to
