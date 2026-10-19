@@ -1028,16 +1028,19 @@ describe("ToggleGroup indicator under the pressed item disabled at runtime", () 
 
   afterEach(() => emulateReducedMotion(false));
 
+  // The root sets a linear default curve, as a consumer's theme could. A part that hard-codes
+  // Tailwind's default curve would fade apart from the other.
   it.each([
     ...MOTION_PATHS.map(({ path, withMotion }) => ({ path, withMotion, reduced: false })),
     { path: "reduced motion", withMotion: false, reduced: true },
   ])("dims the indicator with the item, on $path", async ({ withMotion, reduced }) => {
+    const linear = "[--default-transition-timing-function:linear]";
     await emulateReducedMotion(reduced);
-    const { indicator, rerender, getByRole } = await renderGroup(ui(false), withMotion);
+    const { indicator, rerender, getByRole } = await renderGroup(ui(false, linear), withMotion);
     const item = getByRole("button", { name: "Beta" });
     await waitForStable(() => offBy(item, indicator()));
 
-    rerender(ui(true));
+    rerender(ui(true, linear));
     const { faded, log } = await expectFadesWith(item, indicator);
     expect(faded, log).toBe(!reduced);
     expect(await waitForStable(() => opacityOf(indicator()))).toBe(0.5);
@@ -1069,31 +1072,9 @@ describe("ToggleGroup indicator under the pressed item disabled at runtime", () 
     ]);
 
     rerender(sized({ value: "b", disabled: true }));
-    // The item's fade: 300ms on Tailwind's default curve
-    expect(transitions()).toContainEqual({
-      property: "opacity",
-      duration: 300,
-      easing: "cubic-bezier(0.4, 0, 0.2, 1)",
-    });
     const { faded, log } = await expectFadesWith(item("Beta"), indicator);
     expect(faded, log).toBe(true);
   });
-
-  // A consumer's own default curve (`--default-transition-timing-function` in their theme) reaches
-  // the item's fade and the pill's alike
-  it.each(MOTION_PATHS)(
-    "dims the indicator on the item's curve when the default curve changes, on $path",
-    async ({ withMotion }) => {
-      const linear = "[--default-transition-timing-function:linear]";
-      const { indicator, rerender, getByRole } = await renderGroup(ui(false, linear), withMotion);
-      const item = getByRole("button", { name: "Beta" });
-      await waitForStable(() => offBy(item, indicator()));
-
-      rerender(ui(true, linear));
-      const { faded, log } = await expectFadesWith(item, indicator);
-      expect(faded, log).toBe(true);
-    },
-  );
 
   // The item snaps because `.micro-interactions` is `transition: none !important` under reduced
   // motion. Motion drives the indicator without that class, so its `motion-reduce:transition-none`

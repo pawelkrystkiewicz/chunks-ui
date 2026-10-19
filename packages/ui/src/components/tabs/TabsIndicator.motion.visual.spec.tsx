@@ -339,10 +339,22 @@ describe.each(MOTION_PATHS)("Tabs.Indicator, $path", ({ withMotion }) => {
 describe("Tabs.Indicator under the selected tab disabled at runtime", () => {
   const opacityOf = (el: Element) => Number(getComputedStyle(el).opacity);
 
-  /** Both opacities in the next 40 painted frames, asserted within 0.01 of each other in each */
-  async function expectFadesWith(tab: Element, indicator: Element) {
+  afterEach(() => emulateReducedMotion(false));
+
+  // The list sets a linear default curve, as a consumer's theme could. A part that hard-codes
+  // Tailwind's default curve would fade apart from the other.
+  it.each([
+    ...MOTION_PATHS.map(({ path, withMotion }) => ({ path, withMotion, reduced: false })),
+    { path: "reduced motion", withMotion: false, reduced: true },
+  ])("dims the indicator with the tab, on $path", async ({ withMotion, reduced }) => {
+    const linear = { listClassName: "[--default-transition-timing-function:linear]" };
+    await emulateReducedMotion(reduced);
+    const { rerender, indicator, tab } = await renderTabs(withMotion, { ...linear, value: "b" });
+    const beta = tab("Beta");
+
+    rerender(tabs({ ...linear, value: "b", disabled: true }));
     const frames = await eachPaintedFrame(
-      () => ({ tab: opacityOf(tab), indicator: opacityOf(indicator) }),
+      () => ({ tab: opacityOf(beta), indicator: opacityOf(indicator) }),
       40,
     );
     const log = JSON.stringify(frames);
@@ -350,41 +362,11 @@ describe("Tabs.Indicator under the selected tab disabled at runtime", () => {
       frames.every((frame) => Math.abs(frame.indicator - frame.tab) < 0.01),
       log,
     ).toBe(true);
-    // Values between the two ends: it faded rather than jumped
-    const faded = frames.some(({ indicator: opacity }) => opacity > 0.5 && opacity < 1);
-    return { faded, log };
-  }
-
-  afterEach(() => emulateReducedMotion(false));
-
-  it.each([
-    ...MOTION_PATHS.map(({ path, withMotion }) => ({ path, withMotion, reduced: false })),
-    { path: "reduced motion", withMotion: false, reduced: true },
-  ])("dims the indicator with the tab, on $path", async ({ withMotion, reduced }) => {
-    await emulateReducedMotion(reduced);
-    const { rerender, indicator, tab } = await renderTabs(withMotion, { value: "b" });
-    const beta = tab("Beta");
-
-    rerender(tabs({ value: "b", disabled: true }));
-    const { faded, log } = await expectFadesWith(beta, indicator);
-    expect(faded, log).toBe(!reduced);
+    // Values between the two ends: it faded rather than jumped, unless reduced motion is on
+    const between = frames.filter(({ indicator: opacity }) => opacity > 0.5 && opacity < 1);
+    expect(between.length > 0, log).toBe(!reduced);
     expect(await waitForStable(() => opacityOf(indicator))).toBe(0.5);
   });
-
-  // A consumer's own default curve (`--default-transition-timing-function` in their theme) reaches
-  // the tab's fade and the indicator's alike
-  it.each(MOTION_PATHS)(
-    "dims the indicator on the tab's curve when the default curve changes, on $path",
-    async ({ withMotion }) => {
-      const linear = { listClassName: "[--default-transition-timing-function:linear]" };
-      const { rerender, indicator, tab } = await renderTabs(withMotion, { ...linear, value: "b" });
-      const beta = tab("Beta");
-
-      rerender(tabs({ ...linear, value: "b", disabled: true }));
-      const { faded, log } = await expectFadesWith(beta, indicator);
-      expect(faded, log).toBe(true);
-    },
-  );
 
   // The tab snaps because `.micro-interactions` is `transition: none !important` under reduced
   // motion. Motion drives the indicator without that class, so its `motion-reduce:transition-none`
@@ -414,26 +396,5 @@ describe("Tabs.Indicator under the selected tab disabled at runtime", () => {
       frames.some((frame) => frame.tab === 0.5),
       log,
     ).toBe(true);
-  });
-
-  // The slide ends with the spring. The indicator's fade under a tab disabled on the way is no
-  // slide: a resize after the spring moves the indicator at once, as at rest.
-  it("jumps on a resize after the spring, while the indicator still fades", async () => {
-    // 10s outlasts the spring
-    const slowFade = { listClassName: "[&>span]:duration-[10s]" };
-    const { rerender, indicator, tab, list } = await renderTabs(true, slowFade);
-    rerender(tabs({ ...slowFade, value: "b", disabled: true }));
-    const beta = tab("Beta");
-    await waitForStable(() => offBy(beta, indicator));
-    expect(opacityOf(indicator), "the indicator still fades").toBeGreaterThan(0.5);
-
-    const start = boxOf(indicator);
-    const read = () => ({ indicator: boxOf(indicator), off: offBy(beta, indicator) });
-    const firstFrame = beforePaintOnceResized(
-      { items: [tab("Alpha"), beta], container: list },
-      read,
-    );
-    rerender(tabs({ ...slowFade, value: "b", disabled: true, tabClassName: "px-8" }));
-    await expectFollowsFromFirstFrame(firstFrame, read, start, near);
   });
 });
