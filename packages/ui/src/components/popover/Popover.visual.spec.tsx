@@ -201,43 +201,71 @@ describeExitPaths("Popover focus as the popup closes", (reduce) => {
 
   // The same close, made from a keydown that is not prevented: the hook cannot tell a key made it,
   // so it handed over at once and the keypress clicked the trigger.
-  it.skipIf(reduce)(
-    "keeps a controlled popover closed when a keydown handler closes it on Enter",
-    async () => {
-      function Controlled() {
-        const [open, setOpen] = useState(false);
-        return (
-          <div style={{ padding: 40 }}>
-            <Popover.Root open={open} onOpenChange={setOpen}>
-              <Popover.Trigger>Settings</Popover.Trigger>
-              <Popover.Content data-testid="popup">
-                <input
-                  aria-label="Name"
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") setOpen(false);
-                  }}
-                />
-              </Popover.Content>
-            </Popover.Root>
-          </div>
-        );
-      }
-      const view = render(<Controlled />);
-      const trigger = view.getByRole("button", { name: "Settings" });
-      await userEvent.click(trigger);
-      const name = await view.findByRole("textbox", { name: "Name" });
-      await expect.poll(() => document.activeElement).toBe(name);
-      const popup = view.getByTestId("popup");
-      await settled(popup);
-      const onTriggerClick = vi.fn();
-      trigger.addEventListener("click", onTriggerClick);
-      await userEvent.keyboard("{Enter}");
-      expect(onTriggerClick, "the trigger was clicked").not.toHaveBeenCalled();
-      expect(document.activeElement).toBe(trigger);
-      await exited(popup);
-      expect(trigger).toHaveAttribute("aria-expanded", "false");
-    },
-  );
+  it("keeps a controlled popover closed when a keydown handler closes it on Enter", async () => {
+    function Controlled() {
+      const [open, setOpen] = useState(false);
+      return (
+        <div style={{ padding: 40 }}>
+          <Popover.Root open={open} onOpenChange={setOpen}>
+            <Popover.Trigger>Settings</Popover.Trigger>
+            <Popover.Content data-testid="popup">
+              <input
+                aria-label="Name"
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") setOpen(false);
+                }}
+              />
+            </Popover.Content>
+          </Popover.Root>
+        </div>
+      );
+    }
+    const view = render(<Controlled />);
+    const trigger = view.getByRole("button", { name: "Settings" });
+    await userEvent.click(trigger);
+    const name = await view.findByRole("textbox", { name: "Name" });
+    await expect.poll(() => document.activeElement).toBe(name);
+    const popup = view.getByTestId("popup");
+    await settled(popup);
+    const onTriggerClick = vi.fn();
+    trigger.addEventListener("click", onTriggerClick);
+    await userEvent.keyboard("{Enter}");
+    expect(onTriggerClick, "the trigger was clicked").not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(trigger);
+    await exited(popup);
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+  });
+
+  // A native button clicks on Space's keyup: the keydown is over by then, so nothing is left to
+  // wait for and focus goes to the trigger at once, as in 0.3.0
+  it("hands focus to the trigger at once when a button that closes a controlled popover is pressed with Space", async () => {
+    function Controlled() {
+      const [open, setOpen] = useState(false);
+      return (
+        <div style={{ padding: 40 }}>
+          <Popover.Root open={open} onOpenChange={setOpen}>
+            <Popover.Trigger>Settings</Popover.Trigger>
+            <Popover.Content data-testid="popup">
+              <button type="button" onClick={() => setOpen(false)}>
+                Save
+              </button>
+            </Popover.Content>
+          </Popover.Root>
+        </div>
+      );
+    }
+    const view = render(<Controlled />);
+    const trigger = view.getByRole("button", { name: "Settings" });
+    await userEvent.click(trigger);
+    const save = await view.findByRole("button", { name: "Save" });
+    await expect.poll(() => document.activeElement).toBe(save);
+    const popup = view.getByTestId("popup");
+    await settled(popup);
+    await userEvent.keyboard(" ");
+    expect(document.activeElement, "focus waited for the exit").toBe(trigger);
+    await exited(popup);
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+  });
 
   // A click and a key press are two calls, too far apart for the one frame of reduced motion
   it.skipIf(reduce)(

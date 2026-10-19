@@ -137,18 +137,25 @@ export function useFocusOnClose<T extends HTMLElement>(
         event.preventDefault();
       }
     };
-    // The Enter or Space keydown being dispatched: a close Base UI does not report that lands in
-    // its task (the observer runs right after the handler that set `open`) was made by that key.
-    // Probed in Chromium: capture keydown, the handler, this observer (a microtask), the bubble
-    // keydown, keypress, keyup, and a `setTimeout(0)` set in the capture keydown runs after them.
-    // ponytail: a consumer that closes after an await, a transition or a frame is not seen.
+    // The Enter or Space keydown of the task now running, kept until its keyup or its timer. A close
+    // Base UI does not report that lands while it is kept (the observer runs right after the
+    // handler that set `open`) counts as a close by that key: its keypress and keyup are still to
+    // come, and the keypress would click the trigger. Probed in Chromium: capture keydown, the
+    // handler, this observer (a microtask), keypress, keyup.
+    // ponytail: a close in a later task is matched only until the timer or the keyup; after that it
+    // hands over at once, as in 0.3.0.
     let keyDown: KeyboardEvent | undefined;
     const onKeyDownCapture = (event: KeyboardEvent) => {
+      if (popup.hasAttribute("data-closed")) return;
       if (event.key !== "Enter" && event.key !== " ") return;
       keyDown = event;
       setTimeout(() => {
         if (keyDown === event) keyDown = undefined;
       });
+    };
+    // Under automation the timer can run after the keyup
+    const onKeyUpCapture = () => {
+      keyDown = undefined;
     };
     const observer = new MutationObserver(() => {
       // The last close's listeners go: a kept-mounted popup (Select) may have reopened since
@@ -180,7 +187,8 @@ export function useFocusOnClose<T extends HTMLElement>(
       byKey = keyClick || event?.type.startsWith("key") === true;
       // Other closes hand over at once, and still listen until the next key's events, for the
       // repeats of a key held through the close: a Combobox's pick by Enter (default-prevented), or
-      // a button that sets `open` to false, which Base UI does not report.
+      // a button pressed with Space or the mouse that sets `open` to false, which Base UI does not
+      // report. A button pressed with Enter is a close by a key, above.
       doc.addEventListener("keydown", onNextKeyDown, true);
       doc.addEventListener("keypress", handOff, true);
       doc.addEventListener("keyup", endWait, true);
@@ -188,11 +196,13 @@ export function useFocusOnClose<T extends HTMLElement>(
     });
     observer.observe(popup, { attributeFilter: ["data-closed"] });
     doc.addEventListener("keydown", onKeyDownCapture, true);
+    doc.addEventListener("keyup", onKeyUpCapture, true);
     inside.addEventListener("focusout", onFocusOut);
     inside.addEventListener("focusin", onFocusIn);
     return () => {
       observer.disconnect();
       doc.removeEventListener("keydown", onKeyDownCapture, true);
+      doc.removeEventListener("keyup", onKeyUpCapture, true);
       inside.removeEventListener("focusout", onFocusOut);
       inside.removeEventListener("focusin", onFocusIn);
       stopWaiting();
