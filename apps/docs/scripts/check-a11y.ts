@@ -107,8 +107,8 @@ const ALLOWED: Allowed[] = [
   // text. Only the swatch's "Aa" is excused, not the text around it.
   {
     rule: "color-contrast",
-    selector: 'button[aria-label^="Edit colours:"] > span[aria-hidden="true"]',
-    why: "/create's contrast swatches show each pair in its own colours, failing ones too: the default theme's light-mode Primary and Destructive button hover, 3.91:1 and 4.13:1",
+    selector: 'button[aria-label^="Edit colours:"] > span[aria-hidden="true"]:first-child',
+    why: "/create's contrast swatches show each pair in its own colours, failing ones too: the default theme's Primary and Destructive button hover in the Light column, 3.91:1 and 4.13:1",
     pages: ["/create"],
   },
 ];
@@ -123,7 +123,7 @@ type Role = Parameters<Page["getByRole"]>[0];
 type Disclosure = { page: string; name: RegExp };
 
 const DISCLOSURES: Disclosure[] = [
-  // The contrast table. Its name goes on with the pass counts.
+  // The contrast, target size and type scale tables. Its name goes on with the pass counts.
   { page: "/create", name: /^Accessibility/ },
 ];
 
@@ -417,14 +417,18 @@ const NON_EMPTY_SUSPENSE = /<!--\$[!?]?-->(?!<!--\/\$-->)/;
 
 /** Opens `disclosure` on its loaded page and waits until its panel is open at its full height */
 async function expand(page: Page, disclosure: Disclosure) {
-  const trigger = page.getByRole("button", { name: disclosure.name });
-  await trigger.click({ timeout: POPUP_MS });
-  // Base UI sets aria-controls once the panel is open
-  const id = await trigger.getAttribute("aria-controls", { timeout: POPUP_MS });
+  await page.getByRole("button", { name: disclosure.name }).click({ timeout: POPUP_MS });
+  // Base UI sets aria-controls in the render that sets aria-expanded
+  const id = await page
+    .getByRole("button", { name: disclosure.name, expanded: true })
+    .getAttribute("aria-controls", { timeout: POPUP_MS });
   if (!id) throw new Error(`The ${disclosure.name} button controls no panel once pressed`);
-  // data-starting-style holds the panel at 0px high, its content clipped, for its first frame
+  // Base UI sets the height to auto once the panel has opened. Until then a pixel height, or 0px
+  // under data-starting-style, can clip what it shows.
   await page
-    .locator(`[id="${id}"][data-open]:not([data-starting-style])`)
+    .locator(
+      `[id="${id}"][data-open]:not([data-starting-style])[style*="--collapsible-panel-height: auto"]`,
+    )
     .waitFor({ timeout: POPUP_MS });
 }
 
@@ -595,9 +599,21 @@ async function audit(
           `no html[data-hydrated] within ${HYDRATION_MS / 1000} s: is HydrationMarker in app/layout.tsx, and does the page hydrate?`,
         );
       });
-    // Before the fonts wait, as what a panel shows can load more
+    const problems: Problem[] = [];
+    // Before the fonts wait, as what a panel shows can load more. A disclosure that won't open is a
+    // problem of its own; the page is still audited as it is.
     for (const disclosure of DISCLOSURES.filter((entry) => entry.page === route)) {
-      await expand(page, disclosure);
+      try {
+        await expand(page, disclosure);
+      } catch (error) {
+        problems.push({
+          page: route,
+          theme,
+          rule: "disclosure",
+          help: "The disclosure could not be opened",
+          targets: [String(error)],
+        });
+      }
     }
     await page.waitForFunction(() => document.fonts.status === "loaded", undefined, {
       timeout: HYDRATION_MS,
@@ -609,7 +625,7 @@ async function audit(
         `${route} did not switch to the ${theme} theme (<html class="${htmlClass}">)`,
       );
     }
-    const problems = await axe(page, route, theme, matched);
+    problems.push(...(await axe(page, route, theme, matched)));
     for (const popup of POPUPS.filter((entry) => entry.page === route)) {
       const label = `${route} with ${popup.name} open`;
       // A popup that won't open or close is a problem of its own; the page's results still count
