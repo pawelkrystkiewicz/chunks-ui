@@ -172,6 +172,40 @@ describeExitPaths("Menu focus as the popup closes", (reduce) => {
     expect(trigger).toHaveAttribute("aria-expanded", "false");
   });
 
+  // With reduced motion the menu has unmounted, and Base UI has returned focus to the trigger,
+  // when a real tap's keyup comes some 100 ms after its keydown
+  it.runIf(reduce)(
+    "keeps the menu closed when Space picks an item and comes up after the exit, with a non-native trigger",
+    async () => {
+      const onTriggerClick = vi.fn();
+      render(
+        <div style={{ padding: 40 }}>
+          <Menu.Root>
+            <Menu.Trigger nativeButton={false} render={<span />} onClick={onTriggerClick}>
+              Options
+            </Menu.Trigger>
+            <Menu.Content data-testid="popup">
+              <Menu.Item>Edit</Menu.Item>
+              <Menu.Item>Copy</Menu.Item>
+            </Menu.Content>
+          </Menu.Root>
+        </div>,
+      );
+      const trigger = screen.getByRole("button", { name: "Options" });
+      await userEvent.click(trigger);
+      onTriggerClick.mockClear();
+      const popup = await screen.findByTestId("popup");
+      await expect.poll(() => popup.contains(document.activeElement)).toBe(true);
+      await settled(popup);
+      await userEvent.keyboard("{ArrowDown}{ >}");
+      await exited(popup);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      await userEvent.keyboard("{/ }");
+      expect(onTriggerClick, "the trigger was clicked").not.toHaveBeenCalled();
+      expect(trigger).toHaveAttribute("aria-expanded", "false");
+    },
+  );
+
   // A click and a key press are two calls, too far apart for the one frame of reduced motion
   it.skipIf(reduce)(
     "moves a Tab pressed during the exit past the trigger, after a pick by click",
