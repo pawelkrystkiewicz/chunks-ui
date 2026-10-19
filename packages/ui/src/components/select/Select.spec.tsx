@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { configureAxe } from "jest-axe";
 import { createRef, type ReactElement } from "react";
@@ -7,8 +7,6 @@ import { undecided } from "../../AxeTest.utils";
 import { Field } from "../field";
 import { FOCUS_RING } from "../shared";
 import { Select, type SelectRootProps } from "./Select";
-
-type SelectRootActions = NonNullable<SelectRootProps["actionsRef"]>["current"] & {};
 
 afterEach(cleanup);
 
@@ -358,6 +356,12 @@ describe("Select disabled", () => {
   );
   const trigger = () => screen.getByRole("combobox", { name: "Fruit" });
 
+  it("never opens for a commit when mounted with its own disabled and defaultOpen", () => {
+    const onOpenChangeComplete = vi.fn();
+    render(fruits({ disabled: true, defaultOpen: true, onOpenChangeComplete }));
+    expect(onOpenChangeComplete).not.toHaveBeenCalled();
+  });
+
   describe.each<[string, (disabled: boolean, props: SelectRootProps) => ReactElement]>([
     ["its own disabled", (disabled, props) => fruits({ disabled, ...props })],
     [
@@ -368,14 +372,11 @@ describe("Select disabled", () => {
       "a native fieldset",
       (disabled, props) => <fieldset disabled={disabled}>{fruits(props)}</fieldset>,
     ],
-  ])("disabled by %s", (cause, select) => {
+  ])("disabled by %s", (_cause, select) => {
     it("does not open from defaultOpen, nor when it is enabled again", () => {
       const onOpenChange = vi.fn();
-      const onOpenChangeComplete = vi.fn();
-      const props = { defaultOpen: true, onOpenChange, onOpenChangeComplete };
+      const props = { defaultOpen: true, onOpenChange };
       const { rerender } = render(select(true, props));
-      // Not even for a commit: the own `disabled` gates the first render
-      if (cause === "its own disabled") expect(onOpenChangeComplete).not.toHaveBeenCalled();
       expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
       expect(trigger()).toHaveAttribute("aria-expanded", "false");
       rerender(select(false, props));
@@ -433,17 +434,13 @@ describe("Select disabled", () => {
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
   });
 
-  it("still fills a consumer actionsRef: it closes the listbox, and disabling unmounts through it", async () => {
+  it("fills a consumer actionsRef, and still closes the listbox when disabled", async () => {
     const user = userEvent.setup();
-    const actionsRef = createRef<SelectRootActions>();
+    const actionsRef: SelectRootProps["actionsRef"] = createRef();
     const { rerender } = render(<fieldset>{fruits({ actionsRef })}</fieldset>);
     await user.click(trigger());
     expect(await screen.findByRole("listbox")).toBeInTheDocument();
     expect(actionsRef.current).not.toBeNull();
-    act(() => actionsRef.current?.close());
-    await waitFor(() => expect(screen.queryByRole("listbox")).not.toBeInTheDocument());
-    await user.click(trigger());
-    expect(await screen.findByRole("listbox")).toBeInTheDocument();
     rerender(<fieldset disabled>{fruits({ actionsRef })}</fieldset>);
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
   });

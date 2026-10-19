@@ -46,15 +46,12 @@ function SelectRoot<Value, Multiple extends boolean | undefined = false>({
   actionsRef,
   ...props
 }: BaseSelect.Root.Props<Value, Multiple>) {
-  // A disabled trigger cannot be pressed, and `open` is not a press: as on DatePicker, the listbox
-  // stays closed whatever `open` and `defaultOpen` say. Base UI refuses a pick while the Select's
-  // own `disabled` or its Field's is on, but not under a native <fieldset disabled>, which only the
-  // browser knows. So this reads `:disabled` on Base UI's form input, which all three disable,
-  // after every commit and at a pick. A disabled uncontrolled Select also forgets that it was open,
-  // so enabling it later does not pop the listbox open. A listbox open when that read finds the
-  // Select disabled goes at once, with no exit: Base UI 1.9 cannot take back an open in the commit
-  // after it (a Select that mounts open in a disabled Field) before its portal has the popup, which
-  // then stays mounted and closing.
+  // A disabled trigger cannot be pressed, and `open` is not a press: as on DatePicker, a disabled
+  // Select stays closed whatever `open` and `defaultOpen` say. `:disabled` is read from Base UI's
+  // form input after every commit and at a pick, because only the browser knows a native fieldset
+  // disabled it. A disabled uncontrolled Select forgets it was open, so enabling it later does not
+  // pop the listbox open. The close skips the exit: Base UI 1.9 cannot take back an open in the
+  // commit after it, so the popup would stay mounted and closing.
   // ponytail: only the Select's own `disabled` counts in the render that sets it; the others count
   // from its next render, or from a pick. So a Select that mounts open in a disabled Field or
   // fieldset is open for its first commit, gone before it paints, and calls `onOpenChangeComplete`
