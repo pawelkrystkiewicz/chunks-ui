@@ -235,8 +235,24 @@ export function buildCss(t: Theme): string {
       `  --spacing-ui-height: ${t.height}px;`,
     ],
     dark,
-  )}\n\n${block(".dark", dark, [], light)}`;
+  )}\n\n${block(".dark", dark, [], light)}${t.touchTargets ? TOUCH_TARGETS : ""}`;
 }
+
+/**
+ * The library's `touch-target` on every checkbox, radio and switch. In a layer, as the class is: a
+ * position utility on a control still wins over the area's `relative`. ponytail: picked by ARIA
+ * role, so it also reaches a checkbox, radio or switch that is not chunks-ui's.
+ */
+const TOUCH_TARGETS = `
+
+/* Touch targets: 44px hit areas on checkboxes, radios and switches */
+@layer components {
+  [role="checkbox"],
+  [role="radio"],
+  [role="switch"] {
+    @apply touch-target;
+  }
+}`;
 
 export const samePrimary = (a: Oklch, b: Oklch) =>
   Math.abs(a.h - b.h) < 0.5 && Math.abs(a.c - b.c) < 0.005 && Math.abs(a.l - b.l) < 0.005;
@@ -404,6 +420,7 @@ export function loadTheme(): Theme | null {
     for (const k of ["fontHeading", "fontBody"] as const) {
       if (typeof s[k] === "string") out[k] = s[k];
     }
+    if (s.touchTargets === true) out.touchTargets = true;
     // Hand-set colours: known tokens with all-finite channels, clamped to what oklch() paints
     let overrides: Overrides | undefined;
     for (const mode of ENUMS.mode) {

@@ -321,3 +321,31 @@ describe("hand-set colours", () => {
     expect(loadTheme()?.overrides).toEqual({ light: { muted: { l: 1, c: 0, h: 330 } } });
   });
 });
+
+describe("touch targets", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("give every checkbox, radio and switch touch-target in Get code, when on", () => {
+    expect(buildCss(DEFAULT_THEME)).not.toContain("touch-target");
+    const css = buildCss({ ...DEFAULT_THEME, touchTargets: true });
+    // In a layer, so a position utility on a control still wins over the area's `relative`
+    expect(css).toContain(
+      '\n@layer components {\n  [role="checkbox"],\n  [role="radio"],\n  [role="switch"] {\n    @apply touch-target;\n  }\n}',
+    );
+    // Get code counts tokens by their `--`
+    expect(css.match(/--/g)?.length).toBe(buildCss(DEFAULT_THEME).match(/--/g)?.length);
+  });
+
+  it("load from storage only when stored as true", () => {
+    for (const [value, loaded] of [
+      [true, true],
+      ["yes", undefined],
+      [1, undefined],
+    ] as const) {
+      vi.stubGlobal("localStorage", {
+        getItem: () => JSON.stringify({ ...DEFAULT_THEME, touchTargets: value }),
+      });
+      expect(loadTheme()?.touchTargets).toBe(loaded);
+    }
+  });
+});
