@@ -181,6 +181,13 @@ function TabsIndicator({
   );
 }
 
+/** Every indicator element mounted: a list doesn't observe its tabs again when one mounts or unmounts */
+const indicators = new WeakSet<Node>();
+const holdsNonIndicator = (nodes: NodeList) => {
+  for (const node of nodes) if (!indicators.has(node)) return true;
+  return false;
+};
+
 // The same element with and without Motion, so it isn't remounted when Motion loads
 function TabsIndicatorElement({
   state,
@@ -206,6 +213,13 @@ function TabsIndicatorElement({
   // it or the list resizes, and the indicator then jumps to it
   const selected = useContext(TabsContext)?.value;
   const { element, sliding, transition } = useIndicatorSlide<HTMLElement>(selected, box);
+  const ownRef = useCallback(
+    (node: HTMLElement | null) => {
+      element.current = node;
+      if (node) indicators.add(node);
+    },
+    [element],
+  );
   // Observes each tab's border box and the list's border and content boxes (Base UI watches
   // content boxes only), so the indicator renders in the frame a resize happens in.
   useEffect(() => {
@@ -214,36 +228,41 @@ function TabsIndicatorElement({
     const list = indicator?.closest('[role="tablist"]');
     if (!indicator || !list) return;
     let stops: (() => void)[] = [];
+    // not the tabs of a nested Tabs list
+    let ownTabs: Element[] = [];
     // A new observation's first notification measures every tab: this catches tabs that mount
     // or remount
     const observeTabs = () => {
       for (const stop of stops) stop();
+      ownTabs = Array.from(list.querySelectorAll('[role="tab"]')).filter(
+        (tab) => tab.closest('[role="tablist"]') === list,
+      );
       stops = [
         observeResize(list, "border-box", onTabResize),
         // Padding on a list sized from outside changes its content box alone
         observeResize(list, "content-box", onTabResize),
-        ...Array.from(list.querySelectorAll('[role="tab"]'), (tab) =>
-          observeResize(tab, "border-box", onTabResize),
-        ),
+        ...ownTabs.map((tab) => observeResize(tab, "border-box", onTabResize)),
       ];
     };
     observeTabs();
     // A selection or a class/style change on the list, a tab or an element holding one measures
     // again (gap, order), and a node added or removed beside the tabs observes them again (a tab
     // mounts or unmounts). Not a change inside a tab, such as a swapped icon (its resize is
-    // observed), or to the indicator.
-    const holdsTab = (node: Node) =>
-      node === list ||
-      (node instanceof Element &&
-        (node.matches('[role="tab"]') || node.querySelector('[role="tab"]') !== null));
+    // observed), or to the indicator, nor an indicator mounting or unmounting.
+    const holdsTab = (node: Node) => node === list || ownTabs.some((tab) => node.contains(tab));
     const insideTab = (node: Node) => {
       const tab = node instanceof Element ? node.closest('[role="tab"]') : null;
       // A list inside a tab of another list has that tab above it
       return tab !== null && list.contains(tab);
     };
     const mutation = new MutationObserver((records) => {
-      const outside = records.filter(({ target, type }) =>
-        type === "childList" ? !indicator.contains(target) && !insideTab(target) : holdsTab(target),
+      const outside = records.filter(({ target, type, addedNodes, removedNodes }) =>
+        type === "childList"
+          ? !indicator.contains(target) &&
+            !insideTab(target) &&
+            (holdsNonIndicator(addedNodes) || holdsNonIndicator(removedNodes))
+          : // short-circuit: the indicator's own style writes are most records
+            !indicator.contains(target) && holdsTab(target),
       );
       if (outside.length === 0) return;
       if (outside.some((record) => record.type === "childList")) observeTabs();
@@ -264,7 +283,7 @@ function TabsIndicatorElement({
   const [indicatorRef, driven] = useMotionAnimate<HTMLElement>(
     box,
     { transition, clear: [...BOX_EDGES] },
-    useMergedRef(element, ref),
+    useMergedRef(ownRef, ref),
   );
   // Motion applies a jump a frame late from a ResizeObserver callback; write the box now so the
   // frame doesn't paint the old one.
