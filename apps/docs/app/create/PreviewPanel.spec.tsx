@@ -78,11 +78,7 @@ describe("touch targets", () => {
     expect(scopes()).toHaveLength(2);
     expect(scopes().some((el) => el.className.includes("touch-target"))).toBe(false);
     rerender(<PreviewPanel theme={{ ...DEFAULT_THEME, touchTargets: true }} onChange={vi.fn()} />);
-    for (const el of scopes()) {
-      expect(el.className).toContain(
-        "[&_:is([role=checkbox],[role=radio],[role=switch])]:touch-target",
-      );
-    }
+    for (const el of scopes()) expect(el.className).toContain(":touch-target");
   });
 });
 

@@ -77,8 +77,8 @@ export function ThemeStatus({
   theme: Theme;
   onChange: (patch: Partial<Theme>) => void;
   preview?: RefObject<HTMLElement | null>;
-  textSpacing?: boolean;
-  onTextSpacingChange?: (on: boolean) => void;
+  textSpacing: boolean;
+  onTextSpacingChange: (on: boolean) => void;
 }) {
   const [prefs, setPrefs] = useState(DEFAULT_PREFS);
   // The open editor: its pair (listed under "Failures only" once it passes), mode and the token
@@ -453,10 +453,11 @@ export function ThemeStatus({
             . A smaller control can still pass AA through WCAG's spacing exception, when a 24px
             circle centred on it overlaps no other target, which this table can't measure. The{" "}
             <code className="font-mono text-[11.5px]">touch-target</code> class grows a control's
-            area to 44px without changing its size; Use touch targets adds it to every checkbox,
-            radio and switch, in the preview and in Get code. Where two of them sit closer than 44px
-            centre to centre, their areas overlap and a press there goes to the later one. Sizes
-            follow Control height and Spacing.
+            hit area to at least 44×44px without changing its size; Use touch targets adds it to
+            every checkbox, radio and switch, in the preview and in Get code. The area also takes
+            the presses meant for any control it covers, so the 44px holds only where neighbouring
+            targets sit at least 44px apart, centre to centre. Sizes follow Control height and
+            Spacing.
           </p>
           {/* biome-ignore lint/a11y/noLabelWithoutControl: wraps Base UI Switch (button-based control) */}
           <label className="flex items-center gap-2 self-start text-[12.5px]">
@@ -514,24 +515,21 @@ export function ThemeStatus({
               text spacing
             </a>{" "}
             criterion (1.4.12, AA) does not ask the theme for any spacing. It asks that no content
-            or function is lost when a reader sets line height to 1.5 times the font size, the space
-            after paragraphs to 2 times, letter spacing to 0.12 times and word spacing to 0.16
-            times. Line spacing of at least 1.5 within paragraphs is another criterion,{" "}
+            or function is lost when a reader sets line height, the space after paragraphs, letter
+            spacing and word spacing to at least 1.5, 2, 0.12 and 0.16 times the font size. Line
+            spacing of 1.5 within paragraphs is part of{" "}
             <a
               className={LINK}
               href="https://www.w3.org/WAI/WCAG22/Understanding/visual-presentation.html"
             >
               1.4.8
             </a>{" "}
-            at AAA. No table can check this: turn on Override text spacing and look for text in the
-            preview that is cut off or overlaps.
+            (AAA), which asks only for a way to get it. No table can check this: turn on Override
+            text spacing and look for text in the preview that is cut off or overlaps.
           </p>
           {/* biome-ignore lint/a11y/noLabelWithoutControl: wraps Base UI Switch (button-based control) */}
           <label className="flex items-center gap-2 self-start text-[12.5px]">
-            <Switch.Root
-              checked={!!textSpacing}
-              onCheckedChange={(on) => onTextSpacingChange?.(on)}
-            >
+            <Switch.Root checked={textSpacing} onCheckedChange={(on) => onTextSpacingChange(on)}>
               <Switch.Thumb />
             </Switch.Root>
             Override text spacing

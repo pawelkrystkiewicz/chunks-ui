@@ -229,10 +229,10 @@ describe("nudge by measure", () => {
   it("reaches APCA alone, and both measures by default", () => {
     // Dark muted text passes WCAG AA and fails APCA Bronze (Lc 51 of 60)
     const levels = { wcag: "AA", apca: "Bronze" } as const;
-    for (const measure of ["apca", "both"] as const) {
+    for (const measure of ["apca", undefined] as const) {
       const found = nudge(DEFAULT_THEME, levels, "dark", "muted", muted, measure);
       const check = checkWith(levels, "dark", found);
-      expect(passApca(check, "dark") && passWcag(check, "dark"), measure).toBe(true);
+      expect(passApca(check, "dark") && passWcag(check, "dark"), measure ?? "default").toBe(true);
     }
   });
 

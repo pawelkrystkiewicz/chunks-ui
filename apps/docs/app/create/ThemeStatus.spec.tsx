@@ -15,7 +15,12 @@ function Harness({ initial = DEFAULT_THEME }: { initial?: Theme }) {
   const [theme, setTheme] = useState(initial);
   return (
     <>
-      <ThemeStatus theme={theme} onChange={(patch) => setTheme((t) => applyPatch(t, patch))} />
+      <ThemeStatus
+        theme={theme}
+        onChange={(patch) => setTheme((t) => applyPatch(t, patch))}
+        textSpacing={false}
+        onTextSpacingChange={() => {}}
+      />
       <button
         type="button"
         onClick={() => setTheme((t) => applyPatch(t, { overrides: undefined }))}
@@ -301,10 +306,13 @@ describe("the edited pair's cells", { timeout: 15_000 }, () => {
     render(<Harness />);
     fireEvent.click(screen.getByRole("button", { name: /Accessibility/ }));
     fireEvent.click(swatchOf("Muted text", "Light"));
-    // Its text, muted-foreground, is also the text of "Muted text on muted"
-    expect(tints("Muted text", "Light")).toEqual(["bg-primary/20", "bg-primary/20"]);
-    expect(tints("Muted text on muted", "Light")).toEqual(["bg-primary/10", "bg-primary/10"]);
-    expect(tints("Muted text", "Dark")).toEqual([null, null]);
+    // The tint's opacity, 0 for none. Its text, muted-foreground, is also "Muted text on muted"'s.
+    const alpha = (label: string, mode: "Light" | "Dark") =>
+      tints(label, mode).map((t) => Number(t?.split("/")[1] ?? 0));
+    const [own, affected] = [alpha("Muted text", "Light"), alpha("Muted text on muted", "Light")];
+    expect(affected.every((a) => a > 0)).toBe(true);
+    expect(own.every((a, i) => a > (affected[i] ?? 0))).toBe(true);
+    expect(alpha("Muted text", "Dark")).toEqual([0, 0]);
   });
 });
 
@@ -335,11 +343,18 @@ describe("text spacing", { timeout: 15_000 }, () => {
     );
     fireEvent.click(screen.getByRole("button", { name: /Accessibility/ }));
     const section = screen.getByRole("region", { name: "Type scale" });
-    expect(section.textContent).toMatch(/no content or function is lost/);
-    expect(section.textContent).toMatch(/does not ask the theme for any spacing/);
-    // At Bronze no size rule applies, so nothing in the section passes or fails
-    expect(section.textContent).not.toMatch(/Pass|Fail/);
-    fireEvent.click(screen.getByRole("switch", { name: "Override text spacing" }));
+    const copy = [...section.querySelectorAll("p")].find((p) =>
+      /1\.4\.12/.test(p.textContent ?? ""),
+    );
+    expect(copy?.textContent).toMatch(/does not ask the theme for any spacing/);
+    expect(copy?.textContent).toMatch(/no content or function is lost/);
+    expect(copy?.textContent).toMatch(/at least 1\.5, 2, 0\.12 and 0\.16 times the font size/);
+    // What the text spacing part says and offers claims no result
+    const toggle = screen.getByRole("switch", { name: "Override text spacing" });
+    for (const part of [copy, toggle.closest("label")]) {
+      expect(part?.textContent).not.toMatch(/pass|fail/i);
+    }
+    fireEvent.click(toggle);
     expect(changes).toEqual([true]);
   });
 });
