@@ -24,7 +24,7 @@ Runs in the `lint` job of `quality-gates.yml`. Tests: `scripts/__specs__/check-b
 
 ## check-docs-direction.ts
 
-Fails on a physical direction class (`ml-*`, `left-*`, `text-left`, `object-left`, `origin-top-left`, `mask-l-from-*`, `bg-linear-to-r` and the like) in the docs source, so the docs mirror in RTL. It reads the `.ts`, `.tsx` and `.mdx` files in all of `apps/docs`, except `node_modules` and the build output, and the `@apply` lines of the `.css` files there. A class behind an `rtl:` or `ltr:` variant is set for one direction on purpose and passes. Positions, side masks and gradient directions have no logical class, so this is how they mirror: `ltr:object-left rtl:object-right` needs no marker, but in `object-left rtl:object-right` the `object-left` still needs one. A deliberate one carries a `direction: physical, <reason>` marker, on its line or in a comment directly above it. The full class list, marker rules and limits: `TESTING_STRATEGY.md` › CI › Docs direction.
+Fails on a physical direction class (`ml-*`, `left-*`, `text-left`, `object-left`, `origin-top-left`, `mask-l-from-*`, `bg-linear-to-r` and the like) in the docs source, so the docs mirror in RTL. It reads the `.js`, `.jsx`, `.ts`, `.tsx`, `.md` and `.mdx` files in all of `apps/docs`, except `node_modules` and the build output. In the `.css` files there it reads each `@apply` (its continuation lines too) and each `@source inline("…")` string. A class behind an `rtl:` or `ltr:` variant is set for one direction on purpose and passes. Positions, side masks and gradient directions have no logical class, so this is how they mirror: `ltr:object-left rtl:object-right` needs no marker, but in `object-left rtl:object-right` the `object-left` still needs one. A deliberate one carries a `direction: physical, <reason>` marker, on its line or in a comment directly above it. The full class list, marker rules and limits: `TESTING_STRATEGY.md` › CI › Docs direction.
 
 Left out on purpose:
 
@@ -32,6 +32,7 @@ Left out on purpose:
 - `space-x-*`, `space-x-reverse`, `divide-x-*` and `divide-x-reverse`: Tailwind 4 writes them with `margin-inline-*` and `border-inline-*-width`, so they mirror. A `-reverse` class only swaps those two logical sides for `flex-row-reverse`.
 - `data-[side=left]:` and the like: Base UI sets the side from the real placement, so the variant already follows it.
 - `slide-in-from-left` and the like: Tailwind does not generate them; they come from an animation plugin such as `tw-animate-css`, which the docs do not load.
+- Braces in `@source inline` (`m{l,r}-4`, `ml-{1..4}`): they are not expanded, so the classes they make are not read. The docs have no `@source inline`, so an expander waits until they do.
 - A marker for one class of a line: a marker exempts its whole line, which keeps the marker rule short.
 
 ```bash

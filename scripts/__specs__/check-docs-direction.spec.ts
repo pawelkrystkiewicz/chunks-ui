@@ -359,6 +359,19 @@ describe("checkDocsDirection", () => {
     ]);
   });
 
+  it("scans the .js, .jsx and .md files too", async () => {
+    const dir = tree({
+      "apps/docs/app/a.js": 'export const A = "ml-4";\n',
+      "apps/docs/app/b.jsx": 'export const B = () => <div className="pr-2" />;\n',
+      "apps/docs/content/c.md": "# C\n\nAlign with `text-left`.\n",
+    });
+    expect(await checkDocsDirection(dir)).toEqual([
+      "apps/docs/app/a.js:1: ml-4",
+      "apps/docs/app/b.jsx:1: pr-2",
+      "apps/docs/content/c.md:3: text-left",
+    ]);
+  });
+
   it("skips node_modules at any depth and the build output at the top of apps/docs", async () => {
     const dir = tree({
       "apps/docs/node_modules/x/y.tsx": 'export const Y = "ml-4";\n',
@@ -401,6 +414,48 @@ describe("checkDocsDirection", () => {
     ]);
   });
 
+  // [name, lines of apps/docs/app/x.css, expected "line: token" problems]
+  it.each<[string, string[], string[]]>([
+    [
+      "reads an @apply on its continuation lines, up to its ; or }",
+      [
+        ".a {",
+        "  @apply ms-2",
+        "    ml-4",
+        "    text-start;",
+        "}",
+        ".b { @apply pe-2",
+        "  pr-2 }",
+        ".left-0 { color: red; }",
+        ".c {",
+        "  @apply ms-1",
+        "    /* direction: physical, the arrow points at the clock */",
+        "    float-left;",
+        "}",
+      ],
+      ["3: ml-4", "7: pr-2"],
+    ],
+    [
+      "reads the string of each @source inline, not of an @source not inline or an @source path",
+      [
+        '@source inline("ms-2 mr-4");',
+        "@source inline('rounded-l');",
+        '@source not inline("pl-2");',
+        '@source "./left-0";',
+        '@source inline("rtl:pr-2 pr-2"); /* direction: physical, the twin of rtl:pr-2 */',
+      ],
+      ["1: mr-4", "2: rounded-l"],
+    ],
+    [
+      "does not read an @apply in a comment, or what follows it",
+      ["/* we never @apply here:", "   .right-0 is plain CSS */", ".right-0 { right: 0; }"],
+      [],
+    ],
+  ])("%s", async (_name, lines, expected) => {
+    const dir = tree({ "apps/docs/app/x.css": `${lines.join("\n")}\n` });
+    expect(await checkDocsDirection(dir)).toEqual(expected.map((p) => `apps/docs/app/x.css:${p}`));
+  });
+
   it("fails when apps/docs is missing, so an empty scan cannot pass", async () => {
     const dir = tree();
     rmSync(join(dir, "apps/docs"), { recursive: true });
@@ -408,16 +463,16 @@ describe("checkDocsDirection", () => {
   });
 
   it("fails when apps/docs holds no scanned file outside the skipped folders, so an empty scan cannot pass", async () => {
-    // .js and .md are not scanned, so a hit in them does not count as a scanned file
+    // .json and .txt are not scanned, so a hit in them does not count as a scanned file
     const dir = tree({
       "apps/docs/node_modules/x.ts": "export {};\n",
-      "apps/docs/x.js": 'export const X = "ml-4";\n',
-      "apps/docs/x.md": "`ml-4`\n",
+      "apps/docs/x.json": '{ "x": "ml-4" }\n',
+      "apps/docs/x.txt": "ml-4\n",
     });
     rmSync(join(dir, "apps/docs/seed.ts"));
     rmSync(join(dir, "apps/docs/seed.mdx"));
     expect(await checkDocsDirection(dir)).toEqual([
-      expect.stringMatching(/^apps\/docs: no \.ts, /),
+      expect.stringMatching(/^apps\/docs: no \.js, /),
     ]);
   });
 
