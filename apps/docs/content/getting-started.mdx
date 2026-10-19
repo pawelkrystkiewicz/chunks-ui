@@ -31,14 +31,14 @@ export function BackToTop() {
   const reduced = useReducedMotion();
 
   return (
-    <Button onClick={() => window.scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" })}>
+    <Button onClick={() => window.scrollTo({ top: 0, behavior: reduced ? "instant" : "smooth" })}>
       Back to top
     </Button>
   );
 }
 ```
 
-On the server and while hydrating, the hook returns `false`, so the client markup matches what the server sent. For a user who asks for reduced motion, it switches to `true` right after hydration, without a remount. A component that renders only on the client, such as a popup in a portal, reads the real value on its first render. Motion that must be off from the first paint belongs in CSS (the `motion-reduce:` variant), not in the hook.
+On the server and while hydrating, the hook returns `false`, so the client markup matches what the server sent. For a user who asks for reduced motion, it switches to `true` right after hydration. A component that mounts after hydration, such as a popup that opens later, reads the real value on its first render. An animation that must be off from the first paint belongs in CSS (the `motion-reduce:` variant), not in the hook.
 
 ## Setup
 
