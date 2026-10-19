@@ -31,7 +31,7 @@ async function tabThrough(count: number) {
 }
 
 /** A high-priority toast with a title, a description, an action and a close button, between two fields */
-async function renderUrgentToast() {
+async function renderUrgentToast(actionProps: { tabIndex?: number } = {}) {
   const manager = Toast.createToastManager();
   const result = render(
     <Toast.Provider toastManager={manager}>
@@ -44,7 +44,7 @@ async function renderUrgentToast() {
     title: "Connection lost",
     description: "Reconnecting automatically.",
     priority: "high",
-    actionProps: { children: "Retry now" },
+    actionProps: { children: "Retry now", ...actionProps },
     dismissible: true,
     timeout: 0,
   });
@@ -73,6 +73,15 @@ describe("Toast tab order while Base UI hides a toast from assistive tech", () =
       screen.getByRole("button", { name: "Retry now" }),
       screen.getByRole("button", { name: "Close" }),
     ]);
+  });
+
+  // Base UI merges `actionProps` into the Action last, so a `tabIndex` there would win
+  it("keeps the action of a hidden high-priority toast out of it whatever actionProps.tabIndex says", async () => {
+    const { container, toast } = await renderUrgentToast({ tabIndex: 0 });
+    expect(toast).toHaveAttribute("aria-hidden", "true");
+    expect(await ariaHiddenFocus(container)).toEqual([]);
+    screen.getByRole("textbox", { name: "Before" }).focus();
+    expect(await tabThrough(1)).toEqual([screen.getByRole("textbox", { name: "After" })]);
   });
 
   // A pointer over the viewport expands the toasts, but a high-priority toast stays aria-hidden

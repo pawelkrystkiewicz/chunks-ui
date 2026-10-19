@@ -2,13 +2,14 @@ import { Toast as BaseToast } from "@base-ui/react/toast";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
-import type { ComponentPropsWithoutRef } from "react";
+import { type ComponentPropsWithoutRef, createRef } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { expectOnlyFocusGuardsUndecided, undecided } from "../../AxeTest.utils";
 import { FOCUS_RING } from "../shared";
 import {
   createToastManager,
   Toast,
+  type ToastActionProps,
   type ToastCloseProps,
   type ToastRootProps,
   type ToastViewportProps,
@@ -728,4 +729,75 @@ describe("Toast.Root render", () => {
       </>
     );
   }
+});
+
+describe("Toast.Action render", () => {
+  type Options = ToastActionProps & { priority?: "high" };
+
+  /** Shows a toast on a custom root whose action takes the options, and returns once it is up */
+  async function showAction({ priority, ...actionProps }: Options = {}) {
+    const manager = createToastManager();
+    function Actions() {
+      return Toast.useToast().toasts.map((toast) => (
+        <Toast.Root key={toast.id} toast={toast}>
+          <Toast.Action className="mine" data-testid="action" {...actionProps}>
+            {actionProps.render ? undefined : "Undo"}
+          </Toast.Action>
+        </Toast.Root>
+      ));
+    }
+    render(
+      <Toast.Provider toastManager={manager}>
+        <BaseToast.Viewport>
+          <Actions />
+        </BaseToast.Viewport>
+      </Toast.Provider>,
+    );
+    act(() => {
+      manager.add({ title: "Saved", type: "info", priority, actionProps: {} });
+    });
+    await screen.findByRole(priority ? "alertdialog" : "dialog", { hidden: true });
+  }
+
+  it.each<{ kind: string; renderProp: ToastActionProps["render"] }>([
+    { kind: "an element", renderProp: <a href="/x">Docs</a> },
+    {
+      kind: "a function",
+      renderProp: (props) => (
+        <a {...props} href="/y">
+          Docs
+        </a>
+      ),
+    },
+  ])("renders the label of $kind that carries its own", async ({ renderProp }) => {
+    await showAction({ render: renderProp, nativeButton: false });
+    const action = screen.getByTestId("action");
+    expect(action.tagName).toBe("A");
+    expect(action).toHaveTextContent("Docs");
+    expect(action).toHaveClass("mine");
+  });
+
+  it("renders a button without a render prop, with the library classes and the consumer's", async () => {
+    await showAction();
+    const action = screen.getByTestId("action");
+    expect(action.tagName).toBe("BUTTON");
+    expect(action).toHaveTextContent("Undo");
+    expect(action).toHaveClass("mine", "inline-flex");
+    expect(action).toHaveAttribute("data-type");
+  });
+
+  it("runs onClick once and passes the ref to the element", async () => {
+    const user = userEvent.setup();
+    const onClick = vi.fn();
+    const ref = createRef<HTMLButtonElement>();
+    await showAction({ onClick, ref });
+    await user.click(screen.getByTestId("action"));
+    expect(onClick).toHaveBeenCalledTimes(1);
+    expect(ref.current).toBe(screen.getByTestId("action"));
+  });
+
+  it("takes a hidden high-priority toast's action out of the tab order", async () => {
+    await showAction({ priority: "high" });
+    expect(screen.getByTestId("action")).toHaveAttribute("tabindex", "-1");
+  });
 });
