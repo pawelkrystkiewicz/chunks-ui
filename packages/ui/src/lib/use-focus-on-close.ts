@@ -137,13 +137,31 @@ export function useFocusOnClose<T extends HTMLElement>(
         event.preventDefault();
       }
     };
+    // The Enter or Space keydown of the task now running. An unreported close that lands while it is
+    // kept is a close by that key: its keypress and keyup are still to come. In Chromium the order
+    // is capture keydown, the handler, this observer (a microtask), keypress, keyup.
+    // ponytail: a close in a later task is not matched: the key is dropped at its keyup or the
+    // timer, and that close hands over at once, as in 0.3.0.
+    let keyDown: KeyboardEvent | undefined;
+    const onKeyDownCapture = (event: KeyboardEvent) => {
+      if (popup.hasAttribute("data-closed")) return;
+      if (event.key !== "Enter" && event.key !== " ") return;
+      keyDown = event;
+      setTimeout(() => {
+        if (keyDown === event) keyDown = undefined;
+      });
+    };
+    // Under automation the timer can run after the keyup
+    const onKeyUpCapture = () => {
+      keyDown = undefined;
+    };
     const observer = new MutationObserver(() => {
       // The last close's listeners go: a kept-mounted popup (Select) may have reopened since
       stopWaiting();
       if (!closing()) return;
       const close = closeFocus.close.current;
       closeFocus.close.current = undefined;
-      const event = close?.event;
+      const event = close?.event ?? keyDown;
       // A mouse or pen press closes it before the browser moves focus to what was pressed, and a
       // touch outside (a scroll, or a tap, which closes a Combobox on its click) would scroll the
       // page to the trigger where `preventScroll` is unsupported: leave focus to the browser and
@@ -163,21 +181,29 @@ export function useFocusOnClose<T extends HTMLElement>(
       // ponytail: an assistive technology's click or a script's `.click()` has no click count too;
       // its close waits for a key that may not come, and Base UI's return at the unmount moves
       // focus instead. Accepted.
+      // Enter that activates a native button inside the popup (a DatePicker day, a Save button) is a
+      // key close too: its click comes from the keypress in the keydown's task, so the hand-off
+      // waits for the keyup or the next key, where it went at once before.
       const keyClick = event?.type === "click" && "detail" in event && event.detail === 0;
       byKey = keyClick || event?.type.startsWith("key") === true;
       // Other closes hand over at once, and still listen until the next key's events, for the
       // repeats of a key held through the close: a Combobox's pick by Enter (default-prevented), or
-      // a button that sets `open` to false, which Base UI does not report.
+      // a button pressed with Space or the mouse that sets `open` to false, which Base UI does not
+      // report. A button pressed with Enter is a close by a key, above.
       doc.addEventListener("keydown", onNextKeyDown, true);
       doc.addEventListener("keypress", handOff, true);
       doc.addEventListener("keyup", endWait, true);
       if (!((event?.type === "keydown" && !event.defaultPrevented) || keyClick)) handOff();
     });
     observer.observe(popup, { attributeFilter: ["data-closed"] });
+    doc.addEventListener("keydown", onKeyDownCapture, true);
+    doc.addEventListener("keyup", onKeyUpCapture, true);
     inside.addEventListener("focusout", onFocusOut);
     inside.addEventListener("focusin", onFocusIn);
     return () => {
       observer.disconnect();
+      doc.removeEventListener("keydown", onKeyDownCapture, true);
+      doc.removeEventListener("keyup", onKeyUpCapture, true);
       inside.removeEventListener("focusout", onFocusOut);
       inside.removeEventListener("focusin", onFocusIn);
       stopWaiting();
