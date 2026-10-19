@@ -3,7 +3,7 @@ import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
 # DatePicker
 
-A trigger-and-popover date picker built on Base UI's `Popover` primitive and the `Calendar` component. Selecting a date closes the popover automatically.
+A trigger-and-popover date picker built on Base UI's `Popover` primitive and the `Calendar` component. Selecting a date closes the popover, or with a controlled `open`, asks you to close it through `onOpenChange` (see [Open State](#open-state)).
 
 ## Import
 
@@ -83,9 +83,28 @@ function MonthDatePicker() {
 }
 ```
 
+## Open State
+
+`open` and `onOpenChange` control whether the calendar is open, with the names and the `onOpenChange(open, eventDetails)` signature of Base UI's `Popover.Root`, and `defaultOpen` opens it on mount. A trigger press, a pick, Escape, an outside press and focus leaving the calendar (`focus-out`) call `onOpenChange` with Base UI's event details; a pick closes the calendar with the reason `close-press`. A Tab pressed while the calendar closes after a pick or Escape can make Base UI call `onOpenChange` again, with the reason `focus-out`. A controlled calendar opens and closes only when you change `open`. Without `open`, `eventDetails.cancel()` keeps the calendar as it is. However the calendar opened, a pick or Escape that closes it returns focus to the trigger if focus is still in the calendar.
+
+```tsx
+function OpenDatePicker() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <Button onClick={() => setOpen(true)}>Set due date</Button>
+      <DatePicker aria-label="Due date" open={open} onOpenChange={setOpen} />
+    </>
+  );
+}
+```
+
 ## Disabled
 
-A disabled `DatePicker` is dimmed and shows the not-allowed cursor.
+A disabled `DatePicker` is dimmed and shows the not-allowed cursor. The `disabled` prop disables it, and so does a disabled `Field.Root`, Base UI's `Fieldset` or a `<fieldset disabled>`. A disabled picker stays closed whatever `open` and `defaultOpen` say, and it ignores a pick. Disabling a picker with an open calendar closes the calendar without calling `onOpenChange`. When it is enabled again, a controlled calendar opens if `open` is `true`; an uncontrolled one stays closed.
+
+The `disabled` prop does all this at once. The other causes take effect when the picker next renders, because the picker reads the disabled state of its trigger after each render. Until then an open calendar stays open, but a pick in it is already ignored, and closes the calendar.
 
 ```tsx
 <DatePicker disabled />
@@ -171,6 +190,8 @@ The text of the trigger has the size of the text fields: 16px below the `md` bre
 | <kbd>Enter</kbd> / <kbd>Space</kbd> on a day | Selects the day, closes the calendar and returns focus to the trigger |
 | <kbd>Escape</kbd> | Closes the calendar without changing the date and returns focus to the trigger |
 
+With a controlled `open`, these keys only call `onOpenChange` (a day is still selected at once): the calendar opens or closes, and focus moves, once you change `open`.
+
 When the calendar opens, focus goes to the selected day, or to today if no date is selected. Inside the calendar, the arrow, Home, End and Page keys move focus as described in [Calendar keyboard](/components/calendar#keyboard). Disabled days can take focus but cannot be selected.
 
 ## DatePicker Props
@@ -179,7 +200,7 @@ When the calendar opens, focus goes to the selected day, or to today if no date 
   definition={generateDefinition({
     code: `
 import type { DatePickerProps } from 'chunks-ui'
-type Props = Pick<DatePickerProps, 'value' | 'defaultValue' | 'onValueChange' | 'placeholder' | 'disabled' | 'min' | 'max' | 'isDateDisabled' | 'weekStartsOn' | 'showOutsideDays' | 'month' | 'onMonthChange' | 'name' | 'required' | 'form' | 'className' | 'triggerClassName' | 'labels'>
+type Props = Pick<DatePickerProps, 'value' | 'defaultValue' | 'onValueChange' | 'open' | 'defaultOpen' | 'onOpenChange' | 'placeholder' | 'disabled' | 'min' | 'max' | 'isDateDisabled' | 'weekStartsOn' | 'showOutsideDays' | 'month' | 'onMonthChange' | 'name' | 'required' | 'form' | 'className' | 'triggerClassName' | 'labels'>
 export default Props
 `
   })}

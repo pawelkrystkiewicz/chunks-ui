@@ -38,7 +38,9 @@ export function useCloseFocusRoot<Details extends OpenChangeDetails>(
       // the keyboard gets it too, where Base UI's return at the unmount prefers the element focused
       // before the open. Accepted: the trigger is where APG returns focus. Until an open carries a
       // trigger (`defaultOpen`, `open` true at mount, `handle.open()` without one) there is none,
-      // and the popup hands nothing over: Base UI's return at the unmount stays.
+      // and the popup hands nothing over: Base UI's return at the unmount stays. A Root that sets
+      // `closeFocus.trigger` itself, as DatePicker does with its one trigger, has one from the
+      // start.
       if (details.trigger) closeFocus.trigger.current = details.trigger as HTMLElement;
       return;
     }
