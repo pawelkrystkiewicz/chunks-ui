@@ -44,11 +44,13 @@ describe("DatePicker focus as a controlled popup closes", () => {
    */
   const open = async (closeAfter?: number) => {
     const onOpenChange = vi.fn();
+    const onValueChange = vi.fn();
     function Controlled() {
       const [isOpen, setOpen] = useState(false);
       return (
         <DatePicker
           defaultValue={new Date(2026, 2, 15)}
+          onValueChange={onValueChange}
           open={isOpen}
           onOpenChange={(next, eventDetails) => {
             onOpenChange(next, eventDetails.reason);
@@ -73,7 +75,13 @@ describe("DatePicker focus as a controlled popup closes", () => {
     // Open at rest: closed during its entry, the popup can leave at once
     const popup = view.getByRole("dialog");
     await settled(popup);
-    return { trigger, popup, onOpenChange, after: view.getByRole("textbox", { name: "After" }) };
+    return {
+      trigger,
+      popup,
+      onOpenChange,
+      onValueChange,
+      after: view.getByRole("textbox", { name: "After" }),
+    };
   };
 
   it("moves focus to the trigger on Escape", async () => {
@@ -90,10 +98,12 @@ describe("DatePicker focus as a controlled popup closes", () => {
   // The pick's close carries the key's click, so the hand-off waits for the repeat's keypress
   // before it moves focus: the repeat does not reach the trigger and open the calendar again, and
   // the trigger shows its ring, as after a close by a key
-  it("keeps the calendar closed and the trigger focused when the picking Enter repeats once during the exit", async () => {
-    const { popup, trigger, onOpenChange } = await open();
+  it("keeps the calendar closed and the trigger focused, and picks once, when the picking Enter repeats once during the exit", async () => {
+    const { popup, trigger, onOpenChange, onValueChange } = await open();
     onOpenChange.mockClear();
     await userEvent.keyboard("{ArrowDown}{Enter>2}{/Enter}");
+    // Once: Chromium used to pick the day again on the repeat's keypress
+    expect(onValueChange).toHaveBeenCalledExactlyOnceWith(new Date(2026, 2, 22));
     expect(trigger).toHaveAttribute("aria-expanded", "false");
     expect(document.activeElement).toBe(trigger);
     expect(trigger.matches(":focus-visible"), "the trigger shows its ring").toBe(true);
