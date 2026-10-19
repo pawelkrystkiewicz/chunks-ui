@@ -445,6 +445,23 @@ describe("checkDocsDirection", () => {
     ]);
   });
 
+  it("takes the comment kind from the line above, so the other kind's closer inside it ends nothing", async () => {
+    const block = ["/*", " * direction: physical, art", " * an arrow --> inside", " */"];
+    const html = ["<!--", "  direction: physical, art", "  a */ inside", "-->"];
+    const dir = tree({
+      "apps/docs/app/x.tsx": [...block, 'const A = "left-3";'].join("\n"),
+      "apps/docs/content/a.mdx": [
+        "{/*",
+        ...block.slice(1, 3),
+        "*/}",
+        "Align with `text-left`.",
+      ].join("\n"),
+      "apps/docs/content/b.mdx": [...html, "Align with `text-right`."].join("\n"),
+      "apps/docs/app/x.css": [...block, ".a { @apply ml-4; }"].join("\n"),
+    });
+    expect(await checkDocsDirection(dir)).toEqual([]);
+  });
+
   it("skips node_modules at any depth and the build output at the top of apps/docs", async () => {
     const dir = tree({
       "apps/docs/node_modules/x/y.tsx": 'export const Y = "ml-4";\n',

@@ -51,8 +51,8 @@ const PHYSICAL = new RegExp(
 );
 /**
  * A character escaped with a backslash, which opens no string, or a string up to its closing quote
- * or the end of its line. Tailwind refuses a string that runs on to the next line; one that does
- * here ends there instead of failing, so a line of unclosed quotes still scans in linear time.
+ * or the end of its line. Tailwind refuses a string that runs on to the next line; an unclosed
+ * quote here runs to the end of its line instead of failing.
  * ponytail: a string Tailwind continues past a backslash at the end of its line ends at that line.
  */
 const STRING = /\\.|"(?:[^"\\\n]|\\.)*"?|'(?:[^'\\\n]|\\.)*'?/.source;
@@ -106,14 +106,16 @@ function commentAbove(lines: string[], index: number): string {
   if (first < index) return lines.slice(first, index).join("\n");
   const above = lines[index - 1] ?? "";
   if (!/(?:\*\/\}?|-->)\s*$/.test(above)) return "";
+  // The kind of comment that closes on the line above: the other kind's closer inside it ends nothing.
+  const html = /-->\s*$/.test(above);
   for (let start = index - 1; start >= 0; start--) {
     const text = lines[start] ?? "";
-    if (/^\s*(?:\{?\/\*|<!--)/.test(text)) {
+    if (html ? /^\s*<!--/.test(text) : /^\s*\{?\/\*/.test(text)) {
       const comment = lines.slice(start, index).join("\n");
       return COMMENT.test(comment) ? comment : "";
     }
     // The end of an earlier comment: the one above has no opener of its own.
-    if (start < index - 1 && /\*\/|-->/.test(text)) return "";
+    if (start < index - 1 && text.includes(html ? "-->" : "*/")) return "";
   }
   return "";
 }
