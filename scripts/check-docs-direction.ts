@@ -18,7 +18,7 @@ import { join } from "node:path";
 const DIR = "apps/docs";
 /** The build output, relative to DIR; `node_modules` is skipped at any depth. */
 const SKIP = new Set([".next", ".turbo", "out", "public/_pagefind"]);
-const SCANNED = /\.(?:jsx?|tsx?|mdx?|css)$/;
+const SCANNED = /\.(?:[cm]?js|jsx|tsx?|mdx?|json|css)$/;
 
 /** A spacing or inset value: `4`, `0.5`, `1/2`, `px`, `auto`, `full`, `[calc(…)]`, `(--var)`. */
 const VALUE = /\d+(?:\.\d+)?(?:\/\d+)?|px|auto|full|\[[^\]\s]*\]|\([^)\s]*\)/.source;
@@ -39,7 +39,7 @@ const PHYSICAL = new RegExp(
   `(?<![\\w-])(?<!${DIRECTION_VARIANT})(?:${[
     `-?(?:scroll-)?(?:ml|mr|pl|pr)-(?:${VALUE})`,
     `-?(?:left|right)-(?:${VALUE})`,
-    "(?:rounded-[lr]|rounded-[tb][lr]|border-[lr])(?:-(?:\\w+(?:\\.\\w+)*|\\[[^\\]\\s]*\\]|\\([^)\\s]*\\)))?",
+    "(?:rounded-[lr]|rounded-[tb][lr]|border-[lr])(?:-(?:\\w+(?:[-.]\\w+)*|\\[[^\\]\\s]*\\]|\\([^)\\s]*\\)))?",
     "text-(?:left|right)",
     "(?:float|clear)-(?:left|right)",
     "(?:object|bg|origin|perspective-origin|mask|mask-radial-at)-(?:(?:top|bottom)-)?(?:left|right)",
@@ -50,25 +50,35 @@ const PHYSICAL = new RegExp(
   "g",
 );
 /**
+ * A character escaped with a backslash, which opens no string, or a string up to its closing quote
+ * or the end of its line. Tailwind refuses a string that runs on to the next line; one that does
+ * here ends there instead of failing, so a line of unclosed quotes still scans in linear time.
+ * ponytail: a string Tailwind continues past a backslash at the end of its line ends at that line.
+ */
+const STRING = /\\.|"(?:[^"\\\n]|\\.)*"?|'(?:[^'\\\n]|\\.)*'?/.source;
+const CSS_COMMENT = /\/\*[\s\S]*?\*\//.source;
+/**
  * In a stylesheet, what Tailwind reads as classes, kept as group 1: each `@apply` up to its `;` or
- * `}`, across lines and past its comments, and each `@source inline` string. Then what is blanked:
- * a string (so the `/*` of `@source "src/*.tsx"` opens no comment), a comment (one in an `@apply`
- * too, as Tailwind drops it), any other character.
+ * `}`, across lines and past its comments and strings (`before:content-[';']`), and each
+ * `@source inline` string. Then what is blanked: a string (so the `/*` of `@source "src/*.tsx"`
+ * opens no comment), a comment (one in an `@apply` too, as Tailwind drops it), any other character.
  */
 const STYLESHEET = new RegExp(
   [
-    /(@apply\b(?:[^;}/]|\/(?!\*)|\/\*[\s\S]*?\*\/)*|@source\s+inline\(\s*(?:"[^"]*"|'[^']*'))/
-      .source,
-    /"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'/.source,
-    /\/\*[\s\S]*?\*\//.source,
+    `(@apply\\b(?:${STRING}|${CSS_COMMENT}|\\/(?!\\*)|[^;}/])*|${/@source\s+inline\(\s*(?:"[^"]*"|'[^']*')/.source})`,
+    STRING,
+    CSS_COMMENT,
     /[^\n]/.source,
   ].join("|"),
   "g",
 );
+/** A string or a comment in an `@apply`, so that the `/*` in a string opens no comment. */
+const APPLY_PART = new RegExp(`${STRING}|${CSS_COMMENT}`, "g");
 /** A reason has to start with a word character, so `direction: physical,` closed at once by `*\/` names none. */
 const MARKER = /direction:\s*physical,\s*\w/;
-/** One `/* … *\/` or `{/* … *\/}`, on one line or several, and nothing else. */
-const COMMENT = /^\s*(?:\/\*(?:(?!\*\/)[\s\S])*\*\/|\{\/\*(?:(?!\*\/)[\s\S])*\*\/\})\s*$/;
+/** One `/* … *\/`, `{/* … *\/}` or `<!-- … -->`, on one line or several, and nothing else. */
+const COMMENT =
+  /^\s*(?:\/\*(?:(?!\*\/)[\s\S])*\*\/|\{\/\*(?:(?!\*\/)[\s\S])*\*\/\}|<!--(?:(?!-->)[\s\S])*-->)\s*$/;
 
 /** The physical direction classes in `line`, in order. */
 export function physicalTokens(line: string): string[] {
@@ -82,7 +92,9 @@ function stylesheetClasses(css: string): string {
     if (classes === undefined) return part.replace(/[^\n]/g, " ");
     // ponytail: a comment splits a class: `m/**/l-4`, which Tailwind joins to `ml-4`, is not read
     return classes.startsWith("@apply")
-      ? classes.replace(/\/\*[\s\S]*?\*\//g, (comment) => comment.replace(/[^\n]/g, " "))
+      ? classes.replace(APPLY_PART, (part) =>
+          part.startsWith("/*") ? part.replace(/[^\n]/g, " ") : part,
+        )
       : classes;
   });
 }
@@ -93,15 +105,15 @@ function commentAbove(lines: string[], index: number): string {
   while (/^\s*\/\//.test(lines[first - 1] ?? "")) first--;
   if (first < index) return lines.slice(first, index).join("\n");
   const above = lines[index - 1] ?? "";
-  if (!/\*\/\}?\s*$/.test(above)) return "";
+  if (!/(?:\*\/\}?|-->)\s*$/.test(above)) return "";
   for (let start = index - 1; start >= 0; start--) {
     const text = lines[start] ?? "";
-    if (/^\s*\{?\/\*/.test(text)) {
+    if (/^\s*(?:\{?\/\*|<!--)/.test(text)) {
       const comment = lines.slice(start, index).join("\n");
       return COMMENT.test(comment) ? comment : "";
     }
     // The end of an earlier comment: the one above has no opener of its own.
-    if (start < index - 1 && text.includes("*/")) return "";
+    if (start < index - 1 && /\*\/|-->/.test(text)) return "";
   }
   return "";
 }
@@ -122,7 +134,9 @@ export async function checkDocsDirection(root: string): Promise<string[]> {
   if (!existsSync(join(root, DIR))) return [`${DIR}: not found, nothing to scan`];
   const files = sourceFiles(root).sort();
   if (files.length === 0) {
-    return [`${DIR}: no .js, .jsx, .ts, .tsx, .md, .mdx or .css file, nothing to scan`];
+    return [
+      `${DIR}: no .js, .jsx, .mjs, .cjs, .ts, .tsx, .md, .mdx, .json or .css file, nothing to scan`,
+    ];
   }
   if (!files.some((file) => file.endsWith(".mdx"))) {
     return [`${DIR}: no .mdx file, nothing to scan in the content`];

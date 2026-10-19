@@ -74,6 +74,16 @@ describe("physicalTokens", () => {
       ],
     ],
     [
+      "an auto or full value",
+      "ml-auto mr-auto left-full -right-full",
+      ["ml-auto", "mr-auto", "left-full", "-right-full"],
+    ],
+    [
+      "a border colour with a shade, behind a variant too, without its / modifier",
+      "border-l-red-500 border-r-red-500 hover:border-l-sky-950/50",
+      ["border-l-red-500", "border-r-red-500", "border-l-sky-950"],
+    ],
+    [
       "the class, not the ; , ) ] } or . that follows it",
       "a: border-r-2; b: rounded-l-lg, c: (see border-l-4) d: border-l-(--l-ill) a](border-l-2](url) b: rounded-l-lg} c: border-l-2,border-r-2 d: border-l-2 e: see border-l-2.",
       [
@@ -154,8 +164,8 @@ describe("physicalTokens", () => {
     ],
     [
       "a class whose rtl: is not its own variant: on another class, in a longer variant, in prose, before a brace",
-      "rtl:x ml-4 data-rtl:ml-4 group-rtl:ml-4 in-rtl:ml-4 'rtl:' pr-2 rtl: pl-2 {,rtl:}mr-4",
-      ["ml-4", "ml-4", "ml-4", "ml-4", "pr-2", "pl-2", "mr-4"],
+      "rtl:x ml-4 data-rtl:ml-4 group-rtl:ml-4 in-rtl:ml-4 xrtl:ml-4 'rtl:' pr-2 rtl: pl-2 {,rtl:}mr-4",
+      ["ml-4", "ml-4", "ml-4", "ml-4", "ml-4", "pr-2", "pl-2", "mr-4"],
     ],
     [
       "nothing for the logical classes and the look-alikes",
@@ -394,16 +404,44 @@ describe("checkDocsDirection", () => {
     ]);
   });
 
-  it("scans the .js, .jsx and .md files too", async () => {
+  it("scans the .js, .jsx, .mjs, .cjs, .json and .md files too", async () => {
     const dir = tree({
       "apps/docs/app/a.js": 'export const A = "ml-4";\n',
       "apps/docs/app/b.jsx": 'export const B = () => <div className="pr-2" />;\n',
       "apps/docs/content/c.md": "# C\n\nAlign with `text-left`.\n",
+      "apps/docs/d.mjs": 'export const D = "pl-2";\n',
+      "apps/docs/e.cjs": 'module.exports = "mr-2";\n',
+      "apps/docs/f.json": '{ "f": "left-0" }\n',
     });
     expect(await checkDocsDirection(dir)).toEqual([
       "apps/docs/app/a.js:1: ml-4",
       "apps/docs/app/b.jsx:1: pr-2",
       "apps/docs/content/c.md:3: text-left",
+      "apps/docs/d.mjs:1: pl-2",
+      "apps/docs/e.cjs:1: mr-2",
+      "apps/docs/f.json:1: left-0",
+    ]);
+  });
+
+  it("reads a marker in an HTML comment directly above, in a .md file", async () => {
+    const dir = tree({
+      "apps/docs/content/c.md": [
+        "<!-- direction: physical, the table keeps its columns -->",
+        "Align with `text-left`.",
+        "<!--",
+        "  direction: physical, same",
+        "-->",
+        "Align with `text-right`.",
+        "<!-- direction: physical, two lines up -->",
+        "",
+        "Align with `float-left`.",
+        "<!-- direction: physical, before more text --> Align with `ml-4`.",
+        "Align with `mr-4`.",
+      ].join("\n"),
+    });
+    expect(await checkDocsDirection(dir)).toEqual([
+      "apps/docs/content/c.md:9: float-left",
+      "apps/docs/content/c.md:11: mr-4",
     ]);
   });
 
@@ -500,6 +538,21 @@ describe("checkDocsDirection", () => {
       ["1: ml-4", "4: mr-2"],
     ],
     [
+      "reads an @apply on past a ;, } or /* in a quoted value and an escaped quote, up to its own ; as Tailwind does",
+      [
+        ".a { @apply before:content-[';'] ml-4; }",
+        '.b { @apply after:content-["}"] mr-4; } .left-0 { color: red; }',
+        ".c { @apply before:content-['/*'] pl-4 after:content-['*/'] pr-4; }",
+        ".d {",
+        "  @apply before:content-[';']",
+        "    ml-2;",
+        "}",
+        ".e { @apply before:content-[\\'] mr-2; }",
+        ".right-0 { right: 0; }",
+      ],
+      ["1: ml-4", "2: mr-4", "3: pl-4", "3: pr-4", "6: ml-2", "8: mr-2"],
+    ],
+    [
       "reads the string of each @source inline, not of an @source not inline or an @source path",
       [
         '@source inline("ms-2 mr-4");',
@@ -543,8 +596,18 @@ describe("checkDocsDirection", () => {
       ["2: ml-4"],
     ],
     [
-      "ends a string at the end of its line, so a stray apostrophe blanks nothing after it",
+      "ends no single-quoted string at an escaped quote",
+      [".a::after { content: 'a\\'/*'; }", ".b { @apply ml-4; }", "/* a note */"],
+      ["2: ml-4"],
+    ],
+    [
+      "ends a string at the end of its line, so a stray apostrophe blanks nothing on the lines after it",
       ["// it's a note", ".a { @apply ml-4; }", ".b::after { content: 'x'; }"],
+      ["2: ml-4"],
+    ],
+    [
+      "ends a double-quoted string at the end of its line too",
+      ['// a "note', ".a { @apply ml-4; }", '.b::after { content: "x"; }'],
       ["2: ml-4"],
     ],
   ])("%s", async (_name, lines, expected) => {
@@ -559,10 +622,10 @@ describe("checkDocsDirection", () => {
   });
 
   it("fails when apps/docs holds no scanned file outside the skipped folders, so an empty scan cannot pass", async () => {
-    // .json and .txt are not scanned, so a hit in them does not count as a scanned file
+    // .txt and .yml are not scanned, so a hit in them does not count as a scanned file
     const dir = tree({
       "apps/docs/node_modules/x.ts": "export {};\n",
-      "apps/docs/x.json": '{ "x": "ml-4" }\n',
+      "apps/docs/x.yml": "x: ml-4\n",
       "apps/docs/x.txt": "ml-4\n",
     });
     rmSync(join(dir, "apps/docs/seed.ts"));
