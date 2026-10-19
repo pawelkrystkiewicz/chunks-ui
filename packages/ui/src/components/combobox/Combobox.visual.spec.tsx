@@ -1,24 +1,29 @@
 import { render } from "@testing-library/react";
 import { createRef } from "react";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import { cn } from "../../lib/cn";
 import {
   boxOf,
   contentSpan,
+  describeDirs,
+  describeExitPaths,
   describePopupCssPath,
   emulateReducedMotion,
   enterMotionPath,
+  exited,
   expectNotAllowed,
   focusVisible,
   framesOf,
   inlineSpan,
   insetsWithin,
   MOTION_PATHS,
+  recordTabDuringExit,
   renderFixture,
   renderPage,
   ringColor,
   settled,
+  tookFocus,
   waitForStable,
 } from "../../VisualTest.utils";
 import { Combobox, type ComboboxPositionerProps } from "./index";
@@ -336,14 +341,7 @@ describe("Combobox.Trigger beside an input, with nothing selected", () => {
 // element, so a wide value wrapped or ran past the trigger and pushed the chevron out (#541). Each
 // case runs in both directions: the value's `text-start` follows the direction, and the value, the
 // badge and the chevron keep their inline order.
-describe.each(["ltr", "rtl"] as const)("Combobox.Value in a trigger, %s", (dir) => {
-  beforeEach(() => {
-    document.documentElement.dir = dir;
-  });
-  afterEach(() => {
-    document.documentElement.removeAttribute("dir");
-  });
-
+describeDirs("Combobox.Value in a trigger, %s", (dir) => {
   // The Trigger's defaults are a chevron over an input's end (`absolute inset-y-0 end-0`): this
   // makes it a Select-like button
   const SELECT_LIKE =
@@ -538,20 +536,8 @@ describe("Combobox.Popup closing, Motion", () => {
   });
 });
 
-// Trigger-style, input in the popup: a Tab during the exit landed on <body> (#627). The exit is
-// about 0.5s with Motion, 0.3s on the CSS path, and a frame with reduced motion.
-describe.each([
-  { path: "Motion", withMotion: true, reduce: false },
-  { path: "CSS fallback", withMotion: false, reduce: false },
-  { path: "reduced motion", withMotion: true, reduce: true },
-])("Combobox with the input in the popup, closing, $path", ({ withMotion, reduce }) => {
-  beforeAll(() => enterMotionPath(withMotion));
-  beforeEach(() => emulateReducedMotion(reduce));
-  afterAll(async () => {
-    await emulateReducedMotion(true);
-    await enterMotionPath(true);
-  });
-
+// Trigger-style, input in the popup: a Tab during the exit landed on <body> (#627)
+describeExitPaths("Combobox with the input in the popup, closing", (reduce) => {
   // Text fields around the trigger, as WebKit's Tab and click skip buttons; `open` ignores changes
   const fixture = ({
     open,
@@ -618,38 +604,14 @@ describe.each([
     };
   };
 
-  // A Tab after the exit passes without the fix; skipped for reduced motion's one frame
-  const recordTab = (popup: HTMLElement) => {
-    let mounted: boolean | undefined;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Tab") mounted = popup.isConnected;
-    };
-    document.addEventListener("keydown", onKeyDown, true);
-    return () => {
-      document.removeEventListener("keydown", onKeyDown, true);
-      if (!reduce) expect(mounted, "the popup was still closing when Tab went down").toBe(true);
-    };
-  };
-
-  /** Whether `el` has taken focus since the call */
-  const tookFocus = (el: HTMLElement) => {
-    let focused = false;
-    el.addEventListener("focus", () => {
-      focused = true;
-    });
-    return () => focused;
-  };
-
-  const unmounted = (popup: HTMLElement) => expect.poll(() => popup.isConnected).toBe(false);
-
   // Enter and Tab go in one call: with reduced motion the popup leaves a frame after the pick
   it("moves a Tab pressed during the exit past the trigger, after a pick by Enter", async () => {
     const { popup, after } = await openInPopup();
     await userEvent.keyboard("{ArrowDown}");
-    const checkTab = recordTab(popup);
+    const checkTab = recordTabDuringExit(popup, { reduce });
     await userEvent.keyboard("{Enter}{Tab}");
     checkTab();
-    await unmounted(popup);
+    await exited(popup);
     expect(document.activeElement).toBe(after);
   });
 
@@ -658,11 +620,11 @@ describe.each([
     "moves a Tab pressed during the exit past the trigger, after a pick by click",
     async () => {
       const { popup, after } = await openInPopup();
-      const checkTab = recordTab(popup);
+      const checkTab = recordTabDuringExit(popup, { reduce });
       await userEvent.click(page.getByRole("option", { name: "Vue" }));
       await userEvent.keyboard("{Tab}");
       checkTab();
-      await unmounted(popup);
+      await exited(popup);
       expect(document.activeElement).toBe(after);
     },
   );
@@ -670,10 +632,10 @@ describe.each([
   // Its keypress, on a trigger that already had focus, clicked it and reopened the popup
   it("keeps the popup closed and moves a Tab past the trigger, after Enter with nothing highlighted", async () => {
     const { popup, trigger, after } = await openInPopup();
-    const checkTab = recordTab(popup);
+    const checkTab = recordTabDuringExit(popup, { reduce });
     await userEvent.keyboard("{Enter}{Tab}");
     checkTab();
-    await unmounted(popup);
+    await exited(popup);
     expect(document.activeElement).toBe(after);
     expect(trigger).toHaveAttribute("aria-expanded", "false");
   });
@@ -682,7 +644,7 @@ describe.each([
     const { popup, trigger } = await openInPopup();
     await userEvent.keyboard("{Escape}");
     expect(document.activeElement).toBe(trigger);
-    await unmounted(popup);
+    await exited(popup);
     expect(document.activeElement).toBe(trigger);
   });
 
@@ -693,7 +655,7 @@ describe.each([
     await userEvent.click(before);
     expect(triggerFocused(), "the trigger took focus on the way").toBe(false);
     expect(document.activeElement).toBe(before);
-    await unmounted(popup);
+    await exited(popup);
     expect(document.activeElement).toBe(before);
   });
 
@@ -713,10 +675,10 @@ describe.each([
       expect(popup, "the parent kept the popup open").toHaveAttribute("data-open");
       expect(document.activeElement, "the press kept focus in the input").toBe(input);
       view.rerender(fixture({ open: false }));
-      const checkTab = recordTab(popup);
+      const checkTab = recordTabDuringExit(popup, { reduce });
       await userEvent.keyboard("{Tab}");
       checkTab();
-      await unmounted(popup);
+      await exited(popup);
       expect(document.activeElement).toBe(view.getByRole("textbox", { name: "After" }));
     },
   );
@@ -726,7 +688,7 @@ describe.each([
     const { popup, trigger, before } = await openInPopup({ finalFocusBefore: true });
     const triggerFocused = tookFocus(trigger);
     await userEvent.click(page.getByRole("option", { name: "Vue" }));
-    await unmounted(popup);
+    await exited(popup);
     expect(triggerFocused(), "the trigger took focus").toBe(false);
     expect(document.activeElement).toBe(before);
   });

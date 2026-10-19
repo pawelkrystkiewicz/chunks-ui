@@ -4,18 +4,24 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import {
   contentSpan,
+  describeDirs,
+  describeExitPaths,
   describePopupCssPath,
   emulateReducedMotion,
   enterMotionPath,
+  exited,
   expectNotAllowed,
   focusVisible,
   framesOf,
   inlineSpan,
   insetsWithin,
+  isShown,
   MOTION_PATHS,
+  recordTabDuringExit,
   renderFixture,
   renderPage,
   settled,
+  tookFocus,
 } from "../../VisualTest.utils";
 import { FIELD_TEXT_SIZE } from "../shared";
 import { Select } from "./index";
@@ -106,6 +112,36 @@ describe("Select", () => {
     );
     expectNotAllowed(getByRole("combobox"));
   });
+});
+
+// Each case runs in both directions: the value's `text-start` and the chevron's `ms-auto` follow
+// the direction, and the value, the badge and the chevron keep their inline order.
+describeDirs("Select.Value in a trigger, %s", (dir) => {
+  // Three of the cases below in one picture: a short and a long value in a 140px trigger, and a long
+  // value beside a badge in a 200px one. In RTL the value starts at the right edge and its ellipsis,
+  // the badge and the chevron sit to its left. A Latin value shows its last words there: its text
+  // keeps to the right edge, so its first words are what overflows
+  it("shows a short value, a cut value and a badge before the chevron", async () => {
+    const rows = [
+      { fruit: "Fig", width: 140 },
+      { fruit: "Dragon fruit from the far end of the orchard", width: 140 },
+      { fruit: "Dragon fruit from the far end of the orchard", width: 200, badge: "Pro plan" },
+    ];
+    const { fixture } = await renderFixture(
+      <div className="flex flex-col items-start gap-2">
+        {rows.map(({ fruit, width, badge }) => (
+          <Select.Root key={`${width} ${fruit}`} defaultValue={fruit}>
+            <Select.Trigger aria-label="Fruit" style={{ width }}>
+              <Select.Value />
+              {badge && <span className="ms-2">{badge}</span>}
+              <Select.Icon />
+            </Select.Trigger>
+          </Select.Root>
+        ))}
+      </div>,
+    );
+    await expect(fixture).toMatchScreenshot();
+  });
 
   // A value wider than the trigger stays on one line and ends in an ellipsis before the chevron,
   // and the chevron keeps its size at the trigger's end, as beside a short value (#518). Before,
@@ -126,14 +162,14 @@ describe("Select", () => {
       </div>,
     );
     const trigger = getByRole("combobox");
-    const content = contentSpan(trigger, "ltr");
+    const content = contentSpan(trigger, dir);
     const value = getByTestId("value");
-    const icon = inlineSpan(getByTestId("icon"), "ltr");
+    const icon = inlineSpan(getByTestId("icon"), dir);
     const { top, bottom } = insetsWithin(trigger, value);
     expect(top).toBeGreaterThanOrEqual(0);
     expect(bottom).toBeGreaterThanOrEqual(0);
-    expect(inlineSpan(value, "ltr").start).toBeCloseTo(content.start, 1);
-    expect(inlineSpan(value, "ltr").end).toBeLessThanOrEqual(icon.start);
+    expect(inlineSpan(value, dir).start).toBeCloseTo(content.start, 1);
+    expect(inlineSpan(value, dir).end).toBeLessThanOrEqual(icon.start);
     expect(icon.end).toBeCloseTo(content.end, 1);
     expect(icon.end - icon.start).toBe(16);
     // Cut at the value's box, with an ellipsis: the text is wider than what shows
@@ -166,18 +202,18 @@ describe("Select", () => {
       </div>,
     );
     const trigger = getByRole("combobox");
-    const content = contentSpan(trigger, "ltr");
+    const content = contentSpan(trigger, dir);
     const value = getByTestId("value");
     const badge = getByTestId("badge");
-    const icon = inlineSpan(getByTestId("icon"), "ltr");
+    const icon = inlineSpan(getByTestId("icon"), dir);
     const reference = getByTestId("reference").getBoundingClientRect();
     expect(badge.getBoundingClientRect().width).toBeCloseTo(reference.width, 1);
     // The text keeps to the start of the value's box, which the trigger's <button> would centre
     const text = document.createRange();
     text.selectNodeContents(value);
-    expect(inlineSpan(text, "ltr").start).toBeCloseTo(content.start, 1);
-    expect(inlineSpan(value, "ltr").end).toBeLessThanOrEqual(inlineSpan(badge, "ltr").start);
-    expect(inlineSpan(badge, "ltr").end).toBeLessThanOrEqual(icon.start);
+    expect(inlineSpan(text, dir).start).toBeCloseTo(content.start, 1);
+    expect(inlineSpan(value, dir).end).toBeLessThanOrEqual(inlineSpan(badge, dir).start);
+    expect(inlineSpan(badge, dir).end).toBeLessThanOrEqual(icon.start);
     expect(icon.end).toBeCloseTo(content.end, 1);
     expect(value.scrollWidth > value.clientWidth).toBe(truncated);
   });
@@ -194,11 +230,11 @@ describe("Select", () => {
         </Select.Root>
       </div>,
     );
-    const content = contentSpan(getByRole("combobox"), "ltr");
+    const content = contentSpan(getByRole("combobox"), dir);
     const value = getByTestId("value");
-    const icon = inlineSpan(getByTestId("icon"), "ltr");
+    const icon = inlineSpan(getByTestId("icon"), dir);
     expect(value.scrollWidth).toBeGreaterThan(value.clientWidth);
-    expect(inlineSpan(value, "ltr").end).toBeLessThanOrEqual(icon.start);
+    expect(inlineSpan(value, dir).end).toBeLessThanOrEqual(icon.start);
     expect(icon.end).toBeCloseTo(content.end, 1);
   });
 
@@ -225,9 +261,10 @@ describe("Select", () => {
         </div>
       </div>,
     );
-    const box = getByTestId("box");
-    expect(insetsWithin(box, getByRole("combobox")).right).toBeGreaterThanOrEqual(0);
-    if (row) expect(insetsWithin(box, getByRole("button")).right).toBeGreaterThanOrEqual(0);
+    // An overflow would pass the box's inline end: its right edge in LTR, its left edge in RTL
+    const box = inlineSpan(getByTestId("box"), dir);
+    expect(inlineSpan(getByRole("combobox"), dir).end).toBeLessThanOrEqual(box.end);
+    if (row) expect(inlineSpan(getByRole("button"), dir).end).toBeLessThanOrEqual(box.end);
     const value = getByTestId("value");
     expect(getComputedStyle(value).textOverflow).toBe("ellipsis");
     expect(value.scrollWidth).toBeGreaterThan(value.clientWidth);
@@ -297,21 +334,10 @@ describe("Select.Popup below its trigger, Motion", () => {
   });
 });
 
-// Base UI returns focus to the trigger only at the unmount, after the exit: a Tab during it went
-// to a focus guard in the closing popup, then <body> (#633). The exit is about 0.5s with Motion,
-// 0.3s on the CSS path, and a frame with reduced motion.
-describe.each([
-  { path: "Motion", withMotion: true, reduce: false },
-  { path: "CSS fallback", withMotion: false, reduce: false },
-  { path: "reduced motion", withMotion: true, reduce: true },
-])("Select focus as the popup closes, $path", ({ withMotion, reduce }) => {
-  beforeAll(() => enterMotionPath(withMotion));
-  beforeEach(() => emulateReducedMotion(reduce));
-  afterAll(async () => {
-    await emulateReducedMotion(true);
-    await enterMotionPath(true);
-  });
-
+// Base UI returns focus to the trigger only at the end of the exit, as it hides the popup (kept
+// mounted once the trigger has had focus): a Tab during the exit went to a focus guard in the
+// closing popup, then <body> (#633)
+describeExitPaths("Select focus as the popup closes", (reduce) => {
   // Text fields around the trigger, as WebKit's Tab and click skip buttons
   const fixture = ({
     alignItemWithTrigger,
@@ -367,32 +393,6 @@ describe.each([
     };
   };
 
-  // A Tab after the exit passes without the fix; skipped for reduced motion's one frame. Base UI
-  // keeps the popup mounted after the exit, hidden: shown means still leaving.
-  const recordTab = (popup: HTMLElement) => {
-    let shown: boolean | undefined;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Tab") shown = popup.checkVisibility();
-    };
-    document.addEventListener("keydown", onKeyDown, true);
-    return () => {
-      document.removeEventListener("keydown", onKeyDown, true);
-      if (!reduce) expect(shown, "the popup was still closing when Tab went down").toBe(true);
-    };
-  };
-
-  /** Whether `el` has taken focus since the call */
-  const tookFocus = (el: HTMLElement) => {
-    let focused = false;
-    el.addEventListener("focus", () => {
-      focused = true;
-    });
-    return () => focused;
-  };
-
-  // The exit is over: Base UI keeps the popup mounted, hidden, while the trigger has focus
-  const exited = (popup: HTMLElement) => expect.poll(() => popup.checkVisibility()).toBe(false);
-
   // Enter and Tab go in one call: with reduced motion the popup leaves a frame after the pick
   it.each([
     { alignment: "aligned with its trigger", alignItemWithTrigger: undefined },
@@ -402,11 +402,11 @@ describe.each([
     async ({ alignItemWithTrigger }) => {
       const { popup, after } = await open({ alignItemWithTrigger });
       await userEvent.keyboard("{ArrowDown}");
-      const checkTab = recordTab(popup);
+      const checkTab = recordTabDuringExit(popup, { reduce, stillClosing: isShown });
       await userEvent.keyboard("{Enter}{Tab}");
       checkTab();
       expect(document.activeElement).toBe(after);
-      await exited(popup);
+      await exited(popup, { stillClosing: isShown });
       expect(document.activeElement).toBe(after);
     },
   );
@@ -416,12 +416,12 @@ describe.each([
     "moves a Tab pressed during the exit past the trigger, after a pick by click",
     async () => {
       const { popup, after } = await open();
-      const checkTab = recordTab(popup);
+      const checkTab = recordTabDuringExit(popup, { reduce, stillClosing: isShown });
       await userEvent.click(page.getByRole("option", { name: "Cherry" }));
       await userEvent.keyboard("{Tab}");
       checkTab();
       expect(document.activeElement).toBe(after);
-      await exited(popup);
+      await exited(popup, { stillClosing: isShown });
       expect(document.activeElement).toBe(after);
     },
   );
@@ -431,7 +431,7 @@ describe.each([
     const { popup, trigger } = await open();
     await userEvent.keyboard("{Escape}");
     expect(document.activeElement).toBe(trigger);
-    await exited(popup);
+    await exited(popup, { stillClosing: isShown });
     expect(document.activeElement).toBe(trigger);
   });
 
@@ -443,16 +443,17 @@ describe.each([
     await userEvent.click(before);
     expect(triggerFocused(), "the trigger took focus on the way").toBe(false);
     expect(document.activeElement).toBe(before);
-    await exited(popup);
+    await exited(popup, { stillClosing: isShown });
     expect(document.activeElement).toBe(before);
   });
 
-  // An element as `finalFocus` keeps Base UI's timing: focus moves there at the unmount
+  // An element as `finalFocus` keeps Base UI's timing: focus moves there at the end of the exit,
+  // as the popup hides
   it("moves focus only at the unmount, to an element passed as finalFocus", async () => {
     const { popup, trigger, before } = await open({ finalFocusBefore: true });
     const triggerFocused = tookFocus(trigger);
     await userEvent.keyboard("{Escape}");
-    await exited(popup);
+    await exited(popup, { stillClosing: isShown });
     expect(triggerFocused(), "the trigger took focus").toBe(false);
     expect(document.activeElement).toBe(before);
   });

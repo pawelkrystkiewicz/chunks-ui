@@ -4,7 +4,9 @@ import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import {
   emulateReducedMotion,
+  exited,
   expectNotAllowed,
+  recordTabDuringExit,
   renderFixture,
   settled,
 } from "../../VisualTest.utils";
@@ -165,47 +167,32 @@ describe.each([
     };
   };
 
-  // A Tab after the exit passes without the fix; skipped for reduced motion's one frame
-  const recordTab = (popup: HTMLElement) => {
-    let mounted: boolean | undefined;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Tab") mounted = popup.isConnected;
-    };
-    document.addEventListener("keydown", onKeyDown, true);
-    return () => {
-      document.removeEventListener("keydown", onKeyDown, true);
-      if (!reduce) expect(mounted, "the popup was still closing when Tab went down").toBe(true);
-    };
-  };
-
-  const unmounted = (popup: HTMLElement) => expect.poll(() => popup.isConnected).toBe(false);
-
   // Enter and Tab go in one call: with reduced motion the popup leaves a frame after the pick
   it("moves a Tab pressed during the exit past the trigger, after a pick by Enter", async () => {
     const { popup, after } = await open();
     await userEvent.keyboard("{ArrowDown}");
-    const checkTab = recordTab(popup);
+    const checkTab = recordTabDuringExit(popup, { reduce });
     await userEvent.keyboard("{Enter}{Tab}");
     checkTab();
     expect(document.activeElement).toBe(after);
-    await unmounted(popup);
+    await exited(popup);
     expect(document.activeElement).toBe(after);
   });
 
-  // A held Enter repeats its keydown and keypress: on a trigger that already had focus, the repeat
-  // clicked it and opened the calendar again. The CSS path only (#652): with reduced motion the
-  // popup unmounts a frame after the pick and Base UI focuses the trigger, so this repeat lands on
-  // either side by load, and a repeat after the unmount clicks the focused trigger, as on any
-  // button.
+  // The picking Enter repeats its keydown and keypress once, inside the exit. Without the
+  // hand-off's wait the repeat would land on the trigger, which has focus by then, and open the
+  // calendar again. A second repeat clicks the trigger, as on any button. The CSS path only
+  // (#652): with reduced motion the popup unmounts a frame after the pick and Base UI focuses the
+  // trigger, so this repeat lands on either side by load.
   it.skipIf(reduce)(
-    "keeps the calendar closed and the trigger focused, after a pick by a held Enter",
+    "keeps the calendar closed and the trigger focused when the picking Enter repeats once during the exit",
     async () => {
       const { popup, trigger } = await open();
       await userEvent.keyboard("{ArrowDown}{Enter>2}{/Enter}");
       expect(trigger).toHaveAttribute("aria-expanded", "false");
       expect(document.activeElement).toBe(trigger);
       expect(trigger.matches(":focus-visible"), "the trigger shows its ring").toBe(true);
-      await unmounted(popup);
+      await exited(popup);
       expect(trigger).toHaveAttribute("aria-expanded", "false");
       expect(document.activeElement).toBe(trigger);
     },
@@ -216,12 +203,12 @@ describe.each([
     "moves a Tab pressed during the exit past the trigger, after a pick by click",
     async () => {
       const { popup, after } = await open();
-      const checkTab = recordTab(popup);
+      const checkTab = recordTabDuringExit(popup, { reduce });
       await userEvent.click(page.getByRole("button", { name: "Friday, March 20, 2026" }));
       await userEvent.keyboard("{Tab}");
       checkTab();
       expect(document.activeElement).toBe(after);
-      await unmounted(popup);
+      await exited(popup);
       expect(document.activeElement).toBe(after);
     },
   );
@@ -231,7 +218,7 @@ describe.each([
     const { popup, trigger } = await open();
     await userEvent.keyboard("{Escape}");
     expect(document.activeElement).toBe(trigger);
-    await unmounted(popup);
+    await exited(popup);
     expect(document.activeElement).toBe(trigger);
   });
 });

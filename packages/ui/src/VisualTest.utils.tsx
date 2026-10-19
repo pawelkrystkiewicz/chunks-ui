@@ -1,7 +1,7 @@
 import { type RenderResult, render } from "@testing-library/react";
 import { cancelFrame, frame } from "motion/react";
 import type { ReactElement, ReactNode } from "react";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { commands, page } from "vitest/browser";
 import { reloadMotion, useMotion } from "./lib/use-motion";
 import { SETTLE_TIMEOUT_MS } from "./VisualTest.timeouts";
@@ -153,6 +153,25 @@ export async function renderPage(children: ReactNode) {
   render(children);
   await document.fonts.ready;
   return page.elementLocator(document.body);
+}
+
+/** Both inline directions, left to right first */
+export const DIRS: Dir[] = ["ltr", "rtl"];
+
+/**
+ * Runs `define` once per direction, with `dir` on <html> through each test, as an app sets it, so
+ * portalled popups inherit it. `name` takes the direction at `%s`, as in `describe.each`. Base UI's
+ * `DirectionProvider` (keyboard navigation, logical popup sides) is the spec's to add, as
+ * `renderIn` in Rtl.visual.spec.tsx does.
+ */
+export function describeDirs(name: string, define: (dir: Dir) => void) {
+  describe.each(DIRS)(name, (dir) => {
+    beforeEach(() => {
+      document.documentElement.dir = dir;
+    });
+    afterEach(() => document.documentElement.removeAttribute("dir"));
+    define(dir);
+  });
 }
 
 /** Asserts `disabledEl` is dimmed and ignores the pointer, and `enabledEl` is neither */
@@ -673,3 +692,74 @@ export function applyTheme(vars: Theme["vars"]) {
 export function resetTheme(vars: Theme["vars"]) {
   for (const name of Object.keys(vars)) document.documentElement.style.removeProperty(name);
 }
+
+// Focus as a popup closes: Base UI returns focus to the trigger only at the end of the exit, as
+// the popup unmounts or hides (`isShown`), so the popups' specs press Tab during the exit, on each
+// of its paths (#633)
+
+/** Whether a popup is still closing */
+type StillClosing = (popup: HTMLElement) => boolean;
+
+const mounted: StillClosing = (popup) => popup.isConnected;
+
+/**
+ * Still closing while it shows, for a popup that stays mounted after its exit, hidden: Base UI
+ * keeps a Select popup mounted once its trigger has had focus
+ */
+export const isShown: StillClosing = (popup) => popup.checkVisibility();
+
+/**
+ * Runs `define` once per path of a popup's exit, as `${name}, $path`, and passes it whether motion
+ * is reduced: with no preference on each of `MOTION_PATHS` (an exit of about 0.5s with Motion,
+ * 0.3s on the CSS path), and with reduced motion, an exit of a frame. Reduced motion and Motion
+ * are back to the defaults afterwards.
+ */
+export function describeExitPaths(name: string, define: (reduce: boolean) => void) {
+  describe.each([
+    ...MOTION_PATHS.map(({ path, withMotion }) => ({ path, withMotion, reduce: false })),
+    { path: "reduced motion", withMotion: true, reduce: true },
+  ])(`${name}, $path`, ({ withMotion, reduce }) => {
+    beforeAll(() => enterMotionPath(withMotion));
+    beforeEach(() => emulateReducedMotion(reduce));
+    afterAll(async () => {
+      await emulateReducedMotion(true);
+      await enterMotionPath(true);
+    });
+    define(reduce);
+  });
+}
+
+/**
+ * Notes whether `popup` was still closing when Tab went down: by default, still mounted. The check
+ * it returns fails when it was not, as a Tab after the exit passes without the hand-off. Not with
+ * reduced motion: the exit of a frame may be over by then.
+ */
+export function recordTabDuringExit(
+  popup: HTMLElement,
+  { reduce, stillClosing = mounted }: { reduce: boolean; stillClosing?: StillClosing },
+) {
+  let closing: boolean | undefined;
+  const onKeyDown = (event: KeyboardEvent) => {
+    if (event.key === "Tab") closing = stillClosing(popup);
+  };
+  document.addEventListener("keydown", onKeyDown, true);
+  return () => {
+    document.removeEventListener("keydown", onKeyDown, true);
+    if (!reduce) expect(closing, "the popup was still closing when Tab went down").toBe(true);
+  };
+}
+
+/** Whether `el` has taken focus since the call */
+export function tookFocus(el: HTMLElement) {
+  let focused = false;
+  el.addEventListener("focus", () => {
+    focused = true;
+  });
+  return () => focused;
+}
+
+/** Resolves once `popup` is no longer closing: by default, once it has unmounted */
+export const exited = (
+  popup: HTMLElement,
+  { stillClosing = mounted }: { stillClosing?: StillClosing } = {},
+) => expect.poll(() => stillClosing(popup)).toBe(false);
