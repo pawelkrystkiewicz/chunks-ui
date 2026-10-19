@@ -17,6 +17,12 @@ export type Trail = {
 export const EMPTY_TRAIL: Trail = { steps: [] };
 
 /**
+ * No hand-set colours, as the panel writes it. Presets, shuffle and the resets write `undefined`,
+ * so a trail whose `last` is NONE no longer belongs to the theme after one of those.
+ */
+export const NONE: Overrides = {};
+
+/**
  * The trail after an edit from `current` to `next`. The first event of a gesture, or any edit that
  * is not a drag, pushes `current`; later events of the same drag only move `last`. Built from the
  * trail it is given, so events handled before a re-render stack up. An edit drops what was undone.
@@ -38,7 +44,7 @@ export function undoTrail(trail: Trail, current: Overrides | undefined): Trail {
   if (trail.last !== current || trail.steps.length === 0) return trail;
   return {
     steps: trail.steps.slice(0, -1),
-    last: trail.steps.at(-1),
+    last: trail.steps.at(-1) ?? NONE,
     redo: [...(trail.redo ?? []), current],
   };
 }
@@ -47,5 +53,5 @@ export function undoTrail(trail: Trail, current: Overrides | undefined): Trail {
 export function redoTrail(trail: Trail, current: Overrides | undefined): Trail {
   const redo = trail.redo ?? [];
   if (trail.last !== current || redo.length === 0) return trail;
-  return { steps: [...trail.steps, current], last: redo.at(-1), redo: redo.slice(0, -1) };
+  return { steps: [...trail.steps, current], last: redo.at(-1) ?? NONE, redo: redo.slice(0, -1) };
 }

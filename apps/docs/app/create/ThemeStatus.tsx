@@ -31,7 +31,7 @@ import {
   WCAG_LEVELS,
   type WcagLevel,
 } from "./theme-status";
-import { EMPTY_TRAIL, nextTrail, redoTrail, undoTrail } from "./undo-trail";
+import { EMPTY_TRAIL, NONE, nextTrail, redoTrail, undoTrail } from "./undo-trail";
 
 const GROUPS = ["Text", "Controls", "Charts"] as const;
 const TH = "py-1.5 pe-3 text-start font-medium";
@@ -124,26 +124,28 @@ export function ThemeStatus({
     }
   };
 
+  // The panel writes "no colours" as NONE: see the trail
   const edit = (overrides: Overrides | undefined, drag = false) => {
     const current = theme.overrides;
+    const next = overrides ?? NONE;
     const dragged = dragging.current;
-    setTrail((t) => nextTrail(t, current, overrides, drag, dragged));
+    setTrail((t) => nextTrail(t, current, next, drag, dragged));
     dragging.current = drag;
-    onChange({ overrides });
+    onChange({ overrides: next });
   };
   const undo = () => {
     if (history.length === 0) return;
     const current = theme.overrides;
     dragging.current = false;
     setTrail((t) => undoTrail(t, current));
-    onChange({ overrides: history.at(-1) });
+    onChange({ overrides: history.at(-1) ?? NONE });
   };
   const redo = () => {
     if (undone.length === 0) return;
     const current = theme.overrides;
     dragging.current = false;
     setTrail((t) => redoTrail(t, current));
-    onChange({ overrides: undone.at(-1) });
+    onChange({ overrides: undone.at(-1) ?? NONE });
   };
   // ⌘Z / Ctrl+Z undoes and ⇧⌘Z / Ctrl+Y redoes anywhere in the panel or an open editor, except in a
   // text field's own history

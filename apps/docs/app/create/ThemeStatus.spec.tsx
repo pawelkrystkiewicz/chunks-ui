@@ -224,6 +224,20 @@ describe("redo", { timeout: 15_000 }, () => {
     expect(redoButton().getAttribute("aria-disabled")).toBe("true");
   });
 
+  it("forgets its steps when a preset, shuffle or reset sets the colours after an undo", () => {
+    render(<Harness />);
+    openEditor();
+    typeBlack();
+    ctrlZ(resetAll());
+    fireEvent.click(screen.getByRole("button", { name: "Outside reset" }));
+    expect(redoButton().getAttribute("aria-disabled")).toBe("true");
+    // Reset all, then a reset from outside: the hand-set colours must not come back
+    typeBlack();
+    fireEvent.click(resetAll());
+    fireEvent.click(screen.getByRole("button", { name: "Outside reset" }));
+    expect(undoButton().getAttribute("aria-disabled")).toBe("true");
+  });
+
   it("forgets the undone edits when a new edit is made", () => {
     render(<Harness />);
     openEditor();
