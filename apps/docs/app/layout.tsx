@@ -60,6 +60,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           // sets the text of the theme options ("Light theme" etc.). The navbar's switch, the one
           // globals.css leaves on screen, is `lite` (icon only): the Select's
           // `title="Change theme"` names it.
+          // ponytail: that name leaves out the current theme, which only the opened list shows.
+          // The full copies globals.css hides were the only switches whose name carried it
+          // ("Light theme").
           search={<Search aria-label="Search documentation" />}
           themeSwitch={{ light: "Light theme", dark: "Dark theme", system: "System theme" }}
           // Base of the "Edit this page" and feedback links; Nextra appends the file path
