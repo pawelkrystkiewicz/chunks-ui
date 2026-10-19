@@ -413,6 +413,33 @@ describe("Toast", () => {
     expect(toast).not.toHaveAttribute("aria-hidden");
     expect([toast, action, close].map((el) => el.tabIndex)).toEqual([0, 0, 0]);
   });
+
+  // Base UI aria-hides the close button of every toast while the toasts are collapsed
+  // (mui/base-ui#5731), and Toast.Close takes itself out of the tab order for that time (#685).
+  // The toast of the default `low` priority is not aria-hidden: it and its action keep their
+  // tab stops
+  it("keeps only the close button of a default-priority toast out of the tab order while collapsed", async () => {
+    const user = userEvent.setup();
+    const manager = createToastManager();
+    render(
+      <Toast.Provider toastManager={manager}>
+        <Toast.Viewport data-testid="viewport" />
+      </Toast.Provider>,
+    );
+    act(() => {
+      manager.add({ title: "Saved", dismissible: true, actionProps: { children: "Undo" } });
+    });
+    const toast = await screen.findByRole("dialog");
+    const action = screen.getByRole("button", { name: "Undo" });
+    const close = screen.getByLabelText(DEFAULT_TOAST_LABELS.close, { selector: "button" });
+    expect(close).toHaveAttribute("aria-hidden", "true");
+    expect([toast, action, close].map((el) => el.tabIndex)).toEqual([0, 0, -1]);
+
+    // The pointer over the viewport expands the toasts: Base UI shows the close button again
+    await user.hover(screen.getByTestId("viewport"));
+    expect(close).not.toHaveAttribute("aria-hidden", "true");
+    expect([toast, action, close].map((el) => el.tabIndex)).toEqual([0, 0, 0]);
+  });
 });
 
 describe("Toast labels", () => {

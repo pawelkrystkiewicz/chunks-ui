@@ -331,7 +331,7 @@ export default Props
 
 ### Compound parts
 
-All other compound parts (`Toast.Provider`, `Toast.Root`, `Toast.Title`, `Toast.Description`, `Toast.Close`, `Toast.Action`) are thin style wrappers and forward their props to the corresponding Base UI primitive, except that `Toast.Root`, `Toast.Close` and `Toast.Action` replace a `tabIndex` you pass with `-1` while Base UI hides them from screen readers, which for `Toast.Close` includes the time the toasts are collapsed (see the note under [Props](#props)). See the [Base UI Toast reference](https://base-ui.com/react/components/toast#api-reference) for the full prop surface.
+All other compound parts (`Toast.Provider`, `Toast.Root`, `Toast.Title`, `Toast.Description`, `Toast.Close`, `Toast.Action`) are thin style wrappers and forward their props to the corresponding Base UI primitive, except that `Toast.Root`, `Toast.Close` and `Toast.Action` replace a `tabIndex` you pass as a prop with `-1` while Base UI hides them from screen readers, which for `Toast.Close` includes the time the toasts are collapsed (see the note under [Props](#props)). A `tabIndex` in `closeProps` is replaced too. A `tabIndex` in `actionProps` is not: Base UI merges `actionProps` after the part's props, so it wins. See the [Base UI Toast reference](https://base-ui.com/react/components/toast#api-reference) for the full prop surface.
 
 ## Labels
 
