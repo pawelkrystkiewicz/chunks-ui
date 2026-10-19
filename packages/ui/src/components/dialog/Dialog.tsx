@@ -40,8 +40,10 @@ function DialogPortal({ className, children, ref, ...props }: DialogPortalProps)
     <BaseDialog.Portal
       ref={portalRef}
       container={container}
-      // The portal node carries the z-layer, not the popup: whatever opens from the dialog portals in here and stacks above it
-      className={cnState("relative z-modals", className)}
+      // The portal node carries the z-layer, not the popup: whatever opens from the dialog portals in here and stacks above it.
+      // Popups from the dialog are placed against this box, which Floating UI does not watch: at the top of the document it
+      // stays put when the page changes height (#664), and as wide as the page it lets a popup grow to fit its content
+      className={cnState("absolute inset-x-0 top-0 z-modals", className)}
       {...props}
     >
       <PortalContainerProvider value={portalNode}>{children}</PortalContainerProvider>
