@@ -61,8 +61,9 @@ function DrawerPortal({ className, children, ref, ...props }: DrawerPortalProps)
     <BaseDialog.Portal
       ref={portalRef}
       container={container}
-      // The portal node carries the z-layer, not the popup: whatever opens from the drawer portals in here and stacks above it
-      className={cnState("relative z-drawers", className)}
+      // The portal node carries the z-layer, not the popup: whatever opens from the drawer
+      // portals in here and stacks above it. ponytail: as DialogPortal
+      className={cnState("fixed inset-x-0 top-0 z-drawers", className)}
       {...props}
     >
       <PortalContainerProvider value={portalNode}>{children}</PortalContainerProvider>
