@@ -75,8 +75,8 @@ describe("DatePicker focus as a controlled popup closes", () => {
     expect(document.activeElement).toBe(trigger);
   });
 
-  // The pick's close carries the key's click, so the hand-off waits for the repeat's keypress
-  // before it moves focus: the repeat does not reach the trigger and open the calendar again, and
+  // The pick's close carries the key's click, so the hand-off cancels the repeat and moves focus
+  // when the key comes up: the repeat does not reach the trigger and open the calendar again, and
   // the trigger shows its ring, as after a close by a key
   it("keeps the calendar closed and the trigger focused, and picks once, when the picking Enter repeats once during the exit", async () => {
     const { popup, trigger, onOpenChange, onValueChange } = await open();

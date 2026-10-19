@@ -1,6 +1,6 @@
 import { render } from "@testing-library/react";
 import { createRef } from "react";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import {
   contentSpan,
@@ -343,16 +343,18 @@ describeExitPaths("Select focus as the popup closes", (reduce) => {
     alignItemWithTrigger,
     modal,
     finalFocusBefore = false,
+    onValueChange,
   }: {
     alignItemWithTrigger?: boolean;
     modal?: boolean;
     finalFocusBefore?: boolean;
+    onValueChange?: (value: string | null) => void;
   } = {}) => {
     const beforeRef = createRef<HTMLInputElement>();
     return (
       <div className="flex w-60 flex-col items-start gap-2" style={{ padding: 40 }}>
         <input ref={beforeRef} aria-label="Before" />
-        <Select.Root defaultValue="apple" modal={modal}>
+        <Select.Root defaultValue="apple" modal={modal} onValueChange={onValueChange}>
           <Select.Trigger aria-label="Fruit">
             <Select.Value />
             <Select.Icon />
@@ -410,6 +412,24 @@ describeExitPaths("Select focus as the popup closes", (reduce) => {
       expect(document.activeElement).toBe(after);
     },
   );
+
+  // A Base UI item picks on each Enter or Space keydown, and the hand-off's wait let the repeats
+  // reach the item: it picked once per keydown. Motion and CSS only: with reduced motion the popup
+  // may be gone before the repeats, by load.
+  it.skipIf(reduce).each([
+    { key: "Enter", keys: "{Enter>3}{/Enter}" },
+    { key: "Space", keys: "[Space>3][/Space]" },
+  ])("picks once when the picking $key repeats during the exit", async ({ keys }) => {
+    const onValueChange = vi.fn();
+    const { popup, trigger } = await open({ onValueChange });
+    await userEvent.keyboard(`{ArrowDown}${keys}`);
+    expect(onValueChange).toHaveBeenCalledOnce();
+    expect(onValueChange).toHaveBeenCalledWith("banana", expect.anything());
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    expect(document.activeElement).toBe(trigger);
+    await exited(popup, { stillClosing: isShown });
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+  });
 
   // A click and a key press are two calls, too far apart for the one frame of reduced motion
   it.skipIf(reduce)(

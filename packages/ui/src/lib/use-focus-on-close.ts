@@ -99,31 +99,41 @@ export function useFocusOnClose<T extends HTMLElement>(
     let byKey = false;
     const stopWaiting = () => {
       doc.removeEventListener("keydown", onNextKeyDown, true);
-      doc.removeEventListener("keypress", onKeyPress, true);
-      doc.removeEventListener("keyup", handOff, true);
+      doc.removeEventListener("keypress", endWait, true);
+      doc.removeEventListener("keyup", endWait, true);
     };
     // Checks again after a wait: the popup may have reopened.
     // ponytail: a pick that opens a Dialog gives the trigger focus for a frame, until the Dialog
     // takes it (its focus and blur handlers fire). Accepted for now.
     const handOff = () => {
-      stopWaiting();
       if (!closing() || !focusInside()) return;
       // `focusVisible`, which lib.dom lacks
       const options = { preventScroll: true, ...(byKey && { focusVisible: true }) };
       closeFocus.trigger.current?.focus(options as FocusOptions);
     };
+    const endWait = () => {
+      stopWaiting();
+      handOff();
+    };
     // A new key's keydown ends the wait, as does any keypress or keyup. A held key repeats its
     // keydown, and its keypress too if it has one (Enter, Space, characters, not Escape, Tab or
     // the arrows): the repeat's keydown does not end the wait, its keypress does.
-    // With focus inside the closing popup, that keypress is also cancelled: Chromium activates its
-    // target even after the hand-off has moved focus, and a held Enter would pick a DatePicker day
-    // twice.
+    // A held Enter or Space acts again on each repeat: a Base UI item on the keydown, a button on
+    // Enter's keypress, and the trigger, once focus is there, opens the popup again. While the popup
+    // closes, such a repeat aimed inside it or at the trigger is cancelled, which also cancels its
+    // keypress; Base UI's items skip a cancelled keydown. Other keys' repeats are left alone: a held
+    // Shift+Tab closes a Select or Menu and goes on from the trigger.
+    // ponytail: a popup that unmounts stops listening, so a key held past the exit reaches the
+    // trigger and opens the popup again, as on any button. Accepted.
     const onNextKeyDown = (event: KeyboardEvent) => {
-      if (!event.repeat) handOff();
-    };
-    const onKeyPress = (event: KeyboardEvent) => {
-      if (event.repeat && closing() && focusInside()) event.preventDefault();
-      handOff();
+      if (!event.repeat) endWait();
+      else if (
+        (event.key === "Enter" || event.key === " ") &&
+        closing() &&
+        (focusInside() || event.target === closeFocus.trigger.current)
+      ) {
+        event.preventDefault();
+      }
     };
     const observer = new MutationObserver(() => {
       if (!closing()) return;
@@ -152,13 +162,13 @@ export function useFocusOnClose<T extends HTMLElement>(
       // focus instead. Accepted.
       const keyClick = event?.type === "click" && "detail" in event && event.detail === 0;
       byKey = keyClick || event?.type.startsWith("key") === true;
-      if ((event?.type === "keydown" && !event.defaultPrevented) || keyClick) {
-        doc.addEventListener("keydown", onNextKeyDown, true);
-        doc.addEventListener("keypress", onKeyPress, true);
-        doc.addEventListener("keyup", handOff, true);
-      } else {
-        handOff();
-      }
+      // Other closes hand over at once, and still listen until the next key's events, for the
+      // repeats of a key held through the close: a Combobox's pick by Enter (default-prevented), or
+      // a button that sets `open` to false, which Base UI does not report.
+      doc.addEventListener("keydown", onNextKeyDown, true);
+      doc.addEventListener("keypress", endWait, true);
+      doc.addEventListener("keyup", endWait, true);
+      if (!((event?.type === "keydown" && !event.defaultPrevented) || keyClick)) handOff();
     });
     observer.observe(popup, { attributeFilter: ["data-closed"] });
     inside.addEventListener("focusout", onFocusOut);

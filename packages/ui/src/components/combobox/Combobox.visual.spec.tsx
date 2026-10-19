@@ -1,6 +1,6 @@
 import { render } from "@testing-library/react";
 import { createRef } from "react";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import { cn } from "../../lib/cn";
 import {
@@ -677,6 +677,26 @@ describeExitPaths("Combobox with the input in the popup, closing", (reduce) => {
       checkTab();
       await exited(popup);
       expect(document.activeElement).toBe(after);
+    },
+  );
+
+  // The pick's keydown is default-prevented, so the hand-off moved focus at once, and each repeat
+  // clicked the trigger, which opened the popup again, then closed it. Motion and CSS only: with
+  // reduced motion the popup may be gone before the repeats, by load, and they then reach the
+  // trigger, as on any button.
+  it.skipIf(reduce)(
+    "keeps the popup closed when the picking Enter repeats during the exit",
+    async () => {
+      const { popup, trigger } = await openInPopup();
+      const onTriggerClick = vi.fn();
+      trigger.addEventListener("click", onTriggerClick);
+      await userEvent.keyboard("{ArrowDown}{Enter>3}{/Enter}");
+      expect(trigger).toHaveTextContent("React");
+      expect(onTriggerClick, "the trigger was clicked").not.toHaveBeenCalled();
+      expect(trigger).toHaveAttribute("aria-expanded", "false");
+      expect(document.activeElement).toBe(trigger);
+      await exited(popup);
+      expect(trigger).toHaveAttribute("aria-expanded", "false");
     },
   );
 

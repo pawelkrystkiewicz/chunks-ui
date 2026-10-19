@@ -1,5 +1,5 @@
 import { render } from "@testing-library/react";
-import { createRef } from "react";
+import { createRef, useState } from "react";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { commands, page, userEvent } from "vitest/browser";
 import {
@@ -119,6 +119,54 @@ describeExitPaths("Popover focus as the popup closes", (reduce) => {
     await userEvent.keyboard("{Tab}{Enter>2}{/Enter}");
     expect(onClick).toHaveBeenCalledOnce();
   });
+
+  // A button that sets `open` to false: Base UI reports no close, so the hand-off moved focus at
+  // once, and each repeat clicked the trigger, which opened the popover again, then closed it.
+  // Motion and CSS only: with reduced motion the popup may be gone before the repeats, by load,
+  // and they then reach the trigger, as on any button.
+  it.skipIf(reduce)(
+    "keeps a controlled popover closed when Enter on a button that closes it repeats during the exit",
+    async () => {
+      const onSave = vi.fn();
+      function Controlled() {
+        const [open, setOpen] = useState(false);
+        return (
+          <div style={{ padding: 40 }}>
+            <Popover.Root open={open} onOpenChange={setOpen}>
+              <Popover.Trigger>Settings</Popover.Trigger>
+              <Popover.Content data-testid="popup">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onSave();
+                    setOpen(false);
+                  }}
+                >
+                  Save
+                </button>
+              </Popover.Content>
+            </Popover.Root>
+          </div>
+        );
+      }
+      const view = render(<Controlled />);
+      const trigger = view.getByRole("button", { name: "Settings" });
+      await userEvent.click(trigger);
+      const save = await view.findByRole("button", { name: "Save" });
+      await expect.poll(() => document.activeElement).toBe(save);
+      const popup = view.getByTestId("popup");
+      await settled(popup);
+      const onTriggerClick = vi.fn();
+      trigger.addEventListener("click", onTriggerClick);
+      await userEvent.keyboard("{Enter>3}{/Enter}");
+      expect(onSave).toHaveBeenCalledOnce();
+      expect(onTriggerClick, "the trigger was clicked").not.toHaveBeenCalled();
+      expect(trigger).toHaveAttribute("aria-expanded", "false");
+      expect(document.activeElement).toBe(trigger);
+      await exited(popup);
+      expect(trigger).toHaveAttribute("aria-expanded", "false");
+    },
+  );
 
   // A click and a key press are two calls, too far apart for the one frame of reduced motion
   it.skipIf(reduce)(
