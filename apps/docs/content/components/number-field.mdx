@@ -97,6 +97,8 @@ A disabled `NumberField` is dimmed and shows the not-allowed cursor over its inp
 
 Base UI sets `inputMode` on `NumberField.Input` for you: `numeric`, except on iOS, whose number keypad has no minus key. There a `min` of 0 or more gives the decimal keypad, and without one, or with a negative `min`, the full keyboard shows, so a minus sign can be typed. Set `min={0}` when the value can't be negative, so iOS shows the keypad. An `inputMode` you pass to `NumberField.Input` replaces Base UI's.
 
+A `numeric` keypad need not have a decimal separator: the HTML spec suggests `numeric` for PIN entry and asks for the locale's separator only with `decimal`. When the value can have a fraction, for example with a fractional `step`, pass `inputMode="decimal"` to `NumberField.Input`. On iOS, it also replaces the full keyboard that Base UI gives a field without a `min` of 0 or more, and the decimal keypad has no minus key, so the minus sign can't be typed there. For a value that can be both negative and fractional, pass `inputMode="text"`, the full keyboard that Base UI shows on iOS.
+
 ## Text Size
 
 The text of `NumberField.Input` is 16px below the `md` breakpoint (768px by default) and on a touch screen, so iOS Safari does not zoom the page when the field takes focus (it zooms into text under 16px); otherwise it is 14px, as in `Input`. With a mouse, a text-size class on `NumberField.Input`, such as `text-lg`, sets the size from `md` up. A `max-md:` class, such as `max-md:text-lg`, sets it below `md`, on a touch screen too; from `md` up on a touch screen, a `md:[@media(pointer:coarse)]:` class sets it. See [Text Size](/components/input#text-size) in `Input` for the limits.
