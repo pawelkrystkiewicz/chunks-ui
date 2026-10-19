@@ -1,9 +1,12 @@
 import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { configureAxe } from "jest-axe";
+import { createRef, type ReactElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { undecided } from "../../AxeTest.utils";
+import { Field } from "../field";
 import { FOCUS_RING } from "../shared";
-import { Select } from "./Select";
+import { Select, type SelectRootProps } from "./Select";
 
 afterEach(cleanup);
 
@@ -326,5 +329,119 @@ describe("Select focus ring", () => {
   it("draws the library focus ring on the Trigger", () => {
     trigger();
     expect(screen.getByTestId("trigger")).toHaveClass(FOCUS_RING);
+  });
+});
+
+// `open` and `defaultOpen` are not a press, and a disabled trigger cannot be pressed: as on
+// DatePicker, the disabled state wins over them, whoever set it.
+describe("Select disabled", () => {
+  const fruits = (props: SelectRootProps) => (
+    <Select.Root {...props}>
+      <Select.Trigger aria-label="Fruit">
+        <Select.Value placeholder="Pick a fruit" />
+      </Select.Trigger>
+      <Select.Portal>
+        <Select.Positioner>
+          <Select.Popup>
+            <Select.Item value="apple">
+              <Select.ItemText>Apple</Select.ItemText>
+            </Select.Item>
+            <Select.Item value="banana">
+              <Select.ItemText>Banana</Select.ItemText>
+            </Select.Item>
+          </Select.Popup>
+        </Select.Positioner>
+      </Select.Portal>
+    </Select.Root>
+  );
+  const trigger = () => screen.getByRole("combobox", { name: "Fruit" });
+
+  it("never opens for a commit when mounted with its own disabled and defaultOpen", () => {
+    const onOpenChangeComplete = vi.fn();
+    render(fruits({ disabled: true, defaultOpen: true, onOpenChangeComplete }));
+    expect(onOpenChangeComplete).not.toHaveBeenCalled();
+  });
+
+  describe.each<[string, (disabled: boolean, props: SelectRootProps) => ReactElement]>([
+    ["its own disabled", (disabled, props) => fruits({ disabled, ...props })],
+    [
+      "a Field.Root",
+      (disabled, props) => <Field.Root disabled={disabled}>{fruits(props)}</Field.Root>,
+    ],
+    [
+      "a native fieldset",
+      (disabled, props) => <fieldset disabled={disabled}>{fruits(props)}</fieldset>,
+    ],
+  ])("disabled by %s", (_cause, select) => {
+    it("does not open from defaultOpen, nor when it is enabled again", () => {
+      const onOpenChange = vi.fn();
+      const props = { defaultOpen: true, onOpenChange };
+      const { rerender } = render(select(true, props));
+      expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+      expect(trigger()).toHaveAttribute("aria-expanded", "false");
+      rerender(select(false, props));
+      expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+      expect(onOpenChange).not.toHaveBeenCalled();
+    });
+
+    it("does not open from a controlled open until it is enabled, and closes again when disabled", () => {
+      const onOpenChange = vi.fn();
+      const props = { open: true, onOpenChange };
+      const { rerender } = render(select(true, props));
+      expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+      rerender(select(false, props));
+      expect(screen.getByRole("listbox")).toBeInTheDocument();
+      rerender(select(true, props));
+      expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+      expect(onOpenChange).not.toHaveBeenCalled();
+    });
+
+    it("closes an open listbox when it is disabled, and does not reopen it when it is enabled again", async () => {
+      const user = userEvent.setup();
+      const onOpenChange = vi.fn();
+      const props = { onOpenChange };
+      const { rerender } = render(select(false, props));
+      await user.click(trigger());
+      // Base UI opens on the mousedown's next frame
+      expect(await screen.findByRole("listbox")).toBeInTheDocument();
+      rerender(select(true, props));
+      expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+      rerender(select(false, props));
+      expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+      // Only the press that opened it: a close that disabling asks for is not the user's
+      expect(onOpenChange.mock.calls.map(([open]) => open)).toEqual([true]);
+    });
+  });
+
+  // A listbox can outlive the disabling: the Select may not render when only its fieldset changes
+  // (same element below, so React skips it, and the listbox stays open). Base UI refuses a pick
+  // while its own `disabled` or a Field's is on, but knows nothing of a native fieldset. It is
+  // `multiple` because Base UI closes a single Select after any pick, cancelled or not, and keeps a
+  // multiple one open: only the gate can close this listbox.
+  it("ignores a pick once a native fieldset disables it, and closes the listbox", async () => {
+    const user = userEvent.setup();
+    const onValueChange = vi.fn();
+    const select = fruits({ onValueChange, multiple: true });
+    const { rerender } = render(<fieldset>{select}</fieldset>);
+    await user.click(trigger());
+    const banana = await screen.findByRole("option", { name: "Banana" });
+    rerender(<fieldset disabled>{select}</fieldset>);
+    expect(trigger()).toBeDisabled();
+    expect(screen.getByRole("listbox")).toBeInTheDocument();
+    await user.click(banana);
+    expect(onValueChange).not.toHaveBeenCalled();
+    expect(trigger()).toHaveTextContent("Pick a fruit");
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+  });
+
+  it("fills a consumer actionsRef, and still closes the listbox when disabled", async () => {
+    const user = userEvent.setup();
+    const actionsRef: SelectRootProps["actionsRef"] = createRef();
+    const { rerender } = render(<fieldset>{fruits({ actionsRef })}</fieldset>);
+    await user.click(trigger());
+    expect(await screen.findByRole("listbox")).toBeInTheDocument();
+    expect(actionsRef.current).not.toBeNull();
+    rerender(<fieldset disabled>{fruits({ actionsRef })}</fieldset>);
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
   });
 });
