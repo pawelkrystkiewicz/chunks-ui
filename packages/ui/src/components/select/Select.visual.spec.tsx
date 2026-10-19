@@ -453,6 +453,11 @@ describeExitPaths("Select focus as the popup closes", (reduce) => {
     const { popup, trigger, before } = await open({ finalFocusBefore: true });
     const triggerFocused = tookFocus(trigger);
     await userEvent.keyboard("{Escape}");
+    // Not as the exit starts. Reduced motion's exit of a frame may be over by now.
+    if (!reduce) {
+      expect(isShown(popup), "the popup is still closing").toBe(true);
+      expect(document.activeElement).not.toBe(before);
+    }
     await exited(popup, { stillClosing: isShown });
     expect(triggerFocused(), "the trigger took focus").toBe(false);
     expect(document.activeElement).toBe(before);
