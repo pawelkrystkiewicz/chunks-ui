@@ -99,7 +99,7 @@ export function useFocusOnClose<T extends HTMLElement>(
     let byKey = false;
     const stopWaiting = () => {
       doc.removeEventListener("keydown", onNextKeyDown, true);
-      doc.removeEventListener("keypress", handOff, true);
+      doc.removeEventListener("keypress", onKeyPress, true);
       doc.removeEventListener("keyup", endWait, true);
     };
     // Checks again after a wait: the popup may have reopened.
@@ -115,7 +115,14 @@ export function useFocusOnClose<T extends HTMLElement>(
       stopWaiting();
       handOff();
     };
-    // A new key's keydown or any keyup ends the wait; a keypress hands off and goes on listening.
+    // Space waits for its keyup, which lands first (capture, on the target it began on): Base UI
+    // clicks a non-native button (`nativeButton={false}`) on a Space keyup, and after a hand-off at
+    // the keypress that keyup reached the trigger and opened the popup again. Enter hands off here.
+    const onKeyPress = (event: KeyboardEvent) => {
+      if (event.key !== " ") handOff();
+    };
+    // A new key's keydown or any keyup ends the wait; an Enter or character keypress hands off and
+    // goes on listening.
     // A held key repeats its keydown, and its keypress too if it has one (Enter, Space, characters,
     // not Escape, Tab or the arrows): a repeat does not end the wait.
     // A held Enter or Space acts again on each repeat: a Base UI item on the keydown, a button on
@@ -191,7 +198,7 @@ export function useFocusOnClose<T extends HTMLElement>(
       // a button pressed with Space or the mouse that sets `open` to false, which Base UI does not
       // report. A button pressed with Enter is a close by a key, above.
       doc.addEventListener("keydown", onNextKeyDown, true);
-      doc.addEventListener("keypress", handOff, true);
+      doc.addEventListener("keypress", onKeyPress, true);
       doc.addEventListener("keyup", endWait, true);
       if (!((event?.type === "keydown" && !event.defaultPrevented) || keyClick)) handOff();
     });

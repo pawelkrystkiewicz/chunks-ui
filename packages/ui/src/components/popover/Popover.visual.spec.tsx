@@ -219,6 +219,30 @@ describeExitPaths("Popover focus as the popup closes", (reduce) => {
     expect(trigger).toHaveAttribute("aria-expanded", "false");
   });
 
+  // Base UI's `useButton` clicks a non-native button on any Space keyup that reaches it. The
+  // hand-off at Space's keypress moved focus to the trigger before that keyup, and it clicked the
+  // trigger: the popover opened again.
+  it("keeps a controlled popover closed when a keydown handler closes it on Space and the trigger is not a native button", async () => {
+    const { trigger, popup } = await openControlled(
+      (setOpen) => (
+        <input
+          aria-label="Name"
+          onKeyDown={(event) => {
+            if (event.key === " ") setOpen(false);
+          }}
+        />
+      ),
+      { nativeTrigger: false },
+    );
+    const onTriggerClick = vi.fn();
+    trigger.addEventListener("click", onTriggerClick);
+    await userEvent.keyboard("{ }");
+    expect(onTriggerClick, "the trigger was clicked").not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(trigger);
+    await exited(popup);
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+  });
+
   // A native button clicks on Space's keyup: the keydown is over by then, so nothing is left to
   // wait for and focus goes to the trigger at once, as in 0.3.0
   it("hands focus to the trigger at once when a button that closes a controlled popover is pressed with Space", async () => {
@@ -350,13 +374,18 @@ function popoverFixture({ finalFocusBefore = false, openOnHover = false } = {}) 
 }
 
 /** A controlled popover whose content is `content`, opened by click with its first control focused and the popup at rest */
-async function openControlled(content: (setOpen: (open: boolean) => void) => ReactNode) {
+async function openControlled(
+  content: (setOpen: (open: boolean) => void) => ReactNode,
+  { nativeTrigger = true } = {},
+) {
   function Controlled() {
     const [open, setOpen] = useState(false);
     return (
       <div style={{ padding: 40 }}>
         <Popover.Root open={open} onOpenChange={setOpen}>
-          <Popover.Trigger>Settings</Popover.Trigger>
+          <Popover.Trigger {...(!nativeTrigger && { nativeButton: false, render: <span /> })}>
+            Settings
+          </Popover.Trigger>
           <Popover.Content data-testid="popup">{content(setOpen)}</Popover.Content>
         </Popover.Root>
       </div>

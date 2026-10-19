@@ -264,14 +264,19 @@ describe("useFocusOnClose", () => {
       return focus;
     };
 
-    it("waits for the keypress or keyup after an Enter or Space keydown in its task", async () => {
-      for (const key of ["Enter", " "]) {
-        const focus = await closeAfter(key);
-        expect(focus).not.toHaveBeenCalled();
+    // Space waits for its keyup: Base UI clicks a non-native trigger on it (#732)
+    it.each([
+      { key: "Enter", ends: "keypress" },
+      { key: " ", ends: "keyup" },
+    ])("waits for the $ends after a $key keydown in its task", async ({ key, ends }) => {
+      const focus = await closeAfter(key);
+      expect(focus).not.toHaveBeenCalled();
+      if (key === " ") {
         document.dispatchEvent(new KeyboardEvent("keypress", { key }));
-        expect(focus).toHaveBeenCalledOnce();
-        cleanup();
+        expect(focus, "Space's keypress handed over").not.toHaveBeenCalled();
       }
+      document.dispatchEvent(new KeyboardEvent(ends, { key }));
+      expect(focus).toHaveBeenCalledOnce();
     });
 
     it("hands over at once in a later task, after the keydown's timer", async () => {
