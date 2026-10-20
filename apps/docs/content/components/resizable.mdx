@@ -346,8 +346,11 @@ let timer: ReturnType<typeof setTimeout> | undefined;
 
 // Writes once the changes stop: a held arrow key commits on every repeat
 function writeUrl(layout: ResizableLayout) {
+  const page = location.pathname;
   clearTimeout(timer);
   timer = setTimeout(() => {
+    // A router went to another page in the meantime: this layout is not that page's
+    if (location.pathname !== page) return;
     const url = new URL(location.href);
     url.searchParams.set(PARAM, JSON.stringify(layout));
     try {
@@ -374,6 +377,8 @@ function UrlSplit() {
   );
 }
 ```
+
+A change made less than 300ms before the user leaves or reloads the page is not written.
 
 On a server-rendered page don't call `readUrl` during render. Read the same parameter from the request on the server, as the cookie recipe does, and pass it down.
 
