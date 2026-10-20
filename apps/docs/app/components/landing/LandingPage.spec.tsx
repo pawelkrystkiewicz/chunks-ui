@@ -211,7 +211,7 @@ it("the Create section links to /create once, besides the preset tiles", () => {
   const { container } = renderPage();
   const create = container.querySelector<HTMLElement>("#create");
   if (!create) throw new Error("no #create section");
-  const links = [...create.querySelectorAll("a:not(.border-e)")];
+  const links = [...create.querySelectorAll("a:not([data-preset])")];
   expect(links.map((a) => [a.textContent, a.getAttribute("href")])).toEqual([
     ["Open Create", "/create"],
   ]);

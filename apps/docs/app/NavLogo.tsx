@@ -5,12 +5,14 @@ const LOGO_SIZE = 30;
 const NAME = "Chunks UI";
 
 // Our own home link: Nextra's hard-codes aria-label="Home page", which hides the visible name
-// (WCAG 2.5.3). Here the link's name is its content. The classes are Nextra's own for this link.
+// (WCAG 2.5.3). Here the link's name is its content. The `x:` classes are copied from the link Nextra draws.
+// ponytail: they work only while Nextra's build still emits them (the app's Tailwind ignores `x:`);
+// if Nextra stops, the link silently loses its flex, hover and focus styles.
 export function NavLogo() {
   return (
     <Link
       href="/"
-      className="x:flex x:flex-nowrap x:items-center x:gap-2 x:transition-opacity x:focus-visible:nextra-focus x:hover:opacity-75"
+      className="x:flex x:items-center x:gap-2 x:transition-opacity x:focus-visible:nextra-focus x:hover:opacity-75"
     >
       {/* Nextra marks dark theme with a `dark` class on <html>; the images are decorative */}
       <Image

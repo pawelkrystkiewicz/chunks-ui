@@ -203,6 +203,7 @@ export function PresetGrid() {
         return (
           <Link
             key={preset.name}
+            data-preset
             href="/create"
             // Keep the visitor's stored mode; the preset sets everything else.
             onClick={() => saveTheme({ ...(loadTheme() ?? DEFAULT_THEME), ...preset.theme })}
@@ -228,8 +229,8 @@ export function PresetGrid() {
             <span className="font-semibold text-[15px] tracking-[-.01em]">{preset.name}</span>
             <span className="max-w-full truncate font-mono text-(--l-muted) text-[10.5px] tracking-[.04em]">
               {fontHeading} · r{radius} · h{height}
+              <span className="sr-only"> · open in Create</span>
             </span>
-            <span className="sr-only">, open in Create</span>
           </Link>
         );
       })}
