@@ -32,8 +32,8 @@ function Horizontal(props: Partial<React.ComponentProps<typeof Resizable.Group>>
   );
 }
 
-const side = () => document.getElementById("side") as HTMLElement;
-const main = () => document.getElementById("main") as HTMLElement;
+const side = () => document.querySelector('[data-panel-id="side"]') as HTMLElement;
+const main = () => document.querySelector('[data-panel-id="main"]') as HTMLElement;
 const HANDLE = '[data-testid="handle"]';
 
 describe("Resizable", () => {
@@ -247,7 +247,7 @@ describeDirs("Resizable drag (%s)", (dir) => {
         </Resizable.Group>
       </div>,
     );
-    const top = document.getElementById("top") as HTMLElement;
+    const top = document.querySelector('[data-panel-id="top"]') as HTMLElement;
     const before = sized(top, "height");
     await commands.pointerDown(HANDLE);
     await commands.pointerMoveBy(0, 30, 3);
@@ -271,7 +271,7 @@ describeDirs("Resizable drag (%s)", (dir) => {
     expect(onLayoutChange.mock.calls[0]?.[0].side).toBeCloseTo(20, 1);
   });
 
-  it("moves a px panel by whole pixels and leaves the other handle's panels alone", async () => {
+  it("moves a px panel with the pointer and leaves the other handle's panels alone", async () => {
     const onLayoutChange = vi.fn();
     await renderFixture(
       <div style={{ width: 480, height: 80, flex: "none" }}>
@@ -290,12 +290,15 @@ describeDirs("Resizable drag (%s)", (dir) => {
         </Resizable.Group>
       </div>,
     );
-    const detail = document.getElementById("detail") as HTMLElement;
+    const detail = document.querySelector('[data-panel-id="detail"]') as HTMLElement;
     const detailBefore = sized(detail);
     await commands.pointerDown(HANDLE);
     await commands.pointerMoveBy(50 * toward, 0, 5);
     await commands.pointerUp();
-    expect(sized(document.getElementById("nav") as HTMLElement)).toBeCloseTo(170, 1);
+    expect(sized(document.querySelector('[data-panel-id="nav"]') as HTMLElement)).toBeCloseTo(
+      170,
+      1,
+    );
     expect(sized(detail)).toBeCloseTo(detailBefore, 1);
     expect(onLayoutChange.mock.calls[0]?.[0].nav).toBeCloseTo(170, 1);
   });
@@ -371,5 +374,29 @@ describe("Resizable pointer handling", () => {
     await expect.poll(() => sized(side())).toBeCloseTo(150, 0);
     (document.getElementById("box") as HTMLElement).style.width = "600px";
     await expect.poll(() => sized(side())).toBeCloseTo(179.7, 0);
+  });
+});
+
+describeDirs("Resizable with a flex gap (%s)", (dir) => {
+  withViewport(700);
+  const toward = dir === "rtl" ? -1 : 1;
+
+  it("keeps the handle under the pointer when the group has a gap", async () => {
+    const onLayoutChange = vi.fn();
+    await renderFixture(<Horizontal className={`${box} gap-2`} onLayoutChange={onLayoutChange} />);
+    const handle = document.querySelector(HANDLE) as HTMLElement;
+    const centre = () => {
+      const rect = handle.getBoundingClientRect();
+      return rect.left + rect.width / 2;
+    };
+    // 400 - 2 border - 1 handle - 2 gaps of 8: the panels share 381px, 30% of it is 114.3px
+    expect(sized(side())).toBeCloseTo((400 - 2 - 1 - 16) * 0.3, 1);
+    const start = centre();
+    await commands.pointerDown(HANDLE);
+    await commands.pointerMoveBy(60 * toward, 0, 6);
+    // Without the gap in the measure the % maths over-counts the space and the handle lags
+    expect(centre() - start).toBeCloseTo(60 * toward, 0);
+    await commands.pointerUp();
+    expect(centre() - start).toBeCloseTo(60 * toward, 0);
   });
 });

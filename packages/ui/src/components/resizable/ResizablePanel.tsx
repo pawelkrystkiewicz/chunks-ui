@@ -11,8 +11,9 @@ export type ResizablePanelSize = PanelSize;
 
 export type ResizablePanelProps = Omit<ComponentProps<"div">, "id"> & {
   /**
-   * Names the panel in a layout and is its DOM `id`, so keep it stable and unique in the page.
-   * `aria-controls` on the handles points at it.
+   * Names the panel in a layout, so keep it stable and unique within its group. It is the layout
+   * key only: the DOM `id` is generated, so two groups on a page can reuse a name. The panel
+   * carries it as `data-panel-id`.
    */
   id: string;
   /**
@@ -93,7 +94,8 @@ export function ResizablePanel({
   return (
     <div
       {...props}
-      id={id}
+      id={generated}
+      data-panel-id={id}
       ref={mergedRef}
       style={{ flex, ...style }}
       className={cn(resizablePanelClasses, className)}

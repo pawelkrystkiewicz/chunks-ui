@@ -311,8 +311,8 @@ export { mergeLabels } from "./lib/labels";
 export { springs } from "./lib/motion";
 export { PortalContainerProvider, usePortalContainer } from "./lib/portal-container";
 export {
-  type Layout,
   type PanelConfig as ResizablePanelConfig,
+  type ResizableLayout,
   sanitizeLayout,
 } from "./lib/resizable";
 export { type MotionLike, useMotion, useReducedMotion } from "./lib/use-motion";

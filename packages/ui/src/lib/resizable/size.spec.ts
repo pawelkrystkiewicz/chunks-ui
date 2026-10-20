@@ -38,12 +38,14 @@ describe("parseSize", () => {
 
 describe("cssVarName", () => {
   it("keeps a safe id", () => {
-    expect(cssVarName("side-bar_1")).toBe("--resizable-side-bar_1");
+    expect(cssVarName("side-bar1")).toBe("--resizable-side-bar1");
   });
 
   it("escapes unsafe characters without colliding", () => {
     expect(cssVarName("a.b")).not.toBe(cssVarName("a_b"));
     expect(cssVarName("a b")).toMatch(/^--resizable-[\w-]+$/);
+    // `a.b` escapes to `a_2e_b`, which is itself a valid id and must not collide with it
+    expect(cssVarName("a.b")).not.toBe(cssVarName("a_2e_b"));
   });
 });
 

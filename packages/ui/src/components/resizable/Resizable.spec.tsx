@@ -4,7 +4,7 @@ import { axe } from "jest-axe";
 import { createRef, useState } from "react";
 import { renderToString } from "react-dom/server";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import type { Layout } from "../../lib/resizable";
+import type { ResizableLayout } from "../../lib/resizable";
 import { Resizable } from "./Resizable";
 import type { ResizableGroupProps } from "./ResizableGroup";
 
@@ -88,14 +88,16 @@ function Split(props: Props) {
 }
 
 const handle = () => screen.getByRole("separator");
+/** The DOM id of the panel whose layout key is `key` */
+const panelId = (key: string) => document.querySelector(`[data-panel-id="${key}"]`)?.id;
 const valueNow = () => handle().getAttribute("aria-valuenow");
 
 describe("Resizable structure and ARIA", () => {
   it("renders a group, two panels and a separator", () => {
     render(<Split />);
     expect(screen.getByRole("group", { name: "Split" })).toBeInTheDocument();
-    expect(screen.getByText("Side")).toHaveAttribute("id", "side");
-    expect(screen.getByText("Main")).toHaveAttribute("id", "main");
+    expect(screen.getByText("Side")).toHaveAttribute("data-panel-id", "side");
+    expect(screen.getByText("Main")).toHaveAttribute("data-panel-id", "main");
     expect(handle()).toBeInTheDocument();
   });
 
@@ -106,8 +108,29 @@ describe("Resizable structure and ARIA", () => {
     expect(handle()).toHaveAttribute("aria-valuenow", "30");
     expect(handle()).toHaveAttribute("aria-valuemin", "10");
     expect(handle()).toHaveAttribute("aria-valuemax", "60");
-    expect(handle()).toHaveAttribute("aria-controls", "side main");
+    expect(handle()).toHaveAttribute("aria-controls", `${panelId("side")} ${panelId("main")}`);
     expect(handle()).toHaveAttribute("data-orientation", "vertical");
+  });
+
+  it("keeps the layout key out of the DOM id, so two groups can reuse a name", () => {
+    render(
+      <>
+        <Split />
+        <Split />
+      </>,
+    );
+    const ids = [...document.querySelectorAll("[data-panel-id]")].map((el) => el.id);
+    expect(ids).toHaveLength(4);
+    expect(new Set(ids).size).toBe(4);
+    for (const id of ids) expect(id).not.toBe("side");
+    const [first, second] = screen.getAllByRole("separator");
+    // Each handle points at the panels of its own group
+    expect(first?.getAttribute("aria-controls")).not.toBe(second?.getAttribute("aria-controls"));
+    for (const separator of [first, second]) {
+      for (const id of separator?.getAttribute("aria-controls")?.split(" ") ?? []) {
+        expect(separator?.parentElement?.contains(document.getElementById(id))).toBe(true);
+      }
+    }
   });
 
   it("gives the separator of a vertical group a horizontal orientation", () => {
@@ -262,8 +285,8 @@ describe("Resizable layout at first render", () => {
     const [first, second] = screen.getAllByRole("separator");
     expect(first).toHaveAttribute("aria-valuenow", "20");
     expect(second).toHaveAttribute("aria-valuenow", "40");
-    expect(first).toHaveAttribute("aria-controls", "nav a");
-    expect(second).toHaveAttribute("aria-controls", "a b");
+    expect(first).toHaveAttribute("aria-controls", `${panelId("nav")} ${panelId("a")}`);
+    expect(second).toHaveAttribute("aria-controls", `${panelId("a")} ${panelId("b")}`);
   });
 });
 
@@ -461,7 +484,7 @@ describe("Resizable controlled layout", () => {
   it("follows the parent when it accepts the change", async () => {
     const user = userEvent.setup();
     function Parent() {
-      const [layout, setLayout] = useState<Layout>({ side: 40, main: 60 });
+      const [layout, setLayout] = useState<ResizableLayout>({ side: 40, main: 60 });
       return <Split layout={layout} onLayoutChange={setLayout} />;
     }
     render(<Parent />);
@@ -536,10 +559,10 @@ describe("Resizable nesting", () => {
     );
     expect(screen.getByRole("separator", { name: "outer handle" })).toHaveAttribute(
       "aria-controls",
-      "left right",
+      `${panelId("left")} ${panelId("right")}`,
     );
     const innerHandle = screen.getByRole("separator", { name: "inner handle" });
-    expect(innerHandle).toHaveAttribute("aria-controls", "top bottom");
+    expect(innerHandle).toHaveAttribute("aria-controls", `${panelId("top")} ${panelId("bottom")}`);
     innerHandle.focus();
     await user.keyboard("{ArrowDown}");
     expect(inner).toHaveBeenCalledTimes(1);
@@ -601,5 +624,37 @@ describe("Resizable programmer errors", () => {
     handle().focus();
     await user.keyboard("{ArrowRight}{End}");
     expect(onLayoutChange).not.toHaveBeenCalled();
+  });
+});
+
+describe("Resizable body lock", () => {
+  it("keeps the lock of a dragging handle when an idle one unmounts", () => {
+    const Two = ({ idle }: { idle: boolean }) => (
+      <Resizable.Group data-test-group="" aria-label="x">
+        <Resizable.Panel id="a" defaultSize="30%">
+          A
+        </Resizable.Panel>
+        <Resizable.Handle aria-label="first" />
+        <Resizable.Panel id="b" defaultSize="30%">
+          B
+        </Resizable.Panel>
+        {idle && <Resizable.Handle aria-label="idle" />}
+        <Resizable.Panel id="c" defaultSize="40%">
+          C
+        </Resizable.Panel>
+      </Resizable.Group>
+    );
+    const { rerender } = render(<Two idle />);
+    fireEvent.pointerDown(screen.getByRole("separator", { name: "first" }), {
+      button: 0,
+      pointerId: 1,
+      clientX: 300,
+    });
+    expect(document.body.style.userSelect).toBe("none");
+    rerender(<Two idle={false} />);
+    expect(screen.queryByRole("separator", { name: "idle" })).not.toBeInTheDocument();
+    expect(document.body.style.userSelect).toBe("none");
+    fireEvent.pointerUp(screen.getByRole("separator", { name: "first" }), { pointerId: 1 });
+    expect(document.body.style.userSelect).toBe("");
   });
 });

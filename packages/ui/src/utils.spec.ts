@@ -94,6 +94,7 @@ describe("chunks-ui/utils", () => {
       "iconButtonVariants",
       "inputVariants",
       "mergeLabels",
+      "sanitizeLayout",
       "springs",
     ]);
   });
@@ -121,6 +122,11 @@ describe("chunks-ui/utils", () => {
     expectTypeOf<utils.SliderLabels>().toEqualTypeOf<main.SliderLabels>();
     expectTypeOf<utils.ThemeToggleLabels>().toEqualTypeOf<main.ThemeToggleLabels>();
     expectTypeOf<utils.ToastLabels>().toEqualTypeOf<main.ToastLabels>();
+  });
+
+  it("exports the types of the layout helpers", () => {
+    expectTypeOf<utils.ResizableLayout>().toEqualTypeOf<main.ResizableLayout>();
+    expectTypeOf<utils.ResizablePanelConfig>().toEqualTypeOf<main.ResizablePanelConfig>();
   });
 
   // tsup bundles this graph into dist/utils.*, which has no "use client" banner

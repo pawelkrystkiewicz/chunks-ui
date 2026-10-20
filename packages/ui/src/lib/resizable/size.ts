@@ -20,11 +20,12 @@ export function parseSize(input: unknown): ParsedSize | undefined {
 }
 
 /**
- * The CSS custom property that holds a panel's size. Characters a custom property name can't take
- * are written as `_` and their hex code, so `a.b` and `a_b` stay apart.
+ * The CSS custom property that holds a panel's size. Everything outside `[a-zA-Z0-9-]` is written
+ * as `_`, its hex code and `_`. `_` is escaped too, so the mapping is one to one: `a.b` and `a_2e_b`
+ * stay apart.
  */
 export function cssVarName(id: string) {
-  return `--resizable-${id.replace(/[^\w-]/g, (char) => `_${char.charCodeAt(0).toString(16)}_`)}`;
+  return `--resizable-${id.replace(/[^a-zA-Z0-9-]/g, (char) => `_${char.charCodeAt(0).toString(16)}_`)}`;
 }
 
 /**

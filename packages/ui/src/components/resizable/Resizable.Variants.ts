@@ -27,12 +27,15 @@ export const resizablePanelClasses = "min-h-0 min-w-0 overflow-hidden";
  */
 export const resizableHandleVariants = cva(
   [
-    "relative z-10 shrink-0 touch-none select-none bg-border",
+    "group/handle relative z-10 flex shrink-0 touch-none select-none items-center justify-center bg-border",
     "touch-target [--touch-target-size:12px] pointer-coarse:[--touch-target-size:44px]",
     "not-data-disabled:hover:bg-ring data-dragging:bg-ring",
     "data-disabled:cursor-not-allowed data-disabled:opacity-50",
     // A ring offset from a 1px line draws two lines around it; drawn on the line it is one bar
     "focus-visible:outline-2 focus-visible:outline-ring",
+    // Forced-colors mode repaints backgrounds in the page colour, which would hide a 1px line.
+    // System colours keep it visible, and Highlight marks the active state as the ring does.
+    "forced-colors:bg-[CanvasText] forced-colors:not-data-disabled:hover:bg-[Highlight] forced-colors:data-dragging:bg-[Highlight]",
   ],
   {
     variants: {

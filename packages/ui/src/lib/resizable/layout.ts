@@ -11,18 +11,8 @@
  *   padding and border.
  * - A min or max limit in % is a percent of the available size.
  */
-import { type PanelSize, type ParsedSize, parseSize, type Unit } from "./size";
-
-/** Panel id to size, each in the unit its panel declares. */
-export type Layout = Record<string, number>;
-
-/** What a panel declares. `Resizable.Panel` takes the same fields as props. */
-export type PanelConfig = {
-  id: string;
-  defaultSize?: PanelSize;
-  minSize?: PanelSize;
-  maxSize?: PanelSize;
-};
+import { type ParsedSize, parseSize, type Unit } from "./size";
+import type { PanelConfig, ResizableLayout } from "./types";
 
 /** A panel after its sizes are parsed. */
 export type PanelModel = {
@@ -92,8 +82,11 @@ export function buildModels(
 }
 
 /** Scales the % panels' shares to sum to 100. Px panels keep their size. Returns a new layout. */
-export function normalizePercents(models: readonly PanelModel[], layout: Layout): Layout {
-  const out: Layout = { ...layout };
+export function normalizePercents(
+  models: readonly PanelModel[],
+  layout: ResizableLayout,
+): ResizableLayout {
+  const out: ResizableLayout = { ...layout };
   const percent = models.filter((m) => m.unit === "%");
   const total = sum(percent.map((m) => out[m.id] ?? 0));
   for (const m of percent) {
@@ -106,8 +99,8 @@ export function normalizePercents(models: readonly PanelModel[], layout: Layout)
  * The layout the declared `defaultSize`s describe. A % panel without one takes an equal part of
  * what the others leave of 100. The % shares are normalised to sum to 100.
  */
-export function defaultLayout(models: readonly PanelModel[]): Layout {
-  const out: Layout = {};
+export function defaultLayout(models: readonly PanelModel[]): ResizableLayout {
+  const out: ResizableLayout = {};
   const unspecified: PanelModel[] = [];
   let specified = 0;
   for (const m of models) {
@@ -126,7 +119,7 @@ export function defaultLayout(models: readonly PanelModel[]): Layout {
 /** The panels' sizes in px along the axis, in panel order. */
 export function toPixels(
   models: readonly PanelModel[],
-  layout: Layout,
+  layout: ResizableLayout,
   available: number,
 ): number[] {
   const fixed = sum(models.map((m) => (m.unit === "px" ? (layout[m.id] ?? 0) : 0)));
@@ -141,8 +134,8 @@ export function toPixels(
 }
 
 /** The inverse of `toPixels`: sizes in px back to a layout, rounded to two decimals. */
-export function fromPixels(models: readonly PanelModel[], px: readonly number[]): Layout {
-  const out: Layout = {};
+export function fromPixels(models: readonly PanelModel[], px: readonly number[]): ResizableLayout {
+  const out: ResizableLayout = {};
   const flexible = sum(models.map((m, i) => (m.unit === "%" ? (px[i] ?? 0) : 0)));
   const percentCount = models.filter((m) => m.unit === "%").length;
   models.forEach((m, i) => {
@@ -260,9 +253,9 @@ export function fitPixels(
  */
 export function fitLayout(
   models: readonly PanelModel[],
-  layout: Layout,
+  layout: ResizableLayout,
   available: number,
-): Layout {
+): ResizableLayout {
   if (!(available > 0) || models.length === 0) return layout;
   const px = toPixels(models, layout, available);
   const fitted = fitPixels(
@@ -321,7 +314,7 @@ export function actionDelta(action: ResizeAction, available: number) {
  */
 export function ariaValues(
   models: readonly PanelModel[],
-  layout: Layout,
+  layout: ResizableLayout,
   index: number,
   available: number,
 ): { now: number; min: number; max: number } | undefined {

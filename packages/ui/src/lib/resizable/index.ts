@@ -8,20 +8,19 @@ export {
   fitPixels,
   fromPixels,
   keyToAction,
-  type Layout,
   type LayoutWarning,
   type Limits,
   limitsPx,
   normalizePercents,
   type Orientation,
-  type PanelConfig,
   type PanelModel,
   type ResizeAction,
   resizeBetween,
   stepSize,
   toPixels,
 } from "./layout";
-export { sanitizeLayout, sanitizeModels } from "./sanitize-layout";
+export { sanitizeLayout } from "./sanitize-layout";
+export { sanitizeModels } from "./sanitize-models";
 export {
   cssVarName,
   formatCssValue,
@@ -30,3 +29,4 @@ export {
   parseSize,
   type Unit,
 } from "./size";
+export type { PanelConfig, ResizableLayout } from "./types";

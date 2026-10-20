@@ -18,12 +18,37 @@ describe("sanitizeLayout", () => {
     });
   });
 
-  it("clamps to the panel's min and max in its own unit", () => {
-    expect(sanitizeLayout({ side: 5, main: 95 }, panels).side).toBeLessThanOrEqual(50);
-    // 5 -> 20 by min, then the shares are normalised: 20 / 115
-    const low = sanitizeLayout({ side: 5, main: 80 }, panels);
-    expect(low.side).toBeCloseTo((20 / 100) * 100, 5);
-    expect(low.side! + low.main!).toBeCloseTo(100, 5);
+  it("clamps a % share to its panel's min and max", () => {
+    // 5 would be 17.39 once normalised after clamping; the clamp has to hold at 20
+    const low = sanitizeLayout({ side: 5, main: 95 }, panels);
+    expect(low.side).toBeCloseTo(20, 9);
+    expect(low.main).toBeCloseTo(80, 9);
+    const high = sanitizeLayout({ side: 90, main: 10 }, panels);
+    expect(high.side).toBeCloseTo(50, 9);
+    expect(high.main).toBeCloseTo(50, 9);
+  });
+
+  it("clamps in a group whose shares sum to 100 on both sides", () => {
+    const both = [
+      { id: "side", defaultSize: "30%" as const, minSize: "10%" as const, maxSize: "60%" as const },
+      { id: "main", defaultSize: "70%" as const },
+    ];
+    const max = sanitizeLayout({ side: 99, main: 1 }, both);
+    expect(max.side).toBeCloseTo(60, 9);
+    expect(max.main).toBeCloseTo(40, 9);
+    const min = sanitizeLayout({ side: 1, main: 99 }, both);
+    expect(min.side).toBeCloseTo(10, 9);
+    expect(min.main).toBeCloseTo(90, 9);
+  });
+
+  it("leaves % limits to the group when a px panel is present", () => {
+    const mixed = [
+      { id: "nav", defaultSize: 240 },
+      { id: "a", defaultSize: "50%" as const, minSize: "40%" as const },
+      { id: "b", defaultSize: "50%" as const },
+    ];
+    // a % limit is of the measured size, which the server doesn't have
+    expect(sanitizeLayout({ nav: 240, a: 10, b: 90 }, mixed)).toEqual({ nav: 240, a: 10, b: 90 });
   });
 
   it("fills missing panels from the defaults", () => {

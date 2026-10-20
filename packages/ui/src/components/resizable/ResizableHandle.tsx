@@ -83,8 +83,11 @@ export function ResizableHandle({
   // A drag ends cleanly if the handle goes away under the pointer
   useEffect(
     () => () => {
-      drag.current?.session.end(false);
+      // Only a handle that is mid-drag owns the body lock; another handle's drag may hold it
+      const current = drag.current;
+      if (!current) return;
       drag.current = null;
+      current.session.end(false);
       unlockBody();
     },
     [],
@@ -92,8 +95,14 @@ export function ResizableHandle({
 
   const horizontal = orientation === "horizontal";
   const values = index >= 0 ? ariaValues(models, layout, index, size) : undefined;
-  const before = models[index];
-  const after = models[index + 1];
+  // The panels' DOM ids: a panel's `id` names it in a layout and is not its DOM id
+  const controls =
+    index >= 0
+      ? [models[index], models[index + 1]]
+          .map((model) => (model ? group.panelElement(model.id)?.id : undefined))
+          .filter(Boolean)
+          .join(" ")
+      : "";
 
   const finish = (commit: boolean) => {
     const current = drag.current;
@@ -115,7 +124,7 @@ export function ResizableHandle({
       aria-valuenow={values?.now}
       aria-valuemin={values?.min}
       aria-valuemax={values?.max}
-      aria-controls={before && after ? `${before.id} ${after.id}` : undefined}
+      aria-controls={controls || undefined}
       aria-disabled={disabled || undefined}
       data-orientation={horizontal ? "vertical" : "horizontal"}
       data-dragging={dragging ? "" : undefined}

@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import type { Layout, Orientation, PanelConfig, PanelModel } from "../../lib/resizable";
+import type { Orientation, PanelConfig, PanelModel, ResizableLayout } from "../../lib/resizable";
 
 /** A resize in progress: a drag, or one key step. */
 export type ResizeSession = {
@@ -16,15 +16,17 @@ export type ResizeSession = {
 export type GroupContextValue = {
   orientation: Orientation;
   /** The layout the panels' first render reads: `layout`, else `defaultLayout` */
-  initialLayout: Layout | undefined;
+  initialLayout: ResizableLayout | undefined;
   /** The panels in document order */
   models: readonly PanelModel[];
   /** The layout as it shows, inside the panels' limits */
-  layout: Layout;
+  layout: ResizableLayout;
   /** The size the panels share along the axis, in px; 0 until measured */
   size: number;
   registerPanel: (config: PanelConfig, el: HTMLElement) => () => void;
   registerHandle: (el: HTMLElement) => () => void;
+  /** The element of the panel with this layout `id`, once it has mounted */
+  panelElement: (id: string) => HTMLElement | undefined;
   /** The index of the panel before the handle, or -1 for a handle that can't resize */
   indexOfHandle: (el: HTMLElement) => number;
   startResize: (handle: HTMLElement) => ResizeSession | null;

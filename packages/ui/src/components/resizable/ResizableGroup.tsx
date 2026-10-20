@@ -24,11 +24,11 @@ import {
   formatCssValue,
   fromPixels,
   keyToAction,
-  type Layout,
   limitsPx,
   type Orientation,
   type PanelConfig,
   type PanelModel,
+  type ResizableLayout,
   resizeBetween,
   sanitizeLayout,
   sanitizeModels,
@@ -54,17 +54,17 @@ export type ResizableGroupProps = ComponentProps<"div"> & {
    * The layout to start from, a size per panel `id` in the unit that panel declares. Read once;
    * later changes are ignored. It works at the first render, on the server too.
    */
-  defaultLayout?: Layout;
+  defaultLayout?: ResizableLayout;
   /**
    * The layout, when you hold it yourself. A drag or key step is reported to `onLayoutChange`
    * and applied only when you pass the new layout back.
    */
-  layout?: Layout;
+  layout?: ResizableLayout;
   /**
    * Called with the whole layout once per change a user commits: on pointer release, and on
    * each key step. It is not called on mount, while dragging, or when the window resizes.
    */
-  onLayoutChange?: (layout: Layout) => void;
+  onLayoutChange?: (layout: ResizableLayout) => void;
 };
 
 type Registered = { config: PanelConfig; el: HTMLElement };
@@ -74,8 +74,8 @@ type Registered = { config: PanelConfig; el: HTMLElement };
 // ---------------------------------------------------------------------------
 
 /**
- * The size the panels share along the axis, in px: the group's box minus its padding and border
- * and minus its handles, which take space of their own.
+ * The size the panels share along the axis, in px: the group's box minus its padding and border,
+ * its handles, which take space of their own, and the flex `gap` between its children.
  */
 function measure(group: HTMLElement, orientation: Orientation, handles: ReadonlySet<HTMLElement>) {
   const horizontal = orientation === "horizontal";
@@ -99,6 +99,15 @@ function measure(group: HTMLElement, orientation: Orientation, handles: Readonly
   for (const handle of handles) {
     const rect = handle.getBoundingClientRect();
     total -= horizontal ? rect.width : rect.height;
+  }
+  // A gap sits between every two children in the flow; `normal` and a % are not px, and count as 0
+  const gap = horizontal ? style.columnGap : style.rowGap;
+  if (gap.endsWith("px")) {
+    const inFlow = Array.from(group.children).filter((child) => {
+      const { position, display } = getComputedStyle(child);
+      return display !== "none" && position !== "absolute" && position !== "fixed";
+    });
+    total -= (Number.parseFloat(gap) || 0) * Math.max(0, inFlow.length - 1);
   }
   return Math.max(0, Math.round(total * 100) / 100);
 }
@@ -135,7 +144,7 @@ const sameConfig = (a: PanelConfig, b: PanelConfig) =>
   a.minSize === b.minSize &&
   a.maxSize === b.maxSize;
 
-const sameLayout = (a: Layout, b: Layout) => {
+const sameLayout = (a: ResizableLayout, b: ResizableLayout) => {
   const keys = Object.keys(a);
   return (
     keys.length === Object.keys(b).length &&
@@ -171,13 +180,13 @@ export function ResizableGroup({
     order: [] as HTMLElement[],
     /** The custom properties set on the group, to clear those of panels that left */
     written: new Set<string>(),
-    /** True from the first pointer move until the session ends */
+    /** True from the start of a session (pointer down or a key) until it ends */
     resizing: false,
   });
 
   const [configs, setConfigs] = useState<PanelConfig[]>([]);
   const [initialDefault] = useState(defaultLayout);
-  const [uncontrolled, setUncontrolled] = useState<Layout | undefined>();
+  const [uncontrolled, setUncontrolled] = useState<ResizableLayout | undefined>();
   const [size, setSize] = useState(0);
   const [, rerender] = useReducer((count: number) => count + 1, 0);
 
@@ -249,6 +258,8 @@ export function ResizableGroup({
     [remeasure],
   );
 
+  const panelElement = useCallback((id: string) => registry.current.panels.get(id)?.el, []);
+
   const indexOfHandle = useCallback((el: HTMLElement) => {
     const { order } = registry.current;
     let before = 0;
@@ -269,7 +280,7 @@ export function ResizableGroup({
 
   // -- Writing the layout to the DOM ---------------------------------------
 
-  const writeVars = useCallback((panels: readonly PanelModel[], next: Layout) => {
+  const writeVars = useCallback((panels: readonly PanelModel[], next: ResizableLayout) => {
     const group = groupRef.current;
     if (!group) return;
     const { written } = registry.current;
@@ -284,7 +295,7 @@ export function ResizableGroup({
   }, []);
 
   const writeAria = useCallback(
-    (panels: readonly PanelModel[], next: Layout, available: number) => {
+    (panels: readonly PanelModel[], next: ResizableLayout, available: number) => {
       for (const handle of registry.current.handles) {
         const values = ariaValues(panels, next, indexOfHandle(handle), available);
         if (!values) continue;
@@ -394,6 +405,7 @@ export function ResizableGroup({
       size,
       registerPanel,
       registerHandle,
+      panelElement,
       indexOfHandle,
       startResize,
       resizeByKey,
@@ -406,6 +418,7 @@ export function ResizableGroup({
       size,
       registerPanel,
       registerHandle,
+      panelElement,
       indexOfHandle,
       startResize,
       resizeByKey,
