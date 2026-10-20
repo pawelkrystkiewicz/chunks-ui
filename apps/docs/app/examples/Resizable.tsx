@@ -1,6 +1,6 @@
 "use client";
 
-import { type Layout, Resizable } from "chunks-ui";
+import { Resizable, type ResizableLayout } from "chunks-ui";
 import { type ReactNode, useState } from "react";
 import { Container } from "@/components";
 
@@ -108,7 +108,7 @@ export function ResizableNestedExample() {
 }
 
 export function ResizableControlledExample() {
-  const [layout, setLayout] = useState<Layout>({ left: 50, right: 50 });
+  const [layout, setLayout] = useState<ResizableLayout>({ left: 50, right: 50 });
   const [commits, setCommits] = useState(0);
   return (
     <Container centered={false} className="flex-col items-stretch">

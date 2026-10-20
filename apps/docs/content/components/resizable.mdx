@@ -19,7 +19,7 @@ import { Resizable, sanitizeLayout } from "chunks-ui";
 
 ## Basic Usage
 
-`Resizable.Group` holds the panels. Put a `Resizable.Handle` between each two. Every panel needs a stable `id`. Give the group a size, since it fills its parent:
+`Resizable.Group` holds the panels. Put a `Resizable.Handle` between each two. Every panel needs a stable `id`: the name its size goes by in a [layout](#layout-and-controlled-use). The `id` is a layout key only. It is not the panel's DOM `id`: the DOM `id` is generated, so two groups on one page (or in tabs, or in a list of cards) can reuse the same names without a clash. The panel carries its key as `data-panel-id`, which is what a test or a style rule can select by. Keep each `id` unique within its group. Give the group a size, since it fills its parent:
 
 ```tsx
 <Resizable.Group className="h-48 w-full" aria-label="Sidebar and content">
@@ -57,7 +57,7 @@ Set `orientation="vertical"` on the group to stack the panels. The handle lines 
 
 `defaultSize`, `minSize` and `maxSize` take a number (px) or a string with a unit: `240`, `"240px"` and `"30%"` are all valid. The unit of `defaultSize` is the unit of the panel: it decides how the panel's value reads in a layout (see [Layout](#layout-and-controlled-use)). A panel without a `defaultSize` is a % panel.
 
-- A **px panel** keeps its size when the group resizes. A drag changes it by whole pixels.
+- A **px panel** keeps its size when the group resizes.
 - A **% panel** takes a share of what the px panels and the handles leave. In a group with no px panel that is a share of the whole group. The shares of a group's % panels always add up to 100: values that don't are scaled, so `20%` and `20%` are two halves. A % panel grows and shrinks with the group.
 - `minSize` and `maxSize` are limits in either unit, whatever the unit of the panel. A limit in % is a percent of the group (minus its handles). Both neighbours' limits bind a handle, so it stops when either panel reaches one.
 - A group needs at least one % panel to fill its width. If every panel is px, the leftover space stays empty.
@@ -82,6 +82,8 @@ Set `orientation="vertical"` on the group to stack the panels. The handle lines 
 <ResizableMixedExample />
 
 Don't put padding or a border on a `Resizable.Panel`. The browser takes them off before it shares the space, which skews the sizes and makes the handle drift from the pointer. Put them on an element inside the panel, as the examples do. Development builds warn when a panel has either.
+
+The group may be a flex box with a `gap` (`gap-2`, say): the measure takes the gap between its children off before sharing the space, so the handle still follows the pointer. A gap in % is not counted. Padding and border on the group itself are counted off too.
 
 ## Nested groups
 
@@ -114,7 +116,7 @@ For a layout that splits both ways, put a group inside a panel. Each group has i
 A layout maps each panel `id` to its size, in the unit that panel declares: px for a px panel, a share for a % panel.
 
 ```ts
-type Layout = Record<string, number>;
+type ResizableLayout = Record<string, number>;
 
 // { folders: 160, list: 40, detail: 60 }
 ```
@@ -126,11 +128,11 @@ Three props on the group carry it:
 - `onLayoutChange(layout)` is called with the whole layout once per change a user commits: when the pointer is released after a drag, and on each key step. It is not called on mount, while a drag is in progress, when the window or the group resizes, or when a key can't move the handle (it is at its limit). There is no per-pointer-move callback. A drag writes the sizes straight to the DOM and React hears of it on release.
 
 ```tsx
-import { type Layout, Resizable } from "chunks-ui";
+import { type ResizableLayout, Resizable } from "chunks-ui";
 import { useState } from "react";
 
 function ControlledSplit() {
-  const [layout, setLayout] = useState<Layout>({ left: 50, right: 50 });
+  const [layout, setLayout] = useState<ResizableLayout>({ left: 50, right: 50 });
 
   return (
     <Resizable.Group layout={layout} onLayoutChange={setLayout} className="h-32 w-full">
@@ -148,6 +150,8 @@ function ControlledSplit() {
 
 <ResizableControlledExample />
 
+Update the state synchronously in `onLayoutChange`, as above. A parent that applies the new layout later (inside `startTransition`, after a router navigation, after a request) makes the group snap back to the old layout on release and then jump to the new one when it arrives, because the group shows exactly the `layout` it is given at every render. To save the layout somewhere slow, set the state at once and write to the slow place from an effect or a debounce.
+
 Both props go through `sanitizeLayout`, so a layout that doesn't fit the panels (an old one, say) never breaks the group. See [`sanitizeLayout`](#sanitizelayout).
 
 ## Persistence
@@ -163,7 +167,7 @@ Always run what you read through `sanitizeLayout`. Storage can hold anything: an
 For an app that renders only on the client, such as a Vite app. In a server-rendered app the server can't read `localStorage`, so the first render would differ from the stored layout: use the cookie recipe.
 
 ```tsx
-import { type Layout, type ResizablePanelConfig, Resizable, sanitizeLayout } from "chunks-ui";
+import { type ResizablePanelConfig, type ResizableLayout, Resizable, sanitizeLayout } from "chunks-ui";
 import { useState } from "react";
 
 const PANELS = [
@@ -174,7 +178,7 @@ const PANELS = [
 // Version the key when a panel changes between px and %
 const KEY = "panels-v1";
 
-function readLayout(): Layout {
+function readLayout(): ResizableLayout {
   try {
     return sanitizeLayout(JSON.parse(localStorage.getItem(KEY) ?? "null"), PANELS);
   } catch {
@@ -182,7 +186,7 @@ function readLayout(): Layout {
   }
 }
 
-function writeLayout(layout: Layout) {
+function writeLayout(layout: ResizableLayout) {
   try {
     localStorage.setItem(KEY, JSON.stringify(layout));
   } catch {
@@ -216,8 +220,9 @@ A cookie that only remembers a layout is a functional preference: it holds somet
 ```tsx
 // app/page.tsx (a server component)
 import { cookies } from "next/headers";
-import { sanitizeLayout } from "chunks-ui";
-// import { MasterDetail, PANELS } from "./master-detail"; (the next block)
+import { sanitizeLayout } from "chunks-ui/utils";
+// import { MasterDetail } from "./master-detail"; (the last block)
+// import { PANELS } from "./panels"; (the next block)
 
 export default async function Page() {
   const stored = (await cookies()).get("panels-v1")?.value;
@@ -232,23 +237,28 @@ export default async function Page() {
 ```
 
 ```tsx
-// app/master-detail.tsx
-"use client";
-
-import { type Layout, type ResizablePanelConfig, Resizable } from "chunks-ui";
+// app/panels.ts (no "use client": the server reads it too)
+import type { ResizablePanelConfig } from "chunks-ui/utils";
 
 export const PANELS = [
   { id: "list", defaultSize: "30%", minSize: "15%" },
   { id: "detail", defaultSize: "70%" },
 ] satisfies ResizablePanelConfig[];
+```
 
-function saveLayout(layout: Layout) {
+```tsx
+// app/master-detail.tsx
+"use client";
+
+import { type ResizableLayout, Resizable } from "chunks-ui";
+
+function saveLayout(layout: ResizableLayout) {
   const value = encodeURIComponent(JSON.stringify(layout));
   // `panels-v1`: change it when a panel changes between px and %
   document.cookie = `panels-v1=${value}; path=/; max-age=31536000; samesite=lax`;
 }
 
-export function MasterDetail({ defaultLayout }: { defaultLayout: Layout }) {
+export function MasterDetail({ defaultLayout }: { defaultLayout: ResizableLayout }) {
   return (
     <Resizable.Group defaultLayout={defaultLayout} onLayoutChange={saveLayout} className="h-96 w-full">
       <Resizable.Panel id="list" defaultSize="30%" minSize="15%">
@@ -263,14 +273,14 @@ export function MasterDetail({ defaultLayout }: { defaultLayout: Layout }) {
 }
 ```
 
-`sanitizeLayout` is plain TypeScript with no React in it, so it runs on the server. The server still renders each panel's `defaultSize` as the fallback for a panel with no stored value, so give every % panel a `defaultSize`.
+The server page imports `sanitizeLayout` from `chunks-ui/utils`, not from `chunks-ui`. The main entry starts with `"use client"`, so a Server Component that imports `sanitizeLayout` from it gets a client reference, and calling that on the server throws. `chunks-ui/utils` is built without the banner and holds the React-free helpers, `sanitizeLayout` and the `ResizableLayout` and `ResizablePanelConfig` types among them, so a server can call them. `PANELS` lives in a plain module for the same reason: a module marked `"use client"` hands the server a reference too, which it can't iterate. The server still renders each panel's `defaultSize` as the fallback for a panel with no stored value, so give every % panel a `defaultSize`.
 
 ### URL
 
-A layout in the query string survives a reload and can be shared as a link. `history.replaceState` changes the address without adding a history entry for every drag.
+A layout in the query string survives a reload and can be shared as a link. `history.replaceState` changes the address without adding a history entry for every drag. Browsers rate-limit it and throw a `SecurityError` when it is called too often, so wrap it in `try`/`catch` as the `localStorage` recipe does.
 
 ```tsx
-import { type Layout, type ResizablePanelConfig, Resizable, sanitizeLayout } from "chunks-ui";
+import { type ResizablePanelConfig, type ResizableLayout, Resizable, sanitizeLayout } from "chunks-ui";
 
 const PANELS = [
   { id: "list", defaultSize: "30%", minSize: "15%" },
@@ -279,7 +289,7 @@ const PANELS = [
 
 const PARAM = "panels-v1";
 
-function readUrl(): Layout {
+function readUrl(): ResizableLayout {
   try {
     const stored = new URL(location.href).searchParams.get(PARAM);
     return sanitizeLayout(JSON.parse(stored ?? "null"), PANELS);
@@ -288,10 +298,14 @@ function readUrl(): Layout {
   }
 }
 
-function writeUrl(layout: Layout) {
+function writeUrl(layout: ResizableLayout) {
   const url = new URL(location.href);
   url.searchParams.set(PARAM, JSON.stringify(layout));
-  history.replaceState(history.state, "", url);
+  try {
+    history.replaceState(history.state, "", url);
+  } catch {
+    // Safari and Firefox throw a SecurityError when replaceState is called too often
+  }
 }
 
 function UrlSplit() {
@@ -314,7 +328,7 @@ On a server-rendered page read the same parameter from the request on the server
 ## `sanitizeLayout`
 
 ```ts
-function sanitizeLayout(raw: unknown, panels: ResizablePanelConfig[]): Layout;
+function sanitizeLayout(raw: unknown, panels: ResizablePanelConfig[]): ResizableLayout;
 ```
 
 Makes a layout that came from storage safe to use. `panels` is a list of `{ id, defaultSize?, minSize?, maxSize? }`, the same fields as the panels' props. It never throws.
@@ -322,8 +336,9 @@ Makes a layout that came from storage safe to use. `panels` is a list of `{ id, 
 - Input that is not a plain object (`null`, a string, an array, `undefined`) gives the defaults.
 - Ids that match no panel are dropped.
 - A missing value, or one that is not a finite, non-negative number, is filled from the panel's default. Missing % panels take what the others leave of 100.
-- Each value is clamped to the panel's own `minSize` and `maxSize` when those are in the panel's unit. A limit in the other unit needs the measured group, so the group applies it once it has rendered.
-- The % shares are scaled to add up to 100.
+- A px panel is clamped to its px `minSize` and `maxSize`.
+- The % shares are scaled to add up to 100. In a group of % panels only, they are also clamped to the panels' % `minSize` and `maxSize`, and the difference goes to the panels that have room, so the result is inside the limits and still adds up to 100 (`{ side: 99, main: 1 }` with `side` at most `60%` gives `{ side: 60, main: 40 }`).
+- When the group has a px panel, a % limit is a percent of the measured size, which the server doesn't have. `sanitizeLayout` then leaves % limits out, and the group applies them once it has measured. So does a limit in the other unit of a panel.
 
 ## Keyboard
 
@@ -346,7 +361,7 @@ Each key press that moves the handle is one committed change: `onLayoutChange` i
 - `role="separator"`, focusable with `tabindex="0"`.
 - `aria-orientation` is the orientation of the separator line, as the pattern defines it: a horizontal group (panels side by side) has `"vertical"` lines. The handle's `data-orientation` has the same value.
 - `aria-valuenow` is the size of the panel before the handle, as a percent of the group. `aria-valuemin` and `aria-valuemax` are the range the handle can move that panel to, given the limits of both neighbours. They update while dragging.
-- `aria-controls` lists the `id`s of the two panels it resizes.
+- `aria-controls` lists the DOM `id`s of the two panels it resizes (the generated ones, not the layout keys).
 - A disabled handle is out of the tab order and has `aria-disabled="true"`.
 
 Give each handle an accessible name with `aria-label` ("Resize sidebar") or `aria-labelledby`: the component has no built-in text, so there is nothing to translate. `Resizable.Group` has `role="group"`; label it too when the page holds more than one.
@@ -359,7 +374,7 @@ Everything follows the writing direction, which the component reads from the gro
 
 ### Pointer and touch
 
-A drag uses pointer events with pointer capture, so it works with a mouse, a pen and a finger, and keeps going when the pointer leaves the thin handle. The handle has `touch-action: none` so a touch drag doesn't scroll the page. Its hit area is wider than the line: 12px with a mouse and 44px on a touch screen (the `touch-target` utility). While dragging, the page's text selection is switched off and the cursor stays a resize cursor. A drag that is cancelled (the system takes the pointer, an `Escape` from the browser, the component unmounting) puts the sizes back and calls nothing.
+A drag uses pointer events with pointer capture, so it works with a mouse, a pen and a finger, and keeps going when the pointer leaves the thin handle. The handle has `touch-action: none` so a touch drag doesn't scroll the page. Its hit area is wider than the line: 12px with a mouse and 44px on a touch screen (the `touch-target` utility). While dragging, the page's text selection is switched off and the cursor stays a resize cursor. A drag that is cancelled (the system takes the pointer, the component unmounting) puts the sizes back and calls nothing.
 
 ## Styling
 
@@ -369,6 +384,7 @@ The handle is a 1px line in `bg-border` that turns `bg-ring` on hover and while 
 |---|---|---|
 | `Resizable.Group` | `data-orientation` | `horizontal` or `vertical`: the axis of the panels |
 | `Resizable.Handle` | `data-orientation` | The orientation of its line, as `aria-orientation`: `vertical` in a horizontal group |
+| `Resizable.Panel` | `data-panel-id` | The panel's `id`, its layout key |
 | `Resizable.Handle` | `data-dragging` | Present while a drag is in progress |
 | `Resizable.Handle` | `data-disabled` | Present when disabled |
 
@@ -407,7 +423,7 @@ export default Props
 
 ### Resizable.Panel
 
-A `div`. It takes the props of a `div` (its `id` is required), plus:
+A `div`. It takes the props of a `div`, plus the required `id`, which is a layout key and not the DOM `id`:
 
 <TSDoc
   definition={generateDefinition({
