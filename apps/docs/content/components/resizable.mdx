@@ -61,7 +61,7 @@ Set `orientation="vertical"` on the group to stack the panels. The handle lines 
 - A **px panel** keeps its size when the group resizes, as long as the % panels can take the change.
 - A **% panel** takes a share of what the px panels and the handles leave. In a group with no px panel that is a share of the whole group. The shares of a group's % panels always add up to 100: values that don't are scaled, so `20%` and `20%` are two halves. A % panel grows and shrinks with the group.
 - `minSize` and `maxSize` are limits in either unit, whatever the unit of the panel. A limit in % is a percent of the group (minus its handles). Both neighbours' limits bind a handle, so it stops when either panel reaches one.
-- When the % panels can't take all of the change (there are none, or they are at their `minSize` or `maxSize`), the px panels share the rest. A group of px panels only still fills its width: `200` and `300` show at about 450px and 550px in a 1000px group.
+- When the % panels can't take all of the change (there are none, or they are at their `minSize` or `maxSize`), the px panels share the rest. A group of px panels only still fills its width, up to their `maxSize`s: `200` and `300` show at about 450px and 550px in a 1000px group.
 - A px panel wider than the group is shrunk to fit. A % panel with a px `minSize` the group is too small for is held at that size, and goes back to its share when the group grows, unless a handle was moved in between.
 
 ```tsx
