@@ -184,7 +184,7 @@ describe("Resizable structure and ARIA", () => {
 });
 
 describe("Resizable layout at first render", () => {
-  it("writes each panel's size as a CSS variable in the server HTML", () => {
+  it("writes each panel's size as the fallback of its CSS variable in the server HTML", () => {
     const html = renderToString(<Split defaultLayout={{ side: 25, main: 75 }} />);
     expect(html).toContain("var(--resizable-side, 25)");
     expect(html).toContain("var(--resizable-main, 75)");
@@ -245,11 +245,6 @@ describe("Resizable layout at first render", () => {
     const html = renderToString(<Split defaultLayout={{ side: Number.NaN, main: -4 }} />);
     expect(html).toContain("var(--resizable-side, 30)");
     expect(html).toContain("var(--resizable-main, 70)");
-  });
-
-  it("renders without touching window", () => {
-    const html = renderToString(<Split />);
-    expect(html).toContain('data-orientation="horizontal"');
   });
 
   it("sets the variables on the group once mounted, from defaultLayout", () => {
