@@ -245,7 +245,8 @@ export default async function Page() {
   const stored = (await cookies()).get("panels-v1")?.value;
   let raw: unknown = null;
   try {
-    raw = JSON.parse(decodeURIComponent(stored ?? "null"));
+    // Next has decoded the value already: it is the JSON the browser wrote
+    raw = JSON.parse(stored ?? "null");
   } catch {
     // A cookie that isn't JSON gives the defaults
   }
@@ -267,17 +268,38 @@ export const PANELS = [
 // app/master-detail.tsx
 "use client";
 
-import { type ResizableLayout, Resizable } from "chunks-ui";
+import { type ResizableLayout, Resizable, sanitizeLayout } from "chunks-ui";
+import { useState } from "react";
+import { PANELS } from "./panels";
+
+// Change the name (here and in app/page.tsx) when a panel changes between px and %
+const COOKIE = "panels-v1";
+
+function readCookie(): ResizableLayout | undefined {
+  const pair = document.cookie.split("; ").find((part) => part.startsWith(`${COOKIE}=`));
+  if (!pair) return undefined;
+  try {
+    // Unlike the value the server reads, the browser's cookie string is still encoded
+    return sanitizeLayout(JSON.parse(decodeURIComponent(pair.slice(COOKIE.length + 1))), PANELS);
+  } catch {
+    return undefined;
+  }
+}
 
 function saveLayout(layout: ResizableLayout) {
   const value = encodeURIComponent(JSON.stringify(layout));
-  // `panels-v1`: change it when a panel changes between px and %
-  document.cookie = `panels-v1=${value}; path=/; max-age=31536000; samesite=lax`;
+  // max-age is one year: shorten it if your rules ask for a shorter lifetime
+  document.cookie = `${COOKIE}=${value}; path=/; max-age=31536000; samesite=lax`;
 }
 
 export function MasterDetail({ defaultLayout }: { defaultLayout: ResizableLayout }) {
+  // On a first load the cookie is what the server read, so the layouts match and hydration is clean
+  const [initial] = useState(() =>
+    typeof document === "undefined" ? defaultLayout : (readCookie() ?? defaultLayout),
+  );
+
   return (
-    <Resizable.Group defaultLayout={defaultLayout} onLayoutChange={saveLayout} className="h-96 w-full">
+    <Resizable.Group defaultLayout={initial} onLayoutChange={saveLayout} className="h-96 w-full">
       <Resizable.Panel id="list" defaultSize="30%" minSize="15%">
         List
       </Resizable.Panel>
@@ -289,6 +311,10 @@ export function MasterDetail({ defaultLayout }: { defaultLayout: ResizableLayout
   );
 }
 ```
+
+Reading `cookies()` makes the route render on every request (dynamic rendering). With `cacheComponents` on, read it inside a `<Suspense>` boundary, or the build fails. Next decodes cookie values, so the page parses `value` as it is; on a server that doesn't, decode it yourself first.
+
+The client component reads the cookie again in its `useState` initializer. On a first load that is the value the server read, so hydration matches. Back and Forward reuse the server's first answer for a page, which can be older than the cookie, and the client's read makes the newer layout win. The browser's cookie string is still encoded, so `readCookie` decodes the value before it parses it.
 
 The server page imports `sanitizeLayout` from `chunks-ui/utils`, not from `chunks-ui`. The main entry starts with `"use client"`, so a Server Component that imports `sanitizeLayout` from it gets a client reference, and calling that on the server throws. `chunks-ui/utils` is built without the banner and holds the React-free helpers, `sanitizeLayout` and the `ResizableLayout` and `ResizablePanelConfig` types among them, so a server can call them. `PANELS` lives in a plain module for the same reason: a module marked `"use client"` hands the server a reference too, which it can't iterate. The server still renders each panel's `defaultSize` as the fallback for a panel with no stored value, so give every % panel a `defaultSize`.
 
