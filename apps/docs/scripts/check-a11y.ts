@@ -77,11 +77,6 @@ const ALLOWED: Allowed[] = [
     why: '#299: Nextra\'s <TSDoc> props table links each row with an empty <a> that shows "#" from CSS',
   },
   {
-    rule: "label-content-name-mismatch",
-    selector: 'a[aria-label="Home page"]',
-    why: '#299: Nextra\'s navbar logo link is named "Home page" while it shows the site name (axe 4.14 compares the visible text with the name)',
-  },
-  {
     rule: "color-contrast",
     selector: 'pre code span[style*="--shiki-light:#E36209"]',
     why: "#299: Nextra's default Shiki theme github-light: parameters #E36209 on white, 3.48:1",
