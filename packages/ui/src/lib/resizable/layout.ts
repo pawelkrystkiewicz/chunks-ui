@@ -31,6 +31,10 @@ export type Limits = { min: number; max: number };
 
 const EPSILON = 1e-6;
 const FREE = Number.POSITIVE_INFINITY;
+// No layout is a billion px. Capping a size here keeps the sums in `fitPixels` finite and well
+// within EPSILON (a double steps by 1.2e-7 at 1e9, so they are not exact). It assumes
+// `available` is far below the cap (no browser lays out 1e9px); limits are not capped.
+const MAX_PX = 1e9;
 
 const round2 = (value: number) => Math.round(value * 100) / 100;
 const sum = (values: readonly number[]) => values.reduce((total, value) => total + value, 0);
@@ -237,7 +241,10 @@ export function resizeBetween(
  * pane that cannot move stops the process, so impossible limits leave the sizes as near as they
  * allow. A pane can give up all of its size above its min, so a size saved far above the group
  * still fits. Its room to grow is capped at `available`, so a pane with no max does not get
- * infinite room. Returns `px` itself when it already fits.
+ * infinite room. A size is first capped at a billion px, so a crafted size cannot overflow the
+ * sums: they stay finite and well within EPSILON. That assumes `available` is far below the cap
+ * (for a larger one the sizes are fitted as if they were a billion), and limits are not capped.
+ * Returns `px` itself when it already fits.
  */
 export function fitPixels(
   px: readonly number[],
@@ -246,10 +253,10 @@ export function fitPixels(
   absorbs?: readonly boolean[],
 ): number[] {
   if (!(available > 0)) return px as number[];
-  // ponytail: a size of about 1e19px or more loses precision (a pane ends at 0px, and two near 1e308
-  // give NaN). Layouts are only checked to be finite, so cap each size near 1e9 here if a crafted
-  // layout ever matters (W427).
-  const next = px.map((value, i) => (limits[i] ? clampTo(value, limits[i]) : value));
+  const next = px.map((value, i) => {
+    const size = Math.min(value, MAX_PX);
+    return limits[i] ? clampTo(size, limits[i]) : size;
+  });
   for (let pass = 0; pass <= next.length; pass++) {
     const diff = available - sum(next);
     if (Math.abs(diff) < EPSILON) break;

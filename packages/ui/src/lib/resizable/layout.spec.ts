@@ -420,6 +420,33 @@ describe("fitPixels", () => {
       ),
     ).toBe(px);
   });
+
+  describe("a size far beyond any layout", () => {
+    // Past 2^53 (about 9e15) the sums can be off by whole pixels (1e17 left 4px on the other pane),
+    // and two sizes near 1e308 overflow them to Infinity, so the shares are NaN
+    const free = { min: 0, max: Number.POSITIVE_INFINITY };
+
+    it.each([1e17, 1e19, 1e100, Number.MAX_VALUE])(
+      "takes a pane of %s px down to the space, with nothing left over",
+      (size) => {
+        const fitted = fitPixels([size, 0], [free, free], 1000);
+        expect(fitted[0]).toBeCloseTo(1000);
+        expect(fitted[1]).toBeCloseTo(0);
+      },
+    );
+
+    it.each([1e308, Number.MAX_VALUE])("keeps two panes of %s px finite", (size) => {
+      const fitted = fitPixels([size, size], [free, free], 1000);
+      expect(fitted.every(Number.isFinite)).toBe(true);
+      expect(fitted[0]).toBeCloseTo(500);
+      expect(fitted[1]).toBeCloseTo(500);
+    });
+
+    it("caps a size that has no entry in limits too", () => {
+      const fitted = fitPixels([Number.MAX_VALUE, Number.MAX_VALUE], [], 1000);
+      expect(fitted.every(Number.isFinite)).toBe(true);
+    });
+  });
 });
 
 describe("keyboard", () => {
@@ -541,6 +568,38 @@ describe("fitLayout", () => {
     expect(px[0]).toBeCloseTo(420);
     expect(px[1]).toBeCloseTo(760);
     expect(px[0]! + px[1]!).toBeCloseTo(1180);
+  });
+
+  it.each([3e17, 2e19, 1e20, Number.MAX_VALUE])(
+    "fits a px panel saved at %s px as it fits one at 6000px",
+    (saved) => {
+      // Uncapped, the sums round off from about 2^53 (3e17 leaves item at 704px and list at
+      // 476px), and from just past 2^64 (about 1.85e19) nearly every size loses item: it goes
+      // to 0px and list takes the group
+      const wide = models(
+        { id: "list", minSize: 420 },
+        { id: "item", defaultSize: 480, minSize: 360 },
+      );
+      const fitted = fitLayout(wide, { list: 100, item: saved }, 1180);
+      expect(fitted).toEqual({ list: 100, item: 760 });
+      const px = toPixels(wide, fitted, 1180);
+      expect(px[0]! + px[1]!).toBeCloseTo(1180);
+    },
+  );
+
+  it.each([1e19, Number.MAX_VALUE])("fits a px panel of %s px beside % panels", (saved) => {
+    // The panel takes the whole group. Uncapped, 1e19 already left it at 0px, under its 200px min
+    const beside = models({ id: "nav", defaultSize: 240, minSize: 200 }, { id: "a" }, { id: "b" });
+    const fitted = fitLayout(beside, { nav: saved, a: 50, b: 50 }, 1000);
+    expect(fitted).toEqual({ nav: 1000, a: 50, b: 50 });
+    expect(toPixels(beside, fitted, 1000)).toEqual([1000, 0, 0]);
+  });
+
+  it("returns finite values for two px panels saved at the largest number", () => {
+    const two = models({ id: "a", defaultSize: 100 }, { id: "b", defaultSize: 100 });
+    const fitted = fitLayout(two, { a: Number.MAX_VALUE, b: Number.MAX_VALUE }, 1000);
+    expect(Object.values(fitted).every(Number.isFinite)).toBe(true);
+    expect(fitted.a! + fitted.b!).toBeCloseTo(1000);
   });
 });
 
