@@ -213,6 +213,7 @@ export type {
 } from "./components/radio";
 export { Radio } from "./components/radio";
 export type {
+  ResizableGripProps,
   ResizableGroupProps,
   ResizableHandleProps,
   ResizablePanelProps,

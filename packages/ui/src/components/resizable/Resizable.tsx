@@ -1,3 +1,4 @@
+import { ResizableGrip } from "./ResizableGrip";
 import { ResizableGroup } from "./ResizableGroup";
 import { ResizableHandle } from "./ResizableHandle";
 import { ResizablePanel } from "./ResizablePanel";
@@ -17,4 +18,5 @@ export const Resizable = {
   Group: ResizableGroup,
   Panel: ResizablePanel,
   Handle: ResizableHandle,
+  Grip: ResizableGrip,
 };

@@ -136,3 +136,36 @@ export function ResizableControlledExample() {
     </Container>
   );
 }
+
+export function ResizableGripExample() {
+  return (
+    <Container centered={false} className="flex-col items-stretch">
+      <Resizable.Group className={`h-40 w-full ${frame}`} aria-label="Sidebar and content">
+        <Resizable.Panel id="side" className="bg-muted/50" defaultSize="35%" minSize="15%">
+          <Cell>Horizontal group</Cell>
+        </Resizable.Panel>
+        <Resizable.Handle aria-label="Resize sidebar">
+          <Resizable.Grip />
+        </Resizable.Handle>
+        <Resizable.Panel id="main">
+          <Cell>Content</Cell>
+        </Resizable.Panel>
+      </Resizable.Group>
+      <Resizable.Group
+        orientation="vertical"
+        className={`h-48 w-full ${frame}`}
+        aria-label="Editor and terminal"
+      >
+        <Resizable.Panel id="editor" defaultSize="60%" minSize="20%">
+          <Cell>Vertical group</Cell>
+        </Resizable.Panel>
+        <Resizable.Handle aria-label="Resize terminal">
+          <Resizable.Grip />
+        </Resizable.Handle>
+        <Resizable.Panel id="terminal" className="bg-muted/50" minSize="15%">
+          <Cell>Terminal</Cell>
+        </Resizable.Panel>
+      </Resizable.Group>
+    </Container>
+  );
+}

@@ -4,6 +4,7 @@ import {
   ResizableMixedExample,
   ResizableNestedExample,
   ResizableControlledExample,
+  ResizableGripExample,
 } from '@/examples/Resizable'
 import { generateDefinition, TSDoc } from 'nextra/tsdoc'
 
@@ -110,6 +111,22 @@ For a layout that splits both ways, put a group inside a panel. Each group has i
 ```
 
 <ResizableNestedExample />
+
+## Grip
+
+A 1px line is easy to miss. `Resizable.Grip` is an optional part you put inside a handle: a small rounded pill centred on the line with a few dots in it, so users can see it can be dragged.
+
+```tsx
+<Resizable.Handle aria-label="Resize sidebar">
+  <Resizable.Grip />
+</Resizable.Handle>
+```
+
+<ResizableGripExample />
+
+The grip is decorative. It has `aria-hidden="true"`, is not focusable, and has `pointer-events: none`, so the handle keeps the pointer: a press that lands on the grip starts the drag of the handle under it, and the handle keeps its role, name, values and keys. It follows the group's orientation: a tall pill with stacked dots on the vertical line of a horizontal group, a wide pill with a row of dots on the horizontal line of a vertical group. It is 12px across, so it stays inside the handle's 12px hit area. The pill overflows the line and sits above the panels, centred in either writing direction. It takes the colours of the handle's state: the border and dots turn to the ring colour on hover, while dragging and on keyboard focus (not on a disabled handle). In forced-colors mode it keeps a visible border in system colours. Nothing animates.
+
+It takes the props of a `div`; `className` replaces the library's classes where they conflict (`rounded-full` for a round pill, say). The dots are drawn by CSS, so there is no icon to supply.
 
 ## Layout and controlled use
 
@@ -388,6 +405,8 @@ The handle is a 1px line in `bg-border` that turns `bg-ring` on hover and while 
 | `Resizable.Handle` | `data-dragging` | Present while a drag is in progress |
 | `Resizable.Handle` | `data-disabled` | Present when disabled |
 
+A `Resizable.Grip` reads these from its handle (`group-data-dragging/handle:`, `group-data-[orientation=vertical]/handle:`), so a handle you restyle can restyle its grip the same way.
+
 ```tsx
 <Resizable.Handle
   aria-label="Resize sidebar"
@@ -448,3 +467,7 @@ export default Props
 `
   })}
 />
+
+### Resizable.Grip
+
+An optional, decorative `div` that goes inside a `Resizable.Handle`. It takes the props of a `div` and no others; `aria-hidden` is always `"true"`.

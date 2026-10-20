@@ -47,3 +47,28 @@ export const resizableHandleVariants = cva(
     defaultVariants: { orientation: "vertical" },
   },
 );
+
+/**
+ * The optional grabber on the handle: a small pill centred on the line with a few dots in it. The
+ * handle centres it with flex, which is direction-safe and lets it overflow the 1px line evenly.
+ * It turns with the line by the handle's `data-orientation`: a vertical line gets a tall pill with
+ * stacked dots, a horizontal line a wide one. The pill is at most 12px across, so the handle's
+ * `touch-target` (12px) still covers it; `pointer-events-none` leaves every press to the handle.
+ * The dots are one `radial-gradient` tile repeated three times, so they need no icon. Hover, drag
+ * and keyboard focus follow the handle (not on a disabled one). Nothing animates.
+ */
+export const resizableGripVariants = cva([
+  "pointer-events-none flex shrink-0 items-center justify-center rounded-md border border-border bg-background text-muted-foreground",
+  "group-data-[orientation=vertical]/handle:h-5 group-data-[orientation=vertical]/handle:w-3",
+  "group-data-[orientation=horizontal]/handle:h-3 group-data-[orientation=horizontal]/handle:w-5",
+  "after:block after:bg-[radial-gradient(circle,currentColor_1px,transparent_1.5px)] after:bg-size-[4px_4px] after:content-['']",
+  "group-data-[orientation=vertical]/handle:after:h-3 group-data-[orientation=vertical]/handle:after:w-1",
+  "group-data-[orientation=horizontal]/handle:after:h-1 group-data-[orientation=horizontal]/handle:after:w-3",
+  "group-not-data-disabled/handle:group-hover/handle:border-ring group-not-data-disabled/handle:group-hover/handle:text-foreground",
+  "group-data-dragging/handle:border-ring group-data-dragging/handle:text-foreground",
+  "group-focus-visible/handle:border-ring group-focus-visible/handle:text-foreground",
+  // The pill keeps a visible border in forced-colors mode, Highlight while active
+  "forced-colors:border-[CanvasText] forced-colors:bg-[Canvas] forced-colors:text-[CanvasText]",
+  "forced-colors:group-not-data-disabled/handle:group-hover/handle:border-[Highlight]",
+  "forced-colors:group-data-dragging/handle:border-[Highlight] forced-colors:group-focus-visible/handle:border-[Highlight]",
+]);

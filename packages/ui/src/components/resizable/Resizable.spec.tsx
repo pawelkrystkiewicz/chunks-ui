@@ -658,3 +658,62 @@ describe("Resizable body lock", () => {
     expect(document.body.style.userSelect).toBe("");
   });
 });
+
+describe("Resizable.Grip", () => {
+  const WithGrip = (props: React.ComponentProps<typeof Resizable.Grip>) => (
+    <Resizable.Group data-test-group="" aria-label="x">
+      <Resizable.Panel id="a" defaultSize="50%">
+        A
+      </Resizable.Panel>
+      <Resizable.Handle aria-label="Resize a">
+        <Resizable.Grip data-testid="grip" {...props} />
+      </Resizable.Handle>
+      <Resizable.Panel id="b">B</Resizable.Panel>
+    </Resizable.Group>
+  );
+
+  it("renders inside the handle, hidden from assistive technology", () => {
+    render(<WithGrip />);
+    const grip = screen.getByTestId("grip");
+    expect(handle()).toContainElement(grip);
+    expect(grip).toHaveAttribute("aria-hidden", "true");
+    expect(grip).not.toHaveAttribute("tabindex");
+    expect(grip).toHaveClass("pointer-events-none");
+  });
+
+  it("stays out of the tab order", async () => {
+    const user = userEvent.setup();
+    render(<WithGrip />);
+    await user.tab();
+    expect(handle()).toHaveFocus();
+    await user.tab();
+    expect(screen.getByTestId("grip")).not.toHaveFocus();
+  });
+
+  it("merges className, passes props through and keeps aria-hidden", () => {
+    render(<WithGrip className="grip-custom" title="drag" aria-hidden={false} />);
+    const grip = screen.getByTestId("grip");
+    expect(grip).toHaveClass("grip-custom", "pointer-events-none");
+    expect(grip).toHaveAttribute("title", "drag");
+    expect(grip).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("lets a class replace a library one", () => {
+    render(<WithGrip className="rounded-full" />);
+    expect(screen.getByTestId("grip")).toHaveClass("rounded-full");
+    expect(screen.getByTestId("grip")).not.toHaveClass("rounded-md");
+  });
+
+  it("leaves the handle's name and values alone", () => {
+    render(<WithGrip />);
+    expect(screen.getByRole("separator", { name: "Resize a" })).toHaveAttribute(
+      "aria-valuenow",
+      "50",
+    );
+  });
+
+  it("has no a11y violations", async () => {
+    const { container } = render(<WithGrip />);
+    expect(await axe(container)).toHaveNoViolations();
+  });
+});

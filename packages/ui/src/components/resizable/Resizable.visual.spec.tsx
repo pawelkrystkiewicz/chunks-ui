@@ -1,7 +1,14 @@
 import { cleanup } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { commands, userEvent } from "vitest/browser";
-import { describeDirs, renderFixture, withViewport } from "../../VisualTest.utils";
+import {
+  describeDirs,
+  emulateForcedColors,
+  paintedPixels,
+  renderFixture,
+  systemColour,
+  withViewport,
+} from "../../VisualTest.utils";
 import { Resizable } from "./index";
 
 const box = "overflow-hidden rounded-md border border-border";
@@ -398,5 +405,171 @@ describeDirs("Resizable with a flex gap (%s)", (dir) => {
     expect(centre() - start).toBeCloseTo(60 * toward, 0);
     await commands.pointerUp();
     expect(centre() - start).toBeCloseTo(60 * toward, 0);
+  });
+});
+
+function Gripped({ orientation }: { orientation: "horizontal" | "vertical" }) {
+  const horizontal = orientation === "horizontal";
+  return (
+    <div style={{ width: horizontal ? 320 : 200, height: horizontal ? 120 : 200, flex: "none" }}>
+      <Resizable.Group orientation={orientation} className={box} aria-label="Split">
+        <Resizable.Panel id="first" className={pane} defaultSize="40%">
+          <div className="p-3 text-sm">First</div>
+        </Resizable.Panel>
+        <Resizable.Handle data-testid="handle" aria-label="Resize first">
+          <Resizable.Grip data-testid="grip" />
+        </Resizable.Handle>
+        <Resizable.Panel id="second">
+          <div className="p-3 text-sm">Second</div>
+        </Resizable.Panel>
+      </Resizable.Group>
+    </div>
+  );
+}
+
+const GRIP = '[data-testid="grip"]';
+const gripEl = () => document.querySelector(GRIP) as HTMLElement;
+const handleEl = () => document.querySelector(HANDLE) as HTMLElement;
+const centreOf = (el: Element) => {
+  const rect = el.getBoundingClientRect();
+  return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+};
+
+describeDirs("Resizable.Grip (%s)", (dir) => {
+  withViewport(700);
+  const toward = dir === "rtl" ? -1 : 1;
+
+  it("sits centred on a vertical line, tall, overflowing it", async () => {
+    const { fixture } = await renderFixture(<Gripped orientation="horizontal" />);
+    const grip = gripEl().getBoundingClientRect();
+    const line = handleEl().getBoundingClientRect();
+    expect(line.width).toBe(1);
+    expect(grip.width).toBe(12);
+    expect(grip.height).toBe(20);
+    expect(centreOf(gripEl()).x).toBeCloseTo(centreOf(handleEl()).x, 1);
+    expect(centreOf(gripEl()).y).toBeCloseTo(centreOf(handleEl()).y, 1);
+    // The panels clip their content, but the grip is the handle's child: its pixels outside the
+    // 1px line are painted
+    for (const strip of [
+      new DOMRect(grip.left, grip.top, line.left - grip.left, grip.height),
+      new DOMRect(line.right, grip.top, grip.right - line.right, grip.height),
+    ]) {
+      expect(await paintedPixels(gripEl(), "", strip)).toBeGreaterThan(15);
+    }
+    await expect(fixture).toMatchScreenshot();
+  });
+
+  it("sits centred on a horizontal line, wide", async () => {
+    const { fixture } = await renderFixture(<Gripped orientation="vertical" />);
+    const grip = gripEl().getBoundingClientRect();
+    expect(handleEl().getBoundingClientRect().height).toBe(1);
+    expect(grip.width).toBe(20);
+    expect(grip.height).toBe(12);
+    expect(centreOf(gripEl()).x).toBeCloseTo(centreOf(handleEl()).x, 1);
+    expect(centreOf(gripEl()).y).toBeCloseTo(centreOf(handleEl()).y, 1);
+    await expect(fixture).toMatchScreenshot();
+  });
+
+  it("stays inside the handle's hit area", async () => {
+    await renderFixture(<Gripped orientation="horizontal" />);
+    const grip = gripEl().getBoundingClientRect();
+    const hit = Number.parseFloat(getComputedStyle(handleEl(), "::after").width);
+    expect(grip.width).toBeLessThanOrEqual(hit);
+  });
+
+  it("follows the handle on hover, while dragging and on keyboard focus", async () => {
+    await renderFixture(<Gripped orientation="horizontal" />);
+    const border = () => getComputedStyle(gripEl()).borderTopColor;
+    const idle = border();
+    await userEvent.hover(handleEl());
+    const active = getComputedStyle(handleEl()).backgroundColor;
+    expect(border()).toBe(active);
+    expect(border()).not.toBe(idle);
+    await userEvent.unhover(handleEl());
+    await commands.parkPointer();
+    expect(border()).toBe(idle);
+
+    await userEvent.tab();
+    expect(border()).toBe(active);
+    (document.activeElement as HTMLElement).blur();
+    expect(border()).toBe(idle);
+
+    await commands.pointerDown(HANDLE);
+    expect(handleEl()).toHaveAttribute("data-dragging");
+    expect(border()).toBe(active);
+    await commands.pointerUp();
+    await commands.parkPointer();
+  });
+
+  it("shows the active look on hover and drag in a screenshot", async () => {
+    const { fixture } = await renderFixture(<Gripped orientation="horizontal" />);
+    await commands.pointerDown(HANDLE);
+    await commands.pointerMoveBy(30 * toward, 0, 3);
+    await expect(fixture).toMatchScreenshot();
+    await commands.pointerUp();
+  });
+
+  it("resizes when the press starts on the grip", async () => {
+    const onLayoutChange = vi.fn();
+    await renderFixture(
+      <div style={{ width: 320, height: 120, flex: "none" }}>
+        <Resizable.Group className={box} aria-label="Split" onLayoutChange={onLayoutChange}>
+          <Resizable.Panel id="first" className={pane} defaultSize="40%">
+            First
+          </Resizable.Panel>
+          <Resizable.Handle aria-label="Resize first">
+            <Resizable.Grip data-testid="grip" />
+          </Resizable.Handle>
+          <Resizable.Panel id="second">Second</Resizable.Panel>
+        </Resizable.Group>
+      </div>,
+    );
+    const first = document.querySelector('[data-panel-id="first"]') as HTMLElement;
+    const before = sized(first);
+    const at = centreOf(gripEl());
+    // The grip lets the press through: the element under its centre is the handle
+    expect(document.elementFromPoint(at.x, at.y)).toBe(document.querySelector("[role=separator]"));
+    await commands.pointerDown(GRIP);
+    await commands.pointerMoveBy(40 * toward, 0, 4);
+    await commands.pointerUp();
+    expect(sized(first) - before).toBeCloseTo(40, 0);
+    expect(onLayoutChange).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not react on a disabled handle", async () => {
+    await renderFixture(
+      <div style={{ width: 320, height: 120, flex: "none" }}>
+        <Resizable.Group className={box} aria-label="Split">
+          <Resizable.Panel id="first" defaultSize="40%">
+            First
+          </Resizable.Panel>
+          <Resizable.Handle disabled data-testid="handle" aria-label="Resize first">
+            <Resizable.Grip data-testid="grip" />
+          </Resizable.Handle>
+          <Resizable.Panel id="second">Second</Resizable.Panel>
+        </Resizable.Group>
+      </div>,
+    );
+    const idle = getComputedStyle(gripEl()).borderTopColor;
+    await userEvent.hover(handleEl());
+    expect(getComputedStyle(gripEl()).borderTopColor).toBe(idle);
+    await commands.parkPointer();
+  });
+});
+
+describe("Resizable.Grip in forced colours", () => {
+  withViewport(700);
+  afterEach(() => emulateForcedColors(false));
+
+  it("keeps the line and the pill visible", async () => {
+    await emulateForcedColors(true);
+    await renderFixture(<Gripped orientation="horizontal" />);
+    expect(getComputedStyle(handleEl()).backgroundColor).toBe(systemColour("CanvasText"));
+    expect(getComputedStyle(gripEl()).borderTopColor).toBe(systemColour("CanvasText"));
+    expect(getComputedStyle(gripEl()).borderTopStyle).toBe("solid");
+    await userEvent.hover(handleEl());
+    expect(getComputedStyle(handleEl()).backgroundColor).toBe(systemColour("Highlight"));
+    expect(getComputedStyle(gripEl()).borderTopColor).toBe(systemColour("Highlight"));
+    await commands.parkPointer();
   });
 });
