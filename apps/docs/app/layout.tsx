@@ -4,16 +4,15 @@ import { getPageMap } from "nextra/page-map";
 import { Footer, Layout, Navbar, ThemeSwitch } from "nextra-theme-docs";
 import "nextra-theme-docs/style.css";
 import "../globals.css";
-import Image from "next/image";
 import { HydrationMarker } from "./HydrationMarker";
 import { LAYOUT_FONTS_HREF } from "./layout-fonts";
+import { NavLogo } from "./NavLogo";
 
 export const metadata = {
   title: "Chunks UI",
   description: "UI library",
 };
 
-const LOGO_SIZE = 30;
 const REPO = "https://github.com/pawelkrystkiewicz/chunks-ui";
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -25,34 +24,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <Layout
           navbar={
             <Navbar
-              logo={
-                <div className="flex flex-nowrap items-center gap-2">
-                  {/* Nextra marks dark theme with a `dark` class on <html> */}
-                  <Image
-                    src="/logo.svg"
-                    alt={metadata.title}
-                    width={LOGO_SIZE}
-                    height={LOGO_SIZE}
-                    className="[.dark_&]:hidden"
-                  />
-                  <Image
-                    src="/logo-dark-mode.svg"
-                    alt={metadata.title}
-                    width={LOGO_SIZE}
-                    height={LOGO_SIZE}
-                    className="hidden [.dark_&]:block"
-                  />
-                  {/* One line or none: wrapped, it spills out of the 64px navbar. Nextra's padding,
-                      gaps and three icon controls take 7rem + 72px, the mark, gap and name 5.4rem +
-                      30px. Below their sum, as at 390px wide with a 32px default font, only the
-                      mark shows; the link keeps Nextra's name, "Home page".
-                      ponytail: the sum is measured on Nextra 4.6's navbar; a change to its padding,
-                      gaps or controls moves it. */}
-                  <b className="whitespace-nowrap max-[calc(12.5rem+102px)]:hidden">
-                    {metadata.title}
-                  </b>
-                </div>
-              }
+              // Nextra's link says aria-label="Home page" over the visible name; NavLogo is ours
+              logo={<NavLogo />}
+              logoLink={false}
               projectLink={REPO}
               // The landing's name for its GitHub link; Nextra's default icon says "Project repository"
               projectIcon={<GitHubIcon height="24" aria-label="GitHub repository" />}

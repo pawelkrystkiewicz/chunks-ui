@@ -200,40 +200,33 @@ function Grid({ className, children }: { className: string; children: ReactNode 
   );
 }
 
-function CellMeta({ left, right }: { left: string; right: string }) {
+function CellMeta({
+  left,
+  right,
+  decorative,
+}: {
+  left: string;
+  right: string;
+  decorative?: boolean;
+}) {
   return (
-    <span className="flex justify-between gap-2 font-mono text-(--l-muted) text-[10px] tracking-[.1em]">
+    <span
+      aria-hidden={decorative || undefined}
+      className="flex justify-between gap-2 font-mono text-(--l-muted) text-[10px] tracking-[.1em]"
+    >
       <span>{left}</span>
       <span>{right}</span>
     </span>
   );
 }
 
-function CellText({
-  id,
-  title,
-  body,
-  meta,
-}: {
-  id?: string;
-  title: string;
-  body: string;
-  meta: string[];
-}) {
+function CellText({ title, body, meta }: { title: string; body: string; meta: string[] }) {
   return (
     <>
-      <h3
-        id={id && `${id}-title`}
-        className="font-display font-semibold text-(--l-fg) text-[20px] leading-tight tracking-[-.02em]"
-      >
+      <h3 className="font-display font-semibold text-(--l-fg) text-[20px] leading-tight tracking-[-.02em]">
         {title}
       </h3>
-      <p
-        id={id && `${id}-body`}
-        className="text-pretty text-(--l-muted) text-[14px] leading-normal"
-      >
-        {body}
-      </p>
+      <p className="text-pretty text-(--l-muted) text-[14px] leading-normal">{body}</p>
       <span className="mt-auto flex flex-wrap gap-2 pt-1 font-mono text-(--l-muted) text-[11px]">
         {meta.map((m, i) => (
           <span key={m} className="contents">
@@ -482,14 +475,12 @@ function ComponentsSection() {
             const names = Object.keys(c.items);
             const { core, extended } = tally(Object.values(c.items));
             return (
-              <Link
-                key={c.tag}
-                href={c.href}
-                aria-labelledby={`cat-${c.tag}-title`}
-                aria-describedby={`cat-${c.tag}-body`}
-                className={`${CELL} group/card ${FOCUS_RING_INSET}`}
-              >
-                <CellMeta left={`0${i + 1} · ${c.tag}`} right={`${names.length} COMPONENTS`} />
+              <Link key={c.tag} href={c.href} className={`${CELL} group/card ${FOCUS_RING_INSET}`}>
+                <CellMeta
+                  decorative
+                  left={`0${i + 1} · ${c.tag}`}
+                  right={`${names.length} COMPONENTS`}
+                />
                 <div
                   aria-hidden
                   className="relative mb-1 aspect-[16/10] overflow-hidden rounded-[10px] border border-(--l-line) bg-background [--ring:var(--l-lib-ring)]"
@@ -502,7 +493,6 @@ function ComponentsSection() {
                   </span>
                 </div>
                 <CellText
-                  id={`cat-${c.tag}`}
                   title={c.title}
                   body={`${names.join(", ")}.${c.note ? ` ${c.note}` : ""}`}
                   meta={[`${core} core`, `${extended} extended`]}

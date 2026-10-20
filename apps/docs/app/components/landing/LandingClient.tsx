@@ -203,9 +203,8 @@ export function PresetGrid() {
         return (
           <Link
             key={preset.name}
+            data-preset
             href="/create"
-            title={`Open Create with ${preset.name}`}
-            aria-label={`Open Create with ${preset.name}`}
             // Keep the visitor's stored mode; the preset sets everything else.
             onClick={() => saveTheme({ ...(loadTheme() ?? DEFAULT_THEME), ...preset.theme })}
             // The ring sits inside the tile: the grid frame clips what is outside
@@ -213,6 +212,7 @@ export function PresetGrid() {
           >
             <span className="flex w-full items-center justify-between gap-2">
               <span
+                aria-hidden
                 className="font-semibold text-[30px] leading-none tracking-[-.02em]"
                 style={{ fontFamily: fontOf(fontHeading).stack }}
               >
@@ -229,6 +229,7 @@ export function PresetGrid() {
             <span className="font-semibold text-[15px] tracking-[-.01em]">{preset.name}</span>
             <span className="max-w-full truncate font-mono text-(--l-muted) text-[10.5px] tracking-[.04em]">
               {fontHeading} · r{radius} · h{height}
+              <span className="sr-only"> · open in Create</span>
             </span>
           </Link>
         );

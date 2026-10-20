@@ -92,3 +92,11 @@ it("PresetGrid's Aa subset loads each preset font exactly once, minus the layout
   }
   expect(families.length).toBe(wanted.filter((f) => !isLayoutFont(f)).length);
 });
+
+// Named by content, never aria-label (see LandingPage.spec.tsx): the Aa glyph is hidden, a sr-only tail says where it goes.
+it("PresetGrid tiles are named by preset and purpose", () => {
+  render(<PresetGrid />);
+  const tile = screen.getByRole("link", { name: /^Chunks.+ · r\d+ · h\d+\s?· open in Create$/ });
+  expect(tile.hasAttribute("aria-label")).toBe(false);
+  expect(tile.hasAttribute("title")).toBe(false);
+});
