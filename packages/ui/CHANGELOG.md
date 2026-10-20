@@ -1,5 +1,27 @@
 # chunks-ui
 
+## 0.3.1
+
+### Patch Changes
+
+- [#740](https://github.com/pawelkrystkiewicz/chunks-ui/pull/740) [`88f9b70`](https://github.com/pawelkrystkiewicz/chunks-ui/commit/88f9b70c9eac39d1a50bd00e7f3de8b22cfeb688) - Fixed: `Popover` and `DatePicker` report a close once. Base UI closed a popup that was already closing when focus left the trigger during the exit, so `onOpenChange(false)` fired a second time, with reason `"focus-out"`.
+
+- [#719](https://github.com/pawelkrystkiewicz/chunks-ui/pull/719) [`20386b6`](https://github.com/pawelkrystkiewicz/chunks-ui/commit/20386b6aa9e749448584f85a6b8a7db9b71c23b3) - Fixed: holding Enter or Space on a `Select` item or a `Menu.Item` picked it again on each key repeat that came while the popup was closing, so `onValueChange` or the item's `onClick` ran two or more times. Holding Enter to pick an item in a `Combobox` whose input is in the popup, or on a button that closes a controlled `Popover` by setting `open` to `false`, could open the popup again from the trigger. While a popup closes, the repeats of a held Enter or Space now do nothing inside it or on its trigger.
+
+- [#729](https://github.com/pawelkrystkiewicz/chunks-ui/pull/729) [`836a75d`](https://github.com/pawelkrystkiewicz/chunks-ui/commit/836a75de7230fa83be5b9b6c05ae8af0dc7a3ab9) - Fixed: a controlled popup such as `Popover` closed from a consumer's `onKeyDown` handler on Enter, without `preventDefault`, opened again on that single key press, as Enter's keypress clicked the trigger. The popup now waits for the key as it does for a close made by a key, and does the same for a close on a Space keydown.
+
+- [#715](https://github.com/pawelkrystkiewicz/chunks-ui/pull/715) [`43de4c7`](https://github.com/pawelkrystkiewicz/chunks-ui/commit/43de4c7de70bce9278e14ffc16b4eb91f8530f10) - Fixed: while a modal `Menu`, `Select`, `Popover` (with `modal`) or `Combobox` (with `modal`) was open (`Menu` and `Select` are modal by default), a press on a page element below the `z-dropdowns` layer (200), such as a `sticky z-10` header, reached that element: its `onClick` ran as the popup closed. Base UI's invisible backdrop, which takes presses outside a modal popup, had no z-index, so such elements painted over it. The backdrop now takes the popup's `z-dropdowns` layer, so the press closes the popup and reaches nothing, as anywhere else on the page. A positioner moved to another layer by its `className` (`z-50`, say), by an inline `z-index` or with a `!` class (`z-10!`) leaves the backdrop as before, so the backdrop does not cover the popup.
+
+- [#744](https://github.com/pawelkrystkiewicz/chunks-ui/pull/744) [`ae719fa`](https://github.com/pawelkrystkiewicz/chunks-ui/commit/ae719fa7a705bd54ed8f8c5f9c9e4885c1fa73b4) - Fixed: `Select` reports a close once. Base UI closed a popup that was already closing when focus left the trigger during the exit, so `onOpenChange(false)` fired a second time, with reason `"focus-out"`. Also, after a fast click opened the `Select`, a later click elsewhere no longer reports an extra close with reason `"cancel-open"`.
+
+- [#716](https://github.com/pawelkrystkiewicz/chunks-ui/pull/716) [`8223b63`](https://github.com/pawelkrystkiewicz/chunks-ui/commit/8223b6371d2e6f76b952d091aaf16b0ae95cb437) - Fixed: a disabled `Select` now stays closed whatever `open` or `defaultOpen` say (it opened before). Disabling an open `Select` closes it without calling `onOpenChange` (it stayed open before). Under a `<fieldset disabled>`, a pick no longer changes the value (see Disabled in the `Select` docs).
+
+- [#739](https://github.com/pawelkrystkiewicz/chunks-ui/pull/739) [`b7c5ea1`](https://github.com/pawelkrystkiewicz/chunks-ui/commit/b7c5ea103e29eebc2be0cf41c98550d21e439838) - Fixed: a popup whose trigger is not a native button (`nativeButton={false}`) opened again after a close made by Space.
+
+- [#713](https://github.com/pawelkrystkiewicz/chunks-ui/pull/713) [`e45eb65`](https://github.com/pawelkrystkiewicz/chunks-ui/commit/e45eb65e5752f199255566ce42a798be2d1041b6) - Changed: `Tabs.Indicator` ignores a node added to or removed from a tab, such as a swapped icon: the tab's own resize is already observed. Before, each such change had the indicator observe every tab of the list again and render twice more (once per observed box). A tab added to or removed from the list still has it observe the tabs again. It also observes only its own list's tabs, not those of a `Tabs` list inside one of its tabs, and an indicator mounting or unmounting in the list no longer has it observe the tabs again.
+
+- [#745](https://github.com/pawelkrystkiewicz/chunks-ui/pull/745) [`bf3dcc3`](https://github.com/pawelkrystkiewicz/chunks-ui/commit/bf3dcc3444a75863e0487ae3682f311cf093cbd7) - Fixed: `Toast.Action` without a `render` stays out of the tab order while Base UI hides a high-priority toast, whatever `tabIndex` you pass in `actionProps`. Before, that `tabIndex` won and left a tab stop inside an `aria-hidden` toast (axe `aria-hidden-focus`).
+
 ## 0.3.0
 
 ### Minor Changes
