@@ -237,6 +237,10 @@ describe("Resizable layout at first render", () => {
     expect(html).toMatch(/flex:0 0 var\(--resizable-nav, 240px\)/);
   });
 
+  it("keeps the handle out of the tab order in the server HTML, until it has its values", () => {
+    expect(renderToString(<Split />)).not.toContain("tabindex");
+  });
+
   it("ignores a stored value that is not a size", () => {
     const html = renderToString(<Split defaultLayout={{ side: Number.NaN, main: -4 }} />);
     expect(html).toContain("var(--resizable-side, 30)");
@@ -613,6 +617,21 @@ describe("Resizable programmer errors", () => {
       </Resizable.Group>,
     );
     expect(warn).toHaveBeenCalledWith(expect.stringMatching(/maxSize/));
+  });
+
+  it("keeps a handle with no neighbours out of the tab order, with no a11y violations", async () => {
+    const { container } = render(
+      <Resizable.Group aria-label="x">
+        <Resizable.Handle aria-label="before" />
+        <Resizable.Panel id="a">A</Resizable.Panel>
+        <Resizable.Handle aria-label="after" />
+      </Resizable.Group>,
+    );
+    for (const separator of screen.getAllByRole("separator")) {
+      expect(separator).not.toHaveAttribute("tabindex");
+      expect(separator).not.toHaveAttribute("aria-valuenow");
+    }
+    expect(await axe(container)).toHaveNoViolations();
   });
 
   it("renders a handle with no neighbours as an inert separator", async () => {

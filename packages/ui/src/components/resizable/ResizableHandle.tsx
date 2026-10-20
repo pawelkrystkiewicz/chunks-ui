@@ -119,7 +119,9 @@ export function ResizableHandle({
       {...props}
       ref={mergedRef}
       role="separator"
-      tabIndex={disabled ? undefined : 0}
+      // A focusable separator must carry `aria-valuenow`, which a handle has once it knows both its
+      // neighbours (`index` starts at -1, so the server's HTML and the first client render agree)
+      tabIndex={disabled || index < 0 ? undefined : 0}
       aria-orientation={horizontal ? "vertical" : "horizontal"}
       aria-valuenow={values?.now}
       aria-valuemin={values?.min}
