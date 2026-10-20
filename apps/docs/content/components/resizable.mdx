@@ -410,7 +410,7 @@ Each key press that moves the handle is one committed change: `onLayoutChange` i
 
 `Resizable.Handle` follows the [WAI-ARIA window splitter](https://www.w3.org/WAI/ARIA/apg/patterns/windowsplitter/) pattern:
 
-- `role="separator"`, focusable with `tabindex="0"`. A handle without a panel on each side is not focusable, since a focusable separator needs its value.
+- `role="separator"`, focusable with `tabindex="0"` once it has its values. A focusable separator needs `aria-valuenow`, so a handle without a panel on each side is not focusable, and neither is a handle in a group with a px panel until the group has measured.
 - `aria-orientation` is the orientation of the separator line, as the pattern defines it: a horizontal group (panels side by side) has `"vertical"` lines. The handle's `data-orientation` has the same value.
 - `aria-valuenow` is the size of the panel before the handle, as a percent of the group. `aria-valuemin` and `aria-valuemax` are the range the handle can move that panel to, given the limits of both neighbours. They update while dragging.
 - `aria-controls` lists the DOM `id`s of the two panels it resizes (the generated ones, not the layout keys).

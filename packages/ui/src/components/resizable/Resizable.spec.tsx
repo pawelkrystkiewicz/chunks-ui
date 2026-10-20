@@ -668,6 +668,41 @@ describe("Resizable programmer errors", () => {
     expect(await axe(container)).toHaveNoViolations();
   });
 
+  it("keeps the handle of a px group out of the tab order while the group is unmeasured", async () => {
+    // No size mocks: jsdom has no layout, so the group never measures, as in a consumer's own test
+    const { container } = render(
+      <Resizable.Group aria-label="x">
+        <Resizable.Panel id="nav" defaultSize={240}>
+          Nav
+        </Resizable.Panel>
+        <Resizable.Handle aria-label="Resize nav" />
+        <Resizable.Panel id="main">Main</Resizable.Panel>
+      </Resizable.Group>,
+    );
+    expect(handle()).not.toHaveAttribute("tabindex");
+    expect(handle()).not.toHaveAttribute("aria-valuenow");
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it("makes the handle of a px group a tab stop once the group has been measured", () => {
+    GROUP.width = 0;
+    render(
+      <Resizable.Group data-test-group="" aria-label="x">
+        <Resizable.Panel id="nav" defaultSize={200}>
+          Nav
+        </Resizable.Panel>
+        <Resizable.Handle aria-label="r" />
+        <Resizable.Panel id="main">Main</Resizable.Panel>
+      </Resizable.Group>,
+    );
+    expect(handle()).not.toHaveAttribute("tabindex");
+    expect(handle()).not.toHaveAttribute("aria-valuenow");
+    GROUP.width = 1000;
+    resized(screen.getByRole("group"));
+    expect(handle()).toHaveAttribute("tabindex", "0");
+    expect(valueNow()).toBe("20");
+  });
+
   it("renders a handle with no neighbours as an inert separator", async () => {
     const onLayoutChange = vi.fn();
     const user = userEvent.setup();
