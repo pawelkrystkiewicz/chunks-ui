@@ -205,7 +205,6 @@ export function PresetGrid() {
             key={preset.name}
             href="/create"
             title={`Open Create with ${preset.name}`}
-            aria-label={`Open Create with ${preset.name}`}
             // Keep the visitor's stored mode; the preset sets everything else.
             onClick={() => saveTheme({ ...(loadTheme() ?? DEFAULT_THEME), ...preset.theme })}
             // The ring sits inside the tile: the grid frame clips what is outside

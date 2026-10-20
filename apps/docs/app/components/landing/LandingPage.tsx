@@ -209,31 +209,13 @@ function CellMeta({ left, right }: { left: string; right: string }) {
   );
 }
 
-function CellText({
-  id,
-  title,
-  body,
-  meta,
-}: {
-  id?: string;
-  title: string;
-  body: string;
-  meta: string[];
-}) {
+function CellText({ title, body, meta }: { title: string; body: string; meta: string[] }) {
   return (
     <>
-      <h3
-        id={id && `${id}-title`}
-        className="font-display font-semibold text-(--l-fg) text-[20px] leading-tight tracking-[-.02em]"
-      >
+      <h3 className="font-display font-semibold text-(--l-fg) text-[20px] leading-tight tracking-[-.02em]">
         {title}
       </h3>
-      <p
-        id={id && `${id}-body`}
-        className="text-pretty text-(--l-muted) text-[14px] leading-normal"
-      >
-        {body}
-      </p>
+      <p className="text-pretty text-(--l-muted) text-[14px] leading-normal">{body}</p>
       <span className="mt-auto flex flex-wrap gap-2 pt-1 font-mono text-(--l-muted) text-[11px]">
         {meta.map((m, i) => (
           <span key={m} className="contents">
@@ -482,13 +464,7 @@ function ComponentsSection() {
             const names = Object.keys(c.items);
             const { core, extended } = tally(Object.values(c.items));
             return (
-              <Link
-                key={c.tag}
-                href={c.href}
-                aria-labelledby={`cat-${c.tag}-title`}
-                aria-describedby={`cat-${c.tag}-body`}
-                className={`${CELL} group/card ${FOCUS_RING_INSET}`}
-              >
+              <Link key={c.tag} href={c.href} className={`${CELL} group/card ${FOCUS_RING_INSET}`}>
                 <CellMeta left={`0${i + 1} · ${c.tag}`} right={`${names.length} COMPONENTS`} />
                 <div
                   aria-hidden
@@ -502,7 +478,6 @@ function ComponentsSection() {
                   </span>
                 </div>
                 <CellText
-                  id={`cat-${c.tag}`}
                   title={c.title}
                   body={`${names.join(", ")}.${c.note ? ` ${c.note}` : ""}`}
                   meta={[`${core} core`, `${extended} extended`]}

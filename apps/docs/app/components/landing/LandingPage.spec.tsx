@@ -211,7 +211,7 @@ it("the Create section links to /create once, besides the preset tiles", () => {
   const { container } = renderPage();
   const create = container.querySelector<HTMLElement>("#create");
   if (!create) throw new Error("no #create section");
-  const links = [...create.querySelectorAll("a:not([aria-label^='Open Create with'])")];
+  const links = [...create.querySelectorAll("a:not([title^='Open Create with'])")];
   expect(links.map((a) => [a.textContent, a.getAttribute("href")])).toEqual([
     ["Open Create", "/create"],
   ]);
@@ -237,8 +237,24 @@ it("every link and button, the footer's too, draws the --ring outline on keyboar
 it("every component preview frame restores the library ring", () => {
   const { container } = renderPage();
   const frames = [
-    ...container.querySelectorAll<HTMLElement>("a[aria-labelledby^='cat-'] > div[aria-hidden]"),
+    ...container.querySelectorAll<HTMLElement>("#components a[href] > div[aria-hidden]"),
   ];
   expect(frames.length).toBeGreaterThan(0);
   for (const f of frames) expect(f.classList).toContain("[--ring:var(--l-lib-ring)]");
+});
+
+// WCAG 2.5.3 (axe label-content-name-mismatch): a link's name holds all its visible text, so the cards carry no aria-label override.
+it("each category card is named by its visible text, tag and count first", () => {
+  const { container } = renderPage();
+  const cards = [
+    ...container.querySelectorAll<HTMLElement>("#components a[href] > div[aria-hidden]"),
+  ].map((f) => f.parentElement as HTMLElement);
+  expect(cards.length).toBeGreaterThan(0);
+  for (const card of cards) {
+    expect(card.hasAttribute("aria-labelledby")).toBe(false);
+    expect(card.hasAttribute("aria-label")).toBe(false);
+  }
+  expect(
+    screen.getByRole("link", { name: /^01 · INPUTS\s?\d+ COMPONENTS Inputs Button, / }),
+  ).toBeTruthy();
 });
