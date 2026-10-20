@@ -20,7 +20,7 @@ import { Resizable, sanitizeLayout } from "chunks-ui";
 
 ## Basic Usage
 
-`Resizable.Group` holds the panels. Put a `Resizable.Handle` between each two. Every panel needs a stable `id`: the name its size goes by in a [layout](#layout-and-controlled-use). The `id` is a layout key only. It is not the panel's DOM `id`: the DOM `id` is generated, so two groups on one page (or in tabs, or in a list of cards) can reuse the same names without a clash. The panel carries its key as `data-panel-id`, which is what a test or a style rule can select by. Keep each `id` unique within its group. Give the group a size, since it fills its parent:
+`Resizable.Group` holds the panels. Put a `Resizable.Handle` between each two. Every panel needs a stable `id`: the name its size goes by in a [layout](#layout-and-controlled-use). The `id` is a layout key only. It is not the panel's DOM `id`: the DOM `id` is generated, so two groups on one page (or in tabs, or in a list of cards) can reuse the same names without a clash. The panel carries its key as `data-panel-id`, which is what a test or a style rule can select by. Keep each `id` unique within its group. `__proto__` is not a valid `id`: a panel that uses it is treated as having none, and warns in development. Give the group a size, since it fills its parent:
 
 ```tsx
 <Resizable.Group className="h-48 w-full" aria-label="Sidebar and content">

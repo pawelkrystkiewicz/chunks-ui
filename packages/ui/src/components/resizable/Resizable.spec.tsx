@@ -4,7 +4,7 @@ import { axe } from "jest-axe";
 import { createRef, StrictMode, useState } from "react";
 import { renderToString } from "react-dom/server";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import type { ResizableLayout } from "../../lib/resizable";
+import { cssVarName, type ResizableLayout } from "../../lib/resizable";
 import { Resizable } from "./Resizable";
 import type { ResizableGroupProps } from "./ResizableGroup";
 
@@ -739,6 +739,127 @@ describe("Resizable programmer errors", () => {
     handle().focus();
     await user.keyboard("{ArrowRight}{End}");
     expect(onLayoutChange).not.toHaveBeenCalled();
+  });
+});
+
+describe("Resizable ids that are names on Object.prototype", () => {
+  const Pair = ({ first, ...props }: Props & { first: string }) => (
+    <Resizable.Group data-test-group="" aria-label="x" {...props}>
+      <Resizable.Panel id={first}>A</Resizable.Panel>
+      <Resizable.Handle aria-label="r" />
+      <Resizable.Panel id="main">B</Resizable.Panel>
+    </Resizable.Group>
+  );
+
+  // `warnOnce` warns once per message for the whole file, so only this first test can see it
+  it("treats a __proto__ id as no id: warns, takes a generated one and resizes", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const onLayoutChange = vi.fn();
+    const user = userEvent.setup();
+    render(<Pair first="__proto__" onLayoutChange={onLayoutChange} />);
+    expect(warn).toHaveBeenCalledWith(expect.stringMatching(/__proto__/));
+
+    const key = screen.getByText("A").getAttribute("data-panel-id") ?? "";
+    expect(key).not.toBe("");
+    expect(key).not.toBe("__proto__");
+    const group = screen.getByRole("group");
+    // Two numbers that share the group, not "[object Object]" or "NaN"
+    expect(group.style.getPropertyValue(cssVarName(key))).toBe("50");
+    expect(group.style.getPropertyValue("--resizable-main")).toBe("50");
+    expect(valueNow()).toBe("50");
+
+    handle().focus();
+    await user.keyboard("{ArrowRight}");
+    expect(onLayoutChange).toHaveBeenCalledTimes(1);
+    const reported = onLayoutChange.mock.calls[0]?.[0] as ResizableLayout;
+    expect(Object.keys(reported).sort()).toEqual([key, "main"].sort());
+    expect(Object.values(reported).every(Number.isFinite)).toBe(true);
+    expect(reported).toEqual({ [key]: 51, main: 49 });
+    expect(group.style.getPropertyValue(cssVarName(key))).toBe("51");
+    expect(group.style.getPropertyValue("--resizable-main")).toBe("49");
+    expect(valueNow()).toBe("51");
+  });
+
+  it("gives a __proto__ panel a generated id in the server HTML too", () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const html = renderToString(<Pair first="__proto__" defaultLayout={{ main: 60 }} />);
+    expect(html).not.toContain("__proto__");
+    expect(html).not.toContain("[object Object]");
+  });
+
+  it("keeps resizing a group with two __proto__ panels, each under an id of its own", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const onLayoutChange = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <Resizable.Group data-test-group="" aria-label="x" onLayoutChange={onLayoutChange}>
+        <Resizable.Panel id="__proto__">A</Resizable.Panel>
+        <Resizable.Handle aria-label="r1" />
+        <Resizable.Panel id="__proto__">B</Resizable.Panel>
+        <Resizable.Handle aria-label="r2" />
+        <Resizable.Panel id="main">C</Resizable.Panel>
+      </Resizable.Group>,
+    );
+    expect(screen.getAllByRole("separator")).toHaveLength(2);
+    screen.getByRole("separator", { name: "r2" }).focus();
+    await user.keyboard("{ArrowRight}");
+    const reported = onLayoutChange.mock.calls[0]?.[0] as ResizableLayout;
+    expect(Object.keys(reported)).toHaveLength(3);
+    expect(Object.values(reported).every(Number.isFinite)).toBe(true);
+    expect(Object.values(reported).reduce((a, b) => a + b, 0)).toBeCloseTo(100, 1);
+  });
+
+  it.each(["constructor", "toString", "hasOwnProperty"])(
+    "uses %s as a layout key like any other",
+    async (id) => {
+      const onLayoutChange = vi.fn();
+      const user = userEvent.setup();
+      render(
+        <Pair first={id} defaultLayout={{ [id]: 30, main: 70 }} onLayoutChange={onLayoutChange} />,
+      );
+      const group = screen.getByRole("group");
+      expect(screen.getByText("A")).toHaveAttribute("data-panel-id", id);
+      expect(group.style.getPropertyValue(cssVarName(id))).toBe("30");
+      expect(group.style.getPropertyValue("--resizable-main")).toBe("70");
+      expect(valueNow()).toBe("30");
+
+      handle().focus();
+      await user.keyboard("{ArrowRight}");
+      expect(onLayoutChange).toHaveBeenLastCalledWith({ [id]: 31, main: 69 });
+      expect(group.style.getPropertyValue(cssVarName(id))).toBe("31");
+      expect(valueNow()).toBe("31");
+    },
+  );
+
+  it("lays out and resizes a group whose ids are all names on Object.prototype", async () => {
+    const onLayoutChange = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <Resizable.Group data-test-group="" aria-label="x" onLayoutChange={onLayoutChange}>
+        <Resizable.Panel id="constructor" defaultSize="20%">
+          A
+        </Resizable.Panel>
+        <Resizable.Handle aria-label="r1" />
+        <Resizable.Panel id="toString" defaultSize="30%">
+          B
+        </Resizable.Panel>
+        <Resizable.Handle aria-label="r2" />
+        <Resizable.Panel id="hasOwnProperty" defaultSize="50%">
+          C
+        </Resizable.Panel>
+      </Resizable.Group>,
+    );
+    const group = screen.getByRole("group");
+    expect(group.style.getPropertyValue("--resizable-constructor")).toBe("20");
+    expect(group.style.getPropertyValue("--resizable-toString")).toBe("30");
+    expect(group.style.getPropertyValue("--resizable-hasOwnProperty")).toBe("50");
+    screen.getByRole("separator", { name: "r2" }).focus();
+    await user.keyboard("{ArrowRight}");
+    expect(onLayoutChange).toHaveBeenLastCalledWith({
+      constructor: 20,
+      toString: 31,
+      hasOwnProperty: 49,
+    });
   });
 });
 

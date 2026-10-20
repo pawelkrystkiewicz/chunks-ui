@@ -7,6 +7,7 @@ export {
   fitLayout,
   fitPixels,
   fromPixels,
+  isPanelId,
   keyToAction,
   type LayoutWarning,
   type Limits,
@@ -16,6 +17,7 @@ export {
   type PanelModel,
   type ResizeAction,
   resizeBetween,
+  sizeIn,
   stepSize,
   toPixels,
 } from "./layout";

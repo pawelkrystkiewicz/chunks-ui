@@ -8,11 +8,13 @@ import {
   fitLayout,
   fitPixels,
   fromPixels,
+  isPanelId,
   keyToAction,
   type LayoutWarning,
   limitsPx,
   normalizePercents,
   resizeBetween,
+  sizeIn,
   stepSize,
   toPixels,
 } from "./layout";
@@ -43,6 +45,23 @@ describe("buildModels", () => {
     expect(warnings).toHaveLength(1);
   });
 
+  it("drops a __proto__ id and reports it", () => {
+    // `layout["__proto__"]` is Object.prototype, and a write to it is lost: no layout can hold it
+    const warnings: LayoutWarning[] = [];
+    const m = buildModels([{ id: "__proto__" }, { id: "a" }], (w) => warnings.push(w));
+    expect(m.map((x) => x.id)).toEqual(["a"]);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain('"__proto__"');
+  });
+
+  it.each(["constructor", "toString", "hasOwnProperty"])("keeps %s as an id", (id) => {
+    // An own property of the layout like any other, only the read has to stay on own properties
+    const warnings: LayoutWarning[] = [];
+    const m = buildModels([{ id }, { id: "a" }], (w) => warnings.push(w));
+    expect(m.map((x) => x.id)).toEqual([id, "a"]);
+    expect(warnings).toEqual([]);
+  });
+
   it("ignores an unreadable size and reports it", () => {
     const warnings: LayoutWarning[] = [];
     const m = buildModels([{ id: "a", minSize: "wide" as never }], (w) => warnings.push(w));
@@ -61,6 +80,80 @@ describe("buildModels", () => {
     const warnings: LayoutWarning[] = [];
     buildModels([{ id: "a", minSize: 300, maxSize: "10%" }], (w) => warnings.push(w));
     expect(warnings).toEqual([]);
+  });
+});
+
+describe("isPanelId", () => {
+  it.each(["side", "a b", "constructor", "toString", "hasOwnProperty", "_proto_", "__proto"])(
+    "accepts %s",
+    (id) => {
+      expect(isPanelId(id)).toBe(true);
+    },
+  );
+
+  it.each(["", "__proto__", undefined, null, 5, {}])("rejects %j", (id) => {
+    expect(isPanelId(id)).toBe(false);
+  });
+});
+
+describe("sizeIn", () => {
+  it("reads a size the layout holds", () => {
+    expect(sizeIn({ a: 40, b: 0 }, "a")).toBe(40);
+    expect(sizeIn({ a: 40, b: 0 }, "b")).toBe(0);
+  });
+
+  it.each(["constructor", "toString", "hasOwnProperty", "__proto__"])(
+    "does not read %s from the prototype",
+    (id) => {
+      expect(sizeIn({}, id)).toBeUndefined();
+      expect(sizeIn({ a: 40 }, id)).toBeUndefined();
+    },
+  );
+
+  it("reads a size held under a name that Object.prototype also has", () => {
+    expect(sizeIn({ constructor: 25 }, "constructor")).toBe(25);
+  });
+
+  it("gives undefined without a layout", () => {
+    expect(sizeIn(undefined, "a")).toBeUndefined();
+  });
+});
+
+describe("ids that are names on Object.prototype", () => {
+  const m = models(
+    { id: "constructor", defaultSize: 200 },
+    { id: "toString", defaultSize: "30%" },
+    { id: "hasOwnProperty", defaultSize: "70%" },
+  );
+  const layout = { constructor: 200, toString: 30, hasOwnProperty: 70 };
+
+  it("lays out, converts and restores a layout that holds them", () => {
+    expect(defaultLayout(m)).toEqual(layout);
+    const px = toPixels(m, layout, 1000);
+    expect(px).toEqual([200, 240, 560]);
+    expect(fromPixels(m, px)).toEqual(layout);
+  });
+
+  it("reads a size the layout lacks as unset, not as what Object.prototype has", () => {
+    // The px panel's 200px is missing: it is 0px, and the % panels share all 1000px
+    expect(toPixels(m, { toString: 30, hasOwnProperty: 70 }, 1000)).toEqual([0, 300, 700]);
+    // One % share is missing: it is 0, so the other takes all 100
+    expect(normalizePercents(m, { constructor: 200, toString: 30 })).toEqual({
+      constructor: 200,
+      toString: 100,
+      hasOwnProperty: 0,
+    });
+  });
+
+  it("fits and reports the values of a handle by key", () => {
+    const narrow = models(
+      { id: "constructor", defaultSize: "50%", minSize: 600 },
+      { id: "toString", defaultSize: "50%" },
+    );
+    const fitted = fitLayout(narrow, { constructor: 50, toString: 50 }, 1000);
+    expect(fitted.constructor).toBeCloseTo(60, 1);
+    expect(fitted.toString).toBeCloseTo(40, 1);
+    expect(ariaValues(narrow, fitted, 0, 1000)).toEqual({ now: 60, min: 60, max: 100 });
   });
 });
 

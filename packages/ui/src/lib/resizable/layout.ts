@@ -36,9 +36,26 @@ const round2 = (value: number) => Math.round(value * 100) / 100;
 const sum = (values: readonly number[]) => values.reduce((total, value) => total + value, 0);
 
 /**
- * Parses panel configs into models. A duplicate or empty id is dropped, an unreadable size is
- * ignored, and a max below its min (same unit) is raised to the min. Each is reported to `warn`;
- * nothing throws.
+ * Whether `id` can name a panel in a layout: a non-empty string other than `__proto__`. A layout is
+ * a plain object, where `layout["__proto__"]` is its prototype, not a size, and a write to it is
+ * lost. Every other string is an own property of its own, `constructor` and `toString` included.
+ */
+export function isPanelId(id: unknown): boolean {
+  return typeof id === "string" && id !== "" && id !== "__proto__";
+}
+
+/**
+ * The size a layout holds for a panel, or undefined. Own properties only: an id the layout lacks
+ * (`constructor`, say) is not answered by `Object.prototype`.
+ */
+export function sizeIn(layout: ResizableLayout | undefined, id: string): number | undefined {
+  return layout && Object.hasOwn(layout, id) ? layout[id] : undefined;
+}
+
+/**
+ * Parses panel configs into models. A duplicate id, an empty one and `__proto__` are dropped, an
+ * unreadable size is ignored, and a max below its min (same unit) is raised to the min. Each is
+ * reported to `warn`; nothing throws.
  */
 export function buildModels(
   configs: readonly PanelConfig[],
@@ -54,8 +71,12 @@ export function buildModels(
   };
   for (const config of configs) {
     const { id } = config;
-    if (typeof id !== "string" || id === "") {
-      warn?.("A panel has no `id`: give every panel a stable, non-empty `id`");
+    if (!isPanelId(id)) {
+      warn?.(
+        id === "__proto__"
+          ? `Panel id "${id}" is not valid: a layout can't name a panel by it, so the panel is ignored`
+          : "A panel has no `id`: give every panel a stable, non-empty `id`",
+      );
       continue;
     }
     if (seen.has(id)) {
@@ -88,9 +109,9 @@ export function normalizePercents(
 ): ResizableLayout {
   const out: ResizableLayout = { ...layout };
   const percent = models.filter((m) => m.unit === "%");
-  const total = sum(percent.map((m) => out[m.id] ?? 0));
+  const total = sum(percent.map((m) => sizeIn(out, m.id) ?? 0));
   for (const m of percent) {
-    out[m.id] = total > 0 ? ((out[m.id] ?? 0) / total) * 100 : 100 / percent.length;
+    out[m.id] = total > 0 ? ((sizeIn(out, m.id) ?? 0) / total) * 100 : 100 / percent.length;
   }
   return out;
 }
@@ -122,12 +143,12 @@ export function toPixels(
   layout: ResizableLayout,
   available: number,
 ): number[] {
-  const fixed = sum(models.map((m) => (m.unit === "px" ? (layout[m.id] ?? 0) : 0)));
+  const fixed = sum(models.map((m) => (m.unit === "px" ? (sizeIn(layout, m.id) ?? 0) : 0)));
   const flexible = Math.max(0, available - fixed);
-  const shares = sum(models.map((m) => (m.unit === "%" ? (layout[m.id] ?? 0) : 0)));
+  const shares = sum(models.map((m) => (m.unit === "%" ? (sizeIn(layout, m.id) ?? 0) : 0)));
   const percentCount = models.filter((m) => m.unit === "%").length;
   return models.map((m) => {
-    const value = layout[m.id] ?? 0;
+    const value = sizeIn(layout, m.id) ?? 0;
     if (m.unit === "px") return value;
     return shares > 0 ? (value / shares) * flexible : flexible / percentCount;
   });
