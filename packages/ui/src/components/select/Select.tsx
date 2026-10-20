@@ -106,10 +106,12 @@ function SelectRoot<Value, Multiple extends boolean | undefined = false>({
     },
   );
   // ponytail: Base UI 1.9's FloatingFocusManager closes a popup that is already closing, as
-  // "focus-out", when focus leaves the trigger during or after the exit. A quick press that opens
-  // it also arms a stale "cancel-open" close for the next `mouseup` (mui/base-ui#6042). Drop both
-  // before `useCloseFocusRoot`, whose handler calls `onOpenChange`; remove once Base UI fixes the
-  // focus-out close (mui/base-ui#6041) and #6042.
+  // "focus-out", when focus leaves the trigger during or after the exit (mui/base-ui#6041). A fast
+  // press that opens it also leaves a "cancel-open" close armed for the next `mouseup` outside the
+  // trigger and popup (mui/base-ui#6042). Both are dropped while the Select is not open, before
+  // `useCloseFocusRoot`, whose handler calls `onOpenChange`. Not covered: after a fast-press open,
+  // a press inside the popup released outside it still closes the Select. Remove once both are
+  // fixed.
   const handleOpenChange: typeof reportOpenChange = (next, eventDetails) => {
     if (!next && !isOpen) {
       if (keepMounted.current) eventDetails.preventUnmountOnClose();
