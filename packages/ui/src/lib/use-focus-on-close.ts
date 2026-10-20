@@ -115,6 +115,28 @@ export function useFocusOnClose<T extends HTMLElement>(
       stopWaiting();
       handOff();
     };
+    // `useButton` clicks a non-native trigger on any Space keyup that reaches it, so the closing
+    // Space's keyup is cancelled there. It outlives the effect: with reduced motion the popup is
+    // gone first.
+    // ponytail: a stray cancel needs a Space keyup whose keydown this document never saw (an iframe,
+    // or a window-capture handler that stops propagation). A close at Space's keyup, or a lost
+    // keyup, leaves one idle listener until the next Space keydown.
+    const cancelSpaceKeyup = () => {
+      const done = () => {
+        doc.removeEventListener("keyup", onSpaceUp, true);
+        doc.removeEventListener("keydown", onSpaceDown, true);
+      };
+      const onSpaceUp = (event: KeyboardEvent) => {
+        if (event.key !== " ") return;
+        done();
+        if (event.composedPath()[0] === closeFocus.trigger.current) event.preventDefault();
+      };
+      const onSpaceDown = (event: KeyboardEvent) => {
+        if (!event.repeat && event.key === " ") done();
+      };
+      doc.addEventListener("keyup", onSpaceUp, true);
+      doc.addEventListener("keydown", onSpaceDown, true);
+    };
     // A new key's keydown or any keyup ends the wait; a keypress hands off and goes on listening.
     // A held key repeats its keydown, and its keypress too if it has one (Enter, Space, characters,
     // not Escape, Tab or the arrows): a repeat does not end the wait.
@@ -186,6 +208,11 @@ export function useFocusOnClose<T extends HTMLElement>(
       // waits for the keyup or the next key, where it went at once before.
       const keyClick = event?.type === "click" && "detail" in event && event.detail === 0;
       byKey = keyClick || event?.type.startsWith("key") === true;
+      const space =
+        event && "key" in event
+          ? event.key === " "
+          : (event === undefined || keyClick) && keyDown?.key === " ";
+      if (space) cancelSpaceKeyup();
       // Other closes hand over at once, and still listen until the next key's events, for the
       // repeats of a key held through the close: a Combobox's pick by Enter (default-prevented), or
       // a button pressed with Space or the mouse that sets `open` to false, which Base UI does not

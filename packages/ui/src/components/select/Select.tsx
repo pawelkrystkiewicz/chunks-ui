@@ -80,17 +80,41 @@ function SelectRoot<Value, Multiple extends boolean | undefined = false>({
     if (next && (isOpen || wasOpen.current)) actions.current?.unmount();
     return next;
   };
+  const keepMounted = useRef(false);
   useLayoutEffect(() => {
     syncDisabled();
+    // Base UI clears its own copy when `open` changes, not on a render that still sees `open`
+    if (isOpen && !wasOpen.current) keepMounted.current = false;
     wasOpen.current = isOpen;
   });
-  // Only an uncontrolled Select keeps the state: a controlled one shows `open`
-  const [closeFocus, handleOpenChange] = useCloseFocusRoot(
+  const [closeFocus, reportOpenChange] = useCloseFocusRoot(
     (next: boolean, eventDetails: BaseSelect.Root.OpenChangeEventDetails) => {
+      if (!next) {
+        // Remember the consumer's choice, to repeat it for a close dropped below
+        keepMounted.current = false;
+        const prevent = eventDetails.preventUnmountOnClose;
+        eventDetails.preventUnmountOnClose = () => {
+          keepMounted.current = true;
+          prevent.call(eventDetails);
+        };
+      }
       onOpenChange?.(next, eventDetails);
+
+      if (eventDetails.isCanceled) keepMounted.current = false;
+      // Only an uncontrolled Select keeps the state: a controlled one shows `open`
       if (open === undefined && !eventDetails.isCanceled) setInternalOpen(next);
     },
   );
+  // ponytail: Base UI 1.9's FloatingFocusManager closes a popup that is already closing, as
+  // "focus-out", when focus leaves the trigger during or after the exit. Drop it before
+  // `useCloseFocusRoot`, whose handler calls `onOpenChange`; remove once Base UI checks `open`.
+  const handleOpenChange: typeof reportOpenChange = (next, eventDetails) => {
+    if (!next && !isOpen) {
+      if (keepMounted.current) eventDetails.preventUnmountOnClose();
+      return;
+    }
+    reportOpenChange(next, eventDetails);
+  };
   return (
     <SelectCloseFocusContext.Provider value={closeFocus}>
       <BaseSelect.Root<Value, Multiple>
