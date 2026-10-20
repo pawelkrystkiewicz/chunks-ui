@@ -4,6 +4,7 @@ export {
   buildModels,
   defaultLayout,
   deltaRange,
+  fitLayout,
   fitPixels,
   fromPixels,
   keyToAction,
@@ -20,7 +21,7 @@ export {
   stepSize,
   toPixels,
 } from "./layout";
-export { sanitizeLayout } from "./sanitize-layout";
+export { sanitizeLayout, sanitizeModels } from "./sanitize-layout";
 export {
   cssVarName,
   formatCssValue,

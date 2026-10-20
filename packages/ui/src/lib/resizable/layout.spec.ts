@@ -5,6 +5,7 @@ import {
   buildModels,
   defaultLayout,
   deltaRange,
+  fitLayout,
   fitPixels,
   fromPixels,
   keyToAction,
@@ -256,6 +257,23 @@ describe("fitPixels", () => {
     expect(fitted).toEqual([600, 600]);
   });
 
+  it("lets the flagged panes absorb first, then the rest", () => {
+    // c rises to 500 by its min; the 100px excess comes off b (flagged) before a
+    const withMin = [
+      { min: 0, max: 1000 },
+      { min: 0, max: 1000 },
+      { min: 500, max: 1000 },
+    ];
+    expect(fitPixels([300, 600, 100], withMin, 1000, [false, true, true])).toEqual([300, 200, 500]);
+    // b has only 100 to give above its min of 400: a pays the rest
+    const tight = [
+      { min: 0, max: 1000 },
+      { min: 400, max: 1000 },
+      { min: 500, max: 1000 },
+    ];
+    expect(fitPixels([300, 500, 100], tight, 1000, [false, true, true])).toEqual([100, 400, 500]);
+  });
+
   it("does nothing without a known size", () => {
     const px = [10, 20];
     expect(
@@ -352,5 +370,31 @@ describe("ariaValues", () => {
 
   it("is unknown for a handle without two neighbours", () => {
     expect(ariaValues(m, { a: 30, b: 70 }, 1, 1000)).toBeUndefined();
+  });
+});
+
+describe("fitLayout", () => {
+  const m = models(
+    { id: "nav", defaultSize: 240, minSize: 200 },
+    { id: "a", minSize: 300 },
+    { id: "b" },
+  );
+
+  it("returns the layout itself when it fits", () => {
+    const layout = { nav: 240, a: 50, b: 50 };
+    expect(fitLayout(m, layout, 1000)).toBe(layout);
+  });
+
+  it("returns the layout itself while the size is unknown", () => {
+    const layout = { nav: 240, a: 50, b: 50 };
+    expect(fitLayout(m, layout, 0)).toBe(layout);
+  });
+
+  it("lifts a % panel to its px min and takes the rest from the others", () => {
+    // 1000 - 240 = 760 flexible: a would be 38, so it needs 300 of 760 = 39.47%
+    const fitted = fitLayout(m, { nav: 240, a: 5, b: 95 }, 1000);
+    expect(fitted.nav).toBe(240);
+    expect(fitted.a).toBeCloseTo((300 / 760) * 100, 1);
+    expect(fitted.a! + fitted.b!).toBeCloseTo(100, 1);
   });
 });

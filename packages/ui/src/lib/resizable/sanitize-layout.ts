@@ -31,7 +31,11 @@ function clampOwnUnit(model: PanelModel, value: number) {
  * Plain TypeScript with no React: call it on the server too.
  */
 export function sanitizeLayout(raw: unknown, panels: readonly PanelConfig[]): Layout {
-  const models = buildModels(panels);
+  return sanitizeModels(raw, buildModels(panels));
+}
+
+/** `sanitizeLayout` for panels that are already parsed. */
+export function sanitizeModels(raw: unknown, models: readonly PanelModel[]): Layout {
   const defaults = defaultLayout(models);
   if (!isRecord(raw)) return defaults;
   const layout: Layout = {};

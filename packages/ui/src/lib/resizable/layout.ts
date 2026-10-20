@@ -218,14 +218,16 @@ export function resizeBetween(
 
 /**
  * Brings sizes inside their limits and back to the available total: a pane over a limit is
- * clamped, and the difference goes to the panes that have room, in proportion to it. A pane that
- * cannot move stops the process, so impossible limits leave the sizes as near as they allow.
- * Returns `px` itself when it already fits.
+ * clamped, and the difference goes to the panes that have room, in proportion to it. Panes
+ * flagged in `absorbs` take it first; the others share it only once those have no room left. A
+ * pane that cannot move stops the process, so impossible limits leave the sizes as near as they
+ * allow. Returns `px` itself when it already fits.
  */
 export function fitPixels(
   px: readonly number[],
   limits: readonly Limits[],
   available: number,
+  absorbs?: readonly boolean[],
 ): number[] {
   if (!(available > 0)) return px as number[];
   const next = px.map((value, i) => (limits[i] ? clampTo(value, limits[i]) : value));
@@ -236,16 +238,40 @@ export function fitPixels(
       const limit = limits[i] ?? { min: 0, max: FREE };
       return Math.min(diff > 0 ? limit.max - value : value - limit.min, available);
     });
-    const total = sum(room);
+    const preferred = room.map((r, i) => (absorbs && !absorbs[i] ? 0 : r));
+    const usable = sum(preferred) >= EPSILON ? preferred : room;
+    const total = sum(usable);
     if (total < EPSILON) break;
     for (let i = 0; i < next.length; i++) {
-      const share = Math.min(room[i] ?? 0, (Math.abs(diff) * (room[i] ?? 0)) / total);
+      const share = Math.min(usable[i] ?? 0, (Math.abs(diff) * (usable[i] ?? 0)) / total);
       next[i] = (next[i] ?? 0) + Math.sign(diff) * share;
     }
   }
   return next.every((value, i) => Math.abs(value - (px[i] ?? 0)) < EPSILON)
     ? (px as number[])
     : next;
+}
+
+/**
+ * The layout as it shows in a group of `available` px: sizes pushed inside their limits (a min in
+ * px that the group is too small for, say) with the % shares re-normalised. % panels absorb the
+ * difference before px panels do. Returns `layout`
+ * itself when it already fits, and always when the size is unknown.
+ */
+export function fitLayout(
+  models: readonly PanelModel[],
+  layout: Layout,
+  available: number,
+): Layout {
+  if (!(available > 0) || models.length === 0) return layout;
+  const px = toPixels(models, layout, available);
+  const fitted = fitPixels(
+    px,
+    limitsPx(models, available),
+    available,
+    models.map((m) => m.unit === "%"),
+  );
+  return fitted === px ? layout : fromPixels(models, fitted);
 }
 
 export type Orientation = "horizontal" | "vertical";
