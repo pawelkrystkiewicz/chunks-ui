@@ -1,7 +1,7 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
-import { createRef, useState } from "react";
+import { createRef, StrictMode, useState } from "react";
 import { renderToString } from "react-dom/server";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ResizableLayout } from "../../lib/resizable";
@@ -57,6 +57,8 @@ afterAll(() => {
 
 beforeEach(() => {
   GROUP.width = 1000;
+  // jsdom has no pointer capture; a browser grants it for a live pointer
+  Object.assign(HTMLElement.prototype, { setPointerCapture: () => {} });
   vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (
     this: HTMLElement,
   ) {
@@ -67,6 +69,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  delete (HTMLElement.prototype as { setPointerCapture?: unknown }).setPointerCapture;
   vi.restoreAllMocks();
   document.body.removeAttribute("style");
 });
@@ -656,6 +659,75 @@ describe("Resizable body lock", () => {
     expect(document.body.style.userSelect).toBe("none");
     fireEvent.pointerUp(screen.getByRole("separator", { name: "first" }), { pointerId: 1 });
     expect(document.body.style.userSelect).toBe("");
+  });
+});
+
+describe("Resizable drag ending", () => {
+  const down = () =>
+    fireEvent.pointerDown(handle(), { button: 0, pointerId: 1, clientX: 300, clientY: 0 });
+
+  it("treats a failed pointer capture as no drag: keys and later drags still work", async () => {
+    Object.assign(HTMLElement.prototype, {
+      setPointerCapture: () => {
+        throw new DOMException("gone", "NotFoundError");
+      },
+    });
+    const onLayoutChange = vi.fn();
+    const user = userEvent.setup();
+    render(<Split onLayoutChange={onLayoutChange} />);
+    down();
+    expect(document.body.style.userSelect).toBe("");
+    expect(handle()).not.toHaveAttribute("data-dragging");
+    handle().focus();
+    await user.keyboard("{ArrowRight}");
+    expect(onLayoutChange).toHaveBeenLastCalledWith({ side: 31, main: 69 });
+    // A later pointerdown is not ignored: with capture working again it starts a drag
+    Object.assign(HTMLElement.prototype, { setPointerCapture: () => {} });
+    down();
+    expect(handle()).toHaveAttribute("data-dragging");
+    fireEvent.pointerUp(handle(), { pointerId: 1 });
+  });
+
+  it("puts the sizes back on lostpointercapture without a pointerup, and reports nothing", () => {
+    const onLayoutChange = vi.fn();
+    render(<Split onLayoutChange={onLayoutChange} />);
+    down();
+    fireEvent.pointerMove(handle(), { pointerId: 1, clientX: 400, clientY: 0 });
+    expect(valueNow()).toBe("40");
+    fireEvent.lostPointerCapture(handle(), { pointerId: 1 });
+    expect(valueNow()).toBe("30");
+    expect(onLayoutChange).not.toHaveBeenCalled();
+    expect(handle()).not.toHaveAttribute("data-dragging");
+    expect(document.body.style.userSelect).toBe("");
+  });
+});
+
+describe("Resizable in StrictMode", () => {
+  it("registers once, reports nothing extra and cleans up the body lock", async () => {
+    const onLayoutChange = vi.fn();
+    const user = userEvent.setup();
+    const { unmount } = render(
+      <StrictMode>
+        <Split onLayoutChange={onLayoutChange} />
+      </StrictMode>,
+    );
+    expect(screen.getAllByRole("separator")).toHaveLength(1);
+    expect(onLayoutChange).not.toHaveBeenCalled();
+    expect(valueNow()).toBe("30");
+    expect(handle().getAttribute("aria-controls")?.split(" ")).toHaveLength(2);
+    expect(document.querySelector<HTMLElement>("[data-panel-id=side]")?.style.cssText).toContain(
+      "30",
+    );
+    handle().focus();
+    await user.keyboard("{ArrowRight}");
+    expect(onLayoutChange).toHaveBeenCalledTimes(1);
+    expect(onLayoutChange).toHaveBeenLastCalledWith({ side: 31, main: 69 });
+    expect(valueNow()).toBe("31");
+    fireEvent.pointerDown(handle(), { button: 0, pointerId: 1, clientX: 300 });
+    expect(document.body.style.userSelect).toBe("none");
+    unmount();
+    expect(document.body.style.userSelect).toBe("");
+    expect(onLayoutChange).toHaveBeenCalledTimes(1);
   });
 });
 

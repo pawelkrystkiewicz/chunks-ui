@@ -149,7 +149,10 @@ export function ResizableHandle({
         try {
           el.setPointerCapture(event.pointerId);
         } catch {
-          // A pointer that is already gone has nothing to capture; the drag then ends on cancel
+          // A pointer that is already gone can't be captured, so no pointerup or cancel would
+          // ever reach this thin handle: don't start a drag that nothing can end
+          session.end(false);
+          return;
         }
         drag.current = {
           session,
