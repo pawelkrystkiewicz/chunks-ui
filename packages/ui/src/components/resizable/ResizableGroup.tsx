@@ -348,15 +348,19 @@ export function ResizableGroup({
           if (over) return;
           over = true;
           registry.current.resizing = false;
-          if (commit && !sameLayout(current, start)) {
-            if (state.layoutProp === undefined) setUncontrolled(current);
-            latest.current.onLayoutChange?.(current);
-          } else {
-            writeVars(panels, start);
-            writeAria(panels, start, available);
+          try {
+            if (commit && !sameLayout(current, start)) {
+              if (state.layoutProp === undefined) setUncontrolled(current);
+              latest.current.onLayoutChange?.(current);
+            } else {
+              writeVars(panels, start);
+              writeAria(panels, start, available);
+            }
+          } finally {
+            // A controlled parent that kept its layout, or whose callback threw (the error goes
+            // on), gets its variables back in this render instead of the preview staying
+            rerender();
           }
-          // A controlled parent that kept its layout gets its variables back in this render
-          rerender();
         },
       };
     },

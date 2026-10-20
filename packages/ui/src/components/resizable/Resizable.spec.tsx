@@ -508,6 +508,39 @@ describe("Resizable controlled layout", () => {
     expect(screen.getByRole("group").style.getPropertyValue("--resizable-main")).toBe("80");
   });
 
+  it("puts the sizes back when onLayoutChange throws, and lets the error through", () => {
+    const errors: unknown[] = [];
+    // React reports an error thrown in an event handler to the window; catch it here
+    const onError = (event: ErrorEvent) => {
+      event.preventDefault();
+      errors.push(event.error);
+    };
+    window.addEventListener("error", onError);
+    try {
+      render(
+        <Split
+          layout={{ side: 40, main: 60 }}
+          onLayoutChange={() => {
+            throw new Error("boom");
+          }}
+        />,
+      );
+      fireEvent.pointerDown(handle(), { button: 0, pointerId: 1, clientX: 400, clientY: 0 });
+      fireEvent.pointerMove(handle(), { pointerId: 1, clientX: 500, clientY: 0 });
+      expect(valueNow()).toBe("50");
+      fireEvent.pointerUp(handle(), { pointerId: 1 });
+    } finally {
+      window.removeEventListener("error", onError);
+    }
+    expect(errors).toEqual([new Error("boom")]);
+    // The preview is gone: the DOM shows the layout the parent holds
+    expect(valueNow()).toBe("40");
+    expect(screen.getByRole("group").style.getPropertyValue("--resizable-side")).toBe("40");
+    expect(screen.getByRole("group").style.getPropertyValue("--resizable-main")).toBe("60");
+    expect(handle()).not.toHaveAttribute("data-dragging");
+    expect(document.body.style.userSelect).toBe("");
+  });
+
   it("sanitizes a layout prop that is out of range", () => {
     render(<Split layout={{ side: 99, main: 1 }} />);
     // the group measures 1000px, so the 60% max shows
