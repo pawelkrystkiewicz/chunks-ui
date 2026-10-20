@@ -294,10 +294,11 @@ The server page imports `sanitizeLayout` from `chunks-ui/utils`, not from `chunk
 
 ### URL
 
-A layout in the query string survives a reload and can be shared as a link. `history.replaceState` changes the address without adding a history entry for every drag. Browsers rate-limit it and throw a `SecurityError` when it is called too often, so wrap it in `try`/`catch` as the `localStorage` recipe does.
+A layout in the query string survives a reload and can be shared as a link. `history.replaceState` changes the address without adding a history entry for every drag. Browsers rate-limit it and throw a `SecurityError` when it is called too often, so wrap it in `try`/`catch` as the `localStorage` recipe does. Like that recipe, this one is for a page that renders only on the client: `readUrl` reads `location`, which a server doesn't have. `useState(readUrl)` reads the URL once, on the first render, not on every render.
 
 ```tsx
 import { type ResizablePanelConfig, type ResizableLayout, Resizable, sanitizeLayout } from "chunks-ui";
+import { useState } from "react";
 
 const PANELS = [
   { id: "list", defaultSize: "30%", minSize: "15%" },
@@ -326,8 +327,10 @@ function writeUrl(layout: ResizableLayout) {
 }
 
 function UrlSplit() {
+  const [initial] = useState(readUrl);
+
   return (
-    <Resizable.Group defaultLayout={readUrl()} onLayoutChange={writeUrl} className="h-96 w-full">
+    <Resizable.Group defaultLayout={initial} onLayoutChange={writeUrl} className="h-96 w-full">
       <Resizable.Panel id="list" defaultSize="30%" minSize="15%">
         List
       </Resizable.Panel>
@@ -340,7 +343,7 @@ function UrlSplit() {
 }
 ```
 
-On a server-rendered page read the same parameter from the request on the server, as the cookie recipe does, and pass it down.
+On a server-rendered page don't call `readUrl` during render. Read the same parameter from the request on the server, as the cookie recipe does, and pass it down.
 
 ## `sanitizeLayout`
 
