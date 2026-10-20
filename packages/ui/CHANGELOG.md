@@ -1,5 +1,11 @@
 # chunks-ui
 
+## 0.4.0
+
+### Minor Changes
+
+- [#749](https://github.com/pawelkrystkiewicz/chunks-ui/pull/749) [`5003c22`](https://github.com/pawelkrystkiewicz/chunks-ui/commit/5003c22cd73685b859c1880be9f1285aa95f4e8d) - Added `Resizable`: a split-pane layout with `Resizable.Group`, `Resizable.Panel`, `Resizable.Handle` and an optional decorative `Resizable.Grip` for the handle, horizontal or vertical, sizes in px and %, pointer and keyboard resizing (RTL aware), and `defaultLayout`, `layout`, `onLayoutChange` and `sanitizeLayout` (also in `chunks-ui/utils`, for Server Components) to save and restore the layout without storage code in the component.
+
 ## 0.3.1
 
 ### Patch Changes
