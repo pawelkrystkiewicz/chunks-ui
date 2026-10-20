@@ -14,6 +14,10 @@
  *   takes from the component around it or from an earlier block on the page.
  * A block's own imports and declarations take precedence over all of these.
  *
+ * A block can also import a file that another block of its page shows (`./panels`): the fixtures'
+ * `modules` declare it by hand (keep them in step with the blocks), so the importing block
+ * type-checks as written.
+ *
  * How a block is wrapped: if its code after the imports starts with `<` or `{/*`, it is JSX
  * children and goes inside a fragment, so sibling elements and JSX comments are fine. Otherwise it
  * is module code (types, functions, statements, one JSX expression) and is checked as written.
@@ -22,7 +26,7 @@
  */
 import { join } from "node:path";
 import ts from "typescript";
-import { fixtures } from "./check-snippets.fixtures";
+import { fixtures, modules } from "./check-snippets.fixtures";
 
 const DOCS_DIR = join(import.meta.dirname, "..");
 const CONTENT_DIR = join(DOCS_DIR, "content");
@@ -154,6 +158,11 @@ function createHost(options: ts.CompilerOptions, files: Map<string, string>) {
   };
   host.fileExists = (fileName) => files.has(fileName) || ts.sys.fileExists(fileName);
   host.readFile = (fileName) => files.get(fileName) ?? ts.sys.readFile(fileName);
+  // A relative import looks in the block's own folder, which exists only in memory
+  const { directoryExists } = host;
+  host.directoryExists = (directory) =>
+    [...files.keys()].some((fileName) => fileName.startsWith(`${directory}/`)) ||
+    (directoryExists?.(directory) ?? false);
   return host;
 }
 
@@ -220,7 +229,7 @@ if (import.meta.main) {
   let previous = globals.program;
   let blocks = 0;
 
-  for (const page of Object.keys(fixtures)) {
+  for (const page of [...Object.keys(fixtures), ...Object.keys(modules)]) {
     if (!pages.has(page))
       errors.add(`check-snippets.fixtures.ts: no tsx blocks in content/${page}`);
   }
@@ -231,6 +240,9 @@ if (import.meta.main) {
       [GLOBALS_FILE, globals.text],
       [FIXTURES_FILE, `declare global {\n${fixtures[page] ?? ""}\n}\nexport {};`],
     ]);
+    for (const [name, text] of Object.entries(modules[page] ?? {})) {
+      files.set(join(VIRTUAL_DIR, page, name), text);
+    }
     for (const snippet of snippets) {
       files.set(snippet.file, snippet.lines.map((line) => line.text).join("\n"));
     }

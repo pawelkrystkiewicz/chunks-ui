@@ -1,0 +1,575 @@
+import { cleanup } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { commands, userEvent } from "vitest/browser";
+import {
+  describeDirs,
+  emulateForcedColors,
+  paintedPixels,
+  renderFixture,
+  systemColour,
+  withViewport,
+} from "../../VisualTest.utils";
+import { Resizable } from "./index";
+
+const box = "overflow-hidden rounded-md border border-border";
+const pane = "bg-muted";
+
+/** A panel's width or height in CSS px, as laid out */
+const sized = (el: HTMLElement, axis: "width" | "height" = "width") =>
+  el.getBoundingClientRect()[axis];
+
+afterEach(() => {
+  cleanup();
+  document.body.removeAttribute("style");
+});
+
+function Horizontal(props: Partial<React.ComponentProps<typeof Resizable.Group>>) {
+  return (
+    <div style={{ width: 400, height: 160, flex: "none" }}>
+      <Resizable.Group className={box} aria-label="Split" {...props}>
+        <Resizable.Panel id="side" className={pane} defaultSize="30%" minSize="20%" maxSize="50%">
+          <div className="p-3 text-sm">Side</div>
+        </Resizable.Panel>
+        <Resizable.Handle data-testid="handle" aria-label="Resize side" />
+        <Resizable.Panel id="main">
+          <div className="p-3 text-sm">Main</div>
+        </Resizable.Panel>
+      </Resizable.Group>
+    </div>
+  );
+}
+
+const side = () => document.querySelector('[data-panel-id="side"]') as HTMLElement;
+const main = () => document.querySelector('[data-panel-id="main"]') as HTMLElement;
+const HANDLE = '[data-testid="handle"]';
+
+describe("Resizable", () => {
+  withViewport(700);
+
+  it("horizontal", async () => {
+    const { fixture } = await renderFixture(<Horizontal />);
+    await expect(fixture).toMatchScreenshot();
+  });
+
+  it("vertical", async () => {
+    const { fixture } = await renderFixture(
+      <div style={{ width: 240, height: 200, flex: "none" }}>
+        <Resizable.Group orientation="vertical" className={box} aria-label="Split">
+          <Resizable.Panel id="top" className={pane} defaultSize="40%">
+            <div className="p-3 text-sm">Top</div>
+          </Resizable.Panel>
+          <Resizable.Handle aria-label="Resize top" />
+          <Resizable.Panel id="bottom">
+            <div className="p-3 text-sm">Bottom</div>
+          </Resizable.Panel>
+        </Resizable.Group>
+      </div>,
+    );
+    await expect(fixture).toMatchScreenshot();
+  });
+
+  it("three panes mixing px and %", async () => {
+    const { fixture } = await renderFixture(
+      <div style={{ width: 480, height: 120, flex: "none" }}>
+        <Resizable.Group className={box} aria-label="Layout">
+          <Resizable.Panel id="nav" className={pane} defaultSize={120} minSize={80}>
+            <div className="p-3 text-sm">Nav 120px</div>
+          </Resizable.Panel>
+          <Resizable.Handle aria-label="Resize nav" />
+          <Resizable.Panel id="list" defaultSize="60%">
+            <div className="p-3 text-sm">List 60%</div>
+          </Resizable.Panel>
+          <Resizable.Handle aria-label="Resize list" />
+          <Resizable.Panel id="detail" className={pane} defaultSize="40%">
+            <div className="p-3 text-sm">Detail 40%</div>
+          </Resizable.Panel>
+        </Resizable.Group>
+      </div>,
+    );
+    await expect(fixture).toMatchScreenshot();
+  });
+
+  it("nested", async () => {
+    const { fixture } = await renderFixture(
+      <div style={{ width: 400, height: 200, flex: "none" }}>
+        <Resizable.Group className={box} aria-label="Outer">
+          <Resizable.Panel id="left" className={pane} defaultSize="35%">
+            <div className="p-3 text-sm">Left</div>
+          </Resizable.Panel>
+          <Resizable.Handle aria-label="Resize left" />
+          <Resizable.Panel id="right" defaultSize="65%">
+            <Resizable.Group orientation="vertical" aria-label="Inner">
+              <Resizable.Panel id="top" defaultSize="50%">
+                <div className="p-3 text-sm">Top</div>
+              </Resizable.Panel>
+              <Resizable.Handle aria-label="Resize top" />
+              <Resizable.Panel id="bottom" className={pane} defaultSize="50%">
+                <div className="p-3 text-sm">Bottom</div>
+              </Resizable.Panel>
+            </Resizable.Group>
+          </Resizable.Panel>
+        </Resizable.Group>
+      </div>,
+    );
+    await expect(fixture).toMatchScreenshot();
+  });
+
+  it("disabled handle", async () => {
+    const { fixture } = await renderFixture(
+      <div style={{ width: 400, height: 100, flex: "none" }}>
+        <Resizable.Group className={box} aria-label="Split">
+          <Resizable.Panel id="side" className={pane} defaultSize="50%">
+            <div className="p-3 text-sm">Side</div>
+          </Resizable.Panel>
+          <Resizable.Handle disabled aria-label="Resize side" />
+          <Resizable.Panel id="main">Main</Resizable.Panel>
+        </Resizable.Group>
+      </div>,
+    );
+    await expect(fixture).toMatchScreenshot();
+    const handle = fixture.querySelector("[role=separator]") as HTMLElement;
+    expect(getComputedStyle(handle).cursor).toBe("not-allowed");
+  });
+
+  it("handle with keyboard focus", async () => {
+    const { fixture } = await renderFixture(<Horizontal />);
+    await userEvent.tab();
+    expect(document.activeElement).toBe(fixture.querySelector("[role=separator]"));
+    await expect(fixture).toMatchScreenshot();
+  });
+
+  it("handle while dragging", async () => {
+    const { fixture } = await renderFixture(<Horizontal />);
+    await commands.pointerDown(HANDLE);
+    await commands.pointerMoveBy(40, 0, 4);
+    await expect(fixture).toMatchScreenshot();
+    await commands.pointerUp();
+  });
+});
+
+describe("Resizable layout in the browser", () => {
+  withViewport(700);
+
+  it("fills the group, border and handle included", async () => {
+    await renderFixture(<Horizontal />);
+    const group = document.querySelector("[role=group]") as HTMLElement;
+    const handle = document.querySelector(HANDLE) as HTMLElement;
+    // 400 wide, 1px border each side, 1px handle: 397px shared 30 / 70
+    const available = 400 - 2 - sized(handle);
+    expect(sized(side())).toBeCloseTo(available * 0.3, 1);
+    expect(sized(side()) + sized(main()) + sized(handle) + 2).toBeCloseTo(sized(group), 1);
+    expect(handle).toHaveAttribute("aria-valuenow", "30");
+  });
+
+  it("keeps a px panel at its size and gives the rest to the % panels", async () => {
+    await renderFixture(
+      <div style={{ width: 480, height: 80, flex: "none" }}>
+        <Resizable.Group aria-label="Layout">
+          <Resizable.Panel id="side" defaultSize={120}>
+            <div className="p-3 text-sm">Nav</div>
+          </Resizable.Panel>
+          <Resizable.Handle aria-label="r1" />
+          <Resizable.Panel id="main" defaultSize="75%">
+            <div className="p-3 text-sm">A</div>
+          </Resizable.Panel>
+          <Resizable.Handle aria-label="r2" />
+          <Resizable.Panel defaultSize="25%" id="c">
+            <div className="p-3 text-sm">B</div>
+          </Resizable.Panel>
+        </Resizable.Group>
+      </div>,
+    );
+    expect(sized(side())).toBe(120);
+    const rest = 480 - 120 - 2;
+    expect(sized(main())).toBeCloseTo(rest * 0.75, 1);
+  });
+
+  it("shrinks a px panel that is larger than the group", async () => {
+    await renderFixture(
+      <div style={{ width: 200, height: 80, flex: "none" }}>
+        <Resizable.Group aria-label="Layout">
+          <Resizable.Panel id="side" defaultSize={500}>
+            <div className="p-3 text-sm">Nav</div>
+          </Resizable.Panel>
+          <Resizable.Handle aria-label="r1" />
+          <Resizable.Panel id="main">A</Resizable.Panel>
+        </Resizable.Group>
+      </div>,
+    );
+    await expect.poll(() => sized(side())).toBeLessThanOrEqual(200);
+  });
+});
+
+describeDirs("Resizable drag (%s)", (dir) => {
+  withViewport(700);
+
+  /** A pointer moving toward the inline end grows the first panel in LTR, shrinks it in RTL */
+  const toward = dir === "rtl" ? -1 : 1;
+
+  it("puts the first panel at the inline start", async () => {
+    const { fixture } = await renderFixture(<Horizontal />);
+    const first = side().getBoundingClientRect();
+    const group = (document.querySelector("[role=group]") as HTMLElement).getBoundingClientRect();
+    if (dir === "rtl") expect(first.right).toBeCloseTo(group.right - 1, 0);
+    else expect(first.left).toBeCloseTo(group.left + 1, 0);
+    await expect(fixture).toMatchScreenshot();
+  });
+
+  it("moves the handle with the pointer and reports the layout once, on release", async () => {
+    const onLayoutChange = vi.fn();
+    await renderFixture(<Horizontal onLayoutChange={onLayoutChange} />);
+    const before = sized(side());
+    const handle = document.querySelector(HANDLE) as HTMLElement;
+
+    await commands.pointerDown(HANDLE);
+    expect(handle).toHaveAttribute("data-dragging");
+    expect(document.body.style.userSelect).toBe("none");
+    await commands.pointerMoveBy(20 * toward, 0, 4);
+    await commands.pointerMoveBy(20 * toward, 0, 4);
+
+    expect(sized(side()) - before).toBeCloseTo(40, 0);
+    expect(handle).toHaveAttribute("aria-valuenow", expect.stringMatching(/^4[0-9.]+$/));
+    expect(onLayoutChange).not.toHaveBeenCalled();
+
+    await commands.pointerUp();
+    expect(onLayoutChange).toHaveBeenCalledTimes(1);
+    const layout = onLayoutChange.mock.calls[0]?.[0] as Record<string, number>;
+    expect(layout.side).toBeCloseTo((sized(side()) / (sized(side()) + sized(main()))) * 100, 1);
+    expect(layout.side! + layout.main!).toBeCloseTo(100, 1);
+    expect(handle).not.toHaveAttribute("data-dragging");
+    expect(document.body.style.userSelect).toBe("");
+    expect(sized(side()) - before).toBeCloseTo(40, 0);
+  });
+
+  it("grows toward the pointer in a vertical group", async () => {
+    const onLayoutChange = vi.fn();
+    await renderFixture(
+      <div style={{ width: 240, height: 200, flex: "none" }}>
+        <Resizable.Group orientation="vertical" aria-label="Split" onLayoutChange={onLayoutChange}>
+          <Resizable.Panel id="top" defaultSize="40%" minSize="10%">
+            <div className="p-3 text-sm">Top</div>
+          </Resizable.Panel>
+          <Resizable.Handle data-testid="handle" aria-label="Resize top" />
+          <Resizable.Panel id="bottom">Bottom</Resizable.Panel>
+        </Resizable.Group>
+      </div>,
+    );
+    const top = document.querySelector('[data-panel-id="top"]') as HTMLElement;
+    const before = sized(top, "height");
+    await commands.pointerDown(HANDLE);
+    await commands.pointerMoveBy(0, 30, 3);
+    await commands.pointerUp();
+    expect(sized(top, "height") - before).toBeCloseTo(30, 0);
+    expect(onLayoutChange).toHaveBeenCalledTimes(1);
+  });
+
+  it("stops at the min and max of the panels", async () => {
+    const onLayoutChange = vi.fn();
+    await renderFixture(<Horizontal onLayoutChange={onLayoutChange} />);
+    const available = 400 - 2 - 1;
+
+    await commands.pointerDown(HANDLE);
+    await commands.pointerMoveBy(500 * toward, 0, 5);
+    expect(sized(side())).toBeCloseTo(available * 0.5, 1);
+    await commands.pointerMoveBy(-900 * toward, 0, 5);
+    expect(sized(side())).toBeCloseTo(available * 0.2, 1);
+    await commands.pointerUp();
+    expect(onLayoutChange).toHaveBeenCalledTimes(1);
+    expect(onLayoutChange.mock.calls[0]?.[0].side).toBeCloseTo(20, 1);
+  });
+
+  it("moves a px panel with the pointer and leaves the other handle's panels alone", async () => {
+    const onLayoutChange = vi.fn();
+    await renderFixture(
+      <div style={{ width: 480, height: 80, flex: "none" }}>
+        <Resizable.Group aria-label="Layout" onLayoutChange={onLayoutChange}>
+          <Resizable.Panel id="nav" defaultSize={120} minSize={80}>
+            <div className="p-3 text-sm">Nav</div>
+          </Resizable.Panel>
+          <Resizable.Handle data-testid="handle" aria-label="r1" />
+          <Resizable.Panel id="list" defaultSize="50%">
+            <div className="p-3 text-sm">List</div>
+          </Resizable.Panel>
+          <Resizable.Handle aria-label="r2" />
+          <Resizable.Panel id="detail" defaultSize="50%">
+            <div className="p-3 text-sm">Detail</div>
+          </Resizable.Panel>
+        </Resizable.Group>
+      </div>,
+    );
+    const detail = document.querySelector('[data-panel-id="detail"]') as HTMLElement;
+    const detailBefore = sized(detail);
+    await commands.pointerDown(HANDLE);
+    await commands.pointerMoveBy(50 * toward, 0, 5);
+    await commands.pointerUp();
+    expect(sized(document.querySelector('[data-panel-id="nav"]') as HTMLElement)).toBeCloseTo(
+      170,
+      1,
+    );
+    expect(sized(detail)).toBeCloseTo(detailBefore, 1);
+    expect(onLayoutChange.mock.calls[0]?.[0].nav).toBeCloseTo(170, 1);
+  });
+});
+
+describe("Resizable pointer handling", () => {
+  withViewport(700);
+
+  it("starts a drag from the hit area beside the line", async () => {
+    await renderFixture(<Horizontal />);
+    const handle = document.querySelector(HANDLE) as HTMLElement;
+    expect(getComputedStyle(handle).touchAction).toBe("none");
+    expect(Number.parseFloat(getComputedStyle(handle, "::after").width)).toBeGreaterThanOrEqual(12);
+    const before = sized(side());
+    await commands.pointerDown(HANDLE, 4, 0);
+    await commands.pointerMoveBy(30, 0, 3);
+    await commands.pointerUp();
+    expect(sized(side()) - before).toBeCloseTo(30, 0);
+  });
+
+  it("undoes the drag on pointercancel", async () => {
+    const onLayoutChange = vi.fn();
+    await renderFixture(<Horizontal onLayoutChange={onLayoutChange} />);
+    const handle = document.querySelector(HANDLE) as HTMLElement;
+    const before = sized(side());
+    await commands.pointerDown(HANDLE);
+    await commands.pointerMoveBy(60, 0, 3);
+    expect(sized(side()) - before).toBeCloseTo(60, 0);
+    // Chromium's mouse is pointer 1
+    handle.dispatchEvent(new PointerEvent("pointercancel", { pointerId: 1, bubbles: true }));
+    await commands.pointerUp();
+    expect(sized(side())).toBeCloseTo(before, 1);
+    expect(handle).toHaveAttribute("aria-valuenow", "30");
+    expect(handle).not.toHaveAttribute("data-dragging");
+    expect(document.body.style.userSelect).toBe("");
+    expect(onLayoutChange).not.toHaveBeenCalled();
+  });
+
+  it("lets go of the page when it unmounts mid-drag", async () => {
+    await renderFixture(<Horizontal />);
+    await commands.pointerDown(HANDLE);
+    await commands.pointerMoveBy(30, 0, 3);
+    expect(document.body.style.userSelect).toBe("none");
+    cleanup();
+    expect(document.body.style.userSelect).toBe("");
+    await commands.pointerUp();
+  });
+
+  it("resizes by key in the browser too", async () => {
+    const onLayoutChange = vi.fn();
+    await renderFixture(<Horizontal onLayoutChange={onLayoutChange} />);
+    const before = sized(side());
+    await userEvent.tab();
+    await userEvent.keyboard("{ArrowRight}");
+    expect(sized(side()) - before).toBeCloseTo(3.97, 1);
+    expect(onLayoutChange).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps a % panel at its px min when the group shrinks", async () => {
+    await renderFixture(
+      <div id="box" style={{ width: 600, height: 80, flex: "none" }}>
+        <Resizable.Group aria-label="Layout">
+          <Resizable.Panel id="side" defaultSize="30%" minSize={150}>
+            <div className="p-3 text-sm">Side</div>
+          </Resizable.Panel>
+          <Resizable.Handle aria-label="r1" />
+          <Resizable.Panel id="main">Main</Resizable.Panel>
+        </Resizable.Group>
+      </div>,
+    );
+    expect(sized(side())).toBeCloseTo(179.7, 0);
+    (document.getElementById("box") as HTMLElement).style.width = "300px";
+    await expect.poll(() => sized(side())).toBeCloseTo(150, 0);
+    (document.getElementById("box") as HTMLElement).style.width = "600px";
+    await expect.poll(() => sized(side())).toBeCloseTo(179.7, 0);
+  });
+});
+
+describeDirs("Resizable with a flex gap (%s)", (dir) => {
+  withViewport(700);
+  const toward = dir === "rtl" ? -1 : 1;
+
+  it("keeps the handle under the pointer when the group has a gap", async () => {
+    const onLayoutChange = vi.fn();
+    await renderFixture(<Horizontal className={`${box} gap-2`} onLayoutChange={onLayoutChange} />);
+    const handle = document.querySelector(HANDLE) as HTMLElement;
+    const centre = () => {
+      const rect = handle.getBoundingClientRect();
+      return rect.left + rect.width / 2;
+    };
+    // 400 - 2 border - 1 handle - 2 gaps of 8: the panels share 381px, 30% of it is 114.3px
+    expect(sized(side())).toBeCloseTo((400 - 2 - 1 - 16) * 0.3, 1);
+    const start = centre();
+    await commands.pointerDown(HANDLE);
+    await commands.pointerMoveBy(60 * toward, 0, 6);
+    // Without the gap in the measure the % maths over-counts the space and the handle lags
+    expect(centre() - start).toBeCloseTo(60 * toward, 0);
+    await commands.pointerUp();
+    expect(centre() - start).toBeCloseTo(60 * toward, 0);
+  });
+});
+
+function Gripped({ orientation }: { orientation: "horizontal" | "vertical" }) {
+  const horizontal = orientation === "horizontal";
+  return (
+    <div style={{ width: horizontal ? 320 : 200, height: horizontal ? 120 : 200, flex: "none" }}>
+      <Resizable.Group orientation={orientation} className={box} aria-label="Split">
+        <Resizable.Panel id="first" className={pane} defaultSize="40%">
+          <div className="p-3 text-sm">First</div>
+        </Resizable.Panel>
+        <Resizable.Handle data-testid="handle" aria-label="Resize first">
+          <Resizable.Grip data-testid="grip" />
+        </Resizable.Handle>
+        <Resizable.Panel id="second">
+          <div className="p-3 text-sm">Second</div>
+        </Resizable.Panel>
+      </Resizable.Group>
+    </div>
+  );
+}
+
+const GRIP = '[data-testid="grip"]';
+const gripEl = () => document.querySelector(GRIP) as HTMLElement;
+const handleEl = () => document.querySelector(HANDLE) as HTMLElement;
+const centreOf = (el: Element) => {
+  const rect = el.getBoundingClientRect();
+  return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+};
+
+describeDirs("Resizable.Grip (%s)", (dir) => {
+  withViewport(700);
+  const toward = dir === "rtl" ? -1 : 1;
+
+  it("sits centred on a vertical line, tall, overflowing it", async () => {
+    const { fixture } = await renderFixture(<Gripped orientation="horizontal" />);
+    const grip = gripEl().getBoundingClientRect();
+    const line = handleEl().getBoundingClientRect();
+    expect(line.width).toBe(1);
+    expect(grip.width).toBe(12);
+    expect(grip.height).toBe(20);
+    expect(centreOf(gripEl()).x).toBeCloseTo(centreOf(handleEl()).x, 1);
+    expect(centreOf(gripEl()).y).toBeCloseTo(centreOf(handleEl()).y, 1);
+    // The panels clip their content, but the grip is the handle's child: its pixels outside the
+    // 1px line are painted
+    for (const strip of [
+      new DOMRect(grip.left, grip.top, line.left - grip.left, grip.height),
+      new DOMRect(line.right, grip.top, grip.right - line.right, grip.height),
+    ]) {
+      expect(await paintedPixels(gripEl(), "", strip)).toBeGreaterThan(15);
+    }
+    await expect(fixture).toMatchScreenshot();
+  });
+
+  it("sits centred on a horizontal line, wide", async () => {
+    const { fixture } = await renderFixture(<Gripped orientation="vertical" />);
+    const grip = gripEl().getBoundingClientRect();
+    expect(handleEl().getBoundingClientRect().height).toBe(1);
+    expect(grip.width).toBe(20);
+    expect(grip.height).toBe(12);
+    expect(centreOf(gripEl()).x).toBeCloseTo(centreOf(handleEl()).x, 1);
+    expect(centreOf(gripEl()).y).toBeCloseTo(centreOf(handleEl()).y, 1);
+    await expect(fixture).toMatchScreenshot();
+  });
+
+  it("stays inside the handle's hit area", async () => {
+    await renderFixture(<Gripped orientation="horizontal" />);
+    const grip = gripEl().getBoundingClientRect();
+    const hit = Number.parseFloat(getComputedStyle(handleEl(), "::after").width);
+    expect(grip.width).toBeLessThanOrEqual(hit);
+  });
+
+  it("follows the handle on hover, while dragging and on keyboard focus", async () => {
+    await renderFixture(<Gripped orientation="horizontal" />);
+    const border = () => getComputedStyle(gripEl()).borderTopColor;
+    const idle = border();
+    await userEvent.hover(handleEl());
+    const active = getComputedStyle(handleEl()).backgroundColor;
+    expect(border()).toBe(active);
+    expect(border()).not.toBe(idle);
+    await userEvent.unhover(handleEl());
+    await commands.parkPointer();
+    expect(border()).toBe(idle);
+
+    await userEvent.tab();
+    expect(border()).toBe(active);
+    (document.activeElement as HTMLElement).blur();
+    expect(border()).toBe(idle);
+
+    await commands.pointerDown(HANDLE);
+    expect(handleEl()).toHaveAttribute("data-dragging");
+    expect(border()).toBe(active);
+    await commands.pointerUp();
+    await commands.parkPointer();
+  });
+
+  it("shows the active look on hover and drag in a screenshot", async () => {
+    const { fixture } = await renderFixture(<Gripped orientation="horizontal" />);
+    await commands.pointerDown(HANDLE);
+    await commands.pointerMoveBy(30 * toward, 0, 3);
+    await expect(fixture).toMatchScreenshot();
+    await commands.pointerUp();
+  });
+
+  it("resizes when the press starts on the grip", async () => {
+    const onLayoutChange = vi.fn();
+    await renderFixture(
+      <div style={{ width: 320, height: 120, flex: "none" }}>
+        <Resizable.Group className={box} aria-label="Split" onLayoutChange={onLayoutChange}>
+          <Resizable.Panel id="first" className={pane} defaultSize="40%">
+            First
+          </Resizable.Panel>
+          <Resizable.Handle aria-label="Resize first">
+            <Resizable.Grip data-testid="grip" />
+          </Resizable.Handle>
+          <Resizable.Panel id="second">Second</Resizable.Panel>
+        </Resizable.Group>
+      </div>,
+    );
+    const first = document.querySelector('[data-panel-id="first"]') as HTMLElement;
+    const before = sized(first);
+    const at = centreOf(gripEl());
+    // The grip lets the press through: the element under its centre is the handle
+    expect(document.elementFromPoint(at.x, at.y)).toBe(document.querySelector("[role=separator]"));
+    await commands.pointerDown(GRIP);
+    await commands.pointerMoveBy(40 * toward, 0, 4);
+    await commands.pointerUp();
+    expect(sized(first) - before).toBeCloseTo(40, 0);
+    expect(onLayoutChange).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not react on a disabled handle", async () => {
+    await renderFixture(
+      <div style={{ width: 320, height: 120, flex: "none" }}>
+        <Resizable.Group className={box} aria-label="Split">
+          <Resizable.Panel id="first" defaultSize="40%">
+            First
+          </Resizable.Panel>
+          <Resizable.Handle disabled data-testid="handle" aria-label="Resize first">
+            <Resizable.Grip data-testid="grip" />
+          </Resizable.Handle>
+          <Resizable.Panel id="second">Second</Resizable.Panel>
+        </Resizable.Group>
+      </div>,
+    );
+    const idle = getComputedStyle(gripEl()).borderTopColor;
+    await userEvent.hover(handleEl());
+    expect(getComputedStyle(gripEl()).borderTopColor).toBe(idle);
+    await commands.parkPointer();
+  });
+});
+
+describe("Resizable.Grip in forced colours", () => {
+  withViewport(700);
+  afterEach(() => emulateForcedColors(false));
+
+  it("keeps the line and the pill visible", async () => {
+    await emulateForcedColors(true);
+    await renderFixture(<Gripped orientation="horizontal" />);
+    expect(getComputedStyle(handleEl()).backgroundColor).toBe(systemColour("CanvasText"));
+    expect(getComputedStyle(gripEl()).borderTopColor).toBe(systemColour("CanvasText"));
+    expect(getComputedStyle(gripEl()).borderTopStyle).toBe("solid");
+    await userEvent.hover(handleEl());
+    expect(getComputedStyle(handleEl()).backgroundColor).toBe(systemColour("Highlight"));
+    expect(getComputedStyle(gripEl()).borderTopColor).toBe(systemColour("Highlight"));
+    await commands.parkPointer();
+  });
+});

@@ -37,7 +37,7 @@ import { Button, Tabs, Input } from 'chunks-ui'
 
 `theme.css` registers its CSS variables with Tailwind CSS v4 through `@theme`, and its `@source` makes Tailwind generate the classes the components use — no plugin needed.
 
-`chunks-ui` is a client bundle (`"use client"`). To call `cn`, `cnState` or a `*Variants` function such as `buttonVariants` in a React Server Component, import it from `chunks-ui/utils`. It also exports the English label defaults (`DEFAULT_*_LABELS`) and their `<Component>Labels` types. See [Utilities › Server components](https://ui-kit.chunk-creations.com/utilities#server-components).
+`chunks-ui` is a client bundle (`"use client"`). To call `cn`, `cnState` or a `*Variants` function such as `buttonVariants` in a React Server Component, import it from `chunks-ui/utils`. It also exports the English label defaults (`DEFAULT_*_LABELS`) and their `<Component>Labels` types, and [`sanitizeLayout`](https://ui-kit.chunk-creations.com/components/resizable#sanitizelayout) with the `ResizableLayout` and `ResizablePanelConfig` types, to read a saved `Resizable` layout on the server. See [Utilities › Server components](https://ui-kit.chunk-creations.com/utilities#server-components).
 
 Motion is optional: without it the components use CSS transitions, and installing `motion` turns the animations on. See [Getting Started](https://ui-kit.chunk-creations.com/getting-started).
 
@@ -49,7 +49,7 @@ Add the `touch-target` class to give a small control a 44×44px hit area without
 
 ## Components
 
-Accordion, Avatar, Breadcrumb, Button, Calendar, Card, Checkbox, Chip, ClearButton, Collapsible, Combobox, CopyButton, DatePicker, Dialog, Drawer, Empty, Field, IconButton, Input, InputCopy, Label, Loader, Menu, NumberField, Pagination, Popover, Progress, Radio, ScrollArea, Select, Separator, Skeleton, Slider, Switch, Table, Tabs, Textarea, ThemeToggle, Toast, ToggleGroup, Tooltip
+Accordion, Avatar, Breadcrumb, Button, Calendar, Card, Checkbox, Chip, ClearButton, Collapsible, Combobox, CopyButton, DatePicker, Dialog, Drawer, Empty, Field, IconButton, Input, InputCopy, Label, Loader, Menu, NumberField, Pagination, Popover, Progress, Radio, Resizable, ScrollArea, Select, Separator, Skeleton, Slider, Switch, Table, Tabs, Textarea, ThemeToggle, Toast, ToggleGroup, Tooltip
 
 Each has a page in the [component index](https://ui-kit.chunk-creations.com/components).
 

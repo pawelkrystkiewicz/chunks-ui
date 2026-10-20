@@ -213,6 +213,14 @@ export type {
 } from "./components/radio";
 export { Radio } from "./components/radio";
 export type {
+  ResizableGripProps,
+  ResizableGroupProps,
+  ResizableHandleProps,
+  ResizablePanelProps,
+  ResizablePanelSize,
+} from "./components/resizable";
+export { Resizable } from "./components/resizable";
+export type {
   ScrollAreaContentProps,
   ScrollAreaCornerProps,
   ScrollAreaRootProps,
@@ -303,6 +311,11 @@ export { type ClassInput, cn, cnState, type StateClassName } from "./lib/cn";
 export { mergeLabels } from "./lib/labels";
 export { springs } from "./lib/motion";
 export { PortalContainerProvider, usePortalContainer } from "./lib/portal-container";
+export {
+  type PanelConfig as ResizablePanelConfig,
+  type ResizableLayout,
+  sanitizeLayout,
+} from "./lib/resizable";
 export { type MotionLike, useMotion, useReducedMotion } from "./lib/use-motion";
 export type * from "./types";
 // Named values, not `export *`: the build turns this into an import of ./utils.js, and Next.js

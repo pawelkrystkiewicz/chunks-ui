@@ -38,6 +38,43 @@ const parkPointer: BrowserCommand<[]> = async ({ page }) => {
   await page.mouse.move(-1, -1);
 };
 
+/** Where the last `pointerDown` or `pointerMoveBy` left the mouse, in the main page's CSS px */
+let pointer = { x: 0, y: 0 };
+
+/**
+ * Presses the mouse on the middle of the first element in the test page that `selector` (CSS)
+ * matches, moved by the offset. A real press, so the page sees pointer events as from a user; the specs of a drag
+ * (Resizable) need the pointer to stay down between commands.
+ */
+const pointerDown: BrowserCommand<[selector: string, offsetX?: number, offsetY?: number]> = async (
+  { page, frame },
+  selector,
+  offsetX = 0,
+  offsetY = 0,
+) => {
+  const box = await (await frame()).locator(selector).first().boundingBox();
+  if (!box) throw new Error(`No box for ${selector}`);
+  pointer = { x: box.x + box.width / 2 + offsetX, y: box.y + box.height / 2 + offsetY };
+  await page.mouse.move(pointer.x, pointer.y);
+  await page.mouse.down();
+};
+
+/** Moves the pressed mouse by (dx, dy) CSS px in `steps` moves, each a pointer event */
+const pointerMoveBy: BrowserCommand<[dx: number, dy: number, steps?: number]> = async (
+  { page },
+  dx,
+  dy,
+  steps = 1,
+) => {
+  pointer = { x: pointer.x + dx, y: pointer.y + dy };
+  await page.mouse.move(pointer.x, pointer.y, { steps });
+};
+
+/** Releases the mouse */
+const pointerUp: BrowserCommand<[]> = async ({ page }) => {
+  await page.mouse.up();
+};
+
 type FrameTree = { frame: { id: string; url: string }; childFrames?: FrameTree[] };
 
 const frameIdOf = (tree: FrameTree, url: string): string | undefined =>
@@ -130,7 +167,14 @@ export default defineConfig({
       enabled: true,
       headless: true,
       provider: playwrightProvider("reduce"),
-      commands: { emulateMedia, parkPointer, accessibilityTree },
+      commands: {
+        emulateMedia,
+        parkPointer,
+        accessibilityTree,
+        pointerDown,
+        pointerMoveBy,
+        pointerUp,
+      },
       instances: [
         // Reduced motion: components skip Motion springs, so screenshots never catch one mid-way
         {

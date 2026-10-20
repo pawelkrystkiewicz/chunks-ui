@@ -59,3 +59,23 @@ export const fixtures: Record<string, string> = {
     const FavoriteToggle: typeof import("@base-ui/react/toggle").Toggle;
   `,
 };
+
+/**
+ * Files that blocks of one page import from each other (`./panels`, `./master-detail`), keyed by the
+ * page and then by the file the import resolves to, next to the page's blocks. Each block is checked
+ * on its own, so the block that imports such a file sees these declarations instead. They are
+ * declared by hand: keep them in step with the blocks that define them, because a rename there is
+ * not noticed here. They are `.ts` files of `export declare`, not `.d.ts`, so a mistake in a
+ * declaration (a misspelt type, say) is an error, which `skipLibCheck` would hide in a `.d.ts`. See
+ * `check-snippets.ts`.
+ */
+export const modules: Record<string, Record<string, string>> = {
+  // `app/panels.ts` and `app/master-detail.tsx` of the cookie recipe
+  "components/resizable.mdx": {
+    "panels.ts": `
+      export declare const COOKIE: string;
+      export declare const PANELS: import("chunks-ui").ResizablePanelConfig[];
+    `,
+    "master-detail.ts": `export declare function MasterDetail(props: { defaultLayout: import("chunks-ui").ResizableLayout }): import("react").ReactElement;`,
+  },
+};

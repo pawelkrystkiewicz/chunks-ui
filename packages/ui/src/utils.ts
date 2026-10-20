@@ -56,4 +56,6 @@ export { DEFAULT_TOAST_LABELS, type ToastLabels } from "./components/toast/Toast
 export { type ClassInput, cn, cnState, type StateClassName } from "./lib/cn";
 export { mergeLabels } from "./lib/labels";
 export { springs } from "./lib/motion";
+export { sanitizeLayout } from "./lib/resizable/sanitize-layout";
+export type { PanelConfig as ResizablePanelConfig, ResizableLayout } from "./lib/resizable/types";
 export * from "./types";
