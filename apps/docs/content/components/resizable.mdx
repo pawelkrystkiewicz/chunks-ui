@@ -239,10 +239,10 @@ A cookie that only remembers a layout is a functional preference: it holds somet
 import { cookies } from "next/headers";
 import { sanitizeLayout } from "chunks-ui/utils";
 import { MasterDetail } from "./master-detail";
-import { PANELS } from "./panels";
+import { COOKIE, PANELS } from "./panels";
 
 export default async function Page() {
-  const stored = (await cookies()).get("panels-v1")?.value;
+  const stored = (await cookies()).get(COOKIE)?.value;
   let raw: unknown = null;
   try {
     // Next has decoded the value already: it is the JSON the browser wrote
@@ -258,6 +258,8 @@ export default async function Page() {
 // app/panels.ts (no "use client": the server reads it too)
 import type { ResizablePanelConfig } from "chunks-ui/utils";
 
+export const COOKIE = "panels-v1"; // change it when a panel changes between px and %
+
 export const PANELS = [
   { id: "list", defaultSize: "30%", minSize: "15%" },
   { id: "detail", defaultSize: "70%" },
@@ -270,10 +272,7 @@ export const PANELS = [
 
 import { type ResizableLayout, Resizable, sanitizeLayout } from "chunks-ui";
 import { useState } from "react";
-import { PANELS } from "./panels";
-
-// Change the name (here and in app/page.tsx) when a panel changes between px and %
-const COOKIE = "panels-v1";
+import { COOKIE, PANELS } from "./panels";
 
 function readCookie(): ResizableLayout | undefined {
   const pair = document.cookie.split("; ").find((part) => part.startsWith(`${COOKIE}=`));
@@ -316,7 +315,7 @@ Reading `cookies()` makes the route render on every request (dynamic rendering).
 
 The client component reads the cookie again in its `useState` initializer. On a first load that is the value the server read, so hydration matches. Back and Forward reuse the server's first answer for a page, which can be older than the cookie, and the client's read makes the newer layout win. The browser's cookie string is still encoded, so `readCookie` decodes the value before it parses it.
 
-The server page imports `sanitizeLayout` from `chunks-ui/utils`, not from `chunks-ui`. The main entry starts with `"use client"`, so a Server Component that imports `sanitizeLayout` from it gets a client reference, and calling that on the server throws. `chunks-ui/utils` is built without the banner and holds the React-free helpers, `sanitizeLayout` and the `ResizableLayout` and `ResizablePanelConfig` types among them, so a server can call them. `PANELS` lives in a plain module for the same reason: a module marked `"use client"` hands the server a reference too, which it can't iterate. The server still renders each panel's `defaultSize` as the fallback for a panel with no stored value, so give every % panel a `defaultSize`.
+The server page imports `sanitizeLayout` from `chunks-ui/utils`, not from `chunks-ui`. The main entry starts with `"use client"`, so a Server Component that imports `sanitizeLayout` from it gets a client reference, and calling that on the server throws. `chunks-ui/utils` is built without the banner and holds the React-free helpers, `sanitizeLayout` and the `ResizableLayout` and `ResizablePanelConfig` types among them, so a server can call them. `PANELS` and `COOKIE` live in a plain module for the same reason: a module marked `"use client"` hands the server a reference too, not the value. The server still renders each panel's `defaultSize` as the fallback for a panel with no stored value, so give every % panel a `defaultSize`.
 
 ### URL
 

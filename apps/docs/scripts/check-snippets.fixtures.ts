@@ -72,7 +72,10 @@ export const fixtures: Record<string, string> = {
 export const modules: Record<string, Record<string, string>> = {
   // `app/panels.ts` and `app/master-detail.tsx` of the cookie recipe
   "components/resizable.mdx": {
-    "panels.ts": `export declare const PANELS: import("chunks-ui").ResizablePanelConfig[];`,
+    "panels.ts": `
+      export declare const COOKIE: string;
+      export declare const PANELS: import("chunks-ui").ResizablePanelConfig[];
+    `,
     "master-detail.ts": `export declare function MasterDetail(props: { defaultLayout: import("chunks-ui").ResizableLayout }): import("react").ReactElement;`,
   },
 };
