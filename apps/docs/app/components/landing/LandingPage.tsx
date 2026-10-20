@@ -200,9 +200,12 @@ function Grid({ className, children }: { className: string; children: ReactNode 
   );
 }
 
-function CellMeta({ left, right }: { left: string; right: string }) {
+function CellMeta({ left, right, hidden }: { left: string; right: string; hidden?: boolean }) {
   return (
-    <span className="flex justify-between gap-2 font-mono text-(--l-muted) text-[10px] tracking-[.1em]">
+    <span
+      aria-hidden={hidden || undefined}
+      className="flex justify-between gap-2 font-mono text-(--l-muted) text-[10px] tracking-[.1em]"
+    >
       <span>{left}</span>
       <span>{right}</span>
     </span>
@@ -465,7 +468,11 @@ function ComponentsSection() {
             const { core, extended } = tally(Object.values(c.items));
             return (
               <Link key={c.tag} href={c.href} className={`${CELL} group/card ${FOCUS_RING_INSET}`}>
-                <CellMeta left={`0${i + 1} · ${c.tag}`} right={`${names.length} COMPONENTS`} />
+                <CellMeta
+                  hidden
+                  left={`0${i + 1} · ${c.tag}`}
+                  right={`${names.length} COMPONENTS`}
+                />
                 <div
                   aria-hidden
                   className="relative mb-1 aspect-[16/10] overflow-hidden rounded-[10px] border border-(--l-line) bg-background [--ring:var(--l-lib-ring)]"

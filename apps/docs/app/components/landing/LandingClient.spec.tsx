@@ -93,10 +93,10 @@ it("PresetGrid's Aa subset loads each preset font exactly once, minus the layout
   expect(families.length).toBe(wanted.filter((f) => !isLayoutFont(f)).length);
 });
 
-// WCAG 2.5.3: the tile's name is its visible text ("Aa", name, font · radius · height), not an aria-label.
-it("PresetGrid tiles are named by their visible text", () => {
+// Named by content, never aria-label (see LandingPage.spec.tsx): the Aa glyph is hidden, a sr-only tail says where it goes.
+it("PresetGrid tiles are named by preset and purpose", () => {
   render(<PresetGrid />);
-  const tile = screen.getByRole("link", { name: /^Aa\s?Chunks.+ · r\d+ · h\d+$/ });
+  const tile = screen.getByRole("link", { name: /^Chunks.+ · r\d+ · h\d+, open in Create$/ });
   expect(tile.hasAttribute("aria-label")).toBe(false);
-  expect(tile.getAttribute("title")).toBe("Open Create with Chunks");
+  expect(tile.hasAttribute("title")).toBe(false);
 });
