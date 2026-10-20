@@ -230,7 +230,7 @@ function MasterDetail() {
 
 ### Cookie with server rendering
 
-The server reads the cookie and passes the layout as `defaultLayout`, so the first paint already has the saved sizes. With % panels and % limits only, that is the final layout: no flash, no jump after hydration. A px panel or a px limit can only be checked against the measured group, so if the window is not the size it was when the layout was saved, the group corrects it after hydration (see [`sanitizeLayout`](#sanitizelayout)). Each panel's size is the fallback of its CSS variable in its inline style, and `defaultLayout` is read at the first render. This is a Next.js App Router page; any server that can read the request's cookies works the same.
+The server reads the cookie and passes the layout as `defaultLayout`, so the first paint already has the saved sizes. With % panels and % limits only, that is the final layout: no flash, no jump after hydration. A px panel or a px limit can only be checked against the measured group, so a layout that doesn't fit the group (the defaults in a narrow window too, or a layout saved at another window size) is corrected after hydration (see [`sanitizeLayout`](#sanitizelayout)). Each panel's size is the fallback of its CSS variable in its inline style, and `defaultLayout` is read at the first render. This is a Next.js App Router page; any server that can read the request's cookies works the same.
 
 A cookie that only remembers a layout is a functional preference: it holds something the user set and nothing that identifies them. It is often treated as needing no consent banner. The rules differ by country and some regulators ask for a short lifetime, so check the ones that apply to you.
 
