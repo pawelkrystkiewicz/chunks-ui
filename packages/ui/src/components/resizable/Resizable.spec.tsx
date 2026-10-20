@@ -5,6 +5,7 @@ import { createRef, StrictMode, useState } from "react";
 import { renderToString } from "react-dom/server";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { cssVarName, type ResizableLayout } from "../../lib/resizable";
+import { resetWarnings } from "./context";
 import { Resizable } from "./Resizable";
 import type { ResizableGroupProps } from "./ResizableGroup";
 
@@ -72,6 +73,9 @@ afterEach(() => {
   delete (HTMLElement.prototype as { setPointerCapture?: unknown }).setPointerCapture;
   vi.restoreAllMocks();
   document.body.removeAttribute("style");
+  // `warnOnce` warns once per message for the whole file: a spec that looks for a warning must
+  // not depend on which spec ran before it
+  resetWarnings();
 });
 
 type Props = Partial<ResizableGroupProps>;
@@ -751,7 +755,6 @@ describe("Resizable ids that are names on Object.prototype", () => {
     </Resizable.Group>
   );
 
-  // `warnOnce` warns once per message for the whole file, so only this first test can see it
   it("treats a __proto__ id as no id: warns, takes a generated one and resizes", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const onLayoutChange = vi.fn();

@@ -54,3 +54,8 @@ export function warnOnce(message: string) {
   warned.add(message);
   console.warn(`chunks-ui: Resizable: ${message}`);
 }
+
+/** Forgets what `warnOnce` has warned of, so a spec sees a message again. For specs only. */
+export function resetWarnings() {
+  warned.clear();
+}
