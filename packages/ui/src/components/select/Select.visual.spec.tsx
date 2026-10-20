@@ -655,6 +655,7 @@ describe("Select onOpenChange as the popup closes", () => {
       />,
     );
     return {
+      view,
       onOpenChange,
       reveal: () => reveal(view),
       after: view.getByRole("textbox", { name: "After" }),
@@ -815,6 +816,23 @@ describe("Select onOpenChange as the popup closes", () => {
     await userEvent.keyboard("{F4}");
     await userEvent.keyboard("{F2}");
     await expectKeptMounted(popup, onOpenChangeComplete);
+  });
+
+  it("does not report a stale cancel-open after a quick press opened it", async () => {
+    const { view, onOpenChange, after } = await open();
+    const trigger = view.getByRole("combobox", { name: "Fruit" });
+    // Press and release in one task: the release comes before Base UI adds its `mouseup`
+    // listener, which then waits for the next release anywhere (mui/base-ui#6042)
+    const press = { bubbles: true, cancelable: true, button: 0 };
+    trigger.dispatchEvent(new MouseEvent("mousedown", press));
+    trigger.dispatchEvent(new MouseEvent("mouseup", press));
+    const popup = await view.findByTestId("popup");
+    await settled(popup);
+    onOpenChange.mockClear();
+    await userEvent.keyboard("{Escape}");
+    await exited(popup, { stillClosing: isShown });
+    await userEvent.click(after);
+    expect(onOpenChange.mock.calls).toEqual([[false, "escape-key"]]);
   });
 
   it("reports a close that follows a reopen", async () => {
