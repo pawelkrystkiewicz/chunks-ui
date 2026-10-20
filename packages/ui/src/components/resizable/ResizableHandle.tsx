@@ -46,8 +46,9 @@ function unlockBody() {
 
 /**
  * The draggable divider between two panels, a WAI-ARIA window splitter. It resizes the panel
- * before it and the panel after it, and no other. Keyboard: the arrows of the group's axis step
- * 1% (Shift 10%), Home and End go to the limits.
+ * before it and the panel after it. A drag or key step commits the layout as the group shows it,
+ * so a panel the group had to fit (held at a px `minSize`, shrunk or stretched) keeps that size.
+ * Keyboard: the arrows of the group's axis step 1% (Shift 10%), Home and End go to the limits.
  */
 export function ResizableHandle({
   disabled = false,

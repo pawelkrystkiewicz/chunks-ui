@@ -34,7 +34,7 @@ import { Resizable, sanitizeLayout } from "chunks-ui";
 
 <ResizableHorizontalExample />
 
-A handle resizes the panel before it and the panel after it, and no other. Drag it, or focus it and use the keys below.
+Drag a handle, or focus it and use the keys below. A handle resizes the panel before it and the panel after it. A drag or key step commits the layout as the group shows it, so a panel the group had to fit (held at a px `minSize`, shrunk or stretched) keeps that size afterwards.
 
 ## Vertical
 
@@ -58,11 +58,11 @@ Set `orientation="vertical"` on the group to stack the panels. The handle lines 
 
 `defaultSize`, `minSize` and `maxSize` take a number (px) or a string with a unit: `240`, `"240px"` and `"30%"` are all valid. The unit of `defaultSize` is the unit of the panel: it decides how the panel's value reads in a layout (see [Layout](#layout-and-controlled-use)). A panel without a `defaultSize` is a % panel.
 
-- A **px panel** keeps its size when the group resizes.
+- A **px panel** keeps its size when the group resizes, as long as the % panels can take the change.
 - A **% panel** takes a share of what the px panels and the handles leave. In a group with no px panel that is a share of the whole group. The shares of a group's % panels always add up to 100: values that don't are scaled, so `20%` and `20%` are two halves. A % panel grows and shrinks with the group.
 - `minSize` and `maxSize` are limits in either unit, whatever the unit of the panel. A limit in % is a percent of the group (minus its handles). Both neighbours' limits bind a handle, so it stops when either panel reaches one.
-- A group needs at least one % panel to fill its width. If every panel is px, the leftover space stays empty.
-- A px panel wider than the group is shrunk to fit. A % panel with a px `minSize` the group is too small for is held at that size, and goes back to its share when the group grows.
+- When the % panels can't take all of the change (there are none, or they are at their `minSize` or `maxSize`), the px panels share the rest. A group of px panels only still fills its width: `200` and `300` show at about 450px and 550px in a 1000px group.
+- A px panel wider than the group is shrunk to fit. A % panel with a px `minSize` the group is too small for is held at that size, and goes back to its share when the group grows, unless a handle was moved in between.
 
 ```tsx
 <Resizable.Group className="h-48 w-full" aria-label="Folders, list and detail">
@@ -141,7 +141,7 @@ type ResizableLayout = Record<string, number>;
 Three props on the group carry it:
 
 - `defaultLayout` is where the group starts. It is read once, at the first render, so the server's HTML has the right sizes too.
-- `layout` makes the group controlled: it shows exactly this layout. A change is reported to `onLayoutChange`, and applied only once you pass the new layout back. If you don't, the panels return to your layout.
+- `layout` makes the group controlled: it shows this layout, fitted to the panels' limits and the group's size. A change is reported to `onLayoutChange`, and applied only once you pass the new layout back. If you don't, the panels return to your layout.
 - `onLayoutChange(layout)` is called with the whole layout once per change a user commits: when the pointer is released after a drag, and on each key step. It is not called on mount, while a drag is in progress, when the window or the group resizes, or when a key can't move the handle (it is at its limit). There is no per-pointer-move callback. A drag writes the sizes straight to the DOM and React hears of it on release.
 
 ```tsx
@@ -167,7 +167,7 @@ function ControlledSplit() {
 
 <ResizableControlledExample />
 
-Update the state synchronously in `onLayoutChange`, as above. A parent that applies the new layout later (inside `startTransition`, after a router navigation, after a request) makes the group snap back to the old layout on release and then jump to the new one when it arrives, because the group shows exactly the `layout` it is given at every render. To save the layout somewhere slow, set the state at once and write to the slow place from an effect or a debounce.
+Update the state synchronously in `onLayoutChange`, as above. A parent that applies the new layout later (inside `startTransition`, after a router navigation, after a request) makes the group snap back to the old layout on release and then jump to the new one when it arrives, because the group shows the `layout` it is given at every render. To save the layout somewhere slow, set the state at once and write to the slow place from an effect or a debounce.
 
 Both props go through `sanitizeLayout`, so a layout that doesn't fit the panels (an old one, say) never breaks the group. See [`sanitizeLayout`](#sanitizelayout).
 
