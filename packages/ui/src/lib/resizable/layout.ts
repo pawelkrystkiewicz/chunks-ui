@@ -214,7 +214,9 @@ export function resizeBetween(
  * clamped, and the difference goes to the panes that have room, in proportion to it. Panes
  * flagged in `absorbs` take it first; the others share it only once those have no room left. A
  * pane that cannot move stops the process, so impossible limits leave the sizes as near as they
- * allow. Returns `px` itself when it already fits.
+ * allow. A pane can give up all of its size above its min, so a size saved far above the group
+ * still fits. Its room to grow is capped at `available`, so a pane with no max does not get
+ * infinite room. Returns `px` itself when it already fits.
  */
 export function fitPixels(
   px: readonly number[],
@@ -223,13 +225,19 @@ export function fitPixels(
   absorbs?: readonly boolean[],
 ): number[] {
   if (!(available > 0)) return px as number[];
+  // ponytail: a size of about 1e19px or more loses precision (a pane ends at 0px, and two near 1e308
+  // give NaN). Layouts are only checked to be finite, so cap each size near 1e9 here if a crafted
+  // layout ever matters (W427).
   const next = px.map((value, i) => (limits[i] ? clampTo(value, limits[i]) : value));
   for (let pass = 0; pass <= next.length; pass++) {
     const diff = available - sum(next);
     if (Math.abs(diff) < EPSILON) break;
     const room = next.map((value, i) => {
       const limit = limits[i] ?? { min: 0, max: FREE };
-      return Math.min(diff > 0 ? limit.max - value : value - limit.min, available);
+      // Only growth is capped: a pane with no max has infinite room, and no gap is more than
+      // `available`. A shrinking pane's room is its size above its min, which is finite; capped,
+      // a pane over (passes x `available`) would stay too big.
+      return diff > 0 ? Math.min(limit.max - value, available) : value - limit.min;
     });
     const preferred = room.map((r, i) => (absorbs && !absorbs[i] ? 0 : r));
     const usable = sum(preferred) >= EPSILON ? preferred : room;
