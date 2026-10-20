@@ -538,8 +538,14 @@ describe("Resizable controlled layout", () => {
 
   it("sanitizes a layout prop that is out of range", () => {
     render(<Split layout={{ side: 99, main: 1 }} />);
-    // the group measures 1000px, so the 60% max shows
-    expect(Number(valueNow())).toBeLessThanOrEqual(60);
+    // side has a 60% max, so the 99/1 split is brought inside it, still adding up to 100
+    expect(valueNow()).toBe("60");
+    const group = screen.getByRole("group");
+    expect(group.style.getPropertyValue("--resizable-side")).toBe("60");
+    expect(group.style.getPropertyValue("--resizable-main")).toBe("40");
+    // The first render reads the same sizes as the fallback of each panel's variable
+    const side = document.querySelector<HTMLElement>('[data-panel-id="side"]');
+    expect(side?.getAttribute("style")).toContain("var(--resizable-side, 60)");
   });
 });
 
