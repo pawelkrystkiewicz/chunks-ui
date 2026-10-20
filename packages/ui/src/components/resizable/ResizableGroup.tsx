@@ -23,6 +23,7 @@ import {
   fitLayout,
   formatCssValue,
   fromPixels,
+  isPanelId,
   keyToAction,
   limitsPx,
   type Orientation,
@@ -32,6 +33,7 @@ import {
   resizeBetween,
   sanitizeLayout,
   sanitizeModels,
+  sizeIn,
   toPixels,
 } from "../../lib/resizable";
 import { observeResize } from "../../lib/shared-resize";
@@ -129,7 +131,7 @@ function panelsIn(children: ReactNode) {
       }
       if (child.type === ResizablePanel) {
         const { id, defaultSize, minSize, maxSize } = child.props;
-        if (typeof id === "string" && id !== "") found.push({ id, defaultSize, minSize, maxSize });
+        if (isPanelId(id)) found.push({ id, defaultSize, minSize, maxSize });
       } else if (child.type === Fragment) {
         visit(child.props.children);
       }
@@ -149,7 +151,7 @@ const sameLayout = (a: ResizableLayout, b: ResizableLayout) => {
   const keys = Object.keys(a);
   return (
     keys.length === Object.keys(b).length &&
-    keys.every((key) => Math.abs((a[key] ?? 0) - (b[key] ?? Number.NaN)) < 1e-9)
+    keys.every((key) => Math.abs((a[key] ?? 0) - (sizeIn(b, key) ?? Number.NaN)) < 1e-9)
   );
 };
 
@@ -289,7 +291,7 @@ export function ResizableGroup({
     for (const model of panels) {
       const name = cssVarName(model.id);
       names.add(name);
-      group.style.setProperty(name, formatCssValue(next[model.id] ?? 0, model.unit));
+      group.style.setProperty(name, formatCssValue(sizeIn(next, model.id) ?? 0, model.unit));
     }
     for (const name of written) if (!names.has(name)) group.style.removeProperty(name);
     registry.current.written = names;

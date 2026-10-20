@@ -7,6 +7,8 @@ import type { PanelConfig, ResizableLayout } from "./types";
  *
  * - Anything that is not a plain object gives the defaults.
  * - Ids that match no panel are dropped.
+ * - A panel whose `id` is empty or `__proto__`, or that repeats the `id` of an earlier panel, is
+ *   skipped.
  * - A missing, non-numeric or negative value is filled from the panel's default; missing % panels
  *   take what the supplied ones leave of 100.
  * - A px panel is clamped to its px min and max.

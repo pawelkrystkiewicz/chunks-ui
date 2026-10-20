@@ -2,7 +2,7 @@
 
 import { type ComponentProps, useId, useLayoutEffect, useRef } from "react";
 import { cn } from "../../lib/cn";
-import { cssVarName, type PanelSize, parseSize } from "../../lib/resizable";
+import { cssVarName, isPanelId, type PanelSize, parseSize, sizeIn } from "../../lib/resizable";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { isDevelopment, useGroupContext, warnOnce } from "./context";
 import { resizablePanelClasses } from "./Resizable.Variants";
@@ -57,9 +57,17 @@ export function ResizablePanel({
 }: ResizablePanelProps) {
   const group = useGroupContext("Resizable.Panel");
   const generated = useId();
-  if (!idProp)
-    warnOnce("Resizable.Panel needs a stable `id`: a layout can't name a panel without one");
-  const id = idProp || generated;
+  // An id a layout can't hold (none, or `__proto__`) is treated as none: the panel takes a
+  // generated one and still renders and resizes, only its layout key is not one you chose
+  const usable = isPanelId(idProp);
+  if (!usable) {
+    warnOnce(
+      idProp === "__proto__"
+        ? "Resizable.Panel can't use `__proto__` as its `id`: a layout can't name a panel by it. Give the panel another stable `id`"
+        : "Resizable.Panel needs a stable `id`: a layout can't name a panel without one",
+    );
+  }
+  const id = usable ? idProp : generated;
 
   const elRef = useRef<HTMLDivElement>(null);
   const mergedRef = useMergedRef(elRef, ref);
@@ -94,7 +102,7 @@ export function ResizablePanel({
 
   const declared = parseSize(defaultSize);
   const percent = (declared?.unit ?? "%") === "%";
-  const size = fallbackOf(group.initialLayout?.[id], declared?.value, percent);
+  const size = fallbackOf(sizeIn(group.initialLayout, id), declared?.value, percent);
   const variable = cssVarName(id);
   const flex = percent ? `var(${variable}, ${size}) 1 0%` : `0 0 var(${variable}, ${size}px)`;
 

@@ -4,6 +4,7 @@ import {
   type Limits,
   normalizePercents,
   type PanelModel,
+  sizeIn,
 } from "./layout";
 import type { ResizableLayout } from "./types";
 
@@ -29,7 +30,7 @@ function fitShares(models: readonly PanelModel[], layout: ResizableLayout): Resi
     return { min, max: Math.max(min, max) };
   });
   const fitted = fitPixels(
-    models.map((m) => layout[m.id] ?? 0),
+    models.map((m) => sizeIn(layout, m.id) ?? 0),
     limits,
     100,
   );
@@ -54,12 +55,12 @@ export function sanitizeModels(raw: unknown, models: readonly PanelModel[]): Res
   }
   // A missing % panel takes what the supplied ones leave of 100, split as the defaults split it
   const missingShares = missing.reduce(
-    (n, m) => n + (m.unit === "%" ? (defaults[m.id] ?? 0) : 0),
+    (n, m) => n + (m.unit === "%" ? (sizeIn(defaults, m.id) ?? 0) : 0),
     0,
   );
   const rest = suppliedShares < 100 ? 100 - suppliedShares : 0;
   for (const model of missing) {
-    const fallback = defaults[model.id] ?? 0;
+    const fallback = sizeIn(defaults, model.id) ?? 0;
     const share =
       model.unit === "%" && rest > 0 && missingShares > 0
         ? (rest * fallback) / missingShares

@@ -20,7 +20,7 @@ import { Resizable, sanitizeLayout } from "chunks-ui";
 
 ## Basic Usage
 
-`Resizable.Group` holds the panels. Put a `Resizable.Handle` between each two. Every panel needs a stable `id`: the name its size goes by in a [layout](#layout-and-controlled-use). The `id` is a layout key only. It is not the panel's DOM `id`: the DOM `id` is generated, so two groups on one page (or in tabs, or in a list of cards) can reuse the same names without a clash. The panel carries its key as `data-panel-id`, which is what a test or a style rule can select by. Keep each `id` unique within its group. Give the group a size, since it fills its parent:
+`Resizable.Group` holds the panels. Put a `Resizable.Handle` between each two. Every panel needs a stable `id`: the name its size goes by in a [layout](#layout-and-controlled-use). The `id` is a layout key only. It is not the panel's DOM `id`: the DOM `id` is generated, so two groups on one page (or in tabs, or in a list of cards) can reuse the same names without a clash. The panel carries its key as `data-panel-id`, which is what a test or a style rule can select by. Keep each `id` unique within its group. `__proto__` is not a valid `id`, and a panel that uses it is treated as having none: it still renders and resizes, under a generated key that `onLayoutChange` reports but a saved layout can't count on (`sanitizeLayout` drops it), and development builds warn. Give the group a size, since it fills its parent:
 
 ```tsx
 <Resizable.Group className="h-48 w-full" aria-label="Sidebar and content">
@@ -391,6 +391,7 @@ Makes a layout that came from storage safe to use. `panels` is a list of `{ id, 
 
 - Input that is not a plain object (`null`, a string, an array, `undefined`) gives the defaults.
 - Ids that match no panel are dropped.
+- A panel whose `id` is empty or `__proto__`, or that repeats the `id` of an earlier panel, is skipped.
 - A missing value, or one that is not a finite, non-negative number, is filled from the panel's default. Missing % panels take what the others leave of 100.
 - A px panel is clamped to its px `minSize` and `maxSize`.
 - The % shares are scaled to add up to 100. In a group of % panels only, they are also clamped to the panels' % `minSize` and `maxSize`, and the difference goes to the panels that have room, so the result is inside the limits and still adds up to 100 (`{ side: 99, main: 1 }` with `side` at most `60%` gives `{ side: 60, main: 40 }`).

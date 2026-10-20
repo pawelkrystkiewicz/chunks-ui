@@ -18,6 +18,18 @@ describe("sanitizeLayout", () => {
     });
   });
 
+  it("skips a panel with an empty id and one that repeats an earlier id", () => {
+    // The first panel to use an id keeps it; the later ones, and the empty id, are left out
+    const listed = [
+      { id: "", defaultSize: "20%" as const },
+      { id: "side", defaultSize: "30%" as const },
+      { id: "side", defaultSize: "50%" as const },
+      { id: "main", defaultSize: "70%" as const },
+    ];
+    expect(sanitizeLayout(undefined, listed)).toEqual({ side: 30, main: 70 });
+    expect(sanitizeLayout({ side: 40, main: 60 }, listed)).toEqual({ side: 40, main: 60 });
+  });
+
   it("clamps a % share to its panel's min and max", () => {
     // 5 would be 17.39 once normalised after clamping; the clamp has to hold at 20
     const low = sanitizeLayout({ side: 5, main: 95 }, panels);
@@ -98,4 +110,41 @@ describe("sanitizeLayout", () => {
     const raw = Object.create({ side: 40 });
     expect(sanitizeLayout(raw, panels)).toEqual({ side: 30, main: 70 });
   });
+});
+
+describe("sanitizeLayout and ids that are names on Object.prototype", () => {
+  const withProto = [
+    { id: "__proto__", defaultSize: "30%" as const },
+    { id: "main", defaultSize: "70%" as const },
+  ];
+
+  it("skips a __proto__ panel and never returns it", () => {
+    // Its share is gone too: the one panel left takes the whole group
+    for (const raw of [undefined, {}, { main: 70 }]) {
+      const layout = sanitizeLayout(raw, withProto);
+      expect(layout).toEqual({ main: 100 });
+      expect(Object.hasOwn(layout, "__proto__")).toBe(false);
+      expect(Object.getPrototypeOf(layout)).toBe(Object.prototype);
+    }
+  });
+
+  it("ignores a __proto__ key of the stored layout", () => {
+    // JSON.parse makes "__proto__" an own key; a literal would set the prototype instead
+    const raw = JSON.parse('{"__proto__": 30, "main": 70}');
+    expect(Object.hasOwn(raw, "__proto__")).toBe(true);
+    const layout = sanitizeLayout(raw, withProto);
+    expect(layout).toEqual({ main: 100 });
+    expect(Object.hasOwn(layout, "__proto__")).toBe(false);
+  });
+
+  it.each(["constructor", "toString", "hasOwnProperty"])(
+    "keeps %s as a panel id, read from the layout's own properties",
+    (id) => {
+      const panelsWithId = [{ id, defaultSize: "30%" as const }, withProto[1]!];
+      expect(sanitizeLayout({ [id]: 40, main: 60 }, panelsWithId)).toEqual({ [id]: 40, main: 60 });
+      // No such key of its own in the layout: the default, not what Object.prototype has
+      expect(sanitizeLayout({}, panelsWithId)).toEqual({ [id]: 30, main: 70 });
+      expect(sanitizeLayout({ main: 60 }, panelsWithId)).toEqual({ [id]: 40, main: 60 });
+    },
+  );
 });
