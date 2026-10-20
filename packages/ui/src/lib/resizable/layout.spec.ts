@@ -248,6 +248,46 @@ describe("fitPixels", () => {
     expect(fitted[0]).toBeCloseTo(500);
   });
 
+  it("shrinks a pane however far over the space it is", () => {
+    // A pane's room to shrink is its whole size above its min, not `available` a pass (#751)
+    const limits = [
+      { min: 360, max: Number.POSITIVE_INFINITY },
+      { min: 0, max: Number.POSITIVE_INFINITY },
+    ];
+    expect(fitPixels([6000, 0], limits, 1000)).toEqual([1000, 0]);
+    expect(fitPixels([1e9, 0], limits, 1000)[0]).toBeCloseTo(1000);
+  });
+
+  it("takes every oversized pane down to its min when the mins fill the space", () => {
+    const limits = [
+      { min: 700, max: Number.POSITIVE_INFINITY },
+      { min: 300, max: Number.POSITIVE_INFINITY },
+    ];
+    expect(fitPixels([6000, 6000], limits, 1000)).toEqual([700, 300]);
+  });
+
+  it("takes the flagged panes to their mins first, then the rest, within the passes", () => {
+    // 18000px in 1500px: b and c (flagged) give everything above their mins (11500) in one pass,
+    // and a gives the other 5000 in the next. At 1000px the mins fill the space, so the answer
+    // would not tell flagged first from all at once.
+    const limits = [
+      { min: 500, max: Number.POSITIVE_INFINITY },
+      { min: 300, max: Number.POSITIVE_INFINITY },
+      { min: 200, max: Number.POSITIVE_INFINITY },
+    ];
+    expect(fitPixels([6000, 6000, 6000], limits, 1500, [false, true, true])).toEqual([
+      1000, 300, 200,
+    ]);
+  });
+
+  it("grows panes with no max to fill the space", () => {
+    const limits = [
+      { min: 0, max: Number.POSITIVE_INFINITY },
+      { min: 0, max: Number.POSITIVE_INFINITY },
+    ];
+    expect(fitPixels([200, 300], limits, 1000)).toEqual([450, 550]);
+  });
+
   it("stops when the limits leave no room", () => {
     const limits = [
       { min: 600, max: 1000 },
@@ -396,6 +436,18 @@ describe("fitLayout", () => {
     expect(fitted.nav).toBe(240);
     expect(fitted.a).toBeCloseTo((300 / 760) * 100, 1);
     expect(fitted.a! + fitted.b!).toBeCloseTo(100, 1);
+  });
+
+  it("fits a px panel saved far above the group, so the panels add up to the group", () => {
+    // `item` has no px max, so 6000px is a valid saved width in a 1180px group (#751)
+    const wide = models(
+      { id: "list", minSize: 420 },
+      { id: "item", defaultSize: 480, minSize: 360 },
+    );
+    const px = toPixels(wide, fitLayout(wide, { list: 100, item: 6000 }, 1180), 1180);
+    expect(px[0]).toBeCloseTo(420);
+    expect(px[1]).toBeCloseTo(760);
+    expect(px[0]! + px[1]!).toBeCloseTo(1180);
   });
 });
 

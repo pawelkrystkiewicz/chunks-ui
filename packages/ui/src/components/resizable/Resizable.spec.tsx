@@ -290,6 +290,30 @@ describe("Resizable layout at first render", () => {
     expect(first).toHaveAttribute("aria-controls", `${panelId("nav")} ${panelId("a")}`);
     expect(second).toHaveAttribute("aria-controls", `${panelId("a")} ${panelId("b")}`);
   });
+
+  it("fits a px panel saved far above the group, so the panels add up to the group", () => {
+    // `item` has no px max, so 6000px is a valid saved width in a 1180px group (#751)
+    GROUP.width = 1180;
+    render(
+      <Resizable.Group data-test-group="" aria-label="x" defaultLayout={{ list: 100, item: 6000 }}>
+        <Resizable.Panel id="list" minSize={420}>
+          List
+        </Resizable.Panel>
+        <Resizable.Handle aria-label="r" />
+        <Resizable.Panel id="item" defaultSize={480} minSize={360}>
+          Item
+        </Resizable.Panel>
+      </Resizable.Group>,
+    );
+    const group = screen.getByRole("group");
+    // list is held at its 420px min and item takes the other 760px
+    expect(group.style.getPropertyValue("--resizable-list")).toBe("100");
+    expect(group.style.getPropertyValue("--resizable-item")).toBe("760px");
+    // 420px of 1180 is 35.59%; the handle can move 400px, to item's 360px min: 820px, 69.49%
+    expect(handle()).toHaveAttribute("aria-valuenow", "35.59");
+    expect(handle()).toHaveAttribute("aria-valuemin", "35.59");
+    expect(handle()).toHaveAttribute("aria-valuemax", "69.49");
+  });
 });
 
 describe("Resizable keyboard", () => {
