@@ -157,7 +157,7 @@ bun run test:unit:coverage # with coverage report
 
 1. Create a branch from `master`
 2. Implement changes
-3. Run quality gates locally: `bun run lint && bun run check-types && bun run test`
+3. Run quality gates locally: `bun run lint && bun run check-types && bun run check:tailwind && bun run test`
 4. Push branch and open PR
 5. CI runs lint, typecheck, and unit tests with coverage
 
@@ -167,6 +167,7 @@ All of these run in CI on every PR:
 
 - `bun run lint` — Biome lint + format
 - `bun run check-types` — TypeScript strict mode
+- `bun run check:tailwind` — builds `chunks-ui` and fails when Tailwind 4.0.0, the library's floor, cannot generate a class the installed Tailwind does. It installs the 4.0.0 CLI from `scripts/tailwind-4.0`, so it needs the network, and node. CI runs it in the `typecheck` job; `lint` and `check-types` do not cover it. Details: `scripts/README.md`.
 - `bun run test` — Vitest unit tests
 
 Pre-commit hook (Lefthook) auto-runs Biome on staged files.
