@@ -1,36 +1,59 @@
-import { renderToString } from "react-dom/server";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { Resizable } from "./Resizable";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 /**
  * What a server does not have. The unit suite runs under jsdom, where all of these exist, so a
- * render that read one of them would pass; they are taken away for each spec instead. (A file run
- * in vitest's node environment would be the direct way, but vitest.setup.ts writes to `window` and
- * fails there.)
+ * render or an import that read one of them would pass. They are taken away in `beforeAll`, before
+ * the component and `react-dom/server` are imported, so that a read at module scope fails too.
+ * (A file run in vitest's node environment would be the direct way, but vitest.setup.ts writes to
+ * `window` and fails there.)
+ *
+ * This catches a read that goes through the object (`location.href`, `document.title`,
+ * `window.matchMedia(…)`). A bare primitive such as `innerWidth` still passes: a global stubbed to
+ * undefined keeps its binding, so reading it gives undefined instead of throwing.
  */
 const BROWSER_ONLY = [
   "window",
+  "self",
   "document",
   "Node",
   "Element",
   "HTMLElement",
+  "location",
+  "history",
+  "localStorage",
+  "sessionStorage",
+  "screen",
+  "innerWidth",
+  "innerHeight",
+  "devicePixelRatio",
+  "CSS",
   "getComputedStyle",
   "matchMedia",
   "requestAnimationFrame",
   "ResizeObserver",
+  "MutationObserver",
+  "IntersectionObserver",
+  "addEventListener",
+  "removeEventListener",
 ];
 
-beforeEach(() => {
+let renderToString: typeof import("react-dom/server").renderToString;
+let Resizable: typeof import("./Resizable").Resizable;
+
+beforeAll(async () => {
   for (const name of BROWSER_ONLY) vi.stubGlobal(name, undefined);
+  ({ renderToString } = await import("react-dom/server"));
+  ({ Resizable } = await import("./Resizable"));
 });
-afterEach(() => {
+afterAll(() => {
   vi.unstubAllGlobals();
 });
 
 describe("Resizable on the server", () => {
-  it("is rendered with no window or document", () => {
+  it("is rendered with no window, document or location", () => {
     expect(typeof window).toBe("undefined");
     expect(typeof document).toBe("undefined");
+    expect(typeof location).toBe("undefined");
   });
 
   it("renders a group of % panels with each size as the fallback of its variable", () => {
