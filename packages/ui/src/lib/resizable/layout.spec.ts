@@ -398,3 +398,40 @@ describe("fitLayout", () => {
     expect(fitted.a! + fitted.b!).toBeCloseTo(100, 1);
   });
 });
+
+describe("what a committed step keeps", () => {
+  // A drag or key step commits the layout as the group shows it (see Resizable.Handle)
+  const step = (
+    m: ReturnType<typeof models>,
+    shown: Record<string, number>,
+    size: number,
+    index: number,
+  ) => fromPixels(m, resizeBetween(toPixels(m, shown, size), limitsPx(m, size), index, 5));
+
+  it("keeps the share of a % panel that was held at a px min, not its px size or its own share", () => {
+    const m = models(
+      { id: "a", defaultSize: "22%" },
+      { id: "b", defaultSize: "34%", minSize: 300 },
+      { id: "c", defaultSize: "22%" },
+      { id: "d", defaultSize: "22%" },
+    );
+    const saved = { a: 22, b: 34, c: 22, d: 22 };
+    // In 500px b is held at 300px, which is 60% of the group
+    const shown = fitLayout(m, saved, 500);
+    expect(shown.b).toBeCloseTo(60, 1);
+    // A step on the c|d handle commits that share with the rest
+    const committed = step(m, shown, 500, 2);
+    expect(committed.b).toBeCloseTo(60, 1);
+    // In 1200px b keeps the 60%, about 720px: not 300px, and not its own 34% (408px)
+    expect(toPixels(m, fitLayout(m, committed, 1200), 1200)[1]).toBeCloseTo(720, 0);
+    expect(toPixels(m, fitLayout(m, saved, 1200), 1200)[1]).toBeCloseTo(408, 0);
+  });
+
+  it("keeps the px size a px panel was stretched to", () => {
+    const m = models({ id: "a", defaultSize: 200 }, { id: "b", defaultSize: 300 });
+    // Nothing else can take 500px, so the px panels share it: 450 and 550
+    const shown = fitLayout(m, { a: 200, b: 300 }, 1000);
+    expect(shown).toEqual({ a: 450, b: 550 });
+    expect(step(m, shown, 1000, 0)).toEqual({ a: 455, b: 545 });
+  });
+});
