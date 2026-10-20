@@ -18,6 +18,18 @@ describe("sanitizeLayout", () => {
     });
   });
 
+  it("skips a panel with an empty id and one that repeats an earlier id", () => {
+    // The first panel to use an id keeps it; the later ones, and the empty id, are left out
+    const listed = [
+      { id: "", defaultSize: "20%" as const },
+      { id: "side", defaultSize: "30%" as const },
+      { id: "side", defaultSize: "50%" as const },
+      { id: "main", defaultSize: "70%" as const },
+    ];
+    expect(sanitizeLayout(undefined, listed)).toEqual({ side: 30, main: 70 });
+    expect(sanitizeLayout({ side: 40, main: 60 }, listed)).toEqual({ side: 40, main: 60 });
+  });
+
   it("clamps a % share to its panel's min and max", () => {
     // 5 would be 17.39 once normalised after clamping; the clamp has to hold at 20
     const low = sanitizeLayout({ side: 5, main: 95 }, panels);
