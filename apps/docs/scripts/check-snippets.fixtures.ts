@@ -41,11 +41,6 @@ export const fixtures: Record<string, string> = {
     const nonce: string;
     const App: () => React.ReactElement;
   `,
-  "components/resizable.mdx": `
-    /** The client component of the next block, which the server page imports */
-    const MasterDetail: (props: { defaultLayout: import("chunks-ui").ResizableLayout }) => React.ReactElement;
-    const PANELS: import("chunks-ui").ResizablePanelConfig[];
-  `,
   "components/textarea.mdx": state("bio", "string | undefined"),
   "components/theme-toggle.mdx": state("theme", `"light" | "dark"`),
   "components/toast.mdx": `
@@ -63,4 +58,18 @@ export const fixtures: Record<string, string> = {
     /** Defined in the block before the one that uses it */
     const FavoriteToggle: typeof import("@base-ui/react/toggle").Toggle;
   `,
+};
+
+/**
+ * Files that blocks of one page import from each other (`./panels`, `./master-detail`). Each block
+ * is checked on its own, so a block that imports such a file sees its declaration from here. Keyed
+ * by the page, then by the file the import resolves to, next to the page's blocks. Write them as
+ * `.d.ts`, so that they are not checked themselves. See `check-snippets.ts`.
+ */
+export const modules: Record<string, Record<string, string>> = {
+  // `app/panels.ts` and `app/master-detail.tsx` of the cookie recipe
+  "components/resizable.mdx": {
+    "panels.d.ts": `export const PANELS: import("chunks-ui").ResizablePanelConfig[];`,
+    "master-detail.d.ts": `export function MasterDetail(props: { defaultLayout: import("chunks-ui").ResizableLayout }): import("react").ReactElement;`,
+  },
 };

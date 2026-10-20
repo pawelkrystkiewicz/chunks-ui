@@ -238,8 +238,8 @@ A cookie that only remembers a layout is a functional preference: it holds somet
 // app/page.tsx (a server component)
 import { cookies } from "next/headers";
 import { sanitizeLayout } from "chunks-ui/utils";
-// import { MasterDetail } from "./master-detail"; (the last block)
-// import { PANELS } from "./panels"; (the next block)
+import { MasterDetail } from "./master-detail";
+import { PANELS } from "./panels";
 
 export default async function Page() {
   const stored = (await cookies()).get("panels-v1")?.value;
