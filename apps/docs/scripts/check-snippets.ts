@@ -15,7 +15,8 @@
  * A block's own imports and declarations take precedence over all of these.
  *
  * A block can also import a file that another block of its page shows (`./panels`): the fixtures'
- * `modules` declare it, so the page type-checks as written.
+ * `modules` declare it by hand (keep them in step with the blocks), so the importing block
+ * type-checks as written.
  *
  * How a block is wrapped: if its code after the imports starts with `<` or `{/*`, it is JSX
  * children and goes inside a fragment, so sibling elements and JSX comments are fine. Otherwise it
