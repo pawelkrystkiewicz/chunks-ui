@@ -28,7 +28,7 @@ export const resizablePanelClasses = "min-h-0 min-w-0 overflow-hidden";
 export const resizableHandleVariants = cva(
   [
     "group/handle relative z-10 flex shrink-0 touch-none select-none items-center justify-center bg-border",
-    "touch-target [--touch-target-size:12px] pointer-coarse:[--touch-target-size:44px]",
+    "touch-target [--touch-target-size:12px] [@media(pointer:coarse)]:[--touch-target-size:44px]",
     "not-data-disabled:hover:bg-ring data-dragging:bg-ring",
     "data-disabled:cursor-not-allowed data-disabled:opacity-50",
     // A ring offset from a 1px line draws two lines around it; drawn on the line it is one bar
@@ -61,7 +61,7 @@ export const resizableGripVariants = cva([
   "pointer-events-none flex shrink-0 items-center justify-center rounded-md border border-border bg-background text-muted-foreground",
   "group-data-[orientation=vertical]/handle:h-5 group-data-[orientation=vertical]/handle:w-3",
   "group-data-[orientation=horizontal]/handle:h-3 group-data-[orientation=horizontal]/handle:w-5",
-  "after:block after:bg-[radial-gradient(circle,currentColor_1px,transparent_1.5px)] after:bg-size-[4px_4px] after:content-['']",
+  "after:block after:bg-[radial-gradient(circle,currentColor_1px,transparent_1.5px)] after:[background-size:4px_4px] after:content-['']",
   "group-data-[orientation=vertical]/handle:after:h-3 group-data-[orientation=vertical]/handle:after:w-1",
   "group-data-[orientation=horizontal]/handle:after:h-1 group-data-[orientation=horizontal]/handle:after:w-3",
   "group-not-data-disabled/handle:group-hover/handle:border-ring group-not-data-disabled/handle:group-hover/handle:text-foreground",
