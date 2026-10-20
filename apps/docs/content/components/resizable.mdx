@@ -38,7 +38,7 @@ Drag a handle, or focus it and use the keys below. A handle resizes the panel be
 
 ## Vertical
 
-Set `orientation="vertical"` on the group to stack the panels. The handle lines then run horizontally, and the up and down arrow keys move them. A vertical group fills its parent's height, so give the parent one, or the group collapses:
+Set `orientation="vertical"` on the group to stack the panels. The handle lines then run horizontally, and the up and down arrow keys move them. A vertical group fills its parent's height, so give the group or its parent a height (`h-64` below). Without one the group is only as tall as its content, and a drag changes nothing on screen.
 
 ```tsx
 <Resizable.Group orientation="vertical" className="h-64 w-full" aria-label="Editor and terminal">
@@ -348,7 +348,7 @@ On a server-rendered page don't call `readUrl` during render. Read the same para
 ## `sanitizeLayout`
 
 ```ts
-function sanitizeLayout(raw: unknown, panels: ResizablePanelConfig[]): ResizableLayout;
+function sanitizeLayout(raw: unknown, panels: readonly ResizablePanelConfig[]): ResizableLayout;
 ```
 
 Makes a layout that came from storage safe to use. `panels` is a list of `{ id, defaultSize?, minSize?, maxSize? }`, the same fields as the panels' props. It never throws.
@@ -378,7 +378,7 @@ Each key press that moves the handle is one committed change: `onLayoutChange` i
 
 `Resizable.Handle` follows the [WAI-ARIA window splitter](https://www.w3.org/WAI/ARIA/apg/patterns/windowsplitter/) pattern:
 
-- `role="separator"`, focusable with `tabindex="0"`.
+- `role="separator"`, focusable with `tabindex="0"`. A handle without a panel on each side is not focusable, since a focusable separator needs its value.
 - `aria-orientation` is the orientation of the separator line, as the pattern defines it: a horizontal group (panels side by side) has `"vertical"` lines. The handle's `data-orientation` has the same value.
 - `aria-valuenow` is the size of the panel before the handle, as a percent of the group. `aria-valuemin` and `aria-valuemax` are the range the handle can move that panel to, given the limits of both neighbours. They update while dragging.
 - `aria-controls` lists the DOM `id`s of the two panels it resizes (the generated ones, not the layout keys).
@@ -386,7 +386,7 @@ Each key press that moves the handle is one committed change: `onLayoutChange` i
 
 Give each handle an accessible name with `aria-label` ("Resize sidebar") or `aria-labelledby`: the component has no built-in text, so there is nothing to translate. `Resizable.Group` has `role="group"`; label it too when the page holds more than one.
 
-The server's HTML has the panels' sizes but not the handles' `aria-value*` and `aria-controls`: they depend on the panels' order and the group's measured size, so they appear at hydration.
+The server's HTML has the panels' sizes but not the handles' `aria-value*` and `aria-controls`: they depend on the panels' order and the group's measured size, so they appear at hydration. A handle joins the tab order then too.
 
 ### Right to left
 
@@ -394,7 +394,7 @@ Everything follows the writing direction, which the component reads from the gro
 
 ### Pointer and touch
 
-A drag uses pointer events with pointer capture, so it works with a mouse, a pen and a finger, and keeps going when the pointer leaves the thin handle. The handle has `touch-action: none` so a touch drag doesn't scroll the page. Its hit area is wider than the line: 12px with a mouse and 44px on a touch screen (the `touch-target` utility). While dragging, the page's text selection is switched off and the cursor stays a resize cursor. A drag that is cancelled (the system takes the pointer, the component unmounting) puts the sizes back and calls nothing.
+A drag uses pointer events with pointer capture, so it works with a mouse, a pen and a finger, and keeps going when the pointer leaves the thin handle. The handle has `touch-action: none` so a touch drag doesn't scroll the page. Its hit area is wider than the line: 12px with a mouse and 44px on a touch screen (the `touch-target` utility). The hit area reaches about 6px (mouse) or 22px (touch) into each neighbouring panel and takes presses there, so keep buttons and links that far from the line. While dragging, the page's text selection is switched off and the cursor stays a resize cursor. A drag that is cancelled (the system takes the pointer, the component unmounting) puts the sizes back and calls nothing.
 
 ## Styling
 
@@ -419,7 +419,7 @@ A `Resizable.Grip` reads these from its handle (`group-data-dragging/handle:`, `
 
 ## Not supported
 
-- **Collapsing a panel to zero** (a handle that snaps it shut). A panel stops at its `minSize`. For a collapsible sidebar, render the panel or not.
+- **Collapsing a panel to zero** (a handle that snaps it shut). A panel stops at its `minSize`, which is 0 when unset, so a panel without one can be dragged down to 0. For a collapsible sidebar, render the panel and its handle, or neither.
 - **Motion.** Resizing is direct manipulation, and sizes never animate.
 - **Resetting on double click.** To offer a reset, keep the layout in state (the controlled `layout` prop) and set it back.
 - **A storage hook.** The recipes above are a few lines each; the component stays free of storage code.
