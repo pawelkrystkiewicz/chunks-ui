@@ -124,7 +124,7 @@ A 1px line is easy to miss. `Resizable.Grip` is an optional part you put inside 
 
 <ResizableGripExample />
 
-The grip is decorative. It has `aria-hidden="true"`, is not focusable, and has `pointer-events: none`, so the handle keeps the pointer: a press that lands on the grip starts the drag of the handle under it, and the handle keeps its role, name, values and keys. It follows the group's orientation: a tall pill with stacked dots on the vertical line of a horizontal group, a wide pill with a row of dots on the horizontal line of a vertical group. It is 12px across, so it stays inside the handle's 12px hit area. The pill overflows the line and sits above the panels, centred in either writing direction. It takes the colours of the handle's state: the border and dots turn to the ring colour on hover, while dragging and on keyboard focus (not on a disabled handle). In forced-colors mode it keeps a visible border in system colours. Nothing animates.
+The grip is decorative. It has `aria-hidden="true"`, is not focusable and has `pointer-events: none`, so a press that lands on it starts the drag of the handle under it, and the handle keeps its role, values and keys. It follows the group's orientation and the handle's hover, drag and focus state, and it keeps a visible border in forced-colors mode. Pass `className` to restyle it.
 
 It takes the props of a `div`; `className` replaces the library's classes where they conflict (`rounded-full` for a round pill, say). The dots are drawn by CSS, so there is no icon to supply.
 
@@ -416,8 +416,6 @@ A `Resizable.Grip` reads these from its handle (`group-data-dragging/handle:`, `
   className="data-dragging:bg-primary data-[orientation=vertical]:w-0.5"
 />
 ```
-
-Nothing animates, so there is no Motion path and nothing to switch off with `prefers-reduced-motion`.
 
 ## Not supported
 
