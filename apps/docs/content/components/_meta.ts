@@ -27,6 +27,7 @@ export default {
   popover: { title: "Popover" },
   progress: { title: "Progress" },
   radio: { title: "Radio" },
+  resizable: { title: "Resizable" },
   "scroll-area": { title: "ScrollArea" },
   select: { title: "Select" },
   separator: { title: "Separator" },

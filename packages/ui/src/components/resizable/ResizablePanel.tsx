@@ -4,7 +4,7 @@ import { type ComponentProps, useId, useLayoutEffect, useRef } from "react";
 import { cn } from "../../lib/cn";
 import { cssVarName, type PanelSize, parseSize } from "../../lib/resizable";
 import { useMergedRef } from "../../lib/use-merged-ref";
-import { useGroupContext, warnOnce } from "./context";
+import { isDevelopment, useGroupContext, warnOnce } from "./context";
 import { resizablePanelClasses } from "./Resizable.Variants";
 
 export type ResizablePanelSize = PanelSize;
@@ -60,6 +60,29 @@ export function ResizablePanel({
     const el = elRef.current;
     return el ? registerPanel({ id, defaultSize, minSize, maxSize }, el) : undefined;
   }, [registerPanel, id, defaultSize, minSize, maxSize]);
+
+  // A panel's padding and border are taken off before the space is shared, which skews the shares
+  // and the drag. Development only.
+  useLayoutEffect(() => {
+    const el = elRef.current;
+    if (!el || !isDevelopment()) return;
+    const style = getComputedStyle(el);
+    const taken = [
+      style.paddingInlineStart,
+      style.paddingInlineEnd,
+      style.paddingBlockStart,
+      style.paddingBlockEnd,
+      style.borderInlineStartWidth,
+      style.borderInlineEndWidth,
+      style.borderBlockStartWidth,
+      style.borderBlockEndWidth,
+    ].some((edge) => Number.parseFloat(edge) > 0);
+    if (taken) {
+      warnOnce(
+        `Panel "${id}" has padding or a border, which skews its size. Put them on an element inside the panel.`,
+      );
+    }
+  }, [id]);
 
   const declared = parseSize(defaultSize);
   const percent = (declared?.unit ?? "%") === "%";

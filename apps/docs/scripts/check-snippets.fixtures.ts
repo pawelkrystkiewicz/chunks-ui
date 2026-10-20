@@ -41,6 +41,11 @@ export const fixtures: Record<string, string> = {
     const nonce: string;
     const App: () => React.ReactElement;
   `,
+  "components/resizable.mdx": `
+    /** The client component of the next block, which the server page imports */
+    const MasterDetail: (props: { defaultLayout: import("chunks-ui").Layout }) => React.ReactElement;
+    const PANELS: import("chunks-ui").ResizablePanelConfig[];
+  `,
   "components/textarea.mdx": state("bio", "string | undefined"),
   "components/theme-toggle.mdx": state("theme", `"light" | "dark"`),
   "components/toast.mdx": `

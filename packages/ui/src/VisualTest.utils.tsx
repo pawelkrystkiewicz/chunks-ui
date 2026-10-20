@@ -250,6 +250,12 @@ declare module "vitest/browser" {
     emulateMedia: (options: EmulatedMedia) => Promise<void>;
     /** Moves the mouse outside the viewport, registered in vitest.visual.config.ts. */
     parkPointer: () => Promise<void>;
+    /** Presses the mouse on the middle of the element `selector` matches; see vitest.visual.config.ts. */
+    pointerDown: (selector: string, offsetX?: number, offsetY?: number) => Promise<void>;
+    /** Moves the pressed mouse by (dx, dy) CSS px in `steps` moves; see vitest.visual.config.ts. */
+    pointerMoveBy: (dx: number, dy: number, steps?: number) => Promise<void>;
+    /** Releases the mouse; see vitest.visual.config.ts. */
+    pointerUp: () => Promise<void>;
     /** Chromium's accessibility tree for a CSS selector; see vitest.visual.config.ts. */
     accessibilityTree: (selector: string) => Promise<AccessibilityNode>;
   }

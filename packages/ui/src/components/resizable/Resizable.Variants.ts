@@ -1,6 +1,4 @@
 import { cva } from "../../lib/cva";
-import { FOCUS_RING } from "../shared";
-
 /**
  * The group is a flex box along its axis. `min-*-0` lets it shrink inside a flex parent, and it
  * fills its parent: a vertical group needs a parent with a height, like a vertical slider.
@@ -33,7 +31,8 @@ export const resizableHandleVariants = cva(
     "touch-target [--touch-target-size:12px] pointer-coarse:[--touch-target-size:44px]",
     "not-data-disabled:hover:bg-ring data-dragging:bg-ring",
     "data-disabled:cursor-not-allowed data-disabled:opacity-50",
-    FOCUS_RING,
+    // A ring offset from a 1px line draws two lines around it; drawn on the line it is one bar
+    "focus-visible:outline-2 focus-visible:outline-ring",
   ],
   {
     variants: {

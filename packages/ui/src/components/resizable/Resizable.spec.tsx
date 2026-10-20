@@ -169,6 +169,35 @@ describe("Resizable layout at first render", () => {
     expect(html).toContain("var(--resizable-side, 30)");
   });
 
+  it("gives a panel without a defaultSize what the others leave, in the server HTML", () => {
+    const html = renderToString(
+      <Resizable.Group>
+        <Resizable.Panel id="side" defaultSize="30%">
+          Side
+        </Resizable.Panel>
+        <Resizable.Handle />
+        <Resizable.Panel id="main">Main</Resizable.Panel>
+      </Resizable.Group>,
+    );
+    expect(html).toContain("var(--resizable-main, 70)");
+  });
+
+  it("finds panels inside a fragment for that too", () => {
+    const html = renderToString(
+      <Resizable.Group>
+        {/* biome-ignore lint/complexity/noUselessFragments: the fragment is what the test looks through */}
+        <>
+          <Resizable.Panel id="side" defaultSize="25%">
+            Side
+          </Resizable.Panel>
+          <Resizable.Handle />
+        </>
+        <Resizable.Panel id="main">Main</Resizable.Panel>
+      </Resizable.Group>,
+    );
+    expect(html).toContain("var(--resizable-main, 75)");
+  });
+
   it("uses a px panel's unit in the server HTML", () => {
     const html = renderToString(
       <Resizable.Group>

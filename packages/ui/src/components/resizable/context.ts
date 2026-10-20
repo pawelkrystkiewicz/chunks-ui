@@ -42,11 +42,13 @@ export function useGroupContext(part: string) {
 
 declare const process: { env: { NODE_ENV?: string } };
 
+export const isDevelopment = () => process.env.NODE_ENV !== "production";
+
 const warned = new Set<string>();
 
 /** A programmer error, once per message, in development only. */
 export function warnOnce(message: string) {
-  if (process.env.NODE_ENV === "production" || warned.has(message)) return;
+  if (!isDevelopment() || warned.has(message)) return;
   warned.add(message);
   console.warn(`chunks-ui: Resizable: ${message}`);
 }

@@ -1,7 +1,11 @@
 "use client";
 
 import {
+  Children,
   type ComponentProps,
+  Fragment,
+  isValidElement,
+  type ReactNode,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -26,6 +30,7 @@ import {
   type PanelConfig,
   type PanelModel,
   resizeBetween,
+  sanitizeLayout,
   sanitizeModels,
   toPixels,
 } from "../../lib/resizable";
@@ -33,6 +38,7 @@ import { observeResize } from "../../lib/shared-resize";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { GroupContext, type GroupContextValue, type ResizeSession, warnOnce } from "./context";
 import { resizableGroupVariants } from "./Resizable.Variants";
+import { ResizablePanel } from "./ResizablePanel";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -95,6 +101,32 @@ function measure(group: HTMLElement, orientation: Orientation, handles: Readonly
     total -= horizontal ? rect.width : rect.height;
   }
   return Math.max(0, Math.round(total * 100) / 100);
+}
+
+/**
+ * The panels among `children`, looking through fragments only, so the first render can size a
+ * panel that has no `defaultSize` from what the others leave (the server has no registry yet). A
+ * panel behind another component is not seen, and keeps its own fallback.
+ */
+function panelsIn(children: ReactNode) {
+  const found: PanelConfig[] = [];
+  const visit = (nodes: ReactNode) => {
+    Children.forEach(nodes, (child) => {
+      if (
+        !isValidElement<ComponentProps<typeof ResizablePanel> & { children?: ReactNode }>(child)
+      ) {
+        return;
+      }
+      if (child.type === ResizablePanel) {
+        const { id, defaultSize, minSize, maxSize } = child.props;
+        if (typeof id === "string" && id !== "") found.push({ id, defaultSize, minSize, maxSize });
+      } else if (child.type === Fragment) {
+        visit(child.props.children);
+      }
+    });
+  };
+  visit(children);
+  return found;
 }
 
 const sameConfig = (a: PanelConfig, b: PanelConfig) =>
@@ -344,10 +376,19 @@ export function ResizableGroup({
     };
   }, []);
 
+  // What the panels read for their first render: the layout, filled and normalised from the panels
+  // found in `children` (the registry is empty until they mount). Once: the group writes the
+  // variables before the first paint, and a panel added later is sized by the same write.
+  const [initialLayout] = useState(() => {
+    const seen = panelsIn(children);
+    const given = layoutProp ?? initialDefault;
+    return seen.length > 0 ? sanitizeLayout(given, seen) : given;
+  });
+
   const context = useMemo<GroupContextValue>(
     () => ({
       orientation,
-      initialLayout: layoutProp ?? initialDefault,
+      initialLayout,
       models,
       layout,
       size,
@@ -359,8 +400,7 @@ export function ResizableGroup({
     }),
     [
       orientation,
-      layoutProp,
-      initialDefault,
+      initialLayout,
       models,
       layout,
       size,
