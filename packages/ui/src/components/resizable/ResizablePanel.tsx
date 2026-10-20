@@ -20,11 +20,18 @@ export type ResizablePanelProps = Omit<ComponentProps<"div">, "id"> & {
    * The starting size. A number is px; `"30%"` and `"240px"` carry their unit. The unit also
    * decides what this panel's value in a layout means. A % panel without one shares what the
    * others leave.
+   * @remarks `number | `${number}%` | `${number}px``
    */
   defaultSize?: ResizablePanelSize;
-  /** The least the panel can be. Same forms as `defaultSize`; a % is of the group. */
+  /**
+   * The least the panel can be. Same forms as `defaultSize`; a % is of the group.
+   * @remarks `number | `${number}%` | `${number}px``
+   */
   minSize?: ResizablePanelSize;
-  /** The most the panel can be. Same forms as `defaultSize`; a % is of the group. */
+  /**
+   * The most the panel can be. Same forms as `defaultSize`; a % is of the group.
+   * @remarks `number | `${number}%` | `${number}px``
+   */
   maxSize?: ResizablePanelSize;
 };
 

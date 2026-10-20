@@ -48,6 +48,7 @@ export type ResizableGroupProps = ComponentProps<"div"> & {
   /**
    * The axis the panels are laid out along. `"horizontal"` puts them side by side.
    * @default "horizontal"
+   * @remarks `"horizontal" | "vertical"`
    */
   orientation?: Orientation;
   /**
