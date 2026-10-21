@@ -670,18 +670,49 @@ describe("Toast closeProps", () => {
     });
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  // The close button leaves the tab order with a high-priority toast that Base UI aria-hides, a
+  // `render` element included, and a `tabIndex` in closeProps goes with it. A `tabIndex` on the
+  // `render` element stays (the docs: Compound parts). The row without a tabIndex is there because
+  // Base UI gives a non-native button `tabIndex: 0`, so the "0" row alone would pass without the -1
+  it.each<{ kind: string; closeProps: ToastCloseProps; selector: string; expected: string }>([
+    {
+      kind: "a tabIndex in closeProps",
+      closeProps: { tabIndex: 0 },
+      selector: "button",
+      expected: "-1",
+    },
+    {
+      kind: "a render element without a tabIndex",
+      closeProps: { nativeButton: false, render: <span /> },
+      selector: "span",
+      expected: "-1",
+    },
+    {
+      kind: "a tabIndex on its render element",
+      closeProps: { render: <button type="button" tabIndex={0} /> },
+      selector: "button",
+      expected: "0",
+    },
+  ])(
+    "puts tabindex $expected on the close button of a hidden high-priority toast with $kind",
+    async ({ closeProps, selector, expected }) => {
+      await addToast({ priority: "high", dismissible: true, closeProps }, viewport);
+      expect(screen.getByLabelText("Zamknij", { selector })).toHaveAttribute("tabindex", expected);
+    },
+  );
 });
 
 // Toast.Root renders its element in a render function of its own, to read Base UI's aria-hidden
 // (#685). A `render` you pass still replaces the element, with Base UI's props, state and ref.
 describe("Toast.Root render", () => {
-  /** Shows a high-priority toast on a root with the given `render` prop and returns the root */
-  async function showRoot(renderProp?: ToastRootProps["render"]) {
+  /** Shows a high-priority toast on a root with the given `render` prop and props, and returns it */
+  async function showRoot(renderProp?: ToastRootProps["render"], rootProps?: { tabIndex: number }) {
     const manager = createToastManager();
     render(
       <Toast.Provider toastManager={manager}>
         <BaseToast.Viewport>
-          <Roots render={renderProp} />
+          <Roots render={renderProp} {...rootProps} />
         </BaseToast.Viewport>
       </Toast.Provider>,
     );
@@ -720,11 +751,39 @@ describe("Toast.Root render", () => {
     expect(screen.queryByRole("alertdialog", { hidden: true })).toBeNull();
   });
 
-  function Roots({ render: renderProp }: { render: ToastRootProps["render"] }) {
+  // A `tabIndex` you pass goes with the -1 of a hidden toast. One on the `render` element stays
+  // (the docs: Compound parts)
+  it.each<{
+    kind: string;
+    renderProp?: ToastRootProps["render"];
+    rootProps?: { tabIndex: number };
+    expected: string;
+  }>([
+    { kind: "a tabIndex prop", rootProps: { tabIndex: 0 }, expected: "-1" },
+    {
+      kind: "a tabIndex on its render element",
+      // biome-ignore lint/a11y/noNoninteractiveTabindex: the tabIndex of the element is the case
+      renderProp: <section tabIndex={0} />,
+      expected: "0",
+    },
+  ])(
+    "puts tabindex $expected on a hidden root with $kind",
+    async ({ renderProp, rootProps, expected }) => {
+      expect(await showRoot(renderProp, rootProps)).toHaveAttribute("tabindex", expected);
+    },
+  );
+
+  function Roots({
+    render: renderProp,
+    ...rootProps
+  }: {
+    render: ToastRootProps["render"];
+    tabIndex?: number;
+  }) {
     return (
       <>
         {Toast.useToast().toasts.map((toast) => (
-          <Toast.Root key={toast.id} toast={toast} render={renderProp} />
+          <Toast.Root key={toast.id} toast={toast} render={renderProp} {...rootProps} />
         ))}
       </>
     );
@@ -732,10 +791,14 @@ describe("Toast.Root render", () => {
 });
 
 describe("Toast.Action render", () => {
-  type Options = ToastActionProps & { priority?: "high" };
+  type Options = ToastActionProps & {
+    priority?: "high";
+    /** The `actionProps` of the toast, which Base UI's action merges over the props it gets */
+    toastActionProps?: { tabIndex?: number };
+  };
 
   /** Shows a toast on a custom root whose action takes the options, and returns once it is up */
-  async function showAction({ priority, ...actionProps }: Options = {}) {
+  async function showAction({ priority, toastActionProps = {}, ...actionProps }: Options = {}) {
     const manager = createToastManager();
     function Actions() {
       return Toast.useToast().toasts.map((toast) => (
@@ -754,7 +817,7 @@ describe("Toast.Action render", () => {
       </Toast.Provider>,
     );
     act(() => {
-      manager.add({ title: "Saved", type: "info", priority, actionProps: {} });
+      manager.add({ title: "Saved", type: "info", priority, actionProps: toastActionProps });
     });
     await screen.findByRole(priority ? "alertdialog" : "dialog", { hidden: true });
   }
@@ -800,4 +863,68 @@ describe("Toast.Action render", () => {
     await showAction({ priority: "high" });
     expect(screen.getByTestId("action")).toHaveAttribute("tabindex", "-1");
   });
+
+  // An action with a `render` (a link, say) leaves the tab order too (#763): Base UI gives a
+  // non-native button `tabIndex: 0`, and the -1 of chunks-ui goes over it only while hidden
+  it("takes a hidden high-priority toast's action with a render out of the tab order, and back in once F6 shows the toast", async () => {
+    const user = userEvent.setup();
+    await showAction({ priority: "high", render: <a href="/x">Docs</a>, nativeButton: false });
+    // aria-hidden, so only a query with `hidden` finds it
+    const toast = screen.getByRole("alertdialog", { hidden: true });
+    const action = screen.getByTestId("action");
+    expect(action.tagName).toBe("A");
+    expect(toast).toHaveAttribute("aria-hidden", "true");
+    expect(action).toHaveAttribute("tabindex", "-1");
+
+    // F6 moves focus into the viewport: Base UI shows the toast, and the tab stop comes back
+    await user.keyboard("{F6}");
+    expect(toast).not.toHaveAttribute("aria-hidden");
+    expect(action.tabIndex).toBe(0);
+  });
+
+  // What a hidden toast does with a `tabIndex` you pass (the docs: Compound parts, and the note
+  // under Props). The default action ends in a button of its own that sets the -1 last. With a
+  // `render`, Base UI merges the toast's `actionProps` and then the props of the render element
+  // over the -1. The `actionProps` row pins the limit that the ponytail comment in ToastAction
+  // names, and a fix of it flips that row. The render element row pins the rule in the docs
+  it.each<{ kind: string; options: Options; expected: string }>([
+    { kind: "a default action with a tabIndex prop", options: { tabIndex: 0 }, expected: "-1" },
+    {
+      kind: "a default action, actionProps.tabIndex",
+      options: { toastActionProps: { tabIndex: 0 } },
+      expected: "-1",
+    },
+    {
+      kind: "a render action with a tabIndex prop",
+      options: { render: <a href="/x">Docs</a>, nativeButton: false, tabIndex: 0 },
+      expected: "-1",
+    },
+    {
+      kind: "a render action, actionProps.tabIndex",
+      options: {
+        render: <a href="/x">Docs</a>,
+        nativeButton: false,
+        toastActionProps: { tabIndex: 0 },
+      },
+      expected: "0",
+    },
+    {
+      kind: "a render element with a tabIndex",
+      options: {
+        render: (
+          <a href="/x" tabIndex={0}>
+            Docs
+          </a>
+        ),
+        nativeButton: false,
+      },
+      expected: "0",
+    },
+  ])(
+    "puts tabindex $expected on the action of a hidden high-priority toast: $kind",
+    async ({ options, expected }) => {
+      await showAction({ priority: "high", ...options });
+      expect(screen.getByTestId("action")).toHaveAttribute("tabindex", expected);
+    },
+  );
 });
