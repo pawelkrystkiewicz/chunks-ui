@@ -60,7 +60,7 @@ The builder's prompt starts with the System Prompt from `.claude/agents/builder.
 - **TDD:** a failing test first for every behaviour change, then the fix. Follow `CLAUDE.md`.
 - **Changeset:** add `.changeset/<slug>.md` for any user-facing change to `packages/ui`. Use `patch` for fixes and `minor` for features or breaking changes; we are on 0.x.
 - **Docs:** update `apps/docs/content/` when public API or behaviour changes.
-- **Gates before committing:** `cd <wt>/packages/ui && bunx vitest run <spec>`, then `cd <wt> && bun run check-types && bun run check:tailwind && bun run lint` (what `check:tailwind` checks and needs: `CONTRIBUTING.md` › Quality Gates).
+- **Gates before committing:** `cd <wt>/packages/ui && bunx vitest run <spec>`, then `cd <wt> && bun run check-types && bun run check:tailwind && bun run lint` (what `check:tailwind` checks and needs: `CONTRIBUTING.md` › Quality Gates). When the change touches `scripts/` or `packages/ui/scripts/`, also run `bun test ./scripts ./packages/ui/scripts` (those specs run on `bun:test`, not Vitest), and for `scripts/` also `bun run lint:scripts && bun run check-types:scripts`. Step 7 runs CI's checks before the push.
 - **Visual baselines,** when rendering changes:
   1. Commit first.
   2. Regenerate the Linux baselines in Docker with the recipe in TESTING_STRATEGY.md › Visual Regression, then copy them back.
@@ -119,9 +119,15 @@ When the input says `preview` (naming the issues it covers, if several) or the m
 Run the gates and push as one chain, so a red gate never pushes:
 
 ```bash
-cd <wt> && bun run lint && bun run check-types && bun run check:tailwind && bun run test && git push -u origin <type>/<slug> \
+cd <wt> && test -z "$(git status --porcelain)" && GITHUB_TOKEN=$(gh auth token) bun run gates:full && git push -u origin <type>/<slug> \
   && gh pr create --base master --head <type>/<slug> --title "<type>(<scope>): <summary>" --body-file <scratchpad>/pr-<slug>.md
 ```
+
+- **Clean tree first:** the gates check the working tree but the push sends `HEAD`, so an uncommitted or untracked file would pass here and fail in CI. The test stops the chain without a message; `git status` shows why.
+- **`gates:full`** runs the steps of CI's `lint`, `typecheck`, `test` and `docs-build` jobs, each job's steps in CI's order and the jobs one after another. The token lets its `check:a11y` read the issue states that CI reads.
+- **`bun run gates`** is the same without `docs-build`. Put it in place of `GITHUB_TOKEN=$(gh auth token) bun run gates:full` only when every changed file is one of these: a spec (`*.spec.ts`, `*.spec.tsx`); a file in `.claude/` or `.changeset/`; Markdown outside `apps/docs`; a file in the root `scripts/` other than `check-no-motion.ts` and `no-motion/`, which `docs-build` runs; a workflow line outside the `docs-build` job. For anything else, keep `gates:full`.
+- **Time:** the chain takes a few minutes (`CONTRIBUTING.md` › Quality Gates, with what each step needs). Run it with a 600000 ms Bash timeout or in the background: the default 120 s timeout kills it, which pushes nothing but wastes the run.
+- **Parallel deliveries:** `check:a11y` serves the docs build on port 3105. Give each chain its own port (`PORT=<3105 + n>` before `bun run gates:full`), or run the chains one at a time.
 
 Name the body file after the slug: issues built in parallel each run this step, and a shared `pr.md` can hold another PR's body (and its `Closes #<n>`) when `gh` reads it.
 

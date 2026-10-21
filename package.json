@@ -20,6 +20,8 @@
     "format": "biome format --write .",
     "lint:scripts": "biome check scripts",
     "check-types:scripts": "tsc -p scripts",
+    "gates": "bun scripts/gates.ts",
+    "gates:full": "bun scripts/gates.ts --full",
     "changeset": "changeset",
     "version-packages": "changeset version && bun install --lockfile-only",
     "release": "turbo run build --filter=chunks-ui && bun run --cwd packages/ui check:exports && bun run --cwd packages/ui check:dist && changeset publish",

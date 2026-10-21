@@ -2,6 +2,38 @@
 
 This directory contains utility scripts for the project.
 
+## gates.ts
+
+Runs CI's checks in this checkout and stops at the first that fails. Each step is a `run:` step of a CI job, word for word, in its `working-directory`. Each job's steps run in CI's order, the jobs one after another (lint, typecheck, test, then docs-build), where CI runs them side by side. The lists are `FAST` and `FULL` in the script:
+
+- `FAST` (`bun run gates`): the `lint` and `typecheck` jobs of `quality-gates.yml`, then the `test` job of `unit.tests.yml`. It starts with CI's `bun install --frozen-lockfile`, once per run. It includes the changeset check, which CI runs on pull requests only, and the unit tests with coverage (`test:unit:coverage`), not `bun run test`: the coverage thresholds in `packages/ui/vitest.config.ts` fail CI's run where a plain run passes.
+- `FULL` (`GITHUB_TOKEN=$(gh auth token) bun run gates:full`, after `FAST`): the `docs-build` job of `quality-gates.yml`.
+
+Which changes need `FULL`, how long each list takes and what the steps need: `CONTRIBUTING.md` › Quality Gates.
+
+Each step runs with `sh -e` (CI's default shell is `bash -e`, or `sh -e` in a container job) from the repo root or its `cwd`, with this shell's environment and the terminal attached. At the end the script lists every step with its time. For a failed step it says what the step needs (`network`, `node`, `browser`, `token`, `origin/master`) and the command that runs it alone. It exits with 0 when every step passed, 1 when one failed and 2 on an unknown argument.
+
+About `check:a11y`:
+
+- The script passes `GITHUB_TOKEN` to this step only, as CI does. That keeps the token out of the other tools' environment dumps, logs and crash reports. It is no barrier to hostile dependency code, which can read its parent process's environment or run `gh auth token` itself, and Bun loads a `.env` file in a step's directory: do not keep the token in a `.env` file.
+- It serves the docs build on port 3105, which `PORT` changes: two runs at once, such as deliveries in parallel, each need their own port.
+
+Left out on purpose (`CI_ONLY` in the script gives the reason for each): the install in the `typecheck`, `test` and `docs-build` jobs, the Turbo cache prune, the `unzip` install of the `docs-build` image, and the `floors` job. Also the `uses:` steps (checkout, setup-bun, the caches, the coverage upload and its PR comment), which run no command, and the visual regression workflow: run the specs a change touches with `bun run test:visual <filter>` in `packages/ui`.
+
+Other differences from CI:
+
+- A step's `if:`, `env:` and `continue-on-error:`: every step runs, and the run stops at the first failure also where CI goes on (CI runs the repo scripts' tests after a red unit run).
+- The environment: each step gets this shell's. CI also sets `GITHUB_ACTIONS`, with which `check:a11y` fails on a missing token or on a 401, 403, 404 or 410 for an issue it links (here they are notices), and `LANG` and `LC_ALL` to `en_US.UTF-8` for every step (no check depends on the locale today).
+- Turbo replays `lint` and the builds from a cache that all worktrees share, where CI starts cold, and its `lint` hash does not include the root `biome.json`. After a change to a root config that Turbo does not hash, run `TURBO_FORCE=1 bun run gates`.
+- CI checks out the pull request merged into the current `master`; the gates check `HEAD`. When `master` has moved, merge `origin/master` first.
+
+```bash
+bun run gates                                     # the lint, typecheck and test jobs
+GITHUB_TOKEN=$(gh auth token) bun run gates:full  # and the docs-build job
+```
+
+CI does not run the script; its spec runs with the repo scripts' tests in the `test` job of `unit.tests.yml`. Tests: `scripts/__specs__/gates.spec.ts` reads `quality-gates.yml` and `unit.tests.yml` and fails when a `run:` step of one of their jobs is in neither list (the `docs-build` job's in `FULL`, the others' in `FAST`) nor in `CI_ONLY`, when a list step matches no `run:` step, when a list leaves CI's order within a job or runs a step more or fewer times than CI, and when a `CI_ONLY` entry matches no `run:` step. A step matches on its `run:` text and its working directory: its own, else `defaults.run.working-directory` of its job, else that of the workflow. A job defined with `uses:` (a reusable workflow) has no steps there, and another workflow file is not read. The rows that prove the checker feed it small workflows of their own; one row reads today's workflows. The spec also tests the runner, the closing report and the exit codes.
+
 ## check-playwright-version.ts
 
 Fails when the Playwright version differs between `@playwright/test` (packages/ui), `playwright` (apps/docs, and the root for `check-no-motion.ts`), the `mcr.microsoft.com/playwright` images in the workflows and the Docker recipe in `TESTING_STRATEGY.md`. Also fails on an image reference without a `v<version>` tag. It checks no digest: they are bumped with the tag by hand or by Renovate. It makes no network calls.

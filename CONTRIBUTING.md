@@ -149,26 +149,37 @@ Tests use Vitest + Testing Library. Co-locate tests next to source files as `Com
 ### Running Tests
 
 ```bash
-bun run test              # run all tests
-bun run test:unit:coverage # with coverage report
+bun run test              # Vitest in packages/ui and apps/docs, then bun test ./scripts
+bun run test:unit:coverage # the same Vitest suites, with the coverage report and its thresholds
 ```
+
+`bun run gates` (see Quality Gates) runs everything CI's `test` job runs: the Vitest suites with coverage, then `bun test ./scripts ./packages/ui/scripts`.
 
 ## PR Workflow
 
 1. Create a branch from `master`
 2. Implement changes
-3. Run quality gates locally: `bun run lint && bun run check-types && bun run check:tailwind && bun run test`
+3. Commit, then run the quality gates on the clean branch: `GITHUB_TOKEN=$(gh auth token) bun run gates:full`, or `bun run gates` where Quality Gates says it is enough
 4. Push branch and open PR
-5. CI runs lint, typecheck, and unit tests with coverage
+5. CI runs lint, typecheck, unit tests with coverage, the docs build with its checks, and the visual regression tests
 
 ## Quality Gates
 
-All of these run in CI on every PR:
+Two commands run CI's checks locally. Each step is a `run:` step of a CI job, word for word, in its working directory. Each job's steps run in CI's order and the jobs one after another, where CI runs the jobs side by side: the run stops at the first step that fails, so it does not show what the other jobs would report. It says what the failed step needs and how to re-run it alone, and ends with every step and its time.
 
-- `bun run lint` — Biome lint + format
-- `bun run check-types` — TypeScript strict mode
-- `bun run check:tailwind` — builds `chunks-ui` and fails when Tailwind 4.0.0, the library's floor, cannot generate a class the installed Tailwind does. It installs the 4.0.0 CLI from `scripts/tailwind-4.0`, so it needs the network, and node. CI runs it in the `typecheck` job; `lint` and `check-types` do not cover it. Details: `scripts/README.md`.
-- `bun run test` — Vitest unit tests
+- `bun run gates` runs the `lint` and `typecheck` jobs (`quality-gates.yml`), then the `test` job (`unit.tests.yml`), in about half a minute when warm.
+- `GITHUB_TOKEN=$(gh auth token) bun run gates:full` runs the same, then the `docs-build` job, a few minutes more. That job builds the docs, runs axe (WCAG A and AA, colour contrast included, which jest-axe in jsdom cannot see) on every docs page in both themes, and runs `check:no-motion`, which type-checks a consumer with `skipLibCheck: false` under `node10` resolution.
+
+`bun run gates` is enough only when every changed file is one of these: a spec (`*.spec.ts`, `*.spec.tsx`); a file in `.claude/` or `.changeset/`; Markdown outside `apps/docs`; a file in the root `scripts/` other than `check-no-motion.ts` and `no-motion/`, which the `docs-build` job runs; a workflow line outside the `docs-build` job. For anything else, run `gates:full`.
+
+What the steps need:
+
+- The first step is CI's `bun install --frozen-lockfile`. It fails when `package.json` and `bun.lock` disagree, and brings `node_modules` in line with `bun.lock`, for example after a merge of `master` that bumps a dependency.
+- The changeset check (`bunx changeset status --since=origin/master`, see Changesets) compares with your `origin/master`, so run `git fetch origin` first. It does not see untracked files, so commit first.
+- `check:tailwind` builds `chunks-ui` and fails when Tailwind 4.0.0, the library's floor, cannot generate a class the installed Tailwind does. It installs the 4.0.0 CLI from `scripts/tailwind-4.0`, so it needs the network, and node. `lint` and `check-types` do not cover it. Details: `scripts/README.md`.
+- The `docs-build` steps need the network and Chromium for Playwright (`bunx playwright install chromium`). With `GITHUB_TOKEN`, `check:a11y` also checks the state of the issues its `ALLOWED` entries link, as CI does; the gates pass the token to that step only. Without it, it prints a notice and skips that part; in CI a missing token fails the run.
+
+The step lists are in `scripts/gates.ts`, with the CI steps they leave out (the install in the other jobs, the cache and container setup, the `floors` job) and why. `scripts/README.md` lists the other differences from CI. `scripts/__specs__/gates.spec.ts` reads `quality-gates.yml` and `unit.tests.yml` and fails when one of their jobs has a `run:` step that the lists do not cover. It skips a job defined with `uses:` (a reusable workflow) and does not read other workflow files. Neither command runs the visual regression tests: run the specs a change touches with `bun run test:visual <filter>` in `packages/ui`.
 
 Pre-commit hook (Lefthook) auto-runs Biome on staged files.
 
