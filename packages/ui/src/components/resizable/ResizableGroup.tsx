@@ -353,6 +353,13 @@ export function ResizableGroup({
           registry.current.resizing = false;
           try {
             if (commit && !sameLayout(current, start)) {
+              // ponytail: commits `current`, the layout as the group shows it (`fromPixels` over
+              // every panel), so a size the window forced on a panel this drag did not move is
+              // saved too: a % panel held at a px limit keeps the held share, a px panel shrunk
+              // or stretched keeps that px, and a % panel can be saved as 0% when px panels fill
+              // the group. Upgrade: save only the two panels the handle moves, on top of the
+              // stored layout, with the drag preview built the same way (else the 0% case jumps
+              // on release); a drag beside a held panel keeps this rule. Accepted.
               if (state.layoutProp === undefined) setUncontrolled(current);
               latest.current.onLayoutChange?.(current);
             } else {
