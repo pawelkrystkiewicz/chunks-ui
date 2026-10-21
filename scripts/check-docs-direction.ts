@@ -4,10 +4,11 @@
  * object, background, transform-origin, perspective-origin, mask or gradient direction class in
  * apps/docs. It needs a Tailwind value (`ml-4`, `left-1/2`), so prose like `left-to-right` passes.
  * In a .css file it reads each `@apply`, its continuation lines too, and each
- * `@source inline("…")` string only. A class behind `rtl:` or `ltr:` is set for one direction on
- * purpose and passes. A marker `direction: physical, <reason>` on the same line, or in a comment
- * alone on its lines directly above (a run of `//` lines is one comment), exempts a deliberate one.
- * An empty scan, or one with no .mdx file, fails. Full list and limits: TESTING_STRATEGY.md
+ * `@source inline("…")` string only. A class behind `rtl:`, `ltr:`, `[&:dir(rtl)]:` or
+ * `[&:dir(ltr)]:` is set for one direction on purpose and passes. A marker
+ * `direction: physical, <reason>` on the same line, or in a comment alone on its lines directly
+ * above (a run of `//` lines is one comment), exempts a deliberate one. An empty scan, or one with
+ * no .mdx file, fails. Full list and limits: TESTING_STRATEGY.md
  *
  * Run: bun run check:docs-direction
  */
@@ -23,17 +24,21 @@ const SCANNED = /\.(?:[cm]?js|jsx|tsx?|mdx?|json|css)$/;
 /** A spacing or inset value: `4`, `0.5`, `1/2`, `px`, `auto`, `full`, `[calc(…)]`, `(--var)`. */
 const VALUE = /\d+(?:\.\d+)?(?:\/\d+)?|px|auto|full|\[[^\]\s]*\]|\([^)\s]*\)/.source;
 /**
- * An `rtl:` or `ltr:` variant right before a class, or before more variants and a leading `!`
- * (`rtl:md:`, `rtl:[&>img]:`, `rtl:!`). A space, quote, brace, comma, semicolon or pipe ends the
- * chain, so `rtl:pl-2,md:ml-4` does not reach `ml-4`.
+ * A direction variant right before a class, or before more variants and a leading `!` (`rtl:md:`,
+ * `rtl:[&>img]:`, `rtl:!`): `rtl:` or `ltr:`, or the arbitrary `[&:dir(rtl)]:` or `[&:dir(ltr)]:`.
+ * The arbitrary pair follows the nearest `dir`; `rtl:` also matches inside an LTR section of an RTL
+ * page. A space, quote, brace, comma, semicolon or pipe ends the chain, so `rtl:pl-2,md:ml-4` does
+ * not reach `ml-4`.
  * ponytail: the chain is capped at 100 characters, so a class behind a longer one is flagged. The
  * cap keeps the lookbehind from scanning far back: without it a line with no delimiter cost the
  * square of its length (80 000 characters of `m:` took 1.4 s, now 4 ms).
  */
-const DIRECTION_VARIANT = /(?<![\w-])(?:rtl|ltr):(?:[^\s"'`{},;|]{0,100}:)?!?/.source;
+const DIRECTION_VARIANT =
+  /(?<![\w-])(?:rtl|ltr|\[&:dir\((?:rtl|ltr)\)\]):(?:[^\s"'`{},;|]{0,100}:)?!?/.source;
 /**
  * A physical class as a whole token: nothing of a class before it or after it (`overfloat-left` is
- * another class). One behind `rtl:` or `ltr:` is set for that direction on purpose and is not one.
+ * another class). One behind a direction variant (`DIRECTION_VARIANT`) is set for that direction on
+ * purpose and is not one.
  *
  * Left out on purpose, so `PHYSICAL` does not match them (the spec pins each one):
  * - `bg-linear-<angle>`, `-bg-linear-<angle>`, `mask-linear-<angle>`, `-mask-linear-<angle>`,
@@ -174,7 +179,7 @@ if (import.meta.main) {
   for (const problem of problems) console.error(problem);
   if (problems.length > 0) {
     console.error(
-      `\n${problems.length} physical direction ${problems.length === 1 ? "class" : "classes"} in the docs. Use the logical class (ms-/me-, ps-/pe-, start-/end-, text-start/text-end, rounded-s-/rounded-e-/rounded-ss-…, border-s-/border-e-) so the page mirrors in RTL; with no logical class (positions, side masks, gradient directions), set one per direction, \`ltr:object-left rtl:object-right\`. Or mark a deliberate one with \`direction: physical, <reason>\` in a comment on its line or directly above it. Rules: TESTING_STRATEGY.md › CI › Docs direction.`,
+      `\n${problems.length} physical direction ${problems.length === 1 ? "class" : "classes"} in the docs. Use the logical class (ms-/me-, ps-/pe-, start-/end-, text-start/text-end, rounded-s-/rounded-e-/rounded-ss-…, border-s-/border-e-) so the page mirrors in RTL; with no logical class (positions, side masks, gradient directions), set one per direction, \`ltr:object-left rtl:object-right\`; inside a section whose direction differs from the page, \`[&:dir(ltr)]:\` and \`[&:dir(rtl)]:\` are the pair that follows the nearest \`dir\`. Or mark a deliberate one with \`direction: physical, <reason>\` in a comment on its line or directly above it. Rules: TESTING_STRATEGY.md › CI › Docs direction.`,
     );
     process.exit(1);
   }

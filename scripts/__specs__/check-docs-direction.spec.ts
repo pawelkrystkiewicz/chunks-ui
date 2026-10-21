@@ -163,9 +163,19 @@ describe("physicalTokens", () => {
       ["object-left"],
     ],
     [
+      "nothing behind a [&:dir(rtl)]: or [&:dir(ltr)]: variant, anywhere in its chain, but the unprefixed twin",
+      "object-left [&:dir(rtl)]:object-right [&:dir(rtl)]:ml-4 [&:dir(ltr)]:object-left md:[&:dir(rtl)]:pl-2 [&:dir(rtl)]:md:hover:bg-right [&:dir(rtl)]:!-ml-2 [&:dir(rtl)]:mr-2! group-hover:[&:dir(ltr)]:mask-l-from-50% [&>img]:[&:dir(ltr)]:left-0 [&:dir(rtl)]:[&>img]:pl-2 [&:is(.a,.b)]:[&:dir(rtl)]:pl-2",
+      ["object-left"],
+    ],
+    [
       "a class whose rtl: is not its own variant: on another class, in a longer variant, in prose, before a brace",
       "rtl:x ml-4 data-rtl:ml-4 group-rtl:ml-4 in-rtl:ml-4 xrtl:ml-4 'rtl:' pr-2 rtl: pl-2 {,rtl:}mr-4",
       ["ml-4", "ml-4", "ml-4", "ml-4", "ml-4", "pr-2", "pl-2", "mr-4"],
+    ],
+    [
+      "a class whose [&:dir(rtl)]: is not its own variant: a suffix, no colon, another argument, a longer selector, a word before it, another variant's argument, in prose",
+      "[&:dir(rtl)]x:ml-4 [&:dir(rtl)] mr-4 [&:dir(ltr)]pl-4 [&:dir(rt)]:pr-4 [&:not(:dir(rtl))]:left-4 [&:dir(rtl)_&]:right-4 x[&:dir(rtl)]:ml-2 group-[&:dir(rtl)]:mr-2 '[&:dir(rtl)]:' pl-2 [&:dir(rtl)]: pr-2",
+      ["ml-4", "mr-4", "pl-4", "pr-4", "left-4", "right-4", "ml-2", "mr-2", "pl-2", "pr-2"],
     ],
     [
       "nothing for the logical classes and the look-alikes",
@@ -201,19 +211,34 @@ describe("physicalTokens", () => {
     expect(physicalTokens(line)).toEqual(expected);
   });
 
+  const DELIMITERS = [" ", '"', "'", "`", "{", "}", ",", ";", "|"];
+
   // Each delimiter alone, with a variant on the second class: a chain that ran on past the delimiter
   // would reach that class and exempt it. The delimiter before rtl: too: a guard that took it for
   // part of a word would flag the first class.
-  it.each([" ", '"', "'", "`", "{", "}", ",", ";", "|"])(
+  it.each(DELIMITERS)(
     "ends an rtl: chain at %j, so a variant after it does not reach the next class",
     (delimiter) => {
       expect(physicalTokens(`${delimiter}rtl:pl-2${delimiter}md:ml-4`)).toEqual(["ml-4"]);
     },
   );
 
+  it.each(DELIMITERS)(
+    "ends a [&:dir(rtl)]: chain at %j, so a variant after it does not reach the next class",
+    (delimiter) => {
+      expect(physicalTokens(`${delimiter}[&:dir(rtl)]:pl-2${delimiter}md:ml-4`)).toEqual(["ml-4"]);
+    },
+  );
+
   // The cap keeps the lookbehind from rescanning a long line without a delimiter at every colon.
   it("reads an rtl: chain of 100 characters before a class, and flags the class behind a longer one", () => {
     const behind = (chain: number) => `rtl:${"x".repeat(chain)}:ml-4`;
+    expect(physicalTokens(behind(100))).toEqual([]);
+    expect(physicalTokens(behind(101))).toEqual(["ml-4"]);
+  });
+
+  it("reads a [&:dir(rtl)]: chain of 100 characters before a class, and flags the class behind a longer one", () => {
+    const behind = (chain: number) => `[&:dir(rtl)]:${"x".repeat(chain)}:ml-4`;
     expect(physicalTokens(behind(100))).toEqual([]);
     expect(physicalTokens(behind(101))).toEqual(["ml-4"]);
   });
@@ -531,6 +556,18 @@ describe("checkDocsDirection", () => {
       ["3: ml-4", "7: pr-2"],
     ],
     [
+      "passes a class behind [&:dir(rtl)]: or [&:dir(ltr)]: in an @apply, on its continuation lines too, and reports the unprefixed twin",
+      [
+        ".a {",
+        "  @apply ms-2 object-left [&:dir(rtl)]:object-right",
+        "    [&:dir(rtl)]:ml-4 md:[&:dir(ltr)]:pr-2",
+        "    [&:dir(rtl)]:pl-2 ml-4;",
+        "}",
+        ".b { @apply [&:dir(rtl)]:md:hover:bg-right [&:dir(ltr)]:!-ml-2 mr-4; }",
+      ],
+      ["2: object-left", "4: ml-4", "6: mr-4"],
+    ],
+    [
       "reads on past a comment in an @apply, a ; or } in it too, as Tailwind does",
       [".a {", "  @apply ms-2", "    /* the gap; see #12 } */", "    ml-4;", "}"],
       ["4: ml-4"],
@@ -584,6 +621,11 @@ describe("checkDocsDirection", () => {
         '@source inline("rtl:pr-2 pr-2");',
       ],
       ["1: mr-4", "2: rounded-l", "5: pr-2"],
+    ],
+    [
+      "passes a class behind [&:dir(rtl)]: or [&:dir(ltr)]: in an @source inline string too",
+      ['@source inline("[&:dir(rtl)]:pr-2 [&:dir(ltr)]:md:pl-2 pl-4");'],
+      ["1: pl-4"],
     ],
     [
       "reads a /* in an @source inline string as text, which is no comment there",
