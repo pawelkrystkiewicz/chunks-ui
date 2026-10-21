@@ -74,7 +74,9 @@ The builder's prompt starts with the System Prompt from `.claude/agents/builder.
 Pick the mode:
 
 - **Sequential** (only when the `review-sequential` skill is listed in your available skills; otherwise run Single and say so in the PR body): for a new component, a new public API, or more than about 300 changed source lines, or when the input says `passes=N`. A new public API is an export of `packages/ui/src/index.ts` or `packages/ui/src/utils.ts`, a CSS variable in `packages/ui/src/theme.css`, or a component's part, prop or variant, added or renamed; a fix to how an existing one behaves is not one. Changed source lines are added plus deleted, not specs, docs, baselines, changesets or lockfiles; docs are the pages and demos in `apps/docs/content` and `apps/docs/app/examples`. Count them with: `out=$(git -C <wt> diff -M --numstat origin/master...HEAD -- . ':!*.spec.*' ':!*.md' ':!.changeset' ':!*.lock' ':!apps/docs/content' ':!apps/docs/app/examples') && printf '%s\n' "$out" | awk '{n += $1 + $2} END {print n + 0}'`. It runs at least 3 passes, opening on Opus, so it costs more.
-- **Single:** every other PR, and any PR when the input says "quick review", even a new component. For maths (numeric code such as sizes, layout, clamping and date arithmetic, like `packages/ui/src/lib/resizable/`), the reviewer also runs a property or differential test (step 2 below).
+- **Single:** every other PR, and any PR when the input says "quick review", even a new component.
+
+For maths (numeric code such as sizes, layout, clamping and date arithmetic, like `packages/ui/src/lib/resizable/`), either mode adds a property or differential test by the recipe in Single, step 2; in Sequential, pass 1 runs it.
 
 Both modes judge findings against the same rubric:
 
@@ -90,6 +92,7 @@ Invoke the `review-sequential` skill (Skill tool). Use `passes=N` from the input
 
 - `base=origin/master`, the branch, and that the repo is `<wt>`. Every git and gate command runs as `cd <wt> && …` or `git -C <wt> …`.
 - one paragraph on what the change is for, plus the rubric above;
+- for maths: the maths bullet of Single, step 2, for pass 1 only. It lifts the skill's read-only contract and its never-re-run-git rule for that pass; pass 1 runs commands, so give it a subagent with Bash. Pass 1 reports its harness file and run command, and the harness imports the new code from `<wt>`, not a copy. After each fix wave, re-run it yourself before the next pass (or step 7): triage a failure like a finding; if it no longer runs, say so in the PR body;
 - **the fix waves:** each implementer gets the step-5 builder brief (the builder.md System Prompt, the file scope, TDD, the step-5 gate line, commit format with the co-author trailer). That gate line replaces the skill's own typecheck-and-lint list, so `check:tailwind` stays in. Only one implementer works in `<wt>` at a time.
 - **no push.** This overrides the skill's Finish. Step 7, not the skill's lint, is the final gate.
 

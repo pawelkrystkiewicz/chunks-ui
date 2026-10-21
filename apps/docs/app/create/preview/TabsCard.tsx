@@ -33,7 +33,7 @@ export function TabsCard() {
           </Tabs.Tab>
           <Tabs.Indicator />
         </Tabs.List>
-        {/* W80 (#341) workaround lives on the columns container in PreviewPanel */}
+        {/* The WebKit workaround (#341) lives on the columns container in PreviewPanel */}
         <Tabs.Contents>
           <Tabs.Content value="overview" className="flex flex-col gap-4">
             <div className="grid grid-cols-3 gap-2">

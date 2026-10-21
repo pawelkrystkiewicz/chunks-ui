@@ -40,7 +40,7 @@ describe("themeChecks", () => {
     expect(ring.wcag.dark).toBeCloseTo(2.05, 1);
   });
 
-  it("paints contained hover at 90% over the background, as measured in the browser (W1)", () => {
+  it("paints contained hover at 90% over the background, as measured in the browser", () => {
     expect(byId("on-primary-hover").wcag.light).toBeCloseTo(3.91, 1);
     expect(byId("on-destructive-hover").wcag.light).toBeCloseTo(4.13, 1);
   });
