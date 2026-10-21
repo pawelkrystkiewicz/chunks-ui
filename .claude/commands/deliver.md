@@ -73,8 +73,8 @@ The builder's prompt starts with the System Prompt from `.claude/agents/builder.
 
 Pick the mode:
 
-- **Sequential** (the default): use it when the `review-sequential` skill is listed in your available skills, unless the input says "quick review". It runs at least 3 passes, opening on Opus, so it costs more.
-- **Single:** use it when the input says "quick review", or when the skill is not listed.
+- **Sequential** (only when the `review-sequential` skill is listed in your available skills; otherwise run Single and say so in the PR body): for a new component, a new public API, or more than about 300 changed source lines, or when the input says `passes=N`. A new public API is an export of `packages/ui/src/index.ts` or `packages/ui/src/utils.ts`, a CSS variable in `packages/ui/src/theme.css`, or a component's part, prop or variant, added or renamed; a fix to how an existing one behaves is not one. Changed source lines are added plus deleted, not specs, docs, baselines, changesets or lockfiles; docs are the pages and demos in `apps/docs/content` and `apps/docs/app/examples`. Count them with: `out=$(git -C <wt> diff -M --numstat origin/master...HEAD -- . ':!*.spec.*' ':!*.md' ':!.changeset' ':!*.lock' ':!apps/docs/content' ':!apps/docs/app/examples') && printf '%s\n' "$out" | awk '{n += $1 + $2} END {print n + 0}'`. It runs at least 3 passes, opening on Opus, so it costs more.
+- **Single:** every other PR, and any PR when the input says "quick review", even a new component. For maths (numeric code such as sizes, layout, clamping and date arithmetic, like `packages/ui/src/lib/resizable/`), the reviewer also runs a property or differential test (step 2 below).
 
 Both modes judge findings against the same rubric:
 
@@ -99,9 +99,10 @@ You still own the triage. Out-of-scope findings and the skill's leftovers go on 
 
 1. Package the diff into one file:
    `{ git -C <wt> log --oneline origin/master..HEAD; git -C <wt> diff --stat origin/master...HEAD; git -C <wt> diff -U10 origin/master...HEAD; } > <scratchpad>/<slug>.diff`
-2. Spawn a **fresh** reviewer. Its prompt starts with the System Prompt from `.claude/agents/reviewer.md` and adds:
+2. Spawn a **fresh** reviewer on Opus. Its prompt starts with the System Prompt from `.claude/agents/reviewer.md` and adds:
    - the diff file path, one paragraph on what the change is for, and that the gates passed;
    - the rubric above;
+   - for maths: run a property test, and a differential test against the old code when there is old code (a few hundred thousand random cases is enough), and report what it covered (case counts and input ranges). This is the one exception to reviewer.md's no-write rule: create files only under `<scratchpad>/<slug>-…`, never in `<wt>`. Take the old code from the merge base: `set -o pipefail; mkdir -p <scratchpad>/<slug>-old && git -C <wt> archive "$(git -C <wt> merge-base origin/master HEAD)" <dir> | tar -x -C <scratchpad>/<slug>-old`;
    - no implementer report and no earlier findings;
    - severities Critical, Important and Minor, which replace reviewer.md's labels. Each finding gives `file:line`, why it matters, and the fix.
 3. **Triage it yourself.** Check each finding against the code. Drop false positives and note why. Out-of-scope ideas go on the Also possible list.
@@ -125,6 +126,7 @@ The PR body has:
 
 - a Summary of what changed and why;
 - `Closes #<n>` when the PR meets every acceptance criterion; check the diff against the issue's `- [ ]` list yourself, not the builder's report. Otherwise write `Part of #<n>` and list the criteria still open, so the merge leaves the issue open;
+- the review mode, with the changed source line count when it was counted and, when a property or differential test ran, what it covered;
 - one line for each review finding, fixed or dropped;
 - a Test plan;
 - the Claude Code attribution line.
