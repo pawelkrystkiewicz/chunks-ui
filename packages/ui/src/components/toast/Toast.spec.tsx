@@ -840,6 +840,37 @@ describe("Toast.Action render", () => {
     expect(action).toHaveClass("mine");
   });
 
+  // Pins the rule in the docs (the note under Props): Base UI gives a non-native action
+  // `role="button"`, so a link announces as a button. The `role={undefined}` of the render element
+  // wins over it, and the link keeps its link role. A render function gets props that already hold
+  // `role: "button"` and nothing merges after it, so `role={undefined}` goes after `{...props}`
+  it.each<{ kind: string; renderProp: ToastActionProps["render"]; role: "button" | "link" }>([
+    { kind: "a link", renderProp: <a href="/x">Docs</a>, role: "button" },
+    {
+      kind: "a link with role={undefined}",
+      renderProp: (
+        // biome-ignore lint/a11y/useValidAriaRole: the `role={undefined}` the docs recommend is under test
+        <a href="/x" role={undefined}>
+          Docs
+        </a>
+      ),
+      role: "link",
+    },
+    {
+      kind: "a link from a render function with role={undefined} after {...props}",
+      renderProp: (props) => (
+        // biome-ignore lint/a11y/useValidAriaRole: the `role={undefined}` the docs recommend is under test
+        <a {...props} role={undefined} href="/y">
+          Docs
+        </a>
+      ),
+      role: "link",
+    },
+  ])("gives $kind the role $role", async ({ renderProp, role }) => {
+    await showAction({ render: renderProp, nativeButton: false });
+    expect(screen.getByRole(role, { name: "Docs" })).toBe(screen.getByTestId("action"));
+  });
+
   it("renders a button without a render prop, with the library classes and the consumer's", async () => {
     await showAction();
     const action = screen.getByTestId("action");
