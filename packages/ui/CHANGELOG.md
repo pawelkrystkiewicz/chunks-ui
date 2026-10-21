@@ -1,5 +1,13 @@
 # chunks-ui
 
+## 0.4.1
+
+### Patch Changes
+
+- [#758](https://github.com/pawelkrystkiewicz/chunks-ui/pull/758) [`46f08bf`](https://github.com/pawelkrystkiewicz/chunks-ui/commit/46f08bf77963ab93933def6df8223673381147a4) - Fixed: a `Resizable.Panel` whose `id` is `__proto__` gave `[object Object]` as its size and `NaN` after a drag; it is now treated as a panel without an `id` (a generated one and a warning in development) and resizes like any other.
+
+  Fixed: a stored px size far above the group (about 1e19px and up) left a panel at 0px or gave `NaN`; it now fits like a smaller one.
+
 ## 0.4.0
 
 ### Minor Changes
