@@ -20,6 +20,9 @@ const utilsModules = new Set(
 // In the main entry, an import of one of those modules becomes an import of the built utils file,
 // so an app that uses both entries loads cn, cnState and the variants once.
 // The rule for utils.ts exports is in the header of src/utils.ts.
+// ponytail: utils.ts re-exports only `sanitizeLayout` and two types from the Resizable maths, so
+// the rest of it (lib/resizable/layout, size, sanitize-models) is bundled into both entries, about
+// 1.5 KB gzip in a client bundle that uses Resizable. Goes when the maths is shared in one place.
 const importFromUtils: EsbuildPlugin = {
   name: "import-from-utils",
   setup(build) {
