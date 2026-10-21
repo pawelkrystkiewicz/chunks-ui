@@ -125,7 +125,7 @@ describe("Tabs.Contents in WebKit", () => {
   });
 
   /*
-   * W80 (#341, https://bugs.webkit.org/show_bug.cgi?id=327820): WebKit paints a composited
+   * A WebKit bug (#341, https://bugs.webkit.org/show_bug.cgi?id=327820): WebKit paints a composited
    * element in a later CSS column at column 1's x, below the grid, not in its own box. Here the
    * slid track reaches over the sidebar (two panels to the left), and `will-change` composites the
    * sidebar. Full detail: TESTING_STRATEGY.md, WebKit Smoke Tests.
@@ -172,13 +172,13 @@ describe("Tabs.Contents in WebKit", () => {
     return screen.getByRole("textbox", { name: "Note" });
   }
 
-  describe("in the second CSS column, next to an earlier composited layer (W80)", () => {
+  describe("in the second CSS column, next to an earlier composited layer (#341)", () => {
     // A WebKit bug: Chromium paints the panel in place. The bug spec and the workaround spec below
     // form a pair: `toBe(0)` proves a bug only because the workaround spec uses the same layout
     // and paints more than 0. Change them together. If the bug spec fails, WebKit paints the panel
     // in place now: flip it to `toBeGreaterThan(0)` and rename it. Keep the workaround spec:
     // users' Safari lags behind, and #295 depends on it.
-    it("paints nothing in the Note field's box: WebKit bug (W80); when this fails, WebKit is fixed", async () => {
+    it("paints nothing in the Note field's box: WebKit bug (#341); when this fails, WebKit is fixed", async () => {
       const note = await openNotes();
       // Preconditions: the panel is laid out in place, so 0 pixels painted there means a bug
       const columns = screen.getByTestId("columns").getBoundingClientRect();
@@ -596,7 +596,7 @@ describe("DatePicker focus as the popup closes, in WebKit", () => {
   });
 });
 
-// W365: a Base UI item acts on each Enter keydown, and a held Enter's repeats reached it while the
+// #705: a Base UI item acts on each Enter keydown, and a held Enter's repeats reached it while the
 // popup left: WebKit picked again on each repeat, as Chromium did (Select.visual.spec.tsx,
 // MenuFocus.visual.spec.tsx). The hand-off cancels those repeats. The items take focus from code
 // (ArrowDown), so no Tab is needed: WebKit's Tab skips buttons.
@@ -653,7 +653,7 @@ describe("Select and Menu items on a held Enter as the popup closes, in WebKit",
 
 describe("Focus rings in WebKit", () => {
   /*
-   * W122 (#383): with an arrow, the ring moves to an `::after` overlay that takes the popup's
+   * #383: with an arrow, the ring moves to an `::after` overlay that takes the popup's
    * border box, centred on it with `place-self: unsafe center` (popup-arrow.ts). Chromium's
    * PopupArrow spec checks it; this checks WebKit's layout and paint of it. The `border-2` class
    * is the case: with the default 1px border the overlay's `-inset-px` alone lands on the border
