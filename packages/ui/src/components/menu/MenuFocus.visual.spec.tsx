@@ -18,7 +18,7 @@ import { Dialog } from "../dialog";
 import { Menu } from "./index";
 
 /*
- * W151 (#383). Base UI's `useListNavigation` focuses the popup when the pointer leaves an item
+ * #383: Base UI's `useListNavigation` focuses the popup when the pointer leaves an item
  * for anything but another item (its `onPointerLeave`): the popup's padding, a separator, or
  * the page. Chromium keeps keyboard modality until a mouse press, so after a keyboard open that
  * focus matches `:focus-visible`, and the popup drew its ring under the mouse. The popup now

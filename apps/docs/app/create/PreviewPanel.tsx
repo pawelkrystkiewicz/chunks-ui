@@ -177,13 +177,13 @@ export function PreviewPanel({
             className="mx-auto transition-[max-width] duration-400 ease-fluid motion-reduce:transition-none [&_[data-lit]]:outline-offset-2 [&_[data-lit]]:[outline:2px_dashed_var(--lit)]"
           >
             <Tabs.Panel value="cards">
-              {/* will-change: opacity composites the columns to work around WebKit W80 (#341,
+              {/* will-change: opacity composites the columns to work around a WebKit bug (#341,
                   https://bugs.webkit.org/show_bug.cgi?id=327820): a composited element in a later
                   column paints under column 1, below the grid. Not transform, which would make the
                   columns the containing block of Base UI's fixed hidden inputs. Keep every
                   descendant off its own layer (no will-change, translateZ(0) or translate3d): a
                   composited descendant in a later column is misplaced, workaround or not.
-                  Remove once the Safari versions we support ship the fix (the W80 bug spec in
+                  Remove once the Safari versions we support ship the fix (the bug spec in
                   Smoke.webkit.visual.spec.tsx fails first). Details: TESTING_STRATEGY.md, WebKit
                   Smoke Tests. */}
               <div

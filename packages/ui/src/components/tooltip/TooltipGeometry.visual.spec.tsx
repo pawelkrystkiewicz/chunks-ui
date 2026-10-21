@@ -362,7 +362,7 @@ const ARROW_EDGE_CORNERS: Record<"left" | "right", [top: Corner, bottom: Corner]
   right: ["borderTopLeftRadius", "borderBottomLeftRadius"],
 };
 
-// W104: one line of text is about 24px tall, less than the arrow's foot and two 8px corners, so
+// One line of text is about 24px tall, less than the arrow's foot and two 8px corners, so
 // Floating UI caps the padding at the popup's middle, less 1px
 const ONE_LINE_SIDES = CASES.filter(({ side, dir }) => {
   const physical = physicalSide(side, dir);

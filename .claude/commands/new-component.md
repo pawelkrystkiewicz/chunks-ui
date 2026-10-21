@@ -50,6 +50,7 @@ Given the component name `$ARGUMENTS`, produce a structured task brief in the fo
 - [ ] `$ARGUMENTS.spec.tsx` with jest-axe a11y assertion
 - [ ] Exported from `packages/ui/src/index.ts`
 - [ ] Lint passes (`bun run lint`)
+- [ ] Tailwind 4.0, the floor, generates every class the installed version does (`bun run check:tailwind`; it builds `chunks-ui` first and needs the network and node)
 
 ---
 

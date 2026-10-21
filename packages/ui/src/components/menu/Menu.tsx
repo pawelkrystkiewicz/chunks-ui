@@ -108,8 +108,9 @@ function MenuContentPopup({
     finalFocus: props.finalFocus,
     scope: usePortalContainer(),
   });
-  // Pointer over the popup until the next key press keeps its ring off (W151); a reopen during the
-  // exit animation keeps a stale flag until the next key press (accepted).
+  // Pointer over the popup until the next key press keeps its ring off, so a keyboard-opened menu
+  // does not draw its ring under the mouse (#383); a reopen during the exit animation keeps a
+  // stale flag until the next key press (accepted).
   const [pointer, setPointer] = useState(false);
   const { useSpring, render } = usePopupRender(renderProp, {
     spring: springs.popup,
