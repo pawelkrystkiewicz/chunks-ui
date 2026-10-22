@@ -91,21 +91,25 @@ jobs:
             text: "Published ${{ steps.published.outputs.list }} to npm\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>"
 
       # After the Slack ping, so the publish is reported even when this fails. gh makes the tag
-      # at the run commit on GitHub's side; the action no longer pushes it. The release is
-      # chunks-ui's alone: a run that published only chunks-ui-core makes none.
+      # at the run commit on GitHub's side; the action no longer pushes it. The version is the
+      # commit's and a release that exists is kept: a failed publish of one package sets no
+      # outputs, so the re-run may publish only core and still owes chunks-ui its release.
       - name: Create GitHub release
         if: ${{ !cancelled() && steps.changesets.outputs.published == 'true' }}
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-          PUBLISHED: ${{ steps.changesets.outputs.publishedPackages }}
         run: |
           set -o pipefail
-          VERSION=$(jq -r '.[] | select(.name == "chunks-ui") | .version' <<<"$PUBLISHED")
-          if [ -z "$VERSION" ]; then
-            echo "chunks-ui was not published in this run, so there is no release to create"
-            exit 0
+          VERSION=$(git show "$GITHUB_SHA:packages/ui/package.json" | jq -r .version)
+          if [ -z "$VERSION" ] || [ "$VERSION" = null ]; then
+            echo "::error::cannot read .version of packages/ui/package.json at $GITHUB_SHA"
+            exit 1
           fi
           tag="chunks-ui@$VERSION"
+          if gh release view "$tag" > /dev/null 2>&1; then
+            echo "$tag has a release already"
+            exit 0
+          fi
           notes="$RUNNER_TEMP/release-notes.md"
           # Read at the run's commit, which the tag points at, not from the workspace
           git show "$GITHUB_SHA:packages/ui/CHANGELOG.md" |

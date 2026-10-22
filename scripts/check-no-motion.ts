@@ -340,13 +340,15 @@ async function bundle(fixture: string, dir: string, tarballs: { core: string; ui
       `bun add brought in ${brought.join(", ")}: the fixture in ${fixture} must pin every dependency of chunks-ui and chunks-ui-core.`,
     );
   }
-  // Resolved from chunks-ui, as its own code resolves it
+  // Resolved from chunks-ui, as its own code resolves it. The bytes of dist/index.js, not the
+  // version: a release on npm at the local version (the placeholder 0.0.0, or the last release)
+  // would pass a version compare
   const core = Bun.resolveSync("chunks-ui-core/package.json", join(dir, "node_modules/chunks-ui"));
-  const got = JSON.parse(readFileSync(core, "utf8")).version;
-  const want = JSON.parse(readFileSync(join(CORE, "package.json"), "utf8")).version;
-  if (got !== want) {
+  const installed = join(core, "../dist/index.js");
+  const built = join(CORE, "dist/index.js");
+  if (!existsSync(installed) || !readFileSync(installed).equals(readFileSync(built))) {
     throw new Error(
-      `the fixture installed chunks-ui-core from the registry, not the local tarball (${core} is ${got}, packages/core is ${want}).`,
+      `the fixture installed chunks-ui-core from the registry, not the local tarball (${installed} is missing or differs from ${built}).`,
     );
   }
   await Bun.write(join(dir, "entry.js"), ENTRY);
