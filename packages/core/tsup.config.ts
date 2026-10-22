@@ -7,6 +7,8 @@ export default defineConfig((options) => ({
   entry: ["src/index.ts"],
   format: ["cjs", "esm"],
   dts: true,
+  // A single build, so a file left from an older one cannot reach `files: ["dist"]`
+  clean: true,
   onSuccess: async () => {
     copyFileSync("src/theme.css", "dist/theme.css");
     console.log("Copied theme.css to dist/");
