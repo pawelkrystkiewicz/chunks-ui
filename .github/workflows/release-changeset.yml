@@ -127,36 +127,44 @@ jobs:
           gh release create "$tag" --target "$GITHUB_SHA" --title "$tag" --notes-file "$notes" "${pre[@]}"
 
       # Nothing published: when this fires and what to do are in TESTING_STRATEGY.md, CI, Release.
-      - name: Check npm has the version master is at
+      # Both packages are checked: changeset publish sends them to npm together, and a chunks-ui
+      # without the chunks-ui-core version it requires cannot be installed.
+      - name: Check npm has the versions master is at
         id: unpublished
         if: steps.changesets.outputs.published != 'true'
         run: |
           # An empty or null version must fail here, not reach npm view; `|| version=` keeps bash -e alive to print the ::error::.
           set -o pipefail
-          # Not the workspace: changesets/action leaves it on its release branch, versions bumped
-          version=$(git show "$GITHUB_SHA:packages/ui/package.json" | jq -r .version) || version=
-          if [ -z "$version" ] || [ "$version" = null ]; then
-            echo "::error::cannot read .version of packages/ui/package.json at $GITHUB_SHA"
-            exit 1
-          fi
-          if out=$(npm view "chunks-ui@$version" version 2>&1); then
-            echo "chunks-ui@$version is on npm"
-          elif grep -q E404 <<<"$out"; then
-            echo "chunks-ui@$version is not on npm"
-            echo "version=$version" >> "$GITHUB_OUTPUT"
-          else
-            echo "::warning::npm view failed: ${out//$'\n'/%0A}"
-          fi
+          missing=
+          for pair in chunks-ui=ui chunks-ui-core=core; do
+            name=${pair%=*}
+            dir=${pair#*=}
+            # Not the workspace: changesets/action leaves it on its release branch, versions bumped
+            version=$(git show "$GITHUB_SHA:packages/$dir/package.json" | jq -r .version) || version=
+            if [ -z "$version" ] || [ "$version" = null ]; then
+              echo "::error::cannot read .version of packages/$dir/package.json at $GITHUB_SHA"
+              exit 1
+            fi
+            if out=$(npm view "$name@$version" version 2>&1); then
+              echo "$name@$version is on npm"
+            elif grep -q E404 <<<"$out"; then
+              echo "$name@$version is not on npm"
+              missing="${missing:+$missing, }$name@$version"
+            else
+              echo "::warning::npm view of $name@$version failed: ${out//$'\n'/%0A}"
+            fi
+          done
+          if [ -n "$missing" ]; then echo "missing=$missing" >> "$GITHUB_OUTPUT"; fi
 
-      - name: Notify Slack when the run published nothing and npm lacks the version
-        if: steps.unpublished.outputs.version != ''
+      - name: Notify Slack when the run published nothing and npm lacks a version
+        if: steps.unpublished.outputs.missing != ''
         uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
         with:
           method: chat.postMessage
           token: ${{ secrets.SLACK_BOT_TOKEN }}
           payload: |
             channel: "${{ secrets.SLACK_CHANNEL_ID }}"
-            text: "Release run published nothing but chunks-ui@${{ steps.unpublished.outputs.version }} is not on npm; a Version Packages PR was merged too early and master still holds changesets (TESTING_STRATEGY.md, CI, Release)\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>"
+            text: "Release run published nothing but npm lacks ${{ steps.unpublished.outputs.missing }}: a Version Packages PR was merged too early and master still holds changesets, or one package of a release failed to publish (TESTING_STRATEGY.md, CI, Release)\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>"
 
       - name: Notify Slack on Release Failure
         if: failure()

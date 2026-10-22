@@ -24,7 +24,7 @@
     "gates:full": "bun scripts/gates.ts --full",
     "changeset": "changeset",
     "version-packages": "changeset version && bun install --lockfile-only",
-    "release": "turbo run build --filter=chunks-ui && bun run --cwd packages/core check:exports && bun run --cwd packages/core check:dist && bun run --cwd packages/ui check:exports && bun run --cwd packages/ui check:dist && changeset publish",
+    "release": "npm view chunks-ui-core name > /dev/null && turbo run build --filter=chunks-ui && bun run --cwd packages/core check:exports && bun run --cwd packages/core check:dist && bun run --cwd packages/ui check:exports && bun run --cwd packages/ui check:dist && changeset publish",
     "update:screenshots": "sh scripts/update-screenshots.sh",
     "check:playwright": "bun scripts/check-playwright-version.ts",
     "check:bun": "bun scripts/check-bun-version.ts",
