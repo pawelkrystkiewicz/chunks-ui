@@ -118,11 +118,12 @@ follows `@import` with Bun's resolver, which ignores `style`, and throws on an i
 `class-variance-authority`. No `"use client"` banner, so React Server Components can import it, which
 is exactly what `chunks-ui/utils` exists for today.
 
-`chunks-ui` after the split: `dependencies: { "chunks-ui-core": "workspace:*" }`, published as a
-caret range by Changesets (`updateInternalDependencies: patch` is already set). `chunks-ui/utils`
-stays as `export * from "chunks-ui-core"` for one major. `dist/theme.css` becomes the two-line
-wrapper above. `check-dist.ts` drops the shared-copy assertions and keeps the export-name and
-`"use client"` ones.
+`chunks-ui` after the split: `dependencies: { "chunks-ui-core": "^0.0.0" }`, not `workspace:*` (see
+"Where the Phase 1 plan departs", 7). `chunks-ui/utils` is named re-exports of today's names from
+`chunks-ui-core`, not `export *` (same list, 3). `dist/theme.css` becomes the two-line wrapper
+above. `check-dist.ts` keeps the export-name, `"use client"` and identity assertions (`cn` from
+either entry is the same function) and adds a check that neither entry holds a copy of the layout
+maths.
 
 ## 4. Phases
 
@@ -144,17 +145,19 @@ Each phase is a PR or a short series; each has an exit check that runs in CI.
 ### Phase 1 — `chunks-ui-core` (chunks-ui repo) — done 2026-10-22
 
 Done in one PR (plan: `docs/superpowers/plans/2026-10-22-chunks-ui-core.md`). One step is left to do
-by hand: `chunks-ui-core@0.0.0` has to exist on npm before the Version Packages PR that makes core
-`0.1.0` merges (D2, §6), because npm's trusted publishing can only be set up for a package that
-exists.
+by hand: `chunks-ui-core@0.0.0` has to exist on npm **before this PR merges** (D2, §6). Master's
+core is `0.0.0` from the merge on, and the release workflow's npm check runs on every master push
+that publishes nothing, so each push posts a false Slack alert until the placeholder exists. It
+also has to exist before the Version Packages PR that makes core `0.1.0` merges, because npm's
+trusted publishing can only be set up for a package that exists.
 
 1. `packages/core` with the inventory from §2 moved (git mv, history kept). `Avatar.Variants.tsx`
    renamed to `.ts`. `cn.spec.ts` and `utils.spec.ts` move with their modules.
-2. `chunks-ui` imports from `chunks-ui-core`; `src/utils.ts` becomes a re-export; the
-   `importFromUtils` esbuild plugin and the second tsup build go away; `dist/theme.css` becomes the
-   `@import` + `@source` wrapper.
-3. Changesets: core enters as `0.1.0`; `release` script filter widens from `--filter=chunks-ui`
-   to the publishable packages; `attw` check added to core's `check:exports`.
+2. `chunks-ui` imports from `chunks-ui-core`; `src/utils.ts` becomes named re-exports; the
+   `importFromUtils` esbuild plugin goes (the second, banner-free tsup build stays); `dist/theme.css`
+   becomes the `@import` + `@source` wrapper.
+3. Changesets: core enters as `0.1.0`; the `release` script keeps `--filter=chunks-ui` and gains
+   core's `check:exports` and `check:dist`; `attw` check added to core's `check:exports`.
 4. `check-tailwind-compat.ts`: since #403 it collects `@utility` names through `@import` lines, so the
    wrapper `theme.css` works; confirm against core's dist and that `KNOWN_CLASS` still comes from
    Button's variants.

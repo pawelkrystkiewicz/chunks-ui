@@ -3,10 +3,11 @@
 // The React-free utilities, from chunks-ui-core. Named, not `export *`: Next.js rejects
 // `export *` in a "use client" module, and chunks-ui-core exports more than this entry does.
 // ponytail: this entry adds no names in Phase 1, so the typings import AvatarStyles, DrawerSide,
-// drawerPopupVariants and Orientation from chunks-ui-core without exporting them. A consumer who
-// emits declarations on an isolated install (pnpm, Bun's isolated linker) can get TS2742 when an
-// inferred type reaches one; adding chunks-ui-core to their dependencies is the workaround (README,
-// Known limits). Ceiling: that consumer. Upgrade: re-export the four types from here.
+// drawerPopupVariants, Orientation and PanelSize from chunks-ui-core without exporting them
+// (PanelSize only as ResizablePanelSize's alias). A consumer who emits declarations on an isolated
+// install (pnpm, Bun's isolated linker) can get TS2742 when an inferred type reaches one; adding
+// chunks-ui-core to their dependencies is the workaround (README, Known limits). Ceiling: that
+// consumer. Upgrade: re-export those five names from here.
 export type {
   ElementBaseVariant,
   ElementColor,

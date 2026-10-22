@@ -189,7 +189,7 @@ Pre-commit hook (Lefthook) auto-runs Biome on staged files.
 
 ## Changesets
 
-Every PR that changes a publishable package needs a changeset. That is `chunks-ui` and `chunks-ui-core`: `@chunks-ui/docs` is in `ignore` and `@chunks-ui/typescript-config` is private, and `privatePackages.version` is `false` in `.changeset/config.json`, so neither is gated. `typescript-config` is still a devDependency that shapes the `chunks-ui` build (`target`, `jsx`): a change there that alters the build output gets a changeset written by hand, because the gate does not see it. The `lint` job of `quality-gates.yml` runs `changeset status --since=origin/master` on pull requests and fails without a changeset. For a user-facing change:
+Every PR that changes a publishable package needs a changeset. That is `chunks-ui` and `chunks-ui-core`: `@chunks-ui/docs` is in `ignore` and `@chunks-ui/typescript-config` is private, and `privatePackages.version` is `false` in `.changeset/config.json`, so neither is gated. `typescript-config` is still a devDependency that shapes both builds: `chunks-ui` extends `react-library.json` (`target`, `jsx`) and `chunks-ui-core` extends `base.json` (`module`, `moduleResolution`, `declaration`), which `react-library.json` extends too. A change there that alters the output of either build gets a changeset written by hand, because the gate does not see it. The `lint` job of `quality-gates.yml` runs `changeset status --since=origin/master` on pull requests and fails without a changeset. For a user-facing change:
 
 ```bash
 bunx changeset
@@ -220,4 +220,4 @@ bunx changeset --empty
 
 ### Renovate and release PRs
 
-The gate does not run on the Version Packages PR (`changeset-release/master`). Renovate cannot write a changeset, so the gate skips `renovate/*` branches. A bump of a runtime `dependencies` entry of `packages/ui` or `packages/core` (`clsx`, `tailwind-merge`) reaches users, so add a changeset for it by hand in a PR of its own. That PR changes no package file, so the gate passes it. Bumps of dev dependencies need none. Automerge rules: `.github/renovate.json5`.
+The gate does not run on the Version Packages PR (`changeset-release/master`). Renovate cannot write a changeset, so the gate skips `renovate/*` branches. A bump of a runtime `dependencies` entry of `packages/core` (`clsx`, `tailwind-merge`) reaches users, so add a changeset for it by hand in a PR of its own. `packages/ui` has one runtime dependency, `chunks-ui-core`, a workspace package. That PR changes no package file, so the gate passes it. Bumps of dev dependencies need none. Automerge rules: `.github/renovate.json5`.
