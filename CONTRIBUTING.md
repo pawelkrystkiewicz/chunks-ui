@@ -92,39 +92,43 @@ Components from `@creation-ui/react` that were not carried forward:
 
 ## Component Anatomy
 
-Each component lives in `packages/ui/src/components/<name>/` with:
+Each component lives in `packages/ui/src/components/<name>/`. Its Variants and Labels files, when it has them, live in `packages/core/src/components/<name>/` (`chunks-ui-core`, which has no React, Base UI or Motion):
 
 ```
-button/
+packages/ui/src/components/button/
   Button.tsx           # component implementation
-  Button.Variants.ts   # CVA variant definitions
-  Button.Labels.ts     # built-in text and its defaults, when the component has any
   Button.spec.tsx      # unit tests (co-located)
   index.ts             # public exports
+
+packages/core/src/components/button/
+  Button.Variants.ts   # CVA variant definitions
+  Button.Labels.ts     # built-in text and its defaults, when the component has any
 ```
+
+A **new** component's Variants and Labels files go in `packages/core/src/components/<name>/` from the start. An existing component's inline class strings stay in its `packages/ui` file until the component is ported (Phase 3 of `docs/SOLID_MIGRATION.md`). A new Variants or Labels file is exported from `packages/core/src/index.ts`; everything core exports is semver-tracked.
 
 ### Patterns
 
 - **Compound pattern** via Base UI: `<X.Root>`, `<X.Trigger>`, `<X.Content>`
 - **Composition** via Base UI `render` prop, not `asChild`
-- **Variants** defined with CVA in separate `*.Variants.ts` files
-  - Import `cva` from `src/lib/cva`, not from `class-variance-authority`, so the emitted typings never reference cva's `./types` subpath.
+- **Variants** defined with CVA in separate `*.Variants.ts` files, in core
+  - Import `cva` from `packages/core/src/lib/cva`, not from `class-variance-authority`, so the emitted typings never reference cva's `./types` subpath. Core does not export it.
 - **Props over config objects**: `<Button color="primary" variant="outlined">`
 - **One component, one job** — no mode-switching god components
 
-Built-in text is the one exception to props over config objects. A component with English strings of its own takes `labels?: Partial<XLabels>` on the part users render (for a compound component, usually its Root, which passes it to the other parts by context). Define `XLabels` and `DEFAULT_X_LABELS` (typed `Readonly<XLabels>`) in a React-free `X.Labels.ts` with no React or client imports, re-export both from `src/utils.ts`, and merge with `mergeLabels(DEFAULT_X_LABELS, labels)`, which keeps the default for keys set to `undefined`. An explicit `aria-label`, or an existing prop that sets the same text (such as `placeholder`), wins over `labels`. List the component in `apps/docs/content/labels.mdx`.
+Built-in text is the one exception to props over config objects. A component with English strings of its own takes `labels?: Partial<XLabels>` on the part users render (for a compound component, usually its Root, which passes it to the other parts by context). Define `XLabels` and `DEFAULT_X_LABELS` (typed `Readonly<XLabels>`) in a React-free `X.Labels.ts` in `packages/core/src/components/<name>/`, with no React or client imports. Export it from `packages/core/src/index.ts`, re-export both names from the component's `index.ts` (from `chunks-ui-core`), name them in `packages/ui/src/utils.ts` and `packages/ui/src/index.ts` (named re-exports, not `export *`), and merge with `mergeLabels(DEFAULT_X_LABELS, labels)`, which keeps the default for keys set to `undefined`. An explicit `aria-label`, or an existing prop that sets the same text (such as `placeholder`), wins over `labels`. List the component in `apps/docs/content/labels.mdx`.
 
 ### Animation
 
-- Import spring presets from `src/lib/motion.ts` — no magic numbers in components
-- Use `useMotion()` hook from `src/lib/use-motion.ts` for lazy Motion detection
-- A popup part gets its `render` from `usePopupRender()` in `src/lib/use-popup-render.ts`, which picks the Motion spring or the CSS path (and keeps the CSS path for a consumer `render`). The part gates its CSS fallback classes on the returned `useSpring` (`!useSpring && "data-starting-style:…"`) and adds a row to the table in `src/lib/PopupRender.fixtures.tsx`, whose `ui(renderProp, open)` renders the part open or closed from `open`
+- Import spring presets (`springs`) from `packages/core/src/lib/motion.ts` — no magic numbers in components
+- Use `useMotion()` hook from `packages/ui/src/lib/use-motion.ts` for lazy Motion detection
+- A popup part gets its `render` from `usePopupRender()` in `packages/ui/src/lib/use-popup-render.ts`, which picks the Motion spring or the CSS path (and keeps the CSS path for a consumer `render`). The part gates its CSS fallback classes on the returned `useSpring` (`!useSpring && "data-starting-style:…"`) and adds a row to the table in `packages/ui/src/lib/PopupRender.fixtures.tsx`, whose `ui(renderProp, open)` renders the part open or closed from `open`
 - Components must work without Motion installed (CSS transition fallback)
 - Respect `prefers-reduced-motion` via `useReducedMotion()` hook
 
 ### Exports
 
-After creating a component, export it from `packages/ui/src/index.ts`.
+After creating a component, export it from `packages/ui/src/index.ts`. Core's exports are in `packages/core/src/index.ts`.
 
 ## Testing
 
@@ -149,7 +153,7 @@ Tests use Vitest + Testing Library. Co-locate tests next to source files as `Com
 ### Running Tests
 
 ```bash
-bun run test              # Vitest in packages/ui and apps/docs, then bun test ./scripts
+bun run test              # Vitest in packages/core, packages/ui and apps/docs, then bun test ./scripts
 bun run test:unit:coverage # the same Vitest suites, with the coverage report and its thresholds
 ```
 
@@ -185,7 +189,7 @@ Pre-commit hook (Lefthook) auto-runs Biome on staged files.
 
 ## Changesets
 
-Every PR that changes a publishable package needs a changeset. That is `chunks-ui` only: `@chunks-ui/docs` is in `ignore` and `@chunks-ui/typescript-config` is private, and `privatePackages.version` is `false` in `.changeset/config.json`, so neither is gated. `typescript-config` is still a devDependency that shapes the `chunks-ui` build (`target`, `jsx`): a change there that alters the build output gets a changeset written by hand, because the gate does not see it. The `lint` job of `quality-gates.yml` runs `changeset status --since=origin/master` on pull requests and fails without a changeset. For a user-facing change:
+Every PR that changes a publishable package needs a changeset. That is `chunks-ui` and `chunks-ui-core`: `@chunks-ui/docs` is in `ignore` and `@chunks-ui/typescript-config` is private, and `privatePackages.version` is `false` in `.changeset/config.json`, so neither is gated. `typescript-config` is still a devDependency that shapes the `chunks-ui` build (`target`, `jsx`): a change there that alters the build output gets a changeset written by hand, because the gate does not see it. The `lint` job of `quality-gates.yml` runs `changeset status --since=origin/master` on pull requests and fails without a changeset. For a user-facing change:
 
 ```bash
 bunx changeset
@@ -197,7 +201,7 @@ The changelog entry links the PR that added the changeset (`@changesets/changelo
 
 ### Files that need no changeset
 
-`changedFilePatterns` in `.changeset/config.json` lists the files that do not count as a change. The patterns match the path inside `packages/ui`:
+`changedFilePatterns` in `.changeset/config.json` lists the files that do not count as a change. The patterns match the path inside the package (`packages/ui` or `packages/core`):
 
 - `**/*.spec.{ts,tsx}` (unit, visual and WebKit specs)
 - `**/__screenshots__/**` (visual baselines)
@@ -206,7 +210,7 @@ The changelog entry links the PR that added the changeset (`@changesets/changelo
 - `src/AxeTest.*` (unit test helpers for axe audits, never bundled)
 - `scripts/**` (the package's own `scripts/check-dist.ts`, which checks `dist` and ships nothing)
 
-A PR that changes only these files passes the gate with no changeset. Any other file in `packages/ui` counts: source, `package.json` and build config such as `tsup.config.ts`. Keep `**` first in the list and add exclusions after it: a later positive pattern adds back the files an earlier negation removed (micromatch applies the list in order).
+A PR that changes only these files passes the gate with no changeset. Any other file in a published package counts: source, `package.json` and build config such as `tsup.config.ts`. Keep `**` first in the list and add exclusions after it: a later positive pattern adds back the files an earlier negation removed (micromatch applies the list in order).
 
 A change to such a file with no user-facing effect (a comment, a refactor) gets an empty changeset, which bumps nothing and adds no changelog entry:
 
@@ -216,4 +220,4 @@ bunx changeset --empty
 
 ### Renovate and release PRs
 
-The gate does not run on the Version Packages PR (`changeset-release/master`). Renovate cannot write a changeset, so the gate skips `renovate/*` branches. A bump of a runtime `dependencies` entry of `packages/ui` (`clsx`, `tailwind-merge`) reaches users, so add a changeset for it by hand in a PR of its own. That PR changes no package file, so the gate passes it. Bumps of dev dependencies need none. Automerge rules: `.github/renovate.json5`.
+The gate does not run on the Version Packages PR (`changeset-release/master`). Renovate cannot write a changeset, so the gate skips `renovate/*` branches. A bump of a runtime `dependencies` entry of `packages/ui` or `packages/core` (`clsx`, `tailwind-merge`) reaches users, so add a changeset for it by hand in a PR of its own. That PR changes no package file, so the gate passes it. Bumps of dev dependencies need none. Automerge rules: `.github/renovate.json5`.

@@ -11,9 +11,9 @@ Stack: React 19+, Base UI compound pattern (<X.Root>, <X.Trigger>, <X.Content>),
 
 Key constraints:
 - Use bun, never npm/yarn/pnpm
-- Variants go in *.Variants.ts files, not in component files
+- Variants go in *.Variants.ts files, not in component files. A new component's Variants and Labels files go in packages/core/src/components/<name>/ from the start; an existing component's inline class strings stay in its packages/ui file until it is ported (Phase 3 of docs/SOLID_MIGRATION.md)
 - Use Base UI render prop, not asChild
-- Motion from src/lib/motion.ts — no magic numbers
+- Motion presets from packages/core/src/lib/motion.ts — no magic numbers
 - Components must work without Motion (CSS fallback)
 - Respect prefers-reduced-motion
 
@@ -39,6 +39,6 @@ Use `isolation: "worktree"` when:
 
 Always declare file scope in the prompt. Example:
 ```
-File scope: packages/ui/src/components/dialog/ only.
+File scope: packages/ui/src/components/dialog/ only (plus packages/core/src/components/dialog/ for a new component's Variants and Labels files).
 Do not touch index.ts, theme.css, or any other component directories.
 ```

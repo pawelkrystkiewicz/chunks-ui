@@ -13,7 +13,7 @@ import { ThemeToggle } from "./components/theme-toggle";
 import { emulateReducedMotion } from "./VisualTest.utils";
 
 /*
- * `.micro-interactions` (theme.css) gives components their default transition. Timing
+ * `.micro-interactions` (core's theme.css) gives components their default transition. Timing
  * utilities from the consumer, such as `duration-150` or `ease-linear`, must win over it, the
  * same as any other utility does over a component's own styles. With reduced motion nothing
  * turns the transition back on, not even a `transition-*` utility.

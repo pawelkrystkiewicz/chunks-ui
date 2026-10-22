@@ -654,7 +654,7 @@ describe("Select and Menu items on a held Enter as the popup closes, in WebKit",
 describe("Focus rings in WebKit", () => {
   /*
    * #383: with an arrow, the ring moves to an `::after` overlay that takes the popup's
-   * border box, centred on it with `place-self: unsafe center` (popup-arrow.ts). Chromium's
+   * border box, centred on it with `place-self: unsafe center` (core's popup-arrow.ts). Chromium's
    * PopupArrow spec checks it; this checks WebKit's layout and paint of it. The `border-2` class
    * is the case: with the default 1px border the overlay's `-inset-px` alone lands on the border
    * box, so the 1px case cannot exercise `place-self`.

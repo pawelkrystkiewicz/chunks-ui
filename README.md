@@ -2,7 +2,7 @@
 
 Personal React 19.2+ component library built on [Base UI](https://base-ui.com) + [Tailwind CSS v4](https://tailwindcss.com) + [Motion](https://motion.dev).
 
-Replaces `@creation-ui/react`. Published as a single npm package — not a copy/paste registry.
+Replaces `@creation-ui/react`. Published on npm, not a copy/paste registry. It depends on [`chunks-ui-core`](packages/core), the framework-free layer (theme, class sets, `cn`), which installs with it.
 
 ## Install
 
@@ -29,7 +29,7 @@ Then use the components:
 import { Button, Tabs, Input } from 'chunks-ui'
 ```
 
-`theme.css` registers its CSS variables with Tailwind CSS v4 through `@theme`, and its `@source` makes Tailwind generate the classes the components use — no plugin needed.
+`theme.css` imports the theme of `chunks-ui-core`, which registers its CSS variables with Tailwind CSS v4 through `@theme`. Its `@source` lines make Tailwind generate the classes the components use — no plugin needed.
 
 `chunks-ui` is a client bundle (`"use client"`). To call `cn`, `cnState` or a `*Variants` function such as `buttonVariants` in a React Server Component, import it from `chunks-ui/utils`. It also exports the English label defaults (`DEFAULT_*_LABELS`) and their `<Component>Labels` types. See [Utilities › Server components](https://ui-kit.chunk-creations.com/utilities#server-components).
 
@@ -65,28 +65,41 @@ chunks-ui/
   apps/
     docs/                   # Next.js 16 + Nextra 4 docs site
   packages/
+    core/                   # published chunks-ui-core package: no React, no Base UI
+      src/
+        components/
+          button/
+            Button.Variants.ts
+          ...
+        lib/
+          cn.ts             # clsx + tailwind-merge
+          cva.ts            # cva for the Variants files (internal)
+          motion.ts         # shared spring presets
+        theme.css           # CSS variables
+        index.ts            # barrel export
+      tsup.config.ts
+      vitest.config.ts
+      package.json
     ui/                     # published chunks-ui package
       src/
         components/
           button/
             Button.tsx
-            Button.Variants.ts
             Button.spec.tsx
             index.ts
           ...
         lib/
-          cn.ts             # clsx + tailwind-merge
-          motion.ts         # shared spring presets
           use-motion.ts     # useMotion() + useReducedMotion() hooks
           PopupMotion.tsx   # createPopupRenderer() for Base UI popups
-        theme.css           # CSS variables
+        theme.css           # wrapper: imports chunks-ui-core/theme.css
+        utils.ts            # React-free helpers, re-exported from chunks-ui-core
         index.ts            # barrel export
       tsup.config.ts
       vitest.config.ts
       package.json
 ```
 
-Turborepo monorepo with a single publishable package (`chunks-ui`) and a docs site.
+Turborepo monorepo with two publishable packages (`chunks-ui` and `chunks-ui-core`) and a docs site.
 
 ## Color System
 
@@ -115,7 +128,7 @@ Manrope (`--font-sans`) and Fira Code (`--font-mono`) are not shipped; the theme
 
 Motion is a first-class but optional peer dependency (`^12.8.0`). Components detect it at runtime — if absent, they fall back to CSS transitions.
 
-Shared spring presets in `src/lib/motion.ts`:
+Shared spring presets in `packages/core/src/lib/motion.ts`:
 
 - **indicator** — bouncy slide for tab indicators
 - **content** — snappy, no overshoot for content transitions
@@ -143,7 +156,7 @@ bun run lint
 
 ## Versioning
 
-`chunks-ui` is at 0.x, managed with [Changesets](https://github.com/changesets/changesets) and Conventional Commits. While the major is 0, a minor release may contain new features and breaking changes, and a patch release contains fixes only.
+`chunks-ui` and `chunks-ui-core` are at 0.x, managed with [Changesets](https://github.com/changesets/changesets) and Conventional Commits. While the major is 0, a minor release may contain new features and breaking changes, and a patch release contains fixes only.
 
 ## Docs
 

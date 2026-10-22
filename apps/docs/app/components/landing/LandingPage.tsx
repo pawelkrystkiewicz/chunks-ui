@@ -580,7 +580,10 @@ function MotionSection() {
             STIFFNESS / DAMPING
             <SpringList />
           </span>
-          <Href href={`${GITHUB}/blob/master/packages/ui/src/lib/motion.ts`} className={TEXT_LINK}>
+          <Href
+            href={`${GITHUB}/blob/master/packages/core/src/lib/motion.ts`}
+            className={TEXT_LINK}
+          >
             Motion presets →
           </Href>
         </div>

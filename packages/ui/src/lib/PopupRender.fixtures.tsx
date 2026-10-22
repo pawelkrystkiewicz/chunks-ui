@@ -46,7 +46,7 @@ export const popupParts = table([
     ),
   },
   {
-    // One side: `cssSlide` in Drawer.Variants.ts is on the base, shared by the three sides
+    // One side: `cssSlide` in core's Drawer.Variants.ts is on the base, shared by the three sides
     part: "Drawer.Popup",
     ui: (r, open = true) => (
       <Drawer.Root open={open}>

@@ -141,7 +141,12 @@ Each phase is a PR or a short series; each has an exit check that runs in CI.
   listeners stay mounted across tests. Fix the playground config, re-measure, then drop this gate.
 - Exit: the spike page renders a styled popover; the decision to proceed is written here.
 
-### Phase 1 — `chunks-ui-core` (chunks-ui repo)
+### Phase 1 — `chunks-ui-core` (chunks-ui repo) — done 2026-10-22
+
+Done in one PR (plan: `docs/superpowers/plans/2026-10-22-chunks-ui-core.md`). One step is left to do
+by hand: `chunks-ui-core@0.0.0` has to exist on npm before the Version Packages PR that makes core
+`0.1.0` merges (D2, §6), because npm's trusted publishing can only be set up for a package that
+exists.
 
 1. `packages/core` with the inventory from §2 moved (git mv, history kept). `Avatar.Variants.tsx`
    renamed to `.ts`. `cn.spec.ts` and `utils.spec.ts` move with their modules.
@@ -159,6 +164,26 @@ Each phase is a PR or a short series; each has an exit check that runs in CI.
   `chunks-ui`'s `dist/` holds no copy of `lib/resizable` (it imports `chunks-ui-core`) and
   `check:dist` asserts it. That is what closed W424 (decided 2026-10-21): before the split,
   `dist/index.js` and `dist/utils.js` each carried the maths, about 1.5 KB gzip per Resizable bundle.
+
+Where the Phase 1 plan departs from the spec above:
+
+1. `lib/cva.ts` and `lib/cva.spec.ts` move as well. The inventory in §2 leaves them out, but all 7
+   Variants files import `cva` from there. `cva` stays internal to core and is not exported.
+2. `components/resizable/Resizable.Variants.ts` moves. It was added after the inventory, and it is
+   the same kind of file.
+3. `chunks-ui/utils` becomes named re-exports of today's names, not
+   `export * from "chunks-ui-core"`. §3 says `export *`; decision 8 is later and wins.
+4. The second, banner-free tsup build stays, because it is what keeps `"use client"` out of
+   `dist/utils.*`. Only the `importFromUtils` plugin goes.
+5. Core copies ui's tree (`src/components/<name>/`, `src/lib/`, `src/types.ts`, `src/theme.css`)
+   instead of using `src/<name>/`. That way `git mv` leaves every import inside the moved files
+   valid.
+6. Core starts at `0.0.0`. The changeset is `minor`, so Version Packages makes it `0.1.0`.
+7. `chunks-ui` depends on core as `"chunks-ui-core": "^0.0.0"`, not `workspace:*` (§3):
+   `changeset publish` runs `npm publish`, which ships `workspace:*` as it is. Bun still links the
+   workspace package for a plain range.
+8. The `release` script keeps `--filter=chunks-ui`, because Turbo builds core first as a dependency.
+   It gains core's `check:exports` and `check:dist` before `changeset publish`.
 
 ### Phase 2 — `chunks-ui-solid` scaffold
 
@@ -296,6 +321,16 @@ core, keep the Solid components free of animation-specific DOM.
    nothing new is added to it in Phase 1. "Today" includes `sanitizeLayout` and the types `ResizableLayout` and
    `ResizablePanelConfig` (added by #749, 2026-10-20). `index.ts` keeps named re-exports (Next.js rejects `export *`
    in a "use client" module).
+
+Decided 2026-10-22 (Paweł), with the Phase 1 plan:
+
+9. When to start Phase 1 (D1): **now.** The Phase 0 spike runs before Phase 2.
+10. First publish of `chunks-ui-core` (D2): **a placeholder `0.0.0`**, published by hand (Phase 1
+    plan, Task 4).
+11. Where a new component's class sets go (D3): **in core from day one.** Its `*.Variants.ts` and
+    `*.Labels.ts` files go in `packages/core/src/components/<name>/`. An existing component's inline
+    class strings stay in `chunks-ui` until it is ported (Phase 3).
+12. The resizable barrel (D4, a default, not contested): **core exports it flat** while it is 0.x.
 
 ## 7. Also possible (not in this plan unless pulled in)
 

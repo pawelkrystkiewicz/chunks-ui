@@ -7,7 +7,7 @@
  * - Only the main entry starts with "use client"; utils has none, for React Server Components.
  * - Each built entry, ESM and CJS, exports the same names as its source file.
  * - The `motion/react` import keeps the shape described in src/lib/use-motion.ts.
- * - The typings import nothing from a `class-variance-authority/` subpath (`src/lib/cva.ts` keeps it out).
+ * - The typings import nothing from a `class-variance-authority/` subpath (core's `src/lib/cva.ts` keeps it out).
  *
  * Run: bun run check:dist
  * Tests: check-dist.spec.ts (fixture dists in a temporary directory)

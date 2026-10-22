@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 /**
- * Compiles the built package (packages/ui/dist/theme.css and the component code its `@source "./"`
- * scans, as consumers get them) with the oldest Tailwind v4 and with the installed one. Fails when
+ * Compiles the built packages (packages/ui/dist/theme.css, the chunks-ui-core theme it imports and
+ * the component code their `@source "./"` lines scan, as consumers get them) with the oldest Tailwind v4 and with the installed one. Fails when
  * the oldest does not generate a class the installed one does: a consumer on that version would
  * get no CSS for it, and no error.
  *
@@ -44,7 +44,7 @@ const KNOWN_UTILITY = "touch-target";
 const ESCAPE = /\\([0-9a-fA-F]{1,6}) ?|\\(.)/g;
 
 /**
- * The touch size of `FIELD_TEXT_SIZE` (packages/ui/src/components/shared.ts): 16px on a touch
+ * The touch size of `FIELD_TEXT_SIZE` (packages/core/src/components/shared.ts): 16px on a touch
  * screen from `md` up (#587). The built code is its only source, so the check fails when
  * `FIELD_TEXT_SIZE` drops it, instead of passing on a stale name.
  */

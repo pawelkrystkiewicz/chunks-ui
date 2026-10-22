@@ -20,6 +20,8 @@ Peer dependencies:
 
 Node 22 or newer. The install command does not add `tailwindcss`: the app is expected to have Tailwind v4 set up already.
 
+`chunks-ui` depends on [`chunks-ui-core`](https://www.npmjs.com/package/chunks-ui-core) (the theme, the class sets and `cn`), which installs with it.
+
 ## Usage
 
 Add the theme to the CSS file that imports Tailwind:
@@ -35,7 +37,7 @@ Then use the components:
 import { Button, Tabs, Input } from 'chunks-ui'
 ```
 
-`theme.css` registers its CSS variables with Tailwind CSS v4 through `@theme`, and its `@source` makes Tailwind generate the classes the components use — no plugin needed.
+`theme.css` imports the theme of `chunks-ui-core`, which registers its CSS variables with Tailwind CSS v4 through `@theme`. Its `@source` lines make Tailwind generate the classes the components use — no plugin needed.
 
 `chunks-ui` is a client bundle (`"use client"`). To call `cn`, `cnState` or a `*Variants` function such as `buttonVariants` in a React Server Component, import it from `chunks-ui/utils`. It also exports the English label defaults (`DEFAULT_*_LABELS`) and their `<Component>Labels` types, and [`sanitizeLayout`](https://ui-kit.chunk-creations.com/components/resizable#sanitizelayout) with the `ResizableLayout` and `ResizablePanelConfig` types, to read a saved `Resizable` layout on the server. See [Utilities › Server components](https://ui-kit.chunk-creations.com/utilities#server-components).
 

@@ -6,7 +6,7 @@ import { Checkbox } from "./components/checkbox";
 import { ClearButton } from "./components/clear-button";
 
 /*
- * `touch-target` (theme.css) grows an element's hit area to at least 44×44px, centred on it,
+ * `touch-target` (core's theme.css) grows an element's hit area to at least 44×44px, centred on it,
  * and leaves its size and layout alone. These specs press the real mouse at points around the
  * element: jsdom has no layout and no hit testing. No screenshots are taken.
  */
