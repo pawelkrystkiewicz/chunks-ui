@@ -6,7 +6,7 @@ This directory contains utility scripts for the project.
 
 Runs CI's checks in this checkout and stops at the first that fails. Each step is a `run:` step of a CI job, word for word, in its `working-directory`. Each job's steps run in CI's order, the jobs one after another (lint, typecheck, test, then docs-build), where CI runs them side by side. The lists are `FAST` and `FULL` in the script:
 
-- `FAST` (`bun run gates`): the `lint` and `typecheck` jobs of `quality-gates.yml`, then the `test` job of `unit.tests.yml`. It starts with CI's `bun install --frozen-lockfile`, once per run. It includes the changeset check, which CI runs on pull requests only, and the unit tests with coverage (`test:unit:coverage`), not `bun run test`: the coverage thresholds in `packages/ui/vitest.config.ts` fail CI's run where a plain run passes.
+- `FAST` (`bun run gates`): the `lint` and `typecheck` jobs of `quality-gates.yml`, then the `test` job of `unit.tests.yml`. It starts with CI's `bun install --frozen-lockfile`, once per run. It includes the changeset check, which CI runs on pull requests only, and the unit tests with coverage (`test:unit:coverage`), not `bun run test`: the coverage thresholds in `packages/core/vitest.config.ts` and `packages/ui/vitest.config.ts` fail CI's run where a plain run passes.
 - `FULL` (`GITHUB_TOKEN=$(gh auth token) bun run gates:full`, after `FAST`): the `docs-build` job of `quality-gates.yml`. Its package checks run in CI's order: `check:exports` and `check:dist` in `packages/core`, then the same two in `packages/ui`.
 
 Which changes need `FULL`, how long each list takes and what the steps need: `CONTRIBUTING.md` › Quality Gates.

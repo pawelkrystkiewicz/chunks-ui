@@ -45,8 +45,8 @@ export const FAST: Step[] = [
   { name: "check-types", command: "bun run check-types" },
   { name: "check-types:scripts", command: "bun run check-types:scripts" },
   { name: "check:tailwind", command: "bun run check:tailwind", needs: ["network", "node"] },
-  // With coverage, not `bun run test`: the coverage thresholds in packages/ui/vitest.config.ts
-  // fail CI's run where a plain run passes
+  // With coverage, not `bun run test`: the coverage thresholds in packages/core/vitest.config.ts
+  // and packages/ui/vitest.config.ts fail CI's run where a plain run passes
   {
     name: "unit tests",
     command: "bun run test:unit:coverage --concurrency=1 --continue=dependencies-successful",

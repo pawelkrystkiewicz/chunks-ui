@@ -105,7 +105,7 @@ packages/core/src/components/button/
   Button.Labels.ts     # built-in text and its defaults, when the component has any
 ```
 
-A **new** component's Variants and Labels files go in `packages/core/src/components/<name>/` from the start. An existing component's inline class strings stay in its `packages/ui` file until the component is ported (Phase 3 of `docs/SOLID_MIGRATION.md`). A new Variants or Labels file is exported from `packages/core/src/index.ts`; everything core exports is semver-tracked.
+A **new** component's Variants and Labels files go in `packages/core/src/components/<name>/` from the start. An existing component's inline class strings stay in its `packages/ui` file until the component is ported (Phase 3 of `docs/SOLID_MIGRATION.md`). The ui component imports its Variants and Labels from `chunks-ui-core`, and its `index.ts` re-exports the public ones from there (`packages/ui/src/components/button/index.ts` does this for `buttonVariants`). A new Variants or Labels file is exported from `packages/core/src/index.ts`; everything core exports is semver-tracked.
 
 ### Patterns
 
@@ -180,7 +180,7 @@ What the steps need:
 
 - The first step is CI's `bun install --frozen-lockfile`. It fails when `package.json` and `bun.lock` disagree, and brings `node_modules` in line with `bun.lock`, for example after a merge of `master` that bumps a dependency.
 - The changeset check (`bunx changeset status --since=origin/master`, see Changesets) compares with your `origin/master`, so run `git fetch origin` first. It does not see untracked files, so commit first.
-- `check:tailwind` builds `chunks-ui` and fails when Tailwind 4.0.0, the library's floor, cannot generate a class the installed Tailwind does. It installs the 4.0.0 CLI from `scripts/tailwind-4.0`, so it needs the network, and node. `lint` and `check-types` do not cover it. Details: `scripts/README.md`.
+- `check:tailwind` builds `chunks-ui-core` and `chunks-ui` and fails when Tailwind 4.0.0, the library's floor, cannot generate a class the installed Tailwind does. It installs the 4.0.0 CLI from `scripts/tailwind-4.0`, so it needs the network, and node. `lint` and `check-types` do not cover it. Details: `scripts/README.md`.
 - The `docs-build` steps need the network and Chromium for Playwright (`bunx playwright install chromium`). With `GITHUB_TOKEN`, `check:a11y` also checks the state of the issues its `ALLOWED` entries link, as CI does; the gates pass the token to that step only. Without it, it prints a notice and skips that part; in CI a missing token fails the run.
 
 The step lists are in `scripts/gates.ts`, with the CI steps they leave out (the install in the other jobs, the cache and container setup, the `floors` job) and why. `scripts/README.md` lists the other differences from CI. `scripts/__specs__/gates.spec.ts` reads `quality-gates.yml` and `unit.tests.yml` and fails when one of their jobs has a `run:` step that the lists do not cover. It skips a job defined with `uses:` (a reusable workflow) and does not read other workflow files. Neither command runs the visual regression tests: run the specs a change touches with `bun run test:visual <filter>` in `packages/ui`.

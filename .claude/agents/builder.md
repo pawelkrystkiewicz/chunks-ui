@@ -39,6 +39,6 @@ Use `isolation: "worktree"` when:
 
 Always declare file scope in the prompt. Example:
 ```
-File scope: packages/ui/src/components/dialog/ only (plus packages/core/src/components/dialog/ for a new component's Variants and Labels files).
-Do not touch index.ts, theme.css, or any other component directories.
+File scope: packages/ui/src/components/dialog/ only (plus packages/core/src/components/dialog/ for a new component's Variants and Labels files, and the one export line for each of them in packages/core/src/index.ts).
+Do not touch any other index.ts, theme.css, or any other component directories.
 ```

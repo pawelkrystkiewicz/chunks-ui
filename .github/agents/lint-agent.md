@@ -19,7 +19,8 @@ You are a code quality specialist focused on linting and formatting.
 - **File Structure:**
   - `packages/ui/src/` — component library source
   - `packages/ui/src/components/` — one folder per component
-  - `packages/ui/src/lib/` — shared utilities (`cn.ts`, `motion.ts`)
+  - `packages/core/src/lib/` — shared utilities in `chunks-ui-core` (`cn.ts`, `motion.ts`)
+  - `packages/ui/src/lib/` — React hooks and helpers (`use-motion.ts`, `PopupMotion.tsx`)
 
 ## Commands you can use
 

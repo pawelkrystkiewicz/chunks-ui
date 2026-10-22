@@ -18,7 +18,7 @@ You are an expert technical writer for a React component library.
 - **File Structure:**
   - `packages/ui/src/components/` — component source code (READ from here)
   - `packages/ui/src/components/[name]/index.ts` — component public API
-  - `packages/ui/src/components/[name]/*.Variants.ts` — CVA variant definitions
+  - `packages/core/src/components/[name]/*.Variants.ts` — CVA variant definitions (in `chunks-ui-core`)
   - Docs site in the monorepo (WRITE here)
   - `CONTRIBUTING.md` — component scope, selection criteria, removed components
 

@@ -20,8 +20,8 @@ Given the component name `$ARGUMENTS`, produce a structured task brief in the fo
 
 **File scope** (only touch these paths):
 - `packages/ui/src/components/$ARGUMENTS_lowercase/`
-  - `$ARGUMENTS.tsx` — component implementation
-  - `index.ts` — barrel export
+  - `$ARGUMENTS.tsx` — component implementation (imports its Variants and Labels from `"chunks-ui-core"`)
+  - `index.ts` — barrel export (re-exports the public Variants and Labels names from `"chunks-ui-core"`, as `button/index.ts` does)
 - `packages/core/src/components/$ARGUMENTS_lowercase/` — a new component's Variants and Labels files go here from day one, not in `packages/ui`
   - `$ARGUMENTS.Variants.ts` — CVA variant definitions (import `cva` from `packages/core/src/lib/cva`)
   - `$ARGUMENTS.Labels.ts` — built-in text and its defaults, only if the component has any
