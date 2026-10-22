@@ -195,7 +195,7 @@ export function scanProblem(
   utilities: readonly string[] = [],
 ): string | undefined {
   if (!names.has(KNOWN_CLASS)) {
-    return `Tailwind ${version} did not generate ${KNOWN_CLASS}, a class of chunks-ui's Button: the scan of ${THEME} is broken.`;
+    return `Tailwind ${version} did not generate ${KNOWN_CLASS}, a class in Button's variants (chunks-ui-core) and in chunks-ui's components: the scan of ${THEME} is broken.`;
   }
   const absent = utilities.filter((name) => !names.has(name));
   if (absent.length > 0) {

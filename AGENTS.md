@@ -58,7 +58,7 @@ Personal React 19+ component library replacing `@creation-ui/react`. Two npm pac
 - Components use Base UI compound pattern: `<X.Root>`, `<X.Trigger>`, `<X.Content>`
 - Composition via Base UI `render` prop, not `asChild`
 - Variants defined with CVA in separate `*.Variants.ts` files in `packages/core/src/components/<name>/`; import `cva` from `packages/core/src/lib/cva`, not from `class-variance-authority`
-- A **new** component's Variants and Labels files go in `packages/core/src/components/<name>/` from the start. An existing component's inline class strings stay in its `packages/ui` file until it is ported (Phase 3 of `docs/SOLID_MIGRATION.md`). The ui component imports them from `chunks-ui-core` and its `index.ts` re-exports the public ones from there
+- A **new** component's Variants and Labels files go in `packages/core/src/components/<name>/` from the start. An existing component's inline class strings stay in its `packages/ui` file until it is ported (Phase 3 of `docs/SOLID_MIGRATION.md`). The ui component imports the exports of those files from `chunks-ui-core`, and its `index.ts` re-exports the public ones from there
 - A new Labels module is exported from `packages/core/src/index.ts` and named in `packages/ui/src/utils.ts` and `packages/ui/src/index.ts` (named re-exports, not `export *`)
 - CSS variables follow shadcn/ui naming: `--primary`, `--destructive`, `--success`, `--warning`
 - Props over config objects: `<Button color="primary" variant="outlined">`

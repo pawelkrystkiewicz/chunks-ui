@@ -160,7 +160,10 @@ exists.
    Button's variants.
 - Exit: `bun run build && bun run test && bun run check:dist && bun run check:tailwind` green; docs
   app renders unchanged; a consumer installing `chunks-ui` gets core transitively and
-  `chunks-ui/theme.css` still produces every class (visual regression suite is the proof);
+  `chunks-ui/theme.css` still produces every class (`check:tailwind` is the proof: it compiles the
+  wrapper, and its `orderProblems` needs the touch class of `FIELD_TEXT_SIZE`, which only core's
+  dist holds, under both Tailwind versions; the visual suite is not, because `visual-test.css`
+  imports core's `theme.css` directly and no spec goes through the wrapper);
   `chunks-ui`'s `dist/` holds no copy of `lib/resizable` (it imports `chunks-ui-core`) and
   `check:dist` asserts it. That is what closed W424 (decided 2026-10-21): before the split,
   `dist/index.js` and `dist/utils.js` each carried the maths, about 1.5 KB gzip per Resizable bundle.
@@ -291,7 +294,7 @@ core, keep the Solid components free of animation-specific DOM.
 | Solid 2 RC API churn (rc.13 → rc.14 already differ in peers) | Accepted cost of being ready at 2.0.0. Pin RC in dev, `^2.0.0-rc.13` peer; weekly bump PR; Solid package at 0.x until `solid-js@2.0.0`, then `1.0` the same week. |
 | `base-ui-solid` bus factor 1, tracks upstream `main` | Exact pin; read release notes and diff before bumps; `PORTING.md`/`UPSTREAM.md` make it forkable if abandoned. |
 | Data-attribute drift between `@base-ui/react@1.x` and the port on a given part | The parity screenshot test (Phase 4) catches it; the port's rules forbid renaming attributes. |
-| Tailwind not finding classes after the split | `@source "./"` in core's own `theme.css` + wrapper `@source` in each framework package; `check:tailwind` on the wrapper; visual suite as final proof. |
+| Tailwind not finding classes after the split | `@source "./"` in core's own `theme.css` + wrapper `@source` in each framework package; `check:tailwind` on the wrapper is the proof (the visual suite imports core's `theme.css` directly, so it does not test the wrapper). |
 | tsup/esbuild minification mangling class strings | tsup does not minify by default; keep it that way for core (the strings must survive as text for Tailwind's scanner). |
 | jsdom popup slowdown makes Tier C tests unbearable | Phase 0 gate. Fallback: Vitest browser mode for popup specs. |
 
