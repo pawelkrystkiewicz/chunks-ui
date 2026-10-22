@@ -1,10 +1,10 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { cssVarName, type ResizableLayout } from "chunks-ui-core";
 import { axe } from "jest-axe";
 import { createRef, StrictMode, useState } from "react";
 import { renderToString } from "react-dom/server";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { cssVarName, type ResizableLayout } from "../../lib/resizable";
 import { resetWarnings } from "./context";
 import { Resizable } from "./Resizable";
 import type { ResizableGroupProps } from "./ResizableGroup";

@@ -1,6 +1,7 @@
 import { Form } from "@base-ui/react/form";
 import { cleanup, isInaccessible, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { createDate, DEFAULT_DATE_PICKER_LABELS } from "chunks-ui-core";
 import { axe } from "jest-axe";
 import { createRef, type ReactElement } from "react";
 import {
@@ -14,10 +15,8 @@ import {
   vi,
 } from "vitest";
 import { expectOnlyFocusGuardsUndecided } from "../../AxeTest.utils";
-import { createDate } from "../calendar/date";
 import { Field } from "../field";
 import { DatePicker, type DatePickerProps } from "./DatePicker";
-import { DEFAULT_DATE_PICKER_LABELS } from "./DatePicker.Labels";
 
 const MARCH_15_LABEL = "Sunday, March 15, 2026";
 

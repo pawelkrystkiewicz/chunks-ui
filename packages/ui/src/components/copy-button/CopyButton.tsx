@@ -1,5 +1,6 @@
 "use client";
 
+import { type CopyButtonLabels, DEFAULT_COPY_BUTTON_LABELS, mergeLabels } from "chunks-ui-core";
 import {
   type ComponentProps,
   type ReactNode,
@@ -8,9 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { mergeLabels } from "../../lib/labels";
 import { IconButton, type IconButtonProps } from "../icon-button";
-import { type CopyButtonLabels, DEFAULT_COPY_BUTTON_LABELS } from "./CopyButton.Labels";
 
 type IconButtonOnClick = NonNullable<IconButtonProps["onClick"]>;
 type IconButtonClickEvent = Parameters<IconButtonOnClick>[0];

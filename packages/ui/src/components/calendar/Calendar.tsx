@@ -1,6 +1,27 @@
 "use client";
 
 import {
+  addDays,
+  buildWeekRows,
+  type CalendarLabels,
+  cn,
+  createDate,
+  DEFAULT_CALENDAR_LABELS,
+  FIRST_DAY,
+  FOCUS_RING,
+  getKeyTarget,
+  isDateOutOfRange,
+  isSameDay,
+  isSameMonth,
+  mergeLabels,
+  monthOf,
+  RING_ANIMATION_CLASSES,
+  startOfDay,
+  validDate,
+  weekdayIndex,
+  type YearMonth,
+} from "chunks-ui-core";
+import {
   type KeyboardEvent,
   useCallback,
   useEffect,
@@ -11,25 +32,6 @@ import {
   useState,
 } from "react";
 import { flushSync } from "react-dom";
-import { cn } from "../../lib/cn";
-import { mergeLabels } from "../../lib/labels";
-import { FOCUS_RING, RING_ANIMATION_CLASSES } from "../shared";
-import { type CalendarLabels, DEFAULT_CALENDAR_LABELS } from "./Calendar.Labels";
-import {
-  addDays,
-  buildWeekRows,
-  createDate,
-  FIRST_DAY,
-  getKeyTarget,
-  isDateOutOfRange,
-  isSameDay,
-  isSameMonth,
-  monthOf,
-  startOfDay,
-  validDate,
-  weekdayIndex,
-  type YearMonth,
-} from "./date";
 
 export type CalendarProps = {
   /** Controlled selected date. An Invalid Date counts as no date. */

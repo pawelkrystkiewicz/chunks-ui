@@ -1,11 +1,11 @@
 import { Toast as BaseToast } from "@base-ui/react/toast";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { DEFAULT_TOAST_LABELS, FOCUS_RING } from "chunks-ui-core";
 import { axe } from "jest-axe";
 import { type ComponentPropsWithoutRef, createRef } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { expectOnlyFocusGuardsUndecided, undecided } from "../../AxeTest.utils";
-import { FOCUS_RING } from "../shared";
 import {
   createToastManager,
   Toast,
@@ -14,7 +14,6 @@ import {
   type ToastRootProps,
   type ToastViewportProps,
 } from "./Toast";
-import { DEFAULT_TOAST_LABELS } from "./Toast.Labels";
 
 afterEach(cleanup);
 

@@ -1,5 +1,35 @@
 // chunks-ui barrel export
 
+// The React-free utilities, from chunks-ui-core. Named, not `export *`: Next.js rejects
+// `export *` in a "use client" module, and chunks-ui-core exports more than this entry does.
+export type {
+  ElementBaseVariant,
+  ElementColor,
+  ElementOrientation,
+  ElementPlacement,
+  ElementPlacementHorizontal,
+  ElementPlacementVertical,
+  ElementPosition,
+  ElementVariant,
+} from "chunks-ui-core";
+export {
+  type ClassInput,
+  cn,
+  cnState,
+  ELEMENT_BASE_VARIANTS,
+  ELEMENT_COLOR,
+  ELEMENT_ORIENTATION,
+  ELEMENT_PLACEMENT_HORIZONTAL,
+  ELEMENT_PLACEMENT_VERTICAL,
+  ELEMENT_POSITION,
+  ELEMENT_VARIANTS,
+  mergeLabels,
+  type PanelConfig as ResizablePanelConfig,
+  type ResizableLayout,
+  type StateClassName,
+  sanitizeLayout,
+  springs,
+} from "chunks-ui-core";
 // Components
 export type {
   AccordionHeaderProps,
@@ -307,26 +337,5 @@ export type {
 } from "./components/tooltip";
 export { Tooltip } from "./components/tooltip";
 // Utilities
-export { type ClassInput, cn, cnState, type StateClassName } from "./lib/cn";
-export { mergeLabels } from "./lib/labels";
-export { springs } from "./lib/motion";
 export { PortalContainerProvider, usePortalContainer } from "./lib/portal-container";
-export {
-  type PanelConfig as ResizablePanelConfig,
-  type ResizableLayout,
-  sanitizeLayout,
-} from "./lib/resizable";
 export { type MotionLike, useMotion, useReducedMotion } from "./lib/use-motion";
-export type * from "./types";
-// Named values, not `export *`: the build turns this into an import of ./utils.js, and Next.js
-// rejects `export *` in a "use client" module. `export type *` is erased from the JS output, so
-// every type in types.ts reaches this entry too.
-export {
-  ELEMENT_BASE_VARIANTS,
-  ELEMENT_COLOR,
-  ELEMENT_ORIENTATION,
-  ELEMENT_PLACEMENT_HORIZONTAL,
-  ELEMENT_PLACEMENT_VERTICAL,
-  ELEMENT_POSITION,
-  ELEMENT_VARIANTS,
-} from "./types";

@@ -1,8 +1,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
+import { FOCUS_RING } from "chunks-ui-core";
 import { configureAxe } from "jest-axe";
 import { afterEach, describe, expect, it } from "vitest";
 import { undecided } from "../../AxeTest.utils";
-import { FOCUS_RING } from "../shared";
 import { Dialog } from "./Dialog";
 
 afterEach(cleanup);

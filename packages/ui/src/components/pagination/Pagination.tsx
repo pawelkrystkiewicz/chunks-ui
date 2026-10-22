@@ -1,4 +1,12 @@
 import {
+  BUTTON_ANIMATION_CLASSES,
+  cn,
+  DEFAULT_PAGINATION_LABELS,
+  FOCUS_RING,
+  mergeLabels,
+  type PaginationLabels,
+} from "chunks-ui-core";
+import {
   type ComponentProps,
   cloneElement,
   createContext,
@@ -7,10 +15,6 @@ import {
   type ReactNode,
   useContext,
 } from "react";
-import { cn } from "../../lib/cn";
-import { mergeLabels } from "../../lib/labels";
-import { BUTTON_ANIMATION_CLASSES, FOCUS_RING } from "../shared";
-import { DEFAULT_PAGINATION_LABELS, type PaginationLabels } from "./Pagination.Labels";
 
 type RenderProps = { className?: string; children?: ReactNode; [key: string]: unknown };
 type RenderElement = ReactElement<RenderProps>;

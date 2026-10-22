@@ -1,6 +1,7 @@
 "use client";
 
 import { Select as BaseSelect } from "@base-ui/react/select";
+import { cnState, FIELD_TEXT_SIZE, FOCUS_RING, RING_TRANSITION, springs } from "chunks-ui-core";
 import {
   type ComponentProps,
   createContext,
@@ -9,8 +10,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { cnState } from "../../lib/cn";
-import { springs } from "../../lib/motion";
 import {
   PortalContainerProvider,
   usePortalContainer,
@@ -19,7 +18,6 @@ import {
 import { type CloseFocus, useCloseFocusRoot, useFocusOnClose } from "../../lib/use-focus-on-close";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { usePopupRender } from "../../lib/use-popup-render";
-import { FIELD_TEXT_SIZE, FOCUS_RING, RING_TRANSITION } from "../shared";
 
 export type SelectRootProps = ComponentProps<typeof BaseSelect.Root>;
 export type SelectTriggerProps = ComponentProps<typeof BaseSelect.Trigger>;

@@ -1,11 +1,14 @@
 "use client";
 
 import { Slider as BaseSlider } from "@base-ui/react/slider";
+import {
+  cnState,
+  DEFAULT_SLIDER_LABELS,
+  FOCUS_RING_WITHIN,
+  mergeLabels,
+  type SliderLabels,
+} from "chunks-ui-core";
 import { type ComponentProps, createContext, useContext } from "react";
-import { cnState } from "../../lib/cn";
-import { mergeLabels } from "../../lib/labels";
-import { FOCUS_RING_WITHIN } from "../shared";
-import { DEFAULT_SLIDER_LABELS, type SliderLabels } from "./Slider.Labels";
 
 // ---------------------------------------------------------------------------
 // Types

@@ -1,0 +1,10 @@
+{
+  "extends": "@chunks-ui/typescript-config/base.json",
+  "include": ["src"],
+  "compilerOptions": {
+    "lib": ["dom", "dom.iterable", "ESNext"],
+    "target": "ESNext",
+    "noUncheckedIndexedAccess": true,
+    "types": ["vite/client"]
+  }
+}

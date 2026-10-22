@@ -1,3 +1,4 @@
+export { DEFAULT_NUMBER_FIELD_LABELS, type NumberFieldLabels } from "chunks-ui-core";
 export type {
   NumberFieldDecrementProps,
   NumberFieldGroupProps,
@@ -8,4 +9,3 @@ export type {
   NumberFieldScrubAreaProps,
 } from "./NumberField";
 export { NumberField } from "./NumberField";
-export { DEFAULT_NUMBER_FIELD_LABELS, type NumberFieldLabels } from "./NumberField.Labels";

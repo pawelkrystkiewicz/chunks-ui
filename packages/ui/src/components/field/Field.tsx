@@ -1,6 +1,6 @@
 import { Field as BaseField } from "@base-ui/react/field";
+import { cnState } from "chunks-ui-core";
 import type { ComponentProps } from "react";
-import { cnState } from "../../lib/cn";
 
 export type FieldRootProps = ComponentProps<typeof BaseField.Root>;
 

@@ -3,6 +3,17 @@
 import { Field as BaseField } from "@base-ui/react/field";
 import { Popover as BasePopover } from "@base-ui/react/popover";
 import {
+  cn,
+  type DatePickerLabels,
+  DEFAULT_DATE_PICKER_LABELS,
+  FIELD_TEXT_SIZE,
+  FOCUS_RING,
+  mergeLabels,
+  RING_TRANSITION,
+  toIsoDate,
+  validDate,
+} from "chunks-ui-core";
+import {
   type ComponentProps,
   type RefObject,
   useEffect,
@@ -11,15 +22,10 @@ import {
   useRef,
   useState,
 } from "react";
-import { cn } from "../../lib/cn";
-import { mergeLabels } from "../../lib/labels";
 import { usePortalContainer } from "../../lib/portal-container";
 import { useCloseFocusRoot, useFocusOnClose } from "../../lib/use-focus-on-close";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { Calendar, type CalendarProps } from "../calendar/Calendar";
-import { toIsoDate, validDate } from "../calendar/date";
-import { FIELD_TEXT_SIZE, FOCUS_RING, RING_TRANSITION } from "../shared";
-import { type DatePickerLabels, DEFAULT_DATE_PICKER_LABELS } from "./DatePicker.Labels";
 
 // The app's bundler replaces it, as it does in @base-ui/react. The package has no Node types.
 declare const process: { env: { NODE_ENV?: string } };

@@ -1,6 +1,6 @@
 import { Separator as BaseSeparator } from "@base-ui/react/separator";
+import { cnState } from "chunks-ui-core";
 import type { ComponentProps } from "react";
-import { cnState } from "../../lib/cn";
 
 export type SeparatorProps = ComponentProps<typeof BaseSeparator>;
 

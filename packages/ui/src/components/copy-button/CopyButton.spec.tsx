@@ -1,9 +1,9 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { DEFAULT_COPY_BUTTON_LABELS } from "chunks-ui-core";
 import { axe } from "jest-axe";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { CopyButton } from "./CopyButton";
-import { DEFAULT_COPY_BUTTON_LABELS } from "./CopyButton.Labels";
 
 beforeAll(() => {
   Object.defineProperty(navigator, "clipboard", {

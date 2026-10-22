@@ -1,3 +1,4 @@
+export { type BreadcrumbLabels, DEFAULT_BREADCRUMB_LABELS } from "chunks-ui-core";
 export type {
   BreadcrumbEllipsisProps,
   BreadcrumbItemProps,
@@ -8,4 +9,3 @@ export type {
   BreadcrumbSeparatorProps,
 } from "./Breadcrumb";
 export { Breadcrumb } from "./Breadcrumb";
-export { type BreadcrumbLabels, DEFAULT_BREADCRUMB_LABELS } from "./Breadcrumb.Labels";

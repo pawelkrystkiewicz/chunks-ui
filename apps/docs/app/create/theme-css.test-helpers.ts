@@ -9,11 +9,10 @@ export function parseOklch(value: string): Oklch {
   return { l: Number(l) / (percent ? 100 : 1), c: Number(c), h: Number(h) };
 }
 
-// core-prep: reads the source file, not dist: the dist file becomes an `@import` wrapper when core
-// is extracted.
+// chunks-ui-core's source file: chunks-ui's theme.css is an `@import` wrapper of it.
 /** The library's theme.css without its comments. */
 const themeCss = readFileSync(
-  new URL("../../../../packages/ui/src/theme.css", import.meta.url),
+  new URL("../../../../packages/core/src/theme.css", import.meta.url),
   "utf8",
 ).replace(/\/\*[\s\S]*?\*\//g, "");
 

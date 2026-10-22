@@ -1,6 +1,5 @@
+import { cn, resizableGripVariants } from "chunks-ui-core";
 import type { ComponentProps } from "react";
-import { cn } from "../../lib/cn";
-import { resizableGripVariants } from "./Resizable.Variants";
 
 export type ResizableGripProps = ComponentProps<"div">;
 

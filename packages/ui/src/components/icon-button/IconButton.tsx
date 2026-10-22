@@ -1,8 +1,11 @@
 import { Button as BaseButton } from "@base-ui/react/button";
+import {
+  cnState,
+  type ElementColor,
+  type ElementVariant,
+  iconButtonVariants,
+} from "chunks-ui-core";
 import type { ComponentProps } from "react";
-import { cnState } from "../../lib/cn";
-import type { ElementColor, ElementVariant } from "../../types";
-import { iconButtonVariants } from "./IconButton.Variants";
 
 export type IconButtonProps = ComponentProps<typeof BaseButton> & {
   variant?: ElementVariant;

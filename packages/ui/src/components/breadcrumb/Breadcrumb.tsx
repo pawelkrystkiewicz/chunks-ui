@@ -1,4 +1,12 @@
 import {
+  type BreadcrumbLabels,
+  cn,
+  DEFAULT_BREADCRUMB_LABELS,
+  FOCUS_RING,
+  mergeLabels,
+  RING_ANIMATION_CLASSES,
+} from "chunks-ui-core";
+import {
   type ComponentProps,
   cloneElement,
   createContext,
@@ -7,10 +15,6 @@ import {
   type ReactNode,
   useContext,
 } from "react";
-import { cn } from "../../lib/cn";
-import { mergeLabels } from "../../lib/labels";
-import { FOCUS_RING, RING_ANIMATION_CLASSES } from "../shared";
-import { type BreadcrumbLabels, DEFAULT_BREADCRUMB_LABELS } from "./Breadcrumb.Labels";
 
 type RenderProps = { className?: string; children?: ReactNode; [key: string]: unknown };
 type RenderElement = ReactElement<RenderProps>;

@@ -1,7 +1,7 @@
 "use client";
 
+import { arrowPaddingIn } from "chunks-ui-core";
 import { createContext, useContext, useLayoutEffect, useReducer, useRef, useState } from "react";
-import { arrowPaddingIn } from "./arrow-padding";
 
 const ArrowChangeContext = createContext<() => void>(() => {});
 

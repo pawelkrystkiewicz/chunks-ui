@@ -1,9 +1,8 @@
 "use client";
 
 import { Collapsible as BaseCollapsible } from "@base-ui/react/collapsible";
+import { cnState, FOCUS_RING, RING_TRANSITION } from "chunks-ui-core";
 import type { ComponentProps } from "react";
-import { cnState } from "../../lib/cn";
-import { FOCUS_RING, RING_TRANSITION } from "../shared";
 
 // ---------------------------------------------------------------------------
 // Types

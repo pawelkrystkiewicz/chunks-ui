@@ -1,3 +1,2 @@
+export { type ChipLabels, chipVariants, DEFAULT_CHIP_LABELS } from "chunks-ui-core";
 export { Chip, type ChipProps } from "./Chip";
-export { type ChipLabels, DEFAULT_CHIP_LABELS } from "./Chip.Labels";
-export { chipVariants } from "./Chip.Variants";

@@ -1,9 +1,8 @@
 "use client";
 
 import { Tooltip as BaseTooltip } from "@base-ui/react/tooltip";
+import { cnState, POPUP_ARROW_CLASS, springs } from "chunks-ui-core";
 import { type ComponentProps, createContext, useContext } from "react";
-import { cnState } from "../../lib/cn";
-import { springs } from "../../lib/motion";
 import {
   PortalContainerProvider,
   usePortalContainer,
@@ -12,7 +11,6 @@ import {
 import { ArrowChangeProvider, useArrowChange, useArrowPadding } from "../../lib/use-arrow-padding";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { usePopupRender } from "../../lib/use-popup-render";
-import { POPUP_ARROW_CLASS } from "../shared";
 
 export type TooltipRootProps = ComponentProps<typeof BaseTooltip.Root>;
 export type TooltipProviderProps = ComponentProps<typeof BaseTooltip.Provider>;

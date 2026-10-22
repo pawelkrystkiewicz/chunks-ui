@@ -2,13 +2,11 @@
 
 import { Radio as BaseRadio } from "@base-ui/react/radio";
 import { RadioGroup as BaseRadioGroup } from "@base-ui/react/radio-group";
+import { cn, cnState, FOCUS_RING, RING_ANIMATION_CLASSES, springs } from "chunks-ui-core";
 import type { ComponentProps, ReactNode } from "react";
-import { cn, cnState } from "../../lib/cn";
-import { springs } from "../../lib/motion";
 import { useMotion, useReducedMotion } from "../../lib/use-motion";
 import { useMotionAnimate } from "../../lib/use-motion-animate";
 import { type PartRenderProp, useRenderPart } from "../../lib/use-render-part";
-import { FOCUS_RING, RING_ANIMATION_CLASSES } from "../shared";
 
 /**
  * `Value` is the type of `value`, `defaultValue` and the value `onValueChange` receives. It is

@@ -1,10 +1,19 @@
 "use client";
 
 import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
+import {
+  type ComboboxLabels,
+  cn,
+  cnState,
+  DEFAULT_COMBOBOX_LABELS,
+  FIELD_TEXT_SIZE,
+  FOCUS_RING,
+  FOCUS_RING_WITHIN,
+  mergeLabels,
+  RING_TRANSITION,
+  springs,
+} from "chunks-ui-core";
 import { type ComponentProps, createContext, useContext, useId, useRef } from "react";
-import { cn, cnState } from "../../lib/cn";
-import { mergeLabels } from "../../lib/labels";
-import { springs } from "../../lib/motion";
 import {
   PortalContainerProvider,
   usePortalContainer,
@@ -15,8 +24,6 @@ import { useMergedRef } from "../../lib/use-merged-ref";
 import { usePopupRender } from "../../lib/use-popup-render";
 import { CloseIcon } from "../CloseIcon";
 import { removeButtonName } from "../chip/Chip";
-import { FIELD_TEXT_SIZE, FOCUS_RING, FOCUS_RING_WITHIN, RING_TRANSITION } from "../shared";
-import { type ComboboxLabels, DEFAULT_COMBOBOX_LABELS } from "./Combobox.Labels";
 
 const ComboboxLabelsContext = createContext(DEFAULT_COMBOBOX_LABELS);
 // Whether Combobox.Root selects several, as Base UI reads `multiple`: any truthy value (#541)

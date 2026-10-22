@@ -1,10 +1,10 @@
 import type { Slider as BaseSlider } from "@base-ui/react/slider";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { SliderLabels } from "chunks-ui-core";
 import { type ComponentProps, type ReactElement, useState } from "react";
 import { afterEach, describe, expect, expectTypeOf, it } from "vitest";
 import { Slider, type SliderRootProps } from "./Slider";
-import type { SliderLabels } from "./Slider.Labels";
 
 afterEach(cleanup);
 

@@ -1,14 +1,19 @@
 "use client";
 
 import { NumberField as BaseNumberField } from "@base-ui/react/number-field";
+import {
+  cnState,
+  DEFAULT_NUMBER_FIELD_LABELS,
+  FIELD_TEXT_SIZE,
+  FOCUS_RING_WITHIN,
+  mergeLabels,
+  type NumberFieldLabels,
+  RING_TRANSITION,
+} from "chunks-ui-core";
 import { type ComponentProps, createContext, useContext } from "react";
 import { createPortal } from "react-dom";
-import { cnState } from "../../lib/cn";
-import { mergeLabels } from "../../lib/labels";
 import { usePortalContainer } from "../../lib/portal-container";
 import { type PartRenderProp, useRenderPart } from "../../lib/use-render-part";
-import { FIELD_TEXT_SIZE, FOCUS_RING_WITHIN, RING_TRANSITION } from "../shared";
-import { DEFAULT_NUMBER_FIELD_LABELS, type NumberFieldLabels } from "./NumberField.Labels";
 
 // ---------------------------------------------------------------------------
 // Types

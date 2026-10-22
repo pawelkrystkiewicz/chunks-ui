@@ -1,11 +1,15 @@
 "use client";
 
+import {
+  cn,
+  DEFAULT_THEME_TOGGLE_LABELS,
+  FOCUS_RING,
+  mergeLabels,
+  RING_ANIMATION_CLASSES,
+  type ThemeToggleLabels,
+} from "chunks-ui-core";
 import type { ComponentProps, MouseEventHandler, ReactNode } from "react";
-import { cn } from "../../lib/cn";
-import { mergeLabels } from "../../lib/labels";
 import { useReducedMotion } from "../../lib/use-motion";
-import { FOCUS_RING, RING_ANIMATION_CLASSES } from "../shared";
-import { DEFAULT_THEME_TOGGLE_LABELS, type ThemeToggleLabels } from "./ThemeToggle.Labels";
 
 export type Theme = "light" | "dark";
 

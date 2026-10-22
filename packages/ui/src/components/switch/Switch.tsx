@@ -1,13 +1,11 @@
 "use client";
 
 import { Switch as BaseSwitch } from "@base-ui/react/switch";
+import { cn, cnState, FOCUS_RING, RING_ANIMATION_CLASSES, springs } from "chunks-ui-core";
 import { type ComponentProps, useLayoutEffect, useRef, useState } from "react";
-import { cn, cnState } from "../../lib/cn";
-import { springs } from "../../lib/motion";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { useMotionAnimate } from "../../lib/use-motion-animate";
 import { type PartRenderProp, useRenderPart } from "../../lib/use-render-part";
-import { FOCUS_RING, RING_ANIMATION_CLASSES } from "../shared";
 
 export type SwitchRootProps = ComponentProps<typeof BaseSwitch.Root>;
 

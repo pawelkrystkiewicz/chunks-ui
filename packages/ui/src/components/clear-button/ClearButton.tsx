@@ -1,9 +1,13 @@
+import {
+  BUTTON_ANIMATION_CLASSES,
+  type ClearButtonLabels,
+  cn,
+  DEFAULT_CLEAR_BUTTON_LABELS,
+  FOCUS_RING,
+  mergeLabels,
+} from "chunks-ui-core";
 import type { ComponentProps } from "react";
-import { cn } from "../../lib/cn";
-import { mergeLabels } from "../../lib/labels";
 import { CloseIcon } from "../CloseIcon";
-import { BUTTON_ANIMATION_CLASSES, FOCUS_RING } from "../shared";
-import { type ClearButtonLabels, DEFAULT_CLEAR_BUTTON_LABELS } from "./ClearButton.Labels";
 
 export type ClearButtonProps = ComponentProps<"button"> & {
   /**

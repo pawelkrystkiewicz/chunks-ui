@@ -1,4 +1,5 @@
 import { render } from "@testing-library/react";
+import { FIELD_TEXT_SIZE } from "chunks-ui-core";
 import { createRef, useEffect, useState } from "react";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
@@ -24,7 +25,6 @@ import {
   settled,
   tookFocus,
 } from "../../VisualTest.utils";
-import { FIELD_TEXT_SIZE } from "../shared";
 import { Select, type SelectRootProps } from "./index";
 
 const exitDone = (popup: HTMLElement) =>

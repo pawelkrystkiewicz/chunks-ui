@@ -1,9 +1,9 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { DEFAULT_CLEAR_BUTTON_LABELS } from "chunks-ui-core";
 import { axe } from "jest-axe";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ClearButton } from "./ClearButton";
-import { DEFAULT_CLEAR_BUTTON_LABELS } from "./ClearButton.Labels";
 
 afterEach(cleanup);
 

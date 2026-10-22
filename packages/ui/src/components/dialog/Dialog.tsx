@@ -1,16 +1,14 @@
 "use client";
 
 import { Dialog as BaseDialog } from "@base-ui/react/dialog";
+import { cnState, FOCUS_RING, RING_TRANSITION_MOTION, springs } from "chunks-ui-core";
 import type { ComponentProps } from "react";
-import { cnState } from "../../lib/cn";
-import { springs } from "../../lib/motion";
 import {
   PortalContainerProvider,
   usePortalContainer,
   usePortalNode,
 } from "../../lib/portal-container";
 import { usePopupRender } from "../../lib/use-popup-render";
-import { FOCUS_RING, RING_TRANSITION_MOTION } from "../shared";
 import { OverlayBody, type OverlayBodyProps, TitleIdProvider, useTitleId } from "./OverlayBody";
 
 export type DialogRootProps = ComponentProps<typeof BaseDialog.Root>;

@@ -2,14 +2,20 @@
 
 import { Toast as BaseToast } from "@base-ui/react/toast";
 import type { HTMLProps } from "@base-ui/react/types";
+import {
+  cn,
+  cnState,
+  DEFAULT_TOAST_LABELS,
+  FOCUS_RING,
+  mergeLabels,
+  RING_ANIMATION_CLASSES,
+  TOAST_CONTENT_CLASS,
+  type ToastLabels,
+} from "chunks-ui-core";
 import { type ComponentProps, type ComponentType, createContext, useContext } from "react";
-import { cn, cnState } from "../../lib/cn";
-import { mergeLabels } from "../../lib/labels";
 import { useReducedMotion } from "../../lib/use-motion";
 import { type PartRenderProp, useRenderPart } from "../../lib/use-render-part";
 import { CloseIcon } from "../CloseIcon";
-import { FOCUS_RING, RING_ANIMATION_CLASSES, TOAST_CONTENT_CLASS } from "../shared";
-import { DEFAULT_TOAST_LABELS, type ToastLabels } from "./Toast.Labels";
 
 /**
  * Per-toast slots added by chunks-ui on top of Base UI's `ToastObject`.

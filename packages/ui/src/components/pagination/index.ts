@@ -1,3 +1,4 @@
+export { DEFAULT_PAGINATION_LABELS, type PaginationLabels } from "chunks-ui-core";
 export type {
   PaginationContentProps,
   PaginationEllipsisProps,
@@ -8,4 +9,3 @@ export type {
   PaginationRootProps,
 } from "./Pagination";
 export { Pagination } from "./Pagination";
-export { DEFAULT_PAGINATION_LABELS, type PaginationLabels } from "./Pagination.Labels";

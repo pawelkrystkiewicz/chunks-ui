@@ -1,5 +1,5 @@
+import { ELEMENT_COLOR } from "chunks-ui-core";
 import { describe, it } from "vitest";
-import { ELEMENT_COLOR } from "../../types";
 import { renderFixture, withViewport } from "../../VisualTest.utils";
 import { Chip } from "./index";
 

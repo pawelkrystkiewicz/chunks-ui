@@ -1,11 +1,11 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { FOCUS_RING } from "chunks-ui-core";
 import { configureAxe } from "jest-axe";
 import { createRef, type ReactElement, useLayoutEffect, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { undecided } from "../../AxeTest.utils";
 import { Field } from "../field";
-import { FOCUS_RING } from "../shared";
 import { Select, type SelectRootProps } from "./Select";
 
 afterEach(cleanup);

@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
+import { ELEMENT_COLOR, ELEMENT_VARIANTS } from "chunks-ui-core";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { page, userEvent } from "vitest/browser";
-import { ELEMENT_COLOR, ELEMENT_VARIANTS } from "../../types";
 import {
   emulateReducedMotion,
   pauseAnimations,

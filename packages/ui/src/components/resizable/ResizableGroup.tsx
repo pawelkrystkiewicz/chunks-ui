@@ -1,6 +1,29 @@
 "use client";
 
 import {
+  actionDelta,
+  ariaValues,
+  buildModels,
+  cn,
+  cssVarName,
+  fitLayout,
+  formatCssValue,
+  fromPixels,
+  isPanelId,
+  keyToAction,
+  limitsPx,
+  type Orientation,
+  type PanelConfig,
+  type PanelModel,
+  type ResizableLayout,
+  resizableGroupVariants,
+  resizeBetween,
+  sanitizeLayout,
+  sanitizeModels,
+  sizeIn,
+  toPixels,
+} from "chunks-ui-core";
+import {
   Children,
   type ComponentProps,
   Fragment,
@@ -14,32 +37,9 @@ import {
   useRef,
   useState,
 } from "react";
-import { cn } from "../../lib/cn";
-import {
-  actionDelta,
-  ariaValues,
-  buildModels,
-  cssVarName,
-  fitLayout,
-  formatCssValue,
-  fromPixels,
-  isPanelId,
-  keyToAction,
-  limitsPx,
-  type Orientation,
-  type PanelConfig,
-  type PanelModel,
-  type ResizableLayout,
-  resizeBetween,
-  sanitizeLayout,
-  sanitizeModels,
-  sizeIn,
-  toPixels,
-} from "../../lib/resizable";
 import { observeResize } from "../../lib/shared-resize";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { GroupContext, type GroupContextValue, type ResizeSession, warnOnce } from "./context";
-import { resizableGroupVariants } from "./Resizable.Variants";
 import { ResizablePanel } from "./ResizablePanel";
 
 // ---------------------------------------------------------------------------

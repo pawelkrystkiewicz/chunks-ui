@@ -1,3 +1,4 @@
+export { DEFAULT_TOAST_LABELS, type ToastLabels } from "chunks-ui-core";
 export type {
   ToastActionProps,
   ToastCloseProps,
@@ -9,4 +10,3 @@ export type {
   ToastViewportProps,
 } from "./Toast";
 export { createToastManager, Toast } from "./Toast";
-export { DEFAULT_TOAST_LABELS, type ToastLabels } from "./Toast.Labels";

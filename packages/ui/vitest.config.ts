@@ -1,3 +1,4 @@
+import { defaultClientConditions } from "vite";
 import { defineConfig } from "vitest/config";
 
 // Off UTC (CI is UTC), so a local date read through UTC fails here too;
@@ -5,6 +6,8 @@ import { defineConfig } from "vitest/config";
 process.env.TZ = "Europe/Warsaw";
 
 export default defineConfig({
+  // chunks-ui-core from its src/, so the specs run against core's source without a core build
+  resolve: { conditions: ["chunks-ui-source", ...defaultClientConditions] },
   test: {
     environment: "jsdom",
     include: ["src/**/*.spec.{ts,tsx}"],
@@ -15,8 +18,6 @@ export default defineConfig({
     // 1.86s at most (DatePicker's form remount test), hooks included. About 0.3s on a laptop.
     testTimeout: 6_000,
     setupFiles: ["./vitest.setup.ts"],
-    // Vitest blanks CSS imports by default; cn.spec.ts reads the theme tokens as text
-    css: { include: [/theme\.css\?raw$/] },
     coverage: {
       provider: "v8",
       reporter: ["text", "json-summary", "json"],

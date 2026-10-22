@@ -1,9 +1,14 @@
 import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  type ComboboxLabels,
+  DEFAULT_COMBOBOX_LABELS,
+  FOCUS_RING,
+  FOCUS_RING_WITHIN,
+} from "chunks-ui-core";
 import { axe } from "jest-axe";
 import { type ComponentProps, createRef } from "react";
 import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest";
-import { FOCUS_RING, FOCUS_RING_WITHIN } from "../shared";
 import {
   Combobox,
   type ComboboxChipRemoveProps,
@@ -11,7 +16,6 @@ import {
   type ComboboxRootProps,
   type ComboboxTriggerProps,
 } from "./Combobox";
-import { type ComboboxLabels, DEFAULT_COMBOBOX_LABELS } from "./Combobox.Labels";
 
 afterEach(cleanup);
 

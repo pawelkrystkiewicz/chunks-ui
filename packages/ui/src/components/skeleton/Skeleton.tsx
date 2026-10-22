@@ -1,5 +1,5 @@
+import { cn } from "chunks-ui-core";
 import type { ComponentProps } from "react";
-import { cn } from "../../lib/cn";
 
 export type SkeletonProps = ComponentProps<"div">;
 

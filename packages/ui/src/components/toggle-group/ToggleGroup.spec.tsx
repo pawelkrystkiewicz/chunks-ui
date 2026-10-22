@@ -1,12 +1,12 @@
 import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { FOCUS_RING } from "chunks-ui-core";
 import { axe } from "jest-axe";
 import { type CSSProperties, createRef, type ReactNode, StrictMode, useState } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { renderToString } from "react-dom/server";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { reloadMotion } from "../../lib/use-motion";
-import { FOCUS_RING } from "../shared";
 import { ToggleGroup } from "./ToggleGroup";
 
 type Watched = {

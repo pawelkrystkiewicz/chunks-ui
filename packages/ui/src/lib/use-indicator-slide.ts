@@ -1,7 +1,7 @@
 "use client";
 
+import { springs } from "chunks-ui-core";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { springs } from "./motion";
 import type { MotionOptions } from "./use-motion";
 
 export const BOX_EDGES = ["left", "top", "width", "height"] as const;

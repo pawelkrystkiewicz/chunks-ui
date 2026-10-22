@@ -1,11 +1,11 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { DEFAULT_THEME_TOGGLE_LABELS } from "chunks-ui-core";
 import { axe } from "jest-axe";
 import { createRef } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Tooltip } from "../tooltip";
 import { ThemeToggle } from "./ThemeToggle";
-import { DEFAULT_THEME_TOGGLE_LABELS } from "./ThemeToggle.Labels";
 
 afterEach(cleanup);
 

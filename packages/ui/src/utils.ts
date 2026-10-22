@@ -1,61 +1,64 @@
 // chunks-ui/utils: the React-free helpers (class helpers, variants, constants and the English label
-// defaults), built without the "use client" banner so that
-// React Server Components can call them. Import only modules with no React, Base UI or Motion
-// code; utils.spec.ts walks this file's imports to check.
-// Rule: re-export every VALUE export of each module below, because the main entry imports those
-// modules from ./utils.*. `bun run check:dist` catches a miss.
+// defaults) for React Server Components. They all come from chunks-ui-core; this entry exists so
+// they can be imported from chunks-ui with no "use client" banner (see tsup.config.ts), and it
+// adds no names in Phase 1: named re-exports of the names it had before core, not `export *`.
+// utils.spec.ts checks that it imports nothing but chunks-ui-core.
 
 export {
   type BreadcrumbLabels,
-  DEFAULT_BREADCRUMB_LABELS,
-} from "./components/breadcrumb/Breadcrumb.Labels";
-export { buttonVariants } from "./components/button/Button.Variants";
-export {
+  buttonVariants,
   type CalendarLabels,
-  DEFAULT_CALENDAR_LABELS,
-} from "./components/calendar/Calendar.Labels";
-export { type ChipLabels, DEFAULT_CHIP_LABELS } from "./components/chip/Chip.Labels";
-export { chipVariants } from "./components/chip/Chip.Variants";
-export {
+  type ChipLabels,
+  type ClassInput,
   type ClearButtonLabels,
-  DEFAULT_CLEAR_BUTTON_LABELS,
-} from "./components/clear-button/ClearButton.Labels";
-export {
   type ComboboxLabels,
-  DEFAULT_COMBOBOX_LABELS,
-} from "./components/combobox/Combobox.Labels";
-export {
   type CopyButtonLabels,
-  DEFAULT_COPY_BUTTON_LABELS,
-} from "./components/copy-button/CopyButton.Labels";
-export {
+  chipVariants,
+  cn,
+  cnState,
   type DatePickerLabels,
+  DEFAULT_BREADCRUMB_LABELS,
+  DEFAULT_CALENDAR_LABELS,
+  DEFAULT_CHIP_LABELS,
+  DEFAULT_CLEAR_BUTTON_LABELS,
+  DEFAULT_COMBOBOX_LABELS,
+  DEFAULT_COPY_BUTTON_LABELS,
   DEFAULT_DATE_PICKER_LABELS,
-} from "./components/date-picker/DatePicker.Labels";
-export { iconButtonVariants } from "./components/icon-button/IconButton.Variants";
-export { DEFAULT_INPUT_LABELS, type InputLabels } from "./components/input/Input.Labels";
-export { inputVariants } from "./components/input/Input.Variants";
-export {
   DEFAULT_INPUT_COPY_LABELS,
-  type InputCopyLabels,
-} from "./components/input-copy/InputCopy.Labels";
-export {
+  DEFAULT_INPUT_LABELS,
   DEFAULT_NUMBER_FIELD_LABELS,
-  type NumberFieldLabels,
-} from "./components/number-field/NumberField.Labels";
-export {
   DEFAULT_PAGINATION_LABELS,
-  type PaginationLabels,
-} from "./components/pagination/Pagination.Labels";
-export { DEFAULT_SLIDER_LABELS, type SliderLabels } from "./components/slider/Slider.Labels";
-export {
+  DEFAULT_SLIDER_LABELS,
   DEFAULT_THEME_TOGGLE_LABELS,
+  DEFAULT_TOAST_LABELS,
+  ELEMENT_BASE_VARIANTS,
+  ELEMENT_COLOR,
+  ELEMENT_ORIENTATION,
+  ELEMENT_PLACEMENT_HORIZONTAL,
+  ELEMENT_PLACEMENT_VERTICAL,
+  ELEMENT_POSITION,
+  ELEMENT_VARIANTS,
+  type ElementBaseVariant,
+  type ElementColor,
+  type ElementOrientation,
+  type ElementPlacement,
+  type ElementPlacementHorizontal,
+  type ElementPlacementVertical,
+  type ElementPosition,
+  type ElementVariant,
+  type InputCopyLabels,
+  type InputLabels,
+  iconButtonVariants,
+  inputVariants,
+  mergeLabels,
+  type NumberFieldLabels,
+  type PaginationLabels,
+  type PanelConfig as ResizablePanelConfig,
+  type ResizableLayout,
+  type SliderLabels,
+  type StateClassName,
+  sanitizeLayout,
+  springs,
   type ThemeToggleLabels,
-} from "./components/theme-toggle/ThemeToggle.Labels";
-export { DEFAULT_TOAST_LABELS, type ToastLabels } from "./components/toast/Toast.Labels";
-export { type ClassInput, cn, cnState, type StateClassName } from "./lib/cn";
-export { mergeLabels } from "./lib/labels";
-export { springs } from "./lib/motion";
-export { sanitizeLayout } from "./lib/resizable/sanitize-layout";
-export type { PanelConfig as ResizablePanelConfig, ResizableLayout } from "./lib/resizable/types";
-export * from "./types";
+  type ToastLabels,
+} from "chunks-ui-core";

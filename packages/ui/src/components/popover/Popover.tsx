@@ -1,10 +1,14 @@
 "use client";
 
 import { Popover as BasePopover } from "@base-ui/react/popover";
+import {
+  arrowClasses,
+  arrowPopupClasses,
+  cnState,
+  RING_TRANSITION_MOTION,
+  springs,
+} from "chunks-ui-core";
 import { type ComponentProps, createContext, useContext, useLayoutEffect, useRef } from "react";
-import { cnState } from "../../lib/cn";
-import { springs } from "../../lib/motion";
-import { arrowClasses, arrowPopupClasses } from "../../lib/popup-arrow";
 import {
   PortalContainerProvider,
   usePortalContainer,
@@ -13,7 +17,6 @@ import {
 import { ArrowChangeProvider, useArrowChange, useArrowPadding } from "../../lib/use-arrow-padding";
 import { type CloseFocus, useCloseFocusRoot, useFocusOnClose } from "../../lib/use-focus-on-close";
 import { usePopupRender } from "../../lib/use-popup-render";
-import { RING_TRANSITION_MOTION } from "../shared";
 
 export type PopoverRootProps = ComponentProps<typeof BasePopover.Root>;
 export type PopoverTriggerProps = ComponentProps<typeof BasePopover.Trigger>;

@@ -1,11 +1,9 @@
 "use client";
 
+import { ariaValues, cn, resizableHandleVariants } from "chunks-ui-core";
 import { type ComponentProps, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { cn } from "../../lib/cn";
-import { ariaValues } from "../../lib/resizable";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { type ResizeSession, useGroupContext } from "./context";
-import { resizableHandleVariants } from "./Resizable.Variants";
 
 export type ResizableHandleProps = ComponentProps<"div"> & {
   /**

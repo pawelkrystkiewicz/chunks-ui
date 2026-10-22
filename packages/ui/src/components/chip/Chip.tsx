@@ -1,11 +1,15 @@
+import {
+  type ChipLabels,
+  chipVariants,
+  cn,
+  DEFAULT_CHIP_LABELS,
+  type ElementBaseVariant,
+  type ElementColor,
+  mergeLabels,
+} from "chunks-ui-core";
 import type { VariantProps } from "class-variance-authority";
 import { type ComponentProps, useId } from "react";
-import { cn } from "../../lib/cn";
-import { mergeLabels } from "../../lib/labels";
-import type { ElementBaseVariant, ElementColor } from "../../types";
 import { ClearButton } from "../clear-button";
-import { type ChipLabels, DEFAULT_CHIP_LABELS } from "./Chip.Labels";
-import { chipVariants } from "./Chip.Variants";
 
 const CHIP_PLACEHOLDER = "{chip}";
 

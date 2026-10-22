@@ -1,13 +1,11 @@
 "use client";
 
 import { Checkbox as BaseCheckbox } from "@base-ui/react/checkbox";
+import { cn, cnState, FOCUS_RING, RING_ANIMATION_CLASSES, springs } from "chunks-ui-core";
 import type { ComponentProps } from "react";
-import { cn, cnState } from "../../lib/cn";
-import { springs } from "../../lib/motion";
 import { useMotion, useReducedMotion } from "../../lib/use-motion";
 import { useHeldWhileDriving, useMotionAnimate } from "../../lib/use-motion-animate";
 import { type PartRenderProp, useRenderPart } from "../../lib/use-render-part";
-import { FOCUS_RING, RING_ANIMATION_CLASSES } from "../shared";
 
 export type CheckboxRootProps = ComponentProps<typeof BaseCheckbox.Root>;
 

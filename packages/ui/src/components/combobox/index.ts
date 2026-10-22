@@ -1,3 +1,4 @@
+export { type ComboboxLabels, DEFAULT_COMBOBOX_LABELS } from "chunks-ui-core";
 export type {
   ComboboxChipProps,
   ComboboxChipRemoveProps,
@@ -19,4 +20,3 @@ export type {
   ComboboxValueProps,
 } from "./Combobox";
 export { Combobox } from "./Combobox";
-export { type ComboboxLabels, DEFAULT_COMBOBOX_LABELS } from "./Combobox.Labels";

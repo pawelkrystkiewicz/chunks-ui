@@ -1,9 +1,9 @@
 "use client";
 
+import type { InputCopyLabels } from "chunks-ui-core";
 import type { ComponentProps } from "react";
 import { CopyButton } from "../copy-button";
 import { Input } from "../input";
-import type { InputCopyLabels } from "./InputCopy.Labels";
 
 export type InputCopyProps = Omit<
   ComponentProps<typeof Input>,

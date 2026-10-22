@@ -1,7 +1,6 @@
 import { Avatar as BaseAvatar } from "@base-ui/react/avatar";
+import { type AvatarStyles, avatarStyles, cn } from "chunks-ui-core";
 import { type ComponentProps, type ReactNode, useMemo } from "react";
-import { cn } from "../../lib/cn";
-import { type AvatarStyles, avatarStyles } from "./Avatar.Variants";
 
 export type AvatarProps = ComponentProps<"span"> & {
   /** Image URL. The image shows once it loads; until then, or if it fails, the initials show. */

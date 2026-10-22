@@ -1,0 +1,86 @@
+{
+  "name": "chunks-ui-core",
+  "version": "0.0.0",
+  "description": "Framework-free layer of chunks-ui: Tailwind CSS v4 theme, class sets, cn and pure helpers shared by its React and Solid bindings.",
+  "sideEffects": [
+    "*.css"
+  ],
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "chunks-ui-source": "./src/index.ts",
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./theme.css": "./dist/theme.css",
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "engines": {
+    "node": ">=22.23.3"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:unit:coverage": "vitest run --coverage",
+    "lint": "biome check .",
+    "check-types": "tsc --noEmit && tsc -p scripts",
+    "check:dist": "bun run scripts/check-dist.ts",
+    "check:exports": "attw --pack . --exclude-entrypoints ./theme.css",
+    "clean": "rm -rf .turbo node_modules dist coverage"
+  },
+  "peerDependencies": {
+    "class-variance-authority": "^0.7.1",
+    "tailwindcss": "^4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "tailwindcss": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^3.7.0"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "0.18.5",
+    "@chunks-ui/typescript-config": "workspace:*",
+    "@vitest/coverage-v8": "^4.1.12",
+    "class-variance-authority": "^0.7.1",
+    "jsdom": "^28.1.0",
+    "tailwindcss": "^4.3.3",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.4",
+    "vitest": "^4.1.12"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pawelkrystkiewicz/chunks-ui.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/pawelkrystkiewicz/chunks-ui/issues"
+  },
+  "homepage": "https://github.com/pawelkrystkiewicz/chunks-ui#readme",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

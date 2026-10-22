@@ -1,5 +1,6 @@
 import react from "@vitejs/plugin-react";
 import { playwright } from "@vitest/browser-playwright";
+import { defaultClientConditions } from "vite";
 import { defineConfig } from "vitest/config";
 import type { BrowserCommand } from "vitest/node";
 import { SETTLE_TIMEOUT_MS } from "./src/VisualTest.timeouts.ts";
@@ -135,6 +136,8 @@ const accessibilityTree: BrowserCommand<[selector: string]> = async (
 
 export default defineConfig({
   plugins: [react()],
+  // chunks-ui-core from its src/: the visual workflows run without a build
+  resolve: { conditions: ["chunks-ui-source", ...defaultClientConditions] },
   css: {
     postcss: {
       plugins: [(await import("@tailwindcss/postcss")).default()],

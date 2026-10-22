@@ -1,7 +1,6 @@
 import { Field as BaseField } from "@base-ui/react/field";
+import { cnState, FIELD_TEXT_SIZE, FOCUS_RING } from "chunks-ui-core";
 import type { ComponentProps } from "react";
-import { cnState } from "../../lib/cn";
-import { FIELD_TEXT_SIZE, FOCUS_RING } from "../shared";
 
 export type TextareaProps = Omit<ComponentProps<"textarea">, "className"> & {
   /** Classes for the textarea, or a function of its field state (`disabled`, `valid`, …). */

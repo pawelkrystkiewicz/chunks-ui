@@ -1,4 +1,12 @@
 import { Input as BaseInput } from "@base-ui/react/input";
+import {
+  cn,
+  cnState,
+  DEFAULT_INPUT_LABELS,
+  type InputLabels,
+  inputVariants,
+  mergeLabels,
+} from "chunks-ui-core";
 import type { VariantProps } from "class-variance-authority";
 import {
   type ComponentProps,
@@ -8,12 +16,8 @@ import {
   useRef,
   useState,
 } from "react";
-import { cn, cnState } from "../../lib/cn";
-import { mergeLabels } from "../../lib/labels";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { ClearButton } from "../clear-button";
-import { DEFAULT_INPUT_LABELS, type InputLabels } from "./Input.Labels";
-import { inputVariants } from "./Input.Variants";
 
 // The app's bundler replaces it, as it does in @base-ui/react. The package has no Node types.
 declare const process: { env: { NODE_ENV?: string } };

@@ -1,7 +1,7 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { FOCUS_RING } from "chunks-ui-core";
 import { axe } from "jest-axe";
 import { afterEach, describe, expect, it } from "vitest";
-import { FOCUS_RING } from "../shared";
 import { Switch } from "./Switch";
 
 afterEach(cleanup);

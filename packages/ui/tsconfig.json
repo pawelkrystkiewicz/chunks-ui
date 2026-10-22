@@ -13,6 +13,7 @@
     "src/FieldTextSize.fixtures.tsx"
   ],
   "compilerOptions": {
+    "customConditions": ["chunks-ui-source"],
     "noUncheckedIndexedAccess": true,
     "types": ["@testing-library/jest-dom/vitest"]
   }

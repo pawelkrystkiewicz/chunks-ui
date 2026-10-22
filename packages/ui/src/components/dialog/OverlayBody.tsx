@@ -1,6 +1,7 @@
 "use client";
 
 import { useRender } from "@base-ui/react/use-render";
+import { cn, FOCUS_RING, RING_TRANSITION } from "chunks-ui-core";
 import {
   Children,
   cloneElement,
@@ -17,8 +18,6 @@ import {
   useState,
 } from "react";
 import { flushSync } from "react-dom";
-import { cn } from "../../lib/cn";
-import { FOCUS_RING, RING_TRANSITION } from "../shared";
 
 /**
  * The props of `Dialog.Body` and `Drawer.Body`: a `<section>`'s, and Base UI's `render`, which

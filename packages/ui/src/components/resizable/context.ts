@@ -1,5 +1,5 @@
+import type { Orientation, PanelConfig, PanelModel, ResizableLayout } from "chunks-ui-core";
 import { createContext, useContext } from "react";
-import type { Orientation, PanelConfig, PanelModel, ResizableLayout } from "../../lib/resizable";
 
 /** A resize in progress: a drag, or one key step. */
 export type ResizeSession = {

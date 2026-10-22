@@ -1,10 +1,18 @@
 "use client";
 
 import { Dialog as BaseDialog } from "@base-ui/react/dialog";
+import {
+  cnState,
+  type DrawerSide,
+  drawerBase,
+  drawerPopupVariants,
+  drawerSidePosition,
+  drawerSlide,
+  RING_TRANSITION_MOTION,
+  springs,
+} from "chunks-ui-core";
 import type { VariantProps } from "class-variance-authority";
 import type { ComponentProps } from "react";
-import { cnState } from "../../lib/cn";
-import { springs } from "../../lib/motion";
 import {
   PortalContainerProvider,
   usePortalContainer,
@@ -17,14 +25,6 @@ import {
   TitleIdProvider,
   useTitleId,
 } from "../dialog/OverlayBody";
-import { RING_TRANSITION_MOTION } from "../shared";
-import {
-  type DrawerSide,
-  drawerBase,
-  drawerPopupVariants,
-  drawerSidePosition,
-  drawerSlide,
-} from "./Drawer.Variants";
 
 export type DrawerProps = ComponentProps<typeof BaseDialog.Root>;
 export type DrawerTriggerProps = ComponentProps<typeof BaseDialog.Trigger>;

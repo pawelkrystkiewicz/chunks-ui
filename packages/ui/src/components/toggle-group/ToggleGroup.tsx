@@ -2,6 +2,7 @@
 
 import { Toggle as BaseToggle } from "@base-ui/react/toggle";
 import { ToggleGroup as BaseToggleGroup } from "@base-ui/react/toggle-group";
+import { cn, cnState, FOCUS_RING, RING_ANIMATION_CLASSES } from "chunks-ui-core";
 import {
   type ComponentProps,
   createContext,
@@ -12,13 +13,11 @@ import {
   useRef,
   useState,
 } from "react";
-import { cn, cnState } from "../../lib/cn";
 import { notifyResize, observeResize } from "../../lib/shared-resize";
 import { BOX_EDGES, type IndicatorBox, useIndicatorSlide } from "../../lib/use-indicator-slide";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { useReducedMotion } from "../../lib/use-motion";
 import { useHeldWhileDriving, useMotionAnimate } from "../../lib/use-motion-animate";
-import { FOCUS_RING, RING_ANIMATION_CLASSES } from "../shared";
 
 // ---------------------------------------------------------------------------
 // Types

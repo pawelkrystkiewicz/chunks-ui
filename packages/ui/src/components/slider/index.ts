@@ -1,3 +1,4 @@
+export { DEFAULT_SLIDER_LABELS, type SliderLabels } from "chunks-ui-core";
 export type {
   SliderControlProps,
   SliderIndicatorProps,
@@ -7,4 +8,3 @@ export type {
   SliderValueProps,
 } from "./Slider";
 export { Slider } from "./Slider";
-export { DEFAULT_SLIDER_LABELS, type SliderLabels } from "./Slider.Labels";

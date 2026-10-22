@@ -1,8 +1,8 @@
 "use client";
 
 import { ScrollArea as BaseScrollArea } from "@base-ui/react/scroll-area";
+import { cnState } from "chunks-ui-core";
 import type { ComponentProps } from "react";
-import { cnState } from "../../lib/cn";
 
 // ---------------------------------------------------------------------------
 // Types

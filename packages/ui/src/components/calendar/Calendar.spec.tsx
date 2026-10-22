@@ -1,12 +1,10 @@
 import { act, cleanup, isInaccessible, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { createDate, DEFAULT_CALENDAR_LABELS, FOCUS_RING } from "chunks-ui-core";
 import { axe } from "jest-axe";
 import { startTransition, useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { FOCUS_RING } from "../shared";
 import { Calendar } from "./Calendar";
-import { DEFAULT_CALENDAR_LABELS } from "./Calendar.Labels";
-import { createDate } from "./date";
 
 afterEach(cleanup);
 

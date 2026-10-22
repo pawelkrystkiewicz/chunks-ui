@@ -1,11 +1,17 @@
 "use client";
 
+import {
+  cn,
+  cssVarName,
+  isPanelId,
+  type PanelSize,
+  parseSize,
+  resizablePanelClasses,
+  sizeIn,
+} from "chunks-ui-core";
 import { type ComponentProps, useId, useLayoutEffect, useRef } from "react";
-import { cn } from "../../lib/cn";
-import { cssVarName, isPanelId, type PanelSize, parseSize, sizeIn } from "../../lib/resizable";
 import { useMergedRef } from "../../lib/use-merged-ref";
 import { isDevelopment, useGroupContext, warnOnce } from "./context";
-import { resizablePanelClasses } from "./Resizable.Variants";
 
 export type ResizablePanelSize = PanelSize;
 

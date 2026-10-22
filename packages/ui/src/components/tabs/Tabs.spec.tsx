@@ -1,5 +1,6 @@
 import { act, cleanup, render, renderHook, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { FOCUS_RING } from "chunks-ui-core";
 import { axe } from "jest-axe";
 import { type ReactNode, StrictMode, useEffect, useRef, useState } from "react";
 import { hydrateRoot } from "react-dom/client";
@@ -18,7 +19,6 @@ import {
 // Tabs.visual.spec.tsx imports it from
 import { script as prehydrationScript } from "../../../node_modules/@base-ui/react/tabs/indicator/prehydrationScript.min.mjs";
 import { useIndicatorSlide } from "../../lib/use-indicator-slide";
-import { FOCUS_RING } from "../shared";
 import { Tabs, type TabsRootProps, useTabsValue } from "./Tabs";
 
 beforeAll(() => {

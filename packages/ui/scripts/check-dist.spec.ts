@@ -4,8 +4,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { checkDist } from "./check-dist";
 
-// A hand-written dist with the shape tsup gives chunks-ui: one copy of the helpers in utils.*,
-// re-exported by index.*, which alone carries the banner and the guarded motion/react import.
+// A hand-written dist: one copy of the helpers, handed out by utils.* and index.* (in the real
+// dist both import it from chunks-ui-core); index.* alone carries the banner and the guarded
+// motion/react import.
 const MOTION_IMPORT = `async function loadMotion() {
   let motion;
   try {
@@ -127,6 +128,15 @@ describe("checkDist", () => {
     expect(await checkDist(dist(edits), EXPECTED)).toEqual([
       "index.js has no webpackIgnore",
       "index.cjs has no webpackIgnore",
+    ]);
+  });
+
+  it("fails an entry that bundles its own copy of the layout maths", async () => {
+    const edits = {
+      "index.js": `${PASSING["index.js"]}function fitPixels(models, px) { return px; }\n`,
+    };
+    expect(await checkDist(dist(edits), EXPECTED)).toEqual([
+      "index.js holds no copy of the layout maths",
     ]);
   });
 

@@ -1,8 +1,8 @@
 import { render, waitFor } from "@testing-library/react";
+import { springs } from "chunks-ui-core";
 import * as m from "motion/react";
 import type { HTMLAttributes } from "react";
 import { afterEach, expect, it, vi } from "vitest";
-import { springs } from "./motion";
 import { createPopupRenderer } from "./PopupMotion";
 import type { MotionInternals } from "./render-now";
 import type { MotionLike } from "./use-motion";

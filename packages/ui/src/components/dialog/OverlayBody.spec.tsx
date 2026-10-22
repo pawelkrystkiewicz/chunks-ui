@@ -1,10 +1,10 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { FOCUS_RING } from "chunks-ui-core";
 import { configureAxe } from "jest-axe";
 import { createRef, type FormEvent, type ReactElement, type ReactNode, useState } from "react";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { undecided } from "../../AxeTest.utils";
 import { Drawer } from "../drawer";
-import { FOCUS_RING } from "../shared";
 import { Dialog } from "./index";
 
 afterEach(cleanup);

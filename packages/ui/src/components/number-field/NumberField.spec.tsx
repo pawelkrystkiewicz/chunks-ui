@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { DEFAULT_NUMBER_FIELD_LABELS, FOCUS_RING_WITHIN } from "chunks-ui-core";
 import { axe } from "jest-axe";
 import * as React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -10,10 +11,8 @@ import { Drawer } from "../drawer";
 import { Menu } from "../menu";
 import { Popover } from "../popover";
 import { Select } from "../select";
-import { FOCUS_RING_WITHIN } from "../shared";
 import { Tooltip } from "../tooltip";
 import { NumberField } from "./NumberField";
-import { DEFAULT_NUMBER_FIELD_LABELS } from "./NumberField.Labels";
 
 afterEach(cleanup);
 

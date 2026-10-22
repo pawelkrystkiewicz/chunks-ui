@@ -1,9 +1,9 @@
 import { cleanup, isInaccessible, render, screen } from "@testing-library/react";
+import { DEFAULT_PAGINATION_LABELS } from "chunks-ui-core";
 import { axe } from "jest-axe";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { Pagination, type PaginationRootProps } from "./Pagination";
-import { DEFAULT_PAGINATION_LABELS } from "./Pagination.Labels";
 
 afterEach(cleanup);
 

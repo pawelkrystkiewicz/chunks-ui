@@ -20,10 +20,7 @@ it("matches boolean data variants only, in any group form", () => {
 
 it("spells boolean data variants without brackets", () => {
   expect(Object.keys(sources)).toEqual(
-    expect.arrayContaining([
-      "../components/menu/Menu.tsx",
-      "../components/drawer/Drawer.Variants.ts",
-    ]),
+    expect.arrayContaining(["../components/menu/Menu.tsx", "../components/drawer/Drawer.tsx"]),
   );
   const found = Object.entries(sources).flatMap(([file, src]) =>
     (src.match(bracketed) ?? []).map((m) => `${file}: ${m}`),

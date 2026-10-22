@@ -1,9 +1,9 @@
 /// <reference types="@types/bun" />
 /**
  * Checks the built dist/ of chunks-ui. Needs `bun run build` first.
- * - `chunks-ui` and `chunks-ui/utils` share one copy of the helpers: dist/index.js imports them
- *   from ./utils.js and dist/index.cjs requires them from ./utils.cjs, so `cn` from either entry
- *   is the same function, with one tailwind-merge cache.
+ * - `chunks-ui` and `chunks-ui/utils` share one copy of the helpers: both entries hand out
+ *   chunks-ui-core's objects, so `cn` from either entry is the same function, with one
+ *   tailwind-merge cache. Neither bundles its own copy of the layout maths.
  * - Only the main entry starts with "use client"; utils has none, for React Server Components.
  * - Each built entry, ESM and CJS, exports the same names as its source file.
  * - The `motion/react` import keeps the shape described in src/lib/use-motion.ts.
@@ -57,6 +57,14 @@ export async function checkDist(dist: string, expected: ExpectedExports): Promis
       check(value !== undefined, `${name} from ${indexFile} is not undefined`);
     }
 
+    // fitPixels stands for lib/resizable in chunks-ui-core: imported, never bundled
+    for (const [file, code] of [
+      [indexFile, indexCode],
+      [utilsFile, utilsCode],
+    ] as const) {
+      check(!/\bfunction fitPixels\b/.test(code), `${file} holds no copy of the layout maths`);
+    }
+
     check(indexCode.startsWith('"use client";'), `${indexFile} starts with "use client"`);
     check(!utilsCode.includes("use client"), `${utilsFile} has no "use client"`);
     // Next.js rejects `export *` in a "use client" module
@@ -94,6 +102,6 @@ if (import.meta.main) {
     process.exit(1);
   }
   console.log(
-    "dist/: index.{js,cjs} use the helpers in utils.{js,cjs}; banners, exports and the motion import match; the typings import no cva subpath",
+    "dist/: index.{js,cjs} and utils.{js,cjs} share one copy of the helpers and bundle no layout maths; banners, exports and the motion import match; the typings import no cva subpath",
   );
 }

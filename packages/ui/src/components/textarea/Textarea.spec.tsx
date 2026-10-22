@@ -1,10 +1,10 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { FOCUS_RING } from "chunks-ui-core";
 import { axe } from "jest-axe";
 import { createRef } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Field } from "../field";
-import { FOCUS_RING } from "../shared";
 import { Textarea } from "./Textarea";
 
 afterEach(cleanup);

@@ -2,6 +2,14 @@
 
 import { Tabs as BaseTabs } from "@base-ui/react/tabs";
 import {
+  cn,
+  cnState,
+  FOCUS_RING,
+  RING_ANIMATION_CLASSES,
+  RING_TRANSITION,
+  springs,
+} from "chunks-ui-core";
+import {
   Children,
   type ComponentProps,
   createContext,
@@ -15,8 +23,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { cn, cnState } from "../../lib/cn";
-import { springs } from "../../lib/motion";
 import { renderNow } from "../../lib/render-now";
 import { notifyResize, observeResize } from "../../lib/shared-resize";
 import { BOX_EDGES, useIndicatorSlide } from "../../lib/use-indicator-slide";
@@ -24,7 +30,6 @@ import { useMergedRef } from "../../lib/use-merged-ref";
 import { type MotionOptions, useMotion, useReducedMotion } from "../../lib/use-motion";
 import { useMotionAnimate } from "../../lib/use-motion-animate";
 import { type PartRenderProp, useRenderPart } from "../../lib/use-render-part";
-import { FOCUS_RING, RING_ANIMATION_CLASSES, RING_TRANSITION } from "../shared";
 
 // ---------------------------------------------------------------------------
 // Types
