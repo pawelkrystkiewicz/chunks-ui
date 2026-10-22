@@ -58,6 +58,11 @@ export const FAST: Step[] = [
 export const FULL: Step[] = [
   { name: "docs build", command: "bun run build --filter=@chunks-ui/docs" },
   {
+    name: "core check:exports, check:dist",
+    command: "bun run check:exports && bun run check:dist",
+    cwd: "packages/core",
+  },
+  {
     name: "check:exports, check:dist",
     command: "bun run check:exports && bun run check:dist",
     cwd: "packages/ui",

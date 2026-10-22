@@ -69,6 +69,17 @@ jobs:
           # NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           # NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      # The Slack text names every package the run published; an expression cannot join name@version
+      - name: Name the published packages
+        id: published
+        if: steps.changesets.outputs.published == 'true'
+        env:
+          PUBLISHED: ${{ steps.changesets.outputs.publishedPackages }}
+        run: |
+          # Assigned first: a jq failure inside echo's argument would not stop the step
+          list=$(jq -r 'map(.name + "@" + .version) | join(", ")' <<<"$PUBLISHED")
+          echo "list=$list" >> "$GITHUB_OUTPUT"
+
       - name: Notify Slack on Release Success
         if: steps.changesets.outputs.published == 'true'
         uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
@@ -77,17 +88,23 @@ jobs:
           token: ${{ secrets.SLACK_BOT_TOKEN }}
           payload: |
             channel: "${{ secrets.SLACK_CHANNEL_ID }}"
-            text: "Published ${{ fromJSON(steps.changesets.outputs.publishedPackages)[0].name }}@${{ fromJSON(steps.changesets.outputs.publishedPackages)[0].version }} to npm\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>"
+            text: "Published ${{ steps.published.outputs.list }} to npm\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>"
 
       # After the Slack ping, so the publish is reported even when this fails. gh makes the tag
-      # at the run commit on GitHub's side; the action no longer pushes it.
+      # at the run commit on GitHub's side; the action no longer pushes it. The release is
+      # chunks-ui's alone: a run that published only chunks-ui-core makes none.
       - name: Create GitHub release
         if: ${{ !cancelled() && steps.changesets.outputs.published == 'true' }}
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-          VERSION: ${{ fromJSON(steps.changesets.outputs.publishedPackages)[0].version }}
+          PUBLISHED: ${{ steps.changesets.outputs.publishedPackages }}
         run: |
           set -o pipefail
+          VERSION=$(jq -r '.[] | select(.name == "chunks-ui") | .version' <<<"$PUBLISHED")
+          if [ -z "$VERSION" ]; then
+            echo "chunks-ui was not published in this run, so there is no release to create"
+            exit 0
+          fi
           tag="chunks-ui@$VERSION"
           notes="$RUNNER_TEMP/release-notes.md"
           # Read at the run's commit, which the tag points at, not from the workspace

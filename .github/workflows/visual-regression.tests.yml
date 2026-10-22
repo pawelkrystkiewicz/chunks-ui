@@ -37,7 +37,7 @@ jobs:
         run: |
           # git pathspecs: a directory matches everything under it. bunfig.toml sets the linker, so
           # it changes what the suite installs.
-          WATCH='packages/ui bun.lock package.json turbo.json bunfig.toml .github/workflows/visual-regression.tests.yml packages/typescript-config'
+          WATCH='packages/ui packages/core bun.lock package.json turbo.json bunfig.toml .github/workflows/visual-regression.tests.yml packages/typescript-config'
           run_full=true
           if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
             git config --global --add safe.directory "$GITHUB_WORKSPACE"

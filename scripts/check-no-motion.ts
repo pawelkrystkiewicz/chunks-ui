@@ -1,7 +1,9 @@
 #!/usr/bin/env bun
 /**
  * Proves `motion` is an optional peer of chunks-ui in two throwaway consumers, one without Motion
- * and one with it, each installed from a pinned fixture plus the packed package.
+ * and one with it, each installed from a pinned fixture plus the packed packages. chunks-ui-core
+ * comes from its own local tarball through an override: chunks-ui's `^` range would otherwise
+ * install a release from npm, or fail while there is none.
  * - webpack (as Next.js in webpack mode does) bundles an entry that imports chunks-ui. esbuild, bun
  *   and Vite build either way, so webpack is the bundler. Both sides matter: a bare import fails
  *   the build without Motion, and `webpackIgnore` builds but leaves `import("motion/react")` in
@@ -30,6 +32,7 @@ import { join, resolve, sep } from "node:path";
 import type { Browser } from "playwright";
 
 const UI = join(import.meta.dirname, "../packages/ui");
+const CORE = join(import.meta.dirname, "../packages/core");
 const FIXTURES = join(import.meta.dirname, "no-motion");
 
 const ENTRY = 'import * as ui from "chunks-ui";\nconsole.log(Object.keys(ui).length);\n';
@@ -298,31 +301,52 @@ function runOrThrow(cmd: string[], cwd: string) {
   if (exitCode !== 0) throw new Error(`${cmd.join(" ")} failed in ${cwd}:\n${output}`);
 }
 
-/** Packs chunks-ui into `dir` and returns the tarball's path. */
-function pack(dir: string): string {
-  runOrThrow(["bun", "pm", "pack", "--destination", dir], UI);
+/** Packs the package in `source` into the new directory `dir` and returns the tarball's path. */
+function packOne(source: string, dir: string): string {
+  mkdirSync(dir);
+  runOrThrow(["bun", "pm", "pack", "--destination", dir], source);
   const tarball = readdirSync(dir).find((file) => file.endsWith(".tgz"));
   if (!tarball) throw new Error(`bun pm pack wrote no .tgz to ${dir}`);
   return join(dir, tarball);
 }
 
-/** Installs a fixture and the tarball into `dir`, bundles ENTRY there with webpack. */
-async function bundle(fixture: string, dir: string, tarball: string) {
+/** Packs chunks-ui-core and chunks-ui into `dir` and returns their tarballs' paths. */
+function pack(dir: string) {
+  return { core: packOne(CORE, join(dir, "pack-core")), ui: packOne(UI, join(dir, "pack-ui")) };
+}
+
+/**
+ * Installs a fixture and the tarballs into `dir`, bundles ENTRY there with webpack. The override
+ * goes in after the frozen install, which refuses a package.json its lockfile does not match.
+ */
+async function bundle(fixture: string, dir: string, tarballs: { core: string; ui: string }) {
   mkdirSync(dir);
   cpSync(join(fixture, "package.fixture.json"), join(dir, "package.json"));
   cpSync(join(fixture, "bun.fixture.lock"), join(dir, "bun.lock"));
   runOrThrow(["bun", "install", "--frozen-lockfile"], dir);
+  const manifest = JSON.parse(readFileSync(join(dir, "package.json"), "utf8"));
+  manifest.overrides = { "chunks-ui-core": `file:${tarballs.core}` };
+  await Bun.write(join(dir, "package.json"), JSON.stringify(manifest, null, 2));
   const locked = () => {
     const lock = readFileSync(join(dir, "bun.lock"), "utf8");
     const names = lock.slice(lock.indexOf('"packages": {')).matchAll(/^ {4}"([^"]+)": \[/gm);
     return [...names].map(([, name = ""]) => name);
   };
   const before = locked();
-  runOrThrow(["bun", "add", tarball], dir);
+  runOrThrow(["bun", "add", tarballs.ui], dir);
   const brought = locked().filter((name) => !before.includes(name));
-  if (brought.join() !== "chunks-ui") {
+  if (brought.sort().join() !== "chunks-ui,chunks-ui-core") {
     throw new Error(
-      `bun add brought in ${brought.join(", ")}: the fixture in ${fixture} must pin every dependency of chunks-ui.`,
+      `bun add brought in ${brought.join(", ")}: the fixture in ${fixture} must pin every dependency of chunks-ui and chunks-ui-core.`,
+    );
+  }
+  // Resolved from chunks-ui, as its own code resolves it
+  const core = Bun.resolveSync("chunks-ui-core/package.json", join(dir, "node_modules/chunks-ui"));
+  const got = JSON.parse(readFileSync(core, "utf8")).version;
+  const want = JSON.parse(readFileSync(join(CORE, "package.json"), "utf8")).version;
+  if (got !== want) {
+    throw new Error(
+      `the fixture installed chunks-ui-core from the registry, not the local tarball (${core} is ${got}, packages/core is ${want}).`,
     );
   }
   await Bun.write(join(dir, "entry.js"), ENTRY);
@@ -478,14 +502,14 @@ if (import.meta.main) {
   try {
     const dir = mkdtempSync(join(tmpdir(), "chunks-ui-no-motion-"));
     try {
-      const tarball = pack(dir);
-      const without = await bundle(FIXTURES, join(dir, "without"), tarball);
+      const tarballs = pack(dir);
+      const without = await bundle(FIXTURES, join(dir, "without"), tarballs);
       const types = await typecheck(join(dir, "without"), "bundler");
       const node10 = await typecheck(join(dir, "without"), "node10");
       const nextWithout = nextBuild(join(dir, "without"));
       const pageWithout =
         nextWithout.html === undefined ? undefined : await drive(browser, nextWithout.out);
-      const withMotion = await bundle(join(FIXTURES, "with-motion"), join(dir, "with"), tarball);
+      const withMotion = await bundle(join(FIXTURES, "with-motion"), join(dir, "with"), tarballs);
       const nextWith = nextBuild(join(dir, "with"));
       const pageWith = nextWith.html === undefined ? undefined : await drive(browser, nextWith.out);
       const problems = [
