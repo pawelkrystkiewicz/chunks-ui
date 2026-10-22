@@ -8,7 +8,6 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     include: ["src/**/*.spec.ts"],
-    passWithNoTests: false,
     // Vitest blanks CSS imports by default; cn.spec.ts reads the theme tokens as text
     css: { include: [/theme\.css\?raw$/] },
     coverage: {

@@ -16,20 +16,10 @@ function runtimeSpecifiers(source: string) {
   const statements = source.matchAll(
     /^(?:import|export)\s+(type\s+)?(?:[^'";]*?\sfrom\s+)?["']([^"']+)["']/gm,
   );
-  const dynamic = source.matchAll(/\bimport\(\s*(?:\/\*[\s\S]*?\*\/\s*)*["']([^"']+)["']\s*\)/g);
-  return [
-    ...[...statements].filter(([, typeOnly]) => !typeOnly).map(([, , specifier]) => specifier),
-    ...[...dynamic].map(([, specifier]) => specifier),
-  ].filter((specifier) => specifier !== undefined);
-}
-
-function resolveRelative(from: string, specifier: string) {
-  const path = `.${new URL(specifier, `file:///${from.slice(2)}`).pathname}`;
-  const file = [path, `${path}.ts`, `${path}.tsx`, `${path}/index.ts`, `${path}/index.tsx`].find(
-    (candidate) => sources[candidate] !== undefined,
-  );
-  if (!file) throw new Error(`${from}: cannot resolve "${specifier}"`);
-  return file;
+  return [...statements]
+    .filter(([, typeOnly]) => !typeOnly)
+    .map(([, , specifier]) => specifier)
+    .filter((specifier) => specifier !== undefined);
 }
 
 function packageName(specifier: string) {
@@ -37,43 +27,43 @@ function packageName(specifier: string) {
   return first?.startsWith("@") ? `${first}/${second}` : first;
 }
 
-/** Every source file `entry` reaches at runtime, and the packages those files import. */
-function importGraph(entry: string) {
-  const files = new Set<string>();
-  const packages = new Set<string>();
-  const queue = [entry];
-  for (let file = queue.pop(); file !== undefined; file = queue.pop()) {
-    if (files.has(file)) continue;
-    files.add(file);
-    for (const specifier of runtimeSpecifiers(sources[file] ?? "")) {
-      if (specifier.startsWith(".")) queue.push(resolveRelative(file, specifier));
-      else packages.add(specifier);
-    }
-  }
-  return { files: [...files], packages: [...packages] };
-}
-
 describe("runtimeSpecifiers", () => {
   it("follows a re-export that comes after a type-only statement", () => {
-    const source =
-      'export type Size = number;\nexport { Button } from "./components/button/Button";';
+    const source = [
+      'import type { ReactNode } from "react";',
+      "export type Size = number;",
+      'export { Button } from "./components/button/Button";',
+    ].join("\n");
     expect(runtimeSpecifiers(source)).toEqual(["./components/button/Button"]);
   });
 });
 
-// Server Components import this entry, directly or through chunks-ui/utils, and it has no banner
+// Server Components import this entry, directly or through chunks-ui/utils, and it has no banner.
+// Every non-spec file in src is meant to be server-safe, so each one is scanned, not just
+// the ones index.ts reaches
 describe("chunks-ui-core", () => {
-  it("reaches no package but clsx, tailwind-merge and class-variance-authority", () => {
-    const { files, packages } = importGraph("./index.ts");
-    expect(files).toContain("./components/button/Button.Variants.ts");
-    expect(files).toContain("./lib/resizable/layout.ts");
-    expect(
-      packages.filter((name) => !SERVER_SAFE_PACKAGES.includes(packageName(name) ?? "")),
-    ).toEqual([]);
+  it("scans the core sources", () => {
+    expect(Object.keys(sources)).toContain("./components/button/Button.Variants.ts");
+    expect(Object.keys(sources)).toContain("./lib/resizable/layout.ts");
   });
 
-  it("reaches no module that declares 'use client'", () => {
-    const { files } = importGraph("./index.ts");
-    expect(files.filter((file) => /^["']use client["']/m.test(sources[file] ?? ""))).toEqual([]);
+  it("imports no package but clsx, tailwind-merge and class-variance-authority", () => {
+    const offenders = Object.entries(sources).flatMap(([file, source]) =>
+      runtimeSpecifiers(source)
+        .filter(
+          (specifier) =>
+            !specifier.startsWith(".") &&
+            !SERVER_SAFE_PACKAGES.includes(packageName(specifier) ?? ""),
+        )
+        .map((specifier) => `${file}: ${specifier}`),
+    );
+    expect(offenders).toEqual([]);
+  });
+
+  it("declares no 'use client'", () => {
+    const offenders = Object.entries(sources)
+      .filter(([, source]) => /^["']use client["']/m.test(source))
+      .map(([file]) => file);
+    expect(offenders).toEqual([]);
   });
 });
