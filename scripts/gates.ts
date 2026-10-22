@@ -51,7 +51,10 @@ export const FAST: Step[] = [
     name: "unit tests",
     command: "bun run test:unit:coverage --concurrency=1 --continue=dependencies-successful",
   },
-  { name: "repo scripts tests", command: "bun test ./scripts ./packages/ui/scripts" },
+  {
+    name: "repo scripts tests",
+    command: "bun test ./scripts ./packages/ui/scripts ./packages/core/scripts",
+  },
 ];
 
 /** The `docs-build` job of quality-gates.yml, which `--full` runs after FAST */

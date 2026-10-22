@@ -60,7 +60,7 @@ The builder's prompt starts with the System Prompt from `.claude/agents/builder.
 - **TDD:** a failing test first for every behaviour change, then the fix. Follow `CLAUDE.md`.
 - **Changeset:** add `.changeset/<slug>.md` for any user-facing change to `packages/ui`. Use `patch` for fixes and `minor` for features or breaking changes; we are on 0.x.
 - **Docs:** update `apps/docs/content/` when public API or behaviour changes.
-- **Gates before committing:** `cd <wt>/packages/ui && bunx vitest run <spec>`, then `cd <wt> && bun run check-types && bun run check:tailwind && bun run lint` (what `check:tailwind` checks and needs: `CONTRIBUTING.md` › Quality Gates). When the change touches `scripts/` or `packages/ui/scripts/`, also run `bun test ./scripts ./packages/ui/scripts` (those specs run on `bun:test`, not Vitest), and for `scripts/` also `bun run lint:scripts && bun run check-types:scripts`. Step 7 runs CI's checks before the push.
+- **Gates before committing:** `cd <wt>/packages/ui && bunx vitest run <spec>`, then `cd <wt> && bun run check-types && bun run check:tailwind && bun run lint` (what `check:tailwind` checks and needs: `CONTRIBUTING.md` › Quality Gates). When the change touches `scripts/`, `packages/ui/scripts/` or `packages/core/scripts/`, also run `bun test ./scripts ./packages/ui/scripts ./packages/core/scripts` (those specs run on `bun:test`, not Vitest), and for `scripts/` also `bun run lint:scripts && bun run check-types:scripts`. Step 7 runs CI's checks before the push.
 - **Visual baselines,** when rendering changes:
   1. Commit first.
   2. Regenerate the Linux baselines in Docker with the recipe in TESTING_STRATEGY.md › Visual Regression, then copy them back.

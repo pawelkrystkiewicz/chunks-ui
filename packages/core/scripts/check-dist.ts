@@ -7,6 +7,7 @@
  * - dist/theme.css exists and keeps `@source "./"`, which points Tailwind at the class names in dist/.
  *
  * Run: bun run check:dist
+ * Tests: check-dist.spec.ts (fixture dists in a temporary directory)
  */
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";

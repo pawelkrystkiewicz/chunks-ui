@@ -58,7 +58,7 @@ jobs:
 
       - name: Test the repo scripts
         if: ${{ !cancelled() }}
-        run: bun test ./scripts ./packages/ui/scripts
+        run: bun test ./scripts ./packages/ui/scripts ./packages/core/scripts
 
   # The ui unit suite at the lowest versions the peer ranges allow. Informational until it has
   # three stable runs, then it becomes required (#393).

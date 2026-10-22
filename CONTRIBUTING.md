@@ -157,7 +157,7 @@ bun run test              # Vitest in packages/core, packages/ui and apps/docs, 
 bun run test:unit:coverage # the same Vitest suites, with the coverage report and its thresholds
 ```
 
-`bun run gates` (see Quality Gates) runs everything CI's `test` job runs: the Vitest suites with coverage, then `bun test ./scripts ./packages/ui/scripts`.
+`bun run gates` (see Quality Gates) runs everything CI's `test` job runs: the Vitest suites with coverage, then `bun test ./scripts ./packages/ui/scripts ./packages/core/scripts`.
 
 ## PR Workflow
 
