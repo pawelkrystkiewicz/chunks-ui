@@ -5,7 +5,6 @@ import { Footer, Layout, Navbar, ThemeSwitch } from "nextra-theme-docs";
 import "nextra-theme-docs/style.css";
 import "../globals.css";
 import { HydrationMarker } from "./HydrationMarker";
-import { LAYOUT_FONTS_HREF } from "./layout-fonts";
 import { NavLogo } from "./NavLogo";
 
 export const metadata = {
@@ -20,7 +19,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="en" dir="ltr" suppressHydrationWarning>
       <Head />
       <body>
-        <link rel="stylesheet" href={LAYOUT_FONTS_HREF} precedence="default" />
         <Layout
           navbar={
             <Navbar
