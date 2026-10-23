@@ -4,6 +4,7 @@ import { getPageMap } from "nextra/page-map";
 import { Footer, Layout, Navbar, ThemeSwitch } from "nextra-theme-docs";
 import "nextra-theme-docs/style.css";
 import "../globals.css";
+import { config } from "../config";
 import { HydrationMarker } from "./HydrationMarker";
 import { NavLogo } from "./NavLogo";
 
@@ -13,11 +14,22 @@ export const metadata = {
 };
 
 const REPO = "https://github.com/pawelkrystkiewicz/chunks-ui";
+const { analytics } = config;
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" dir="ltr" suppressHydrationWarning>
-      <Head />
+      <Head>
+        {/* Renders only when both vars are set, so local dev and CI load no tracker */}
+        {analytics.scriptUrl && analytics.websiteId && (
+          <script
+            defer
+            src={analytics.scriptUrl}
+            data-website-id={analytics.websiteId}
+            data-domains={analytics.domains}
+          />
+        )}
+      </Head>
       <body>
         <Layout
           navbar={
