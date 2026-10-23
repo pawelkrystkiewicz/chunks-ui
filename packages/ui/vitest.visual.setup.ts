@@ -20,9 +20,9 @@ declare global {
 // run again shows in geometry, a spring or a screenshot.
 configure({ reactStrictMode: true });
 
-// Manrope, the theme's --font-sans, from local files: the weights (200–800) and subsets the docs
-// app loads from Google Fonts. Without it, text fell back to each machine's sans-serif, so glyph
-// widths, and with them overflow, differed between macOS and the Docker image. Added in the
+// Manrope, the theme's --font-sans, from local files: the weights (200–800) and all the subsets
+// Google Fonts serves for Manrope. Without it, text fell back to each machine's sans-serif, so
+// glyph widths, and with them overflow, differed between macOS and the Docker image. Added in the
 // order of Google's stylesheet, which decides the subset that draws a character two ranges
 // share. A file that fails to load fails the setup, and with it every spec.
 await Promise.all(

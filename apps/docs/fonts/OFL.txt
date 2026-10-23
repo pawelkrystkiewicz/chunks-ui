@@ -1,4 +1,4 @@
-Copyright 2018 The Manrope Project Authors (https://github.com/googlefonts/manrope)
+Copyright 2019 The Manrope Project Authors (https://github.com/sharanda/manrope)
 Copyright 2021 The Outfit Project Authors (https://github.com/Outfitio/Outfit-Fonts)
 Copyright 2014-2020 The Fira Code Project Authors (https://github.com/tonsky/FiraCode)
 

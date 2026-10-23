@@ -6,9 +6,11 @@
 /* Layout fonts (LAYOUT_FONTS in app/layout-fonts.ts) are self-hosted so no visitor IP goes to Google.
    Variable woff2 files and unicode ranges from Google Fonts; OFL in ./fonts. The urls are relative so
    Next hashes the files into /_next/static/media and serves them immutable (public/ revalidates). */
-/* ponytail: only latin + latin-ext are shipped. Manrope's and Fira Code's cyrillic, greek and
-   vietnamese subsets and Fira Code's symbols2 box-drawing range (U+2500-259F) are not, so those
-   characters render in the fallback font. Add the subset if the docs ever need them. */
+/* ponytail: only latin + latin-ext are shipped; these subsets Google serves are not, so their
+   characters render in the fallback font. Add a subset if the docs ever need it.
+   Manrope: cyrillic-ext, cyrillic, greek, vietnamese. Outfit: none.
+   Fira Code: cyrillic-ext, cyrillic, greek-ext, greek, symbols2 (U+2000-2001, U+2004-2008, U+200A,
+   U+23B8-23BD, U+2500-259F box drawing). */
 @font-face {
   font-family: "Manrope";
   font-style: normal;
