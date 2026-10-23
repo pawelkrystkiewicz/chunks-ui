@@ -226,6 +226,16 @@ it("the footer links to the privacy page in the same tab", () => {
   expect(link.hasAttribute("target")).toBe(false);
 });
 
+it("the footer's mail link goes to contact@chunk-creations.com", () => {
+  const { container } = renderPage();
+  const footer = container.querySelector("footer");
+  if (!footer) throw new Error("no footer");
+  const mail = [...footer.querySelectorAll('a[href^="mailto:"]')];
+  expect(mail.map((a) => [a.textContent, a.getAttribute("href")])).toEqual([
+    ["contact@chunk-creations.com", "mailto:contact@chunk-creations.com"],
+  ]);
+});
+
 it("every link and button, the footer's too, draws the --ring outline on keyboard focus", () => {
   const { container } = renderPage();
   fireEvent.click(screen.getByRole("button", { name: "Menu" }));
