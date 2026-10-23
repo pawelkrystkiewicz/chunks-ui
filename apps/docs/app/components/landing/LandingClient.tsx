@@ -16,7 +16,6 @@ import {
   palette,
   saveTheme,
 } from "../../create/theme-model";
-import { isLayoutFont } from "../../layout-fonts";
 import { FOCUS_RING, FOCUS_RING_INSET, ICON_BUTTON } from "./focus";
 
 function useCopy(text: string) {
@@ -183,20 +182,9 @@ export function SpringList() {
   ));
 }
 
-// Only the "Aa" glyphs at 600. Families the layout loads in full stay out: a subset face
-// (no unicode-range) for the same family and weight would shadow the full one.
-const PRESET_FONTS_HREF = `https://fonts.googleapis.com/css2?${[
-  ...new Set(PRESETS.map((p) => p.theme.fontHeading)),
-]
-  .filter((f) => !isLayoutFont(f))
-  .map((f) => `family=${f.replaceAll(" ", "+")}:wght@600`)
-  .join("&")}&text=Aa&display=swap`;
-
 export function PresetGrid() {
   return (
     <div className="-me-px -mb-px grid grid-cols-2 lg:grid-cols-3">
-      {/* No `precedence`: rendered in place, so it is removed on unmount */}
-      <link rel="stylesheet" href={PRESET_FONTS_HREF} />
       {PRESETS.map((preset) => {
         const pal = palette({ ...preset.theme, mode: "light" }, "light");
         const { fontHeading, radius, height } = preset.theme;
