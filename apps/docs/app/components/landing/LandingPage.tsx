@@ -682,6 +682,7 @@ const FOOTER_NAV = [
     links: [
       { label: "chunk-creations.com ↗", href: "https://chunk-creations.com" },
       { label: "hello@chunk-creations.com", href: "mailto:hello@chunk-creations.com" },
+      { label: "Privacy", href: "/privacy" },
     ],
   },
 ];

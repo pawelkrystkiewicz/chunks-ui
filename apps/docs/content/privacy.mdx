@@ -1,0 +1,55 @@
+# Privacy
+
+_Last updated: October 23, 2026_
+
+This page covers ui-kit.chunk-creations.com, the Chunks UI documentation site. The `chunks-ui` npm package collects nothing: it has no telemetry and makes no network requests of its own.
+
+## Who we are
+
+Chunk Creations Sp. z o.o., Wspólna 36B, 66-415 Wojcieszyce, Poland (NIP 8971898829), is the controller of the data described here. For questions or requests, write to [contact@chunk-creations.com](mailto:contact@chunk-creations.com).
+
+## Short version
+
+- No cookies, no ads, no accounts.
+- We count page views with Umami, which runs on our own server. It doesn't store your IP address and can't tell who you are.
+- The site serves its own fonts. The theme previews on the home page and the font picker on `/create` load extra fonts from Google Fonts.
+- Vercel hosts the site and logs requests.
+- Themes you build on `/create` stay in your browser.
+
+## Page analytics (Umami)
+
+We run our own Umami instance on a server in Germany (Hetzner Online GmbH). When you open a page, the Umami script sends us:
+
+- the page address and title, and the page you came from;
+- your browser, operating system, device type, screen size and language;
+- your country, region and city, worked out from your IP address.
+
+Umami sets no cookies and doesn't store your IP address. To count visits, it hashes your IP address and browser details together with a salt that changes every month. The hash can't be reversed, and it can't follow you across months or onto other websites. We look only at totals.
+
+We use this to see which pages people read and where they get stuck. The legal basis is our legitimate interest (Art. 6(1)(f) GDPR). We keep the data for 24 months.
+
+To opt out, block the analytics script with any content blocker, or run `localStorage.setItem("umami.disabled", "1")` in the browser console on this site.
+
+## Fonts (Google Fonts)
+
+The documentation pages use fonts served from this site. Two places load more fonts from Google Fonts: the theme previews on the home page and the font picker on `/create`. There, your browser requests the fonts from Google's servers, so Google receives your IP address and browser details. Google describes what it does with this data in its [privacy policy](https://policies.google.com/privacy). The legal basis is our legitimate interest in showing those previews as designed (Art. 6(1)(f) GDPR).
+
+## Hosting (Vercel)
+
+Vercel Inc. hosts the site. To serve pages and block abuse, it processes request data: your IP address, browser, the address you requested, and the time. Vercel acts as our processor. The data may be transferred to the United States, under the EU-US Data Privacy Framework and the EU Standard Contractual Clauses. The legal basis is our legitimate interest in running a working, secure site (Art. 6(1)(f) GDPR).
+
+## Your browser's storage
+
+`/create` saves your theme and the Accessibility panel's filters in your browser's local storage, so they survive a reload. This data never leaves your device. To remove it, clear this site's data in your browser settings.
+
+## Do Not Track
+
+We don't respond to Do Not Track signals. To stop analytics, use the opt-out above.
+
+## Your rights
+
+You can ask us to access, correct or erase your data, or to restrict how we use it. You can also object to processing based on our legitimate interest. Analytics data can't be linked to a person, so we usually can't find records that belong to you (Art. 11 GDPR). If you send details that identify them, we will act on them. You can also complain to the Polish supervisory authority, the President of the Personal Data Protection Office ([Prezes UODO](https://uodo.gov.pl)).
+
+## Changes
+
+When what we collect changes, we update this page and the date at the top.

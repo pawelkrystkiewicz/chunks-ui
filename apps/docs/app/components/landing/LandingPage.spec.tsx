@@ -217,6 +217,15 @@ it("the Create section links to /create once, besides the preset tiles", () => {
   ]);
 });
 
+it("the footer links to the privacy page in the same tab", () => {
+  const { container } = renderPage();
+  const footer = container.querySelector("footer");
+  if (!footer) throw new Error("no footer");
+  const link = within(footer).getByRole("link", { name: "Privacy" });
+  expect(link.getAttribute("href")).toBe("/privacy");
+  expect(link.hasAttribute("target")).toBe(false);
+});
+
 it("every link and button, the footer's too, draws the --ring outline on keyboard focus", () => {
   const { container } = renderPage();
   fireEvent.click(screen.getByRole("button", { name: "Menu" }));
