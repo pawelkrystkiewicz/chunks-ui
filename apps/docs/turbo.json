@@ -4,7 +4,7 @@
   "tasks": {
     "build": {
       "outputs": ["$TURBO_EXTENDS$", "public/llm*.txt", "public/_pagefind/**", "!.next/dev/**"],
-      "env": ["VERCEL_PROJECT_PRODUCTION_URL"]
+      "env": ["$TURBO_EXTENDS$", "VERCEL_PROJECT_PRODUCTION_URL"]
     }
   }
 }
