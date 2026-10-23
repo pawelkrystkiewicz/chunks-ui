@@ -1,7 +1,7 @@
 /**
- * Families the docs layout provides (every latin and latin-ext glyph, not a subset), with their
- * weight ranges. They are self-hosted: `@font-face` rules in globals.css serve them from /fonts
- * under these names.
+ * Families the docs layout provides (Google's latin and latin-ext subsets, not a `text=` subset),
+ * with their weight ranges. They are self-hosted under these names: `@font-face` rules in
+ * globals.css load them from apps/docs/fonts.
  */
 export const LAYOUT_FONTS = {
   Manrope: "200..800",
