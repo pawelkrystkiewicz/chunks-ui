@@ -14,7 +14,20 @@
     schedule: ["before 10am on monday"],
     automerge: true,
   },
-  enabledManagers: ["npm", "bun", "github-actions", "nvm"],
+  enabledManagers: ["npm", "bun", "github-actions", "nvm", "custom.regex"],
+  customManagers: [
+    {
+      // The docs ignoreCommand runs turbo through npx with a hand-written version. No built-in
+      // manager reads vercel.json, so the pin drifted from the root turbo devDependency (#806).
+      // Both deps land in one PR through config:recommended's group:monorepos (monorepo:turbo
+      // matches the npm package's source URL), so no packageRules entry is needed.
+      customType: "regex",
+      managerFilePatterns: ["/^apps/docs/vercel\\.json$/"],
+      matchStrings: ["npx -y turbo@(?<currentValue>\\d+\\.\\d+\\.\\d+)"],
+      depNameTemplate: "turbo",
+      datasourceTemplate: "npm",
+    },
+  ],
   automerge: false,
   automergeType: "pr",
   automergeStrategy: "squash",
