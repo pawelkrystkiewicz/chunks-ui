@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { FONTS, PRESETS } from "./create/theme-model";
+import { DEFAULT_THEME, FONTS, PRESETS } from "./create/theme-model";
 
 const GLOBALS_CSS = new URL("../globals.css", import.meta.url);
 const FONTS_CSS = new URL("../fonts/fonts.css", import.meta.url);
@@ -37,9 +37,24 @@ const fullFaces = fontFaces.filter((f) => !aaFaces.includes(f));
 
 const kebab = (family: string) => family.toLowerCase().replaceAll(" ", "-");
 
+/** A file's first 4 bytes, "wOF2" for a woff2 file; "" when it is missing. */
+const magic = (file: string) => {
+  const url = new URL(file, FONTS_CSS);
+  return existsSync(url) ? readFileSync(url).subarray(0, 4).toString("latin1") : "";
+};
+
 describe("self-hosted fonts", () => {
   it("are imported by globals.css", () => {
     expect(readFileSync(GLOBALS_CSS, "utf8")).toMatch(/^@import "\.\/fonts\/fonts\.css";$/m);
+  });
+
+  // A preset naming a font FONTS lacks would fall back to the system font without an error
+  it("cover every font a preset or the default theme names", () => {
+    const names = new Set(FONTS.map((f) => f.name));
+    for (const theme of [DEFAULT_THEME, ...PRESETS.map((p) => p.theme)]) {
+      expect(names, theme.fontHeading).toContain(theme.fontHeading);
+      expect(names, theme.fontBody).toContain(theme.fontBody);
+    }
   });
 
   it("declare every family the site uses, and only those, at the weights it uses", () => {
@@ -57,7 +72,7 @@ describe("self-hosted fonts", () => {
       for (const face of faces) {
         const file = `./${kebab(name)}-${face.subset}.woff2`;
         expect(face.src, `${name} ${face.subset}`).toBe(`url("${file}") format("woff2")`);
-        expect(existsSync(new URL(file, FONTS_CSS)), file).toBe(true);
+        expect(magic(file), file).toBe("wOF2");
       }
     }
   });
@@ -71,7 +86,7 @@ describe("self-hosted fonts", () => {
       const file = `./${kebab(face.family?.replace(/ Aa$/, "") ?? "")}-aa.woff2`;
       expect([face.weight, face.range], face.family).toEqual(["600", "U+41, U+61"]);
       expect(face.src, face.family).toBe(`url("${file}") format("woff2")`);
-      expect(existsSync(new URL(file, FONTS_CSS)), file).toBe(true);
+      expect(magic(file), file).toBe("wOF2");
     }
   });
 });
