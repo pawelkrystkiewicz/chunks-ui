@@ -27,6 +27,7 @@
  *
  * Run: bun run check:a11y
  */
+import { rmSync } from "node:fs";
 import { join } from "node:path";
 import AxeBuilder from "@axe-core/playwright";
 import { type Browser, chromium, type Page } from "playwright";
@@ -355,6 +356,9 @@ const STARTUP_MS = 60_000;
 async function startServer() {
   // A server left on the port would serve an older build
   if (await answers()) throw new Error(`${BASE_URL} is already taken; stop it or set PORT`);
+  // next start's page cache: a real build clears it, but Turbo's cache restore leaves it, so the
+  // server would serve an older build's pages
+  rmSync(join(DOCS_DIR, ".next", "server", "route-cache"), { recursive: true, force: true });
   const server = Bun.spawn(["bun", "x", "next", "start", "-p", String(PORT)], {
     cwd: DOCS_DIR,
     stdout: "ignore",
