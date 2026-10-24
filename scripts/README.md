@@ -24,7 +24,6 @@ Other differences from CI:
 
 - A step's `if:`, `env:` and `continue-on-error:`: every step runs, and the run stops at the first failure also where CI goes on (CI runs the repo scripts' tests after a red unit run).
 - The environment: each step gets this shell's. CI also sets `GITHUB_ACTIONS`, with which `check:a11y` fails on a missing token or on a 401, 403, 404 or 410 for an issue it links (here they are notices), and `LANG` and `LC_ALL` to `en_US.UTF-8` for every step (no check depends on the locale today).
-- Turbo replays `lint` and the builds from a cache that all worktrees share, where CI starts cold, and its `lint` hash does not include the root `biome.json`. After a change to a root config that Turbo does not hash, run `TURBO_FORCE=1 bun run gates`.
 - CI checks out the pull request merged into the current `master`; the gates check `HEAD`. When `master` has moved, merge `origin/master` first.
 
 ```bash
