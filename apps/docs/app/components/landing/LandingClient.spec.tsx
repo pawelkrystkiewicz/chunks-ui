@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { PRESETS } from "../../create/theme-model";
 import { CopyRow, HeroCopy, PresetGrid } from "./LandingClient";
 
 const CMD = "bun add chunks-ui motion";
@@ -78,6 +79,21 @@ it("PresetGrid loads no font stylesheet", () => {
   render(<PresetGrid />);
   expect(document.querySelector("link[rel='stylesheet']")).toBeNull();
   expect(document.querySelector("[href*='fonts.googleapis.com']")).toBeNull();
+});
+
+// fonts.css declares "<font> Aa" (A and a at 600) for the tiles' fonts; the full face is the fallback.
+it("PresetGrid draws each tile's Aa from the preset font's Aa subset first", () => {
+  render(<PresetGrid />);
+  const tiles = document.querySelectorAll("[data-preset]");
+  expect(tiles.length).toBe(PRESETS.length);
+  PRESETS.forEach(({ theme }, i) => {
+    const spans = [...(tiles[i]?.querySelectorAll("span[aria-hidden]") ?? [])];
+    const aa = spans.find((s) => s.textContent === "Aa") as HTMLElement | undefined;
+    // jsdom writes every quoted family name in double quotes
+    expect(aa?.style.fontFamily, theme.fontHeading).toMatch(
+      new RegExp(`^"${theme.fontHeading} Aa", "${theme.fontHeading}",`),
+    );
+  });
 });
 
 // Named by content, never aria-label (see LandingPage.spec.tsx): the Aa glyph is hidden, a sr-only tail says where it goes.

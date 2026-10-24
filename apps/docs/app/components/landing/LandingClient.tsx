@@ -202,7 +202,9 @@ export function PresetGrid() {
               <span
                 aria-hidden
                 className="font-semibold text-[30px] leading-none tracking-[-.02em]"
-                style={{ fontFamily: fontOf(fontHeading).stack }}
+                // fonts.css declares "<font> Aa" (A and a at 600, ~1 KB) for the tiles' fonts, so
+                // the landing skips the full faces; a font without one falls through to its stack.
+                style={{ fontFamily: `"${fontHeading} Aa", ${fontOf(fontHeading).stack}` }}
               >
                 Aa
               </span>
