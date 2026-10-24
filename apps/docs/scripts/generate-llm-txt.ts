@@ -18,8 +18,7 @@ const FULL_FILE = "llms-full.txt";
 const LEGACY_INDEX_FILE = "llm.txt";
 const LEGACY_FULL_FILE = "llm-full.txt";
 
-const VERCEL_HOST =
-  process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.VERCEL_URL ?? "chunks-ui.vercel.app";
+const VERCEL_HOST = process.env.VERCEL_PROJECT_PRODUCTION_URL || "ui-kit.chunk-creations.com";
 const SITE_URL = `https://${VERCEL_HOST}`;
 
 // ---------------------------------------------------------------------------

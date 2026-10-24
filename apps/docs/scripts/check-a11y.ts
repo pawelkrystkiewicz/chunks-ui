@@ -12,7 +12,7 @@
  * audited with each disclosure listed open (/create's Accessibility panel). On the pages POPUPS
  * lists, it then opens each popup listed and audits it alone, open; on the pages TOASTS lists, it
  * adds each toast and audits it alone, one at a time. Both add aria-dialog-name (see Popup and
- * ToastCheck).
+ * ToastCheck). Every page, the 404 page too, must also show a link to /privacy (see PRIVACY).
  * axe's `incomplete` results (checks it could not decide, often contrast over images or gradients)
  * are not failed. A page is audited once React has hydrated it (`html[data-hydrated]`, set by
  * app/HydrationMarker.tsx) and its fonts have loaded.
@@ -267,6 +267,9 @@ export function assertOnlyCatchAll(files: string[]) {
     throw new Error(`app/${other.join(", app/")}: add its URLs to pages() in check-a11y.ts`);
   }
 }
+
+/** The privacy page, which every crawled page must link to visibly */
+const PRIVACY = "/privacy";
 
 /** A URL no page answers on, so the server renders app/not-found.tsx with status 404 */
 const NOT_FOUND_ROUTE = "/this-page-does-not-exist";
@@ -644,6 +647,18 @@ async function audit(
       throw new Error(
         `${route} did not switch to the ${theme} theme (<html class="${htmlClass}">)`,
       );
+    }
+    // The docs footer (app/layout.tsx) links the privacy page; the landing page, which hides that
+    // footer, has the link in its own (LandingPage.tsx). The 404 page renders in the layout too.
+    const privacy = page.locator(`a[href="${PRIVACY}"]`);
+    if ((await privacy.filter({ visible: true }).count()) === 0) {
+      problems.push({
+        page: route,
+        theme,
+        rule: "privacy-link",
+        help: `No visible link to ${PRIVACY}: keep the Privacy link in the <Footer> of app/layout.tsx, or in the page's own footer if it hides that one`,
+        targets: [`a[href="${PRIVACY}"]: ${await privacy.count()} on the page, none visible`],
+      });
     }
     problems.push(...(await axe(page, route, theme, matched)));
     for (const popup of POPUPS.filter((entry) => entry.page === route)) {
