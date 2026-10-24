@@ -5,8 +5,8 @@ import { Toast } from "./index";
 
 /*
  * The opt-in stack (theme.css `.toast-stack`) positions its toasts with `transform` and
- * transitions that, unlayered, over the Toast.Root utilities. Toast.Root slides in and out along
- * `translate` (#383): with that utility still applying, a closing stacked toast jumped to
+ * transitions that, unlayered, win over the Toast.Root utilities. Toast.Root slides in and out
+ * along `translate` (#383): with that utility still applying, a closing stacked toast jumped to
  * the inline end at once, as `translate` was in no transition list, and its slide was lost.
  */
 describe("Toast stack with motion allowed", () => {
