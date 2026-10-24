@@ -53,11 +53,18 @@ it("falls back to the docs production host, ignoring the per-deployment VERCEL_U
   });
 
   expect(index).toContain("(https://ui-kit.chunk-creations.com/components/button)");
-  expect(index).not.toContain("vercel.app");
+  expect(index).not.toMatch(/\]\(https:\/\/[^)]*vercel\.app/);
 });
 
 it("uses VERCEL_PROJECT_PRODUCTION_URL when it is set", async () => {
   const index = await generateWithEnv({ VERCEL_PROJECT_PRODUCTION_URL: "example.com" });
 
   expect(index).toContain("(https://example.com/components/button)");
+});
+
+it("treats an empty VERCEL_PROJECT_PRODUCTION_URL as unset", async () => {
+  const index = await generateWithEnv({ VERCEL_PROJECT_PRODUCTION_URL: "" });
+
+  expect(index).toContain("(https://ui-kit.chunk-creations.com/components/button)");
+  expect(index).not.toContain("https:///");
 });
