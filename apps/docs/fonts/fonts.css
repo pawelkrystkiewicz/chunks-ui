@@ -233,14 +233,16 @@
 }
 
 /* The landing page's preset tiles show only "Aa" at 600 in each preset heading font: Google's
-   `text=Aa` subsets (about 1 KB each) under their own names, so the tiles skip the full faces. */
+   `text=Aa` subsets (about 1 KB each) under their own names, so the tiles skip the full faces.
+   The range adds the space (U+20, in each file) to Google's U+41, U+61: line metrics come from the
+   first font in the stack that covers a space, so without it the browser loads the full face too. */
 @font-face {
   font-family: "Geist Aa";
   font-style: normal;
   font-weight: 600;
   font-display: swap;
   src: url("./geist-aa.woff2") format("woff2");
-  unicode-range: U+41, U+61;
+  unicode-range: U+20, U+41, U+61;
 }
 @font-face {
   font-family: "Plus Jakarta Sans Aa";
@@ -248,7 +250,7 @@
   font-weight: 600;
   font-display: swap;
   src: url("./plus-jakarta-sans-aa.woff2") format("woff2");
-  unicode-range: U+41, U+61;
+  unicode-range: U+20, U+41, U+61;
 }
 @font-face {
   font-family: "Newsreader Aa";
@@ -256,7 +258,7 @@
   font-weight: 600;
   font-display: swap;
   src: url("./newsreader-aa.woff2") format("woff2");
-  unicode-range: U+41, U+61;
+  unicode-range: U+20, U+41, U+61;
 }
 @font-face {
   font-family: "Space Grotesk Aa";
@@ -264,5 +266,5 @@
   font-weight: 600;
   font-display: swap;
   src: url("./space-grotesk-aa.woff2") format("woff2");
-  unicode-range: U+41, U+61;
+  unicode-range: U+20, U+41, U+61;
 }

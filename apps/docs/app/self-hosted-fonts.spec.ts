@@ -84,7 +84,8 @@ describe("self-hosted fonts", () => {
     );
     for (const face of aaFaces) {
       const file = `./${kebab(face.family?.replace(/ Aa$/, "") ?? "")}-aa.woff2`;
-      expect([face.weight, face.range], face.family).toEqual(["600", "U+41, U+61"]);
+      // U+20 too: the face must hold the space to be the "first available font" for line metrics
+      expect([face.weight, face.range], face.family).toEqual(["600", "U+20, U+41, U+61"]);
       expect(face.src, face.family).toBe(`url("${file}") format("woff2")`);
       expect(magic(file), file).toBe("wOF2");
     }
