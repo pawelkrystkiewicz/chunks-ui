@@ -17,13 +17,15 @@
   enabledManagers: ["npm", "bun", "github-actions", "nvm", "custom.regex"],
   customManagers: [
     {
-      // The docs ignoreCommand runs turbo through npx with a hand-written version. No built-in
-      // manager reads vercel.json, so the pin drifted from the root turbo devDependency (#806).
-      // Both deps land in one PR through config:recommended's group:monorepos (monorepo:turbo
-      // matches the npm package's source URL), so no packageRules entry is needed.
+      // The docs ignoreCommand runs turbo with a hand-written version. No built-in manager reads
+      // vercel.json, so the pin drifted from the root turbo devDependency (#806). The match does
+      // not depend on the runner (npx, bunx, flags) and keeps prerelease suffixes; the leading
+      // whitespace keeps create-turbo@ out. Both deps land in one PR through config:recommended's
+      // group:monorepos (monorepo:turbo matches the npm package's source URL), so no packageRules
+      // entry is needed.
       customType: "regex",
       managerFilePatterns: ["/^apps/docs/vercel\\.json$/"],
-      matchStrings: ["npx -y turbo@(?<currentValue>\\d+\\.\\d+\\.\\d+)"],
+      matchStrings: ["\\sturbo@(?<currentValue>[^\\s\"]+)"],
       depNameTemplate: "turbo",
       datasourceTemplate: "npm",
     },
