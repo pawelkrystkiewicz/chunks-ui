@@ -31,6 +31,16 @@ export default {
   theme: { title: "Theme" },
   utilities: { title: "Utilities" },
   labels: { title: "Labels" },
+  // Built at /privacy and linked from both footers, not listed in the sidebar
+  privacy: {
+    title: "Privacy",
+    display: "hidden",
+    theme: {
+      copyPage: false,
+      pagination: false,
+      timestamp: false,
+    },
+  },
   "llm-separator": { type: "separator", title: "For LLMs" },
   "llms-txt": { title: "llms.txt", href: "/llms.txt" },
   "llms-full-txt": { title: "llms-full.txt", href: "/llms-full.txt" },

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Head, Search } from "nextra/components";
 import { GitHubIcon } from "nextra/icons";
 import { getPageMap } from "nextra/page-map";
@@ -59,7 +60,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           themeSwitch={{ light: "Light theme", dark: "Dark theme", system: "System theme" }}
           // Base of the "Edit this page" and feedback links; Nextra appends the file path
           docsRepositoryBase={`${REPO}/tree/master/apps/docs`}
-          footer={<Footer />}
+          // Nextra's preflight gives links the text's colour and no underline: the underline marks it
+          footer={
+            <Footer>
+              <Link href="/privacy" className="underline underline-offset-2">
+                Privacy
+              </Link>
+            </Footer>
+          }
         >
           {children}
         </Layout>
