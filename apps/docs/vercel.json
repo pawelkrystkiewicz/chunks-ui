@@ -7,5 +7,5 @@
       "**/*-preview": true
     }
   },
-  "ignoreCommand": "npx -y turbo@2.11.9 query affected --base=$VERCEL_GIT_PREVIOUS_SHA --packages @chunks-ui/docs --exit-code || exit 1"
+  "ignoreCommand": "case \"$VERCEL_GIT_COMMIT_MESSAGE\" in *\"[vercel deploy]\"*) exit 1;; *\"[vercel skip]\"*) exit 0;; esac; npx -y turbo@2.11.9 query affected --base=$VERCEL_GIT_PREVIOUS_SHA --packages @chunks-ui/docs --exit-code || exit 1"
 }

@@ -148,7 +148,7 @@ gh pr view <pr> --json body --jq .body > <scratchpad>/pr-<pr>.md
 gh pr edit <pr> --body-file <scratchpad>/pr-<pr>.md
 ```
 
-If the Vercel MCP is not connected, no deployment has a `url` after two minutes, or the newest `state` is `ERROR` or `CANCELED`, leave the body as it is and say so in the report, with its `inspectorUrl` when there is one; do not push to force a build. A later push (a CI fix) builds only when `apps/docs` or a workspace package it depends on changed (turbo-ignore); `[vercel deploy]` in the HEAD commit message forces a build.
+If the Vercel MCP is not connected, no deployment has a `url` after two minutes, or the newest `state` is `ERROR` or `CANCELED`, leave the body as it is and say so in the report, with its `inspectorUrl` when there is one; do not push to force a build. A later push (a CI fix) builds only when `apps/docs` or a workspace package it depends on changed; `[vercel deploy]` in the HEAD commit message forces a build.
 
 ## 8. Merge
 
