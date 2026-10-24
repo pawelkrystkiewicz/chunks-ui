@@ -1,5 +1,4 @@
 import type { CSSProperties } from "react";
-import { isLayoutFont } from "../layout-fonts";
 import {
   BASES,
   BLUE,
@@ -24,6 +23,7 @@ export type Font = { name: string; kind: FontKind; stack: string };
 
 const sans = (name: string) => `'${name}', ui-sans-serif, system-ui, sans-serif`;
 
+/** Each family is self-hosted in fonts/fonts.css at weights 400-700 or wider. */
 export const FONTS: Font[] = [
   { name: "Manrope", kind: "Sans", stack: sans("Manrope") },
   { name: "Geist", kind: "Sans", stack: sans("Geist") },
@@ -39,13 +39,6 @@ export const FONTS: Font[] = [
 
 export const fontOf = (name: string): Font =>
   FONTS.find((f) => f.name === name) ?? (FONTS[0] as Font);
-
-/** Skips families the docs layout already loads; its weight ranges cover 400-700. */
-export const FONTS_HREF = `https://fonts.googleapis.com/css2?${FONTS.filter(
-  (f) => !isLayoutFont(f.name),
-)
-  .map((f) => `family=${f.name.replaceAll(" ", "+")}:wght@400;500;600;700`)
-  .join("&")}&display=swap`;
 
 /** Presets never carry `mode`: applying one keeps the current light/dark choice. */
 export const PRESETS: { name: string; theme: Omit<Theme, "mode"> }[] = [

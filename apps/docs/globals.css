@@ -1,5 +1,7 @@
 @import "tailwindcss";
 @import "chunks-ui/theme.css";
+/* Every font the site uses, self-hosted so no visitor IP goes to Google */
+@import "./fonts/fonts.css";
 
 @source "./";
 

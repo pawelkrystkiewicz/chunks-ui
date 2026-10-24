@@ -7,7 +7,6 @@ import { ThemeSidebar } from "./ThemeSidebar";
 import {
   applyPatch,
   DEFAULT_THEME,
-  FONTS_HREF,
   loadTheme,
   saveTheme,
   shuffle,
@@ -35,8 +34,6 @@ export function CreatePage() {
 
   return (
     <>
-      {/* No `precedence`: React renders it in place, so it is removed on unmount */}
-      <link rel="stylesheet" href={FONTS_HREF} />
       {/* Cancels Nextra's content padding so the page sets its own 24px gutter */}
       <div className="-mx-4 -mt-4 md:-mx-12">
         <div className="mx-auto w-full max-w-[1680px]">

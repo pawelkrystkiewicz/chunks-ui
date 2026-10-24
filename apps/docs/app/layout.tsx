@@ -6,7 +6,6 @@ import "nextra-theme-docs/style.css";
 import "../globals.css";
 import { config } from "../config";
 import { HydrationMarker } from "./HydrationMarker";
-import { LAYOUT_FONTS_HREF } from "./layout-fonts";
 import { NavLogo } from "./NavLogo";
 
 export const metadata = {
@@ -32,7 +31,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         )}
       </Head>
       <body>
-        <link rel="stylesheet" href={LAYOUT_FONTS_HREF} precedence="default" />
         <Layout
           navbar={
             <Navbar

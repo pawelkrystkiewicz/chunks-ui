@@ -2,7 +2,6 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { PRESETS } from "../../create/theme-model";
-import { isLayoutFont } from "../../layout-fonts";
 import { CopyRow, HeroCopy, PresetGrid } from "./LandingClient";
 
 const CMD = "bun add chunks-ui motion";
@@ -75,22 +74,28 @@ it("HeroCopy keeps the visible command in its accessible name", () => {
   expect(screen.getByRole("button", { name: CMD })).toBeTruthy();
 });
 
-// An "Aa"-only face has no unicode-range, so it would shadow the layout's full face of that family.
-// Every other preset heading font must be loaded, or its card falls back to the system font.
-it("PresetGrid's Aa subset loads each preset font exactly once, minus the layout's families", () => {
+// The preset fonts are self-hosted (fonts/fonts.css): no stylesheet, and no request to Google.
+it("PresetGrid loads no font stylesheet", () => {
   render(<PresetGrid />);
-  const link = document.querySelector("link[rel='stylesheet'][href*='text=Aa']");
-  expect(link, "PresetGrid renders no Aa font link").not.toBeNull();
-  const href = link?.getAttribute("href") ?? "";
-  const families = new URL(href).searchParams
-    .getAll("family")
-    .map((f) => f.replace(/:.*/, "").replaceAll("+", " "));
-  const wanted = [...new Set(PRESETS.map((p) => p.theme.fontHeading))];
-  expect(wanted.length).toBeGreaterThan(0);
-  for (const f of wanted) {
-    expect(families.filter((x) => x === f).length, f).toBe(isLayoutFont(f) ? 0 : 1);
-  }
-  expect(families.length).toBe(wanted.filter((f) => !isLayoutFont(f)).length);
+  expect(document.querySelector("link[rel='stylesheet']")).toBeNull();
+  expect(document.querySelector("[href*='fonts.googleapis.com']")).toBeNull();
+});
+
+// fonts.css declares "<font> Aa" (A, a and space at 600) for the tiles' fonts; the full face is the
+// fallback. The faces exist only at 600, so the span must stay font-semibold.
+it("PresetGrid draws each tile's Aa from the preset font's Aa subset first", () => {
+  render(<PresetGrid />);
+  const tiles = document.querySelectorAll("[data-preset]");
+  expect(tiles.length).toBe(PRESETS.length);
+  PRESETS.forEach(({ theme }, i) => {
+    const spans = [...(tiles[i]?.querySelectorAll("span[aria-hidden]") ?? [])];
+    const aa = spans.find((s) => s.textContent === "Aa") as HTMLElement | undefined;
+    // jsdom writes every quoted family name in double quotes
+    expect(aa?.style.fontFamily, theme.fontHeading).toMatch(
+      new RegExp(`^"${theme.fontHeading} Aa", "${theme.fontHeading}",`),
+    );
+    expect(aa?.classList.contains("font-semibold"), theme.fontHeading).toBe(true);
+  });
 });
 
 // Named by content, never aria-label (see LandingPage.spec.tsx): the Aa glyph is hidden, a sr-only tail says where it goes.
