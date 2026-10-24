@@ -1,8 +1,8 @@
 /* Every font the docs site uses (FONTS in app/create/theme-model.ts), self-hosted so no visitor IP
    goes to Google. Variable woff2 files and unicode ranges from Google Fonts; OFL.txt beside them.
    The urls are relative so Next hashes the files into /_next/static/media and serves them
-   immutable. A browser downloads a face only when text renders in it, so the picker's families
-   cost nothing on pages that don't use them. */
+   immutable. A browser downloads a face only when an element's text or line metrics use it, so
+   the picker's families cost nothing on pages that don't use them. */
 /* ponytail: only latin + latin-ext are shipped. The subsets listed here, which Google also serves,
    are not, so their characters render in the fallback font. Add a subset if the docs ever need it.
    Manrope: cyrillic-ext, cyrillic, greek, vietnamese
@@ -80,7 +80,7 @@
     U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
-/* The /create picker's other families, also drawn by the landing page's preset tiles */
+/* The /create picker's other families; the landing page's preset tiles fall back to them */
 @font-face {
   font-family: "Geist";
   font-style: normal;

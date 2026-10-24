@@ -81,7 +81,8 @@ it("PresetGrid loads no font stylesheet", () => {
   expect(document.querySelector("[href*='fonts.googleapis.com']")).toBeNull();
 });
 
-// fonts.css declares "<font> Aa" (A and a at 600) for the tiles' fonts; the full face is the fallback.
+// fonts.css declares "<font> Aa" (A, a and space at 600) for the tiles' fonts; the full face is the
+// fallback. The faces exist only at 600, so the span must stay font-semibold.
 it("PresetGrid draws each tile's Aa from the preset font's Aa subset first", () => {
   render(<PresetGrid />);
   const tiles = document.querySelectorAll("[data-preset]");
@@ -93,6 +94,7 @@ it("PresetGrid draws each tile's Aa from the preset font's Aa subset first", () 
     expect(aa?.style.fontFamily, theme.fontHeading).toMatch(
       new RegExp(`^"${theme.fontHeading} Aa", "${theme.fontHeading}",`),
     );
+    expect(aa?.classList.contains("font-semibold"), theme.fontHeading).toBe(true);
   });
 });
 
