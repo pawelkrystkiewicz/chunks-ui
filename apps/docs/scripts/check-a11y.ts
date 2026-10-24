@@ -30,6 +30,7 @@
 import { rmSync } from "node:fs";
 import { join } from "node:path";
 import AxeBuilder from "@axe-core/playwright";
+import { ROUTE_CACHE_DIRECTORY } from "next/dist/server/lib/route-cache-key";
 import { type Browser, chromium, type Page } from "playwright";
 
 const DOCS_DIR = join(import.meta.dirname, "..");
@@ -356,9 +357,13 @@ const STARTUP_MS = 60_000;
 async function startServer() {
   // A server left on the port would serve an older build
   if (await answers()) throw new Error(`${BASE_URL} is already taken; stop it or set PORT`);
-  // next start's page cache: a real build clears it, but Turbo's cache restore leaves it, so the
-  // server would serve an older build's pages
-  rmSync(join(DOCS_DIR, ".next", "server", "route-cache"), { recursive: true, force: true });
+  // next start's page cache is keyed by route, not by build, and Next reads it before the
+  // build's own pages, so an older build's entries win. A real build clears it; Turbo's cache
+  // restore doesn't.
+  rmSync(join(DOCS_DIR, ".next", "server", ROUTE_CACHE_DIRECTORY), {
+    recursive: true,
+    force: true,
+  });
   const server = Bun.spawn(["bun", "x", "next", "start", "-p", String(PORT)], {
     cwd: DOCS_DIR,
     stdout: "ignore",
