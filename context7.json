@@ -1,6 +1,5 @@
 {
   "$schema": "https://context7.com/schema/context7.json",
-  "url": "https://context7.com/pawelkrystkiewicz/chunks-ui",
   "projectTitle": "Chunks UI",
   "description": "React 19 component library built on Base UI and styled with Tailwind CSS v4 and CVA, with optional Motion animations. Published as one npm package, chunks-ui, with a theme.css of OKLCH design tokens.",
   "folders": ["apps/docs/content", "apps/docs/props"],
