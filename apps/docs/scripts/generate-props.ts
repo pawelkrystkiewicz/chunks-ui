@@ -1,22 +1,17 @@
 /// <reference types="@types/bun" />
 /**
- * Writes the props tables of the docs pages as markdown, one file per page, so that a reader of
- * the source sees what the pages render at build time (Context7 indexes `content/` and `props/`).
+ * Writes the props tables of the docs pages as markdown, one file per page: Context7 indexes the
+ * MDX source (`content/` and `props/`), not the tables the pages render at build time.
  * For each `generateDefinition({ code })` call in `content/**\/*.mdx`, it calls Nextra's
  * `generateDefinition` with the same `code` and writes the entries as a table under the nearest
  * heading above the call: `content/components/button.mdx` → `props/components/button.md`.
- * Needs `chunks-ui` built first: the types resolve through the built package, as for
- * check:snippets (the docs `check-types` script runs after Turbo's `^build`). A change to a
- * prop's comment or type shows in the tables only after a rebuild, so the fix command builds
- * first: `bun run build --filter=chunks-ui && bun run --cwd apps/docs generate:props`, from the
- * repo root.
+ * Needs `chunks-ui` built first: the types resolve through the built package.
  *
  * A call passes `code` alone, as a template literal without `${}`. Any other call shape, a code
- * fence left open, and a result with no props table (a function signature) fail the run with the
- * .mdx line rather than going unread.
+ * fence left open, and a result with no props table fail the run with the .mdx line rather than
+ * going unread.
  *
- * Run: bun run generate:props (writes the files and deletes those no page generates any more)
- *      bun run check:props (writes nothing; exits 1 when a file differs, is missing or is extra)
+ * Run: bun run generate:props (`check:props` writes nothing and exits 1 on any difference)
  */
 import { existsSync } from "node:fs";
 import { mkdir, rm, writeFile } from "node:fs/promises";
@@ -26,15 +21,14 @@ import type { TypeField } from "nextra/tsdoc";
 const DOCS_DIR = join(import.meta.dirname, "..");
 const CONTENT_DIR = join(DOCS_DIR, "content");
 const PROPS_DIR = join(DOCS_DIR, "props");
-// From the repo root. Builds first: the types come from the built `dist`, so a JSDoc edit is not
-// in the tables until chunks-ui is rebuilt.
+// From the repo root. Builds first: a JSDoc edit is not in the tables until chunks-ui is rebuilt.
 const FIX = "bun run build --filter=chunks-ui && bun run --cwd apps/docs generate:props";
 
 export type GenerateDefinition = typeof import("nextra/tsdoc").generateDefinition;
 /** A `generateDefinition` call: its .mdx line and its `code` */
-export type Call = { line: number; code: string };
+type Call = { line: number; code: string };
 /** The calls under one heading of a page */
-export type Section = { heading: string; headingLine: number; calls: Call[] };
+type Section = { heading: string; headingLine: number; calls: Call[] };
 
 const FENCE = /^\s*(`{3,}|~{3,})/;
 const CLOSE = /^\s*(`{3,}|~{3,})\s*$/;
@@ -198,7 +192,7 @@ export function propsMarkdown(
   return `${lines.join("\n")}\n`;
 }
 
-export type Drift = { path: string; problem: "changed" | "missing" | "extra" };
+type Drift = { path: string; problem: "changed" | "missing" | "extra" };
 
 /** Compares the generated files with those on disk, both keyed by their path in `props/` */
 export function diffOutputs(generated: Map<string, string>, onDisk: Map<string, string>) {
@@ -269,12 +263,10 @@ if (import.meta.main) {
     console.error(`Unknown argument in "${args.join(" ")}". Usage: generate-props.ts [--check]`);
     process.exit(2);
   }
-  const started = performance.now();
   const { outputs, errors } = await generateOutputs(await loadGenerateDefinition());
   for (const error of errors) console.error(error);
   if (errors.length > 0) process.exit(1);
   const drift = diffOutputs(outputs, await readOutputs());
-  const seconds = ((performance.now() - started) / 1000).toFixed(1);
 
   if (check) {
     for (const { path, problem } of drift)
@@ -283,7 +275,7 @@ if (import.meta.main) {
       console.error(`The props tables are out of date. Run (from the repo root): ${FIX}`);
       process.exit(1);
     }
-    console.log(`Checked ${outputs.size} props files: up to date (${seconds}s).`);
+    console.log(`Checked ${outputs.size} props files: up to date.`);
   } else {
     for (const { path, problem } of drift) {
       const file = join(PROPS_DIR, path);
@@ -294,8 +286,6 @@ if (import.meta.main) {
         await writeFile(file, outputs.get(path) ?? "");
       }
     }
-    console.log(
-      `Generated ${outputs.size} props files, ${drift.length} written or deleted (${seconds}s).`,
-    );
+    console.log(`Generated ${outputs.size} props files, ${drift.length} written or deleted.`);
   }
 }
