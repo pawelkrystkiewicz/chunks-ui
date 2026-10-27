@@ -1,0 +1,24 @@
+{
+  "$schema": "https://context7.com/schema/context7.json",
+  "url": "https://context7.com/pawelkrystkiewicz/chunks-ui",
+  "projectTitle": "Chunks UI",
+  "description": "React 19 component library built on Base UI and styled with Tailwind CSS v4 and CVA, with optional Motion animations. Published as one npm package, chunks-ui, with a theme.css of OKLCH design tokens.",
+  "folders": ["apps/docs/content", "apps/docs/props"],
+  "excludeFiles": [
+    "CLAUDE.md",
+    "AGENTS.md",
+    "CONTRIBUTING.md",
+    "TESTING_STRATEGY.md",
+    "privacy.mdx",
+    "create.mdx"
+  ],
+  "rules": [
+    "Import components from 'chunks-ui'. In React Server Components import cn, cnState and *Variants helpers from 'chunks-ui/utils', because 'chunks-ui' is a client bundle.",
+    "Load the theme with @import 'chunks-ui/theme.css' right after @import 'tailwindcss'. No Tailwind plugin or config file is needed.",
+    "chunks-ui needs React 19.2+ and Tailwind CSS v4. Motion is optional: without the motion package the components fall back to CSS transitions.",
+    "Compose with the Base UI render prop. chunks-ui components do not support asChild.",
+    "Use the color prop (primary, secondary, destructive, success, warning) and the variant prop where a component offers them, before adding custom classes.",
+    "Change built-in English text with the labels prop and pass only the keys that change.",
+    "Wrap a subtree in <PortalContainerProvider value={element}> to render its popups inside that element instead of document.body."
+  ]
+}
