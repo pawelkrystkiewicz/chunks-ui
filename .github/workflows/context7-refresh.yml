@@ -1,0 +1,38 @@
+name: Context7 Refresh
+# Asks Context7 to re-index the library when a file it reads changes on master: the folders in
+# context7.json, context7.json itself, and the root README.md, which Context7 always reads.
+on:
+  push:
+    branches: [master]
+    paths:
+      - apps/docs/content/**
+      - apps/docs/props/**
+      - context7.json
+      - README.md
+  # A refresh by hand, e.g. after adding the CONTEXT7_API_KEY secret or after a failed run
+  workflow_dispatch:
+permissions: {}
+# One refresh at a time. A push during a run waits, and a newer push replaces a waiting one, so
+# overlapping pushes give at most one more refresh, which indexes the latest master.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+jobs:
+  refresh:
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    steps:
+      # A non-2xx response fails the job and prints Context7's response body
+      - name: Refresh the Context7 library
+        env:
+          CONTEXT7_API_KEY: ${{ secrets.CONTEXT7_API_KEY }}
+        run: |
+          if [ -z "$CONTEXT7_API_KEY" ]; then
+            echo "::error::The CONTEXT7_API_KEY repository secret is not set"
+            exit 1
+          fi
+          curl --fail-with-body -sS --max-time 60 \
+            -X POST https://context7.com/api/v1/refresh \
+            -H "Authorization: Bearer $CONTEXT7_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"libraryName": "/pawelkrystkiewicz/chunks-ui"}'
