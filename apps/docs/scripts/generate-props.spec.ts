@@ -200,6 +200,30 @@ describe("propsMarkdown", () => {
     expect(propsMarkdown("index.mdx", "# Home\n\nText.", fake)).toBeNull();
   });
 
+  it.each([
+    ["no heading at all", [...call("loading")], 2],
+    ["a heading only below the call", [...call("loading"), "# Button"], 2],
+    ["a heading only inside a code fence", ["```md", "# Button", "```", ...call("loading")], 5],
+  ])("throws, naming the file and line, on a call with %s above it", (_, lines, line) => {
+    expect(() => propsMarkdown("components/x.mdx", lines.join("\n"), fake)).toThrow(
+      new RegExp(
+        `^content/components/x\\.mdx:${line} - no heading above the generateDefinition call`,
+      ),
+    );
+  });
+
+  it.each([
+    ["only ## and ### headings", ["## Props", "### Button", ...call("loading")]],
+    [
+      "a # heading only inside a code fence",
+      ["```md", "# Button", "```", "## Props", ...call("loading")],
+    ],
+  ])("throws, naming the file, on a page with %s and no title", (_, lines) => {
+    expect(() => propsMarkdown("components/x.mdx", lines.join("\n"), fake)).toThrow(
+      /^content\/components\/x\.mdx - no "# " heading to title its props/,
+    );
+  });
+
   it("throws, naming the file and line, on a result with no props table", () => {
     const signature: GenerateDefinition = () => ({
       name: "fn",
