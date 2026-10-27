@@ -3,13 +3,20 @@
 import {
   type ColumnDef,
   type ColumnFiltersState,
+  columnFilteringFeature,
+  createFilteredRowModel,
+  createPaginatedRowModel,
+  createSortedRowModel,
+  filterFn_includesString,
   flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
+  rowPaginationFeature,
+  rowSelectionFeature,
+  rowSortingFeature,
   type SortingState,
-  useReactTable,
+  sortFn_alphanumeric,
+  sortFn_text,
+  tableFeatures,
+  useTable,
 } from "@tanstack/react-table";
 import { Button, Checkbox, Input, Table } from "chunks-ui";
 import { ArrowUpDown } from "lucide-react";
@@ -34,7 +41,21 @@ const data: Payment[] = [
   { id: "inv_08", amount: 203, status: "processing", email: "hank@example.com" },
 ];
 
-const columns: ColumnDef<Payment>[] = [
+// TanStack Table v9 has only the features registered here. "auto" sorting and filtering pick
+// from the registered functions: text or alphanumeric for the emails, includesString for the filter
+const features = tableFeatures({
+  columnFilteringFeature,
+  rowSortingFeature,
+  rowPaginationFeature,
+  rowSelectionFeature,
+  filteredRowModel: createFilteredRowModel(),
+  sortedRowModel: createSortedRowModel(),
+  paginatedRowModel: createPaginatedRowModel(),
+  filterFns: { includesString: filterFn_includesString },
+  sortFns: { text: sortFn_text, alphanumeric: sortFn_alphanumeric },
+});
+
+const columns: ColumnDef<typeof features, Payment>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -94,19 +115,16 @@ export function DataTableExample() {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [rowSelection, setRowSelection] = useState({});
 
-  const table = useReactTable({
+  const table = useTable({
+    features,
     data,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     onRowSelectionChange: setRowSelection,
     state: { sorting, columnFilters, rowSelection },
     // TanStack shows 10 rows per page by default; 5 gives the 8 rows two pages
-    initialState: { pagination: { pageSize: 5 } },
+    initialState: { pagination: { pageIndex: 0, pageSize: 5 } },
   });
 
   const emailCol = table.getColumn("email");
@@ -144,7 +162,7 @@ export function DataTableExample() {
               {table.getRowModel().rows.length ? (
                 table.getRowModel().rows.map((row) => (
                   <Table.Row key={row.id} data-state={row.getIsSelected() ? "selected" : undefined}>
-                    {row.getVisibleCells().map((cell) => (
+                    {row.getAllCells().map((cell) => (
                       <Table.Cell key={cell.id}>
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </Table.Cell>

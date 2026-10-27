@@ -5,6 +5,13 @@ import { expect } from "vitest";
 
 expect.extend(toHaveNoViolations);
 
+// @types/jest-axe types the matcher on jest.Matchers, which Vitest 5 no longer merges into its own
+declare module "vitest" {
+  interface Matchers<R extends void | Promise<void> = void | Promise<void>, T = unknown> {
+    toHaveNoViolations(): R;
+  }
+}
+
 // Consumers develop under StrictMode (Next.js turns it on), which double-renders and re-runs
 // effects. Every RTL render and renderHook runs under it, so missing cleanup fails here first.
 // Specs that call hydrateRoot directly bypass it and wrap in StrictMode themselves.

@@ -12,7 +12,7 @@ bun add chunks-ui motion
 
 Peer dependencies: `react` and `react-dom` (`^19.2.0`), `@base-ui/react`, `class-variance-authority`, and optionally `tailwindcss` (v4) and `motion` (`^12.8.0`). See [Getting Started](https://ui-kit.chunk-creations.com/getting-started) for the ranges.
 
-Node 22 or newer. The install command does not add `tailwindcss`: the app is expected to have Tailwind v4 set up already.
+Node 24.22.1 or newer. The install command does not add `tailwindcss`: the app is expected to have Tailwind v4 set up already.
 
 ## Usage
 

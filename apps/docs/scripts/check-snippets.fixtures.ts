@@ -27,11 +27,12 @@ export const fixtures: Record<string, string> = {
   "components/data-table.mdx": `
     type Payment = { id: string; amount: number; status: string; email: string };
     const data: Payment[];
-    const columns: ${TABLE}.ColumnDef<Payment>[];
+    const features: ${TABLE}.StockFeatures;
+    const columns: ${TABLE}.ColumnDef<typeof features, Payment>[];
     ${state("sorting", `${TABLE}.SortingState`)}
     ${state("columnFilters", `${TABLE}.ColumnFiltersState`)}
     ${state("rowSelection", `${TABLE}.RowSelectionState`)}
-    const table: ${TABLE}.Table<Payment>;
+    const table: ${TABLE}.Table<typeof features, Payment>;
   `,
   "components/loader.mdx": "const loading: boolean;",
   "components/menu.mdx": `${state("showGrid", "boolean")} ${state("theme", "string")}`,

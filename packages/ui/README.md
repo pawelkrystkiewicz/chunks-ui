@@ -18,7 +18,7 @@ Peer dependencies:
 | `tailwindcss`               | `^4.0.0`  | optional peer; you need Tailwind v4 in the app to use `theme.css` |
 | `motion`                    | `^12.8.0` | optional; without it components use CSS transitions |
 
-Node 22 or newer. The install command does not add `tailwindcss`: the app is expected to have Tailwind v4 set up already.
+Node 24.22.1 or newer. The install command does not add `tailwindcss`: the app is expected to have Tailwind v4 set up already.
 
 ## Usage
 
