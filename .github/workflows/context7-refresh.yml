@@ -1,6 +1,8 @@
 name: Context7 Refresh
 # Asks Context7 to re-index the library when a file it reads changes on master: the folders in
-# context7.json, context7.json itself, and the root README.md, which Context7 always reads.
+# context7.json, context7.json itself, and the root-level markdown files, which Context7 always
+# reads ('*.md' does not match a file in a subfolder). A root file that context7.json excludes
+# also starts a refresh, which finds nothing new to index.
 on:
   push:
     branches: [master]
@@ -8,7 +10,7 @@ on:
       - apps/docs/content/**
       - apps/docs/props/**
       - context7.json
-      - README.md
+      - '*.md'
   # A refresh by hand, e.g. after adding the CONTEXT7_API_KEY secret or after a failed run
   workflow_dispatch:
 permissions: {}
