@@ -73,6 +73,35 @@ describe("extractBlocks", () => {
   });
 });
 
+describe("extractBlocks, a second call on a line", () => {
+  const one = "<TSDoc definition={generateDefinition({ code: `export default A` })} />";
+  const two = "<TSDoc definition={generateDefinition({ code: `export default B` })} />";
+
+  it.each([
+    ["two calls on one line", ["# Page", "## Props", one + two], 3],
+    [
+      "a call that starts on the last line of the one before",
+      [
+        "# Page",
+        "## Props",
+        "<TSDoc definition={generateDefinition({",
+        "code: `export default A`",
+        `})} />${two}`,
+      ],
+      5,
+    ],
+  ])("throws on %s, naming the file and the line", (_, lines, line) => {
+    expect(() => extractBlocks("components/x.mdx", lines.join("\n"))).toThrow(
+      new RegExp(`^content/components/x\\.mdx:${line} - a second generateDefinition call`),
+    );
+  });
+
+  it("reads two calls on separate lines", () => {
+    const { sections } = extractBlocks("x.mdx", ["# Page", "## Props", one, two].join("\n"));
+    expect(sections.map((section) => section.calls.map((call) => call.line))).toEqual([[3, 4]]);
+  });
+});
+
 describe("renderTable", () => {
   it("renders defaults, required props, deprecations and cells that need escaping", () => {
     const entries: TypeField[] = [

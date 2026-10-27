@@ -91,6 +91,14 @@ export function extractBlocks(page: string, source: string) {
       i++;
       offset += (lines[i]?.length ?? 0) + 1;
     }
+    // i is the call's last line: its remainder is not scanned again, so a second call there
+    // would go unread while check:props passes
+    const endLine = lines[i] ?? "";
+    if (CALL_START.test(endLine.slice(CALL.lastIndex - (offset - endLine.length - 1)))) {
+      throw new Error(
+        `content/${page}:${i + 1} - a second generateDefinition call on the line where the one before it ends: put each call on its own line`,
+      );
+    }
   }
   return { title, sections };
 }
