@@ -280,7 +280,7 @@ if (import.meta.main) {
     for (const { path, problem } of drift)
       console.error(`apps/docs/props/${path} - ${PROBLEMS[problem]}`);
     if (drift.length > 0) {
-      console.error(`The props tables are out of date. Run: ${FIX}`);
+      console.error(`The props tables are out of date. Run (from the repo root): ${FIX}`);
       process.exit(1);
     }
     console.log(`Checked ${outputs.size} props files: up to date (${seconds}s).`);
