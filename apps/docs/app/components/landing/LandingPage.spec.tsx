@@ -28,6 +28,22 @@ it("the header links to the GitHub repository in a new tab", () => {
   expect(link.getAttribute("target")).toBe("_blank");
 });
 
+it("the get-started rows and the footer link to Context7 in a new tab", () => {
+  const { container } = renderPage();
+  const getStarted = container.querySelector<HTMLElement>("#get-started");
+  const footer = container.querySelector("footer");
+  if (!getStarted || !footer) throw new Error("no #get-started section or footer");
+  const links = [
+    within(getStarted).getByRole("link", { name: /context7\.com\/pawelkrystkiewicz\/chunks-ui/ }),
+    within(footer).getByRole("link", { name: "Context7 ↗" }),
+  ];
+  for (const link of links) {
+    expect(link.getAttribute("href")).toBe("https://context7.com/pawelkrystkiewicz/chunks-ui");
+    expect(link.getAttribute("target")).toBe("_blank");
+    expect(link.getAttribute("rel")).toBe("noopener");
+  }
+});
+
 it("the header has the docs search box", () => {
   const { container } = renderPage();
   expect(header(container).getByRole("combobox", { name: "Search documentation" })).toBeTruthy();
