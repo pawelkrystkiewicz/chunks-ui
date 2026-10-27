@@ -13,7 +13,7 @@
     "create.mdx"
   ],
   "rules": [
-    "Import components from 'chunks-ui'. In React Server Components import cn, cnState and *Variants helpers from 'chunks-ui/utils', because 'chunks-ui' is a client bundle.",
+    "Import components from 'chunks-ui'. In React Server Components import the React-free helpers (cn, cnState, *Variants, DEFAULT_*_LABELS, mergeLabels) from 'chunks-ui/utils', because 'chunks-ui' is a client bundle.",
     "Load the theme with @import 'chunks-ui/theme.css' right after @import 'tailwindcss'. No Tailwind plugin or config file is needed.",
     "chunks-ui needs React 19.2+ and Tailwind CSS v4. Motion is optional: without the motion package the components fall back to CSS transitions.",
     "Compose with the Base UI render prop. chunks-ui components do not support asChild.",
