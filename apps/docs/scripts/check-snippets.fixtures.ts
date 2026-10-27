@@ -27,7 +27,13 @@ export const fixtures: Record<string, string> = {
   "components/data-table.mdx": `
     type Payment = { id: string; amount: number; status: string; email: string };
     const data: Payment[];
-    const features: ${TABLE}.StockFeatures;
+    /** The features the page registers in its first block */
+    const features: {
+      columnFilteringFeature: typeof ${TABLE}.columnFilteringFeature;
+      rowSortingFeature: typeof ${TABLE}.rowSortingFeature;
+      rowPaginationFeature: typeof ${TABLE}.rowPaginationFeature;
+      rowSelectionFeature: typeof ${TABLE}.rowSelectionFeature;
+    };
     const columns: ${TABLE}.ColumnDef<typeof features, Payment>[];
     ${state("sorting", `${TABLE}.SortingState`)}
     ${state("columnFilters", `${TABLE}.ColumnFiltersState`)}

@@ -53,7 +53,7 @@ playwright-report
 .playwright-mcp/
 
 # vitest browser attachments (temp files, not baselines)
-.vitest-attachments
+.vitest/
 
 # visual regression screenshots — only linux CI baselines are committed
 **/__screenshots__/**/*.png

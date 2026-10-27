@@ -26,8 +26,13 @@ describe("floorsOf", () => {
     ]).toEqual(["react"]);
   });
 
+  it("takes the lowest of ^ranges joined by ||", () => {
+    expect(floorsOf({ motion: "^14.0.0 || ^12.8.0" }, {}).get("motion")).toBe("12.8.0");
+  });
+
   it("throws on a range that is not a caret", () => {
     expect(() => floorsOf({ react: ">=19.2.0" }, {})).toThrow("react");
+    expect(() => floorsOf({ motion: "^12.8.0 || >=14" }, {})).toThrow("motion");
   });
 
   it("flags an exempt name that is not a peer", () => {

@@ -16,7 +16,7 @@ Peer dependencies:
 | `@base-ui/react`            | `^1.9.0`  | required                                         |
 | `class-variance-authority`  | `^0.7.1`  | required                                         |
 | `tailwindcss`               | `^4.0.0`  | optional peer; you need Tailwind v4 in the app to use `theme.css` |
-| `motion`                    | `^12.8.0` | optional; without it components use CSS transitions |
+| `motion`                    | `^12.8.0 \|\| ^14.7.1` | optional; without it components use CSS transitions |
 
 Node 24.22.1 or newer. The install command does not add `tailwindcss`: the app is expected to have Tailwind v4 set up already.
 
@@ -59,7 +59,7 @@ Each has a page in the [component index](https://ui-kit.chunk-creations.com/comp
 | --------- | --------------------------------------------- |
 | Headless  | `@base-ui/react` v1.9+ (includes Floating UI) |
 | Styling   | Tailwind CSS v4 + CVA                         |
-| Animation | Motion 12.8+ (optional peer dep)              |
+| Animation | Motion 12.8+ or 14.7+ (optional peer dep)     |
 | Build     | tsup (ESM + CJS + `.d.ts`)                    |
 
 ## Color System
@@ -91,7 +91,7 @@ Motion is optional — components detect it at runtime and fall back to CSS tran
 
 ## Known limits
 
-Most entries wait on a fix in Base UI and were checked against `@base-ui/react` 1.9.0. The `Resizable` entry is chunks-ui's own behaviour, not a Base UI bug, and goes when that behaviour changes. A Base UI entry goes once chunks-ui requires a Base UI release with its fix. The other framework packages copy this list when they are created.
+Most entries wait on a fix in Base UI and were checked against `@base-ui/react` 1.9.0. The `Resizable` and Motion 14 entries are chunks-ui's own behaviour, not Base UI bugs, and go when that behaviour changes. A Base UI entry goes once chunks-ui requires a Base UI release with its fix. The other framework packages copy this list when they are created.
 
 - **Select popup stuck mounted.** If a `Select`'s `open` turns `false` in the commit after it turned `true` (a layout effect closes it, a parent disables it), the popup stays mounted in its closing state, still in the accessibility tree, and `onOpenChangeComplete(false)` never fires. chunks-ui removes the popup of a `Select` disabled while open at once, so it closes with no exit animation ([Select › Disabled](https://ui-kit.chunk-creations.com/components/select#disabled)). For any other such close, pass `actionsRef` to `Select.Root` and call `actionsRef.current?.unmount()` in the same batch. `Combobox` has the same bug and the same fix; chunks-ui does not close it on its own. Removed when: [mui/base-ui#6031](https://github.com/mui/base-ui/issues/6031) ships.
 - **Select closes on a drag-out after a fast click.** If the mouse button that opened a `Select` was released before the open render ended (about 20 ms in a React dev build; a trackpad tap-to-click is that fast), a press inside the popup released outside it closes the `Select` (reason `cancel-open`); after a slower click it stays open. chunks-ui drops the other stray closes of this bug, not this one, and has no workaround. Removed when: [mui/base-ui#6042](https://github.com/mui/base-ui/issues/6042) ships.
@@ -99,6 +99,8 @@ Most entries wait on a fix in Base UI and were checked against `@base-ui/react` 
 - **High-priority `Toast` tab stops.** Base UI 1.9 sets `aria-hidden` on a toast added with `priority: "high"` until keyboard focus enters the viewport (F6). chunks-ui takes the toast, its `Toast.Close` and its `Toast.Action` out of the tab order meanwhile, but a focusable element of yours inside it, such as a link in `title` or `description`, keeps its tab stop, and axe reports `aria-hidden-focus`; navigate from `actionProps.onClick` instead ([Toast › High Priority](https://ui-kit.chunk-creations.com/components/toast#high-priority)). Removed when: [mui/base-ui#5659](https://github.com/mui/base-ui/issues/5659) is fixed (proposed fix: [mui/base-ui#5731](https://github.com/mui/base-ui/pull/5731)).
 - **Tooltip arrow that mounts or unmounts while the tooltip is open.** With an explicit `arrowPadding` or a content-sized arrow width, it is placed only at the next scroll, resize or open: a mounting arrow lands half its width off centre, and an unmounting one leaves the popup where the arrow had shifted it. A `Tooltip` with the default padding, `Popover` and `Menu` are unaffected ([Tooltip › Positioning](https://ui-kit.chunk-creations.com/components/tooltip#positioning)). Removed when: for the mount, [mui/base-ui#6029](https://github.com/mui/base-ui/issues/6029) ships (fix PR [mui/base-ui#6035](https://github.com/mui/base-ui/pull/6035)); the unmount has no upstream issue yet.
 - **`Resizable` saves what the window forced.** A drag or key step commits the layout as the group shows it, not only the two panels the handle moves. If the window holds a % panel at a px limit (a `minSize` in a narrow window, a `maxSize` in a wide one) or shrinks or stretches a px panel, that size is saved with the drag, and it is the wrong size once the window changes back. Example: `a` (`defaultSize` 34%, `minSize` 300px), `b` and `c` in a 500px group with the default 1px handles. `a` is held at 300px, and after a drag of the handle between `b` and `c` it is about 722px in a 1200px group, not 407px. When px panels fill the whole group, a % panel can be saved as 0% and can stay 0px at every width until you drag its handle ([Resizable › Basic Usage](https://ui-kit.chunk-creations.com/components/resizable#basic-usage)). Removed when: a drag or key step saves only the sizes it moves.
+- **Motion 14 transforms stay on the main thread.** Motion 14.2 runs `x`, `scale` and the other transforms as browser (WAAPI) animations. The animations of `Switch`, `Checkbox`, `Radio`, `ToggleGroup` and `Tabs` opt out, so they run on the main thread as with Motion 12: their hand-offs between Motion and the CSS fallback read the values Motion writes each frame. Popups (`motion.div`) use WAAPI. A busy main thread can drop their frames, as with Motion 12. Removed when: the hand-offs read a running WAAPI animation's value.
+- **One-frame `Checkbox` or `Radio` indicator flash with Motion 14.** Motion 14 can write transforms a frame before other values. When Motion takes over a `Checkbox` or `Radio` indicator (scale and opacity) in a hand-off that starts after Motion's frame and before the paint, for example from a `ResizeObserver` callback, one frame can show Motion's scale over the CSS fallback. A `Switch` (transform only) and the `Tabs` and `ToggleGroup` indicators (box only) are not affected. Removed when: the hand-off switches after each kind of write.
 
 ## Versioning
 

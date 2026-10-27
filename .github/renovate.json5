@@ -82,6 +82,13 @@
       allowedVersions: "<4.4.0",
     },
     {
+      // engines.node of the published package is a support decision, as the peer floors are:
+      // Renovate raised it twice with no changeset (#663, #781). Move it by hand, with a changeset.
+      matchFileNames: ["packages/ui/package.json"],
+      matchDepTypes: ["engines"],
+      enabled: false,
+    },
+    {
       // @types/node follows the runtime major in .nvmrc: newer types typecheck calls to Node APIs
       // the runtime does not have. Lift the cap in the same PR that moves the .nvmrc major.
       matchPackageNames: ["@types/node"],

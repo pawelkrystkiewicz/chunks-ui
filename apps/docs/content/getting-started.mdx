@@ -14,7 +14,7 @@ Peer dependencies:
 | `@base-ui/react`            | `^1.9.0`  | required                                         |
 | `class-variance-authority`  | `^0.7.1`  | required                                         |
 | `tailwindcss`               | `^4.0.0`  | optional peer; you need Tailwind v4 in the app to use `theme.css` |
-| `motion`                    | `^12.8.0` | optional; without it components use CSS transitions |
+| `motion`                    | `^12.8.0 \|\| ^14.7.1` | optional; without it components use CSS transitions |
 
 Node 24.22.1 or newer. The install command does not add `tailwindcss`: the app is expected to have Tailwind v4 set up already.
 
@@ -76,7 +76,7 @@ A React Server Component imports `cn`, `cnState` and the `*Variants` functions f
 
 - **Headless layer:** `@base-ui/react` v1.9+ (includes Floating UI for positioning)
 - **Styling:** Tailwind CSS v4 + CVA + `clsx` + `tailwind-merge`
-- **Animation:** Motion 12.8+ (optional peer dependency)
+- **Animation:** Motion 12.8+ or 14.7+ (optional peer dependency)
 - **Build:** tsup (ESM + CJS + `.d.ts`)
 - **Compound pattern:** Components use `<X.Root>`, `<X.Trigger>`, `<X.Content>` patterns
 - **Composition:** Base UI `render` prop, not `asChild`

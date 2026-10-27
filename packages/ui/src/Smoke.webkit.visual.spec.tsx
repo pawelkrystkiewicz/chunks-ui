@@ -56,8 +56,7 @@ const settleContents = (contents: HTMLElement) =>
     return [contents.getBoundingClientRect().height, track.getBoundingClientRect().left];
   });
 
-// Wide enough for two columns beside a sidebar; it fits the runner window, so a screenshot is
-// one px per CSS px
+// Wide enough for two columns beside a sidebar
 withViewport(1000, 700);
 
 // Safari users mostly have no reduced-motion preference: Motion drives the springs here

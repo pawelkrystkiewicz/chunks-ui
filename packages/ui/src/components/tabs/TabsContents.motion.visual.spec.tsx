@@ -39,8 +39,8 @@ async function paintedAt(points: Point[]): Promise<Rgb[]> {
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
   if (!ctx) throw new Error("No 2D canvas context");
   ctx.drawImage(image, 0, 0);
-  // One image px per CSS px, as the runner window fits the page: scaled, a thin line blurs into its
-  // neighbours. The screenshot covers the whole viewport, a scrollbar included.
+  // One image px per CSS px, as Vitest sizes the browser page to the test page: scaled, a thin line
+  // blurs into its neighbours. The screenshot covers the whole viewport, a scrollbar included.
   expect(image.naturalWidth).toBe(window.innerWidth);
   return points.map(({ x, y }) => {
     const [r = 0, g = 0, b = 0] = ctx.getImageData(Math.floor(x), Math.floor(y), 1, 1).data;

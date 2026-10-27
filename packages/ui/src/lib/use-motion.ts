@@ -30,6 +30,23 @@ export type MotionElementProps = Omit<
   onAnimationStart?: (definition: unknown) => void;
 };
 
+/** `MotionOptions` that keep transforms on Motion's main-thread path; see `onMainThread`. */
+export type MainThreadOptions = MotionOptions & { onUpdate: () => void };
+
+const noop = () => {};
+
+/**
+ * `options` with an `onUpdate`, which keeps Motion from running `x`, `y` and the other independent
+ * transforms as WAAPI animations (Motion 14.2 and later). Those write no inline style until they
+ * finish, and the hand-offs to and from the CSS fallback read, write and clear the inline values
+ * Motion leaves each frame. Opacity still runs on WAAPI, as it did before 14.2.
+ * ponytail: transforms stay on the main thread as in Motion 12; moving them to WAAPI needs
+ * hand-offs that read the running WAAPI value instead of the inline style.
+ */
+export function onMainThread(options: MotionOptions = {}): MainThreadOptions {
+  return { ...options, onUpdate: noop };
+}
+
 /** The controls of a running `animate()` that chunks-ui uses. */
 export interface MotionAnimationControls {
   stop: () => void;
