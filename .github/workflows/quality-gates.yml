@@ -96,7 +96,8 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      # Includes the docs snippet type-check (apps/docs check:snippets)
+      # Includes the docs snippet type-check (apps/docs check:snippets) and the props tables drift
+      # check (apps/docs check:props)
       - name: Typecheck
         run: bun run check-types
 

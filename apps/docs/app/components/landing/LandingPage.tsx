@@ -30,6 +30,7 @@ import {
 
 const INSTALL = "bun add chunks-ui motion";
 const GITHUB = "https://github.com/pawelkrystkiewicz/chunks-ui";
+const CONTEXT7 = "https://context7.com/pawelkrystkiewicz/chunks-ui";
 const DOCS = "/getting-started";
 const COMPONENTS = "/components";
 
@@ -624,6 +625,7 @@ const LINK_ROWS = [
   { label: "// docs", href: DOCS, value: "ui-kit.chunk-creations.com" },
   { label: "// source", href: GITHUB, value: "github.com/pawelkrystkiewicz/chunks-ui ↗" },
   { label: "// for agents", href: "/llms.txt", value: "ui-kit.chunk-creations.com/llms.txt" },
+  { label: "// context7", href: CONTEXT7, value: "context7.com/pawelkrystkiewicz/chunks-ui ↗" },
 ];
 
 // `dark`: see the note above Hero.
@@ -667,6 +669,7 @@ const FOOTER_NAV = [
       { label: "Docs", href: DOCS },
       { label: "Components", href: COMPONENTS },
       { label: "llms.txt", href: "/llms.txt" },
+      { label: "Context7 ↗", href: CONTEXT7 },
     ],
   },
   {
