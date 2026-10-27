@@ -11,9 +11,9 @@
  * first: `bun run build --filter=chunks-ui && bun run --cwd apps/docs generate:props`, from the
  * repo root.
  *
- * A call passes `code` alone, as a template literal without `${}`. Any other call shape, and a
- * result with no props table (a function signature), fails the run with the .mdx line rather than
- * going unread.
+ * A call passes `code` alone, as a template literal without `${}`. Any other call shape, a code
+ * fence left open, and a result with no props table (a function signature) fail the run with the
+ * .mdx line rather than going unread.
  *
  * Run: bun run generate:props (writes the files and deletes those no page generates any more)
  *      bun run check:props (writes nothing; exits 1 when a file differs, is missing or is extra)
@@ -46,15 +46,16 @@ const CALL = /generateDefinition\(\{\s*code:\s*`([^`\\]*)`,?\s*\}\)/y;
 /**
  * Finds the `generateDefinition` calls of one page, grouped by the heading above them, and the
  * page's first `# ` heading. Fenced code is skipped, so a call or a `#` line shown in a code block
- * is not read. Throws, naming the .mdx line, on a call it cannot read.
+ * is not read. Throws, naming the .mdx line, on a call it cannot read and on a fence left open.
  */
 export function extractBlocks(page: string, source: string) {
   const lines = source.split("\n");
   const sections: Section[] = [];
   let title: string | undefined;
   let heading: { line: number; text: string } | undefined;
-  // The marker (``` or ~~~, any length) of the fence we are in
+  // The marker (``` or ~~~, any length) of the fence we are in, and the line it opened on
   let fence: string | null = null;
+  let fenceLine = 0;
   // Where line i starts in source
   let offset = 0;
 
@@ -68,7 +69,10 @@ export function extractBlocks(page: string, source: string) {
       continue;
     }
     fence = FENCE.exec(text)?.[1] ?? null;
-    if (fence) continue;
+    if (fence) {
+      fenceLine = i + 1;
+      continue;
+    }
     const match = HEADING.exec(text);
     if (match) {
       heading = { line: i + 1, text: match[2] ?? "" };
@@ -104,6 +108,12 @@ export function extractBlocks(page: string, source: string) {
         `content/${page}:${i + 1} - a second generateDefinition call on the line where the one before it ends: put each call on its own line`,
       );
     }
+  }
+  // A fence left open hides the rest of the page: its calls would go unread, check:props passing
+  if (fence) {
+    throw new Error(
+      `content/${page}:${fenceLine} - code fence left open: close it, or the rest of the page goes unread`,
+    );
   }
   return { title, sections };
 }

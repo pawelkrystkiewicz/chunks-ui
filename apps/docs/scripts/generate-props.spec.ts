@@ -60,6 +60,25 @@ describe("extractBlocks", () => {
   });
 
   it.each([
+    ["a ``` fence", ["```tsx", "const a = 1"], 3],
+    ["a ~~~ fence", ["", "~~~", "const a = 1"], 4],
+    // A closing fence shorter than the opening one does not close it
+    ["a fence closed by a shorter one", ["````mdx", ...call("export default A"), "```"], 3],
+  ])("throws when the page ends inside %s, naming its line", (_, tail, line) => {
+    const source = ["# Page", "## Props", ...tail].join("\n");
+    expect(() => extractBlocks("components/x.mdx", source)).toThrow(
+      new RegExp(`^content/components/x\\.mdx:${line} - code fence left open`),
+    );
+  });
+
+  it("throws on an open fence even when a call stands before it", () => {
+    const source = ["# Page", "## Props", ...call("export default A"), "```", "text"].join("\n");
+    expect(() => extractBlocks("components/x.mdx", source)).toThrow(
+      /^content\/components\/x\.mdx:10 - code fence left open/,
+    );
+  });
+
+  it.each([
     ["another option", "generateDefinition({ code: `export default A`, exportName: 'A' })"],
     ["a string code", "generateDefinition({ code: 'export default A' })"],
     // biome-ignore lint/suspicious/noTemplateCurlyInString: the MDX text of a template with a placeholder
