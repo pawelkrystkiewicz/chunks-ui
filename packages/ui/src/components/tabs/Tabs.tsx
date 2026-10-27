@@ -348,7 +348,7 @@ function TabsContents({ className, children, transition, ref, ...props }: TabsCo
   const childValue = (child: ReactNode) =>
     isValidElement(child) ? (child.props as { value?: unknown }).value : undefined;
   const activeIndex = childrenArray.findIndex((child) => childValue(child) === ctx?.value);
-  const safeIndex = activeIndex >= 0 ? activeIndex : 0;
+  const safeIndex = Math.max(activeIndex, 0);
 
   // --- height measurement ---
   const containerRef = useRef<HTMLDivElement>(null);

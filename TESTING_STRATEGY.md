@@ -170,8 +170,8 @@ Browser specs (Vitest browser mode, Playwright Chromium) in `packages/ui`. They 
 
   ```bash
   D=<scratchpad>/ui-visual; rm -rf $D && mkdir -p $D && git -C <wt> archive HEAD | tar -x -C $D
-  docker run --rm --platform linux/amd64 -v $D:/work -w /work mcr.microsoft.com/playwright:v1.64.1-noble@sha256:bdfda2a8fdf48707c5e50a49bd3e06d8d0c759153dc8ee057d8a81c3450bb3e9 bash -lc \
-    'npm i -g bun@1.4.3 >/dev/null 2>&1 && bun install --frozen-lockfile >/dev/null 2>&1 && cd packages/ui && bun run test:visual:update'
+  docker run --rm --platform linux/amd64 -v $D:/work -w /work mcr.microsoft.com/playwright:v1.64.1-noble@sha256:47b510dd9230bf0b9bfc9b20102241e577ea7a99334ab4c3ca19f19770e9b8ea bash -lc \
+    'npm i -g bun@1.4.4 >/dev/null 2>&1 && bun install --frozen-lockfile >/dev/null 2>&1 && cd packages/ui && bun run test:visual:update'
   rsync -am --include='*/' --include='*-linux.png' --exclude='*' $D/packages/ui/src/ <wt>/packages/ui/src/
   ```
 

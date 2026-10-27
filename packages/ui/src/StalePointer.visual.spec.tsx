@@ -26,6 +26,7 @@ const screenshot = (element: Element) => page.screenshot({ element, save: false 
 // The browser keeps the pointer where the last test left it, across tests and spec files, and
 // hovers whatever renders under it next. The tests run in order: the first leaves the pointer
 // on the trigger, at the spot where the second renders the same trigger.
+// biome-ignore lint/correctness/usePlaywrightValidDescribeCallback: Vitest's describe(name, options, fn), not Playwright's
 describe("a pointer left by the previous test", { shuffle: false }, () => {
   let unhovered: string | undefined;
 

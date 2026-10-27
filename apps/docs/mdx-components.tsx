@@ -8,6 +8,7 @@ type HeadingTag = "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
 /** Markdown headings use the display font (Outfit); body text stays Manrope. */
 function withDisplayFont(tag: HeadingTag) {
   const Heading = docsComponents[tag];
+  // biome-ignore lint/correctness/noComponentHookFactories: called once per tag at module load, so each heading keeps one identity
   return function DisplayHeading({ className, ...props }: ComponentProps<typeof Heading>) {
     // Footnotes pass exactly "sr-only", which Nextra swaps for its own class
     const classes = className === "sr-only" ? className : `font-display ${className ?? ""}`.trim();
