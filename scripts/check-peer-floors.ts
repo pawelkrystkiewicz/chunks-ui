@@ -41,7 +41,10 @@ export const TYPES: Record<string, string> = {
   "react-dom": "@types/react-dom",
 };
 
-/** name -> floor, from each `^range`. Throws on another range form or a stale exempt name. */
+/**
+ * name -> floor, from each `^range`, or the lowest of `^range`s joined by `||` (a peer supported
+ * on two majors). Throws on another range form or a stale exempt name.
+ */
 export function floorsOf(
   peers: Record<string, string>,
   exempt: Record<string, string>,
@@ -52,8 +55,12 @@ export function floorsOf(
   const floors = new Map<string, string>();
   for (const [name, range] of Object.entries(peers)) {
     if (name in exempt) continue;
-    if (!range.startsWith("^")) throw new Error(`${name}: peer range ${range} is not a ^range`);
-    floors.set(name, range.replace(/^\^/, ""));
+    const carets = range.split("||").map((part) => part.trim());
+    if (!carets.every((part) => part.startsWith("^"))) {
+      throw new Error(`${name}: peer range ${range} is not a ^range or ^ranges joined by ||`);
+    }
+    const versions = carets.map((part) => part.slice(1)).sort(Bun.semver.order);
+    floors.set(name, versions[0] as string);
   }
   return floors;
 }

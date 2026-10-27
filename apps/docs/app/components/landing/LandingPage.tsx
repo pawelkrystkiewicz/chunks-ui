@@ -391,7 +391,7 @@ const STEPS = [
     ),
     title: "Install",
     body: "Install the package. Motion is an optional peer for spring animations.",
-    meta: ["chunks-ui", "motion@12.8+"],
+    meta: ["chunks-ui", "motion@12.8+ / 14.7+"],
   },
   {
     step: "02 · THEME",
@@ -564,8 +564,8 @@ function MotionSection() {
           <div className={`${STATEMENT} gap-3.5`}>
             <span className={STATEMENT_LABEL}>{"// The default"}</span>
             <p className={STATEMENT_TEXT}>
-              Motion 12.8+ is optional. Add it and you get five tuned springs for indicators,
-              content, popups, overlays and small nudges.
+              Motion 12.8+ or 14.7+ is optional. Add it and you get five tuned springs for
+              indicators, content, popups, overlays and small nudges.
             </p>
           </div>
           <div className={`${STATEMENT} gap-3.5`}>

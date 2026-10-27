@@ -293,14 +293,6 @@ async function screenshotSize() {
   return { width: image.naturalWidth, height: image.naturalHeight };
 }
 
-describe("withViewport", () => {
-  it("rejects a page wider or taller than the runner window", () => {
-    const message = /raise RUNNER_WINDOW in vitest\.visual\.config\.ts/;
-    expect(() => withViewport(2000)).toThrow(message);
-    expect(() => withViewport(500, 5000)).toThrow(message);
-  });
-});
-
 describe("a screenshot of the page", () => {
   it("has one px per CSS px on the default 414 × 896 page", async () => {
     expect(await screenshotSize()).toEqual({ width: 414, height: 896 });
@@ -311,6 +303,15 @@ describe("a screenshot of the page", () => {
 
     it("has one px per CSS px too", async () => {
       expect(await screenshotSize()).toEqual({ width: 1000, height: 896 });
+    });
+  });
+
+  // Beyond the 1280 × 1024 window that Vitest 4 needed to keep a page from being scaled down
+  describe("set larger than a desktop window by withViewport", () => {
+    withViewport(2000, 1200);
+
+    it("has one px per CSS px too", async () => {
+      expect(await screenshotSize()).toEqual({ width: 2000, height: 1200 });
     });
   });
 });

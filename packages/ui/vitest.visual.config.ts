@@ -6,23 +6,15 @@ import { SETTLE_TIMEOUT_MS } from "./src/VisualTest.timeouts.ts";
 import type { AccessibilityNode, EmulatedMedia } from "./src/VisualTest.utils.tsx";
 
 /**
- * The runner's browser window, in CSS px. Vitest scales the test page down until it fits the
- * window, and Playwright's default window (1280 × 720) is shorter than the 414 × 896 page, so
- * screenshots came out at 0.8 scale. This window holds every page size the specs set, so a
- * screenshot has one px per CSS px.
- */
-const RUNNER_WINDOW = { width: 1280, height: 1024 };
-
-/**
- * Playwright with the window above, the pinned time zone, the given reduced-motion preference and,
- * with `hasTouch`, a touch screen
+ * Playwright with the pinned time zone, the given reduced-motion preference and, with `hasTouch`,
+ * a touch screen. No window size: headless, Vitest sizes the browser page to the test page (414 ×
+ * 896, or what withViewport sets), so it never scales a screenshot down.
  */
 export const playwrightProvider = (reducedMotion: "reduce" | "no-preference", hasTouch = false) =>
   playwright({
     contextOptions: {
       reducedMotion,
       hasTouch,
-      viewport: RUNNER_WINDOW,
       // The unit suite pins TZ the same way; see TESTING_STRATEGY.md "Time zone".
       timezoneId: "Europe/Warsaw",
     },

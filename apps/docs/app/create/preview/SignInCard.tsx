@@ -1,5 +1,5 @@
 import { Button, Checkbox, Field, Input, Separator } from "chunks-ui";
-import { Github } from "lucide-react";
+import { GitHubIcon } from "nextra/icons";
 import { PreviewCard, PreviewCardHeading } from "./PreviewCard";
 
 export function SignInCard() {
@@ -38,7 +38,7 @@ export function SignInCard() {
           variant="outlined"
           color="secondary"
           className="w-full"
-          startIcon={<Github className="size-4" />}
+          startIcon={<GitHubIcon aria-hidden className="size-4" />}
         >
           Continue with GitHub
         </Button>

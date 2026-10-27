@@ -13,16 +13,16 @@ concurrency:
 jobs:
   visual-regression-test:
     timeout-minutes: 60
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     # Same image as the local linux/amd64 recipe; check:playwright keeps the tag equal to @playwright/test.
     container:
-      image: mcr.microsoft.com/playwright:v1.64.1-noble@sha256:7852dc5a7d72f5fe458a597d690f6c42fbc8e9e26ddfa95f8e6ef552558d9bbf
+      image: mcr.microsoft.com/playwright:v1.64.1-noble@sha256:47b510dd9230bf0b9bfc9b20102241e577ea7a99334ab4c3ca19f19770e9b8ea
     # Read by notify-slack.
     outputs:
       suites: ${{ steps.failed.outputs.suites }}
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # Full history: the step below diffs a pull request against its merge base with the base branch
           fetch-depth: 0
@@ -97,14 +97,26 @@ jobs:
         if: (github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch') && !cancelled() && steps.visual.outcome != 'skipped'
         run: cd packages/ui && bunx vitest run --config vitest.visual.config.ts --sequence.shuffle --sequence.seed=${{ github.run_number }}
 
-      # Vitest writes each failed screenshot's actual and diff PNGs to <root>/.vitest-attachments
+      # The Motion specs again at the floor of the motion peer's Motion 12 range: the steps above
+      # run the Motion 14 devDependency, and chunks-ui takes other paths on Motion 12
+      # (use-motion-animate.ts, render-now.ts). Last, as it installs another motion.
+      - name: Run the Motion specs at the Motion 12 floor
+        id: motion12
+        if: steps.changes.outputs.run_full == 'true' && !cancelled() && steps.visual.outcome != 'skipped'
+        run: |
+          floor=$(bun -e 'console.log(require("./packages/ui/package.json").peerDependencies.motion.split("||")[0].trim().slice(1))')
+          cd packages/ui
+          bun add --dev "motion@$floor"
+          bunx vitest run --config vitest.visual.config.ts --project chromium-motion
+
+      # Vitest writes each failed screenshot's actual and diff PNGs under <root>/.vitest/attachments
       # cancelled() also keeps the diffs of a run that timed out or was cancelled mid-suite.
       - name: Upload diff screenshots on failure or cancel
         if: failure() || cancelled()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: visual-regression-diffs
-          path: packages/ui/.vitest-attachments
+          path: packages/ui/.vitest/attachments
           # The folder is hidden, and upload-artifact skips hidden files by default
           include-hidden-files: true
           if-no-files-found: ignore
@@ -120,6 +132,7 @@ jobs:
           VISUAL: ${{ steps.visual.outcome }}
           WEBKIT: ${{ steps.webkit.outcome }}
           SHUFFLED: ${{ steps.shuffled.outcome }}
+          MOTION12: ${{ steps.motion12.outcome }}
         # Container jobs default to sh (dash), which rejects the array below.
         shell: bash
         run: |
@@ -127,6 +140,7 @@ jobs:
           [ "$VISUAL" = failure ] && failed+=("Chromium visual")
           [ "$WEBKIT" = failure ] && failed+=("WebKit smoke")
           [ "$SHUFFLED" = failure ] && failed+=("Chromium visual shuffled (seed ${{ github.run_number }})")
+          [ "$MOTION12" = failure ] && failed+=("Motion specs at the Motion 12 floor")
           [ "$JOB_STATUS" = cancelled ] && failed+=("cancelled or timed out")
           # No suite step failed: a setup step did, or a later one such as the artifact upload
           [ ${#failed[@]} -gt 0 ] || failed=("setup or another step")
@@ -139,12 +153,12 @@ jobs:
   notify-slack:
     needs: visual-regression-test
     if: always() && github.ref == 'refs/heads/master' && (needs.visual-regression-test.result == 'failure' || needs.visual-regression-test.result == 'cancelled')
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     permissions: {}
     steps:
       - name: Notify Slack on Failure
-        uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
+        uses: slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d # v4.0.0
         with:
           method: chat.postMessage
           token: ${{ secrets.SLACK_BOT_TOKEN }}

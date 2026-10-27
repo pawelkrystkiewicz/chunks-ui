@@ -6,7 +6,7 @@ Personal React 19+ component library. Single npm package (`chunks-ui`) replacing
 
 - Headless: `@base-ui/react` v1.9+ (includes Floating UI)
 - Styling: Tailwind CSS v4 + CVA + `clsx` + `tailwind-merge`
-- Animation: Motion 12.8+ (optional peer dep)
+- Animation: Motion 12.8+ or 14.7+ (optional peer dep)
 - Build: tsup (ESM + CJS + .d.ts)
 - Test: Vitest + Testing Library + jest-axe
 - Lint/Format: Biome

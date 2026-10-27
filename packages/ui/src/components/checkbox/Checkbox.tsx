@@ -4,6 +4,7 @@ import { Checkbox as BaseCheckbox } from "@base-ui/react/checkbox";
 import type { ComponentProps } from "react";
 import { cn, cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
+import { pathDataKey } from "../../lib/render-now";
 import { useMotion, useReducedMotion } from "../../lib/use-motion";
 import { useHeldWhileDriving, useMotionAnimate } from "../../lib/use-motion-animate";
 import { type PartRenderProp, useRenderPart } from "../../lib/use-render-part";
@@ -58,8 +59,9 @@ function CheckboxIndicator({ className, render, ...props }: CheckboxIndicatorPro
 // (after children or `render` go away): the path then jumps to the right shape, not the one held
 // from before.
 function CheckboxGlyph({ d }: { d: string }) {
+  const m = useMotion();
   const [pathRef, pathDriven] = useMotionAnimate<SVGPathElement>(
-    { d },
+    { [pathDataKey(m)]: d },
     { transition: springs.micro },
   );
   // Motion morphs `d` between the check and the minus; React keeps the value it had then

@@ -63,7 +63,7 @@ describe("expectOnlyFocusGuardsUndecided", () => {
     expect(() => expectOnlyFocusGuardsUndecided(results)).toThrow('data-testid="stray"');
   });
 
-  it("fails when aria-hidden-focus errored, which axe files under `incomplete` with no nodes", async () => {
+  it("fails when aria-hidden-focus errored, which axe files under `incomplete` with the error", async () => {
     // As before #565: with no elementFromPoint in jsdom, the rule throws
     const elementFromPoint = document.elementFromPoint;
     Reflect.deleteProperty(document, "elementFromPoint");
@@ -76,10 +76,11 @@ describe("expectOnlyFocusGuardsUndecided", () => {
       );
       const results = await axe(container);
       expect(results).toHaveNoViolations();
-      expect(results.incomplete.map((rule) => [rule.id, rule.nodes])).toContainEqual([
-        "aria-hidden-focus",
-        [],
-      ]);
+      // axe 4.12 also files the node it reached under an error-occurred check; 4.10 left none
+      expect(results.incomplete.find((rule) => rule.id === "aria-hidden-focus")).toHaveProperty(
+        "error.message",
+        expect.stringContaining("elementFromPoint"),
+      );
       expect(() => undecided(results, "aria-hidden-focus")).toThrow(
         "axe rule aria-hidden-focus errored",
       );

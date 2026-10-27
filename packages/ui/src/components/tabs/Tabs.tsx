@@ -17,11 +17,16 @@ import {
 } from "react";
 import { cn, cnState } from "../../lib/cn";
 import { springs } from "../../lib/motion";
-import { renderNow } from "../../lib/render-now";
+import { releaseValues, renderNow } from "../../lib/render-now";
 import { notifyResize, observeResize } from "../../lib/shared-resize";
 import { BOX_EDGES, useIndicatorSlide } from "../../lib/use-indicator-slide";
 import { useMergedRef } from "../../lib/use-merged-ref";
-import { type MotionOptions, useMotion, useReducedMotion } from "../../lib/use-motion";
+import {
+  type MotionOptions,
+  onMainThread,
+  useMotion,
+  useReducedMotion,
+} from "../../lib/use-motion";
 import { useMotionAnimate } from "../../lib/use-motion-animate";
 import { type PartRenderProp, useRenderPart } from "../../lib/use-render-part";
 import { FOCUS_RING, RING_ANIMATION_CLASSES, RING_TRANSITION } from "../shared";
@@ -348,7 +353,7 @@ function TabsContents({ className, children, transition, ref, ...props }: TabsCo
   const childValue = (child: ReactNode) =>
     isValidElement(child) ? (child.props as { value?: unknown }).value : undefined;
   const activeIndex = childrenArray.findIndex((child) => childValue(child) === ctx?.value);
-  const safeIndex = activeIndex >= 0 ? activeIndex : 0;
+  const safeIndex = Math.max(activeIndex, 0);
 
   // --- height measurement ---
   const containerRef = useRef<HTMLDivElement>(null);
@@ -417,10 +422,13 @@ function TabsContents({ className, children, transition, ref, ...props }: TabsCo
       return;
     }
     const jump = !slide.current;
+    if (jump) releaseValues(motion, track);
+    const x = `${safeIndex * -100}%`;
+    // A jump gives both keyframes, so Motion sets the value without reading the element first
     slide.current = motion.animate(
       track,
-      { x: `${safeIndex * -100}%` },
-      jump ? { duration: 0 } : transitionRef.current,
+      { x: jump ? [x, x] : x },
+      onMainThread(jump ? { duration: 0 } : transitionRef.current),
     );
     // On a jump, render all values, so a transform the CSS fallback removed while Motion still
     // held it comes back (reduced motion turned off at rest)
@@ -444,10 +452,11 @@ function TabsContents({ className, children, transition, ref, ...props }: TabsCo
     }
     if (height === "auto") return;
     const jump = !resize.current;
+    if (jump) releaseValues(motion, container);
     resize.current = motion.animate(
       container,
-      { height },
-      jump ? { duration: 0 } : transitionRef.current,
+      { height: jump ? [height, height] : height },
+      onMainThread(jump ? { duration: 0 } : transitionRef.current),
     );
     // As for the slide: a height the CSS fallback removed comes back
     if (jump) renderNow(motion, container);
@@ -602,7 +611,7 @@ function TabsAnimatePane({
       // <Activity> shows the pane again after hiding it, once Motion has rendered a frame of the entry:
       // finish the entry, don't play it again. A pane hidden before that first frame plays
       // the entry again, on purpose, as StrictMode's re-run does.
-      const controls = m.animate(pane, animate as never, { duration: 0 });
+      const controls = m.animate(pane, animate as never, onMainThread({ duration: 0 }));
       return () => controls.stop();
     }
     // From each `initial` value to its `animate` value, like motion.div's initial/animate
@@ -612,7 +621,7 @@ function TabsAnimatePane({
         name in initial ? [initial[name], to] : to,
       ]),
     );
-    const controls = m.animate(pane, keyframes as never, transition);
+    const controls = m.animate(pane, keyframes as never, onMainThread(transition));
     entry.current = controls;
     const shown = () => {
       entryShown.current = true;

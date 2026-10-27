@@ -23,7 +23,8 @@ function elementOf(node: AxeNode): Element {
 /**
  * The elements that the axe rule `ruleId` left in `incomplete`, as it could not decide them.
  * toHaveNoViolations() reads only `violations`, so it passes whatever is here. Throws if the rule
- * errored: axe files a rule that threw under `incomplete` too, with the error and no nodes.
+ * errored: axe files a rule that threw under `incomplete` too, with the error (and, before 4.12,
+ * no nodes).
  */
 export function undecided(results: AxeResults, ruleId: string): Element[] {
   const entries = results.incomplete.filter((rule) => rule.id === ruleId);
