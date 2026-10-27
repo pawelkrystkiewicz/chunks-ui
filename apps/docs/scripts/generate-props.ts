@@ -6,7 +6,10 @@
  * `generateDefinition` with the same `code` and writes the entries as a table under the nearest
  * heading above the call: `content/components/button.mdx` → `props/components/button.md`.
  * Needs `chunks-ui` built first: the types resolve through the built package, as for
- * check:snippets (the docs `check-types` script runs after Turbo's `^build`).
+ * check:snippets (the docs `check-types` script runs after Turbo's `^build`). A change to a
+ * prop's comment or type shows in the tables only after a rebuild, so the fix command builds
+ * first: `bun run build --filter=chunks-ui && bun run --cwd apps/docs generate:props`, from the
+ * repo root.
  *
  * A call passes `code` alone, as a template literal without `${}`. Any other call shape, and a
  * result with no props table (a function signature), fails the run with the .mdx line rather than
@@ -23,7 +26,9 @@ import type { TypeField } from "nextra/tsdoc";
 const DOCS_DIR = join(import.meta.dirname, "..");
 const CONTENT_DIR = join(DOCS_DIR, "content");
 const PROPS_DIR = join(DOCS_DIR, "props");
-const FIX = "bun run --cwd apps/docs generate:props";
+// From the repo root. Builds first: the types come from the built `dist`, so a JSDoc edit is not
+// in the tables until chunks-ui is rebuilt.
+const FIX = "bun run build --filter=chunks-ui && bun run --cwd apps/docs generate:props";
 
 export type GenerateDefinition = typeof import("nextra/tsdoc").generateDefinition;
 /** A `generateDefinition` call: its .mdx line and its `code` */
