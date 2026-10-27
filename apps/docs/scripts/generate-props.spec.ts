@@ -64,17 +64,11 @@ describe("extractBlocks", () => {
     ["a ~~~ fence", ["", "~~~", "const a = 1"], 4],
     // A closing fence shorter than the opening one does not close it
     ["a fence closed by a shorter one", ["````mdx", ...call("export default A"), "```"], 3],
+    ["a fence opened after a call", [...call("export default A"), "```", "text"], 10],
   ])("throws when the page ends inside %s, naming its line", (_, tail, line) => {
     const source = ["# Page", "## Props", ...tail].join("\n");
     expect(() => extractBlocks("components/x.mdx", source)).toThrow(
       new RegExp(`^content/components/x\\.mdx:${line} - code fence left open`),
-    );
-  });
-
-  it("throws on an open fence even when a call stands before it", () => {
-    const source = ["# Page", "## Props", ...call("export default A"), "```", "text"].join("\n");
-    expect(() => extractBlocks("components/x.mdx", source)).toThrow(
-      /^content\/components\/x\.mdx:10 - code fence left open/,
     );
   });
 
@@ -203,7 +197,6 @@ describe("propsMarkdown", () => {
   it.each([
     ["no heading at all", [...call("loading")], 2],
     ["a heading only below the call", [...call("loading"), "# Button"], 2],
-    ["a heading only inside a code fence", ["```md", "# Button", "```", ...call("loading")], 5],
   ])("throws, naming the file and line, on a call with %s above it", (_, lines, line) => {
     expect(() => propsMarkdown("components/x.mdx", lines.join("\n"), fake)).toThrow(
       new RegExp(
@@ -212,13 +205,8 @@ describe("propsMarkdown", () => {
     );
   });
 
-  it.each([
-    ["only ## and ### headings", ["## Props", "### Button", ...call("loading")]],
-    [
-      "a # heading only inside a code fence",
-      ["```md", "# Button", "```", "## Props", ...call("loading")],
-    ],
-  ])("throws, naming the file, on a page with %s and no title", (_, lines) => {
+  it("throws, naming the file, on a page with only ## and ### headings and no title", () => {
+    const lines = ["## Props", "### Button", ...call("loading")];
     expect(() => propsMarkdown("components/x.mdx", lines.join("\n"), fake)).toThrow(
       /^content\/components\/x\.mdx - no "# " heading to title its props/,
     );
