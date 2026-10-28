@@ -1,6 +1,6 @@
 # Chunks UI
 
-Personal React 19.2+ component library built on [Base UI](https://base-ui.com) + [Tailwind CSS v4](https://tailwindcss.com) + [Motion](https://motion.dev).
+React 19.2+ component library built on [Base UI](https://base-ui.com) + [Tailwind CSS v4](https://tailwindcss.com) + [Motion](https://motion.dev).
 
 Replaces `@creation-ui/react`. Published as a single npm package — not a copy/paste registry.
 
