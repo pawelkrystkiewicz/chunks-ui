@@ -2,6 +2,10 @@
 
 This directory contains utility scripts for the project.
 
+## design-system/
+
+Builds the files of the Chunks UI design system (a claude.ai artifact) and merges them with the published one: `bun run design-system`, then `merge.ts`. See `design-system/README.md`.
+
 ## gates.ts
 
 Runs CI's checks in this checkout and stops at the first that fails. Each step is a `run:` step of a CI job, word for word, in its `working-directory`. Each job's steps run in CI's order, the jobs one after another (lint, typecheck, test, then docs-build), where CI runs them side by side. The lists are `FAST` and `FULL` in the script:

@@ -66,3 +66,6 @@ playwright-report
 # BSD sed -i backups: `sed -i -e ...` writes file-e, `sed -i -E ...` writes file-E
 *-e
 *-E
+
+# design system build (scripts/design-system)
+.design-system

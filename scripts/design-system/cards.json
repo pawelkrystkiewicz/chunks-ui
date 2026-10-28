@@ -1,0 +1,170 @@
+{
+  "Button": {
+    "group": "Actions",
+    "height": 248
+  },
+  "IconButton": {
+    "group": "Actions",
+    "height": 192
+  },
+  "CopyButton": {
+    "group": "Actions",
+    "height": 104
+  },
+  "ClearButton": {
+    "group": "Actions",
+    "height": 72
+  },
+  "ThemeToggle": {
+    "group": "Actions",
+    "height": 108
+  },
+  "ToggleGroup": {
+    "group": "Actions",
+    "height": 108
+  },
+  "Input": {
+    "group": "Forms",
+    "height": 224
+  },
+  "InputCopy": {
+    "group": "Forms",
+    "height": 190
+  },
+  "Textarea": {
+    "group": "Forms",
+    "height": 160
+  },
+  "Field": {
+    "group": "Forms",
+    "height": 266
+  },
+  "Label": {
+    "group": "Forms",
+    "height": 103
+  },
+  "Checkbox": {
+    "group": "Forms",
+    "height": 104
+  },
+  "Radio": {
+    "group": "Forms",
+    "height": 164
+  },
+  "Switch": {
+    "group": "Forms",
+    "height": 108
+  },
+  "Select": {
+    "group": "Forms",
+    "height": 297
+  },
+  "Combobox": {
+    "group": "Forms",
+    "height": 296
+  },
+  "NumberField": {
+    "group": "Forms",
+    "height": 230
+  },
+  "Slider": {
+    "group": "Forms",
+    "height": 172
+  },
+  "DatePicker": {
+    "group": "Forms",
+    "height": 483
+  },
+  "Calendar": {
+    "group": "Forms",
+    "height": 344
+  },
+  "Dialog": {
+    "group": "Overlays",
+    "height": 280
+  },
+  "Drawer": {
+    "group": "Overlays",
+    "height": 300
+  },
+  "Popover": {
+    "group": "Overlays",
+    "height": 173
+  },
+  "Menu": {
+    "group": "Overlays",
+    "height": 233
+  },
+  "Tooltip": {
+    "group": "Overlays",
+    "height": 198
+  },
+  "Toast": {
+    "group": "Overlays",
+    "height": 320
+  },
+  "Tabs": {
+    "group": "Navigation",
+    "height": 441
+  },
+  "Breadcrumb": {
+    "group": "Navigation",
+    "height": 244
+  },
+  "Pagination": {
+    "group": "Navigation",
+    "height": 192
+  },
+  "Accordion": {
+    "group": "Navigation",
+    "height": 213
+  },
+  "Collapsible": {
+    "group": "Navigation",
+    "height": 164
+  },
+  "Avatar": {
+    "group": "Data display",
+    "height": 236
+  },
+  "Card": {
+    "group": "Data display",
+    "height": 273
+  },
+  "Chip": {
+    "group": "Data display",
+    "height": 202
+  },
+  "Table": {
+    "group": "Data display",
+    "height": 365
+  },
+  "Empty": {
+    "group": "Data display",
+    "height": 347
+  },
+  "Separator": {
+    "group": "Data display",
+    "height": 251
+  },
+  "ScrollArea": {
+    "group": "Data display",
+    "height": 406
+  },
+  "Resizable": {
+    "group": "Data display",
+    "height": 680
+  },
+  "Loader": {
+    "group": "Feedback",
+    "height": 160
+  },
+  "Progress": {
+    "group": "Feedback",
+    "height": 448
+  },
+  "Skeleton": {
+    "group": "Feedback",
+    "height": 184
+  }
+}
