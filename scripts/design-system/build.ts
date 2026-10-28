@@ -17,7 +17,7 @@ import {
   rmSync,
   writeFileSync,
 } from "node:fs";
-import { dirname, join, relative } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 import { fromDocs, globals, REACT_GLOBALS, UI_GLOBALS } from "./lib/plugins";
 import { readmeFromMdx } from "./lib/readmes";
 import { type Base, buildTokens, themeForPreviews } from "./lib/tokens";
@@ -33,6 +33,8 @@ const NAMESPACE = "ChunksUI";
 const DEFAULT_CARD = { group: "Other", height: 240 };
 
 const notes: string[] = [];
+/** The node_modules packages bundle() put into a script, for licenses/packages.txt. */
+const bundled = new Set<string>();
 const read = (path: string) => readFileSync(path, "utf8");
 const write = (path: string, text: string | Uint8Array) => {
   mkdirSync(dirname(path), { recursive: true });
@@ -53,9 +55,16 @@ async function bundle(entry: string, plugins: Parameters<typeof Bun.build>[0]["p
     target: "browser",
     define: { "process.env.NODE_ENV": '"production"' },
     plugins,
+    metafile: true,
   });
   const [output] = result.outputs;
   if (!result.success || !output) throw new AggregateError(result.logs, `bundling ${entry} failed`);
+  // licenses/packages.txt is built from it: without it the file would silently be empty
+  if (!result.metafile) throw new Error(`bundling ${entry}: Bun returned no metafile`);
+  for (const input of Object.keys(result.metafile.inputs)) {
+    const pkg = /^(.*node_modules\/(?:@[^/]+\/)?[^/]+)\//.exec(input)?.[1];
+    if (pkg) bundled.add(resolve(pkg));
+  }
   return inlineSafe(await output.text());
 }
 
@@ -223,6 +232,20 @@ async function main() {
     cpSync(join(ROOT, from), join(OUT, "uploads/Logos", name));
     uploads[`assets/Logos/${name}`] = sha256(readFileSync(join(ROOT, from)));
   }
+
+  // licences, outside fonts/ and components/, which the system reads as fonts and components:
+  // the fonts' OFL (§2), and the bundled packages' files, as the minifier drops their comments
+  cpSync(join(DOCS, "fonts/OFL.txt"), join(PROJECT, "licenses/OFL.txt"));
+  const licences = [...bundled].sort().map((dir) => {
+    const { name, version, license } = JSON.parse(read(join(dir, "package.json")));
+    const files = readdirSync(dir, { withFileTypes: true })
+      .filter((f) => f.isFile() && /^(licen[cs]e|notice|copying)(?!.*\.[cm]?[jt]s$)/i.test(f.name))
+      .map((f) => f.name)
+      .sort();
+    const text = files.map((f) => read(join(dir, f)).trim()).join("\n\n");
+    return `${name}@${version} (${license})\n\n${text || "No licence file in the package."}`;
+  });
+  write(join(PROJECT, "licenses/packages.txt"), `${licences.join(`\n\n${"-".repeat(72)}\n\n`)}\n`);
 
   // hashes of everything generated: merge.ts tells an edit on the page from a change in the code
   const files: Record<string, string> = {};

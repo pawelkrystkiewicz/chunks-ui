@@ -19,6 +19,7 @@ bun run design-system   # builds chunks-ui, then the system's files into .design
 | `components/index.d.ts` | `packages/ui/dist/index.d.ts` |
 | `README.md`, `components/Cover/preview.html`, `assets/Logos/README.md` | `static/`, written by hand |
 | fonts, logos | `fontFiles` and `logos` in `tokens.base.json` |
+| `licenses/OFL.txt`, `licenses/packages.txt` | The fonts' licence from `apps/docs/fonts/`, and the licence files of every package the build bundles into a script (the minifier drops their licence comments). |
 
 `.design-system/out/` holds `project/` (the system's files), `uploads/` (the logos, which the system stores as uploads, not files) and `sync.json` (the commit, version, React version and the build's notes). `tokens.json` carries the hashes of everything built in `meta.generated`. The next merge reads them back to tell a change in the code from an edit on the page.
 
