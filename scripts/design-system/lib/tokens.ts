@@ -21,7 +21,7 @@ export interface Base {
   zIndexNote: string;
   zIndexUsage: Record<string, string>;
   shadow: { note?: string; tokens: Token[] };
-  type: { fonts: unknown[]; displayFamily: string; groups: unknown[] };
+  type: { fonts: unknown[]; groups: unknown[] };
   fontFiles: Record<string, string>;
   logos: Record<string, string>;
 }
@@ -92,7 +92,8 @@ export function buildTokens(themeCss: string, docsCss: string, base: Base, notes
     if (name.startsWith("z-index-"))
       zIndex.push({ name, value, usage: base.zIndexUsage[name] ?? noUsage(name, notes) });
 
-  const display = declarations(docsCss, "@theme").get("font-display") ?? base.type.displayFamily;
+  const display = declarations(docsCss, "@theme").get("font-display");
+  if (!display) throw new Error('globals.css has no "--font-display" in its @theme rule');
   const families = {
     sans: theme.get("font-sans") ?? '"Manrope", sans-serif',
     mono: theme.get("font-mono") ?? '"Fira Code", monospace',
