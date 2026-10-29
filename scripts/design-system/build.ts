@@ -117,6 +117,7 @@ async function main() {
   const react = Bun.resolveSync("react", UI);
   const reactDom = dirname(Bun.resolveSync("react-dom", UI));
   const reactVersion: string = JSON.parse(read(join(dirname(react), "package.json"))).version;
+  const reactDomVersion: string = JSON.parse(read(join(reactDom, "package.json"))).version;
   write(
     join(TMP, "react.js"),
     `import * as React from ${JSON.stringify(react)};\nwindow.React = React;\n`,
@@ -125,14 +126,18 @@ async function main() {
     join(TMP, "react-dom.js"),
     `import * as D from ${JSON.stringify(join(reactDom, "index.js"))};\nimport * as C from ${JSON.stringify(join(reactDom, "client.js"))};\nwindow.ReactDOM = Object.assign({}, D, C);\n`,
   );
+  const reactFile = "components/lib/react.production.min.js";
+  const reactDomFile = "components/lib/react-dom.production.min.js";
+  write(join(PROJECT, reactFile), await bundle(join(TMP, "react.js"), []));
   write(
-    join(PROJECT, "components/lib/react.production.min.js"),
-    await bundle(join(TMP, "react.js"), []),
-  );
-  write(
-    join(PROJECT, "components/lib/react-dom.production.min.js"),
+    join(PROJECT, reactDomFile),
     await bundle(join(TMP, "react-dom.js"), [globals({ react: REACT_GLOBALS.react ?? "" })]),
   );
+  // the index's `libraries`, in load order: merge.ts copies them into plan.json for the system's index
+  const libraries = [
+    { name: "react", version: reactVersion, global: "React", file: reactFile },
+    { name: "react-dom", version: reactDomVersion, global: "ReactDOM", file: reactDomFile },
+  ];
 
   // the library, Motion and Base UI included, as window.ChunksUI
   write(
@@ -156,6 +161,15 @@ async function main() {
     fromDocs(DOCS, ["lucide-react"]),
   ];
   for (const name of components) {
+    // the guidelines do not depend on the preview: a component without one keeps its README
+    const mdx = join(DOCS, "content/components", `${kebab(name)}.mdx`);
+    if (existsSync(mdx))
+      write(
+        join(PROJECT, "components", name, "README.md"),
+        readmeFromMdx(read(mdx), name, kebab(name)),
+      );
+    else notes.push(`\`${name}\` has no docs page: no guidelines`);
+
     let entry = join(HERE, "previews", `${name}.tsx`);
     if (!existsSync(entry)) {
       const examples = join(DOCS, "app/examples", `${name}.tsx`);
@@ -183,13 +197,6 @@ async function main() {
       join(PROJECT, "components", name, "preview.html"),
       `<!-- @dsCard group="${card.group}" height=${card.height} -->\n<!doctype html>\n<html lang="en">\n<head><meta charset="utf-8"><title>${name} — preview</title></head>\n<body>\n<div id="root"></div>\n<script>\n${js}\n</script>\n</body>\n</html>\n`,
     );
-    const mdx = join(DOCS, "content/components", `${kebab(name)}.mdx`);
-    if (existsSync(mdx))
-      write(
-        join(PROJECT, "components", name, "README.md"),
-        readmeFromMdx(read(mdx), name, kebab(name)),
-      );
-    else notes.push(`\`${name}\` has no docs page: no guidelines`);
   }
 
   // the previews' stylesheet: Tailwind over the components, the docs examples and the previews
@@ -242,6 +249,8 @@ async function main() {
   // licences, outside fonts/ and components/, which the system reads as fonts and components:
   // the fonts' OFL (§2), and the bundled packages' files, as the minifier drops their comments
   cpSync(join(DOCS, "fonts/OFL.txt"), join(PROJECT, "licenses/OFL.txt"));
+  // bundle.js contains chunks-ui itself
+  cpSync(join(UI, "LICENSE"), join(PROJECT, "licenses/chunks-ui.txt"));
   const licences = [...bundled].sort().map((dir) => {
     const { name, version, license } = JSON.parse(read(join(dir, "package.json")));
     const files = readdirSync(dir, { withFileTypes: true })
@@ -297,7 +306,7 @@ async function main() {
   write(join(PROJECT, "tokens.json"), `${JSON.stringify({ ...tokens, meta }, null, 2)}\n`);
   write(
     join(OUT, "sync.json"),
-    `${JSON.stringify({ ref, commit, version, react: reactVersion, namespace: NAMESPACE, components, notes }, null, 2)}\n`,
+    `${JSON.stringify({ ref, commit, version, react: reactVersion, libraries, namespace: NAMESPACE, components, notes }, null, 2)}\n`,
   );
   cpSync(join(HERE, "merge.ts"), join(OUT, "merge.mts"));
   rmSync(TMP, { recursive: true, force: true });

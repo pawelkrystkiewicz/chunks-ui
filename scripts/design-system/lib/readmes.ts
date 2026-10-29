@@ -40,8 +40,13 @@ export function readmeFromMdx(mdx: string, name: string, slug: string): string {
     out.push(line);
   }
   let text = out.join("\n");
-  const title = text.indexOf(`# ${name}`);
-  text = title >= 0 ? text.slice(title) : `# ${name}\n\n${text}`;
+  // the docs may spell the title differently ("Toggle Group"): the guidelines get one H1, the component's name
+  const squash = (s: string) => s.replace(/\s+/g, "").toLowerCase();
+  const h1 = /^# (.+)$/m.exec(text);
+  text =
+    h1 && squash(h1[1] ?? "") === squash(name)
+      ? `# ${name}${text.slice(h1.index + h1[0].length)}`
+      : `# ${name}\n\n${text}`;
   text = text
     .replace(/\n## Props\n+(?=## |$)/g, "\n")
     .replace(/\]\((\/[^)]*)\)/g, (_, path: string) => `](${DOCS_URL}${path})`)
