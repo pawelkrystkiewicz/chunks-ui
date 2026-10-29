@@ -1,5 +1,13 @@
 # chunks-ui
 
+## 0.5.0
+
+### Minor Changes
+
+- [#819](https://github.com/pawelkrystkiewicz/chunks-ui/pull/819) [`f2602d7`](https://github.com/pawelkrystkiewicz/chunks-ui/commit/f2602d7739a9ae854681dcc1f868df32b9ed10de) - Added: Motion 14 support. The optional `motion` peer range is now `^12.8.0 || ^14.7.1`, and with Motion 14 the animations of `Switch`, `Checkbox`, `Radio`, `ToggleGroup` and `Tabs` behave as they do with Motion 12.
+
+- [#819](https://github.com/pawelkrystkiewicz/chunks-ui/pull/819) [`57675b4`](https://github.com/pawelkrystkiewicz/chunks-ui/commit/57675b425bf883af51fe678a48213c855612ba51) - Changed: `engines.node` is now `>=24.22.1`, so Node 22 is no longer supported.
+
 ## 0.4.1
 
 ### Patch Changes
