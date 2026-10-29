@@ -184,19 +184,26 @@ jobs:
       - name: Build the design system
         run: bun run design-system
 
-      # Users run the tarball's merge.mts with their own Node, not Bun: a first import, into an empty folder
-      - name: Check the shipped merge script runs on Node
+      - name: Pack the tarball
+        run: tar -czf "$RUNNER_TEMP/design-system.tgz" -C .design-system out
+
+      # Users run the packed file's merge.mts with their own Node, not Bun: a first import into an
+      # empty folder, then a re-run against what that import published, which must change nothing
+      - name: Check the tarball's merge script on Node
         run: |
-          mkdir "$RUNNER_TEMP/empty"
-          node .design-system/out/merge.mts --live "$RUNNER_TEMP/empty" --out "$RUNNER_TEMP/merge"
+          mkdir "$RUNNER_TEMP/unpacked" "$RUNNER_TEMP/empty" "$RUNNER_TEMP/live"
+          tar -xzf "$RUNNER_TEMP/design-system.tgz" -C "$RUNNER_TEMP/unpacked"
+          cd "$RUNNER_TEMP/unpacked"
+          node out/merge.mts --live "$RUNNER_TEMP/empty"
+          cp -R merge/project "$RUNNER_TEMP/live/project"
+          node out/merge.mts --live "$RUNNER_TEMP/live"
+          grep -q "Nothing changed" merge/report.md || { cat merge/report.md; exit 1; }
 
       - name: Attach it to the GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ fromJSON(needs.release.outputs.packages)[0].version }}
-        run: |
-          tar -czf "$RUNNER_TEMP/design-system.tgz" -C .design-system out
-          gh release upload "chunks-ui@$VERSION" "$RUNNER_TEMP/design-system.tgz" --clobber --repo "$GITHUB_REPOSITORY"
+        run: gh release upload "chunks-ui@$VERSION" "$RUNNER_TEMP/design-system.tgz" --clobber --repo "$GITHUB_REPOSITORY"
 
       - name: Notify Slack on Design system failure
         if: failure()
