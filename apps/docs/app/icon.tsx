@@ -1,40 +1,36 @@
 import { ImageResponse } from "next/og";
+import { PIXEL_CUT_PATH, SMALL_CUT_PATH } from "./favicon-paths";
 
-// Image metadata
-export const size = {
-  width: 32,
-  height: 32,
-};
-export const contentType = "image/png";
+// One PNG per cut: the pixel cut stays sharp at 16 px, the small cut is drawn for 32 px
+const ICONS = [
+  { id: "16", px: 16, path: PIXEL_CUT_PATH },
+  { id: "32", px: 32, path: SMALL_CUT_PATH },
+] as const;
 
-// Image generation
-export default function Icon() {
+export function generateImageMetadata() {
+  return ICONS.map(({ id, px }) => ({
+    id,
+    size: { width: px, height: px },
+    contentType: "image/png",
+  }));
+}
+
+// Next answers 404 for any other id before it calls this, so the fallback never draws
+export default async function Icon({ id }: { id: Promise<string | number> }) {
+  const iconId = String(await id);
+  const { px, path } = ICONS.find((icon) => icon.id === iconId) ?? ICONS[1];
   return new ImageResponse(
     <svg
-      width={size.width}
-      height={size.height}
-      viewBox="0 0 300 300"
-      fill="none"
+      width={px}
+      height={px}
+      viewBox="0 0 256 256"
       xmlns="http://www.w3.org/2000/svg"
       role="img"
       aria-label="Chunks UI"
     >
-      <circle cx="150" cy="150" r="150" fill="white" />
-      <rect x="86" y="88" width="128.507" height="128.507" rx="3" fill="black" />
-      <rect
-        x="223.688"
-        y="134.972"
-        width="15.0663"
-        height="132.052"
-        transform="rotate(45 223.688 134.972)"
-        fill="white"
-      />
+      <circle cx="128" cy="128" r="128" fill="white" />
+      <path fill="black" fillRule="evenodd" d={path} />
     </svg>,
-    // ImageResponse options
-    {
-      // For convenience, we can re-use the exported icons size metadata
-      // config to also set the ImageResponse's width and height.
-      ...size,
-    },
+    { width: px, height: px },
   );
 }

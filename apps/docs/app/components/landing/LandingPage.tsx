@@ -143,7 +143,13 @@ function Href({ href, ...props }: ComponentProps<"a"> & { href: string }) {
 
 function Logo() {
   return (
-    <Image src="/logo-dark-mode.svg" alt="" width={28} height={28} className="size-7 flex-none" />
+    <Image
+      src="/logo-small-dark-mode.svg"
+      alt=""
+      width={28}
+      height={28}
+      className="size-7 flex-none"
+    />
   );
 }
 

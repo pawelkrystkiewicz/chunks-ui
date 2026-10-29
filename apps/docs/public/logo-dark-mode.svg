@@ -1,6 +1,4 @@
-<svg width="300" height="300" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
 <title>chunks-ui</title>
-<circle cx="150" cy="150" r="150" fill="white"/>
-<rect x="86" y="88" width="128.507" height="128.507" rx="3" fill="black"/>
-<rect x="223.688" y="134.972" width="15.0663" height="132.052" transform="rotate(45 223.688 134.972)" fill="white"/>
+<path fill="#fff" fill-rule="evenodd" d="M62.56 235.68A126 126 0 1 1 235.68 62.56L216.6 81.64A100 100 0 1 0 81.64 216.6ZM241.28 72.84A126 126 0 0 1 246.66 170.38L218.57 170.38A100 100 0 0 0 221.52 92.6ZM242.02 181.62A126 126 0 0 1 72.84 241.28L92.6 221.52A100 100 0 0 0 212.41 181.62ZM83 80L173 80A3 3 0 0 1 176 83L176 122.24L122.24 176L83 176A3 3 0 0 1 80 173L80 83A3 3 0 0 1 83 80ZM176 138.12L176 173A3 3 0 0 1 173 176L138.12 176L176 138.12Z"/>
 </svg>

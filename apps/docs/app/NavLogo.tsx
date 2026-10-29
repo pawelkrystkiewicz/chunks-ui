@@ -16,14 +16,14 @@ export function NavLogo() {
     >
       {/* Nextra marks dark theme with a `dark` class on <html>; the images are decorative */}
       <Image
-        src="/logo.svg"
+        src="/logo-small.svg"
         alt=""
         width={LOGO_SIZE}
         height={LOGO_SIZE}
         className="[.dark_&]:hidden"
       />
       <Image
-        src="/logo-dark-mode.svg"
+        src="/logo-small-dark-mode.svg"
         alt=""
         width={LOGO_SIZE}
         height={LOGO_SIZE}
