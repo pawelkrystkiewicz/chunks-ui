@@ -1,0 +1,182 @@
+{
+  "$comment": "Everything tokens.json needs that theme.css does not state: themes, usage notes, type styles, shadows. Values of colours, spacing-ui-height, radius, font families and z-index layers are read from packages/ui/src/theme.css by build.ts.",
+  "name": "Chunks UI",
+  "version": 1,
+  "themes": [
+    {
+      "id": "light",
+      "name": "Light"
+    },
+    {
+      "id": "dark",
+      "name": "Dark"
+    }
+  ],
+  "colorUsage": {
+    "primary": "Brand blue. Fills of primary Button, IconButton and Chip; checked Checkbox, Radio and Switch; Slider range; Progress indicator; the selected Calendar day. Same value in both themes.",
+    "primary-foreground": "Text and icons on a `primary` fill (4.5:1 in both themes).",
+    "success": "Positive actions: success Button, IconButton and Chip. Never as text: about 2:1 on white; text uses the derived `text-success-text`.",
+    "success-foreground": "Text on a `success` fill. Dark ink, because the fill is light.",
+    "warning": "Caution: warning Button, IconButton and Chip. As text, use the derived `text-warning-text`.",
+    "warning-foreground": "Text on a `warning` fill. Dark ink, because the fill is light.",
+    "destructive": "Errors and deletions: destructive Button, IconButton and Chip; invalid Input and Textarea borders; ClearButton hover. As text, use the derived `text-destructive-text`.",
+    "destructive-foreground": "Text on a `destructive` fill (4.5:1 in both themes).",
+    "background": "Page ground, and the surface of Dialog, Drawer, Input, Textarea, Select and Combobox triggers, the active Tabs tab and ToggleGroup item.",
+    "foreground": "Body text and icons on `background`, `card` and `popover`.",
+    "card": "Card surface (same as `background` by default).",
+    "card-foreground": "Text on `card`.",
+    "popover": "Surface of Popover, Menu, Select and Combobox popups, the DatePicker popup and Toast.",
+    "popover-foreground": "Text on `popover`.",
+    "secondary": "Neutral fill of secondary Button, IconButton and Chip.",
+    "secondary-foreground": "Text on `secondary`.",
+    "muted": "Subdued surfaces: Tabs list track, Skeleton, Progress and Slider tracks, Avatar fallback, Table header and row hover (`bg-muted/50`), ScrollArea thumb.",
+    "muted-foreground": "Secondary text on `background`, `card`, `popover` and `muted`: descriptions, placeholders, Field.Description, Breadcrumb links, inactive tabs (4.5:1 in both themes).",
+    "accent": "Hover and highlighted item background in Menu, Select, Combobox, Calendar, Pagination; text and IconButton hover.",
+    "accent-foreground": "Text on `accent`.",
+    "border": "Hairlines: Card, Separator, Table rows, Accordion items, popup and Dialog outlines, outlined secondary buttons.",
+    "input": "Borders of form controls: Input, Textarea, Select, Combobox, NumberField, DatePicker trigger, unchecked Checkbox, Radio and Switch track.",
+    "chart-1": "Chart series 1 (shadcn compat; no component uses it).",
+    "chart-2": "Chart series 2 (shadcn compat).",
+    "chart-3": "Chart series 3 (shadcn compat).",
+    "chart-4": "Chart series 4 (shadcn compat).",
+    "chart-5": "Chart series 5 (shadcn compat)."
+  },
+  "spacingUsage": {
+    "spacing-ui-height": "Height of every control (Button, Input, Select, NumberField, Tabs list…), `h-ui-height`. `--spacing-ui-icon-height` is half of it."
+  },
+  "radiusUsage": {
+    "radius": "Base radius (10px); the scale derives from it: `rounded-sm` = radius − 4px (6px, Menu and Select items), `rounded-md` = radius − 2px (8px, controls and popups), `rounded-lg` = radius (10px, Tabs track), `rounded-xl` = radius + min(radius, 4px) (14px, Card and Dialog)."
+  },
+  "zIndexNote": "Layer order from theme.css (`@theme inline`, so the utilities hold these numbers).",
+  "zIndexUsage": {
+    "z-index-base": "`z-base`: default content.",
+    "z-index-dropdowns": "`z-dropdowns`: Select, Combobox, Menu, Popover and DatePicker popups.",
+    "z-index-tooltips": "`z-tooltips`: tooltips.",
+    "z-index-overlays": "`z-overlays`: unused by components; free for your overlays above popups, below drawers.",
+    "z-index-drawers": "`z-drawers`: Drawer.Portal.",
+    "z-index-modals": "`z-modals`: Dialog.Portal.",
+    "z-index-notifications": "`z-notifications`: unused by components; free for banners and notices.",
+    "z-index-toasts": "`z-toasts`: Toast.Viewport.",
+    "z-index-cursor": "`z-cursor`: the NumberField scrub-area cursor."
+  },
+  "shadow": {
+    "note": "Tailwind v4 defaults that the components use; theme.css defines no shadows of its own.",
+    "tokens": [
+      {
+        "name": "shadow-sm",
+        "value": "0 1px 3px 0 #0000001a, 0 1px 2px -1px #0000001a",
+        "usage": "Switch thumb, Slider thumb, the active Tabs tab and ToggleGroup item."
+      },
+      {
+        "name": "shadow-md",
+        "value": "0 4px 6px -1px #0000001a, 0 2px 4px -2px #0000001a",
+        "usage": "Popups: Menu, Select, Combobox, Popover, DatePicker, Tooltip."
+      },
+      {
+        "name": "shadow-lg",
+        "value": "0 10px 15px -3px #0000001a, 0 4px 6px -4px #0000001a",
+        "usage": "Dialog and Toast."
+      },
+      {
+        "name": "shadow-xl",
+        "value": "0 20px 25px -5px #0000001a, 0 8px 10px -6px #0000001a",
+        "usage": "Drawer."
+      }
+    ]
+  },
+  "type": {
+    "fonts": [
+      {
+        "family": "Manrope",
+        "file": "fonts/manrope-latin.woff2",
+        "weight": "200 800",
+        "style": "normal"
+      },
+      {
+        "family": "Fira Code",
+        "file": "fonts/fira-code-latin.woff2",
+        "weight": "300 700",
+        "style": "normal"
+      },
+      {
+        "family": "Outfit",
+        "file": "fonts/outfit-latin.woff2",
+        "weight": "400 800",
+        "style": "normal"
+      }
+    ],
+    "groups": [
+      {
+        "name": "Text",
+        "family": "sans",
+        "styles": [
+          {
+            "name": "text-lg",
+            "fontSize": "18px",
+            "lineHeight": "28px",
+            "fontWeight": 600,
+            "sample": "Delete this project?",
+            "usage": "Titles of Card, Dialog, Drawer and Empty (`text-lg font-semibold`; in `font-heading` when you set `--font-heading`)."
+          },
+          {
+            "name": "text-base",
+            "fontSize": "16px",
+            "lineHeight": "24px",
+            "fontWeight": 400,
+            "sample": "Body copy on the page ground.",
+            "usage": "Body copy; the page default from preflight."
+          },
+          {
+            "name": "text-sm",
+            "fontSize": "14px",
+            "lineHeight": "20px",
+            "fontWeight": 500,
+            "sample": "Save changes",
+            "usage": "Controls and labels: Button, Label, Tabs, Menu items, Pagination, Accordion triggers (`text-sm`, `font-medium`). The most used size in the library."
+          },
+          {
+            "name": "text-sm-regular",
+            "fontSize": "14px",
+            "lineHeight": "20px",
+            "fontWeight": 400,
+            "sample": "We will email you a link.",
+            "usage": "Descriptions: Field.Description, Card.Description, Toast description, in `muted-foreground`."
+          },
+          {
+            "name": "text-xs",
+            "fontSize": "12px",
+            "lineHeight": "16px",
+            "fontWeight": 500,
+            "sample": "Beta",
+            "usage": "Chip text, Calendar weekday headers, Tooltip text, Menu and Select group labels."
+          }
+        ]
+      },
+      {
+        "name": "Code",
+        "family": "mono",
+        "styles": [
+          {
+            "name": "code",
+            "fontSize": "14px",
+            "lineHeight": "20px",
+            "fontWeight": 400,
+            "sample": "bun add chunks-ui",
+            "usage": "`font-mono` (Fira Code): code in your app. No component sets it."
+          }
+        ]
+      }
+    ]
+  },
+  "fontFiles": {
+    "fonts/manrope-latin.woff2": "apps/docs/fonts/manrope-latin.woff2",
+    "fonts/fira-code-latin.woff2": "apps/docs/fonts/fira-code-latin.woff2",
+    "fonts/outfit-latin.woff2": "apps/docs/fonts/outfit-latin.woff2"
+  },
+  "logos": {
+    "logo.svg": "apps/docs/public/logo.svg",
+    "logo-dark-mode.svg": "apps/docs/public/logo-dark-mode.svg",
+    "logo-small.svg": "apps/docs/public/logo-small.svg",
+    "logo-small-dark-mode.svg": "apps/docs/public/logo-small-dark-mode.svg"
+  }
+}

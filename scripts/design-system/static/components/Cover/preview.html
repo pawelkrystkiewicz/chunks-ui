@@ -1,0 +1,62 @@
+<!-- @dsCard height=288 -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Chunks UI</title>
+<style>
+  html, body { margin:0; height:100%; }
+  body { background:var(--background); color:var(--foreground); font-family:var(--font-sans); overflow:hidden; }
+  .cover { position:relative; width:960px; height:288px; overflow:hidden; }
+  .art { position:absolute; top:0; left:480px; width:480px; height:288px; overflow:hidden; }
+  .art svg { display:block; }
+  .brand { fill:var(--primary); }
+  .ink { fill:var(--foreground); }
+  .tint { fill:var(--border); }
+  .ok { fill:var(--success); }
+  .blk, .tile { rx:var(--radius); }
+  .words { position:absolute; left:var(--spacing-ui-height); bottom:var(--spacing-ui-height); max-width:440px; }
+  .name { margin:0; font-size:80px; line-height:.92; font-weight:800; letter-spacing:-.03em; color:var(--foreground); white-space:nowrap; }
+  .tag { margin:10px 0 0 3px; font-size:14px; line-height:20px; color:var(--muted-foreground); }
+</style>
+</head>
+<body>
+<div class="cover">
+<div class="art" aria-hidden="true">
+<svg viewBox="0 0 480 288" width="480" height="288">
+<title>Chunks UI colour blocks</title>
+<!--
+  blocks      primary 4x6 modules bled off the top; foreground 3x3; border-grey 7x2 band at the base; success one module (state colour, kept small)
+  arrangement a flush modular grid of spacing-ui-height (35px) modules, the slab on the right, the band along the bottom
+  pattern     geometric, modular, dense UI -> tiles cut by the radius token, some merged two-wide like the controls: "Chunks", a square chunk inside a split-ring mark
+  scales      module = spacing-ui-height (35px); every corner rx = radius (0.625rem); insets = spacing-ui-height
+-->
+<rect class="ink blk" x="140" y="105" width="105" height="105"/>
+<rect class="tint blk" x="35" y="210" width="245" height="70"/>
+<rect class="brand blk" x="280" y="-35" width="140" height="210"/>
+<rect class="ok blk" x="420" y="175" width="35" height="35"/>
+<rect class="tint tile" x="35" y="0" width="35" height="35"/>
+<rect class="brand tile" x="105" y="0" width="70" height="35"/>
+<rect class="tint tile" x="210" y="0" width="35" height="35"/>
+<rect class="tint tile" x="70" y="35" width="35" height="35"/>
+<rect class="ink tile" x="175" y="35" width="35" height="35"/>
+<rect class="tint tile" x="245" y="35" width="35" height="35"/>
+<rect class="brand tile" x="35" y="70" width="35" height="35"/>
+<rect class="tint tile" x="105" y="70" width="70" height="35"/>
+<rect class="tint tile" x="210" y="70" width="35" height="35"/>
+<rect class="tint tile" x="35" y="140" width="70" height="35"/>
+<rect class="brand tile" x="105" y="140" width="35" height="35"/>
+<rect class="tint tile" x="280" y="210" width="35" height="35"/>
+<rect class="ink tile" x="350" y="210" width="70" height="35"/>
+<rect class="tint tile" x="420" y="35" width="35" height="70"/>
+<rect class="brand tile" x="455" y="105" width="35" height="35"/>
+<rect class="tint tile" x="420" y="245" width="70" height="35"/>
+</svg>
+</div>
+<div class="words">
+<h1 class="name">Chunks UI</h1>
+<p class="tag">Lean React components on Base UI, Tailwind CSS v4 and Motion.</p>
+</div>
+</div>
+</body>
+</html>

@@ -44,4 +44,5 @@ export default {
   "llm-separator": { type: "separator", title: "For LLMs" },
   "llms-txt": { title: "llms.txt", href: "/llms.txt" },
   "llms-full-txt": { title: "llms-full.txt", href: "/llms-full.txt" },
+  "claude-design-system": { title: "Claude design system" },
 };

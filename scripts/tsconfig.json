@@ -3,5 +3,5 @@
   "compilerOptions": {
     "types": ["bun"]
   },
-  "include": ["*.ts", "__specs__/*.ts"]
+  "include": ["*.ts", "__specs__/*.ts", "design-system/*.ts", "design-system/lib/*.ts"]
 }

@@ -44,6 +44,7 @@ export const FAST: Step[] = [
   { name: "check:docs-direction", command: "bun run check:docs-direction" },
   { name: "check-types", command: "bun run check-types" },
   { name: "check-types:scripts", command: "bun run check-types:scripts" },
+  { name: "design-system build", command: "bun scripts/design-system/build.ts" },
   { name: "check:tailwind", command: "bun run check:tailwind", needs: ["network", "node"] },
   // With coverage, not `bun run test`: the coverage thresholds in packages/ui/vitest.config.ts
   // fail CI's run where a plain run passes

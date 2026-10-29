@@ -105,6 +105,11 @@ jobs:
       - name: Typecheck the root scripts
         run: bun run check-types:scripts
 
+      # The release job builds the design system after the npm publish; here a break in the build
+      # fails the pull request instead. check-types built packages/ui/dist, which the build reads
+      - name: Build the design system
+        run: bun scripts/design-system/build.ts
+
       # check-types builds chunks-ui, so the build here is a turbo cache hit. The Tailwind 4.0
       # install is pinned by scripts/tailwind-4.0 (frozen lockfile); bun.lock stays as it is
       - name: Check Tailwind 4.0 generates every class
