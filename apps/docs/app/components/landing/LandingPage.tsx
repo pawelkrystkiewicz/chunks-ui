@@ -650,7 +650,7 @@ function DesignSystemTiles() {
             Save
           </span>
           <span className="flex h-4 w-7 rounded-full bg-primary p-0.5">
-            <span className="ms-auto size-3 rounded-full bg-white" />
+            <span className="ms-auto size-3 rounded-full bg-background" />
           </span>
         </span>
       ),
@@ -662,7 +662,7 @@ function DesignSystemTiles() {
     },
     {
       name: "Logos",
-      meta: "split ring · light and dark",
+      meta: "full and small · light and dark",
       art: (
         <>
           <Image src="/logo-small.svg" alt="" width={28} height={28} className="[.dark_&]:hidden" />
@@ -678,7 +678,10 @@ function DesignSystemTiles() {
     },
   ];
   return (
-    <ul className="-me-px -mb-px grid h-full auto-rows-fr grid-cols-2">
+    // The wrapper is a grid, so this list stretches to the statement's height and its negative
+    // margins still tuck the last row's bottom border under the wrapper's.
+    // biome-ignore lint/a11y/noRedundantRoles: WebKit drops the list role under list-style: none
+    <ul role="list" className="-me-px -mb-px grid auto-rows-fr grid-cols-2">
       {tiles.map(({ name, meta, art }) => (
         <li key={name} className={DS_TILE}>
           <span aria-hidden className={DS_ART}>
@@ -703,18 +706,20 @@ function DesignSystemSection() {
           accent="with the real components."
         />
         <Grid className="lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
-          <div className={`${STATEMENT} gap-5`}>
+          {/* Always the last column on lg: no end border, which rounding can paint on the frame */}
+          <div className={`${STATEMENT} gap-5 lg:border-e-0`}>
             <span className={STATEMENT_LABEL}>{"// The design system"}</span>
             <p className={STATEMENT_TEXT}>
               Each release ships a design system for Claude: the tokens, every component live on
-              React 19, the fonts and the logos. Import it once, and the designs Claude makes use
-              the real components.
+              React 19, the fonts and the logos. Import it into your claude.ai account, and the
+              designs Claude makes with it use the real components. Paste the same prompt after a
+              release to update it.
             </p>
             <div className="mt-auto pt-2">
               <Cta href="/claude-design-system">Import it</Cta>
             </div>
           </div>
-          <div className="min-w-0 overflow-hidden border-(--l-line) border-e border-b lg:order-first">
+          <div className="grid min-w-0 overflow-hidden border-(--l-line) border-e border-b lg:order-first">
             <DesignSystemTiles />
           </div>
         </Grid>

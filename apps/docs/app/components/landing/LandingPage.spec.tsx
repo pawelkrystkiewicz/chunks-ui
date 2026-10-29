@@ -241,12 +241,16 @@ it("the Claude section links to the import page once and lists what the system h
   expect(links.map((a) => [a.textContent, a.getAttribute("href")])).toEqual([
     ["Import it", "/claude-design-system"],
   ]);
-  const items = within(claude).getAllByRole("listitem");
-  // The first visible text of each tile is its name; the drawings above them are aria-hidden
-  const names = items.map(
-    (li) => li.querySelector(":scope > span:not([aria-hidden])")?.textContent,
-  );
-  expect(names).toEqual(["Tokens", "Every component", "Fonts", "Logos"]);
+  // Each tile: a drawing hidden from assistive tech, then its name and what it holds
+  const tiles = within(claude)
+    .getAllByRole("listitem")
+    .map((li) => [...li.children].map((c) => c.getAttribute("aria-hidden") ?? c.textContent));
+  expect(tiles).toEqual([
+    ["true", "Tokens", "OKLCH · light and dark"],
+    ["true", "Every component", "live previews · React 19"],
+    ["true", "Fonts", "Manrope · Fira Code · Outfit"],
+    ["true", "Logos", "full and small · light and dark"],
+  ]);
 });
 
 it("the footer links to the privacy page in the same tab", () => {

@@ -24,6 +24,8 @@ it("writes the index to llms.txt and the full docs to llms-full.txt", async () =
   expect(index).toMatch(/^# chunks-ui\n/);
   expect(index).toMatch(/\/components\/button\)/);
   expect(index).not.toMatch(/\/components\/index\)/);
+  // A top-level page that is missing is skipped without a word, so a rename would drop it
+  expect(index).toMatch(/\[Claude design system\]\(https:\/\/[^)]+\/claude-design-system\)/);
   expect(index).toMatch(/\[Full documentation\]\(https:\/\/[^)]+\/llms-full\.txt\)/);
   const full = await read("llms-full.txt");
   expect(full).toMatch(/^# chunks-ui — Full Documentation\n/);
