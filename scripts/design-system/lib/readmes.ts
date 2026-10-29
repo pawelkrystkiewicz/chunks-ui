@@ -5,6 +5,56 @@
  */
 
 const DOCS_URL = "https://ui-kit.chunk-creations.com";
+/** A line that opens with one of these is prose (`<kbd>Enter</kbd> selects the day.`), not a demo */
+const INLINE_TAGS = new Set([
+  "a",
+  "abbr",
+  "b",
+  "code",
+  "em",
+  "i",
+  "kbd",
+  "mark",
+  "small",
+  "span",
+  "strong",
+  "sub",
+  "sup",
+]);
+
+/**
+ * The last line of the live demo or props table that starts at lines[start], or -1 when that line is
+ * prose. A demo opens with a PascalCase tag, `<>`, a lowercase block tag (`<div>`) or `{`, and ends
+ * at its own closing line, so prose right after `</Container>` stays. When no closing line is found
+ * it ends at the next blank line.
+ */
+function demoEnd(lines: string[], start: number): number {
+  const first = lines[start] ?? "";
+  const head = first.trim();
+  const indent = first.length - first.trimStart().length;
+  const tag = /^<([A-Za-z][\w.]*)?(?=[\s/>]|$)/.exec(head);
+  if (head.startsWith("{")) {
+    // an expression: it ends where its braces balance
+    let depth = 0;
+    for (let j = start; j < lines.length; j++) {
+      for (const ch of lines[j] ?? "") depth += ch === "{" ? 1 : ch === "}" ? -1 : 0;
+      if (depth <= 0) return j;
+    }
+  } else if (tag && !INLINE_TAGS.has(tag[1] ?? "")) {
+    const close = `</${tag[1] ?? ""}>`;
+    if (head.endsWith("/>") || head.includes(close)) return start;
+    // an element over several lines closes at the same indentation as it opens; a multi-line
+    // self-closing one (<TSDoc ... />) closes with a line that starts with `/>`
+    for (let j = start + 1; j < lines.length; j++) {
+      const line = lines[j] ?? "";
+      if (line.trim() === "" || line.length - line.trimStart().length !== indent) continue;
+      if (line.trimStart().startsWith(close) || line.trimStart().startsWith("/>")) return j;
+    }
+  } else return -1;
+  let end = start;
+  while (end + 1 < lines.length && (lines[end + 1] ?? "").trim() !== "") end++;
+  return end;
+}
 
 export function readmeFromMdx(mdx: string, name: string, slug: string): string {
   const lines = mdx.split("\n");
@@ -32,9 +82,10 @@ export function readmeFromMdx(mdx: string, name: string, slug: string): string {
       i = j;
       continue;
     }
-    if (/^\s*[<{]/.test(line)) {
-      // a JSX block (a live demo, a props table): skip to the next blank line
-      while (i + 1 < lines.length && (lines[i + 1] ?? "").trim() !== "") i++;
+    const end = demoEnd(lines, i);
+    if (end >= 0) {
+      // a JSX block (a live demo, a props table)
+      i = end;
       continue;
     }
     out.push(line);
