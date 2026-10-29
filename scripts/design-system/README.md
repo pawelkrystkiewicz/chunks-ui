@@ -21,7 +21,7 @@ bun run design-system   # builds chunks-ui, then the system's files into .design
 | fonts, logos | `fontFiles` and `logos` in `tokens.base.json` |
 | `licenses/OFL.txt`, `licenses/packages.txt` | The fonts' licence from `apps/docs/fonts/`, and the licence files of every package the build bundles into a script (the minifier drops their licence comments). |
 
-`.design-system/out/` holds `project/` (the system's files), `uploads/` (the logos, which the system stores as uploads, not files) and `sync.json` (the commit, version, React version and the build's notes). `tokens.json` carries the hashes of everything built in `meta.generated`. The next merge reads them back to tell a change in the code from an edit on the page.
+`.design-system/out/` holds `project/` (the system's files), `uploads/` (the logos, which the system stores as uploads, not files), `sync.json` (the commit, version, React version and the build's notes) and `merge.mts`, a copy of `merge.ts`. `tokens.json` carries the hashes of everything built in `meta.generated`. The next merge reads them back to tell a change in the code from an edit on the page.
 
 When the build prints a note, act on it here:
 
@@ -33,9 +33,10 @@ When the build prints a note, act on it here:
 
 ```bash
 bun scripts/design-system/merge.ts --live <folder holding the published project/>
+node out/merge.mts --live <folder>   # the same, from an extracted design-system.tgz (Node 22.18+)
 ```
 
-It compares the build with the published system, read back into a folder, and writes `.design-system/merge/`: `project/` (only the files to publish, plus `tokens.json`), `plan.json` and `report.md`. Per file and per token:
+It compares the build with the published system, read back into a folder (an empty folder for a first import), and writes `merge/` next to the build's folder (`.design-system/merge/` in the repo): `project/` (only the files to publish, plus `tokens.json`), `plan.json` (those files and the logos to upload) and `report.md`. It refuses a `--live` folder that does not exist and an `--out` folder that holds anything but an earlier merge. Per file and per token:
 
 - unchanged: skipped
 - changed in the code only: the build's version
@@ -46,6 +47,10 @@ Nothing is deleted. A component or token that the code no longer has is listed u
 
 ## Publishing
 
-CI cannot publish to the artifact. Each release instead attaches the build to its GitHub release as `design-system.tgz`; see the `design-system` job in `.github/workflows/release-changeset.yml`. A scheduled Claude task watches for new `chunks-ui@*` tags. For each one it downloads that file (or runs `bun run design-system` at the tag), reads the published system back, runs `merge.ts`, uploads changed logos, publishes `project/` and updates the system's index (`libraries`, `lastChange`) last. It reports `report.md` and asks before removing anything.
+CI cannot publish to an artifact. Each release instead attaches the build to its GitHub release as `design-system.tgz` (the `design-system` job in `.github/workflows/release-changeset.yml`), and anyone turns it into a claude.ai design system of their own with Claude: the docs page [Claude design system](https://ui-kit.chunk-creations.com/claude-design-system) (`apps/docs/content/claude-design-system.mdx`) holds the prompt.
 
-To sync by hand, ask Claude to re-sync the Chunks UI design system from this repository.
+A first import and an update take the same steps: download the tarball, read the published system back into a folder (an empty one the first time), run `merge.mts`, upload the logos `plan.json` lists, publish `merge/project/` and write the system's index (`design-system.json`) last. Claude shows `report.md` and asks before removing anything. The maintainer's own system takes these steps from a scheduled Claude task at each new `chunks-ui@*` tag.
+
+## Known limits
+
+- Nothing checks the build against the claude.ai Design System format (contract 0.2.47 when this was written), and that format still changes. A change there can ship a tarball that imports badly for every user. The maintainer's scheduled sync is the first to hit it: a failure or an odd `report.md` there is the signal to look at the format again.

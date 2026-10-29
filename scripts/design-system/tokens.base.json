@@ -176,6 +176,8 @@
   },
   "logos": {
     "logo.svg": "apps/docs/public/logo.svg",
-    "logo-dark-mode.svg": "apps/docs/public/logo-dark-mode.svg"
+    "logo-dark-mode.svg": "apps/docs/public/logo-dark-mode.svg",
+    "logo-small.svg": "apps/docs/public/logo-small.svg",
+    "logo-small-dark-mode.svg": "apps/docs/public/logo-small-dark-mode.svg"
   }
 }

@@ -6,7 +6,11 @@
  * merge.ts compares the result with the published system, and README.md says who publishes.
  *
  * Needs packages/ui/dist: run it as `bun run design-system`, which builds the package first.
- * Output: .design-system/out/ (project/ = the system's files, uploads/ = logos, sync.json).
+ * Output: .design-system/out/ (project/ = the system's files, uploads/ = logos, sync.json, and
+ * merge.mts, a copy of merge.ts, so the release's tarball merges without a checkout).
+ *
+ * ponytail: nothing validates the output against the Design System format, which still changes;
+ * README.md, Known limits.
  */
 import {
   cpSync,
@@ -212,6 +216,8 @@ async function main() {
     [
       "bunx",
       "--bun",
+      // the devDependency, never a fresh unpinned CLI from npm when the install lacks it
+      "--no-install",
       "@tailwindcss/cli",
       "-i",
       join(TMP, "input.css"),
@@ -293,6 +299,7 @@ async function main() {
     join(OUT, "sync.json"),
     `${JSON.stringify({ ref, commit, version, react: reactVersion, namespace: NAMESPACE, components, notes }, null, 2)}\n`,
   );
+  cpSync(join(HERE, "merge.ts"), join(OUT, "merge.mts"));
   rmSync(TMP, { recursive: true, force: true });
   console.log(
     `design system for chunks-ui@${version} (${ref}): ${components.length} components → ${relative(ROOT, OUT)}`,

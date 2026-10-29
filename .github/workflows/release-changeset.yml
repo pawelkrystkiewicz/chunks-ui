@@ -152,8 +152,8 @@ jobs:
 
   # The files of the Chunks UI design system (a claude.ai artifact; scripts/design-system/README.md),
   # built at the released commit and attached to its GitHub release. A job of its own after the
-  # release, so a failure here never touches the npm publish. CI cannot publish to the artifact:
-  # a scheduled Claude task picks the new tag up and publishes it.
+  # release, so a failure here never touches the npm publish. CI cannot publish to an artifact:
+  # each user's Claude imports the tarball (apps/docs/content/claude-design-system.mdx).
   design-system:
     name: Design system
     needs: release
@@ -184,6 +184,12 @@ jobs:
       - name: Build the design system
         run: bun run design-system
 
+      # Users run the tarball's merge.mts with their own Node, not Bun: a first import, into an empty folder
+      - name: Check the shipped merge script runs on Node
+        run: |
+          mkdir "$RUNNER_TEMP/empty"
+          node .design-system/out/merge.mts --live "$RUNNER_TEMP/empty" --out "$RUNNER_TEMP/merge"
+
       - name: Attach it to the GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -191,3 +197,13 @@ jobs:
         run: |
           tar -czf "$RUNNER_TEMP/design-system.tgz" -C .design-system out
           gh release upload "chunks-ui@$VERSION" "$RUNNER_TEMP/design-system.tgz" --clobber --repo "$GITHUB_REPOSITORY"
+
+      - name: Notify Slack on Design system failure
+        if: failure()
+        uses: slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d # v4.0.0
+        with:
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload: |
+            channel: "${{ secrets.SLACK_CHANNEL_ID }}"
+            text: "Design system job failed: the chunks-ui@${{ fromJSON(needs.release.outputs.packages)[0].version }} release has no design-system.tgz, so the docs' download link fails until \"Re-run failed jobs\" (TESTING_STRATEGY.md, CI, Design system)\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow>"

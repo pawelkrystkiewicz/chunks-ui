@@ -1,4 +1,4 @@
-Chunks UI is a personal React component library: Base UI underneath, Tailwind CSS v4 and CVA for styling, Motion for optional springs. It is a lean, neutral system with one blue — the UI should be the convincing part, not decoration around it.
+Chunks UI is a React component library: Base UI underneath, Tailwind CSS v4 and CVA for styling, Motion for optional springs. It is a lean, neutral system with one blue — the UI should be the convincing part, not decoration around it.
 
 ## Principles
 
@@ -56,7 +56,7 @@ Keyboard focus is a 2px outline in `--ring`, 2px outside the part's edge. `--rin
 
 - The library has no icon set and no `Icon` component: pass any icon as a `ReactNode` (`startIcon`, `endIcon`, `IconButton` children). The docs and these previews use Lucide (`lucide-react`) at `size-4`.
 - The few glyphs the components need (chevrons, close, check) are internal.
-- The Chunks UI mark lives in the Logos group: `logo.svg` on light grounds, `logo-dark-mode.svg` on dark.
+- The Chunks UI mark lives in the Logos group: `logo.svg` on light grounds, `logo-dark-mode.svg` on dark, and their `logo-small` cuts at 32px and below.
 
 ## Using this system
 

@@ -5,14 +5,18 @@
  *
  *   bun scripts/design-system/merge.ts --live <folder holding the system's project/> [--gen <dir>] [--out <dir>]
  *
+ * design-system.tgz ships it as out/merge.mts, next to the build: there `node out/merge.mts --live <dir>`
+ * (Node 22.18 or later, or bun) merges that build into out/../merge. Node built-ins only, for that reason.
+ *
  * The published tokens.json carries the hashes of the last build (meta.generated). With them, each
  * file and token is one of: unchanged; changed in the code only (the new build wins); changed on the
  * page only (the page wins); changed in both (code files take the build, prose keeps the page and is
  * reported). Nothing is deleted: what the code no longer has is listed for a person to decide.
  *
- * Output in --out: project/ (the files to publish, tokens.json always), uploads.json (logos
- * to upload again), plan.json and report.md.
+ * Output in --out: project/ (the files to publish, tokens.json always), plan.json (those files and
+ * the logos to upload again) and report.md.
  */
+import { createHash } from "node:crypto";
 import {
   cpSync,
   existsSync,
@@ -43,21 +47,28 @@ type Tokens = Record<string, unknown> & {
   meta?: { generated?: Generated; [key: string]: unknown };
 };
 
-const ROOT = join(import.meta.dir, "../..");
+// Inside the tarball this file sits in the build itself; in the repo, the build is .design-system/out
+const HERE = import.meta.dirname;
 const { values: args } = parseArgs({
   options: {
     live: { type: "string" },
-    gen: { type: "string", default: join(ROOT, ".design-system/out") },
-    out: { type: "string", default: join(ROOT, ".design-system/merge") },
+    gen: {
+      type: "string",
+      default: existsSync(join(HERE, "project/tokens.json"))
+        ? HERE
+        : join(HERE, "../../.design-system/out"),
+    },
+    out: { type: "string" },
   },
 });
-if (!args.live) throw new Error("--live <folder holding the published project/> is required");
+// An empty folder is a first import; a mistyped path must not pass for one and republish every page
+if (!args.live || !existsSync(args.live))
+  throw new Error("--live <folder holding the published project/, or an empty one> is required");
 const LIVE = join(args.live, "project");
 const GEN = join(args.gen, "project");
-const OUT = args.out;
+const OUT = args.out ?? join(args.gen, "../merge");
 
-const sha256 = (data: string | Uint8Array) =>
-  new Bun.CryptoHasher("sha256").update(data).digest("hex");
+const sha256 = (data: string | Uint8Array) => createHash("sha256").update(data).digest("hex");
 const hashOf = (path: string) => (existsSync(path) ? sha256(readFileSync(path)) : undefined);
 const readJson = <T>(path: string): T | undefined =>
   existsSync(path) ? (JSON.parse(readFileSync(path, "utf8")) as T) : undefined;
@@ -184,8 +195,12 @@ function pick(gen: Tokens, live: Tokens | undefined): Tokens {
   return out;
 }
 
-// output
+// output: --out is emptied first, so only an earlier merge's folder (it holds plan.json) is
+if (existsSync(OUT) && readdirSync(OUT).length && !existsSync(join(OUT, "plan.json")))
+  throw new Error(`${OUT} holds files of its own: pass an empty or new --out`);
 rmSync(OUT, { recursive: true, force: true });
+// tokens.json is written even when no other file changed
+mkdirSync(join(OUT, "project"), { recursive: true });
 for (const path of publish) {
   mkdirSync(dirname(join(OUT, "project", path)), { recursive: true });
   cpSync(join(GEN, path), join(OUT, "project", path));
@@ -213,6 +228,6 @@ if (lines.length === 2) lines.push("Nothing changed besides the provenance in to
 writeFileSync(join(OUT, "report.md"), `${lines.join("\n")}\n`);
 const listed = readdirSync(join(OUT, "project"), { recursive: true }).length;
 console.log(
-  `${publish.length + 1} files to publish, ${uploads.length} uploads → ${relative(ROOT, OUT)} (${listed} entries)`,
+  `${publish.length + 1} files to publish, ${uploads.length} uploads → ${relative(process.cwd(), OUT)} (${listed} entries)`,
 );
 console.log(readFileSync(join(OUT, "report.md"), "utf8"));
