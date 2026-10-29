@@ -95,7 +95,12 @@ async function readComponentDocs(): Promise<Page[]> {
 
 async function readTopLevelPages(): Promise<Page[]> {
   const pages: Page[] = [];
-  for (const name of ["getting-started.mdx", "theme.mdx", "utilities.mdx"]) {
+  for (const name of [
+    "getting-started.mdx",
+    "theme.mdx",
+    "utilities.mdx",
+    "claude-design-system.mdx",
+  ]) {
     try {
       pages.push(await readMdxFile(join(CONTENT_DIR, name)));
     } catch {
