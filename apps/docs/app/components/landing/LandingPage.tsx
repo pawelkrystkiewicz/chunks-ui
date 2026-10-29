@@ -624,7 +624,6 @@ function CreateSection() {
 // Keep in step with PresetGrid's tiles (LandingClient.tsx): the two sections sit side by side
 const DS_TILE =
   "flex min-w-0 flex-col items-start gap-3.5 border-(--l-line) border-e border-b px-6 pt-[22px] pb-6";
-const DS_ART = "flex h-[30px] items-center";
 const DS_META =
   "text-pretty font-mono text-(--l-muted) text-[10.5px] leading-normal tracking-[.04em]";
 const SWATCHES = ["bg-primary", "bg-success", "bg-warning", "bg-destructive", "bg-foreground"];
@@ -658,7 +657,7 @@ const DS_TILES: { name: string; meta: string; art: ReactNode }[] = [
   {
     name: "Fonts",
     meta: "Manrope · Fira Code · Outfit",
-    art: <span className="font-sans font-semibold text-[30px] leading-none">Aa</span>,
+    art: <span className="font-semibold text-[30px] leading-none">Aa</span>,
   },
   {
     name: "Logos",
@@ -686,7 +685,7 @@ function DesignSystemTiles() {
     <ul role="list" className="-me-px -mb-px grid auto-rows-fr grid-cols-2">
       {DS_TILES.map(({ name, meta, art }) => (
         <li key={name} className={DS_TILE}>
-          <span aria-hidden className={DS_ART}>
+          <span aria-hidden className="flex h-[30px] items-center">
             {art}
           </span>
           <span className="font-semibold text-[15px] tracking-[-.01em]">{name}</span>
