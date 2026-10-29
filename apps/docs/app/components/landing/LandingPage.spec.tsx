@@ -239,7 +239,7 @@ it("the Claude section links to the import page once and lists what the system h
   if (!claude) throw new Error("no #claude section");
   const links = [...claude.querySelectorAll("a")];
   expect(links.map((a) => [a.textContent, a.getAttribute("href")])).toEqual([
-    ["Import it", "/claude-design-system"],
+    ["Import the design system", "/claude-design-system"],
   ]);
   // Each tile: a drawing hidden from assistive tech, then its name and what it holds
   const tiles = within(claude)
@@ -250,6 +250,20 @@ it("the Claude section links to the import page once and lists what the system h
     ["true", "Every component", "live previews · React 19"],
     ["true", "Fonts", "Manrope · Fira Code · Outfit"],
     ["true", "Logos", "full and small · light and dark"],
+  ]);
+  // The logo tile swaps its two cuts by theme, as the navbar does; jsdom only sees the classes
+  const logos = [...claude.querySelectorAll("img")].map((img) => [
+    img.getAttribute("src"),
+    img.getAttribute("alt"),
+    img.getAttribute("class"),
+  ]);
+  expect(logos).toEqual([
+    [expect.stringContaining("logo-small.svg"), "", expect.stringContaining("[.dark_&]:hidden")],
+    [
+      expect.stringContaining("logo-small-dark-mode.svg"),
+      "",
+      expect.stringMatching(/(^| )hidden .*\[\.dark_&\]:block/),
+    ],
   ]);
 });
 

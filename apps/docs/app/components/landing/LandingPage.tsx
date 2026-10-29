@@ -621,6 +621,7 @@ function CreateSection() {
   );
 }
 
+// Keep in step with PresetGrid's tiles (LandingClient.tsx): the two sections sit side by side
 const DS_TILE =
   "flex min-w-0 flex-col items-start gap-3.5 border-(--l-line) border-e border-b px-6 pt-[22px] pb-6";
 const DS_ART = "flex h-[30px] items-center";
@@ -629,60 +630,61 @@ const DS_META =
 const SWATCHES = ["bg-primary", "bg-success", "bg-warning", "bg-destructive", "bg-foreground"];
 
 /** What the design system holds, each drawn small in the library's own tokens. */
-function DesignSystemTiles() {
-  const tiles = [
-    {
-      name: "Tokens",
-      meta: "OKLCH · light and dark",
-      art: SWATCHES.map((bg) => (
-        <span
-          key={bg}
-          className={`-ms-1 size-3.5 rounded-full shadow-[0_0_0_2px_var(--l-bg)] first:ms-0 ${bg}`}
-        />
-      )),
-    },
-    {
-      name: "Every component",
-      meta: "live previews · React 19",
-      art: (
-        <span className="flex items-center gap-2.5">
-          <span className="h-7 rounded-md bg-primary px-3 font-medium text-[12px] text-primary-foreground leading-7">
-            Save
-          </span>
-          <span className="flex h-4 w-7 rounded-full bg-primary p-0.5">
-            <span className="ms-auto size-3 rounded-full bg-background" />
-          </span>
+const DS_TILES: { name: string; meta: string; art: ReactNode }[] = [
+  {
+    name: "Tokens",
+    meta: "OKLCH · light and dark",
+    art: SWATCHES.map((bg) => (
+      <span
+        key={bg}
+        className={`-ms-1 size-3.5 rounded-full shadow-[0_0_0_2px_var(--l-bg)] first:ms-0 ${bg}`}
+      />
+    )),
+  },
+  {
+    name: "Every component",
+    meta: "live previews · React 19",
+    art: (
+      <span className="flex items-center gap-2.5">
+        <span className="h-7 rounded-md bg-primary px-3 font-medium text-[12px] text-primary-foreground leading-7">
+          Save
         </span>
-      ),
-    },
-    {
-      name: "Fonts",
-      meta: "Manrope · Fira Code · Outfit",
-      art: <span className="font-sans font-semibold text-[30px] leading-none">Aa</span>,
-    },
-    {
-      name: "Logos",
-      meta: "full and small · light and dark",
-      art: (
-        <>
-          <Image src="/logo-small.svg" alt="" width={28} height={28} className="[.dark_&]:hidden" />
-          <Image
-            src="/logo-small-dark-mode.svg"
-            alt=""
-            width={28}
-            height={28}
-            className="hidden [.dark_&]:block"
-          />
-        </>
-      ),
-    },
-  ];
+        <span className="flex h-4 w-7 rounded-full bg-primary p-0.5">
+          <span className="ms-auto size-3 rounded-full bg-background" />
+        </span>
+      </span>
+    ),
+  },
+  {
+    name: "Fonts",
+    meta: "Manrope · Fira Code · Outfit",
+    art: <span className="font-sans font-semibold text-[30px] leading-none">Aa</span>,
+  },
+  {
+    name: "Logos",
+    meta: "full and small · light and dark",
+    art: (
+      <>
+        <Image src="/logo-small.svg" alt="" width={28} height={28} className="[.dark_&]:hidden" />
+        <Image
+          src="/logo-small-dark-mode.svg"
+          alt=""
+          width={28}
+          height={28}
+          className="hidden [.dark_&]:block"
+        />
+      </>
+    ),
+  },
+];
+
+function DesignSystemTiles() {
   return (
     // The wrapper is a grid, so this list stretches to the statement's height and its negative
     // margins still tuck the last row's bottom border under the wrapper's.
     // biome-ignore lint/a11y/noRedundantRoles: WebKit drops the list role under list-style: none
     <ul role="list" className="-me-px -mb-px grid auto-rows-fr grid-cols-2">
-      {tiles.map(({ name, meta, art }) => (
+      {DS_TILES.map(({ name, meta, art }) => (
         <li key={name} className={DS_TILE}>
           <span aria-hidden className={DS_ART}>
             {art}
@@ -712,11 +714,11 @@ function DesignSystemSection() {
             <p className={STATEMENT_TEXT}>
               Each release ships a design system for Claude: the tokens, every component live on
               React 19, the fonts and the logos. Import it into your claude.ai account, and the
-              designs Claude makes with it use the real components. Paste the same prompt after a
-              release to update it.
+              designs Claude makes with it use the real components. Run the same import again after
+              a release to update it.
             </p>
             <div className="mt-auto pt-2">
-              <Cta href="/claude-design-system">Import it</Cta>
+              <Cta href="/claude-design-system">Import the design system</Cta>
             </div>
           </div>
           <div className="grid min-w-0 overflow-hidden border-(--l-line) border-e border-b lg:order-first">
