@@ -258,9 +258,9 @@ const lines = [`# Design system sync: chunks-ui ${sync?.version} at ${sync?.ref}
 for (const [section, items] of Object.entries(report))
   if (items.length) lines.push(`## ${section}`, "", ...items.map((i) => `- ${i}`), "");
 if (lines.length === 2) lines.push("Nothing changed besides the provenance in tokens.json.");
-writeFileSync(join(OUT, "report.md"), `${lines.join("\n")}\n`);
-const listed = readdirSync(join(OUT, "project"), { recursive: true }).length;
+const text = `${lines.join("\n")}\n`;
+writeFileSync(join(OUT, "report.md"), text);
 console.log(
-  `${publish.length + 1} files to publish, ${uploads.length} uploads → ${relative(process.cwd(), OUT)} (${listed} entries)`,
+  `${publish.length + 1} files to publish, ${uploads.length} uploads → ${relative(process.cwd(), OUT)}`,
 );
-console.log(readFileSync(join(OUT, "report.md"), "utf8"));
+console.log(text);
