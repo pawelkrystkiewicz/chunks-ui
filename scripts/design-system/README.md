@@ -36,7 +36,7 @@ bun scripts/design-system/merge.ts --live <folder holding the published project/
 node out/merge.mts --live <folder>   # the same, from an extracted design-system.tgz (Node 24 or later, or Bun)
 ```
 
-It compares the build with the published system, read back into a folder (an empty folder for a first import), and writes `merge/` next to the build's folder (`.design-system/merge/` in the repo): `project/` (only the files to publish, plus `tokens.json`), `plan.json` (those files, the logos to upload and the index's `libraries`) and `report.md`. It refuses a `--live` folder that does not exist or that holds files without build hashes (a first import takes an empty folder), and an `--out` folder that holds files but no `plan.json`. Per file and per token:
+It compares the build with the published system, read back into a folder (an empty folder for a first import), and writes `merge/` next to the build's folder (`.design-system/merge/` in the repo): `project/` (only the files to publish, plus `tokens.json`), `plan.json` (those files in publishing order with `tokens.json` last, the logos to upload, and the index's `namespace` and `libraries`) and `report.md`. It refuses a `--live` folder that does not exist or that holds files without build hashes (a first import takes an empty folder), and an `--out` folder that holds files but no `plan.json`. In an earlier merge's folder it clears only `project/`, `plan.json` and `report.md` before it writes them. Per file and per token:
 
 - unchanged: skipped
 - changed in the code only: the build's version
@@ -44,13 +44,13 @@ It compares the build with the published system, read back into a folder (an emp
 - changed in both: code files (bundle, stylesheet, previews, fonts) take the build's version; guidelines and pages keep the page's version, listed to compare by hand
 - deleted on the page: guidelines and pages stay deleted; a code file is published again, in its own section of the report
 
-Nothing is deleted. A component or token that the code no longer has is listed under "No longer in the code" for a person to decide on.
+Nothing is deleted. A component or token that the code no longer has is listed under "No longer in the code" for a person to decide on, in the first report after its removal only: the `tokens.json` it publishes records what the build had, and the component or token is no longer in that record.
 
 ## Publishing
 
 CI cannot publish to an artifact. Each release instead attaches the build to its GitHub release as `design-system.tgz` (the `design-system` job in `.github/workflows/release-changeset.yml`), and anyone turns it into a claude.ai design system of their own with Claude: the docs page [Claude design system](https://ui-kit.chunk-creations.com/claude-design-system) (`apps/docs/content/claude-design-system.mdx`) holds the prompt.
 
-A first import and an update take the same steps: download the tarball, read the published system back into a folder (an empty one the first time), run `merge.mts`, upload the logos `plan.json` lists, publish `merge/project/` and write the system's index (`design-system.json`) last. Claude shows `report.md` and asks before removing anything. The maintainer's own system takes these steps from a scheduled Claude task at each new `chunks-ui@*` tag.
+A first import and an update take the same steps: download the tarball, read the published system back into a folder (an empty one the first time; its paths start with `project/`), run `merge.mts` and show `report.md`. Claude asks before it publishes when the report lists a file or token edited on the page and changed in the code, or one deleted on the page and restored, and before it removes anything under "No longer in the code". Then it uploads the logos `plan.json` lists, publishes the files in `plan.json`'s `publish` order (`tokens.json` last: it holds the record of what is synced, so the next merge picks up a publish that stopped halfway) and writes the system's index (`design-system.json`) last, with `plan.json`'s `namespace` and `libraries`. The maintainer's own system takes these steps from a scheduled Claude task at each new `chunks-ui@*` tag.
 
 ## Known limits
 

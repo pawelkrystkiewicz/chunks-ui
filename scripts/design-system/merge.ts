@@ -14,8 +14,9 @@
  * reported). Nothing is deleted: what the code no longer has is listed for a person to decide. A code
  * file deleted on the page is restored; deleted prose stays deleted.
  *
- * Output in --out: project/ (the files to publish, tokens.json always), plan.json (those files and
- * the logos to upload again) and report.md.
+ * Output in --out: project/ (the files to publish, tokens.json always), plan.json (those files, in
+ * publishing order, the logos to upload again, the index's namespace and libraries) and report.md.
+ * Only those three are cleared and rewritten; an --out with other files and no plan.json is refused.
  */
 import { createHash } from "node:crypto";
 import {
@@ -47,6 +48,7 @@ interface Sync {
   ref: string;
   version: string;
   react: string;
+  namespace: string;
   libraries: { name: string; version: string; global: string; file: string }[];
 }
 type Tokens = Record<string, unknown> & {
@@ -198,21 +200,34 @@ function pick(gen: Tokens, live: Tokens | undefined): Tokens {
     const families = { ...(live.type.families ?? {}) };
     for (const [k, stack] of Object.entries(gen.type.families ?? {})) {
       const id = `font-${k}`;
-      if (!(k in families)) families[k] = stack;
-      else if (generated.tokens[id] !== prev.tokens[id] && families[k] !== stack) {
+      const was = prev.tokens[id];
+      const now = generated.tokens[id];
+      const page = families[k];
+      if (page === undefined) {
         families[k] = stack;
-        note("Changed in the code", `font family ${k}`);
+        continue;
       }
+      if (now === was || sha256(page) === now) continue;
+      families[k] = stack;
+      note(
+        sha256(page) === was
+          ? "Changed in the code"
+          : "Edited on the page and changed in the code: the code's version is published",
+        `font family ${k}`,
+      );
     }
     out.type = { ...live.type, families };
   }
   return out;
 }
 
-// output: --out is emptied first, so only an earlier merge's folder (it holds plan.json) is
+// output: a folder that holds files of its own is refused unless an earlier merge wrote it (it
+// holds plan.json). Then only what a merge writes is cleared, so a stale file of that run cannot
+// reach project/ and a foreign file next to it survives
 if (existsSync(OUT) && readdirSync(OUT).length && !existsSync(join(OUT, "plan.json")))
   throw new Error(`${OUT} holds files of its own: pass an empty or new --out`);
-rmSync(OUT, { recursive: true, force: true });
+for (const name of ["project", "plan.json", "report.md"])
+  rmSync(join(OUT, name), { recursive: true, force: true });
 // tokens.json is written even when no other file changed
 mkdirSync(join(OUT, "project"), { recursive: true });
 for (const path of publish) {
@@ -231,8 +246,11 @@ const plan = {
   ref: sync?.ref,
   version: sync?.version,
   react: sync?.react,
+  namespace: sync?.namespace,
   libraries: sync?.libraries,
-  publish: ["tokens.json", ...publish],
+  // tokens.json last: its meta.generated marks what is synced. A publish that stops halfway keeps
+  // the old marker, so the next merge still takes the unpublished files as changed in the code
+  publish: [...publish, "tokens.json"],
   uploads: uploadFiles,
 };
 writeFileSync(join(OUT, "plan.json"), `${JSON.stringify(plan, null, 2)}\n`);
