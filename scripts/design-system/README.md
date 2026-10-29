@@ -19,9 +19,9 @@ bun run design-system   # builds chunks-ui, then the system's files into .design
 | `components/index.d.ts` | `packages/ui/dist/index.d.ts` |
 | `README.md`, `components/Cover/preview.html`, `assets/Logos/README.md` | `static/`, written by hand |
 | fonts, logos | `fontFiles` and `logos` in `tokens.base.json` |
-| `licenses/OFL.txt`, `licenses/packages.txt` | The fonts' licence from `apps/docs/fonts/`, and the licence files of every package the build bundles into a script (the minifier drops their licence comments). |
+| `licenses/OFL.txt`, `licenses/chunks-ui.txt`, `licenses/packages.txt` | The fonts' licence from `apps/docs/fonts/`, `packages/ui/LICENSE` (the bundle contains chunks-ui itself), and the licence files of every package the build bundles into a script (the minifier drops their licence comments). |
 
-`.design-system/out/` holds `project/` (the system's files), `uploads/` (the logos, which the system stores as uploads, not files), `sync.json` (the commit, version, React version and the build's notes) and `merge.mts`, a copy of `merge.ts`. `tokens.json` carries the hashes of everything built in `meta.generated`. The next merge reads them back to tell a change in the code from an edit on the page.
+`.design-system/out/` holds `project/` (the system's files), `uploads/` (the logos, which the system stores as uploads, not files), `sync.json` (the commit, version, React version, the index's `libraries` and the build's notes) and `merge.mts`, a copy of `merge.ts`. `tokens.json` carries the hashes of everything built in `meta.generated`. The next merge reads them back to tell a change in the code from an edit on the page.
 
 When the build prints a note, act on it here:
 
@@ -33,15 +33,16 @@ When the build prints a note, act on it here:
 
 ```bash
 bun scripts/design-system/merge.ts --live <folder holding the published project/>
-node out/merge.mts --live <folder>   # the same, from an extracted design-system.tgz (Node 22.18+)
+node out/merge.mts --live <folder>   # the same, from an extracted design-system.tgz (Node 24 or later, or Bun)
 ```
 
-It compares the build with the published system, read back into a folder (an empty folder for a first import), and writes `merge/` next to the build's folder (`.design-system/merge/` in the repo): `project/` (only the files to publish, plus `tokens.json`), `plan.json` (those files and the logos to upload) and `report.md`. It refuses a `--live` folder that does not exist and an `--out` folder that holds anything but an earlier merge. Per file and per token:
+It compares the build with the published system, read back into a folder (an empty folder for a first import), and writes `merge/` next to the build's folder (`.design-system/merge/` in the repo): `project/` (only the files to publish, plus `tokens.json`), `plan.json` (those files, the logos to upload and the index's `libraries`) and `report.md`. It refuses a `--live` folder that does not exist or that holds files without build hashes (a first import takes an empty folder), and an `--out` folder that holds files but no `plan.json`. Per file and per token:
 
 - unchanged: skipped
 - changed in the code only: the build's version
 - edited on the page only: the page's version
 - changed in both: code files (bundle, stylesheet, previews, fonts) take the build's version; guidelines and pages keep the page's version, listed to compare by hand
+- deleted on the page: guidelines and pages stay deleted; a code file is published again, in its own section of the report
 
 Nothing is deleted. A component or token that the code no longer has is listed under "No longer in the code" for a person to decide on.
 
