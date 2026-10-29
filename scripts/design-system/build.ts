@@ -72,6 +72,22 @@ async function bundle(entry: string, plugins: Parameters<typeof Bun.build>[0]["p
   return inlineSafe(await output.text());
 }
 
+/**
+ * The minified CSS Tailwind makes of `input`, in this process (the `@source` lines of `input` say
+ * what it scans). `@tailwindcss/node` and `@tailwindcss/oxide` are not dependencies of the repo's
+ * root: they come through `@tailwindcss/postcss`, packages/ui's build plugin, as in
+ * check-tailwind-compat.ts, so the version is the one the package and the docs app build with.
+ */
+async function tailwind(input: string): Promise<string> {
+  const postcss = dirname(Bun.resolveSync("@tailwindcss/postcss/package.json", UI));
+  const load = async (name: string) => import(Bun.resolveSync(name, postcss));
+  const { compile, optimize } = await load("@tailwindcss/node");
+  const { Scanner } = await load("@tailwindcss/oxide");
+  const compiler = await compile(read(input), { base: dirname(input), onDependency() {} });
+  const css = compiler.build(new Scanner({ sources: compiler.sources }).scan());
+  return optimize(css, { file: input, minify: true }).code;
+}
+
 /** The components the package exports: PascalCase values exported from ./components/. */
 function exportedComponents(): string[] {
   const index = read(join(UI, "src/index.ts"));
@@ -204,22 +220,7 @@ async function main() {
       "",
     ].join("\n"),
   );
-  const tw = Bun.spawnSync(
-    [
-      "bunx",
-      "--bun",
-      // the devDependency, never a fresh unpinned CLI from npm when the install lacks it
-      "--no-install",
-      "@tailwindcss/cli",
-      "-i",
-      join(TMP, "input.css"),
-      "-o",
-      join(PROJECT, "components/bundle.css"),
-      "--minify",
-    ],
-    { cwd: ROOT, stderr: "pipe" },
-  );
-  if (tw.exitCode !== 0) throw new Error(`tailwindcss failed: ${tw.stderr.toString()}`);
+  write(join(PROJECT, "components/bundle.css"), await tailwind(join(TMP, "input.css")));
 
   // hand-written pages (brand book, cover, logo notes), fonts, logos
   cpSync(join(HERE, "static"), PROJECT, { recursive: true });

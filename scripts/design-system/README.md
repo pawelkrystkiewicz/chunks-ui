@@ -13,7 +13,7 @@ bun run design-system   # builds chunks-ui, then the system's files into .design
 | `tokens.json` | Colours, `--spacing-ui-height`, `--radius`, font stacks and z-index layers from `packages/ui/src/theme.css` (the display face from `apps/docs/globals.css`). Usage notes, themes, type styles and shadows from `tokens.base.json`. |
 | `components/bundle.js` | `packages/ui/dist/index.js` with Base UI and Motion bundled in, as `window.ChunksUI`. The header lists every PascalCase value `src/index.ts` exports from `./components/`. |
 | `components/lib/*.js` | React and ReactDOM from `packages/ui`'s install, as `window.React` and `window.ReactDOM` (React 19 has no UMD build). |
-| `components/bundle.css` | Tailwind over the components, the docs examples and the previews, with `theme.css` minus the values `tokens.json` declares, so an edit on the page reaches the previews. `.dark` also matches the frame's `[data-theme="dark"]`. |
+| `components/bundle.css` | Tailwind (the version `packages/ui` builds with, compiled in this process) over the components, the docs examples and the previews, with `theme.css` minus the values `tokens.json` declares, so an edit on the page reaches the previews. `.dark` also matches the frame's `[data-theme="dark"]`. |
 | `components/<Name>/preview.html` | `previews/<Name>.tsx`. The card's group and height come from `cards.json`. |
 | `components/<Name>/README.md` | `apps/docs/content/components/<name>.mdx` without its imports, live demos and props tables. |
 | `components/index.d.ts` | `packages/ui/dist/index.d.ts` |
