@@ -93,6 +93,8 @@ async function main() {
     read(join(HERE, "cards.json")),
   );
   const components = exportedComponents();
+  // an index.ts export that no longer matches the pattern would otherwise ship an empty system
+  if (components.length === 0) throw new Error("no components found in packages/ui/src/index.ts");
   for (const name of components)
     if (!cards[name])
       notes.push(`\`${name}\` is new: no entry in cards.json, shown under "${DEFAULT_CARD.group}"`);
@@ -279,9 +281,11 @@ async function main() {
   );
   for (const [key, stack] of Object.entries(tokens.type.families))
     tokenHashes[`font-${key}`] = sha256(stack);
-  const commit = Bun.spawnSync(["git", "rev-parse", "HEAD"], { cwd: ROOT })
-    .stdout.toString()
-    .trim();
+  const head = Bun.spawnSync(["git", "rev-parse", "HEAD"], { cwd: ROOT, stderr: "pipe" });
+  const commit = head.stdout.toString().trim();
+  // sync.json and the report name the build by this commit: "" would pass for a real ref
+  if (head.exitCode !== 0 || !commit)
+    throw new Error(`git rev-parse HEAD failed: ${head.stderr.toString().trim() || "no output"}`);
   const ref = commit.slice(0, 7);
   const version: string = JSON.parse(read(join(UI, "package.json"))).version;
   const meta = {
