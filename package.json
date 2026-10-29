@@ -19,7 +19,7 @@
     "test:webkit": "turbo run test:webkit --",
     "format": "biome format --write .",
     "lint:scripts": "biome check scripts",
-    "check-types:scripts": "tsc -p scripts && tsc -p scripts/design-system",
+    "check-types:scripts": "tsc -p scripts && tsc -p scripts/design-system && tsc -p scripts/design-system/tsconfig.previews.json",
     "gates": "bun scripts/gates.ts",
     "gates:full": "bun scripts/gates.ts --full",
     "changeset": "changeset",

@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "types": [],
+    // The previews and the docs examples they import resolve react, chunks-ui and lucide-react
+    // from the docs app. Named tsconfig.previews.json, not tsconfig.json, so Bun.build keeps
+    // using the one above for the bundles.
+    "paths": {
+      "@/*": ["../../apps/docs/app/*"],
+      "*": ["../../apps/docs/node_modules/@types/*", "../../apps/docs/node_modules/*"]
+    }
+  },
+  "include": ["previews/*.tsx"]
+}
