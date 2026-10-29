@@ -48,9 +48,9 @@ Nothing is deleted. A component or token that the code no longer has is listed u
 
 ## Publishing
 
-CI cannot publish to an artifact. Each release instead attaches the build to its GitHub release as `design-system.tgz` (the `design-system` job in `.github/workflows/release-changeset.yml`), and anyone turns it into a claude.ai design system of their own with Claude: the docs page [Claude design system](https://ui-kit.chunk-creations.com/claude-design-system) (`apps/docs/content/claude-design-system.mdx`) holds the prompt.
+CI cannot publish to an artifact. Each release instead attaches the build to its GitHub release as `design-system.tgz` (the `design-system` job in `.github/workflows/release-changeset.yml`), and anyone turns it into a claude.ai design system of their own with Claude.
 
-A first import and an update take the same steps: download the tarball, read the published system back into a folder (an empty one the first time; its paths start with `project/`), run `merge.mts` and show `report.md`. Claude asks before it publishes when the report lists a file or token edited on the page and changed in the code, or one deleted on the page and restored, and before it removes anything under "No longer in the code". Then it uploads the logos `plan.json` lists, publishes the files in `plan.json`'s `publish` order (`tokens.json` last: it holds the record of what is synced, so the next merge picks up a publish that stopped halfway) and writes the system's index (`design-system.json`) last, with `plan.json`'s `namespace` and `libraries`. The maintainer's own system takes these steps from a scheduled Claude task at each new `chunks-ui@*` tag.
+A first import and an update take the same steps, which the docs page [Claude design system](https://ui-kit.chunk-creations.com/claude-design-system) (`apps/docs/content/claude-design-system.mdx`) lists as a prompt for Claude. The maintainer's own system takes them from a scheduled Claude task at each new `chunks-ui@*` tag.
 
 ## Known limits
 
