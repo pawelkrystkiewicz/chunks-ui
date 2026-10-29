@@ -598,7 +598,7 @@ function MotionSection() {
 
 function CreateSection() {
   return (
-    <section id="create" className="pt-6">
+    <section id="create" className="pt-6 pb-24">
       <div className={WRAP}>
         <SectionHead eyebrow="Create" title="Theme" accent="in the browser." />
         <Grid className="lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)]">
@@ -614,6 +614,108 @@ function CreateSection() {
           </div>
           <div className="min-w-0 overflow-hidden border-(--l-line) border-e border-b">
             <PresetGrid />
+          </div>
+        </Grid>
+      </div>
+    </section>
+  );
+}
+
+const DS_TILE =
+  "flex min-w-0 flex-col items-start gap-3.5 border-(--l-line) border-e border-b px-6 pt-[22px] pb-6";
+const DS_ART = "flex h-[30px] items-center";
+const DS_META =
+  "text-pretty font-mono text-(--l-muted) text-[10.5px] leading-normal tracking-[.04em]";
+const SWATCHES = ["bg-primary", "bg-success", "bg-warning", "bg-destructive", "bg-foreground"];
+
+/** What the design system holds, each drawn small in the library's own tokens. */
+function DesignSystemTiles() {
+  const tiles = [
+    {
+      name: "Tokens",
+      meta: "OKLCH · light and dark",
+      art: SWATCHES.map((bg) => (
+        <span
+          key={bg}
+          className={`-ms-1 size-3.5 rounded-full shadow-[0_0_0_2px_var(--l-bg)] first:ms-0 ${bg}`}
+        />
+      )),
+    },
+    {
+      name: "Every component",
+      meta: "live previews · React 19",
+      art: (
+        <span className="flex items-center gap-2.5">
+          <span className="h-7 rounded-md bg-primary px-3 font-medium text-[12px] text-primary-foreground leading-7">
+            Save
+          </span>
+          <span className="flex h-4 w-7 rounded-full bg-primary p-0.5">
+            <span className="ms-auto size-3 rounded-full bg-white" />
+          </span>
+        </span>
+      ),
+    },
+    {
+      name: "Fonts",
+      meta: "Manrope · Fira Code · Outfit",
+      art: <span className="font-sans font-semibold text-[30px] leading-none">Aa</span>,
+    },
+    {
+      name: "Logos",
+      meta: "split ring · light and dark",
+      art: (
+        <>
+          <Image src="/logo-small.svg" alt="" width={28} height={28} className="[.dark_&]:hidden" />
+          <Image
+            src="/logo-small-dark-mode.svg"
+            alt=""
+            width={28}
+            height={28}
+            className="hidden [.dark_&]:block"
+          />
+        </>
+      ),
+    },
+  ];
+  return (
+    <ul className="-me-px -mb-px grid h-full auto-rows-fr grid-cols-2">
+      {tiles.map(({ name, meta, art }) => (
+        <li key={name} className={DS_TILE}>
+          <span aria-hidden className={DS_ART}>
+            {art}
+          </span>
+          <span className="font-semibold text-[15px] tracking-[-.01em]">{name}</span>
+          <span className={DS_META}>{meta}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+// Mirrors Create's grid, the drawing first on wide screens; the statement still reads first
+function DesignSystemSection() {
+  return (
+    <section id="claude" className="pt-6">
+      <div className={WRAP}>
+        <SectionHead
+          eyebrow="For Claude"
+          title="Design in Claude"
+          accent="with the real components."
+        />
+        <Grid className="lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+          <div className={`${STATEMENT} gap-5`}>
+            <span className={STATEMENT_LABEL}>{"// The design system"}</span>
+            <p className={STATEMENT_TEXT}>
+              Each release ships a design system for Claude: the tokens, every component live on
+              React 19, the fonts and the logos. Import it once, and the designs Claude makes use
+              the real components.
+            </p>
+            <div className="mt-auto pt-2">
+              <Cta href="/claude-design-system">Import it</Cta>
+            </div>
+          </div>
+          <div className="min-w-0 overflow-hidden border-(--l-line) border-e border-b lg:order-first">
+            <DesignSystemTiles />
           </div>
         </Grid>
       </div>
@@ -758,6 +860,7 @@ export function LandingPage() {
       <Principles />
       <MotionSection />
       <CreateSection />
+      <DesignSystemSection />
       <GetStarted />
       <Footer />
     </div>

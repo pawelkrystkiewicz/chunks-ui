@@ -233,6 +233,22 @@ it("the Create section links to /create once, besides the preset tiles", () => {
   ]);
 });
 
+it("the Claude section links to the import page once and lists what the system holds", () => {
+  const { container } = renderPage();
+  const claude = container.querySelector<HTMLElement>("#claude");
+  if (!claude) throw new Error("no #claude section");
+  const links = [...claude.querySelectorAll("a")];
+  expect(links.map((a) => [a.textContent, a.getAttribute("href")])).toEqual([
+    ["Import it", "/claude-design-system"],
+  ]);
+  const items = within(claude).getAllByRole("listitem");
+  // The first visible text of each tile is its name; the drawings above them are aria-hidden
+  const names = items.map(
+    (li) => li.querySelector(":scope > span:not([aria-hidden])")?.textContent,
+  );
+  expect(names).toEqual(["Tokens", "Every component", "Fonts", "Logos"]);
+});
+
 it("the footer links to the privacy page in the same tab", () => {
   const { container } = renderPage();
   const footer = container.querySelector("footer");
