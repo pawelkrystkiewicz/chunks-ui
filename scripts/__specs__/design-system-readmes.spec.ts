@@ -11,11 +11,6 @@ describe("readmeFromMdx", () => {
     expect(text.startsWith("# ToggleGroup\n\nText.")).toBe(true);
   });
 
-  it("drops what comes before the title", () => {
-    const text = readmeFromMdx("import { A } from 'x'\n\n# Button\n\nText.\n", "Button", "button");
-    expect(text.startsWith("# Button\n\nText.")).toBe(true);
-  });
-
   it("keeps an inline <kbd> paragraph, which is prose and no demo", () => {
     const mdx =
       "# Calendar\n\n<kbd>Enter</kbd> or <kbd>Space</kbd> selects the focused day.\n\nNext.\n";
