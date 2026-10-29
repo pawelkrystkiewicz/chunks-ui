@@ -157,7 +157,7 @@ async function main() {
   );
   cpSync(join(UI, "dist/index.d.ts"), join(PROJECT, "components/index.d.ts"));
 
-  // one preview per component: previews/<Name>.tsx, else the first examples of the docs page
+  // one preview per component: previews/<Name>.tsx
   const previewPlugins = [
     globals({ ...REACT_GLOBALS, ...UI_GLOBALS }),
     fromDocs(DOCS, ["lucide-react"]),
@@ -172,26 +172,10 @@ async function main() {
       );
     else notes.push(`\`${name}\` has no docs page: no guidelines`);
 
-    let entry = join(HERE, "previews", `${name}.tsx`);
+    const entry = join(HERE, "previews", `${name}.tsx`);
     if (!existsSync(entry)) {
-      const examples = join(DOCS, "app/examples", `${name}.tsx`);
-      const found = existsSync(examples)
-        ? [...read(examples).matchAll(/^export function (\w+)/gm)].map((m) => m[1]).slice(0, 3)
-        : [];
-      if (found.length === 0) {
-        notes.push(`\`${name}\` has no preview: add previews/${name}.tsx`);
-        continue;
-      }
-      notes.push(`\`${name}\` preview made from its docs examples: ${found.join(", ")}`);
-      entry = join(TMP, "previews", `${name}.tsx`);
-      const shared = relative(dirname(entry), join(HERE, "previews/_shared")).replace(/\\/g, "/");
-      const from = relative(dirname(entry), examples)
-        .replace(/\\/g, "/")
-        .replace(/\.tsx$/, "");
-      write(
-        entry,
-        `import { mount } from "${shared}";\nimport { ${found.join(", ")} } from "${from}";\nmount(<>${found.map((f) => `<${f} />`).join("")}</>);\n`,
-      );
+      notes.push(`\`${name}\` has no preview: add previews/${name}.tsx`);
+      continue;
     }
     const card = cards[name] ?? DEFAULT_CARD;
     const js = await bundle(entry, previewPlugins);
@@ -213,7 +197,6 @@ async function main() {
       `@import "${Bun.resolveSync("tailwindcss/index.css", UI)}" source(none);`,
       '@import "./theme.css";',
       `@source "${join(HERE, "previews")}";`,
-      `@source "${join(TMP, "previews")}";`,
       `@source "${join(DOCS, "app/examples")}";`,
       `@source "${join(DOCS, "app/components/Container.tsx")}";`,
       "/* Preview frame only: the ground the components sit on, as an app sets it. */",
