@@ -6,12 +6,13 @@
  *   bun scripts/design-system/merge.ts --live <folder holding the system's project/> [--gen <dir>] [--out <dir>]
  *
  * design-system.tgz ships it as out/merge.mts, next to the build: there `node out/merge.mts --live <dir>`
- * (Node 22.18 or later, or bun) merges that build into out/../merge. Node built-ins only, for that reason.
+ * (Node 24 or later, or Bun) merges that build into out/../merge. Node built-ins only, for that reason.
  *
  * The published tokens.json carries the hashes of the last build (meta.generated). With them, each
  * file and token is one of: unchanged; changed in the code only (the new build wins); changed on the
  * page only (the page wins); changed in both (code files take the build, prose keeps the page and is
- * reported). Nothing is deleted: what the code no longer has is listed for a person to decide.
+ * reported). Nothing is deleted: what the code no longer has is listed for a person to decide. A code
+ * file deleted on the page is restored; deleted prose stays deleted.
  *
  * Output in --out: project/ (the files to publish, tokens.json always), plan.json (those files and
  * the logos to upload again) and report.md.
@@ -41,6 +42,12 @@ interface Family {
 interface Generated {
   files: Record<string, string>;
   tokens: Record<string, string>;
+}
+interface Sync {
+  ref: string;
+  version: string;
+  react: string;
+  libraries: { name: string; version: string; global: string; file: string }[];
 }
 type Tokens = Record<string, unknown> & {
   type?: { families?: Record<string, string>; [key: string]: unknown };
@@ -80,6 +87,12 @@ if (!genTokens?.meta?.generated)
   throw new Error(`no build in ${args.gen}: run \`bun run design-system\``);
 const generated = genTokens.meta.generated;
 const liveTokens = readJson<Tokens>(join(LIVE, "tokens.json"));
+// Without the build's hashes every file reads as an edit or a new file: a half read-back must not
+// pass for a first import and republish over the page. A first import takes an empty folder.
+if (readdirSync(args.live).length && !liveTokens?.meta?.generated)
+  throw new Error(
+    `${args.live} holds files but no project/tokens.json with build hashes (meta.generated): the system was not built by chunks-ui's design-system build, or the read-back is incomplete. A first import takes an empty folder.`,
+  );
 const prev: Generated = liveTokens?.meta?.generated ?? { files: {}, tokens: {} };
 
 const publish: string[] = [];
@@ -90,6 +103,7 @@ const report: Record<string, string[]> = {
   "Edited on the page, kept": [],
   "Edited on the page and changed in the code: the code's version is published": [],
   "Deleted on the page, kept deleted": [],
+  "Deleted on the page, restored from the code": [],
   "No longer in the code (kept; ask before removing)": [],
 };
 const note = (section: string, line: string) => report[section]?.push(line);
@@ -111,7 +125,7 @@ for (const [path, hash] of Object.entries(generated.files)) {
     if (before && isProse(path)) note("Deleted on the page, kept deleted", path);
     else {
       publish.push(path);
-      note(before ? "Changed in the code" : "New in the code", path);
+      note(before ? "Deleted on the page, restored from the code" : "New in the code", path);
     }
   } else if (live === before) {
     publish.push(path);
@@ -206,7 +220,7 @@ for (const path of publish) {
   cpSync(join(GEN, path), join(OUT, "project", path));
 }
 writeFileSync(join(OUT, "project/tokens.json"), `${JSON.stringify(merged, null, 2)}\n`);
-const sync = readJson<{ ref: string; version: string; react: string }>(join(args.gen, "sync.json"));
+const sync = readJson<Sync>(join(args.gen, "sync.json"));
 const uploadFiles = uploads.map((path) => ({
   path,
   group: path.split("/")[1],
@@ -217,6 +231,7 @@ const plan = {
   ref: sync?.ref,
   version: sync?.version,
   react: sync?.react,
+  libraries: sync?.libraries,
   publish: ["tokens.json", ...publish],
   uploads: uploadFiles,
 };
