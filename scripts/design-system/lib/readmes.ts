@@ -6,21 +6,7 @@
 
 const DOCS_URL = "https://ui-kit.chunk-creations.com";
 /** A line that opens with one of these is prose (`<kbd>Enter</kbd> selects the day.`), not a demo */
-const INLINE_TAGS = new Set([
-  "a",
-  "abbr",
-  "b",
-  "code",
-  "em",
-  "i",
-  "kbd",
-  "mark",
-  "small",
-  "span",
-  "strong",
-  "sub",
-  "sup",
-]);
+const INLINE_TAGS = /^(a|abbr|b|code|em|i|kbd|mark|small|span|strong|sub|sup)$/;
 
 /**
  * The last line of the live demo or props table that starts at lines[start], or -1 when that line is
@@ -40,7 +26,7 @@ function demoEnd(lines: string[], start: number): number {
       for (const ch of lines[j] ?? "") depth += ch === "{" ? 1 : ch === "}" ? -1 : 0;
       if (depth <= 0) return j;
     }
-  } else if (tag && !INLINE_TAGS.has(tag[1] ?? "")) {
+  } else if (tag && !INLINE_TAGS.test(tag[1] ?? "")) {
     const close = `</${tag[1] ?? ""}>`;
     if (head.endsWith("/>") || head.includes(close)) return start;
     // an element over several lines closes at the same indentation as it opens; a multi-line
