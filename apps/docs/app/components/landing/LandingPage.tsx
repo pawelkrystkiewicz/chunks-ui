@@ -566,6 +566,11 @@ function Principles() {
   );
 }
 
+/** The "// " before a label. A screen reader may read it as "slash slash", so it stays visual. */
+function Slashes() {
+  return <span aria-hidden>{"// "}</span>;
+}
+
 const STATEMENT = "flex min-w-0 flex-col border-(--l-line) border-e border-b px-7 py-8";
 const STATEMENT_LABEL = "font-mono text-primary-text text-[12px]";
 const STATEMENT_TEXT = "text-pretty text-(--l-fg) text-[20px] leading-normal tracking-[-.01em]";
@@ -578,14 +583,20 @@ function MotionSection() {
         <SectionHead eyebrow="Motion" title="Animation" accent="with CSS fallback." />
         <Grid className="lg:grid-cols-2">
           <div className={`${STATEMENT} gap-3.5`}>
-            <span className={STATEMENT_LABEL}>{"// The default"}</span>
+            <span className={STATEMENT_LABEL}>
+              <Slashes />
+              The default
+            </span>
             <p className={STATEMENT_TEXT}>
               Motion 12.8+ or 14.7+ is optional. Add it and you get five tuned springs for
               indicators, content, popups, overlays and small nudges.
             </p>
           </div>
           <div className={`${STATEMENT} gap-3.5`}>
-            <span className={STATEMENT_LABEL}>{"// The fallback"}</span>
+            <span className={STATEMENT_LABEL}>
+              <Slashes />
+              The fallback
+            </span>
             <p className={STATEMENT_TEXT}>
               Components animate with CSS transitions by default. Reduced-motion preferences are
               respected.
@@ -613,7 +624,10 @@ function CreateSection() {
         <SectionHead eyebrow="Create" title="Theme" accent="in the browser." />
         <Grid className="lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)]">
           <div className={`${STATEMENT} gap-5`}>
-            <span className={STATEMENT_LABEL}>{"// The configurator"}</span>
+            <span className={STATEMENT_LABEL}>
+              <Slashes />
+              The configurator
+            </span>
             <p className={STATEMENT_TEXT}>
               Start from a preset. Adjust color, type, radius and spacing in the live preview, then
               copy the CSS.
@@ -647,14 +661,20 @@ function DesignSystemSection() {
         />
         <Grid className="lg:grid-cols-2">
           <div className={`${STATEMENT} gap-3.5`}>
-            <span className={STATEMENT_LABEL}>{"// The design system"}</span>
+            <span className={STATEMENT_LABEL}>
+              <Slashes />
+              The design system
+            </span>
             <p className={STATEMENT_TEXT}>
               Each release ships a design system for Claude: the tokens, every component live on
               React 19, and the fonts. What Claude designs with it matches the code.
             </p>
           </div>
           <div className={`${STATEMENT} gap-3.5`}>
-            <span className={STATEMENT_LABEL}>{"// The import"}</span>
+            <span className={STATEMENT_LABEL}>
+              <Slashes />
+              The import
+            </span>
             <p className="rounded-[10px] border border-(--l-line) bg-(--l-card) px-4 py-3 font-mono text-(--l-fg) text-[13px] leading-[1.6]">
               <span aria-hidden className="text-(--l-muted)">
                 &gt;
@@ -726,10 +746,10 @@ const ROW_LABEL = "font-mono text-[11px] text-white/70 tracking-[.06em]";
 const ROW_VALUE = "font-semibold text-[20px] tracking-[-.015em]";
 
 const LINK_ROWS = [
-  { label: "// docs", href: DOCS, value: "ui-kit.chunk-creations.com" },
-  { label: "// source", href: GITHUB, value: "github.com/pawelkrystkiewicz/chunks-ui ↗" },
-  { label: "// for agents", href: "/llms.txt", value: "ui-kit.chunk-creations.com/llms.txt" },
-  { label: "// context7", href: CONTEXT7, value: "context7.com/pawelkrystkiewicz/chunks-ui ↗" },
+  { label: "docs", href: DOCS, value: "ui-kit.chunk-creations.com" },
+  { label: "source", href: GITHUB, value: "github.com/pawelkrystkiewicz/chunks-ui ↗" },
+  { label: "for agents", href: "/llms.txt", value: "ui-kit.chunk-creations.com/llms.txt" },
+  { label: "context7", href: CONTEXT7, value: "context7.com/pawelkrystkiewicz/chunks-ui ↗" },
 ];
 
 // `dark`: see the note above Hero.
@@ -756,7 +776,10 @@ function GetStarted() {
           />
           {LINK_ROWS.map(({ label, href, value }) => (
             <Href key={label} href={href} className={ROW}>
-              <span className={ROW_LABEL}>{label}</span>
+              <span className={ROW_LABEL}>
+                <Slashes />
+                {label}
+              </span>
               <span className={ROW_VALUE}>{value}</span>
             </Href>
           ))}
@@ -768,7 +791,7 @@ function GetStarted() {
 
 const FOOTER_NAV = [
   {
-    label: "// Library",
+    label: "Library",
     links: [
       { label: "Docs", href: DOCS },
       { label: "Components", href: COMPONENTS },
@@ -777,7 +800,7 @@ const FOOTER_NAV = [
     ],
   },
   {
-    label: "// Tools",
+    label: "Tools",
     links: [
       { label: "Create", href: "/create" },
       { label: "GitHub ↗", href: GITHUB },
@@ -785,7 +808,7 @@ const FOOTER_NAV = [
     ],
   },
   {
-    label: "// Studio",
+    label: "Studio",
     links: [
       { label: "chunk-creations.com ↗", href: "https://chunk-creations.com" },
       { label: "contact@chunk-creations.com", href: "mailto:contact@chunk-creations.com" },
@@ -815,7 +838,10 @@ function Footer() {
           <nav aria-label="Footer" className="grid grid-cols-2 gap-6 lg:grid-cols-3">
             {FOOTER_NAV.map((col) => (
               <div key={col.label} className="flex flex-col gap-2">
-                <span className="mb-1 font-mono text-[11px] text-white/50">{col.label}</span>
+                <span className="mb-1 font-mono text-[11px] text-white/50">
+                  <Slashes />
+                  {col.label}
+                </span>
                 {col.links.map(({ label, href }) => (
                   <Href
                     key={label}

@@ -54,6 +54,29 @@ export function ThemeButton() {
   );
 }
 
+// Live regions stay out of it: inert would mute what they announce, Next's route announcer included.
+const LIVE = "next-route-announcer, [aria-live]";
+
+/**
+ * Sets `inert` on everything in <body> but `keep`, its ancestors and live regions; returns the
+ * undo. An element that is inert already stays as it is, and the undo leaves it inert.
+ */
+function inertAround(keep: Element) {
+  const set: Element[] = [];
+  // ponytail: one walk, on open. A node appended to <body> later (the Vercel toolbar, Next's dev
+  // overlay, a late portal) stays reachable; a MutationObserver would catch it.
+  for (let el = keep; el !== document.body && el.parentElement; el = el.parentElement) {
+    for (const sibling of el.parentElement.children) {
+      if (sibling === el || sibling.hasAttribute("inert") || sibling.matches(LIVE)) continue;
+      sibling.setAttribute("inert", "");
+      set.push(sibling);
+    }
+  }
+  return () => {
+    for (const el of set) el.removeAttribute("inert");
+  };
+}
+
 /** Hamburger and full-screen menu below the header. Every link leaves the page, which unmounts it. */
 export function MobileMenu({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -75,18 +98,26 @@ export function MobileMenu({ children }: { children: ReactNode }) {
     const onLg = () => lg.matches && setOpen(false);
     document.documentElement.scrollTop = 0;
     document.documentElement.style.overflow = "hidden";
+    // The menu covers the page below the header: make the whole page inert up to <body>, all but
+    // the header that holds the menu and its button. On `/` Nextra renders no navbar; around the
+    // landing sit its skip link and mobile-nav aside, Next's scripts and route announcer (a live
+    // region, left out). Tab then cycles through the header and the menu, and a screen reader's
+    // virtual cursor stays in them.
+    const header = buttonRef.current?.closest("header");
+    const restoreInert = header ? inertAround(header) : undefined;
     window.addEventListener("keydown", onKey);
     lg.addEventListener("change", onLg);
     return () => {
       document.documentElement.style.overflow = "";
+      restoreInert?.();
       window.removeEventListener("keydown", onKey);
       lg.removeEventListener("change", onLg);
     };
   }, [open]);
 
-  // The page under the open menu is hidden (WCAG 2.4.11), so focus that leaves the menu and its
-  // button closes the menu, as in the APG disclosure navigation. Focus that goes nowhere (a tap on
-  // the menu's empty space, a switch to another window) keeps it open.
+  // Focus that leaves the menu and its button closes the menu, as in the APG disclosure
+  // navigation. With the page inert, only the header's other controls can take it. Focus that goes
+  // nowhere (a tap on the menu's empty space, a switch to another window) keeps it open.
   const onBlur = (e: FocusEvent) => {
     if (e.relatedTarget && !e.relatedTarget.closest("#landing-menu, [aria-controls=landing-menu]"))
       setOpen(false);
@@ -165,7 +196,11 @@ export function CopyRow({
   return (
     <>
       <button type="button" onClick={copy} className={className}>
-        <span className={labelClassName}>{copied ? "// copied to clipboard" : "// install"}</span>
+        {/* A screen reader may read "//" as "slash slash": it stays on screen, out of the name */}
+        <span className={labelClassName}>
+          <span aria-hidden>{"// "}</span>
+          {copied ? "copied to clipboard" : "install"}
+        </span>
         <span className="font-medium font-mono text-[18px]">{text}</span>
       </button>
       <CopiedStatus copied={copied} />
