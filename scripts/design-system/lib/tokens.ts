@@ -23,7 +23,6 @@ export interface Base {
   shadow: { note?: string; tokens: Token[] };
   type: { fonts: unknown[]; groups: unknown[] };
   fontFiles: Record<string, string>;
-  logos: Record<string, string>;
 }
 
 /** A plain colour the page accepts: hex or a colour function with no nested function. */

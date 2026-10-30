@@ -15,7 +15,7 @@
  * file deleted on the page is restored; deleted prose stays deleted.
  *
  * Output in --out: project/ (the files to publish, tokens.json always), plan.json (those files, in
- * publishing order, the logos to upload again, the index's namespace and libraries) and report.md.
+ * publishing order, the index's namespace and libraries) and report.md.
  * Only those three are cleared and rewritten; an --out with other files and no plan.json is refused.
  */
 import { createHash } from "node:crypto";
@@ -98,7 +98,6 @@ if (readdirSync(args.live).length && !liveTokens?.meta?.generated)
 const prev: Generated = liveTokens?.meta?.generated ?? { files: {}, tokens: {} };
 
 const publish: string[] = [];
-const uploads: string[] = [];
 const report: Record<string, string[]> = {
   "Changed in the code": [],
   "New in the code": [],
@@ -112,14 +111,6 @@ const note = (section: string, line: string) => report[section]?.push(line);
 
 // files
 for (const [path, hash] of Object.entries(generated.files)) {
-  if (path.startsWith("assets/") && !existsSync(join(GEN, path))) {
-    // an upload (a logo): its bytes are in the build's uploads/
-    if (prev.files[path] !== hash) {
-      uploads.push(path);
-      note(prev.files[path] ? "Changed in the code" : "New in the code", `${path} (upload)`);
-    }
-    continue;
-  }
   const live = hashOf(join(LIVE, path));
   const before = prev.files[path];
   if (live === hash) continue;
@@ -236,12 +227,6 @@ for (const path of publish) {
 }
 writeFileSync(join(OUT, "project/tokens.json"), `${JSON.stringify(merged, null, 2)}\n`);
 const sync = readJson<Sync>(join(args.gen, "sync.json"));
-const uploadFiles = uploads.map((path) => ({
-  path,
-  group: path.split("/")[1],
-  name: path.split("/").slice(2).join("/"),
-  file: join(args.gen, "uploads", path.split("/").slice(1).join("/")),
-}));
 const plan = {
   ref: sync?.ref,
   version: sync?.version,
@@ -251,7 +236,6 @@ const plan = {
   // tokens.json last: its meta.generated marks what is synced. A publish that stops halfway keeps
   // the old marker, so the next merge still takes the unpublished files as changed in the code
   publish: [...publish, "tokens.json"],
-  uploads: uploadFiles,
 };
 writeFileSync(join(OUT, "plan.json"), `${JSON.stringify(plan, null, 2)}\n`);
 const lines = [`# Design system sync: chunks-ui ${sync?.version} at ${sync?.ref}`, ""];
@@ -260,7 +244,5 @@ for (const [section, items] of Object.entries(report))
 if (lines.length === 2) lines.push("Nothing changed besides the provenance in tokens.json.");
 const text = `${lines.join("\n")}\n`;
 writeFileSync(join(OUT, "report.md"), text);
-console.log(
-  `${publish.length + 1} files to publish, ${uploads.length} uploads → ${relative(process.cwd(), OUT)}`,
-);
+console.log(`${publish.length + 1} files to publish → ${relative(process.cwd(), OUT)}`);
 console.log(text);

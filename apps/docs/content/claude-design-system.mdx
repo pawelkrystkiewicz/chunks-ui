@@ -1,6 +1,6 @@
 # Claude design system
 
-Each release of `chunks-ui` comes with a design system for Claude: the theme tokens, every component running live on React 19 with a preview and a guidelines page, the fonts and the logos. Import it into your claude.ai account, and the designs and slides Claude makes with it use the real Chunks UI components and tokens, so what you hand off matches the code.
+Each release of `chunks-ui` comes with a design system for Claude: the theme tokens, every component running live on React 19 with a preview and a guidelines page, and the fonts. Import it into your claude.ai account, and the designs and slides Claude makes with it use the real Chunks UI components and tokens, so what you hand off matches the code.
 
 ## Import it
 
@@ -14,16 +14,18 @@ Import the Chunks UI design system into my claude.ai account, or update it if I 
 1. Download https://github.com/pawelkrystkiewicz/chunks-ui/releases/latest/download/design-system.tgz into a new, empty folder and extract it there.
 2. If I have a design system titled "Chunks UI", read all of its published files back into a new folder, keeping their paths. They start with `project/`, so tokens.json lands at `<folder>/project/tokens.json`. If I have none, make an empty folder instead.
 3. Run `node out/merge.mts --live <that folder>`, or `bun out/merge.mts --live <that folder>`. It writes merge/ next to out/.
-4. Show me merge/report.md. If it lists anything under "Edited on the page and changed in the code" or "Deleted on the page, restored from the code", ask me before you publish. Ask me before you remove anything under "No longer in the code".
+4. Show me merge/report.md. If it lists anything under "Edited on the page and changed in the code" or "Deleted on the page, restored from the code", ask me before you publish. Ask me before you remove anything under "No longer in the code". For each line I agree to remove:
+   - `token <name>`: delete that token from merge/project/tokens.json.
+   - A path you read back in step 2: it is a published file, so remove project/<path>.
+   - Any other path that starts with assets/: delete that one asset by its id from the system's asset listing, never the system itself. Skip the path if the listing doesn't have it.
 5. If I have no Chunks UI system yet, create one from the Design System type, titled "Chunks UI".
-6. Upload the logos that merge/plan.json lists under "uploads".
-7. Publish the files that merge/plan.json lists under "publish", in that order, so tokens.json goes last. Each path is relative to merge/project/ and goes to the system's project/<path>.
-8. Write the index, design-system.json, last: record the logos in it, and set its namespace to the `namespace` in merge/plan.json and its `libraries` to the `libraries` there.
+6. Publish the files that merge/plan.json lists under "publish", in that order, so tokens.json goes last. Each path is relative to merge/project/ and goes to the system's project/<path>.
+7. Write the index, design-system.json, last: set its namespace to the `namespace` in merge/plan.json and its `libraries` to the `libraries` there, and drop an asset group only if step 4 deleted every asset in it.
 ```
 
 `merge.mts` is a copy of [`scripts/design-system/merge.ts`](https://github.com/pawelkrystkiewicz/chunks-ui/blob/master/scripts/design-system/merge.ts). It uses only Node's built-in modules and needs Node 24 or later, or Bun.
 
-`releases/latest` is the newest release. To match the version your app installs, change the link to that release's file, for example `releases/download/chunks-ui@0.5.0/design-system.tgz`. Releases from 0.5.0 on have one. If the link returns 404, the newest release has no tarball yet: take the previous release's `design-system.tgz` from the repo's [Releases page](https://github.com/pawelkrystkiewicz/chunks-ui/releases).
+`releases/latest` is the newest release. To match the version your app installs, change the link to that release's file, `releases/download/chunks-ui@<version>/design-system.tgz`. Releases from 0.5.0 on have one; 0.5.0's also holds the Chunks UI logo, which [TRADEMARKS.md](https://github.com/pawelkrystkiewicz/chunks-ui/blob/master/TRADEMARKS.md) does not license, so take a later one. If the link returns 404, the newest release has no tarball yet: take the previous release's `design-system.tgz` from the repo's [Releases page](https://github.com/pawelkrystkiewicz/chunks-ui/releases).
 
 ## Update it
 
@@ -32,7 +34,9 @@ Paste the same prompt after a new release. The merge compares each file and toke
 - Changed only in the code: the new release's version.
 - Edited only on the page: your edit stays.
 - Changed in both: the components' code (bundle, stylesheet, previews, fonts) and the tokens take the new release's version. Guidelines and the brand book keep your edit, and the report lists them so you can compare.
-- Nothing is deleted. A component or token that the code no longer has is listed in the report of the first update after its removal, for you to decide on. The later reports leave it out, because the system's record of what was synced no longer has it.
+- The merge deletes nothing. A component, token or asset that the code no longer has is listed in the report of the first update after its removal, and Claude removes it only if you agree. The later reports leave it out, because the system's record of what was synced no longer has it.
+
+A system imported from 0.5.0 lists the Chunks UI logo on its first update: four logo files and `assets/Logos/README.md`. The logo is not licensed for use in your system (see [TRADEMARKS.md](https://github.com/pawelkrystkiewicz/chunks-ui/blob/master/TRADEMARKS.md)), so let Claude remove them.
 
 One exception: after the first import, a token's usage note, the colour themes, the shadows, the type styles and the font list keep your copy, whatever a release changes. The merge compares only token values and font stacks.
 

@@ -1,6 +1,6 @@
 # Design system
 
-Builds the files of the **Chunks UI design system**, a claude.ai Design System artifact, from this checkout: the tokens, a live bundle of the components on React 19, one preview and one guidelines page per component, the fonts and the logos. The scripts publish nothing; see [Publishing](#publishing).
+Builds the files of the **Chunks UI design system**, a claude.ai Design System artifact, from this checkout: the tokens, a live bundle of the components on React 19, one preview and one guidelines page per component, and the fonts. The scripts publish nothing; see [Publishing](#publishing).
 
 ```bash
 bun run design-system   # builds chunks-ui, then the system's files into .design-system/out/
@@ -17,11 +17,11 @@ bun run design-system   # builds chunks-ui, then the system's files into .design
 | `components/<Name>/preview.html` | `previews/<Name>.tsx`. The card's group and height come from `cards.json`. |
 | `components/<Name>/README.md` | `apps/docs/content/components/<name>.mdx` without its imports, live demos and props tables. |
 | `components/index.d.ts` | `packages/ui/dist/index.d.ts` |
-| `README.md`, `components/Cover/preview.html`, `assets/Logos/README.md` | `static/`, written by hand |
-| fonts, logos | `fontFiles` and `logos` in `tokens.base.json` |
+| `README.md`, `components/Cover/preview.html` | `static/`, written by hand |
+| fonts | `fontFiles` in `tokens.base.json` |
 | `licenses/OFL.txt`, `licenses/chunks-ui.txt`, `licenses/packages.txt` | The fonts' licence from `apps/docs/fonts/`, `packages/ui/LICENSE` (the bundle contains chunks-ui itself), and the licence files of every package the build bundles into a script (the minifier drops their licence comments). |
 
-`.design-system/out/` holds `project/` (the system's files), `uploads/` (the logos, which the system stores as uploads, not files), `sync.json` (the commit, version, React version, the index's `libraries` and the build's notes) and `merge.mts`, a copy of `merge.ts`. `tokens.json` carries the hashes of everything built in `meta.generated`. The next merge reads them back to tell a change in the code from an edit on the page.
+`.design-system/out/` holds `project/` (the system's files), `sync.json` (the commit, version, React version, the index's `libraries` and the build's notes) and `merge.mts`, a copy of `merge.ts`. `tokens.json` carries the hashes of everything built in `meta.generated`. The next merge reads them back to tell a change in the code from an edit on the page.
 
 When the build prints a note, act on it here:
 
@@ -36,7 +36,7 @@ bun scripts/design-system/merge.ts --live <folder holding the published project/
 node out/merge.mts --live <folder>   # the same, from an extracted design-system.tgz (Node 24 or later, or Bun)
 ```
 
-It compares the build with the published system, read back into a folder (an empty folder for a first import), and writes `merge/` next to the build's folder (`.design-system/merge/` in the repo): `project/` (only the files to publish, plus `tokens.json`), `plan.json` (those files in publishing order with `tokens.json` last, the logos to upload, and the index's `namespace` and `libraries`) and `report.md`. It refuses a `--live` folder that does not exist or that holds files without build hashes (a first import takes an empty folder), and an `--out` folder that holds files but no `plan.json`. In an earlier merge's folder it clears only `project/`, `plan.json` and `report.md` before it writes them. Per file and per token:
+It compares the build with the published system, read back into a folder (an empty folder for a first import), and writes `merge/` next to the build's folder (`.design-system/merge/` in the repo): `project/` (only the files to publish, plus `tokens.json`), `plan.json` (those files in publishing order with `tokens.json` last, and the index's `namespace` and `libraries`) and `report.md`. It refuses a `--live` folder that does not exist or that holds files without build hashes (a first import takes an empty folder), and an `--out` folder that holds files but no `plan.json`. In an earlier merge's folder it clears only `project/`, `plan.json` and `report.md` before it writes them. Per file and per token:
 
 - unchanged: skipped
 - changed in the code only: the build's version

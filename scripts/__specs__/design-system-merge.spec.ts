@@ -16,7 +16,6 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
 const MERGE = join(import.meta.dirname, "../design-system/merge.ts");
-const LOGO = "assets/Logos/logo.svg";
 const LIBRARIES = [
   { name: "react", version: "19.2.0", global: "React", file: "components/lib/react.js" },
   { name: "react-dom", version: "19.2.0", global: "ReactDOM", file: "components/lib/react-dom.js" },
@@ -40,7 +39,6 @@ interface Spec {
   fonts: Record<string, string>;
   /** Stamped on the themes, shadows, font list and type styles, which the merge never compares */
   copy: string;
-  logo: string;
 }
 /** Changes to a Spec; null removes a file, a colour or a font stack. */
 interface Edits {
@@ -49,17 +47,15 @@ interface Edits {
   usage?: Record<string, string>;
   fonts?: Record<string, string | null>;
   copy?: string;
-  logo?: string;
 }
 
-/** The last published build: one prose file, one code file, two colours, two font stacks and a logo. */
+/** The last published build: one prose file, one code file, two colours and two font stacks. */
 const BASE: Spec = {
   files: { [README]: "guidelines v1\n", [PREVIEW]: "<p>preview v1</p>\n" },
   colors: { primary: "oklch(0.5 0.2 250)", secondary: "oklch(0.7 0.1 150)" },
   usage: {},
   fonts: { sans: '"Manrope", sans-serif', mono: '"Fira Code", monospace' },
   copy: "base",
-  logo: "<svg>v1</svg>",
 };
 /** What themes, shadows, the font list and the type styles hold in a tokens.json stamped `copy` */
 const stamped = (copy: string) => ({
@@ -90,21 +86,27 @@ const edit = (spec: Spec, e: Edits = {}): Spec => ({
   usage: { ...spec.usage, ...e.usage },
   fonts: without({ ...spec.fonts, ...e.fonts }),
   copy: e.copy ?? spec.copy,
-  logo: e.logo ?? spec.logo,
 });
 
 /**
- * Writes `spec` as a build (project/, uploads/, sync.json) under `dir`. The hashes in tokens.json are
+ * Writes `spec` as a build (project/, sync.json) under `dir`. The hashes in tokens.json are
  * those of `hashed`: the page holds what was edited since, with the hashes of its last build.
  */
-function write(dir: string, spec: Spec, hashed: Spec = spec, build = true) {
+function write(
+  dir: string,
+  spec: Spec,
+  hashed: Spec = spec,
+  build = true,
+  /** Synced paths beyond `hashed.files`, as an older build recorded them */
+  synced: Record<string, string> = {},
+) {
   const put = (path: string, text: string) => {
     mkdirSync(dirname(join(dir, path)), { recursive: true });
     writeFileSync(join(dir, path), text);
   };
   for (const [path, text] of Object.entries(spec.files)) put(`project/${path}`, text);
   const generated = {
-    files: { ...mapValues(hashed.files, sha), [LOGO]: sha(hashed.logo) },
+    files: mapValues({ ...hashed.files, ...synced }, sha),
     tokens: {
       ...mapValues(hashed.colors, (v) => sha(JSON.stringify(v))),
       ...Object.fromEntries(Object.entries(hashed.fonts).map(([k, v]) => [`font-${k}`, sha(v)])),
@@ -129,7 +131,6 @@ function write(dir: string, spec: Spec, hashed: Spec = spec, build = true) {
     }),
   );
   if (!build) return;
-  put("uploads/Logos/logo.svg", spec.logo);
   put(
     "sync.json",
     JSON.stringify({
@@ -187,13 +188,21 @@ function result(out: string) {
 }
 
 /** Merges the new build (BASE + `code`) into the published system (BASE + `page`; null = an empty folder). */
-function sync({ code, page }: { code?: Edits; page?: Edits | null } = {}) {
+function sync({
+  code,
+  page,
+  synced,
+}: {
+  code?: Edits;
+  page?: Edits | null;
+  synced?: Record<string, string>;
+} = {}) {
   const root = tmp();
   const gen = join(root, "gen");
   const live = join(root, "live");
   write(gen, edit(BASE, code));
   mkdirSync(live);
-  if (page !== null) write(live, edit(BASE, page), BASE, false);
+  if (page !== null) write(live, edit(BASE, page), BASE, false, synced);
   const out = join(root, "out");
   const run = exec([MERGE, "--live", live, "--gen", gen, "--out", out]);
   if (run.status !== 0) throw new Error(run.stderr);
@@ -201,16 +210,13 @@ function sync({ code, page }: { code?: Edits; page?: Edits | null } = {}) {
 }
 
 describe("a first import", () => {
-  it("publishes every file and token, and uploads the logo", () => {
+  it("publishes every file and token", () => {
     const m = sync({ page: null });
     // tokens.json carries the marker of what is synced, so it goes last
     expect(m.plan.publish).toEqual([README, PREVIEW, "tokens.json"]);
-    expect(m.plan.uploads).toEqual([
-      { path: LOGO, group: "Logos", name: "logo.svg", file: join(m.gen, "uploads/Logos/logo.svg") },
-    ]);
     expect(m.plan.namespace).toBe("ChunksUI");
     expect(m.plan.libraries).toEqual(LIBRARIES);
-    expect(m.sections[NEW]).toEqual([README, PREVIEW, `${LOGO} (upload)`]);
+    expect(m.sections[NEW]).toEqual([README, PREVIEW]);
     expect(m.tree).toEqual(["components/X/README.md", "components/X/preview.html", "tokens.json"]);
     expect(m.colors).toEqual(BASE.colors);
     expect(m.fonts).toEqual(BASE.fonts);
@@ -222,7 +228,6 @@ describe("an update", () => {
   it("skips what did not change", () => {
     const m = sync();
     expect(m.plan.publish).toEqual(["tokens.json"]);
-    expect(m.plan.uploads).toEqual([]);
     expect(m.tree).toEqual(["tokens.json"]);
     expect(m.sections).toEqual({});
     expect(m.report).toContain("Nothing changed");
@@ -309,6 +314,21 @@ describe("an update", () => {
     expect(m.sections[CHANGED]).toBeUndefined();
   });
 
+  it("lists what a 0.5.0 import holds and the build dropped, read back or not", () => {
+    // 0.5.0 published a logo notes page under assets/ and uploaded the logos, which step 2 of the
+    // prompt does not read back: both are gone from the code, and only this first update lists them
+    const notes = "assets/Logos/README.md";
+    const logo = "assets/Logos/logo.svg";
+    const m = sync({
+      page: { files: { [notes]: "notes\n" } },
+      synced: { [notes]: "notes\n", [logo]: "<svg/>" },
+    });
+    expect(m.sections[GONE]).toEqual([notes, logo]);
+    expect(m.plan.publish).toEqual(["tokens.json"]);
+    const { meta } = JSON.parse(m.file("tokens.json"));
+    expect(Object.keys(meta.generated.files)).toEqual([README, PREVIEW]);
+  });
+
   it("lists a file and a token the code no longer has, and keeps the page's", () => {
     const m = sync({ code: { files: { [PREVIEW]: null }, colors: { secondary: null } } });
     expect(m.sections[GONE]).toEqual([PREVIEW, "token secondary"]);
@@ -357,15 +377,6 @@ describe("an update", () => {
     expect(m.colors.tertiary).toBe("green");
     expect(m.sections[DELETED]).toEqual(["token secondary"]);
     expect(m.sections[NEW]).toEqual(["token tertiary"]);
-  });
-
-  it("lists a logo changed in the code under uploads", () => {
-    const m = sync({ code: { logo: "<svg>v2</svg>" } });
-    expect(m.plan.publish).toEqual(["tokens.json"]);
-    expect(m.plan.uploads).toEqual([
-      { path: LOGO, group: "Logos", name: "logo.svg", file: join(m.gen, "uploads/Logos/logo.svg") },
-    ]);
-    expect(m.sections[CHANGED]).toEqual([`${LOGO} (upload)`]);
   });
 });
 
@@ -428,7 +439,7 @@ describe("the shipped merge.mts on Node", () => {
     const m = result(join(root, "merge"));
     expect(m.plan.publish).toEqual([README, PREVIEW, "tokens.json"]);
     expect(m.plan.namespace).toBe("ChunksUI");
-    expect(m.sections[NEW]).toEqual([README, PREVIEW, `${LOGO} (upload)`]);
+    expect(m.sections[NEW]).toEqual([README, PREVIEW]);
 
     const live = join(root, "live");
     cpSync(join(root, "merge/project"), join(live, "project"), { recursive: true });

@@ -2,11 +2,11 @@
 /**
  * Builds the files of the Chunks UI design system (a claude.ai Design System artifact) from this
  * checkout: tokens.json from theme.css, the live component bundle on React 19, the previews' stylesheet,
- * one preview and one guidelines page per component, the fonts and the logos. It publishes nothing:
+ * one preview and one guidelines page per component, and the fonts. It publishes nothing:
  * merge.ts compares the result with the published system, and README.md says who publishes.
  *
  * Needs packages/ui/dist: run it as `bun run design-system`, which builds the package first.
- * Output: .design-system/out/ (project/ = the system's files, uploads/ = logos, sync.json, and
+ * Output: .design-system/out/ (project/ = the system's files, sync.json, and
  * merge.mts, a copy of merge.ts, so the release's tarball merges without a checkout).
  *
  * ponytail: nothing validates the output against the Design System format, which still changes;
@@ -222,15 +222,10 @@ async function main() {
   );
   write(join(PROJECT, "components/bundle.css"), await tailwind(join(TMP, "input.css")));
 
-  // hand-written pages (brand book, cover, logo notes), fonts, logos
+  // hand-written pages (brand book, cover), fonts
   cpSync(join(HERE, "static"), PROJECT, { recursive: true });
   for (const [to, from] of Object.entries(base.fontFiles))
     cpSync(join(ROOT, from), join(PROJECT, to));
-  const uploads: Record<string, string> = {};
-  for (const [name, from] of Object.entries(base.logos)) {
-    cpSync(join(ROOT, from), join(OUT, "uploads/Logos", name));
-    uploads[`assets/Logos/${name}`] = sha256(readFileSync(join(ROOT, from)));
-  }
 
   // licences, outside fonts/ and components/, which the system reads as fonts and components:
   // the fonts' OFL (§2), and the bundled packages' files, as the minifier drops their comments
@@ -282,14 +277,13 @@ async function main() {
     paths: {
       tokens: ["packages/ui/src/theme.css", "apps/docs/globals.css"],
       fonts: Object.values(base.fontFiles),
-      assets: Object.values(base.logos),
       docs: ["apps/docs/content/components/*.mdx", "scripts/design-system/static/"],
     },
     components: Object.fromEntries(
       components.map((n) => [n, `packages/ui/src/components/${kebab(n)}/`]),
     ),
     synced: new Date().toISOString().slice(0, 10),
-    generated: { files: { ...files, ...uploads }, tokens: tokenHashes },
+    generated: { files, tokens: tokenHashes },
   };
   write(join(PROJECT, "tokens.json"), `${JSON.stringify({ ...tokens, meta }, null, 2)}\n`);
   write(

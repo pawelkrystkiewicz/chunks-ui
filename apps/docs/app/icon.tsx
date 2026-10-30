@@ -1,5 +1,7 @@
 import { ImageResponse } from "next/og";
 
+// © Paweł Krystkiewicz. The Chunks UI mark drawn below is not covered by the MIT licence: see
+// TRADEMARKS.md.
 // The paths live here, not in a module, because Next's ?<hash> on the icon URL covers only this file.
 // Both are drawn in a 256 viewBox with fill-rule evenodd.
 // Small cut: ring 36 units thick (outer radius 126, inner 90), drawn for 24–32 px.

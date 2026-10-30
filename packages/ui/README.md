@@ -112,4 +112,4 @@ Most entries wait on a fix in Base UI and were checked against `@base-ui/react` 
 
 ## License
 
-MIT
+MIT, for the code and the documentation. The Chunks UI name and logo are not covered by it: see [TRADEMARKS.md](https://github.com/pawelkrystkiewicz/chunks-ui/blob/master/TRADEMARKS.md).
