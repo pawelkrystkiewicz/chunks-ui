@@ -63,10 +63,12 @@ describe("checkTreeshake", () => {
       ].join("\n"),
     };
     const { failures } = await checkTreeshake(pkg(single), FIXTURES, MARKERS);
+    const hint =
+      'Check that "sideEffects" in package.json still lists only CSS files and that tsup.config.ts still splits the main entry';
     expect(failures).toEqual([
-      'Button: holds Dialog\'s code ("dialog-marker"), which it does not import',
-      'Button: holds Toast\'s code ("toast-marker"), which it does not import',
-      'Button and Dialog: holds Toast\'s code ("toast-marker"), which it does not import',
+      `Button: holds Dialog's code ("dialog-marker"), which it does not import. ${hint}`,
+      `Button: holds Toast's code ("toast-marker"), which it does not import. ${hint}`,
+      `Button and Dialog: holds Toast's code ("toast-marker"), which it does not import. ${hint}`,
     ]);
   });
 

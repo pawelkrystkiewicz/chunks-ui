@@ -35,6 +35,8 @@ const importFromUtils: EsbuildPlugin = {
 // One ESM entry per component folder, named after the folder (dist/button.js), beside the main
 // one. esbuild splits the code they share into chunks, so dist/index.js re-exports each component
 // from a file of its own, which an app's bundler drops when the app does not import it (#831).
+// That pays off only while package.json has `"sideEffects": ["*.css"]`: without it, a bundler
+// keeps every file index.js imports, as it cannot tell that loading one does nothing else.
 // The component files are not in the exports map: they exist to split the main entry. Read once
 // at config load, so `tsup --watch` needs a restart after adding a component folder.
 const componentEntries = Object.fromEntries(

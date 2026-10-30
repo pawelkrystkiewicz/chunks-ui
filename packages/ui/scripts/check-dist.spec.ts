@@ -80,9 +80,9 @@ describe("checkDist", () => {
       "index.cjs": PASSING["index.cjs"].replace(MOTION_IMPORT, cjs),
     };
     const motionImport =
-      'or a file beside it awaits import(/* turbopackOptional: true */ "motion/react") inside a try block';
+      'awaits import(/* turbopackOptional: true */ "motion/react") inside a try block';
     expect(await checkDist(dist(edits), EXPECTED)).toEqual([
-      `index.js ${motionImport}`,
+      `index.js or a file beside it ${motionImport}`,
       `index.cjs ${motionImport}`,
     ]);
   });

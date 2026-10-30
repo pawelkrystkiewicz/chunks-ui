@@ -73,7 +73,8 @@ export async function checkDist(dist: string, expected: ExpectedExports): Promis
 
     check(
       main.some(({ code }) => TRIED_MOTION_IMPORT.test(code)),
-      `${indexFile} or a file beside it awaits import(/* turbopackOptional: true */ "motion/react") inside a try block`,
+      // ESM splits the main entry, so the import sits in one of its chunks; CJS has index.cjs alone
+      `${format === "js" ? `${indexFile} or a file beside it` : indexFile} awaits import(/* turbopackOptional: true */ "motion/react") inside a try block`,
     );
 
     for (const entry of ["index", "utils"]) {

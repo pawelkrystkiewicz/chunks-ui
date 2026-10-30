@@ -49,6 +49,10 @@ export const FIXTURES: Fixture[] = [
   { imports: ["Button", "Dialog"], budget: 16_000 },
 ];
 
+/** What keeps the components an app does not import out of its bundle */
+const SPLIT_HINT =
+  'Check that "sideEffects" in package.json still lists only CSS files and that tsup.config.ts still splits the main entry';
+
 export type Size = { name: string; bytes: number; budget?: number };
 export type Result = { failures: string[]; sizes: Size[] };
 
@@ -112,7 +116,7 @@ export async function checkTreeshake(
           failures.push(
             imported
               ? `${name}: lacks ${component}'s code (${JSON.stringify(marker)})`
-              : `${name}: holds ${component}'s code (${JSON.stringify(marker)}), which it does not import`,
+              : `${name}: holds ${component}'s code (${JSON.stringify(marker)}), which it does not import. ${SPLIT_HINT}`,
           );
         }
       }
