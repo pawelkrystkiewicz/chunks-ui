@@ -151,8 +151,9 @@ it("growing the window past lg closes the open menu and releases the scroll lock
   }
 });
 
-// The page under the open menu is hidden (WCAG 2.4.11), so focus that leaves the menu and its
-// button closes the menu. Focus that goes nowhere, as on a tap on the menu's empty space, does not.
+// The page around the open menu is inert, so focus can leave the menu and its button only for the
+// header's other controls, and that closes the menu. Focus that goes nowhere, as on a tap on the
+// menu's empty space or Tab past its last link, does not.
 it("focus leaving the open menu closes it; focus moving within it or going nowhere does not", () => {
   const { container } = renderPage();
   const button = screen.getByRole("button", { name: "Menu" });
@@ -174,22 +175,23 @@ it("focus leaving the open menu closes it; focus moving within it or going nowhe
     button.focus();
   });
   expect(menu()).not.toBeNull();
-  // Tab from the last link: the next link or button in the page, under the menu
-  const focusable = [...container.querySelectorAll<HTMLElement>("a[href], button")];
-  const next = focusable[focusable.indexOf(last) + 1];
-  expect(next?.closest("header")).toBeNull();
+  // From a link to a header control (a tap on the GitHub link): it closes
+  const github = header(container).getByRole("link", { name: "GitHub repository" });
+  expect(github.closest("[inert]")).toBeNull();
   act(() => {
     last.focus();
-    next?.focus();
+    github.focus();
   });
   expect(menu()).toBeNull();
   expect(document.documentElement.style.overflow).toBe("");
-  // The button's own blur: out to the page, it closes
+  // The button's own blur: Shift+Tab from it reaches the theme toggle, and it closes
   fireEvent.click(button);
   expect(menu()).not.toBeNull();
+  const theme = header(container).getByRole("button", { name: /^Switch to (dark|light) mode$/ });
+  expect(theme.closest("[inert]")).toBeNull();
   act(() => {
     button.focus();
-    next?.focus();
+    theme.focus();
   });
   expect(menu()).toBeNull();
 });

@@ -225,3 +225,39 @@ it("unmounting the open menu removes inert from the page it leaves", () => {
   expect(screen.getByText("Quick start")).toBeTruthy();
   expect(inert()).toEqual([]);
 });
+
+// Nextra's skip link, navbar and portals sit outside the landing: at the body's level here. Inert
+// too, Tab from the last menu link cycles through the header and the menu, as in a modal.
+const atBody = (text: string, inert?: boolean) => {
+  const el = document.createElement("div");
+  el.textContent = text;
+  if (inert) el.setAttribute("inert", "");
+  return document.body.insertBefore(el, document.body.firstChild);
+};
+
+it("the open menu makes the page outside the landing inert too, and closing restores it", () => {
+  const navbar = atBody("Nextra navbar");
+  try {
+    render(<Landing />);
+    fireEvent.click(menuButton());
+    expect(inert().map((el) => el.textContent)).toEqual(["Nextra navbar", ...PAGE]);
+    fireEvent.click(menuButton());
+    expect(inert()).toEqual([]);
+  } finally {
+    navbar.remove();
+  }
+});
+
+// Something else made it inert (a closed dialog): the menu neither takes it over nor clears it
+it("closing the menu leaves an element that was inert before it opened inert", () => {
+  const dialog = atBody("Closed dialog", true);
+  try {
+    render(<Landing />);
+    fireEvent.click(menuButton());
+    expect(inert().map((el) => el.textContent)).toEqual(["Closed dialog", ...PAGE]);
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(inert()).toEqual([dialog]);
+  } finally {
+    dialog.remove();
+  }
+});

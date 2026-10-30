@@ -54,15 +54,21 @@ export function ThemeButton() {
   );
 }
 
-/** Sets `inert` on everything in `root` but `keep` and its ancestors; returns the undo. */
-function inertAround(keep: Element, root: Element) {
-  const others: Element[] = [];
-  for (let el = keep; el !== root && el.parentElement; el = el.parentElement) {
-    for (const sibling of el.parentElement.children) if (sibling !== el) others.push(sibling);
+/**
+ * Sets `inert` on everything in <body> but `keep` and its ancestors; returns the undo. An element
+ * that is inert already stays as it is, and the undo leaves it inert.
+ */
+function inertAround(keep: Element) {
+  const set: Element[] = [];
+  for (let el = keep; el !== document.body && el.parentElement; el = el.parentElement) {
+    for (const sibling of el.parentElement.children) {
+      if (sibling === el || sibling.hasAttribute("inert")) continue;
+      sibling.setAttribute("inert", "");
+      set.push(sibling);
+    }
   }
-  for (const el of others) el.setAttribute("inert", "");
   return () => {
-    for (const el of others) el.removeAttribute("inert");
+    for (const el of set) el.removeAttribute("inert");
   };
 }
 
@@ -87,11 +93,11 @@ export function MobileMenu({ children }: { children: ReactNode }) {
     const onLg = () => lg.matches && setOpen(false);
     document.documentElement.scrollTop = 0;
     document.documentElement.style.overflow = "hidden";
-    // Tab can't reach the page under the menu, but a screen reader's virtual cursor can: make the
-    // landing inert, all but the header that holds the menu and its button.
+    // The menu covers the page below the header: make the whole page inert, Nextra's skip link,
+    // navbar and portals too, all but the header that holds the menu and its button. Tab then
+    // cycles through the header and the menu, and a screen reader's virtual cursor stays in them.
     const header = buttonRef.current?.closest("header");
-    const landing = header?.closest(".landing");
-    const restoreInert = header && landing ? inertAround(header, landing) : undefined;
+    const restoreInert = header ? inertAround(header) : undefined;
     window.addEventListener("keydown", onKey);
     lg.addEventListener("change", onLg);
     return () => {
@@ -102,9 +108,9 @@ export function MobileMenu({ children }: { children: ReactNode }) {
     };
   }, [open]);
 
-  // The page under the open menu is hidden (WCAG 2.4.11), so focus that leaves the menu and its
-  // button closes the menu, as in the APG disclosure navigation. Focus that goes nowhere (a tap on
-  // the menu's empty space, a switch to another window) keeps it open.
+  // Focus that leaves the menu and its button closes the menu, as in the APG disclosure
+  // navigation. With the page inert, only the header's other controls can take it. Focus that goes
+  // nowhere (a tap on the menu's empty space, a switch to another window) keeps it open.
   const onBlur = (e: FocusEvent) => {
     if (e.relatedTarget && !e.relatedTarget.closest("#landing-menu, [aria-controls=landing-menu]"))
       setOpen(false);
