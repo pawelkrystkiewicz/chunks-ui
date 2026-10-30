@@ -9,6 +9,7 @@ import Link from "next/link";
 import { Search } from "nextra/components";
 import { GitHubIcon } from "nextra/icons";
 import type { ComponentProps, ReactNode } from "react";
+import { config } from "../../../config";
 import {
   FeedbackPreview,
   InputsPreview,
@@ -670,6 +671,45 @@ function DesignSystemSection() {
   );
 }
 
+const HIRE_LINKS = [
+  { label: "CV ↗", href: "https://www.pawelkrystkiewicz.pl/cv" },
+  { label: "LinkedIn ↗", href: "https://www.linkedin.com/in/pawelkrystkiewicz" },
+  { label: "GitHub profile ↗", href: "https://github.com/pawelkrystkiewicz" },
+];
+
+// One hairline band, not a SectionHead: it sits under the library's sections without competing.
+function HireSection() {
+  return (
+    <section id="hire" className="pt-24">
+      <div className={WRAP}>
+        <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-5 border-(--l-line) border-y py-7">
+          <div className="flex max-w-[560px] flex-col gap-2">
+            <span className="flex items-center font-mono text-(--l-muted) text-[11px] uppercase tracking-[.1em]">
+              <i aria-hidden className={`${SQUARE} bg-success`} />
+              Open to work
+            </span>
+            <h2 className="font-display font-semibold text-(--l-fg) text-[24px] leading-tight tracking-[-.02em]">
+              Hire me
+            </h2>
+            <p className="text-pretty text-(--l-muted) text-[14px] leading-normal">
+              Paweł builds Chunks UI. Nine years of React and TypeScript, most recently at Autodesk
+              on a shared component library and its typed design-token contract. He's looking for
+              his next senior frontend or fullstack role.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-x-6 gap-y-2">
+            {HIRE_LINKS.map(({ label, href }) => (
+              <Href key={label} href={href} className={TEXT_LINK}>
+                {label}
+              </Href>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // Hover text is --l-brand-pale: over the brightest part of the gradient, a mid blue such as
 // oklch(70% .15 257) drops to 3.6:1 (390px wide) and 4.2:1 (1920px); --l-brand-pale keeps 5:1.
 const ROW = `flex flex-col gap-1 border-white/15 border-b py-[18px] text-start text-white transition-colors duration-300 hover:text-(--l-brand-pale) ${FOCUS_RING}`;
@@ -808,6 +848,7 @@ export function LandingPage() {
       <MotionSection />
       <CreateSection />
       <DesignSystemSection />
+      {config.openToWork && <HireSection />}
       <GetStarted />
       <Footer />
     </div>

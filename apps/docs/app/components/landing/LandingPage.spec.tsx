@@ -8,6 +8,7 @@ import {
   type AppRouterInstance,
 } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import { expect, it, vi } from "vitest";
+import { config } from "../../../config";
 import { LandingPage } from "./LandingPage";
 
 // The Claude section quotes the import page's prompt and names the React that
@@ -264,6 +265,45 @@ it("the Claude section links to the import page once, quoting its prompt and the
   expect(PROMPT_FIRST_LINE).toMatch(/^Import the Chunks UI design system/);
   expect(claude.textContent).toContain(PROMPT_FIRST_LINE);
   expect(claude.textContent).toContain(`live on React ${BUNDLED_REACT.split(".")[0]}`);
+});
+
+// Each case sets the flag itself, so flipping it in config.ts on hire leaves the spec green
+const renderOpenToWork = (open: boolean) => {
+  const was = config.openToWork;
+  config.openToWork = open;
+  try {
+    return renderPage();
+  } finally {
+    config.openToWork = was;
+  }
+};
+
+it("open to work, the hire section sits between Claude and Get started and links out in new tabs", () => {
+  const { container } = renderOpenToWork(true);
+  const ids = [...container.querySelectorAll("section[id]")].map((s) => s.id);
+  expect(ids.slice(ids.indexOf("claude"), ids.indexOf("claude") + 3)).toEqual([
+    "claude",
+    "hire",
+    "get-started",
+  ]);
+  const hire = container.querySelector<HTMLElement>("#hire");
+  if (!hire) throw new Error("no #hire section");
+  expect(within(hire).getByRole("heading", { level: 2, name: "Hire me" })).toBeTruthy();
+  const links = within(hire).getAllByRole("link");
+  expect(links.map((a) => [a.textContent, a.getAttribute("href")])).toEqual([
+    ["CV ↗", "https://www.pawelkrystkiewicz.pl/cv"],
+    ["LinkedIn ↗", "https://www.linkedin.com/in/pawelkrystkiewicz"],
+    ["GitHub profile ↗", "https://github.com/pawelkrystkiewicz"],
+  ]);
+  for (const link of links) {
+    expect(link.getAttribute("target")).toBe("_blank");
+    expect(link.getAttribute("rel")).toBe("noopener");
+  }
+});
+
+it("not open to work, the landing has no hire section", () => {
+  const { container } = renderOpenToWork(false);
+  expect(container.querySelector("#hire")).toBeNull();
 });
 
 it("the footer links to the privacy page in the same tab", () => {
