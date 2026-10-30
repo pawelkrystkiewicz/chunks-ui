@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 import { act, fireEvent, render, screen } from "@testing-library/react";
+import { type ReactNode, useState } from "react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { PRESETS } from "../../create/theme-model";
-import { CopyRow, HeroCopy, PresetGrid } from "./LandingClient";
+import { CopyRow, HeroCopy, MobileMenu, PresetGrid } from "./LandingClient";
 
 const CMD = "bun add chunks-ui motion";
 const MESSAGE = "Copied to clipboard";
@@ -104,4 +105,113 @@ it("PresetGrid tiles are named by preset and purpose", () => {
   const tile = screen.getByRole("link", { name: /^Chunks.+ · r\d+ · h\d+\s?· open in Create$/ });
   expect(tile.hasAttribute("aria-label")).toBe(false);
   expect(tile.hasAttribute("title")).toBe(false);
+});
+
+// The landing's shape: the header holding the menu sits in the hero, among the hero's own parts
+function Landing({ menu = true, link }: { menu?: boolean; link?: ReactNode }) {
+  return (
+    <div className="landing">
+      <section>
+        <div>Hero fade</div>
+        <header>
+          <a href="/">Home</a>
+          {menu && <MobileMenu>{link ?? <a href="/docs">Docs</a>}</MobileMenu>}
+        </header>
+        <div>Hero</div>
+      </section>
+      <section>Quick start</section>
+      <footer>Footer</footer>
+    </div>
+  );
+}
+
+const menuButton = () => screen.getByRole("button", { name: "Menu" });
+const inert = () => [...document.querySelectorAll("[inert]")];
+const PAGE = ["Hero fade", "Hero", "Quick start", "Footer"];
+
+// A screen reader's virtual cursor walks what Tab cannot reach: the page under the menu leaves the
+// accessibility tree, the header with the menu and its button stays in it.
+it("the open menu makes every part of the landing outside its header inert", () => {
+  const { container } = render(<Landing />);
+  expect(inert()).toEqual([]);
+  fireEvent.click(menuButton());
+  expect(inert().map((el) => el.textContent)).toEqual(PAGE);
+  expect(container.querySelector("header")?.closest("[inert]")).toBeNull();
+  expect(container.querySelector("#landing-menu")?.closest("[inert]")).toBeNull();
+});
+
+it("closing the menu with its button removes inert", () => {
+  render(<Landing />);
+  fireEvent.click(menuButton());
+  expect(inert().map((el) => el.textContent)).toEqual(PAGE);
+  fireEvent.click(menuButton());
+  expect(document.querySelector("#landing-menu")).toBeNull();
+  expect(inert()).toEqual([]);
+});
+
+it("closing the menu with Escape removes inert", () => {
+  render(<Landing />);
+  fireEvent.click(menuButton());
+  expect(inert().map((el) => el.textContent)).toEqual(PAGE);
+  fireEvent.keyDown(window, { key: "Escape" });
+  expect(document.querySelector("#landing-menu")).toBeNull();
+  expect(inert()).toEqual([]);
+});
+
+it("growing the window past lg closes the menu and removes inert", () => {
+  const LG = "(width >= 64rem)";
+  const lg = Object.assign(new EventTarget(), { matches: false, media: LG });
+  const { matchMedia } = window;
+  window.matchMedia = (query) => (query === LG ? (lg as never) : matchMedia(query));
+  try {
+    render(<Landing />);
+    fireEvent.click(menuButton());
+    expect(inert().map((el) => el.textContent)).toEqual(PAGE);
+    act(() => {
+      lg.matches = true;
+      lg.dispatchEvent(new Event("change"));
+    });
+    expect(document.querySelector("#landing-menu")).toBeNull();
+    expect(inert()).toEqual([]);
+  } finally {
+    window.matchMedia = matchMedia;
+  }
+});
+
+// Every menu link leaves the page: the route change unmounts the landing, its menu with it. The
+// parts kept from the landing would come back without inert (React <Activity>, the bfcache).
+it("following a menu link removes inert", () => {
+  function Site() {
+    const [path, setPath] = useState("/");
+    if (path !== "/") return <main>Docs page</main>;
+    const navigate = (e: { preventDefault: () => void }) => {
+      e.preventDefault();
+      setPath("/docs");
+    };
+    return (
+      <Landing
+        link={
+          <a href="/docs" onClick={navigate}>
+            Docs
+          </a>
+        }
+      />
+    );
+  }
+  render(<Site />);
+  fireEvent.click(menuButton());
+  const page = inert();
+  expect(page.map((el) => el.textContent)).toEqual(PAGE);
+  fireEvent.click(screen.getByRole("link", { name: "Docs" }));
+  expect(screen.getByText("Docs page")).toBeTruthy();
+  expect(page.filter((el) => el.hasAttribute("inert"))).toEqual([]);
+});
+
+it("unmounting the open menu removes inert from the page it leaves", () => {
+  const { rerender } = render(<Landing />);
+  fireEvent.click(menuButton());
+  expect(inert().map((el) => el.textContent)).toEqual(PAGE);
+  rerender(<Landing menu={false} />);
+  expect(screen.getByText("Quick start")).toBeTruthy();
+  expect(inert()).toEqual([]);
 });

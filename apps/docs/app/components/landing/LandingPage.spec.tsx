@@ -378,3 +378,28 @@ it("each category card is named by its visible text, heading first", () => {
   }
   expect(screen.getByRole("link", { name: /^Inputs Button, / })).toBeTruthy();
 });
+
+// LandingClient.spec covers each way the menu closes; this checks the real page's shape. Open to
+// work, so the hire section counts too.
+it("with the menu open, every landing section and hero part outside the header is inert", () => {
+  const { container } = renderOpenToWork(true);
+  const headerEl = container.querySelector("header");
+  const hero = headerEl?.parentElement;
+  const landing = container.querySelector(".landing");
+  if (!headerEl || !hero || !landing) throw new Error("no header, hero or landing");
+  const page = [
+    ...[...hero.children].filter((el) => el !== headerEl),
+    ...[...landing.children].filter((el) => el !== hero),
+  ];
+  expect(page.map((el) => el.id || el.tagName)).toEqual(
+    expect.arrayContaining(["start", "components", "claude", "hire", "get-started", "FOOTER"]),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Menu" }));
+  expect([...container.querySelectorAll("[inert]")]).toEqual(page);
+  for (const el of [headerEl, hero, landing]) expect(el.closest("[inert]")).toBeNull();
+  // The links and buttons under the menu are out of reach, the header's are not
+  const focusable = [...container.querySelectorAll<HTMLElement>("a[href], button")];
+  expect(focusable.filter((el) => !el.closest("header") && !el.closest("[inert]"))).toEqual([]);
+  fireEvent.click(screen.getByRole("button", { name: "Menu" }));
+  expect(container.querySelector("[inert]")).toBeNull();
+});

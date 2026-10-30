@@ -54,6 +54,18 @@ export function ThemeButton() {
   );
 }
 
+/** Sets `inert` on everything in `root` but `keep` and its ancestors; returns the undo. */
+function inertAround(keep: Element, root: Element) {
+  const others: Element[] = [];
+  for (let el = keep; el !== root && el.parentElement; el = el.parentElement) {
+    for (const sibling of el.parentElement.children) if (sibling !== el) others.push(sibling);
+  }
+  for (const el of others) el.setAttribute("inert", "");
+  return () => {
+    for (const el of others) el.removeAttribute("inert");
+  };
+}
+
 /** Hamburger and full-screen menu below the header. Every link leaves the page, which unmounts it. */
 export function MobileMenu({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -75,10 +87,16 @@ export function MobileMenu({ children }: { children: ReactNode }) {
     const onLg = () => lg.matches && setOpen(false);
     document.documentElement.scrollTop = 0;
     document.documentElement.style.overflow = "hidden";
+    // Tab can't reach the page under the menu, but a screen reader's virtual cursor can: make the
+    // landing inert, all but the header that holds the menu and its button.
+    const header = buttonRef.current?.closest("header");
+    const landing = header?.closest(".landing");
+    const restoreInert = header && landing ? inertAround(header, landing) : undefined;
     window.addEventListener("keydown", onKey);
     lg.addEventListener("change", onLg);
     return () => {
       document.documentElement.style.overflow = "";
+      restoreInert?.();
       window.removeEventListener("keydown", onKey);
       lg.removeEventListener("change", onLg);
     };
