@@ -188,8 +188,17 @@ it("growing the window past lg closes the menu and removes inert", () => {
   }
 });
 
-// Every menu link leaves the page: the route change unmounts the landing, its menu with it. The
-// parts kept from the landing would come back without inert (React <Activity>, the bfcache).
+// On `/`, Nextra's skip link and mobile-nav aside and Next's scripts sit outside the landing: at
+// the body's level here. Inert too, Tab from the last menu link cycles through the header and the
+// menu, as in a modal.
+const atBody = (text: string, attributes: Record<string, string> = {}, tag = "div") => {
+  const el = document.createElement(tag);
+  el.textContent = text;
+  for (const [name, value] of Object.entries(attributes)) el.setAttribute(name, value);
+  return document.body.insertBefore(el, document.body.firstChild);
+};
+
+// A Next Link navigation unmounts the landing, so the cleanup must drop inert from what outlives it
 it("following a menu link removes inert", () => {
   function Site() {
     const [path, setPath] = useState("/");
@@ -208,13 +217,18 @@ it("following a menu link removes inert", () => {
       />
     );
   }
-  render(<Site />);
-  fireEvent.click(menuButton());
-  const page = inert();
-  expect(page.map((el) => el.textContent)).toEqual(PAGE);
-  fireEvent.click(screen.getByRole("link", { name: "Docs" }));
-  expect(screen.getByText("Docs page")).toBeTruthy();
-  expect(page.filter((el) => el.hasAttribute("inert"))).toEqual([]);
+  const skip = atBody("Skip link");
+  try {
+    render(<Site />);
+    fireEvent.click(menuButton());
+    expect(inert().map((el) => el.textContent)).toEqual(["Skip link", ...PAGE]);
+    fireEvent.click(screen.getByRole("link", { name: "Docs" }));
+    expect(screen.getByText("Docs page")).toBeTruthy();
+    expect(skip.hasAttribute("inert")).toBe(false);
+    expect(inert()).toEqual([]);
+  } finally {
+    skip.remove();
+  }
 });
 
 it("unmounting the open menu removes inert from the page it leaves", () => {
@@ -226,31 +240,22 @@ it("unmounting the open menu removes inert from the page it leaves", () => {
   expect(inert()).toEqual([]);
 });
 
-// Nextra's skip link, navbar and portals sit outside the landing: at the body's level here. Inert
-// too, Tab from the last menu link cycles through the header and the menu, as in a modal.
-const atBody = (text: string, inert?: boolean) => {
-  const el = document.createElement("div");
-  el.textContent = text;
-  if (inert) el.setAttribute("inert", "");
-  return document.body.insertBefore(el, document.body.firstChild);
-};
-
 it("the open menu makes the page outside the landing inert too, and closing restores it", () => {
-  const navbar = atBody("Nextra navbar");
+  const skip = atBody("Skip link");
   try {
     render(<Landing />);
     fireEvent.click(menuButton());
-    expect(inert().map((el) => el.textContent)).toEqual(["Nextra navbar", ...PAGE]);
+    expect(inert().map((el) => el.textContent)).toEqual(["Skip link", ...PAGE]);
     fireEvent.click(menuButton());
     expect(inert()).toEqual([]);
   } finally {
-    navbar.remove();
+    skip.remove();
   }
 });
 
 // Something else made it inert (a closed dialog): the menu neither takes it over nor clears it
 it("closing the menu leaves an element that was inert before it opened inert", () => {
-  const dialog = atBody("Closed dialog", true);
+  const dialog = atBody("Closed dialog", { inert: "" });
   try {
     render(<Landing />);
     fireEvent.click(menuButton());
@@ -259,5 +264,21 @@ it("closing the menu leaves an element that was inert before it opened inert", (
     expect(inert()).toEqual([dialog]);
   } finally {
     dialog.remove();
+  }
+});
+
+// Inert would mute a live region: the route announcer's name for the next page would go unheard
+it("the open menu leaves live regions out, Next's route announcer among them", () => {
+  const announcer = atBody("", {}, "next-route-announcer");
+  const status = atBody("Saved", { "aria-live": "polite" });
+  try {
+    render(<Landing />);
+    fireEvent.click(menuButton());
+    expect(inert().map((el) => el.textContent)).toEqual(PAGE);
+    expect(announcer.hasAttribute("inert")).toBe(false);
+    expect(status.hasAttribute("inert")).toBe(false);
+  } finally {
+    announcer.remove();
+    status.remove();
   }
 });
