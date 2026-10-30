@@ -92,14 +92,21 @@ const edit = (spec: Spec, e: Edits = {}): Spec => ({
  * Writes `spec` as a build (project/, sync.json) under `dir`. The hashes in tokens.json are
  * those of `hashed`: the page holds what was edited since, with the hashes of its last build.
  */
-function write(dir: string, spec: Spec, hashed: Spec = spec, build = true) {
+function write(
+  dir: string,
+  spec: Spec,
+  hashed: Spec = spec,
+  build = true,
+  /** Synced paths beyond `hashed.files`, as an older build recorded them */
+  synced: Record<string, string> = {},
+) {
   const put = (path: string, text: string) => {
     mkdirSync(dirname(join(dir, path)), { recursive: true });
     writeFileSync(join(dir, path), text);
   };
   for (const [path, text] of Object.entries(spec.files)) put(`project/${path}`, text);
   const generated = {
-    files: mapValues(hashed.files, sha),
+    files: mapValues({ ...hashed.files, ...synced }, sha),
     tokens: {
       ...mapValues(hashed.colors, (v) => sha(JSON.stringify(v))),
       ...Object.fromEntries(Object.entries(hashed.fonts).map(([k, v]) => [`font-${k}`, sha(v)])),
@@ -181,13 +188,21 @@ function result(out: string) {
 }
 
 /** Merges the new build (BASE + `code`) into the published system (BASE + `page`; null = an empty folder). */
-function sync({ code, page }: { code?: Edits; page?: Edits | null } = {}) {
+function sync({
+  code,
+  page,
+  synced,
+}: {
+  code?: Edits;
+  page?: Edits | null;
+  synced?: Record<string, string>;
+} = {}) {
   const root = tmp();
   const gen = join(root, "gen");
   const live = join(root, "live");
   write(gen, edit(BASE, code));
   mkdirSync(live);
-  if (page !== null) write(live, edit(BASE, page), BASE, false);
+  if (page !== null) write(live, edit(BASE, page), BASE, false, synced);
   const out = join(root, "out");
   const run = exec([MERGE, "--live", live, "--gen", gen, "--out", out]);
   if (run.status !== 0) throw new Error(run.stderr);
@@ -297,6 +312,21 @@ describe("an update", () => {
     expect(m.file(PREVIEW)).toBe("<p>preview v1</p>\n");
     expect(m.sections[RESTORED]).toEqual([PREVIEW]);
     expect(m.sections[CHANGED]).toBeUndefined();
+  });
+
+  it("lists what a 0.5.0 import holds and the build dropped, read back or not", () => {
+    // 0.5.0 published a logo notes page under assets/ and uploaded the logos, which step 2 of the
+    // prompt does not read back: both are gone from the code, and only this first update lists them
+    const notes = "assets/Logos/README.md";
+    const logo = "assets/Logos/logo.svg";
+    const m = sync({
+      page: { files: { [notes]: "notes\n" } },
+      synced: { [notes]: "notes\n", [logo]: "<svg/>" },
+    });
+    expect(m.sections[GONE]).toEqual([notes, logo]);
+    expect(m.plan.publish).toEqual(["tokens.json"]);
+    const { meta } = JSON.parse(m.file("tokens.json"));
+    expect(Object.keys(meta.generated.files)).toEqual([README, PREVIEW]);
   });
 
   it("lists a file and a token the code no longer has, and keeps the page's", () => {
