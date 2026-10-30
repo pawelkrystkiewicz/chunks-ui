@@ -1,5 +1,11 @@
 # chunks-ui
 
+## 0.5.1
+
+### Patch Changes
+
+- [#825](https://github.com/pawelkrystkiewicz/chunks-ui/pull/825) [`4e3bd34`](https://github.com/pawelkrystkiewicz/chunks-ui/commit/4e3bd346024cd9c057982c9ed6292f05177e7412) - Changed: the release's `design-system.tgz` no longer ships the Chunks UI logo, and the README says that the MIT licence covers the code and the documentation, not the Chunks UI name and logo (see [TRADEMARKS.md](https://github.com/pawelkrystkiewicz/chunks-ui/blob/master/TRADEMARKS.md)). The first update of a system imported from 0.5.0 lists its four logos and `assets/Logos/README.md` under "No longer in the code", and the import page's prompt removes them once you agree; later updates leave them out.
+
 ## 0.5.0
 
 ### Minor Changes
