@@ -168,7 +168,7 @@ bun run test:unit:coverage # the same Vitest suites, with the coverage report an
 Two commands run CI's checks locally. Each step is a `run:` step of a CI job, word for word, in its working directory. Each job's steps run in CI's order and the jobs one after another, where CI runs the jobs side by side: the run stops at the first step that fails, so it does not show what the other jobs would report. It says what the failed step needs and how to re-run it alone, and ends with every step and its time.
 
 - `bun run gates` runs the `lint` and `typecheck` jobs (`quality-gates.yml`), then the `test` job (`unit.tests.yml`), in about half a minute when warm.
-- `GITHUB_TOKEN=$(gh auth token) bun run gates:full` runs the same, then the `docs-build` job, a few minutes more. That job builds the docs, runs axe (WCAG A and AA, colour contrast included, which jest-axe in jsdom cannot see) on every docs page in both themes, and runs `check:no-motion`, which type-checks a consumer with `skipLibCheck: false` under `node10` resolution.
+- `GITHUB_TOKEN=$(gh auth token) bun run gates:full` runs the same, then the `docs-build` job, a few minutes more. That job builds the docs, runs `check:treeshake` (an app that imports `Button` must get no other component's code), runs axe (WCAG A and AA, colour contrast included, which jest-axe in jsdom cannot see) on every docs page in both themes, and runs `check:no-motion`, which type-checks a consumer with `skipLibCheck: false` under `node10` resolution.
 
 `bun run gates` is enough only when every changed file is one of these: a spec (`*.spec.ts`, `*.spec.tsx`); a file in `.claude/` or `.changeset/`; Markdown outside `apps/docs`; a file in the root `scripts/` other than `check-no-motion.ts` and `no-motion/`, which the `docs-build` job runs; a workflow line outside the `docs-build` job. For anything else, run `gates:full`.
 
@@ -205,7 +205,7 @@ The changelog entry links the PR that added the changeset (`@changesets/changelo
 - `vitest*.config.ts` and `vitest*.setup.ts` in the package root
 - `src/VisualTest.*` and `src/visual-test.css` (visual test helpers and styles, never bundled)
 - `src/AxeTest.*` (unit test helpers for axe audits, never bundled)
-- `scripts/**` (the package's own `scripts/check-dist.ts`, which checks `dist` and ships nothing)
+- `scripts/**` (the package's own `scripts/check-dist.ts` and `scripts/check-treeshake.ts` with their specs, which check `dist` and ship nothing)
 
 A PR that changes only these files passes the gate with no changeset. Any other file in `packages/ui` counts: source, `package.json` and build config such as `tsup.config.ts`. Keep `**` first in the list and add exclusions after it: a later positive pattern adds back the files an earlier negation removed (micromatch applies the list in order).
 

@@ -5,7 +5,8 @@ import { join } from "node:path";
 import { checkDist } from "./check-dist";
 
 // A hand-written dist with the shape tsup gives chunks-ui: one copy of the helpers in utils.*,
-// re-exported by index.*, which alone carries the banner and the guarded motion/react import.
+// re-exported by index.*. The main entry's files alone carry the banner: in ESM, index.js and a
+// chunk it re-exports Button from, which holds the guarded motion/react import.
 const MOTION_IMPORT = `async function loadMotion() {
   let motion;
   try {
@@ -18,7 +19,9 @@ const PASSING = {
   "utils.js": 'export function cn(...a) { return a.join(" "); }\n',
   "utils.cjs":
     '"use strict";\nfunction cn(...a) { return a.join(" "); }\nmodule.exports = { cn };\n',
-  "index.js": `"use client";\nexport { cn } from "./utils.js";\nexport const Button = () => null;\n${MOTION_IMPORT}`,
+  "index.js":
+    '"use client";\nexport { cn } from "./utils.js";\nexport { Button } from "./chunk-BUTTON.js";\n',
+  "chunk-BUTTON.js": `"use client";\nexport const Button = () => null;\n${MOTION_IMPORT}`,
   "index.cjs": `"use client";\n"use strict";\nconst utils = require("./utils.cjs");\nmodule.exports = { Button: () => null, cn: utils.cn };\n${MOTION_IMPORT}`,
   "utils.d.ts": "export declare function cn(...a: string[]): string;\n",
   "utils.d.cts": "export declare function cn(...a: string[]): string;\n",
@@ -52,25 +55,34 @@ describe("checkDist", () => {
     expect(await checkDist(dist(edits), EXPECTED)).toEqual(['index.js starts with "use client"']);
   });
 
+  it('fails a chunk of the main entry that does not start with "use client"', async () => {
+    const edits = {
+      "chunk-BUTTON.js": PASSING["chunk-BUTTON.js"].replace('"use client";\n', ""),
+    };
+    expect(await checkDist(dist(edits), EXPECTED)).toEqual([
+      'chunk-BUTTON.js starts with "use client"',
+    ]);
+  });
+
   it('fails a utils entry that gains a "use client" banner', async () => {
     const edits = { "utils.js": `"use client";\n${PASSING["utils.js"]}` };
     expect(await checkDist(dist(edits), EXPECTED)).toEqual(['utils.js has no "use client"']);
   });
 
   it("fails a motion/react import that is not awaited inside a try block", async () => {
-    // ESM: the import outside the try; CJS: esbuild's rewrite of it, also outside
+    // ESM: the import outside the try, in the chunk; CJS: esbuild's rewrite of it, also outside
     const esm =
       'async function loadMotion() {\n  return import(/* turbopackOptional: true */ "motion/react");\n}\n';
     const cjs =
       'const loadMotion = () => Promise.resolve().then(() => __toESM(require("motion/react")));\n';
     const edits = {
-      "index.js": PASSING["index.js"].replace(MOTION_IMPORT, esm),
+      "chunk-BUTTON.js": PASSING["chunk-BUTTON.js"].replace(MOTION_IMPORT, esm),
       "index.cjs": PASSING["index.cjs"].replace(MOTION_IMPORT, cjs),
     };
     const motionImport =
       'awaits import(/* turbopackOptional: true */ "motion/react") inside a try block';
     expect(await checkDist(dist(edits), EXPECTED)).toEqual([
-      `index.js ${motionImport}`,
+      `index.js or a file beside it ${motionImport}`,
       `index.cjs ${motionImport}`,
     ]);
   });
