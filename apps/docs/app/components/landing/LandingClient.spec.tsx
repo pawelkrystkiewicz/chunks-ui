@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 import { act, fireEvent, render, screen } from "@testing-library/react";
+import { type ReactNode, useState } from "react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { PRESETS } from "../../create/theme-model";
-import { CopyRow, HeroCopy, PresetGrid } from "./LandingClient";
+import { CopyRow, HeroCopy, MobileMenu, PresetGrid } from "./LandingClient";
 
 const CMD = "bun add chunks-ui motion";
 const MESSAGE = "Copied to clipboard";
@@ -69,6 +70,16 @@ it("clears the pending timer on unmount", async () => {
   expect(vi.getTimerCount()).toBe(0);
 });
 
+// The "//" stays on screen but out of the name, which screen readers would read as "slash slash"
+it("CopyRow keeps its // prefix out of the accessible name, before and after the copy", async () => {
+  render(<CopyRow text={CMD} className="" labelClassName="" />);
+  const button = screen.getByRole("button", { name: `install${CMD}` });
+  expect(button.textContent).toBe(`// install${CMD}`);
+  await click(button);
+  expect(screen.getByRole("button", { name: `copied to clipboard${CMD}` })).toBe(button);
+  expect(button.textContent).toBe(`// copied to clipboard${CMD}`);
+});
+
 it("HeroCopy keeps the visible command in its accessible name", () => {
   render(<HeroCopy text={CMD} />);
   expect(screen.getByRole("button", { name: CMD })).toBeTruthy();
@@ -104,4 +115,170 @@ it("PresetGrid tiles are named by preset and purpose", () => {
   const tile = screen.getByRole("link", { name: /^Chunks.+ · r\d+ · h\d+\s?· open in Create$/ });
   expect(tile.hasAttribute("aria-label")).toBe(false);
   expect(tile.hasAttribute("title")).toBe(false);
+});
+
+// The landing's shape: the header holding the menu sits in the hero, among the hero's own parts
+function Landing({ menu = true, link }: { menu?: boolean; link?: ReactNode }) {
+  return (
+    <div className="landing">
+      <section>
+        <div>Hero fade</div>
+        <header>
+          <a href="/">Home</a>
+          {menu && <MobileMenu>{link ?? <a href="/docs">Docs</a>}</MobileMenu>}
+        </header>
+        <div>Hero</div>
+      </section>
+      <section>Quick start</section>
+      <footer>Footer</footer>
+    </div>
+  );
+}
+
+const menuButton = () => screen.getByRole("button", { name: "Menu" });
+const inert = () => [...document.querySelectorAll("[inert]")];
+const PAGE = ["Hero fade", "Hero", "Quick start", "Footer"];
+
+// A screen reader's virtual cursor walks what Tab cannot reach: the page under the menu leaves the
+// accessibility tree, the header with the menu and its button stays in it.
+it("the open menu makes every part of the landing outside its header inert", () => {
+  const { container } = render(<Landing />);
+  expect(inert()).toEqual([]);
+  fireEvent.click(menuButton());
+  expect(inert().map((el) => el.textContent)).toEqual(PAGE);
+  expect(container.querySelector("header")?.closest("[inert]")).toBeNull();
+  expect(container.querySelector("#landing-menu")?.closest("[inert]")).toBeNull();
+});
+
+it("closing the menu with its button removes inert", () => {
+  render(<Landing />);
+  fireEvent.click(menuButton());
+  expect(inert().map((el) => el.textContent)).toEqual(PAGE);
+  fireEvent.click(menuButton());
+  expect(document.querySelector("#landing-menu")).toBeNull();
+  expect(inert()).toEqual([]);
+});
+
+it("closing the menu with Escape removes inert", () => {
+  render(<Landing />);
+  fireEvent.click(menuButton());
+  expect(inert().map((el) => el.textContent)).toEqual(PAGE);
+  fireEvent.keyDown(window, { key: "Escape" });
+  expect(document.querySelector("#landing-menu")).toBeNull();
+  expect(inert()).toEqual([]);
+});
+
+it("growing the window past lg closes the menu and removes inert", () => {
+  const LG = "(width >= 64rem)";
+  const lg = Object.assign(new EventTarget(), { matches: false, media: LG });
+  const { matchMedia } = window;
+  window.matchMedia = (query) => (query === LG ? (lg as never) : matchMedia(query));
+  try {
+    render(<Landing />);
+    fireEvent.click(menuButton());
+    expect(inert().map((el) => el.textContent)).toEqual(PAGE);
+    act(() => {
+      lg.matches = true;
+      lg.dispatchEvent(new Event("change"));
+    });
+    expect(document.querySelector("#landing-menu")).toBeNull();
+    expect(inert()).toEqual([]);
+  } finally {
+    window.matchMedia = matchMedia;
+  }
+});
+
+// On `/`, Nextra's skip link and mobile-nav aside and Next's scripts sit outside the landing: at
+// the body's level here. Inert too, Tab from the last menu link cycles through the header and the
+// menu, as in a modal.
+const atBody = (text: string, attributes: Record<string, string> = {}, tag = "div") => {
+  const el = document.createElement(tag);
+  el.textContent = text;
+  for (const [name, value] of Object.entries(attributes)) el.setAttribute(name, value);
+  return document.body.insertBefore(el, document.body.firstChild);
+};
+
+// A Next Link navigation unmounts the landing, so the cleanup must drop inert from what outlives it
+it("following a menu link removes inert", () => {
+  function Site() {
+    const [path, setPath] = useState("/");
+    if (path !== "/") return <main>Docs page</main>;
+    const navigate = (e: { preventDefault: () => void }) => {
+      e.preventDefault();
+      setPath("/docs");
+    };
+    return (
+      <Landing
+        link={
+          <a href="/docs" onClick={navigate}>
+            Docs
+          </a>
+        }
+      />
+    );
+  }
+  const skip = atBody("Skip link");
+  try {
+    render(<Site />);
+    fireEvent.click(menuButton());
+    expect(inert().map((el) => el.textContent)).toEqual(["Skip link", ...PAGE]);
+    fireEvent.click(screen.getByRole("link", { name: "Docs" }));
+    expect(screen.getByText("Docs page")).toBeTruthy();
+    expect(skip.hasAttribute("inert")).toBe(false);
+    expect(inert()).toEqual([]);
+  } finally {
+    skip.remove();
+  }
+});
+
+it("unmounting the open menu removes inert from the page it leaves", () => {
+  const { rerender } = render(<Landing />);
+  fireEvent.click(menuButton());
+  expect(inert().map((el) => el.textContent)).toEqual(PAGE);
+  rerender(<Landing menu={false} />);
+  expect(screen.getByText("Quick start")).toBeTruthy();
+  expect(inert()).toEqual([]);
+});
+
+it("the open menu makes the page outside the landing inert too, and closing restores it", () => {
+  const skip = atBody("Skip link");
+  try {
+    render(<Landing />);
+    fireEvent.click(menuButton());
+    expect(inert().map((el) => el.textContent)).toEqual(["Skip link", ...PAGE]);
+    fireEvent.click(menuButton());
+    expect(inert()).toEqual([]);
+  } finally {
+    skip.remove();
+  }
+});
+
+// Something else made it inert (a closed dialog): the menu neither takes it over nor clears it
+it("closing the menu leaves an element that was inert before it opened inert", () => {
+  const dialog = atBody("Closed dialog", { inert: "" });
+  try {
+    render(<Landing />);
+    fireEvent.click(menuButton());
+    expect(inert().map((el) => el.textContent)).toEqual(["Closed dialog", ...PAGE]);
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(inert()).toEqual([dialog]);
+  } finally {
+    dialog.remove();
+  }
+});
+
+// Inert would mute a live region: the route announcer's name for the next page would go unheard
+it("the open menu leaves live regions out, Next's route announcer among them", () => {
+  const announcer = atBody("", {}, "next-route-announcer");
+  const status = atBody("Saved", { "aria-live": "polite" });
+  try {
+    render(<Landing />);
+    fireEvent.click(menuButton());
+    expect(inert().map((el) => el.textContent)).toEqual(PAGE);
+    expect(announcer.hasAttribute("inert")).toBe(false);
+    expect(status.hasAttribute("inert")).toBe(false);
+  } finally {
+    announcer.remove();
+    status.remove();
+  }
 });
