@@ -8,7 +8,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Search } from "nextra/components";
 import { GitHubIcon } from "nextra/icons";
-import type { ComponentProps, ReactNode } from "react";
+import { type ComponentProps, Fragment, type ReactNode } from "react";
 import {
   FeedbackPreview,
   InputsPreview,
@@ -626,18 +626,122 @@ const DS_TILE =
   "flex min-w-0 flex-col items-start gap-3.5 border-(--l-line) border-e border-b px-6 pt-[22px] pb-6";
 const DS_META =
   "text-pretty font-mono text-(--l-muted) text-[10.5px] leading-normal tracking-[.04em]";
-const SWATCHES = ["bg-primary", "bg-success", "bg-warning", "bg-destructive", "bg-foreground"];
+const STATES = [
+  "bg-primary text-primary-foreground",
+  "bg-success text-success-foreground",
+  "bg-warning text-warning-foreground",
+  "bg-destructive text-destructive-foreground",
+];
+const NEUTRALS = ["bg-background", "bg-muted", "bg-border", "bg-muted-foreground", "bg-foreground"];
+const CHART = [
+  "h-2.5 bg-chart-1",
+  "h-4 bg-chart-2",
+  "h-3 bg-chart-3",
+  "h-6 bg-chart-4",
+  "h-4.5 bg-chart-5",
+];
+const CORNERS = ["rounded-ss-sm", "rounded-ss-md", "rounded-ss-lg", "rounded-ss-xl"];
+// back to front, each ringed in the page colour where it overlaps the one below
+const LAYERS = [
+  "start-0 top-[9px] bg-border",
+  "start-[9px] top-[6px] bg-muted-foreground",
+  "start-[18px] top-[3px] bg-foreground",
+  "start-[27px] top-0 bg-primary",
+];
+const RULER = "flex h-2.5 items-center border-primary border-x-2";
+
+/** The Tokens drawing: one row per token family, each sample drawn with the tokens themselves */
+const TOKEN_ROWS: [string, ReactNode][] = [
+  [
+    "color",
+    STATES.map((c) => (
+      <span
+        key={c}
+        className={`grid h-6 max-w-11 flex-1 place-items-center rounded-md font-semibold text-[10px] ${c}`}
+      >
+        Aa
+      </span>
+    )),
+  ],
+  [
+    "neutral",
+    <span
+      key="ramp"
+      className="flex h-3.5 max-w-44 flex-1 overflow-hidden rounded-full ring-(--l-line) ring-1"
+    >
+      {NEUTRALS.map((bg) => (
+        <span key={bg} className={`flex-1 ${bg}`} />
+      ))}
+    </span>,
+  ],
+  [
+    "chart",
+    <span key="bars" className="flex h-6 items-end gap-1">
+      {CHART.map((bar) => (
+        <span key={bar} className={`w-2.5 rounded-t-[2px] ${bar}`} />
+      ))}
+    </span>,
+  ],
+  [
+    "radius",
+    CORNERS.map((corner) => (
+      <span key={corner} className={`size-5 border-foreground border-s-2 border-t-2 ${corner}`} />
+    )),
+  ],
+  [
+    "space",
+    ["w-(--spacing-ui-icon-height)", "w-(--spacing-ui-height)"].map((width) => (
+      <span key={width} className={`${RULER} ${width}`}>
+        <span className="h-0.5 w-full bg-primary" />
+      </span>
+    )),
+  ],
+  [
+    "ease",
+    // --ease-fluid, cubic-bezier(0.3, 0, 0, 1), over a straight line
+    <svg
+      key="curve"
+      aria-hidden
+      viewBox="0 0 48 24"
+      fill="none"
+      className="h-6 w-12 overflow-visible"
+    >
+      <path d="M1 23 47 1" className="stroke-(--l-line)" strokeWidth={1.5} />
+      <path
+        d="M1 23C14.8 23 1 1 47 1"
+        className="stroke-primary"
+        strokeWidth={2}
+        strokeLinecap="round"
+      />
+    </svg>,
+  ],
+  [
+    "layer",
+    <span key="stack" className="relative h-[25px] w-[43px] shrink-0">
+      {LAYERS.map((layer) => (
+        <span
+          key={layer}
+          className={`absolute size-4 rounded-[3px] shadow-[0_0_0_1.5px_var(--l-bg)] ${layer}`}
+        />
+      ))}
+    </span>,
+  ],
+];
 
 /** What the design system holds, each drawn small in the library's own tokens. */
-const DS_TILES: { name: string; meta: string; art: ReactNode }[] = [
+const DS_TILES: { name: string; meta: string; art: ReactNode; tall?: boolean }[] = [
   {
     name: "Tokens",
     meta: "OKLCH · light and dark",
-    art: SWATCHES.map((bg) => (
-      <span
-        key={bg}
-        className={`-ms-1 size-3.5 rounded-full shadow-[0_0_0_2px_var(--l-bg)] first:ms-0 ${bg}`}
-      />
+    tall: true,
+    // cells of the tile's two-column grid: the family's name, then its sample past a hairline
+    art: TOKEN_ROWS.map(([label, sample]) => (
+      <Fragment key={label}>
+        <span className={`flex items-center py-1 pe-3 ${DS_META}`}>{label}</span>
+        <span className="flex min-w-0 items-center gap-1.5 border-(--l-line) border-s py-1 ps-3">
+          {sample}
+        </span>
+      </Fragment>
     )),
   },
   {
@@ -659,22 +763,6 @@ const DS_TILES: { name: string; meta: string; art: ReactNode }[] = [
     meta: "Manrope · Fira Code · Outfit",
     art: <span className="font-semibold text-[30px] leading-none">Aa</span>,
   },
-  {
-    name: "Logos",
-    meta: "full and small · light and dark",
-    art: (
-      <>
-        <Image src="/logo-small.svg" alt="" width={28} height={28} className="[.dark_&]:hidden" />
-        <Image
-          src="/logo-small-dark-mode.svg"
-          alt=""
-          width={28}
-          height={28}
-          className="hidden [.dark_&]:block"
-        />
-      </>
-    ),
-  },
 ];
 
 function DesignSystemTiles() {
@@ -682,10 +770,20 @@ function DesignSystemTiles() {
     // The wrapper is a grid, so this list stretches to the statement's height and its negative
     // margins still tuck the last row's bottom border under the wrapper's.
     // biome-ignore lint/a11y/noRedundantRoles: WebKit drops the list role under list-style: none
-    <ul role="list" className="-me-px -mb-px grid auto-rows-fr grid-cols-2">
-      {DS_TILES.map(({ name, meta, art }) => (
-        <li key={name} className={DS_TILE}>
-          <span aria-hidden className="flex h-[30px] items-center">
+    <ul role="list" className="-me-px -mb-px grid grid-cols-2 sm:auto-rows-fr">
+      {DS_TILES.map(({ name, meta, art, tall }) => (
+        <li
+          key={name}
+          className={`${DS_TILE} ${tall ? "col-span-2 sm:col-span-1 sm:row-span-2" : ""}`}
+        >
+          <span
+            aria-hidden
+            className={
+              tall
+                ? "grid w-full flex-1 auto-rows-fr grid-cols-[auto_minmax(0,1fr)]"
+                : "flex h-[30px] items-center"
+            }
+          >
             {art}
           </span>
           <span className="font-semibold text-[15px] tracking-[-.01em]">{name}</span>
@@ -712,9 +810,9 @@ function DesignSystemSection() {
             <span className={STATEMENT_LABEL}>{"// The design system"}</span>
             <p className={STATEMENT_TEXT}>
               Each release ships a design system for Claude: the tokens, every component live on
-              React 19, the fonts and the logos. Import it into your claude.ai account, and the
-              designs Claude makes with it use the real components. Run the same import again after
-              a release to update it.
+              React 19 and the fonts. Import it into your claude.ai account, and the designs Claude
+              makes with it use the real components. Run the same import again after a release to
+              update it.
             </p>
             <div className="mt-auto pt-2">
               <Cta href="/claude-design-system">Import the design system</Cta>

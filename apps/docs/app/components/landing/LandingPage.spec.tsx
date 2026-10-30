@@ -1,4 +1,7 @@
 // @vitest-environment jsdom
+import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import { join } from "node:path";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import {
   AppRouterContext,
@@ -6,6 +9,20 @@ import {
 } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import { expect, it, vi } from "vitest";
 import { LandingPage } from "./LandingPage";
+
+// What scripts/design-system/build.ts ships: its font list, and React as packages/ui resolves it
+// jsdom gives import.meta.url an http scheme, so the path comes from import.meta.dirname
+const ROOT = join(import.meta.dirname, "../../../../..");
+const SHIPPED_FONTS = (
+  JSON.parse(readFileSync(join(ROOT, "scripts/design-system/tokens.base.json"), "utf8")) as {
+    type: { fonts: { family: string }[] };
+  }
+).type.fonts.map((f) => f.family);
+const BUNDLED_REACT = (
+  createRequire(join(ROOT, "packages/ui/package.json"))("react/package.json") as {
+    version: string;
+  }
+).version;
 
 // Nextra's Search reads the App Router, which only Next mounts. No test navigates.
 const renderPage = () =>
@@ -241,30 +258,19 @@ it("the Claude section links to the import page once and lists what the system h
   expect(links.map((a) => [a.textContent, a.getAttribute("href")])).toEqual([
     ["Import the design system", "/claude-design-system"],
   ]);
-  // Each tile: a drawing hidden from assistive tech, then its name and what it holds
+  // Each tile: a drawing hidden from assistive tech, then its name and what it holds. The fonts
+  // and React's major version are read from what the design-system build ships, so a change
+  // there fails here instead of leaving the landing behind.
   const tiles = within(claude)
     .getAllByRole("listitem")
     .map((li) => [...li.children].map((c) => c.getAttribute("aria-hidden") ?? c.textContent));
+  const react = `React ${BUNDLED_REACT.split(".")[0]}`;
   expect(tiles).toEqual([
     ["true", "Tokens", "OKLCH · light and dark"],
-    ["true", "Every component", "live previews · React 19"],
-    ["true", "Fonts", "Manrope · Fira Code · Outfit"],
-    ["true", "Logos", "full and small · light and dark"],
+    ["true", "Every component", `live previews · ${react}`],
+    ["true", "Fonts", SHIPPED_FONTS.join(" · ")],
   ]);
-  // The logo tile swaps its two cuts by theme, as the navbar does; jsdom only sees the classes
-  const logos = [...claude.querySelectorAll("img")].map((img) => [
-    img.getAttribute("src"),
-    img.getAttribute("alt"),
-    img.getAttribute("class"),
-  ]);
-  expect(logos).toEqual([
-    [expect.stringContaining("logo-small.svg"), "", expect.stringContaining("[.dark_&]:hidden")],
-    [
-      expect.stringContaining("logo-small-dark-mode.svg"),
-      "",
-      expect.stringMatching(/(^| )hidden .*\[\.dark_&\]:block/),
-    ],
-  ]);
+  expect(claude.textContent).toContain(`live on ${react}`);
 });
 
 it("the footer links to the privacy page in the same tab", () => {
