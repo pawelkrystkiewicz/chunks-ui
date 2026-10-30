@@ -10,14 +10,16 @@ import {
 import { expect, it, vi } from "vitest";
 import { LandingPage } from "./LandingPage";
 
-// What scripts/design-system/build.ts ships: its font list, and React as packages/ui resolves it
-// jsdom gives import.meta.url an http scheme, so the path comes from import.meta.dirname
+// The Claude section quotes the import page's prompt and names the React that
+// scripts/design-system/build.ts bundles (as packages/ui resolves it). jsdom gives
+// import.meta.url an http scheme, so the paths come from import.meta.dirname.
 const ROOT = join(import.meta.dirname, "../../../../..");
-const SHIPPED_FONTS = (
-  JSON.parse(readFileSync(join(ROOT, "scripts/design-system/tokens.base.json"), "utf8")) as {
-    type: { fonts: { family: string }[] };
-  }
-).type.fonts.map((f) => f.family);
+const PROMPT_FIRST_LINE = readFileSync(
+  join(ROOT, "apps/docs/content/claude-design-system.mdx"),
+  "utf8",
+)
+  .split("```text\n")[1]
+  ?.split("\n")[0];
 const BUNDLED_REACT = (
   createRequire(join(ROOT, "packages/ui/package.json"))("react/package.json") as {
     version: string;
@@ -250,27 +252,18 @@ it("the Create section links to /create once, besides the preset tiles", () => {
   ]);
 });
 
-it("the Claude section links to the import page once and lists what the system holds", () => {
+it("the Claude section links to the import page once, quoting its prompt and the bundled React", () => {
   const { container } = renderPage();
   const claude = container.querySelector<HTMLElement>("#claude");
   if (!claude) throw new Error("no #claude section");
   const links = [...claude.querySelectorAll("a")];
   expect(links.map((a) => [a.textContent, a.getAttribute("href")])).toEqual([
-    ["Import the design system", "/claude-design-system"],
+    ["Get the prompt →", "/claude-design-system"],
   ]);
-  // Each tile: a drawing hidden from assistive tech, then its name and what it holds. The fonts
-  // and React's major version are read from what the design-system build ships, so a change
-  // there fails here instead of leaving the landing behind.
-  const tiles = within(claude)
-    .getAllByRole("listitem")
-    .map((li) => [...li.children].map((c) => c.getAttribute("aria-hidden") ?? c.textContent));
-  const react = `React ${BUNDLED_REACT.split(".")[0]}`;
-  expect(tiles).toEqual([
-    ["true", "Tokens", "OKLCH · light and dark"],
-    ["true", "Every component", `live previews · ${react}`],
-    ["true", "Fonts", SHIPPED_FONTS.join(" · ")],
-  ]);
-  expect(claude.textContent).toContain(`live on ${react}`);
+  // A changed prompt or React major fails here instead of leaving the landing behind
+  expect(PROMPT_FIRST_LINE).toMatch(/^Import the Chunks UI design system/);
+  expect(claude.textContent).toContain(PROMPT_FIRST_LINE);
+  expect(claude.textContent).toContain(`live on React ${BUNDLED_REACT.split(".")[0]}`);
 });
 
 it("the footer links to the privacy page in the same tab", () => {
