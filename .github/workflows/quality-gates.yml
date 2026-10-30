@@ -173,6 +173,12 @@ jobs:
         working-directory: packages/ui
         run: bun run check:exports && bun run check:dist
 
+      # Bundles apps that import one or two components from the built chunks-ui and fails when one
+      # holds another component's code or outgrows its byte budget
+      - name: Check an app gets only the chunks-ui components it imports
+        working-directory: packages/ui
+        run: bun run check:treeshake
+
       # Builds consumers with and without Motion with webpack and with Turbopack (next build), then
       # opens each export in this image's Chromium; the turbo build is a cache hit and the installs
       # are pinned by scripts/no-motion, so it needs the network and the browser only

@@ -62,6 +62,7 @@
     "check-types": "tsc --noEmit && tsc --noEmit --project tsconfig.visual.json && tsc -p scripts && tsc --noEmit -p tsconfig.node.json",
     "check:dist": "bun run scripts/check-dist.ts",
     "check:exports": "attw --pack . --exclude-entrypoints ./theme.css",
+    "check:treeshake": "bun run scripts/check-treeshake.ts",
     "clean": "rm -rf .turbo node_modules dist coverage"
   },
   "peerDependencies": {
