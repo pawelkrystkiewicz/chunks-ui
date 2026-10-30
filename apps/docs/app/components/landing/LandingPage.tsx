@@ -349,7 +349,7 @@ function Hero() {
             {config.openToWork && (
               <a
                 href="#hire"
-                className={`${BADGE} transition-colors hover:border-white/40 ${FOCUS_RING}`}
+                className={`${BADGE} transition-colors duration-250 hover:border-white/40 ${FOCUS_RING}`}
               >
                 <i aria-hidden className={`${SQUARE} bg-success`} />
                 Author open to work

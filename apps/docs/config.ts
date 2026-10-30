@@ -8,6 +8,6 @@ export const config = {
     // added later becomes the filter; VERCEL_URL would be the per-deployment host.
     domains: process.env.VERCEL_PROJECT_PRODUCTION_URL,
   },
-  // The landing's "open to work" block. Flip to false on hire: the claim never expires on its own.
+  // The landing's hero badge and Hire me section. Flip to false on hire: the claim never expires on its own.
   openToWork: true,
 };
