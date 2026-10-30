@@ -301,9 +301,19 @@ it("open to work, the hire section sits between Claude and Get started and links
   }
 });
 
-it("not open to work, the landing has no hire section", () => {
+it("open to work, a hero badge links to the hire section in the same tab", () => {
+  const { container } = renderOpenToWork(true);
+  const hero = container.querySelector("section");
+  if (!hero) throw new Error("no hero");
+  const badge = within(hero).getByRole("link", { name: "Author open to work" });
+  expect(badge.getAttribute("href")).toBe("#hire");
+  expect(badge.hasAttribute("target")).toBe(false);
+});
+
+it("not open to work, the landing has no hire section and no hero badge", () => {
   const { container } = renderOpenToWork(false);
   expect(container.querySelector("#hire")).toBeNull();
+  expect(container.querySelector('a[href="#hire"]')).toBeNull();
 });
 
 it("the footer links to the privacy page in the same tab", () => {
