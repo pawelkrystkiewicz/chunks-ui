@@ -198,6 +198,8 @@ jobs:
           cp -R merge/project "$RUNNER_TEMP/live/project"
           node out/merge.mts --live "$RUNNER_TEMP/live"
           grep -q "Nothing changed" merge/report.md || { cat merge/report.md; exit 1; }
+          # The Chunks UI logo stays out of the tarball (TRADEMARKS.md)
+          if tar -tzf "$RUNNER_TEMP/design-system.tgz" | grep -i logo; then exit 1; fi
 
       - name: Attach it to the GitHub release
         env:
