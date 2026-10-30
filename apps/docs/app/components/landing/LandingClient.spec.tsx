@@ -70,6 +70,16 @@ it("clears the pending timer on unmount", async () => {
   expect(vi.getTimerCount()).toBe(0);
 });
 
+// The "//" stays on screen but out of the name, which screen readers would read as "slash slash"
+it("CopyRow keeps its // prefix out of the accessible name, before and after the copy", async () => {
+  render(<CopyRow text={CMD} className="" labelClassName="" />);
+  const button = screen.getByRole("button", { name: `install${CMD}` });
+  expect(button.textContent).toBe(`// install${CMD}`);
+  await click(button);
+  expect(screen.getByRole("button", { name: `copied to clipboard${CMD}` })).toBe(button);
+  expect(button.textContent).toBe(`// copied to clipboard${CMD}`);
+});
+
 it("HeroCopy keeps the visible command in its accessible name", () => {
   render(<HeroCopy text={CMD} />);
   expect(screen.getByRole("button", { name: CMD })).toBeTruthy();

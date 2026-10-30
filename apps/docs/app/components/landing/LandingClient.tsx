@@ -183,7 +183,11 @@ export function CopyRow({
   return (
     <>
       <button type="button" onClick={copy} className={className}>
-        <span className={labelClassName}>{copied ? "// copied to clipboard" : "// install"}</span>
+        {/* A screen reader may read "//" as "slash slash": it stays on screen, out of the name */}
+        <span className={labelClassName}>
+          <span aria-hidden>{"// "}</span>
+          {copied ? "copied to clipboard" : "install"}
+        </span>
         <span className="font-medium font-mono text-[18px]">{text}</span>
       </button>
       <CopiedStatus copied={copied} />

@@ -403,3 +403,68 @@ it("with the menu open, every landing section and hero part outside the header i
   fireEvent.click(screen.getByRole("button", { name: "Menu" }));
   expect(container.querySelector("[inert]")).toBeNull();
 });
+
+// A screen reader may read "//" as "slash slash". The prefix stays on screen but out of what is
+// read: hidden on its own, so the label after it is still read. Open to work: the whole page.
+const LABELS = [
+  "The default",
+  "The fallback",
+  "The configurator",
+  "The design system",
+  "The import",
+  "install",
+  "docs",
+  "source",
+  "for agents",
+  "context7",
+  "Library",
+  "Tools",
+  "Studio",
+];
+
+// What a screen reader reads of an element: its text without the aria-hidden parts
+const spoken = (el: Element) => {
+  const clone = el.cloneNode(true) as Element;
+  for (const hidden of clone.querySelectorAll("[aria-hidden=true]")) hidden.remove();
+  return clone.textContent;
+};
+
+it("each // label keeps its prefix on screen and hides only the prefix from screen readers", () => {
+  const { container } = renderOpenToWork(true);
+  const prefixes = [...container.querySelectorAll("[aria-hidden=true]")].filter(
+    (el) => el.textContent === "// ",
+  );
+  const labels = prefixes.map((p) => p.parentElement as HTMLElement);
+  expect(labels.map((l) => l.textContent)).toEqual(LABELS.map((l) => `// ${l}`));
+  expect(labels.map(spoken)).toEqual(LABELS);
+  expect(prefixes.every((p, i) => p === labels[i]?.firstChild)).toBe(true);
+  // No other "//" anywhere on the page is read out
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+  const read: string[] = [];
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+    if (n.textContent?.includes("//") && !n.parentElement?.closest("[aria-hidden=true]"))
+      read.push(n.textContent);
+  }
+  expect(read).toEqual([]);
+});
+
+// The rows' URLs keep their own path slashes; what goes is the "//" before each label
+it("the get-started rows are named without their // prefix", () => {
+  const { container } = renderPage();
+  const getStarted = container.querySelector<HTMLElement>("#get-started");
+  if (!getStarted) throw new Error("no #get-started section");
+  const names: string[] = [];
+  const collect = (name: string) => {
+    names.push(name);
+    return true;
+  };
+  within(getStarted).getAllByRole("button", { name: collect });
+  within(getStarted).getAllByRole("link", { name: collect });
+  expect(names).toEqual([
+    "installbun add chunks-ui motion",
+    "docsui-kit.chunk-creations.com",
+    "sourcegithub.com/pawelkrystkiewicz/chunks-ui ↗",
+    "for agentsui-kit.chunk-creations.com/llms.txt",
+    "context7context7.com/pawelkrystkiewicz/chunks-ui ↗",
+  ]);
+});
