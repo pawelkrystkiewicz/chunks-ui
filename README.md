@@ -151,4 +151,4 @@ bun run lint
 
 ## License
 
-MIT
+MIT, for the code and the documentation. The Chunks UI name and logo are not covered by it: see [TRADEMARKS.md](TRADEMARKS.md).
