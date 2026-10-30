@@ -1,6 +1,6 @@
 # Claude design system
 
-Each release of `chunks-ui` comes with a design system for Claude: the theme tokens, every component running live on React 19 with a preview and a guidelines page, the fonts and the logos. Import it into your claude.ai account, and the designs and slides Claude makes with it use the real Chunks UI components and tokens, so what you hand off matches the code.
+Each release of `chunks-ui` comes with a design system for Claude: the theme tokens, every component running live on React 19 with a preview and a guidelines page, and the fonts. Import it into your claude.ai account, and the designs and slides Claude makes with it use the real Chunks UI components and tokens, so what you hand off matches the code.
 
 ## Import it
 
@@ -14,11 +14,10 @@ Import the Chunks UI design system into my claude.ai account, or update it if I 
 1. Download https://github.com/pawelkrystkiewicz/chunks-ui/releases/latest/download/design-system.tgz into a new, empty folder and extract it there.
 2. If I have a design system titled "Chunks UI", read all of its published files back into a new folder, keeping their paths. They start with `project/`, so tokens.json lands at `<folder>/project/tokens.json`. If I have none, make an empty folder instead.
 3. Run `node out/merge.mts --live <that folder>`, or `bun out/merge.mts --live <that folder>`. It writes merge/ next to out/.
-4. Show me merge/report.md. If it lists anything under "Edited on the page and changed in the code" or "Deleted on the page, restored from the code", ask me before you publish. Ask me before you remove anything under "No longer in the code".
+4. Show me merge/report.md. If it lists anything under "Edited on the page and changed in the code" or "Deleted on the page, restored from the code", ask me before you publish. Ask me before you remove anything under "No longer in the code". A path there that starts with assets/ is one of the system's assets, not a published file: delete the asset, and take its group out of design-system.json once the group is empty.
 5. If I have no Chunks UI system yet, create one from the Design System type, titled "Chunks UI".
-6. Upload the logos that merge/plan.json lists under "uploads".
-7. Publish the files that merge/plan.json lists under "publish", in that order, so tokens.json goes last. Each path is relative to merge/project/ and goes to the system's project/<path>.
-8. Write the index, design-system.json, last: record the logos in it, and set its namespace to the `namespace` in merge/plan.json and its `libraries` to the `libraries` there.
+6. Publish the files that merge/plan.json lists under "publish", in that order, so tokens.json goes last. Each path is relative to merge/project/ and goes to the system's project/<path>.
+7. Write the index, design-system.json, last: set its namespace to the `namespace` in merge/plan.json and its `libraries` to the `libraries` there.
 ```
 
 `merge.mts` is a copy of [`scripts/design-system/merge.ts`](https://github.com/pawelkrystkiewicz/chunks-ui/blob/master/scripts/design-system/merge.ts). It uses only Node's built-in modules and needs Node 24 or later, or Bun.
