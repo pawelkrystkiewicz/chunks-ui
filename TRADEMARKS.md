@@ -9,6 +9,7 @@ The MIT licence in [LICENSE](LICENSE) covers the code and the documentation. It 
 ## Use that needs no permission
 
 - Naming Chunks UI in plain text to say what your project uses or works with, such as "built with Chunks UI".
+- Using the package and the design system under the names they ship with: installing `chunks-ui`, or importing the design system titled "Chunks UI" with the prompt on the [docs site](https://ui-kit.chunk-creations.com/claude-design-system).
 - Keeping the copyright and licence notices in code you copy, as the MIT licence requires.
 
 ## Use that needs written permission first

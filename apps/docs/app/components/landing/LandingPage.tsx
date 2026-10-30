@@ -640,7 +640,7 @@ function DesignSystemSection() {
             <span className={STATEMENT_LABEL}>{"// The design system"}</span>
             <p className={STATEMENT_TEXT}>
               Each release ships a design system for Claude: the tokens, every component live on
-              React 19 and the fonts. What Claude designs with it matches the code.
+              React 19, and the fonts. What Claude designs with it matches the code.
             </p>
           </div>
           <div className={`${STATEMENT} gap-3.5`}>
