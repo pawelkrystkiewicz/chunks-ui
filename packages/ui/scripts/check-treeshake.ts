@@ -42,10 +42,11 @@ export const MARKERS: Record<string, string> = {
 /** An app that imports `imports` from chunks-ui, and the most bytes its bundle may have */
 export type Fixture = { imports: string[]; budget: number };
 
-// The budgets are about 20% over the bundles of the build that introduced them (Bun 1.4.4)
+// The budgets are about 20% over the bundles of the build that split the main entry (#831), with
+// Bun 1.4.4: 7436 and 13529 bytes. The single-file build before it gave 51905 and 51918
 export const FIXTURES: Fixture[] = [
-  { imports: ["Button"], budget: 20_000 },
-  { imports: ["Button", "Dialog"], budget: 30_000 },
+  { imports: ["Button"], budget: 9_000 },
+  { imports: ["Button", "Dialog"], budget: 16_000 },
 ];
 
 export type Size = { name: string; bytes: number; budget?: number };

@@ -4,7 +4,9 @@
  * - `chunks-ui` and `chunks-ui/utils` share one copy of the helpers: dist/index.js imports them
  *   from ./utils.js and dist/index.cjs requires them from ./utils.cjs, so `cn` from either entry
  *   is the same function, with one tailwind-merge cache.
- * - Only the main entry starts with "use client"; utils has none, for React Server Components.
+ * - Every file of the main entry starts with "use client": index.cjs, and in ESM every .js file
+ *   but utils.js (index.js, the per-component files and the chunks they share). utils has none,
+ *   for React Server Components.
  * - Each built entry, ESM and CJS, exports the same names as its source file.
  * - The `motion/react` import keeps the shape described in src/lib/use-motion.ts.
  * - The typings import nothing from a `class-variance-authority/` subpath (`src/lib/cva.ts` keeps it out).
@@ -12,7 +14,7 @@
  * Run: bun run check:dist
  * Tests: check-dist.spec.ts (fixture dists in a temporary directory)
  */
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 /** The export names of each entry's source file. */
@@ -39,8 +41,12 @@ export async function checkDist(dist: string, expected: ExpectedExports): Promis
     const utilsFile = `utils.${format}`;
     const index = await load[format](indexFile);
     const utils = await load[format](utilsFile);
-    const indexCode = readFileSync(join(dist, indexFile), "utf8");
     const utilsCode = readFileSync(join(dist, utilsFile), "utf8");
+    // The files the main entry's build emits: index.cjs alone, or every .js file but utils.js
+    const main = readdirSync(dist)
+      .filter((file) => file.endsWith(`.${format}`) && file !== utilsFile)
+      .sort()
+      .map((file) => ({ file, code: readFileSync(join(dist, file), "utf8") }));
     const declarationExtension = format === "js" ? "d.ts" : "d.cts";
 
     check(
@@ -57,16 +63,18 @@ export async function checkDist(dist: string, expected: ExpectedExports): Promis
       check(value !== undefined, `${name} from ${indexFile} is not undefined`);
     }
 
-    check(indexCode.startsWith('"use client";'), `${indexFile} starts with "use client"`);
+    for (const { file, code } of main) {
+      check(code.startsWith('"use client";'), `${file} starts with "use client"`);
+      // Next.js rejects `export *` in a "use client" module
+      check(!/^export \*/m.test(code), `${file} has no "export *"`);
+      check(!code.includes("webpackIgnore"), `${file} has no webpackIgnore`);
+    }
     check(!utilsCode.includes("use client"), `${utilsFile} has no "use client"`);
-    // Next.js rejects `export *` in a "use client" module
-    check(!/^export \*/m.test(indexCode), `${indexFile} has no "export *"`);
 
     check(
-      TRIED_MOTION_IMPORT.test(indexCode),
-      `${indexFile} awaits import(/* turbopackOptional: true */ "motion/react") inside a try block`,
+      main.some(({ code }) => TRIED_MOTION_IMPORT.test(code)),
+      `${indexFile} or a file beside it awaits import(/* turbopackOptional: true */ "motion/react") inside a try block`,
     );
-    check(!indexCode.includes("webpackIgnore"), `${indexFile} has no webpackIgnore`);
 
     for (const entry of ["index", "utils"]) {
       const declarationFile = `${entry}.${declarationExtension}`;
@@ -94,6 +102,6 @@ if (import.meta.main) {
     process.exit(1);
   }
   console.log(
-    "dist/: index.{js,cjs} use the helpers in utils.{js,cjs}; banners, exports and the motion import match; the typings import no cva subpath",
+    "dist/: index.{js,cjs} use the helpers in utils.{js,cjs}; banners, exports and the motion import match in every file of the main entry; the typings import no cva subpath",
   );
 }
