@@ -731,9 +731,9 @@ function DesignSystemSection() {
 }
 
 const HIRE_LINKS = [
-  { label: "CV ↗", href: "https://pawelkrystkiewicz.pl/cv" },
+  { label: "CV ↗", href: "https://www.pawelkrystkiewicz.pl/cv" },
   { label: "LinkedIn ↗", href: "https://www.linkedin.com/in/pawelkrystkiewicz" },
-  { label: "GitHub ↗", href: "https://github.com/pawelkrystkiewicz" },
+  { label: "GitHub profile ↗", href: "https://github.com/pawelkrystkiewicz" },
 ];
 
 // One hairline band, not a SectionHead: it sits under the library's sections without competing.
@@ -751,9 +751,9 @@ function HireSection() {
               Hire me
             </h2>
             <p className="text-pretty text-(--l-muted) text-[14px] leading-normal">
-              Paweł has nine years of React and TypeScript, most recently at Autodesk on a shared
-              component library and its typed design-token contract. He's looking for his next
-              senior frontend or fullstack role.
+              Paweł builds Chunks UI. Nine years of React and TypeScript, most recently at Autodesk
+              on a shared component library and its typed design-token contract. He's looking for
+              his next senior frontend or fullstack role.
             </p>
           </div>
           <div className="flex flex-wrap gap-x-6 gap-y-2">

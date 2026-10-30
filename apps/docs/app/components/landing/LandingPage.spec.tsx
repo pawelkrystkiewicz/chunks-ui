@@ -292,9 +292,9 @@ it("open to work, the hire section sits between Claude and Get started and links
   expect(within(hire).getByRole("heading", { level: 2, name: "Hire me" })).toBeTruthy();
   const links = within(hire).getAllByRole("link");
   expect(links.map((a) => [a.textContent, a.getAttribute("href")])).toEqual([
-    ["CV ↗", "https://pawelkrystkiewicz.pl/cv"],
+    ["CV ↗", "https://www.pawelkrystkiewicz.pl/cv"],
     ["LinkedIn ↗", "https://www.linkedin.com/in/pawelkrystkiewicz"],
-    ["GitHub ↗", "https://github.com/pawelkrystkiewicz"],
+    ["GitHub profile ↗", "https://github.com/pawelkrystkiewicz"],
   ]);
   for (const link of links) {
     expect(link.getAttribute("target")).toBe("_blank");
