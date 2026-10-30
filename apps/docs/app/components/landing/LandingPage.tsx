@@ -346,6 +346,15 @@ function Hero() {
               {TOTAL.core} core · <i className={`${SQUARE} bg-warning`} />
               {TOTAL.extended} extended
             </span>
+            {config.openToWork && (
+              <a
+                href="#hire"
+                className={`${BADGE} transition-colors duration-250 hover:border-white/40 ${FOCUS_RING}`}
+              >
+                <i aria-hidden className={`${SQUARE} bg-success`} />
+                Author open to work
+              </a>
+            )}
           </div>
           <h1 className="my-6 text-balance font-display font-semibold text-[clamp(44px,7vw,88px)] text-white leading-none tracking-[-.05em]">
             <em className="text-white/50 not-italic">Parts</em> for real interfaces.

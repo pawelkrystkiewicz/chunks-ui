@@ -301,9 +301,20 @@ it("open to work, the hire section sits between Claude and Get started and links
   }
 });
 
-it("not open to work, the landing has no hire section", () => {
+it("open to work, a hero badge links to the hire section in the same tab", () => {
+  const { container } = renderOpenToWork(true);
+  const hero = container.querySelector("section");
+  if (!hero) throw new Error("no hero");
+  const badge = within(hero).getByRole("link", { name: "Author open to work" });
+  expect(badge.getAttribute("href")).toBe("#hire");
+  expect(badge.hasAttribute("target")).toBe(false);
+  expect(container.querySelector(badge.getAttribute("href") ?? "")).not.toBeNull();
+});
+
+it("not open to work, the landing has no hire section and no hero badge", () => {
   const { container } = renderOpenToWork(false);
   expect(container.querySelector("#hire")).toBeNull();
+  expect(container.querySelector('a[href="#hire"]')).toBeNull();
 });
 
 it("the footer links to the privacy page in the same tab", () => {
@@ -325,8 +336,9 @@ it("the footer's mail link goes to contact@chunk-creations.com", () => {
   ]);
 });
 
+// Open to work, so the hire links and badge stay covered after the flag flips
 it("every link and button, the footer's too, draws the --ring outline on keyboard focus", () => {
-  const { container } = renderPage();
+  const { container } = renderOpenToWork(true);
   fireEvent.click(screen.getByRole("button", { name: "Menu" }));
   const focusable = [...container.querySelectorAll<HTMLElement>("a[href], button")];
   expect(focusable.length).toBeGreaterThan(40);
