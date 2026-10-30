@@ -646,16 +646,23 @@ function DesignSystemSection() {
           <div className={`${STATEMENT} gap-3.5`}>
             <span className={STATEMENT_LABEL}>{"// The import"}</span>
             <p className="rounded-[10px] border border-(--l-line) bg-(--l-card) px-4 py-3 font-mono text-(--l-fg) text-[13px] leading-[1.6]">
-              <span className="text-(--l-muted)">&gt;</span> {IMPORT_PROMPT}{" "}
-              <span className="text-(--l-muted)">…</span>
+              <span aria-hidden className="text-(--l-muted)">
+                &gt;
+              </span>{" "}
+              {IMPORT_PROMPT}{" "}
+              <span aria-hidden className="text-(--l-muted)">
+                …
+              </span>
             </p>
             <p className="text-pretty text-(--l-muted) text-[14px] leading-normal">
               Paste the whole prompt into Claude Code or Cowork, and Claude imports the system into
               your claude.ai account. Paste it again after a release to update it.
             </p>
-            <Link href="/claude-design-system" className={`${TEXT_LINK} mt-auto pt-1`}>
-              Get the prompt →
-            </Link>
+            <div className="mt-auto pt-1">
+              <Link href="/claude-design-system" className={TEXT_LINK}>
+                Get the prompt →
+              </Link>
+            </div>
           </div>
         </Grid>
       </div>
