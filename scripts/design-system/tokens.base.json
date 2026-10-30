@@ -172,11 +172,5 @@
     "fonts/manrope-latin.woff2": "apps/docs/fonts/manrope-latin.woff2",
     "fonts/fira-code-latin.woff2": "apps/docs/fonts/fira-code-latin.woff2",
     "fonts/outfit-latin.woff2": "apps/docs/fonts/outfit-latin.woff2"
-  },
-  "logos": {
-    "logo.svg": "apps/docs/public/logo.svg",
-    "logo-dark-mode.svg": "apps/docs/public/logo-dark-mode.svg",
-    "logo-small.svg": "apps/docs/public/logo-small.svg",
-    "logo-small-dark-mode.svg": "apps/docs/public/logo-small-dark-mode.svg"
   }
 }

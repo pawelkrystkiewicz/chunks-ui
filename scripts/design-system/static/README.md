@@ -56,7 +56,6 @@ Keyboard focus is a 2px outline in `--ring`, 2px outside the part's edge. `--rin
 
 - The library has no icon set and no `Icon` component: pass any icon as a `ReactNode` (`startIcon`, `endIcon`, `IconButton` children). The docs and these previews use Lucide (`lucide-react`) at `size-4`.
 - The few glyphs the components need (chevrons, close, check) are internal.
-- The Chunks UI mark lives in the Logos group: `logo.svg` on light grounds, `logo-dark-mode.svg` on dark, and their `logo-small` cuts at 32px and below.
 
 ## Using this system
 

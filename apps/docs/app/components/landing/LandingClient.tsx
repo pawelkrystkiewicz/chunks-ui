@@ -195,8 +195,10 @@ export function PresetGrid() {
             href="/create"
             // Keep the visitor's stored mode; the preset sets everything else.
             onClick={() => saveTheme({ ...(loadTheme() ?? DEFAULT_THEME), ...preset.theme })}
-            // The ring sits inside the tile: the grid frame clips what is outside
-            className={`flex min-w-0 flex-col items-start gap-3.5 border-(--l-line) border-e border-b px-6 pt-[22px] pb-6 text-start text-(--l-fg) leading-[normal] transition-colors duration-300 ease-in-out hover:bg-(--l-card) ${FOCUS_RING_INSET}`}
+            // The ring sits inside the tile: the grid frame clips what is outside. `relative` holds
+            // the sr-only suffix in the tile: without it, the suffix sat past a 360px viewport and the
+            // whole page scrolled sideways.
+            className={`relative flex min-w-0 flex-col items-start gap-3.5 border-(--l-line) border-e border-b px-6 pt-[22px] pb-6 text-start text-(--l-fg) leading-[normal] transition-colors duration-300 ease-in-out hover:bg-(--l-card) ${FOCUS_RING_INSET}`}
           >
             <span className="flex w-full items-center justify-between gap-2">
               <span

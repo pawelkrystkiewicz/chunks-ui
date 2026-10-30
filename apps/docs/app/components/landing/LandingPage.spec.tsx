@@ -1,4 +1,7 @@
 // @vitest-environment jsdom
+import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import { join } from "node:path";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import {
   AppRouterContext,
@@ -7,6 +10,22 @@ import {
 import { expect, it, vi } from "vitest";
 import { config } from "../../../config";
 import { LandingPage } from "./LandingPage";
+
+// The Claude section quotes the import page's prompt and names the React that
+// scripts/design-system/build.ts bundles (as packages/ui resolves it). jsdom gives
+// import.meta.url an http scheme, so the paths come from import.meta.dirname.
+const ROOT = join(import.meta.dirname, "../../../../..");
+const PROMPT_FIRST_LINE = readFileSync(
+  join(ROOT, "apps/docs/content/claude-design-system.mdx"),
+  "utf8",
+)
+  .split("```text\n")[1]
+  ?.split("\n")[0];
+const BUNDLED_REACT = (
+  createRequire(join(ROOT, "packages/ui/package.json"))("react/package.json") as {
+    version: string;
+  }
+).version;
 
 // Nextra's Search reads the App Router, which only Next mounts. No test navigates.
 const renderPage = () =>
@@ -234,38 +253,18 @@ it("the Create section links to /create once, besides the preset tiles", () => {
   ]);
 });
 
-it("the Claude section links to the import page once and lists what the system holds", () => {
+it("the Claude section links to the import page once, quoting its prompt and the bundled React", () => {
   const { container } = renderPage();
   const claude = container.querySelector<HTMLElement>("#claude");
   if (!claude) throw new Error("no #claude section");
   const links = [...claude.querySelectorAll("a")];
   expect(links.map((a) => [a.textContent, a.getAttribute("href")])).toEqual([
-    ["Import the design system", "/claude-design-system"],
+    ["Get the prompt →", "/claude-design-system"],
   ]);
-  // Each tile: a drawing hidden from assistive tech, then its name and what it holds
-  const tiles = within(claude)
-    .getAllByRole("listitem")
-    .map((li) => [...li.children].map((c) => c.getAttribute("aria-hidden") ?? c.textContent));
-  expect(tiles).toEqual([
-    ["true", "Tokens", "OKLCH · light and dark"],
-    ["true", "Every component", "live previews · React 19"],
-    ["true", "Fonts", "Manrope · Fira Code · Outfit"],
-    ["true", "Logos", "full and small · light and dark"],
-  ]);
-  // The logo tile swaps its two cuts by theme, as the navbar does; jsdom only sees the classes
-  const logos = [...claude.querySelectorAll("img")].map((img) => [
-    img.getAttribute("src"),
-    img.getAttribute("alt"),
-    img.getAttribute("class"),
-  ]);
-  expect(logos).toEqual([
-    [expect.stringContaining("logo-small.svg"), "", expect.stringContaining("[.dark_&]:hidden")],
-    [
-      expect.stringContaining("logo-small-dark-mode.svg"),
-      "",
-      expect.stringMatching(/(^| )hidden .*\[\.dark_&\]:block/),
-    ],
-  ]);
+  // A changed prompt or React major fails here instead of leaving the landing behind
+  expect(PROMPT_FIRST_LINE).toMatch(/^Import the Chunks UI design system/);
+  expect(claude.textContent).toContain(PROMPT_FIRST_LINE);
+  expect(claude.textContent).toContain(`live on React ${BUNDLED_REACT.split(".")[0]}`);
 });
 
 // Each case sets the flag itself, so flipping it in config.ts on hire leaves the spec green

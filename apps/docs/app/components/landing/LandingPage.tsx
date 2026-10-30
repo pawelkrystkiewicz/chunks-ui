@@ -622,82 +622,11 @@ function CreateSection() {
   );
 }
 
-// Keep in step with PresetGrid's tiles (LandingClient.tsx): the two sections sit side by side
-const DS_TILE =
-  "flex min-w-0 flex-col items-start gap-3.5 border-(--l-line) border-e border-b px-6 pt-[22px] pb-6";
-const DS_META =
-  "text-pretty font-mono text-(--l-muted) text-[10.5px] leading-normal tracking-[.04em]";
-const SWATCHES = ["bg-primary", "bg-success", "bg-warning", "bg-destructive", "bg-foreground"];
+// The prompt's first line, word for word: the landing spec checks it against the import page
+const IMPORT_PROMPT =
+  "Import the Chunks UI design system into my claude.ai account, or update it if I already have one.";
 
-/** What the design system holds, each drawn small in the library's own tokens. */
-const DS_TILES: { name: string; meta: string; art: ReactNode }[] = [
-  {
-    name: "Tokens",
-    meta: "OKLCH · light and dark",
-    art: SWATCHES.map((bg) => (
-      <span
-        key={bg}
-        className={`-ms-1 size-3.5 rounded-full shadow-[0_0_0_2px_var(--l-bg)] first:ms-0 ${bg}`}
-      />
-    )),
-  },
-  {
-    name: "Every component",
-    meta: "live previews · React 19",
-    art: (
-      <span className="flex items-center gap-2.5">
-        <span className="h-7 rounded-md bg-primary px-3 font-medium text-[12px] text-primary-foreground leading-7">
-          Save
-        </span>
-        <span className="flex h-4 w-7 rounded-full bg-primary p-0.5">
-          <span className="ms-auto size-3 rounded-full bg-background" />
-        </span>
-      </span>
-    ),
-  },
-  {
-    name: "Fonts",
-    meta: "Manrope · Fira Code · Outfit",
-    art: <span className="font-semibold text-[30px] leading-none">Aa</span>,
-  },
-  {
-    name: "Logos",
-    meta: "full and small · light and dark",
-    art: (
-      <>
-        <Image src="/logo-small.svg" alt="" width={28} height={28} className="[.dark_&]:hidden" />
-        <Image
-          src="/logo-small-dark-mode.svg"
-          alt=""
-          width={28}
-          height={28}
-          className="hidden [.dark_&]:block"
-        />
-      </>
-    ),
-  },
-];
-
-function DesignSystemTiles() {
-  return (
-    // The wrapper is a grid, so this list stretches to the statement's height and its negative
-    // margins still tuck the last row's bottom border under the wrapper's.
-    // biome-ignore lint/a11y/noRedundantRoles: WebKit drops the list role under list-style: none
-    <ul role="list" className="-me-px -mb-px grid auto-rows-fr grid-cols-2">
-      {DS_TILES.map(({ name, meta, art }) => (
-        <li key={name} className={DS_TILE}>
-          <span aria-hidden className="flex h-[30px] items-center">
-            {art}
-          </span>
-          <span className="font-semibold text-[15px] tracking-[-.01em]">{name}</span>
-          <span className={DS_META}>{meta}</span>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-// Mirrors Create's grid, the drawing first on wide screens; the statement still reads first
+// Two statements, as in Motion: what ships, then how it gets into claude.ai
 function DesignSystemSection() {
   return (
     <section id="claude" className="pt-6">
@@ -707,22 +636,34 @@ function DesignSystemSection() {
           title="Design in Claude"
           accent="with the real components."
         />
-        <Grid className="lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
-          {/* Always the last column on lg: no end border, which rounding can paint on the frame */}
-          <div className={`${STATEMENT} gap-5 lg:border-e-0`}>
+        <Grid className="lg:grid-cols-2">
+          <div className={`${STATEMENT} gap-3.5`}>
             <span className={STATEMENT_LABEL}>{"// The design system"}</span>
             <p className={STATEMENT_TEXT}>
               Each release ships a design system for Claude: the tokens, every component live on
-              React 19, the fonts and the logos. Import it into your claude.ai account, and the
-              designs Claude makes with it use the real components. Run the same import again after
-              a release to update it.
+              React 19, and the fonts. What Claude designs with it matches the code.
             </p>
-            <div className="mt-auto pt-2">
-              <Cta href="/claude-design-system">Import the design system</Cta>
-            </div>
           </div>
-          <div className="grid min-w-0 overflow-hidden border-(--l-line) border-e border-b lg:order-first">
-            <DesignSystemTiles />
+          <div className={`${STATEMENT} gap-3.5`}>
+            <span className={STATEMENT_LABEL}>{"// The import"}</span>
+            <p className="rounded-[10px] border border-(--l-line) bg-(--l-card) px-4 py-3 font-mono text-(--l-fg) text-[13px] leading-[1.6]">
+              <span aria-hidden className="text-(--l-muted)">
+                &gt;
+              </span>{" "}
+              {IMPORT_PROMPT}{" "}
+              <span aria-hidden className="text-(--l-muted)">
+                …
+              </span>
+            </p>
+            <p className="text-pretty text-(--l-muted) text-[14px] leading-normal">
+              Paste the whole prompt into Claude Code or Cowork, and Claude imports the system into
+              your claude.ai account. Paste it again after a release to update it.
+            </p>
+            <div className="mt-auto pt-1">
+              <Link href="/claude-design-system" className={TEXT_LINK}>
+                Get the prompt →
+              </Link>
+            </div>
           </div>
         </Grid>
       </div>

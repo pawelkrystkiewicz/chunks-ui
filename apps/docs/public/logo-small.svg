@@ -1,4 +1,5 @@
 <svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
 <title>chunks-ui</title>
+<!-- © Paweł Krystkiewicz. Not covered by the MIT licence: https://github.com/pawelkrystkiewicz/chunks-ui/blob/master/TRADEMARKS.md -->
 <path fill="#000" fill-rule="evenodd" d="M62.56 235.68A126 126 0 1 1 235.68 62.56L209.15 89.09A90 90 0 1 0 89.09 209.15ZM241.28 72.84A126 126 0 0 1 246.66 170.38L207.4 170.38A90 90 0 0 0 213.68 100.45ZM242.02 181.62A126 126 0 0 1 72.84 241.28L100.45 213.68A90 90 0 0 0 200.29 181.62ZM83 80L173 80A3 3 0 0 1 176 83L176 122.24L122.24 176L83 176A3 3 0 0 1 80 173L80 83A3 3 0 0 1 83 80ZM176 138.12L176 173A3 3 0 0 1 173 176L138.12 176L176 138.12Z"/>
 </svg>
