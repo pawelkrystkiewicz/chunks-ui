@@ -32,12 +32,12 @@ const EXTERNAL = [
  * selector. Pick a component that no fixture imports through another one (DatePicker renders
  * Calendar, so a DatePicker fixture would hold Calendar's marker).
  */
-export const MARKERS: Record<string, string> = {
+export const MARKERS = {
   Calendar: 'button[tabindex="0"]',
   Combobox: "[&_[role=combobox]:focus-visible]:outline-none",
   Dialog: "max-w-[min(28rem,calc(100%-2rem))]",
   Toast: "[--toast-slide-x:100%]",
-};
+} satisfies Record<string, string>;
 
 /** An app that imports `imports` from chunks-ui, and the most bytes its bundle may have */
 export type Fixture = { imports: string[]; budget: number };

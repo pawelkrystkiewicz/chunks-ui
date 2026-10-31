@@ -1,6 +1,7 @@
 import { copyFileSync, existsSync, readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { defineConfig, type Options } from "tsup";
+import { writeCssSources } from "./scripts/css-sources";
 
 type EsbuildPlugin = NonNullable<Options["esbuildPlugins"]>[number];
 
@@ -68,6 +69,12 @@ export default defineConfig((options) => [
     onSuccess: async () => {
       copyFileSync("src/theme.css", "dist/theme.css");
       console.log("Copied theme.css to dist/");
+      // After the copy: needs dist/; a throw fails the build
+      writeCssSources("dist", readFileSync("src/theme.css", "utf8"), [
+        ...Object.keys(componentEntries),
+        "utils",
+      ]);
+      console.log("Wrote theme.core.css and sources/*.css to dist/");
     },
     ...options,
   },

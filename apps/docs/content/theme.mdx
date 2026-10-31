@@ -11,7 +11,7 @@ Import the theme in the CSS file that imports Tailwind:
 @import "chunks-ui/theme.css";
 ```
 
-This single file provides all CSS variables for light mode, dark mode, and Tailwind v4 `@theme inline` tokens. It also includes an `@source` for the package, so Tailwind generates the classes the components use.
+This single file provides all CSS variables for light mode, dark mode, and Tailwind v4 `@theme inline` tokens. It also includes an `@source` for the package, so Tailwind generates the classes the components use. To generate only the classes of the components your app uses, import `chunks-ui/theme.core.css` and one file per component instead: see [Getting Started › Only the components you use](/getting-started#only-the-components-you-use).
 
 ## Color System
 

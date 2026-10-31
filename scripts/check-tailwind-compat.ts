@@ -15,6 +15,8 @@
  * It also fails when either version puts the classes of TOUCH_ORDER out of the order the touch
  * rule of `FIELD_TEXT_SIZE` needs.
  *
+ * The oldest also compiles the opt-in (theme.core.css + sources/button.css) and needs Button's class.
+ *
  * The installed version compiles in this process, with the `@tailwindcss/node` and
  * `@tailwindcss/oxide` from bun.lock. The oldest compiles with the CLI installed from the
  * committed fixture in scripts/tailwind-4.0 (`bun install --frozen-lockfile` in a throwaway
@@ -32,6 +34,8 @@ const OLDEST = "4.0.0";
 const UI = join(import.meta.dirname, "../packages/ui");
 const FIXTURE = join(import.meta.dirname, "tailwind-4.0");
 const THEME = join(UI, "dist/theme.css");
+const THEME_CORE = join(UI, "dist/theme.core.css");
+const BUTTON_SOURCES = join(UI, "dist/sources/button.css");
 const CLASS = /\.(-?(?:[\w-]|\\[0-9a-fA-F]{1,6} ?|\\.)+)/g;
 /** A class from Button's variants, wherever they live: the built code always carries it. */
 const KNOWN_CLASS = "disabled:pointer-events-none";
@@ -203,12 +207,13 @@ export function scanProblem(
   }
 }
 
+const path = (file: string) => JSON.stringify(file.replaceAll("\\", "/"));
+
 /**
  * The input both versions compile: the built theme, and `list`, a file that names the theme's own
  * utilities and CLASSNAME_SIZES.
  */
 function input(list: string): string {
-  const path = (file: string) => JSON.stringify(file.replaceAll("\\", "/"));
   return `@import "tailwindcss" source(none);\n@import ${path(THEME)};\n@source ${path(list)};\n`;
 }
 
@@ -228,19 +233,22 @@ async function compileInstalled(css: string): Promise<string> {
   return compiler.build(new Scanner({ sources: compiler.sources }).scan());
 }
 
-/** The CSS of Tailwind OLDEST, from the fixture's lockfile, for `css`, compiled in `dir`. */
-async function compileOldest(css: string, dir: string): Promise<string> {
+function installOldest(dir: string) {
   cpSync(join(FIXTURE, "package.fixture.json"), join(dir, "package.json"));
   cpSync(join(FIXTURE, "bun.fixture.lock"), join(dir, "bun.lock"));
-  await Bun.write(join(dir, "input.css"), css);
   run(["bun", "install", "--frozen-lockfile"], dir);
-  run(["bun", "x", "tailwindcss", "--input", "input.css", "--output", "output.css"], dir);
-  return await Bun.file(join(dir, "output.css")).text();
+}
+
+/** The CSS of Tailwind OLDEST, installed in `dir`, for `css`, compiled there as `name`.css. */
+async function compileOldest(css: string, dir: string, name: string): Promise<string> {
+  await Bun.write(join(dir, `${name}.css`), css);
+  run(["bun", "x", "tailwindcss", "--input", `${name}.css`, "--output", `${name}.out.css`], dir);
+  return await Bun.file(join(dir, `${name}.out.css`)).text();
 }
 
 /**
- * The CSS of the installed version and of OLDEST, and the utilities the theme and its imports
- * define.
+ * The CSS of the installed version and of OLDEST, the CSS of OLDEST for the opt-in input, and the
+ * utilities the theme and its imports define.
  */
 async function compileBoth() {
   const utilities = themeUtilitiesIn(THEME);
@@ -250,10 +258,14 @@ async function compileBoth() {
     const list = join(dir, "classes.html");
     await Bun.write(list, `${[...utilities, ...CLASSNAME_SIZES].join("\n")}\n`);
     const css = input(list);
+    const installed = await compileInstalled(css);
+    installOldest(dir);
+    const optIn = `@import "tailwindcss" source(none);\n@import ${path(THEME_CORE)};\n@import ${path(BUTTON_SOURCES)};\n`;
     return {
       utilities,
-      installed: await compileInstalled(css),
-      oldest: await compileOldest(css, dir),
+      installed,
+      oldest: await compileOldest(css, dir, "input"),
+      optIn: await compileOldest(optIn, dir, "opt-in"),
     };
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -262,11 +274,16 @@ async function compileBoth() {
 
 if (import.meta.main) {
   const { version } = await Bun.file(Bun.resolveSync("tailwindcss/package.json", UI)).json();
-  const { utilities, installed, oldest } = await compileBoth();
+  const { utilities, installed, oldest, optIn } = await compileBoth();
   const problems = [
     scanProblem(classNames(oldest), OLDEST),
     scanProblem(classNames(installed), version, utilities),
   ].filter(Boolean);
+  if (!classNames(optIn).has(KNOWN_CLASS)) {
+    problems.push(
+      `Tailwind ${OLDEST} did not generate ${KNOWN_CLASS}, a class of chunks-ui's Button, for an app that imports ${THEME_CORE} and ${BUTTON_SOURCES}: on that version, an app that generates only the CSS of the components it uses gets none.`,
+    );
+  }
   const missing = missingClasses(oldest, installed);
   if (missing.length > 0) {
     problems.push(
@@ -279,6 +296,6 @@ if (import.meta.main) {
     process.exit(1);
   }
   console.log(
-    `Tailwind ${OLDEST} generates all ${classNames(installed).size} classes that ${version} does, and both order the touch rule's classes as it needs.`,
+    `Tailwind ${OLDEST} generates all ${classNames(installed).size} classes that ${version} does, and both order the touch rule's classes as it needs. ${OLDEST} generates Button's CSS from its sources file.`,
   );
 }

@@ -72,6 +72,28 @@ Dark mode is the `.dark` class on `<html>`: with it, every component uses the da
 
 A React Server Component imports `cn`, `cnState` and the `*Variants` functions from `chunks-ui/utils`, which has no `"use client"`. See [Utilities › Server components](/utilities#server-components).
 
+### Only the components you use
+
+The `@source` of `theme.css` makes Tailwind generate the classes of every component, also those your app does not render. To generate only the CSS of the components you use, import `chunks-ui/theme.core.css` in place of `theme.css`, then one file for each component the app renders:
+
+```css
+@import "tailwindcss";
+@import "chunks-ui/theme.core.css";
+@import "chunks-ui/sources/button.css";
+@import "chunks-ui/sources/dialog.css";
+```
+
+`theme.core.css` is `theme.css` without its `@source`: the same tokens, dark mode and utilities such as `touch-target`, and no component classes. Each file in `chunks-ui/sources/` points Tailwind at the built code of one component.
+
+- A file is named after the component's page in these docs: `/components/date-picker` is `chunks-ui/sources/date-picker.css`, and `/components/toggle-group` is `chunks-ui/sources/toggle-group.css`. Data Table is a recipe, not a component: import the files of the components it uses (`table.css`, `button.css`, `input.css` and `checkbox.css`).
+- A component that another one renders comes with it: `date-picker.css` brings the classes of Calendar.
+- Every file also brings the variants of Button, Chip, IconButton and Input, which the components share in one built file.
+- An app that uses only `chunks-ui/utils`, such as `buttonVariants` in a Server Component, imports `chunks-ui/sources/utils.css`.
+
+The trade-off: a component that the app renders without its file gets no styles, or only the ones it shares with the components you did import, and nothing warns you. When the app starts to use a component, add its line. A misspelt file name fails the build, as Tailwind cannot resolve the import.
+
+Your own classes, those you pass in `className` included, are generated as before: `@import "tailwindcss"` still scans your app.
+
 ## Architecture
 
 - **Headless layer:** `@base-ui/react` v1.9+ (includes Floating UI for positioning)
