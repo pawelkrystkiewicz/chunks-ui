@@ -2,3 +2,5 @@
 # Bun picks the default linker from the lockfile's configVersion, so a regenerated lockfile can
 # switch it. Isolated: a package sees only the dependencies it declares.
 linker = "isolated"
+# ponytail: blocks a <3-day vuln fix too; add `pkg@x.y.z` to minimumReleaseAgeExcludes for it.
+minimumReleaseAge = 259200
