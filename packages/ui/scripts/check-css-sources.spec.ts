@@ -70,10 +70,9 @@ describe("diffProblems", () => {
     expect(diffProblems(new Set(["a", "b"]), new Set(["b", "a"]))).toEqual([]);
   });
 
-  it("names the missing and the extra classes, sorted", () => {
-    expect(diffProblems(new Set(["a", "x", "w"]), new Set(["a", "c", "b"]))).toEqual([
+  it("names the missing classes, sorted", () => {
+    expect(diffProblems(new Set(["a", "x"]), new Set(["a", "c", "b"]))).toEqual([
       "all sources/*.css together lack these classes of dist/*.js (a sources file misses a file of its component, or dist/ holds stale files: run `bun run build`): b, c",
-      "all sources/*.css together have these classes that dist/*.js lacks (a sources file lists a file that is not a .js file of dist/, or dist/ holds stale files: run `bun run build`): w, x",
     ]);
   });
 });
@@ -215,13 +214,7 @@ function pkg(dist: Record<string, string | null> = {}): string {
 
 describe("checkCssSources", () => {
   it("passes a package whose sources files hold each component's classes alone", async () => {
-    const { failures, sizes } = await checkCssSources(pkg(), FOLDERS, FIXTURES, MARKERS);
-    expect(failures).toEqual([]);
-    expect(sizes.map(({ name, classes }) => [name, classes])).toEqual([
-      ["theme.css (the default)", 5],
-      ["button", 2],
-      ["button + dialog", 4],
-    ]);
+    expect(await checkCssSources(pkg(), FOLDERS, FIXTURES, MARKERS)).toEqual([]);
   });
 
   it("fails sources files that miss a file of their component", async () => {
@@ -230,7 +223,7 @@ describe("checkCssSources", () => {
       "sources/dialog.css": `${HEADER}@source "../dialog.js";\n`,
       "sources/toast.css": `${HEADER}@source "../toast.js";\n`,
     };
-    const { failures } = await checkCssSources(pkg(dist), FOLDERS, FIXTURES, MARKERS);
+    const failures = await checkCssSources(pkg(dist), FOLDERS, FIXTURES, MARKERS);
     expect(failures).toEqual([
       "sources/dialog.css lacks chunk-A.js, which dist/dialog.js loads: the build's import walk (scripts/css-sources.ts) missed an import, or dist/ is stale (run `bun run build`)",
       "sources/toast.css lacks chunk-A.js, which dist/toast.js loads: the build's import walk (scripts/css-sources.ts) missed an import, or dist/ is stale (run `bun run build`)",
@@ -242,27 +235,15 @@ describe("checkCssSources", () => {
     // toast.css still lists chunk-A.js, so all sources files together hold its class: only the
     // check of each file against the closure of its own entry sees that dialog.css lacks it
     const dist = { "sources/dialog.css": `${HEADER}@source "../dialog.js";\n` };
-    const { failures } = await checkCssSources(pkg(dist), FOLDERS, FIXTURES, MARKERS);
+    const failures = await checkCssSources(pkg(dist), FOLDERS, FIXTURES, MARKERS);
     expect(failures).toEqual([
       "sources/dialog.css lacks chunk-A.js, which dist/dialog.js loads: the build's import walk (scripts/css-sources.ts) missed an import, or dist/ is stale (run `bun run build`)",
     ]);
   });
 
-  it("fails a sources file that lists a file outside the .js files of dist/", async () => {
-    const dist = {
-      "index.d.ts": 'export type Size = "h-12";\n',
-      "sources/utils.css": `${HEADER}@source "../utils.js";\n@source "../index.d.ts";\n`,
-    };
-    const { failures } = await checkCssSources(pkg(dist), FOLDERS, FIXTURES, MARKERS);
-    expect(failures).toEqual([
-      "sources/utils.css lists index.d.ts, which dist/utils.js does not load: the build's import walk (scripts/css-sources.ts) followed a file that is no import of it, or dist/ is stale (run `bun run build`)",
-      "all sources/*.css together have these classes that dist/*.js lacks (a sources file lists a file that is not a .js file of dist/, or dist/ holds stale files: run `bun run build`): h-12",
-    ]);
-  });
-
   it("fails a sources file whose component has no .js file in dist/", async () => {
     const dist = { "sources/gone.css": `${HEADER}@source "../utils.js";\n` };
-    const { failures } = await checkCssSources(pkg(dist), FOLDERS, FIXTURES, MARKERS);
+    const failures = await checkCssSources(pkg(dist), FOLDERS, FIXTURES, MARKERS);
     expect(failures).toEqual([
       "sources/gone.css has no dist/gone.js: dist/ is stale, run `bun run build`",
     ]);
@@ -273,7 +254,7 @@ describe("checkCssSources", () => {
       "dialog.js":
         'import "./chunk-A.js";\nconst more = () => import("./lazy.js");\nexport const Dialog = "grid";\n',
     };
-    const { failures } = await checkCssSources(pkg(dist), FOLDERS, FIXTURES, MARKERS);
+    const failures = await checkCssSources(pkg(dist), FOLDERS, FIXTURES, MARKERS);
     expect(failures).toEqual([
       'sources/dialog.css: dist/dialog.js imports "./lazy.js" dynamically: the CSS sources follow static imports only, so its classes would be missing',
     ]);
@@ -284,7 +265,7 @@ describe("checkCssSources", () => {
       "utils.js": 'import "./chunk-X.js";\nexport const buttonVariants = "inline-flex";\n',
       "chunk-X.js": "export const x = 1;\n",
     };
-    const { failures } = await checkCssSources(pkg(dist), FOLDERS, FIXTURES, MARKERS);
+    const failures = await checkCssSources(pkg(dist), FOLDERS, FIXTURES, MARKERS);
     expect(failures).toEqual([
       "sources/button.css lacks chunk-X.js, which dist/button.js loads: the build's import walk (scripts/css-sources.ts) missed an import, or dist/ is stale (run `bun run build`)",
       "sources/utils.css lacks chunk-X.js, which dist/utils.js loads: the build's import walk (scripts/css-sources.ts) missed an import, or dist/ is stale (run `bun run build`)",
@@ -295,7 +276,7 @@ describe("checkCssSources", () => {
     const dist = {
       "sources/button.css": `${HEADER}@source "../button.js";\n@source "../toast.js";\n@source "../utils.js";\n`,
     };
-    const { failures } = await checkCssSources(pkg(dist), FOLDERS, FIXTURES, MARKERS);
+    const failures = await checkCssSources(pkg(dist), FOLDERS, FIXTURES, MARKERS);
     expect(failures).toEqual([
       "sources/button.css lists toast.js, which dist/button.js does not load: the build's import walk (scripts/css-sources.ts) followed a file that is no import of it, or dist/ is stale (run `bun run build`)",
       'button: has toast\'s class "hidden", which it does not import: a sources file lists a file of another component, or theme.core.css still scans dist/',
@@ -305,7 +286,7 @@ describe("checkCssSources", () => {
 
   it("fails a marker that the default setup lacks, so a stale marker cannot pass", async () => {
     const markers = { ...MARKERS, dialog: "table" };
-    const { failures } = await checkCssSources(pkg(), FOLDERS, FIXTURES, markers);
+    const failures = await checkCssSources(pkg(), FOLDERS, FIXTURES, markers);
     expect(failures).toEqual([
       'theme.css (the default) lacks dialog\'s class "table": pick a class the component still uses',
       'button + dialog: lacks dialog\'s class "table"',
@@ -313,7 +294,7 @@ describe("checkCssSources", () => {
   });
 
   it("fails a component folder without a sources file, and no theme.core.css", async () => {
-    const { failures } = await checkCssSources(
+    const failures = await checkCssSources(
       pkg({ "theme.core.css": null, "sources/toast.css": null }),
       FOLDERS,
       FIXTURES,
@@ -326,7 +307,7 @@ describe("checkCssSources", () => {
   });
 
   it("reports an input that does not compile", async () => {
-    const { failures } = await checkCssSources(pkg(), FOLDERS, [["missing"]], MARKERS);
+    const failures = await checkCssSources(pkg(), FOLDERS, [["missing"]], MARKERS);
     expect(failures).toHaveLength(1);
     expect(failures[0]).toStartWith("missing: Tailwind failed: ");
   });

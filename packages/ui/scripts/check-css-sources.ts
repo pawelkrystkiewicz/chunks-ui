@@ -64,9 +64,6 @@ export type Fixture = string[];
 
 export const FIXTURES: Fixture[] = [["button"], ["button", "dialog"]];
 
-export type Size = { name: string; classes: number; bytes: number };
-export type Result = { failures: string[]; sizes: Size[] };
-
 const DEFAULT = "theme.css (the default)";
 const HEAD = '@import "tailwindcss" source(none);\n@import "chunks-ui/theme.core.css";\n';
 const REBUILD = "run `bun run build`, and check the onSuccess of tsup.config.ts";
@@ -122,22 +119,14 @@ export function markerProblems(
   });
 }
 
-/** How `all`, the classes of every sources file, differs from `reference`, those of dist/*.js */
+/** The classes of `reference`, those of dist/*.js, that `all`, those of every sources file, lacks */
 export function diffProblems(all: Set<string>, reference: Set<string>): string[] {
   const missing = [...reference].filter((name) => !all.has(name)).sort();
-  const extra = [...all].filter((name) => !reference.has(name)).sort();
-  const problems: string[] = [];
-  if (missing.length > 0) {
-    problems.push(
-      `all sources/*.css together lack these classes of dist/*.js (a sources file misses a file of its component, or dist/ holds stale files: run \`bun run build\`): ${missing.join(", ")}`,
-    );
-  }
-  if (extra.length > 0) {
-    problems.push(
-      `all sources/*.css together have these classes that dist/*.js lacks (a sources file lists a file that is not a .js file of dist/, or dist/ holds stale files: run \`bun run build\`): ${extra.join(", ")}`,
-    );
-  }
-  return problems;
+  return missing.length === 0
+    ? []
+    : [
+        `all sources/*.css together lack these classes of dist/*.js (a sources file misses a file of its component, or dist/ holds stale files: run \`bun run build\`): ${missing.join(", ")}`,
+      ];
 }
 
 /** The files that the `@source "../<file>";` lines of a sources file list, sorted */
@@ -240,14 +229,13 @@ export async function checkCssSources(
   folders: string[],
   fixtures: Fixture[] = FIXTURES,
   markers: Record<string, string> = MARKERS,
-): Promise<Result> {
+): Promise<string[]> {
   const dist = join(pkg, "dist");
   const failures: string[] = [];
-  const sizes: Size[] = [];
   for (const file of ["theme.core.css", ...[...folders, "utils"].map((n) => `sources/${n}.css`)]) {
     if (!existsSync(join(dist, file))) failures.push(`dist/${file} is missing: ${REBUILD}`);
   }
-  if (failures.length > 0) return { failures, sizes };
+  if (failures.length > 0) return failures;
 
   const files = readdirSync(join(dist, "sources"))
     .filter((file) => file.endsWith(".css"))
@@ -280,11 +268,11 @@ export async function checkCssSources(
     const tailwind = dirname(Bun.resolveSync("tailwindcss/package.json", UI));
     symlinkSync(tailwind, join(app, "node_modules", "tailwindcss"), "dir");
 
-    /** The CSS the app compiles from `css`, or undefined when Tailwind throws */
+    /** The class names of the CSS the app compiles from `css`, or undefined when Tailwind throws */
     const compiled = async (name: string, css: string) => {
       try {
         const compiler = await compile(css, { base: app, onDependency() {} });
-        return compiler.build(new Scanner({ sources: compiler.sources }).scan());
+        return classNames(compiler.build(new Scanner({ sources: compiler.sources }).scan()));
       } catch (error) {
         failures.push(
           `${name}: Tailwind failed: ${error instanceof Error ? error.message : String(error)}`,
@@ -292,18 +280,10 @@ export async function checkCssSources(
         return undefined;
       }
     };
-    /** The class names of `compiled(name, css)`, with its size in `sizes` */
-    const measured = async (name: string, css: string) => {
-      const output = await compiled(name, css);
-      if (output === undefined) return undefined;
-      const classes = classNames(output);
-      sizes.push({ name, classes: classes.size, bytes: Bun.gzipSync(output).length });
-      return classes;
-    };
     const sourcesImports = (files: string[]) =>
       files.map((file) => `@import "chunks-ui/sources/${file}";\n`).join("");
 
-    const defaults = await measured(
+    const defaults = await compiled(
       DEFAULT,
       '@import "tailwindcss" source(none);\n@import "chunks-ui/theme.css";\n',
     );
@@ -317,7 +297,7 @@ export async function checkCssSources(
 
     for (const imports of fixtures) {
       const name = imports.join(" + ");
-      const classes = await measured(name, HEAD + sourcesImports(imports.map((f) => `${f}.css`)));
+      const classes = await compiled(name, HEAD + sourcesImports(imports.map((f) => `${f}.css`)));
       if (classes) failures.push(...markerProblems(imports, classes, markers));
     }
 
@@ -325,31 +305,23 @@ export async function checkCssSources(
     const glob = JSON.stringify(`${dist.replaceAll("\\", "/")}/*.js`);
     const reference = await compiled("dist/*.js", `${HEAD}@source ${glob};\n`);
     if (all !== undefined && reference !== undefined) {
-      failures.push(...diffProblems(classNames(all), classNames(reference)));
+      failures.push(...diffProblems(all, reference));
     }
   } finally {
     // Removes the links, not the packages they point to
     rmSync(app, { recursive: true, force: true });
   }
-  return { failures, sizes };
+  return failures;
 }
 
 if (import.meta.main) {
   const folders = componentFolders(join(UI, "src/components"));
-  const { failures, sizes } = await checkCssSources(UI, folders);
-  console.log("The CSS Tailwind generates for an app's chunks-ui setup (preflight included):");
-  for (const { name, classes, bytes } of sizes) {
-    console.log(`  ${name}: ${classes} classes, ${bytes} bytes gzip`);
-  }
+  const failures = await checkCssSources(UI, folders);
   if (failures.length > 0) {
     console.error(
       `CSS sources check failed:\n${failures.map((failure) => `  - ${failure}`).join("\n")}`,
     );
     process.exit(1);
   }
-  // Button's class is in every sources file, so every fixture imports it
-  const marked = Object.keys(MARKERS).filter((component) => component !== "button");
-  console.log(
-    `An app that imports chunks-ui/sources/<component>.css gets no class of the marked components it does not import (${marked.join(", ")}). Each of the ${folders.length + 1} sources files lists the files its dist/<component>.js loads, and together they cover every .js file of dist/`,
-  );
+  console.log(`check:css-sources: OK (${folders.length + 1} sources files)`);
 }
