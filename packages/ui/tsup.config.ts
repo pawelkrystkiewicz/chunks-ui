@@ -1,6 +1,7 @@
 import { copyFileSync, existsSync, readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { defineConfig, type Options } from "tsup";
+import { writeCssSources } from "./scripts/css-sources";
 
 type EsbuildPlugin = NonNullable<Options["esbuildPlugins"]>[number];
 
@@ -68,6 +69,16 @@ export default defineConfig((options) => [
     onSuccess: async () => {
       copyFileSync("src/theme.css", "dist/theme.css");
       console.log("Copied theme.css to dist/");
+      // For an app that generates the CSS of only the components it uses: theme.core.css, the
+      // theme without its scan of dist/, and sources/<folder>.css, the files of dist/ that hold
+      // one component's classes, found from dist/<folder>.js through its imports (and
+      // sources/utils.css for chunks-ui/utils). It runs here because the files must exist first;
+      // a throw fails the build. See scripts/css-sources.ts
+      writeCssSources("dist", readFileSync("src/theme.css", "utf8"), [
+        ...Object.keys(componentEntries),
+        "utils",
+      ]);
+      console.log("Wrote theme.core.css and sources/*.css to dist/");
     },
     ...options,
   },

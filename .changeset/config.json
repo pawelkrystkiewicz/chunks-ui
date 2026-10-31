@@ -21,6 +21,7 @@
     "!src/VisualTest.*",
     "!src/AxeTest.*",
     "!src/visual-test.css",
-    "!scripts/**"
+    "!scripts/**",
+    "scripts/css-sources.ts"
   ]
 }
