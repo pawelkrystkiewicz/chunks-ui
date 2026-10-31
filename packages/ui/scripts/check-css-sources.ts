@@ -9,14 +9,13 @@
  * checks:
  * - dist/theme.core.css exists, and so does dist/sources/<folder>.css for each component folder
  *   (a folder of src/components with an index.ts, as tsup.config.ts reads them) and for utils;
- * - dist/utils.js has no relative import: both walks (css-sources.ts and parsedClosure here)
- *   treat it as a leaf without reading it, which holds while the utils build bundles everything
- *   and imports only packages;
  * - each sources file, on its own: it lists the files that dist/<name>.js loads (itself and its
- *   static relative imports, transitively, utils.js as a leaf), found here with Bun's parser while
- *   the build finds them with a regex, and lists no other file. Only this check sees a sources
- *   file that misses a chunk which another component's file still lists, and a walk that follows
- *   an import the other one misses;
+ *   static relative imports, transitively), found here with Bun's parser while the build finds
+ *   them with a regex, and lists no other file. Only this check sees a sources file that misses a
+ *   chunk which another component's file still lists, and a walk that follows an import the other
+ *   one misses. This walk reads utils.js like any file, where the build's walk treats it as
+ *   a leaf (the utils build may still be writing it then): a relative import in utils.js fails here as a
+ *   file that the sources files lack;
  * - each marker: its class is in the CSS of the default setup (theme.css alone), so a marker that
  *   the component no longer uses fails here instead of passing the checks below;
  * - each fixture (theme.core.css and the sources files of some components): it has the marker of
@@ -149,35 +148,11 @@ export function listedSources(css: string): string[] {
 const isRelative = (specifier: string) => specifier.startsWith("./") || specifier.startsWith("../");
 
 /**
- * What is wrong with `dist`/utils.js as a leaf: a relative import. Both walks list utils.js
- * without reading it (closure in scripts/css-sources.ts, which must not read it: the separate
- * utils build may still be writing it when the ESM build's onSuccess runs, and parsedClosure
- * below). That holds while the utils build bundles everything and imports only packages. An
- * import of its own file means the build now emits files for it, and the sources files would
- * miss their classes. Nothing is wrong when `dist` has no utils.js: the check of each sources
- * file reports that.
- */
-export function utilsLeafProblems(dist: string): string[] {
-  const file = join(dist, "utils.js");
-  if (!existsSync(file)) return [];
-  const transpiler = new Bun.Transpiler({ loader: "js" });
-  const relative = transpiler
-    .scanImports(readFileSync(file, "utf8"))
-    .map(({ path }) => path)
-    .filter(isRelative);
-  if (relative.length === 0) return [];
-  const listed = [...new Set(relative)].sort().map((specifier) => JSON.stringify(specifier));
-  return [
-    `dist/utils.js imports ${listed.join(", ")}: the leaf assumption broke (the utils build now emits files of its own). scripts/css-sources.ts and this check (parsedClosure) treat utils.js as a leaf, without reading it, so both walks must follow its relative imports`,
-  ];
-}
-
-/**
  * The files of `dist` that `entry` loads: itself and every file it imports statically with a
  * relative path, transitively, sorted. It reads the imports with Bun's parser, where
  * scripts/css-sources.ts uses a regex (tsup runs that one on Node), so an import the regex misses
- * shows up as a difference. Like the build's walk, it treats utils.js as a leaf. `problems` names
- * an import it cannot follow: out of `dist`, to a file that does not exist, or dynamic, which would
+ * shows up as a difference. Unlike the build's walk, it reads utils.js too. `problems` names an
+ * import it cannot follow: out of `dist`, to a file that does not exist, or dynamic, which would
  * load code whose classes the sources file would miss.
  */
 export function parsedClosure(
@@ -190,7 +165,6 @@ export function parsedClosure(
   const walk = (file: string) => {
     if (seen.has(file)) return;
     seen.add(file);
-    if (file === "utils.js") return;
     const code = readFileSync(join(dist, file), "utf8");
     for (const { kind, path: specifier } of transpiler.scanImports(code)) {
       if (!isRelative(specifier)) continue;
@@ -201,7 +175,7 @@ export function parsedClosure(
         );
       } else if (target.startsWith("../")) {
         problems.push(`dist/${file} imports "${specifier}", outside dist/`);
-      } else if (target !== "utils.js" && !existsSync(join(dist, target))) {
+      } else if (!existsSync(join(dist, target))) {
         problems.push(`dist/${file} imports "${specifier}", which is not in dist/`);
         seen.add(target);
       } else {
@@ -274,7 +248,6 @@ export async function checkCssSources(
     if (!existsSync(join(dist, file))) failures.push(`dist/${file} is missing: ${REBUILD}`);
   }
   if (failures.length > 0) return { failures, sizes };
-  failures.push(...utilsLeafProblems(dist));
 
   const files = readdirSync(join(dist, "sources"))
     .filter((file) => file.endsWith(".css"))
