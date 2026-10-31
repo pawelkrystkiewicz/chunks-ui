@@ -173,7 +173,13 @@ describe("themeCore", () => {
 
   it("throws when another @source is left", () => {
     expect(() => themeCore(`${THEME}@source "../extra";\n`)).toThrow(
-      "theme.core.css still has an @source",
+      "theme.core.css still has an @source (an `@source inline(...)` counts too): src/theme.css gained another one",
+    );
+  });
+
+  it("throws when an @source inline() is left, and says where to update", () => {
+    expect(() => themeCore(`${THEME}@source inline("flex");\n`)).toThrow(
+      "scripts/css-sources.ts decides what it keeps",
     );
   });
 });

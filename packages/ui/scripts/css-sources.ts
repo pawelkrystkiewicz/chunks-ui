@@ -100,7 +100,9 @@ export function themeCore(theme: string): string {
   // The comment right above the line: one that holds no "*/" of its own
   const core = theme.replace(/(?:\/\*(?:(?!\*\/)[\s\S])*\*\/\s*)?@source "\.\/";/, HEADER);
   if (/@source\b/.test(core.replace(COMMENTS, ""))) {
-    throw new Error("theme.core.css still has an @source: it must scan nothing");
+    throw new Error(
+      "theme.core.css still has an @source (an `@source inline(...)` counts too): src/theme.css gained another one. theme.core.css must scan nothing, and scripts/css-sources.ts decides what it keeps: update it there",
+    );
   }
   return core;
 }
