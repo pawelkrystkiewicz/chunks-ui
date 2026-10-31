@@ -21,7 +21,10 @@
  * - all sources files together give the classes that theme.core.css with every .js file of dist/
  *   gives, so a .js file that no sources file lists fails, marker or not. It cannot tell which
  *   sources file misses a file that another one lists: the per-file check does.
- * Whether Tailwind 4.0 resolves the sources files is check:tailwind's job.
+ * check:tailwind compiles dist/theme.core.css with dist/sources/button.css on Tailwind 4.0 by
+ * absolute path, so it proves that 4.0 follows the `@source "../x.js"` lines of a sources file.
+ * It does not test the exports-map resolution of `chunks-ui/sources/<name>.css`: only this check
+ * does, with the installed Tailwind.
  *
  * Run: bun run check:css-sources
  * Tests: check-css-sources.spec.ts (fixture packages in a temporary directory)
