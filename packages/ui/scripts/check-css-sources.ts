@@ -103,7 +103,7 @@ export function componentFolders(components: string): string[] {
 }
 
 /** What is wrong with `classes`, the CSS of the fixture `imports`: a marker it lacks or has */
-export function markerProblems(
+function markerProblems(
   imports: Fixture,
   classes: Set<string>,
   markers: Record<string, string> = MARKERS,
@@ -120,7 +120,7 @@ export function markerProblems(
 }
 
 /** The classes of `reference`, those of dist/*.js, that `all`, those of every sources file, lacks */
-export function diffProblems(all: Set<string>, reference: Set<string>): string[] {
+function diffProblems(all: Set<string>, reference: Set<string>): string[] {
   const missing = [...reference].filter((name) => !all.has(name)).sort();
   return missing.length === 0
     ? []
@@ -180,7 +180,7 @@ export function parsedClosure(
  * How the files that sources/<name>.css `listed` differ from `expected`, the closure of
  * dist/<name>.js: each file it misses and each it should not list
  */
-export function sourcesProblems(name: string, listed: string[], expected: string[]): string[] {
+function sourcesProblems(name: string, listed: string[], expected: string[]): string[] {
   const missing = expected.filter((file) => !listed.includes(file));
   const extra = listed.filter((file) => !expected.includes(file));
   const problems: string[] = [];

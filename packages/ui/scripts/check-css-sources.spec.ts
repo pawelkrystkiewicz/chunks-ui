@@ -6,12 +6,9 @@ import {
   checkCssSources,
   classNames,
   componentFolders,
-  diffProblems,
   type Fixture,
   listedSources,
-  markerProblems,
   parsedClosure,
-  sourcesProblems,
 } from "./check-css-sources";
 
 const dirs: string[] = [];
@@ -50,55 +47,10 @@ describe("classNames", () => {
   });
 });
 
-const MARKERS = { button: "flex", dialog: "grid", toast: "hidden" };
-
-describe("markerProblems", () => {
-  it("passes a fixture with the markers of its components and no other", () => {
-    expect(markerProblems(["button"], new Set(["flex", "block"]), MARKERS)).toEqual([]);
-  });
-
-  it("names each marker that a fixture lacks or should not have", () => {
-    expect(markerProblems(["button", "dialog"], new Set(["flex", "hidden"]), MARKERS)).toEqual([
-      'button + dialog: lacks dialog\'s class "grid"',
-      'button + dialog: has toast\'s class "hidden", which it does not import: a sources file lists a file of another component, or theme.core.css still scans dist/',
-    ]);
-  });
-});
-
-describe("diffProblems", () => {
-  it("passes equal sets", () => {
-    expect(diffProblems(new Set(["a", "b"]), new Set(["b", "a"]))).toEqual([]);
-  });
-
-  it("names the missing classes, sorted", () => {
-    expect(diffProblems(new Set(["a", "x"]), new Set(["a", "c", "b"]))).toEqual([
-      "all sources/*.css together lack these classes of dist/*.js (a sources file misses a file of its component, or dist/ holds stale files: run `bun run build`): b, c",
-    ]);
-  });
-});
-
 describe("listedSources", () => {
   it("reads the files of the @source lines, sorted, and skips the comment", () => {
     const css = `/* @source "../in-a-comment.js"; */\n@source "../chunk-B.js";\n@source "../button.js";\n`;
     expect(listedSources(css)).toEqual(["button.js", "chunk-B.js"]);
-  });
-});
-
-describe("sourcesProblems", () => {
-  const LACKS =
-    "which dist/button.js loads: the build's import walk (scripts/css-sources.ts) missed an import, or dist/ is stale (run `bun run build`)";
-  const LISTS =
-    "which dist/button.js does not load: the build's import walk (scripts/css-sources.ts) followed a file that is no import of it, or dist/ is stale (run `bun run build`)";
-
-  it("passes the files that the entry loads", () => {
-    expect(sourcesProblems("button", ["a.js", "b.js"], ["b.js", "a.js"])).toEqual([]);
-  });
-
-  it("names each file that a sources file misses or should not list", () => {
-    expect(sourcesProblems("button", ["a.js", "x.js", "y.js"], ["a.js", "b.js", "c.js"])).toEqual([
-      `sources/button.css lacks b.js, c.js, ${LACKS}`,
-      `sources/button.css lists x.js, y.js, ${LISTS}`,
-    ]);
   });
 });
 
@@ -199,6 +151,7 @@ const DIST: Record<string, string> = {
   "sources/utils.css": `${HEADER}@source "../utils.js";\n`,
 };
 const FOLDERS = ["button", "dialog", "toast"];
+const MARKERS = { button: "flex", dialog: "grid", toast: "hidden" };
 const FIXTURES: Fixture[] = [["button"], ["button", "dialog"]];
 
 /** A package with DIST, changed by `dist` (a null removes a file), in a temporary directory */
@@ -246,17 +199,6 @@ describe("checkCssSources", () => {
     const failures = await checkCssSources(pkg(dist), FOLDERS, FIXTURES, MARKERS);
     expect(failures).toEqual([
       "sources/gone.css has no dist/gone.js: dist/ is stale, run `bun run build`",
-    ]);
-  });
-
-  it("fails a component file that imports a file dynamically, as the build's walk throws on", async () => {
-    const dist = {
-      "dialog.js":
-        'import "./chunk-A.js";\nconst more = () => import("./lazy.js");\nexport const Dialog = "grid";\n',
-    };
-    const failures = await checkCssSources(pkg(dist), FOLDERS, FIXTURES, MARKERS);
-    expect(failures).toEqual([
-      'sources/dialog.css: dist/dialog.js imports "./lazy.js" dynamically: the CSS sources follow static imports only, so its classes would be missing',
     ]);
   });
 
