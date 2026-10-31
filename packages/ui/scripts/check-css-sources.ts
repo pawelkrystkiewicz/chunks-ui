@@ -9,20 +9,34 @@
  * checks:
  * - dist/theme.core.css exists, and so does dist/sources/<folder>.css for each component folder
  *   (a folder of src/components with an index.ts, as tsup.config.ts reads them) and for utils;
+ * - each sources file, on its own: it lists the files that dist/<name>.js loads (itself and its
+ *   static relative imports, transitively, utils.js as a leaf), found here with Bun's parser while
+ *   the build finds them with a regex, and lists no other file. Only this check sees a sources
+ *   file that misses a chunk which another component's file still lists, and a walk that follows
+ *   an import the other one misses;
  * - each marker: its class is in the CSS of the default setup (theme.css alone), so a marker that
  *   the component no longer uses fails here instead of passing the checks below;
  * - each fixture (theme.core.css and the sources files of some components): it has the marker of
- *   each component it imports and of no other one;
+ *   each component it imports and of no other marked one;
  * - all sources files together give the classes that theme.core.css with every .js file of dist/
- *   gives, so a sources file that misses a file of its component fails, marker or not.
+ *   gives, so a .js file that no sources file lists fails, marker or not. It cannot tell which
+ *   sources file misses a file that another one lists: the per-file check does.
  * Whether Tailwind 4.0 resolves the sources files is check:tailwind's job.
  *
  * Run: bun run check:css-sources
  * Tests: check-css-sources.spec.ts (fixture packages in a temporary directory)
  */
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, symlinkSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, posix } from "node:path";
 import { MARKERS as BUNDLE_MARKERS } from "./check-treeshake";
 
 const UI = join(import.meta.dirname, "..");
@@ -110,12 +124,79 @@ export function diffProblems(all: Set<string>, reference: Set<string>): string[]
   const problems: string[] = [];
   if (missing.length > 0) {
     problems.push(
-      `all sources/*.css together lack these classes of dist/*.js (a sources file misses a file of its component): ${missing.join(", ")}`,
+      `all sources/*.css together lack these classes of dist/*.js (a sources file misses a file of its component, or dist/ holds stale files: run \`bun run build\`): ${missing.join(", ")}`,
     );
   }
   if (extra.length > 0) {
     problems.push(
-      `all sources/*.css together have these classes that dist/*.js lacks (a sources file lists a file that is not a .js file of dist/): ${extra.join(", ")}`,
+      `all sources/*.css together have these classes that dist/*.js lacks (a sources file lists a file that is not a .js file of dist/, or dist/ holds stale files: run \`bun run build\`): ${extra.join(", ")}`,
+    );
+  }
+  return problems;
+}
+
+/** The files that the `@source "../<file>";` lines of a sources file list, sorted */
+export function listedSources(css: string): string[] {
+  return [...css.matchAll(/^@source "\.\.\/([^"]+)";$/gm)].map(([, file = ""]) => file).sort();
+}
+
+/**
+ * The files of `dist` that `entry` loads: itself and every file it imports statically with a
+ * relative path, transitively, sorted. It reads the imports with Bun's parser, where
+ * scripts/css-sources.ts uses a regex (tsup runs that one on Node), so an import the regex misses
+ * shows up as a difference. Like the build's walk, it treats utils.js as a leaf. `problems` names
+ * an import it cannot follow: out of `dist`, to a file that does not exist, or dynamic, which would
+ * load code whose classes the sources file would miss.
+ */
+export function parsedClosure(
+  dist: string,
+  entry: string,
+): { files: string[]; problems: string[] } {
+  const transpiler = new Bun.Transpiler({ loader: "js" });
+  const seen = new Set<string>();
+  const problems: string[] = [];
+  const walk = (file: string) => {
+    if (seen.has(file)) return;
+    seen.add(file);
+    if (file === "utils.js") return;
+    const code = readFileSync(join(dist, file), "utf8");
+    for (const { kind, path: specifier } of transpiler.scanImports(code)) {
+      if (!specifier.startsWith("./") && !specifier.startsWith("../")) continue;
+      const target = posix.join(posix.dirname(file), specifier);
+      if (kind === "dynamic-import") {
+        problems.push(
+          `dist/${file} imports "${specifier}" dynamically: the CSS sources follow static imports only, so its classes would be missing`,
+        );
+      } else if (target.startsWith("../")) {
+        problems.push(`dist/${file} imports "${specifier}", outside dist/`);
+      } else if (target !== "utils.js" && !existsSync(join(dist, target))) {
+        problems.push(`dist/${file} imports "${specifier}", which is not in dist/`);
+        seen.add(target);
+      } else {
+        walk(target);
+      }
+    }
+  };
+  walk(entry);
+  return { files: [...seen].sort(), problems };
+}
+
+/**
+ * How the files that sources/<name>.css `listed` differ from `expected`, the closure of
+ * dist/<name>.js: each file it misses and each it should not list
+ */
+export function sourcesProblems(name: string, listed: string[], expected: string[]): string[] {
+  const missing = expected.filter((file) => !listed.includes(file));
+  const extra = listed.filter((file) => !expected.includes(file));
+  const problems: string[] = [];
+  if (missing.length > 0) {
+    problems.push(
+      `sources/${name}.css lacks ${missing.join(", ")}, which dist/${name}.js loads: the build's import walk (scripts/css-sources.ts) missed an import, or dist/ is stale (run \`bun run build\`)`,
+    );
+  }
+  if (extra.length > 0) {
+    problems.push(
+      `sources/${name}.css lists ${extra.join(", ")}, which dist/${name}.js does not load: the build's import walk (scripts/css-sources.ts) followed a file that is no import of it, or dist/ is stale (run \`bun run build\`)`,
     );
   }
   return problems;
@@ -161,6 +242,28 @@ export async function checkCssSources(
     if (!existsSync(join(dist, file))) failures.push(`dist/${file} is missing: ${REBUILD}`);
   }
   if (failures.length > 0) return { failures, sizes };
+
+  const files = readdirSync(join(dist, "sources"))
+    .filter((file) => file.endsWith(".css"))
+    .sort();
+  for (const file of files) {
+    const name = file.slice(0, -".css".length);
+    if (!existsSync(join(dist, `${name}.js`))) {
+      failures.push(
+        `sources/${file} has no dist/${name}.js: dist/ is stale, run \`bun run build\``,
+      );
+      continue;
+    }
+    const { files: expected, problems } = parsedClosure(dist, `${name}.js`);
+    failures.push(
+      ...problems.map((problem) => `sources/${file}: ${problem}`),
+      ...sourcesProblems(
+        name,
+        listedSources(readFileSync(join(dist, "sources", file), "utf8")),
+        expected,
+      ),
+    );
+  }
 
   const { compile, Scanner } = await loadTailwind();
   const app = mkdtempSync(join(tmpdir(), "check-css-sources-"));
@@ -212,8 +315,7 @@ export async function checkCssSources(
       if (classes) failures.push(...markerProblems(imports, classes, markers));
     }
 
-    const files = readdirSync(join(dist, "sources")).filter((file) => file.endsWith(".css"));
-    const all = await compiled("all sources/*.css", HEAD + sourcesImports(files.sort()));
+    const all = await compiled("all sources/*.css", HEAD + sourcesImports(files));
     const glob = JSON.stringify(`${dist.replaceAll("\\", "/")}/*.js`);
     const reference = await compiled("dist/*.js", `${HEAD}@source ${glob};\n`);
     if (all !== undefined && reference !== undefined) {
@@ -239,7 +341,9 @@ if (import.meta.main) {
     );
     process.exit(1);
   }
+  // Button's class is in every sources file, so every fixture imports it
+  const marked = Object.keys(MARKERS).filter((component) => component !== "button");
   console.log(
-    `An app that imports chunks-ui/sources/<component>.css gets those components' classes alone, and the ${folders.length + 1} sources files together cover every .js file of dist/`,
+    `An app that imports chunks-ui/sources/<component>.css gets no class of the marked components it does not import (${marked.join(", ")}). Each of the ${folders.length + 1} sources files lists the files its dist/<component>.js loads, and together they cover every .js file of dist/`,
   );
 }
