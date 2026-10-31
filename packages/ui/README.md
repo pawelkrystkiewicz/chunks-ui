@@ -61,7 +61,7 @@ Add the `touch-target` class to give a small control a 44×44px hit area without
 - A file is named after the component's docs page: `/components/date-picker` is `chunks-ui/sources/date-picker.css`.
 - A component that another one renders comes with it: `date-picker.css` brings Calendar's classes.
 - `chunks-ui/sources/utils.css` is for an app that uses `chunks-ui/utils` alone, such as `buttonVariants` in a Server Component.
-- A component rendered without its file gets no styles, and nothing warns you: when the app starts to use a component, add its line. A misspelt file name fails the build.
+- A component rendered without its file gets no styles, or only the ones it shares with the components you did import, and nothing warns you: when the app starts to use a component, add its line. A misspelt file name fails the build.
 
 See [Getting Started › Only the components you use](https://ui-kit.chunk-creations.com/getting-started#only-the-components-you-use).
 

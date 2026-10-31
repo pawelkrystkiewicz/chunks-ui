@@ -90,7 +90,7 @@ The `@source` of `theme.css` makes Tailwind generate the classes of every compon
 - Every file also brings the variants of Button, Chip, IconButton and Input, which the components share in one built file.
 - An app that uses only `chunks-ui/utils`, such as `buttonVariants` in a Server Component, imports `chunks-ui/sources/utils.css`.
 
-The trade-off: a component that the app renders without its file gets no styles, and nothing warns you. When the app starts to use a component, add its line. A misspelt file name fails the build, as Tailwind cannot resolve the import.
+The trade-off: a component that the app renders without its file gets no styles, or only the ones it shares with the components you did import, and nothing warns you. When the app starts to use a component, add its line. A misspelt file name fails the build, as Tailwind cannot resolve the import.
 
 Your own classes, those you pass in `className` included, are generated as before: `@import "tailwindcss"` still scans your app.
 
