@@ -38,10 +38,11 @@ export function relativeImports(code: string): { static: string[]; dynamic: stri
  * static relative imports, transitively. Paths are relative to `dist`, sorted. Throws on a file
  * that does not exist, an import out of `dist`, and a relative dynamic import, which would load
  * code whose classes the stylesheet would miss.
- * ponytail: every closure holds utils.js, with the variants of Button, Chip, IconButton and
- * Input, so each sources file brings about 120 rules (~1.6 KB gzip) of Chip, IconButton and Input
- * classes. Goes when the utils build is split, so the walk can follow only the variant modules a
- * component imports.
+ * ponytail: every closure holds utils.js, which has the variants of Button, Chip, IconButton and
+ * Input. A component that uses none of them gets all four sets: about 120 rules (~1.6 KB gzip).
+ * button.css, whose own classes are there anyway, pays for the other three sets: about 35 rules
+ * (~0.35 KB gzip). Goes when the utils build is split, so the walk can follow only the variant
+ * modules a component imports.
  */
 export function closure(dist: string, entry: string): string[] {
   const seen = new Set<string>();
