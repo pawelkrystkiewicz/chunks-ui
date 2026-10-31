@@ -1,6 +1,13 @@
 {
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
-  extends: ["config:recommended", ":timezone(Europe/Warsaw)"],
+  // security:minimumReleaseAgeNpm: an npm update waits until the version is 3 days old, as a
+  // compromised release is usually caught and pulled within days and CI holds secrets. Its
+  // internalChecksFilter "strict" skips a younger version, so no branch exists and no CI job
+  // installs it. Vulnerability fixes skip the wait (vulnerabilityAlerts sets minimumReleaseAge to
+  // null), and so do lockfile maintenance, pins and replacements, which carry no release timestamp:
+  // bunfig.toml's install.minimumReleaseAge gates the versions bun resolves for those. Docker and
+  // GitHub Actions updates are not gated (the Playwright image's registry gives no timestamp).
+  extends: ["config:recommended", ":timezone(Europe/Warsaw)", "security:minimumReleaseAgeNpm"],
   schedule: ["before 10am on monday"],
   labels: ["dependencies", "renovate"],
   assignees: ["pawelkrystkiewicz"],

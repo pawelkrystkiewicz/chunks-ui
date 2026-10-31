@@ -2,3 +2,11 @@
 # Bun picks the default linker from the lockfile's configVersion, so a regenerated lockfile can
 # switch it. Isolated: a package sees only the dependencies it declares.
 linker = "isolated"
+# Resolve only versions published at least 3 days ago (259200 s), direct and transitive: `bun add`,
+# `bun update` and Renovate's lockfile maintenance. Versions already in bun.lock are not checked,
+# so a --frozen-lockfile install is unchanged. Same age as security:minimumReleaseAgeNpm in
+# .github/renovate.json5.
+# ponytail: a Renovate vulnerability-fix PR for a version younger than 3 days fails its lockfile
+# update here; to take that fix early, add the exact version to minimumReleaseAgeExcludes (e.g.
+# "pkg@1.2.3", an entry form that needs Bun 1.4.4, the packageManager pin) in that PR.
+minimumReleaseAge = 259200
