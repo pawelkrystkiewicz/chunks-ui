@@ -6,6 +6,7 @@ import {
   assertThemeUtilities,
   classNames,
   missingClasses,
+  optInProblem,
   orderProblems,
   scanProblem,
   TOUCH_ORDER,
@@ -88,6 +89,18 @@ describe("scanProblem", () => {
     const problem = scanProblem(names, "4.3.3", ["font-heading", "touch-target"]);
     expect(problem).toMatch(/4\.3\.3 .*touch-target/);
     expect(problem).not.toMatch(/font-heading/);
+  });
+});
+
+describe("optInProblem", () => {
+  it("accepts a set with Button's class", () => {
+    expect(optInProblem(new Set(["disabled:pointer-events-none"]), "4.0.0")).toBeUndefined();
+  });
+
+  it("reports a set without it, naming the opt-in files", () => {
+    expect(optInProblem(new Set(["p-1"]), "4.0.0")).toMatch(
+      /4\.0\.0 .*disabled:pointer-events-none.*theme\.core\.css.*sources\/button\.css/,
+    );
   });
 });
 
