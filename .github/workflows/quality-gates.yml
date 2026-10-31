@@ -179,8 +179,6 @@ jobs:
         working-directory: packages/ui
         run: bun run check:treeshake
 
-      # Compiles CSS for apps that import the sources files of one or two components; what it fails
-      # on is in the header of packages/ui/scripts/check-css-sources.ts
       - name: Check an app can generate the CSS of the chunks-ui components it uses
         working-directory: packages/ui
         run: bun run check:css-sources

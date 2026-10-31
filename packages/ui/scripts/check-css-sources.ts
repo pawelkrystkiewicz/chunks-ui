@@ -1,36 +1,6 @@
 /// <reference types="@types/bun" />
-/**
- * Checks the stylesheets with which an app generates the CSS of only the chunks-ui components it
- * uses: dist/theme.core.css and dist/sources/<component>.css, which scripts/css-sources.ts writes
- * during the build. Needs `bun run build` first.
- * It compiles CSS with the installed Tailwind (`@tailwindcss/node` and `@tailwindcss/oxide`, as
- * scripts/check-tailwind-compat.ts does) in a throwaway app whose node_modules/chunks-ui links to
- * the package, so `@import "chunks-ui/sources/button.css"` resolves through the exports map, and
- * checks:
- * - dist/theme.core.css exists, and so does dist/sources/<folder>.css for each component folder
- *   (a folder of src/components with an index.ts, as tsup.config.ts reads them) and for utils;
- * - each sources file, on its own: it lists the files that dist/<name>.js loads (itself and its
- *   static relative imports, transitively), found here with Bun's parser while the build finds
- *   them with a regex, and lists no other file. Only this check sees a sources file that misses a
- *   chunk which another component's file still lists, and a walk that follows an import the other
- *   one misses. This walk reads utils.js like any file, where the build's walk treats it as
- *   a leaf (the utils build may still be writing it then): a relative import in utils.js fails here as a
- *   file that the sources files lack;
- * - each marker: its class is in the CSS of the default setup (theme.css alone), so a marker that
- *   the component no longer uses fails here instead of passing the checks below;
- * - each fixture (theme.core.css and the sources files of some components): it has the marker of
- *   each component it imports and of no other marked one;
- * - all sources files together give the classes that theme.core.css with every .js file of dist/
- *   gives, so a .js file that no sources file lists fails, marker or not. It cannot tell which
- *   sources file misses a file that another one lists: the per-file check does.
- * check:tailwind compiles dist/theme.core.css with dist/sources/button.css on Tailwind 4.0 by
- * absolute path, so it proves that 4.0 follows the `@source "../x.js"` lines of a sources file.
- * It does not test the exports-map resolution of `chunks-ui/sources/<name>.css`: only this check
- * does, with the installed Tailwind.
- *
- * Run: bun run check:css-sources
- * Tests: check-css-sources.spec.ts (fixture packages in a temporary directory)
- */
+// Checks dist/theme.core.css and dist/sources/*.css (written by css-sources.ts) through the exports
+// map with the installed Tailwind. Run after `bun run build`: bun run check:css-sources
 import {
   existsSync,
   mkdirSync,
@@ -46,12 +16,7 @@ import { MARKERS as BUNDLE_MARKERS } from "./check-treeshake";
 
 const UI = join(import.meta.dirname, "..");
 
-/**
- * A class that one component's code holds, keyed by its folder, the name of its sources file.
- * Pick a component that no fixture gets through another one (DatePicker renders Calendar).
- * Button's class is in utils.js, which every sources file lists (see closure in css-sources.ts),
- * so every fixture imports button. The other three are check-treeshake.ts's markers.
- */
+// Button's class sits in utils.js, which every sources file lists, so every fixture imports button
 export const MARKERS: Record<string, string> = {
   button: "disabled:pointer-events-none",
   combobox: BUNDLE_MARKERS.Combobox,
@@ -59,7 +24,6 @@ export const MARKERS: Record<string, string> = {
   toast: BUNDLE_MARKERS.Toast,
 };
 
-/** An app that imports chunks-ui/sources/<folder>.css for each of these folders */
 export type Fixture = string[];
 
 export const FIXTURES: Fixture[] = [["button"], ["button", "dialog"]];
@@ -72,15 +36,10 @@ const LEAK_HINT =
 const CLASS = /\.(-?(?:[\w-]|\\[0-9a-fA-F]{1,6} ?|\\.)+)/g;
 const ESCAPE = /\\([0-9a-fA-F]{1,6}) ?|\\(.)/g;
 
-/**
- * The class names in the selectors of compiled CSS, unescaped. A name counts only as a whole
- * class selector, not in a declaration or a comment.
- */
 export function classNames(css: string): Set<string> {
   const chunks = css.replace(/\/\*[\s\S]*?\*\//g, "").split("{");
   return new Set(
     chunks.slice(0, -1).flatMap((chunk) => {
-      // The selector before this "{": what follows the last declaration or block
       const selector = chunk.slice(Math.max(chunk.lastIndexOf("}"), chunk.lastIndexOf(";")) + 1);
       return [...selector.matchAll(CLASS)]
         .map(([, name = ""]) => name)
@@ -94,7 +53,6 @@ export function classNames(css: string): Set<string> {
   );
 }
 
-/** The component folders in `components`: those with an index.ts, sorted */
 export function componentFolders(components: string): string[] {
   return readdirSync(components, { withFileTypes: true })
     .filter((dir) => dir.isDirectory() && existsSync(join(components, dir.name, "index.ts")))
@@ -102,7 +60,6 @@ export function componentFolders(components: string): string[] {
     .sort();
 }
 
-/** What is wrong with `classes`, the CSS of the fixture `imports`: a marker it lacks or has */
 function markerProblems(
   imports: Fixture,
   classes: Set<string>,
@@ -119,7 +76,6 @@ function markerProblems(
   });
 }
 
-/** The classes of `reference`, those of dist/*.js, that `all`, those of every sources file, lacks */
 function diffProblems(all: Set<string>, reference: Set<string>): string[] {
   const missing = [...reference].filter((name) => !all.has(name)).sort();
   return missing.length === 0
@@ -129,21 +85,13 @@ function diffProblems(all: Set<string>, reference: Set<string>): string[] {
       ];
 }
 
-/** The files that the `@source "../<file>";` lines of a sources file list, sorted */
 export function listedSources(css: string): string[] {
   return [...css.matchAll(/^@source "\.\.\/([^"]+)";$/gm)].map(([, file = ""]) => file).sort();
 }
 
 const isRelative = (specifier: string) => specifier.startsWith("./") || specifier.startsWith("../");
 
-/**
- * The files of `dist` that `entry` loads: itself and every file it imports statically with a
- * relative path, transitively, sorted. It reads the imports with Bun's parser, where
- * scripts/css-sources.ts uses a regex (tsup runs that one on Node), so an import the regex misses
- * shows up as a difference. Unlike the build's walk, it reads utils.js too. `problems` names an
- * import it cannot follow: out of `dist`, to a file that does not exist, or dynamic, which would
- * load code whose classes the sources file would miss.
- */
+// Bun's parser against css-sources.ts's regex: a differential check. Reads utils.js too
 export function parsedClosure(
   dist: string,
   entry: string,
@@ -176,10 +124,6 @@ export function parsedClosure(
   return { files: [...seen].sort(), problems };
 }
 
-/**
- * How the files that sources/<name>.css `listed` differ from `expected`, the closure of
- * dist/<name>.js: each file it misses and each it should not list
- */
 function sourcesProblems(name: string, listed: string[], expected: string[]): string[] {
   const missing = expected.filter((file) => !listed.includes(file));
   const extra = listed.filter((file) => !expected.includes(file));
@@ -207,9 +151,7 @@ type Tailwind = {
   Scanner: new (options: { sources: Source[] }) => { scan(): string[] };
 };
 
-/** The installed Tailwind's compiler and scanner */
 async function loadTailwind(): Promise<Tailwind> {
-  // Not deps of this package itself: resolved as @tailwindcss/postcss, a devDependency, gets them
   const postcss = dirname(Bun.resolveSync("@tailwindcss/postcss/package.json", UI));
   const load = async (name: string) => import(Bun.resolveSync(name, postcss));
   const [{ compile }, { Scanner }] = await Promise.all([
@@ -219,11 +161,6 @@ async function loadTailwind(): Promise<Tailwind> {
   return { compile, Scanner };
 }
 
-/**
- * Compiles the default setup, each fixture, and all sources files against the package in `pkg`
- * (its package.json and dist/), imported as `chunks-ui` from node_modules, as an app imports it.
- * `folders` are its component folders.
- */
 export async function checkCssSources(
   pkg: string,
   folders: string[],
@@ -264,11 +201,9 @@ export async function checkCssSources(
   try {
     mkdirSync(join(app, "node_modules"));
     symlinkSync(pkg, join(app, "node_modules", "chunks-ui"), "dir");
-    // For `@import "tailwindcss"`, which resolves from the app as an app's own Tailwind does
     const tailwind = dirname(Bun.resolveSync("tailwindcss/package.json", UI));
     symlinkSync(tailwind, join(app, "node_modules", "tailwindcss"), "dir");
 
-    /** The class names of the CSS the app compiles from `css`, or undefined when Tailwind throws */
     const compiled = async (name: string, css: string) => {
       try {
         const compiler = await compile(css, { base: app, onDependency() {} });
@@ -308,7 +243,7 @@ export async function checkCssSources(
       failures.push(...diffProblems(all, reference));
     }
   } finally {
-    // Removes the links, not the packages they point to
+    // Removes the links, not their targets
     rmSync(app, { recursive: true, force: true });
   }
   return failures;

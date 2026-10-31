@@ -15,10 +15,7 @@
  * It also fails when either version puts the classes of TOUCH_ORDER out of the order the touch
  * rule of `FIELD_TEXT_SIZE` needs.
  *
- * The oldest also compiles the opt-in for an app that generates the CSS of only the components it
- * uses: dist/theme.core.css and dist/sources/button.css, in place of theme.css. The run fails when
- * that CSS lacks Button's class, as the sources file's `@source "../button.js"` must resolve next
- * to the file on 4.0 too. check:css-sources in packages/ui checks the opt-in on the installed one.
+ * The oldest also compiles the opt-in (theme.core.css + sources/button.css) and needs Button's class.
  *
  * The installed version compiles in this process, with the `@tailwindcss/node` and
  * `@tailwindcss/oxide` from bun.lock. The oldest compiles with the CLI installed from the
@@ -236,7 +233,6 @@ async function compileInstalled(css: string): Promise<string> {
   return compiler.build(new Scanner({ sources: compiler.sources }).scan());
 }
 
-/** Installs Tailwind OLDEST in `dir`, from the fixture's lockfile. */
 function installOldest(dir: string) {
   cpSync(join(FIXTURE, "package.fixture.json"), join(dir, "package.json"));
   cpSync(join(FIXTURE, "bun.fixture.lock"), join(dir, "bun.lock"));
@@ -264,8 +260,6 @@ async function compileBoth() {
     const css = input(list);
     const installed = await compileInstalled(css);
     installOldest(dir);
-    // The opt-in for an app that generates the CSS of only the components it uses: the theme
-    // without its scan, and Button's sources file
     const optIn = `@import "tailwindcss" source(none);\n@import ${path(THEME_CORE)};\n@import ${path(BUTTON_SOURCES)};\n`;
     return {
       utilities,

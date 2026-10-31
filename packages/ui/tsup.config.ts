@@ -69,8 +69,7 @@ export default defineConfig((options) => [
     onSuccess: async () => {
       copyFileSync("src/theme.css", "dist/theme.css");
       console.log("Copied theme.css to dist/");
-      // theme.core.css and sources/<name>.css, for an app that generates the CSS of only the
-      // components it uses. Here because dist/ must exist first; a throw fails the build
+      // After the copy: needs dist/; a throw fails the build
       writeCssSources("dist", readFileSync("src/theme.css", "utf8"), [
         ...Object.keys(componentEntries),
         "utils",

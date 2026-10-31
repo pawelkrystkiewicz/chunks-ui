@@ -13,7 +13,6 @@ import {
 
 const dirs: string[] = [];
 
-/** A fresh temporary directory */
 function temp(prefix: string): string {
   const dir = mkdtempSync(join(tmpdir(), prefix));
   dirs.push(dir);
@@ -55,7 +54,6 @@ describe("listedSources", () => {
 });
 
 describe("parsedClosure", () => {
-  /** A dist/ with `files`, in a temporary directory */
   function dist(files: Record<string, string>): string {
     const dir = temp("check-css-sources-dist-");
     for (const [file, code] of Object.entries(files)) writeFileSync(join(dir, file), code);
@@ -69,7 +67,6 @@ describe("parsedClosure", () => {
       "chunk-A.js": 'import "./chunk-E.js";\n',
       "chunk-B.js": "",
       "chunk-C.js": "",
-      // A cycle back to chunk-A ends the walk
       "chunk-E.js": 'import "./chunk-A.js";\n',
     });
     expect(parsedClosure(dir, "button.js")).toEqual({
@@ -136,7 +133,6 @@ const PACKAGE = {
   },
 };
 const HEADER = "/* generated */\n";
-// Shaped like the build: a component file, a chunk two components share, and utils.js
 const DIST: Record<string, string> = {
   "theme.css": '@source "./";\n',
   "theme.core.css": ":root { --x: 1px; }\n",
@@ -154,7 +150,6 @@ const FOLDERS = ["button", "dialog", "toast"];
 const MARKERS = { button: "flex", dialog: "grid", toast: "hidden" };
 const FIXTURES: Fixture[] = [["button"], ["button", "dialog"]];
 
-/** A package with DIST, changed by `dist` (a null removes a file), in a temporary directory */
 function pkg(dist: Record<string, string | null> = {}): string {
   const dir = temp("check-css-sources-pkg-");
   writeFileSync(join(dir, "package.json"), JSON.stringify(PACKAGE));
@@ -171,7 +166,6 @@ describe("checkCssSources", () => {
   });
 
   it("fails sources files that miss a file of their component", async () => {
-    // chunk-A.js, which Dialog and Toast share, holds a class that no marker names
     const dist = {
       "sources/dialog.css": `${HEADER}@source "../dialog.js";\n`,
       "sources/toast.css": `${HEADER}@source "../toast.js";\n`,
@@ -185,8 +179,7 @@ describe("checkCssSources", () => {
   });
 
   it("fails the one sources file that misses a chunk another component's file still lists", async () => {
-    // toast.css still lists chunk-A.js, so all sources files together hold its class: only the
-    // check of each file against the closure of its own entry sees that dialog.css lacks it
+    // Only the per-file check sees this: toast.css still brings chunk-A.js into the union
     const dist = { "sources/dialog.css": `${HEADER}@source "../dialog.js";\n` };
     const failures = await checkCssSources(pkg(dist), FOLDERS, FIXTURES, MARKERS);
     expect(failures).toEqual([
