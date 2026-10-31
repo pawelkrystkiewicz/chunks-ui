@@ -179,11 +179,8 @@ jobs:
         working-directory: packages/ui
         run: bun run check:treeshake
 
-      # Compiles CSS with Tailwind for apps that import theme.core.css and the sources files of
-      # one or two components, and fails when one gets a class of a marked component (Combobox,
-      # Dialog, Toast) it does not import, when a sources file differs from the files its component
-      # loads (read with Bun's import parser), or when the sources files together miss a class of
-      # the built code
+      # Compiles CSS for apps that import the sources files of one or two components; what it fails
+      # on is in the header of packages/ui/scripts/check-css-sources.ts
       - name: Check an app can generate the CSS of the chunks-ui components it uses
         working-directory: packages/ui
         run: bun run check:css-sources

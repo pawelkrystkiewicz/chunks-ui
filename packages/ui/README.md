@@ -49,7 +49,7 @@ Add the `touch-target` class to give a small control a 44×44px hit area without
 
 ### Only the components you use
 
-`theme.css` makes Tailwind generate the classes of every component, also those the app does not render. To generate only the CSS of the components you use, import `theme.core.css` in its place, then one file per component:
+`theme.css` makes Tailwind generate the classes of every component. To generate only the CSS of the components you use, import `theme.core.css` in its place, then one file per component:
 
 ```css
 @import "tailwindcss";
@@ -58,10 +58,7 @@ Add the `touch-target` class to give a small control a 44×44px hit area without
 @import "chunks-ui/sources/dialog.css";
 ```
 
-- A file is named after the component's docs page: `/components/date-picker` is `chunks-ui/sources/date-picker.css`.
-- A component that another one renders comes with it: `date-picker.css` brings Calendar's classes.
-- `chunks-ui/sources/utils.css` is for an app that uses `chunks-ui/utils` alone, such as `buttonVariants` in a Server Component.
-- A component rendered without its file gets no styles, or only the ones it shares with the components you did import, and nothing warns you: when the app starts to use a component, add its line. A misspelt file name fails the build.
+A file is named after the component's docs page (`/components/date-picker` is `chunks-ui/sources/date-picker.css`), and a component rendered without its file gets no styles, or only the ones it shares with the files you did import, and nothing warns you.
 
 See [Getting Started › Only the components you use](https://ui-kit.chunk-creations.com/getting-started#only-the-components-you-use).
 
