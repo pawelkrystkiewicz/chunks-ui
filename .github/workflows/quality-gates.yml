@@ -179,6 +179,13 @@ jobs:
         working-directory: packages/ui
         run: bun run check:treeshake
 
+      # Compiles CSS with Tailwind for apps that import theme.core.css and the sources files of
+      # one or two components, and fails when one gets another component's classes or when the
+      # sources files together miss a class of the built code
+      - name: Check an app can generate the CSS of only the chunks-ui components it uses
+        working-directory: packages/ui
+        run: bun run check:css-sources
+
       # Builds consumers with and without Motion with webpack and with Turbopack (next build), then
       # opens each export in this image's Chromium; the turbo build is a cache hit and the installs
       # are pinned by scripts/no-motion, so it needs the network and the browser only

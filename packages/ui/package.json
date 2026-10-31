@@ -65,6 +65,7 @@
     "check:dist": "bun run scripts/check-dist.ts",
     "check:exports": "attw --pack . --exclude-entrypoints ./theme.css ./theme.core.css './sources/*.css'",
     "check:treeshake": "bun run scripts/check-treeshake.ts",
+    "check:css-sources": "bun run scripts/check-css-sources.ts",
     "clean": "rm -rf .turbo node_modules dist coverage"
   },
   "peerDependencies": {
