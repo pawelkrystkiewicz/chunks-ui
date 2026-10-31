@@ -9,6 +9,9 @@
  * checks:
  * - dist/theme.core.css exists, and so does dist/sources/<folder>.css for each component folder
  *   (a folder of src/components with an index.ts, as tsup.config.ts reads them) and for utils;
+ * - dist/utils.js has no relative import: both walks (css-sources.ts and parsedClosure here)
+ *   treat it as a leaf without reading it, which holds while the utils build bundles everything
+ *   and imports only packages;
  * - each sources file, on its own: it lists the files that dist/<name>.js loads (itself and its
  *   static relative imports, transitively, utils.js as a leaf), found here with Bun's parser while
  *   the build finds them with a regex, and lists no other file. Only this check sees a sources
@@ -143,6 +146,32 @@ export function listedSources(css: string): string[] {
   return [...css.matchAll(/^@source "\.\.\/([^"]+)";$/gm)].map(([, file = ""]) => file).sort();
 }
 
+const isRelative = (specifier: string) => specifier.startsWith("./") || specifier.startsWith("../");
+
+/**
+ * What is wrong with `dist`/utils.js as a leaf: a relative import. Both walks list utils.js
+ * without reading it (closure in scripts/css-sources.ts, which must not read it: the separate
+ * utils build may still be writing it when the ESM build's onSuccess runs, and parsedClosure
+ * below). That holds while the utils build bundles everything and imports only packages. An
+ * import of its own file means the build now emits files for it, and the sources files would
+ * miss their classes. Nothing is wrong when `dist` has no utils.js: the check of each sources
+ * file reports that.
+ */
+export function utilsLeafProblems(dist: string): string[] {
+  const file = join(dist, "utils.js");
+  if (!existsSync(file)) return [];
+  const transpiler = new Bun.Transpiler({ loader: "js" });
+  const relative = transpiler
+    .scanImports(readFileSync(file, "utf8"))
+    .map(({ path }) => path)
+    .filter(isRelative);
+  if (relative.length === 0) return [];
+  const listed = [...new Set(relative)].sort().map((specifier) => JSON.stringify(specifier));
+  return [
+    `dist/utils.js imports ${listed.join(", ")}: the leaf assumption broke (the utils build now emits files of its own). scripts/css-sources.ts and this check (parsedClosure) treat utils.js as a leaf, without reading it, so both walks must follow its relative imports`,
+  ];
+}
+
 /**
  * The files of `dist` that `entry` loads: itself and every file it imports statically with a
  * relative path, transitively, sorted. It reads the imports with Bun's parser, where
@@ -164,7 +193,7 @@ export function parsedClosure(
     if (file === "utils.js") return;
     const code = readFileSync(join(dist, file), "utf8");
     for (const { kind, path: specifier } of transpiler.scanImports(code)) {
-      if (!specifier.startsWith("./") && !specifier.startsWith("../")) continue;
+      if (!isRelative(specifier)) continue;
       const target = posix.join(posix.dirname(file), specifier);
       if (kind === "dynamic-import") {
         problems.push(
@@ -245,6 +274,7 @@ export async function checkCssSources(
     if (!existsSync(join(dist, file))) failures.push(`dist/${file} is missing: ${REBUILD}`);
   }
   if (failures.length > 0) return { failures, sizes };
+  failures.push(...utilsLeafProblems(dist));
 
   const files = readdirSync(join(dist, "sources"))
     .filter((file) => file.endsWith(".css"))

@@ -12,6 +12,7 @@ import {
   markerProblems,
   parsedClosure,
   sourcesProblems,
+  utilsLeafProblems,
 } from "./check-css-sources";
 
 const dirs: string[] = [];
@@ -139,7 +140,7 @@ describe("parsedClosure", () => {
   it("skips package imports and keeps utils.js as a leaf", () => {
     const dir = dist({
       "button.js": 'import "react";\nimport { cn } from "./utils.js";\n',
-      // Imports are not read: the utils build may still be writing it when the sources are built
+      // A leaf: its imports are not followed (utilsLeafProblems fails the check when it has any)
       "utils.js": 'import "./chunk-A.js";\n',
     });
     expect(parsedClosure(dir, "button.js")).toEqual({
@@ -162,6 +163,32 @@ describe("parsedClosure", () => {
         'dist/button.js imports "./lazy.js" dynamically: the CSS sources follow static imports only, so its classes would be missing',
       ],
     });
+  });
+});
+
+describe("utilsLeafProblems", () => {
+  /** A dist/ with `utils` as utils.js (no utils.js when null), in a temporary directory */
+  function dist(utils: string | null): string {
+    const dir = temp("check-css-sources-utils-");
+    if (utils !== null) writeFileSync(join(dir, "utils.js"), utils);
+    return dir;
+  }
+
+  it("passes a utils.js that imports packages only", () => {
+    const code = 'import clsx from "clsx";\nimport { cva } from "class-variance-authority";\n';
+    expect(utilsLeafProblems(dist(code))).toEqual([]);
+  });
+
+  it("passes a dist/ without utils.js: the check of each sources file reports that", () => {
+    expect(utilsLeafProblems(dist(null))).toEqual([]);
+  });
+
+  it("names each relative import of utils.js once, sorted: static, re-export and dynamic", () => {
+    const code =
+      'import "./chunk-B.js";\nexport { a } from "../up.js";\nexport * from "./chunk-A.js";\nconst m = () => import("./chunk-B.js");\n';
+    expect(utilsLeafProblems(dist(code))).toEqual([
+      'dist/utils.js imports "../up.js", "./chunk-A.js", "./chunk-B.js": the leaf assumption broke (the utils build now emits files of its own). scripts/css-sources.ts and this check (parsedClosure) treat utils.js as a leaf, without reading it, so both walks must follow its relative imports',
+    ]);
   });
 });
 
@@ -277,6 +304,18 @@ describe("checkCssSources", () => {
     const { failures } = await checkCssSources(pkg(dist), FOLDERS, FIXTURES, MARKERS);
     expect(failures).toEqual([
       'sources/dialog.css: dist/dialog.js imports "./lazy.js" dynamically: the CSS sources follow static imports only, so its classes would be missing',
+    ]);
+  });
+
+  it("fails when utils.js imports a file of its own, which both walks treat as a leaf", async () => {
+    // The utils build now emits a chunk: sources/*.css lists utils.js without following it
+    const dist = {
+      "utils.js": 'import "./chunk-X.js";\nexport const buttonVariants = "inline-flex";\n',
+      "chunk-X.js": "export const x = 1;\n",
+    };
+    const { failures } = await checkCssSources(pkg(dist), FOLDERS, FIXTURES, MARKERS);
+    expect(failures).toEqual([
+      'dist/utils.js imports "./chunk-X.js": the leaf assumption broke (the utils build now emits files of its own). scripts/css-sources.ts and this check (parsedClosure) treat utils.js as a leaf, without reading it, so both walks must follow its relative imports',
     ]);
   });
 
