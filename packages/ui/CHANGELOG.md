@@ -1,5 +1,11 @@
 # chunks-ui
 
+## 0.6.0
+
+### Minor Changes
+
+- [#839](https://github.com/pawelkrystkiewicz/chunks-ui/pull/839) [`c67a7a6`](https://github.com/pawelkrystkiewicz/chunks-ui/commit/c67a7a6ac257bd3dbe129eba2074b6249666840b) - Added: an app can now generate the CSS of only the components it uses. Import `chunks-ui/theme.core.css` in place of `chunks-ui/theme.css`, then `chunks-ui/sources/<component>.css` for each component the app renders, named after its docs page (`chunks-ui/sources/date-picker.css`). `chunks-ui/theme.css` alone works as before and still generates every component's classes.
+
 ## 0.5.2
 
 ### Patch Changes
