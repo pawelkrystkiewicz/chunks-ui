@@ -210,16 +210,6 @@ export function scanProblem(
   }
 }
 
-/**
- * Why `names`, what Tailwind `version` generates for the opt-in input (Button's sources file),
- * cannot be Button's CSS, or undefined.
- */
-export function optInProblem(names: Set<string>, version: string): string | undefined {
-  if (!names.has(KNOWN_CLASS)) {
-    return `Tailwind ${version} did not generate ${KNOWN_CLASS}, a class of chunks-ui's Button, for an app that imports ${THEME_CORE} and ${BUTTON_SOURCES}: on that version, an app that generates only the CSS of the components it uses gets none.`;
-  }
-}
-
 const path = (file: string) => JSON.stringify(file.replaceAll("\\", "/"));
 
 /**
@@ -228,11 +218,6 @@ const path = (file: string) => JSON.stringify(file.replaceAll("\\", "/"));
  */
 function input(list: string): string {
   return `@import "tailwindcss" source(none);\n@import ${path(THEME)};\n@source ${path(list)};\n`;
-}
-
-/** The opt-in input OLDEST compiles: the theme without its scan, and Button's sources file */
-function optInInput(): string {
-  return `@import "tailwindcss" source(none);\n@import ${path(THEME_CORE)};\n@import ${path(BUTTON_SOURCES)};\n`;
 }
 
 function run(cmd: string[], cwd: string) {
@@ -279,11 +264,14 @@ async function compileBoth() {
     const css = input(list);
     const installed = await compileInstalled(css);
     installOldest(dir);
+    // The opt-in for an app that generates the CSS of only the components it uses: the theme
+    // without its scan, and Button's sources file
+    const optIn = `@import "tailwindcss" source(none);\n@import ${path(THEME_CORE)};\n@import ${path(BUTTON_SOURCES)};\n`;
     return {
       utilities,
       installed,
       oldest: await compileOldest(css, dir, "input"),
-      optIn: await compileOldest(optInInput(), dir, "opt-in"),
+      optIn: await compileOldest(optIn, dir, "opt-in"),
     };
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -296,8 +284,12 @@ if (import.meta.main) {
   const problems = [
     scanProblem(classNames(oldest), OLDEST),
     scanProblem(classNames(installed), version, utilities),
-    optInProblem(classNames(optIn), OLDEST),
   ].filter(Boolean);
+  if (!classNames(optIn).has(KNOWN_CLASS)) {
+    problems.push(
+      `Tailwind ${OLDEST} did not generate ${KNOWN_CLASS}, a class of chunks-ui's Button, for an app that imports ${THEME_CORE} and ${BUTTON_SOURCES}: on that version, an app that generates only the CSS of the components it uses gets none.`,
+    );
+  }
   const missing = missingClasses(oldest, installed);
   if (missing.length > 0) {
     problems.push(
