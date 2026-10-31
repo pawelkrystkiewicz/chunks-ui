@@ -41,6 +41,21 @@ Popups render into `document.body`; wrap a subtree in `PortalContainerProvider` 
 
 Add the `touch-target` class to give a small control a 44×44px hit area without changing its size ([Utilities › touch-target](https://ui-kit.chunk-creations.com/utilities#touch-target)).
 
+### Only the components you use
+
+`theme.css` makes Tailwind generate the classes of every component. To generate only the CSS of the components you use, import `theme.core.css` in its place, then one file per component:
+
+```css
+@import "tailwindcss";
+@import "chunks-ui/theme.core.css";
+@import "chunks-ui/sources/button.css";
+@import "chunks-ui/sources/dialog.css";
+```
+
+A file is named after the component's docs page (`/components/date-picker` is `chunks-ui/sources/date-picker.css`), and a component rendered without its file gets no styles, or only the ones it shares with the files you did import, and nothing warns you.
+
+See [Getting Started › Only the components you use](https://ui-kit.chunk-creations.com/getting-started#only-the-components-you-use).
+
 ## Components
 
 See the [component index](https://ui-kit.chunk-creations.com/components) in the docs.

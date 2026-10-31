@@ -64,6 +64,7 @@ export const FULL: Step[] = [
     cwd: "packages/ui",
   },
   { name: "check:treeshake", command: "bun run check:treeshake", cwd: "packages/ui" },
+  { name: "check:css-sources", command: "bun run check:css-sources", cwd: "packages/ui" },
   { name: "check:no-motion", command: "bun run check:no-motion", needs: ["network", "browser"] },
   // Without GITHUB_TOKEN it prints a notice and skips a check CI runs: whether the issue an
   // ALLOWED entry links is closed as completed or as a duplicate. In CI, where GITHUB_ACTIONS is
