@@ -35,7 +35,7 @@
     "generate:llm": "turbo run generate:llm --filter=@chunks-ui/docs"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.6.3",
+    "@biomejs/biome": "^2.6.4",
     "@changesets/changelog-github": "^1.0.1",
     "@changesets/cli": "^3.0.3",
     "@types/bun": "^1.4.4",
