@@ -344,3 +344,37 @@ describe("Tabs.Contents with Motion, when fill toggles", () => {
     expect(contents.style.height).toBe("2000px");
   });
 });
+
+describe("Tabs.Contents with Motion, when fill turns off on another tab", () => {
+  // Panels of different heights. The height measured for A before fill must not outlive fill:
+  // after B becomes active under fill and fill turns off, the container must jump to B's height.
+  const unevenPanels = ({ value, fill }: { value: "a" | "b"; fill: boolean }) => (
+    <Tabs.Root value={value}>
+      <Tabs.Contents fill={fill} data-testid="contents" className="h-64">
+        <Tabs.Content value="a" className="h-full overflow-y-auto">
+          <div style={{ height: 2000 }}>Panel a</div>
+        </Tabs.Content>
+        <Tabs.Content value="b" className="h-full overflow-y-auto">
+          <div style={{ height: 1200 }}>Panel b</div>
+        </Tabs.Content>
+      </Tabs.Contents>
+    </Tabs.Root>
+  );
+
+  it("jumps to the new active panel's height, with no spring through the old one", async () => {
+    await enterMotionPath(true);
+    const { getByTestId, rerender } = render(unevenPanels({ value: "a", fill: false }));
+    const contents = getByTestId("contents");
+    await expect.poll(() => contents.style.height).toBe("2000px");
+
+    rerender(unevenPanels({ value: "a", fill: true }));
+    await waitForStable(() => heightOf(contents));
+    rerender(unevenPanels({ value: "b", fill: true }));
+    await waitForStable(() => heightOf(contents));
+    expect(heightOf(contents)).toBe(256);
+
+    rerender(unevenPanels({ value: "b", fill: false }));
+    const frames = await eachPaintedFrame(() => heightOf(contents), 20);
+    expect(frames).toEqual(frames.map(() => 1200));
+  });
+});
