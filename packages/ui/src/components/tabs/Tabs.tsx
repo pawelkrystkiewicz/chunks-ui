@@ -512,15 +512,12 @@ function TabsContents({
       {...props}
     >
       {/* items-start: each panel keeps its own height, so the container can follow the active one.
+          With fill the panels' h-full takes the track's height, whatever the alignment.
           -mx-1 with the panels' px-1 puts 8px between panels and keeps each panel's content where
-          the container is, so the clip margin shows none of the panels beside it.
-          With fill the track and the panels take the container's height instead. */}
+          the container is, so the clip margin shows none of the panels beside it. */}
       <div
         ref={trackRef}
-        className={
-          cn(motion && "-mx-1 flex", motion && !fill && "items-start", fill && "h-full") ||
-          undefined
-        }
+        className={cn(motion && "-mx-1 flex items-start", fill && "h-full") || undefined}
       >
         {childrenArray.map((child, i) => (
           <div
