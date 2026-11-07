@@ -1,9 +1,10 @@
 import { render } from "@testing-library/react";
 import { StrictMode } from "react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import {
   eachPaintedFrame,
+  emulateReducedMotion,
   enterMotionPath,
   MOTION_PATHS,
   waitForStable,
@@ -221,5 +222,125 @@ describe("Tabs.Contents layout", () => {
       Motion: { offset: 24, height: 52 },
       "CSS fallback": { offset: 24, height: 52 },
     });
+  });
+});
+
+type FillOptions = { value?: "a" | "b"; fill?: boolean; layout?: "column" | "fixed" };
+
+/**
+ * Two panels of tall content that scroll in their own box. "column": a 384px flex column with a
+ * 48px header above Tabs.Root, and Tabs.Contents takes the rest. "fixed": Tabs.Contents is h-64.
+ */
+const scrollingPanels = ({ value = "a", fill = true, layout = "column" }: FillOptions = {}) => {
+  const contents = (
+    <Tabs.Contents
+      fill={fill}
+      data-testid="contents"
+      className={layout === "column" ? "min-h-0 flex-1" : "h-64"}
+    >
+      {(["a", "b"] as const).map((v) => (
+        <Tabs.Content key={v} value={v} data-testid={v} className="h-full overflow-y-auto">
+          <div style={{ height: 2000 }}>Panel {v}</div>
+        </Tabs.Content>
+      ))}
+    </Tabs.Contents>
+  );
+  return layout === "column" ? (
+    <div data-testid="box" className="flex h-96 flex-col">
+      <div className="h-12 shrink-0">Header</div>
+      <Tabs.Root value={value} className="flex min-h-0 flex-1 flex-col">
+        {contents}
+      </Tabs.Root>
+    </div>
+  ) : (
+    <Tabs.Root value={value}>{contents}</Tabs.Root>
+  );
+};
+
+/** Scrolls the panel down and reads back how far it went */
+function scrolledBy(panel: HTMLElement) {
+  panel.scrollTop = 500;
+  return panel.scrollTop;
+}
+
+const heightOf = (el: Element) => Math.round(el.getBoundingClientRect().height);
+
+const FILL_PATHS = [
+  ...MOTION_PATHS.map(({ path, withMotion }) => ({ path, withMotion, reduce: false })),
+  { path: "reduced motion", withMotion: true, reduce: true },
+] as const;
+
+describe.each(FILL_PATHS)("Tabs.Contents with fill, $path", ({ withMotion, reduce }) => {
+  afterEach(() => emulateReducedMotion(false));
+  const enter = async () => {
+    await enterMotionPath(withMotion);
+    await emulateReducedMotion(reduce);
+  };
+
+  // The header takes 48px of the 384px column; the active panel gets the other 336px and scrolls
+  // its 2000px of content
+  it("gives the active panel the rest of a flex column, and lets it scroll", async () => {
+    await enter();
+    const { getByTestId } = render(scrollingPanels());
+    const contents = getByTestId("contents");
+    const panel = getByTestId("a");
+    await waitForStable(() => [heightOf(contents), heightOf(panel)]);
+    expect(contents.style.height).toBe("");
+    expect([heightOf(contents), heightOf(panel)]).toEqual([336, 336]);
+    expect(panel.scrollHeight).toBe(2000);
+    expect(scrolledBy(panel)).toBeGreaterThan(0);
+    expect(getByTestId("box").getBoundingClientRect().bottom).toBe(
+      contents.getBoundingClientRect().bottom,
+    );
+  });
+
+  // The case a class alone could not serve: Motion's inline height beat h-64
+  it("gives the active panel the height of a fixed h-* class, and lets it scroll", async () => {
+    await enter();
+    const { getByTestId } = render(scrollingPanels({ layout: "fixed" }));
+    const contents = getByTestId("contents");
+    const panel = getByTestId("a");
+    await waitForStable(() => [heightOf(contents), heightOf(panel)]);
+    expect(contents.style.height).toBe("");
+    expect([heightOf(contents), heightOf(panel)]).toEqual([256, 256]);
+    expect(scrolledBy(panel)).toBeGreaterThan(0);
+  });
+
+  it("keeps its height, with no inline height, when the tab changes", async () => {
+    await enter();
+    const { getByTestId, rerender } = render(scrollingPanels());
+    const contents = getByTestId("contents");
+    await waitForStable(() => heightOf(contents));
+    rerender(scrollingPanels({ value: "b" }));
+    const frames = await eachPaintedFrame(
+      () => ({ inline: contents.style.height, height: heightOf(contents) }),
+      20,
+    );
+    expect(frames).toEqual(frames.map(() => ({ inline: "", height: 336 })));
+    await waitForStable(() => heightOf(getByTestId("b")));
+    expect(heightOf(getByTestId("b"))).toBe(336);
+    expect(scrolledBy(getByTestId("b"))).toBeGreaterThan(0);
+  });
+});
+
+describe("Tabs.Contents with Motion, when fill toggles", () => {
+  it("clears its inline height for fill, and measures again without it, from the first frame", async () => {
+    await enterMotionPath(true);
+    const { getByTestId, rerender } = render(scrollingPanels({ fill: false, layout: "fixed" }));
+    const contents = getByTestId("contents");
+    // Without fill the panel has no definite height: Motion sets the 2000px of its content inline
+    await expect.poll(() => contents.style.height).toBe("2000px");
+
+    rerender(scrollingPanels({ fill: true, layout: "fixed" }));
+    expect(contents.style.height).toBe("");
+    await waitForStable(() => heightOf(contents));
+    expect(contents.style.height).toBe("");
+    expect(heightOf(getByTestId("a"))).toBe(256);
+
+    // Turned off, it jumps to the measured height, as on mount: no spring up from 256px
+    rerender(scrollingPanels({ fill: false, layout: "fixed" }));
+    const frames = await eachPaintedFrame(() => heightOf(contents), 20);
+    expect(frames).toEqual(frames.map(() => 2000));
+    expect(contents.style.height).toBe("2000px");
   });
 });
