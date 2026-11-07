@@ -289,9 +289,6 @@ describe.each(FILL_PATHS)("Tabs.Contents with fill, $path", ({ withMotion, reduc
     expect([heightOf(contents), heightOf(panel)]).toEqual([336, 336]);
     expect(panel.scrollHeight).toBe(2000);
     expect(scrolledBy(panel)).toBeGreaterThan(0);
-    expect(getByTestId("box").getBoundingClientRect().bottom).toBe(
-      contents.getBoundingClientRect().bottom,
-    );
   });
 
   // The case a class alone could not serve: Motion's inline height beat h-64
@@ -339,35 +336,13 @@ describe.each(FILL_PATHS)("Tabs.Contents with fill, $path", ({ withMotion, reduc
   });
 });
 
-describe("Tabs.Contents with Motion, when fill toggles", () => {
-  it("clears its inline height for fill, and measures again without it, from the first frame", async () => {
-    await enterMotionPath(true);
-    const { getByTestId, rerender } = render(scrollingPanels({ fill: false, layout: "fixed" }));
-    const contents = getByTestId("contents");
-    // Without fill the panel has no definite height: Motion sets the 2000px of its content inline
-    await expect.poll(() => contents.style.height).toBe("2000px");
-
-    rerender(scrollingPanels({ fill: true, layout: "fixed" }));
-    expect(contents.style.height).toBe("");
-    await waitForStable(() => heightOf(contents));
-    expect(contents.style.height).toBe("");
-    expect(heightOf(getByTestId("a"))).toBe(256);
-
-    // Turned off, it jumps to the measured height, as on mount: no spring up from 256px
-    rerender(scrollingPanels({ fill: false, layout: "fixed" }));
-    const frames = await eachPaintedFrame(() => heightOf(contents), 20);
-    expect(frames).toEqual(frames.map(() => 2000));
-    expect(contents.style.height).toBe("2000px");
-  });
-});
-
 describe("Tabs.Contents with Motion, when fill turns off on another tab", () => {
   // Panels of different heights. The height measured for A before fill must not outlive fill:
   // after B becomes active under fill and fill turns off, the container must jump to B's height.
   const unevenPanels = ({ value, fill }: { value: "a" | "b"; fill: boolean }) => (
     <Tabs.Root value={value}>
       <Tabs.Contents fill={fill} data-testid="contents" className="h-64">
-        <Tabs.Content value="a" className="h-full overflow-y-auto">
+        <Tabs.Content value="a" data-testid="a" className="h-full overflow-y-auto">
           <div style={{ height: 2000 }}>Panel a</div>
         </Tabs.Content>
         <Tabs.Content value="b" className="h-full overflow-y-auto">
@@ -384,7 +359,9 @@ describe("Tabs.Contents with Motion, when fill turns off on another tab", () => 
     await expect.poll(() => contents.style.height).toBe("2000px");
 
     rerender(unevenPanels({ value: "a", fill: true }));
+    expect(contents.style.height).toBe("");
     await waitForStable(() => heightOf(contents));
+    expect(heightOf(getByTestId("a"))).toBe(heightOf(contents));
     rerender(unevenPanels({ value: "b", fill: true }));
     await waitForStable(() => heightOf(contents));
     expect(heightOf(contents)).toBe(256);

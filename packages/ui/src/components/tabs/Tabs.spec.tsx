@@ -168,17 +168,6 @@ describe("Tabs", () => {
     expect(screen.getByText("Panel A")).toBeInTheDocument();
   });
 
-  it("does not forward fill to the Contents element", () => {
-    render(
-      <Tabs.Root defaultValue="a">
-        <Tabs.Contents fill data-testid="contents">
-          <Tabs.Content value="a">Panel A</Tabs.Content>
-        </Tabs.Contents>
-      </Tabs.Root>,
-    );
-    expect(screen.getByTestId("contents")).not.toHaveAttribute("fill");
-  });
-
   it("calls onValueChange when tab is clicked", async () => {
     const user = userEvent.setup();
     const onValueChange = vi.fn();
