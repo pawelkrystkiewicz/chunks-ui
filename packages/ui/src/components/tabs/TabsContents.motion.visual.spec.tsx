@@ -321,6 +321,22 @@ describe.each(FILL_PATHS)("Tabs.Contents with fill, $path", ({ withMotion, reduc
     expect(heightOf(getByTestId("b"))).toBe(336);
     expect(scrolledBy(getByTestId("b"))).toBeGreaterThan(0);
   });
+
+  // Without Motion an inactive panel is display: none, which can reset a scroll position
+  it("keeps a panel's scroll position when you switch away and back", async () => {
+    await enter();
+    const { getByTestId, rerender } = render(scrollingPanels());
+    const a = getByTestId("a");
+    await waitForStable(() => heightOf(a));
+    expect(scrolledBy(a)).toBe(500);
+    rerender(scrollingPanels({ value: "b" }));
+    await waitForStable(() => heightOf(getByTestId("b")));
+    // On the CSS paths the panel is really hidden while away, so the guard means something
+    if (!withMotion || reduce) expect(a.checkVisibility()).toBe(false);
+    rerender(scrollingPanels({ value: "a" }));
+    await waitForStable(() => [heightOf(a), a.scrollTop]);
+    expect(a.scrollTop).toBe(500);
+  });
 });
 
 describe("Tabs.Contents with Motion, when fill toggles", () => {
