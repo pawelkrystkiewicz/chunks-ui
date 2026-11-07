@@ -1,5 +1,11 @@
 # chunks-ui
 
+## 0.7.0
+
+### Minor Changes
+
+- [#849](https://github.com/pawelkrystkiewicz/chunks-ui/pull/849) [`76c9aa4`](https://github.com/pawelkrystkiewicz/chunks-ui/commit/76c9aa4b0231c862193d115347b12234bc61194c) - Added: a `fill` prop on `Tabs.Contents`, so a `Tabs.Content` with `h-full overflow-y-auto` scrolls inside a `Tabs.Contents` of a set height (`h-*`, or `min-h-0 flex-1` in a flex column). With `fill`, `Tabs.Contents` keeps that height instead of animating to the active panel's, and the panels still slide with Motion.
+
 ## 0.6.0
 
 ### Minor Changes
