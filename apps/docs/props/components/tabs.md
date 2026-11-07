@@ -8,6 +8,7 @@
 | --- | --- | --- | --- |
 | `children` | `ReactNode` | required | The `<Tabs.Content>` elements to animate between. |
 | `transition` | `MotionOptions` | `springs.content` | Custom spring transition config passed to Motion. |
+| `fill` | `boolean` | `false` | Makes the panels as tall as `Tabs.Contents`, so a panel with `h-full overflow-y-auto` scrolls inside it. Give `Tabs.Contents` a definite height (`h-*`, or `min-h-0 flex-1` in a flex column); it then keeps that height and does not animate it. |
 
 ## Tabs.Content Props
 

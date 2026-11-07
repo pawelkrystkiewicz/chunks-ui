@@ -3,6 +3,7 @@ import {
   TabsBasicExample,
   TabsDirectionExample,
   TabsDisabledExample,
+  TabsFillExample,
   TabsHookExample,
   TabsUnderlineExample,
   TabsVerticalExample,
@@ -50,6 +51,41 @@ import { Tabs } from "chunks-ui";
 Each `Tabs.Content` is a Base UI `Tabs.Panel` that stays mounted. It has `role="tabpanel"`, its tab names it, and the tab's `aria-controls` points to it. The active panel is in the tab order, as `Tabs.Panel` is, and shows a focus ring inside its edge. Outside `Tabs.Contents`, every `Tabs.Content` shows, and the inactive ones are inert; for plain panels that show and hide, use `Tabs.Panel`.
 
 With Motion, `Tabs.Contents` clips the panels beside the active one. The clip leaves 4px of room around the content (`overflow-clip-margin`), so a focus ring of up to 4px outside an element at the edge shows in full. That room counts as overflow too: when `Tabs.Contents` sits flush against the edge of a scroll container, the container can scroll 4px further, which can show a scrollbar or let a touch screen pan sideways. Give that scroll container at least 4px of padding, or give the content an inset focus ring. Safari does not support `overflow-clip-margin`, so it adds no overflow there, but it clips a ring at the edge; the same padding or inset ring helps. Without Motion, or with reduced motion, nothing is clipped.
+
+## Scrolling panels
+
+By default `Tabs.Contents` takes the height of the active panel, and with Motion it animates that height. A panel with `h-full overflow-y-auto` then has nothing to fill, so it never scrolls: with Motion it is clipped, without Motion it spills out.
+
+To scroll a panel inside a box of a set height, set `fill` on `Tabs.Contents`. The panels then take its height, and it no longer sets or animates a height of its own. Every element down to the panel needs a definite height:
+
+- Give `Tabs.Contents` a height: a class such as `h-64`, or `min-h-0 flex-1` in a flex column.
+- In a flex column, each flex item on the way down needs `min-h-0`. A flex item does not shrink below its content by default, so without it the box grows to the panel's full content.
+- Give each `Tabs.Content` `h-full overflow-y-auto` (or `max-h-full overflow-y-auto`).
+
+```tsx
+<div className="flex h-96 flex-col">
+  <header>Inbox</header>
+  <Tabs.Root defaultValue="all" className="flex min-h-0 flex-1 flex-col">
+    <Tabs.List>
+      <Tabs.Tab value="all">All</Tabs.Tab>
+      <Tabs.Tab value="unread">Unread</Tabs.Tab>
+      <Tabs.Indicator />
+    </Tabs.List>
+    <Tabs.Contents fill className="min-h-0 flex-1">
+      <Tabs.Content value="all" className="h-full overflow-y-auto">
+        {/* long content */}
+      </Tabs.Content>
+      <Tabs.Content value="unread" className="h-full overflow-y-auto">
+        {/* long content */}
+      </Tabs.Content>
+    </Tabs.Contents>
+  </Tabs.Root>
+</div>
+```
+
+<TabsFillExample />
+
+With `fill`, the panels still slide with Motion. Only the height stays fixed.
 
 ## Controlled
 
@@ -325,7 +361,7 @@ function DirectionAwarePanel({
   definition={generateDefinition({
     code: `
 import type { TabsContentsProps } from 'chunks-ui'
-type Props = Pick<TabsContentsProps, 'children' | 'transition'>
+type Props = Pick<TabsContentsProps, 'children' | 'transition' | 'fill'>
 export default Props
 `
   })}
