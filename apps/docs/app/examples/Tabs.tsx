@@ -31,6 +31,37 @@ export function TabsBasicExample() {
   );
 }
 
+export function TabsFillExample() {
+  const rows = (label: string) =>
+    Array.from({ length: 30 }, (_, i) => `${label} ${i + 1}`).map((row) => (
+      <p key={row} className="border-border border-b px-4 py-2">
+        {row}
+      </p>
+    ));
+  return (
+    <Container>
+      <div className="flex h-96 flex-col rounded-md border border-border">
+        <header className="border-border border-b px-4 py-3 font-medium">Inbox</header>
+        <Tabs.Root defaultValue="all" className="flex min-h-0 flex-1 flex-col">
+          <Tabs.List className="m-2">
+            <Tabs.Tab value="all">All</Tabs.Tab>
+            <Tabs.Tab value="unread">Unread</Tabs.Tab>
+            <Tabs.Indicator />
+          </Tabs.List>
+          <Tabs.Contents fill className="min-h-0 flex-1">
+            <Tabs.Content value="all" className="h-full overflow-y-auto">
+              {rows("Message")}
+            </Tabs.Content>
+            <Tabs.Content value="unread" className="h-full overflow-y-auto">
+              {rows("Unread message")}
+            </Tabs.Content>
+          </Tabs.Contents>
+        </Tabs.Root>
+      </div>
+    </Container>
+  );
+}
+
 export function TabsVerticalExample() {
   return (
     <Container>

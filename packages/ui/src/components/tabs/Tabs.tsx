@@ -54,6 +54,12 @@ export type TabsContentsProps = Omit<ComponentProps<"div">, "children"> & {
    * @default springs.content
    */
   transition?: MotionTransition;
+  /** Makes the panels as tall as `Tabs.Contents`, so a panel with `h-full overflow-y-auto` scrolls
+   * inside it. Give `Tabs.Contents` a definite height (`h-*`, or `min-h-0 flex-1` in a flex
+   * column); it then keeps that height and does not animate it.
+   * @default false
+   */
+  fill?: boolean;
 };
 
 export type TabsContentProps = Omit<TabsPanelProps, "keepMounted" | "hidden">;
@@ -341,7 +347,14 @@ function keyOf(value: unknown): string {
 // Animated content container  –  slides between panels + animates height
 // ---------------------------------------------------------------------------
 
-function TabsContents({ className, children, transition, ref, ...props }: TabsContentsProps) {
+function TabsContents({
+  className,
+  children,
+  transition,
+  fill = false,
+  ref,
+  ...props
+}: TabsContentsProps) {
   const m = useMotion();
   const reduced = useReducedMotion();
   // Motion drives the plain elements below instead of replacing them with motion.div, so its
@@ -370,6 +383,12 @@ function TabsContents({ className, children, transition, ref, ...props }: TabsCo
   }, []);
 
   useEffect(() => {
+    // With fill the layout sets the height. "auto" makes the layout effect below measure again
+    // before paint when fill turns off, so the resize jumps to the panel's height
+    if (fill) {
+      setHeight("auto");
+      return;
+    }
     const pane = itemRefs.current[safeIndex];
     if (!pane) return;
     setHeight(measure(safeIndex));
@@ -384,15 +403,15 @@ function TabsContents({ className, children, transition, ref, ...props }: TabsCo
       // A re-measure queued for the previous panel would set its height after a switch
       cancelAnimationFrame(frame);
     };
-  }, [safeIndex, measure]);
+  }, [fill, safeIndex, measure]);
 
   // Set initial height before paint
   useLayoutEffect(() => {
-    if (height === "auto") {
+    if (!fill && height === "auto") {
       const h = measure(safeIndex);
       if (h > 0) setHeight(h);
     }
-  }, [safeIndex, height, measure]);
+  }, [fill, safeIndex, height, measure]);
 
   // --- Motion-powered slide + height ---
   const springTransition = transition ?? springs.content;
@@ -439,7 +458,8 @@ function TabsContents({ className, children, transition, ref, ...props }: TabsCo
   useLayoutEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-    if (!motion) {
+    // With fill the container keeps the height its class or the layout gives it
+    if (!motion || fill) {
       if (resize.current) {
         resize.current.stop();
         resize.current = null;
@@ -460,7 +480,7 @@ function TabsContents({ className, children, transition, ref, ...props }: TabsCo
     );
     // As for the slide: a height the CSS fallback removed comes back
     if (jump) renderNow(motion, container);
-  }, [m, motion, height]);
+  }, [m, motion, height, fill]);
 
   // Stop on unmount, or Motion keeps writing to the detached elements until it settles.
   // StrictMode and <Activity> run the effects above again after this cleanup, so forget the
@@ -492,16 +512,20 @@ function TabsContents({ className, children, transition, ref, ...props }: TabsCo
       {...props}
     >
       {/* items-start: each panel keeps its own height, so the container can follow the active one.
+          With fill the panels' h-full takes the track's height, whatever the alignment.
           -mx-1 with the panels' px-1 puts 8px between panels and keeps each panel's content where
           the container is, so the clip margin shows none of the panels beside it. */}
-      <div ref={trackRef} className={motion ? "-mx-1 flex items-start" : undefined}>
+      <div
+        ref={trackRef}
+        className={cn(motion && "-mx-1 flex items-start", fill && "h-full") || undefined}
+      >
         {childrenArray.map((child, i) => (
           <div
             key={childValue(child) == null ? `index:${i}` : keyOf(childValue(child))}
             ref={(el) => {
               itemRefs.current[i] = el;
             }}
-            className={motion ? "w-full shrink-0 px-1" : undefined}
+            className={cn(motion && "w-full shrink-0 px-1", fill && "h-full") || undefined}
             style={!motion && i !== safeIndex ? { display: "none" } : undefined}
             inert={motion && i !== safeIndex ? true : undefined}
           >
