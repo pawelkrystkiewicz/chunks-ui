@@ -54,9 +54,9 @@ With Motion, `Tabs.Contents` clips the panels beside the active one. The clip le
 
 ## Scrolling panels
 
-By default `Tabs.Contents` takes the height of the active panel, and with Motion it animates that height. A panel with `h-full overflow-y-auto` then has nothing to fill, so it never scrolls: with Motion it is clipped, without Motion it spills out.
+By default `Tabs.Contents` takes the height of the active panel, and with Motion it animates that height. A panel with `h-full overflow-y-auto` then has nothing to fill, so it never scrolls: with Motion, a height class on `Tabs.Contents` loses to the inline height, so it grows to the panel's full content; in a flex column it is clipped instead. Without Motion it spills out.
 
-To scroll a panel inside a box of a set height, set `fill` on `Tabs.Contents`. The panels then take its height, and it no longer sets or animates a height of its own. Every element down to the panel needs a definite height:
+To scroll a panel inside a box of a set height, set `fill` on `Tabs.Contents`. The panels then take its height, and it no longer sets or animates a height of its own. Every element down to the panel needs a definite height. Without one on `Tabs.Contents`, it becomes as tall as its tallest panel with Motion, and as tall as the active panel without Motion, and nothing scrolls:
 
 - Give `Tabs.Contents` a height: a class such as `h-64`, or `min-h-0 flex-1` in a flex column.
 - In a flex column, each flex item on the way down needs `min-h-0`. A flex item does not shrink below its content by default, so without it the box grows to the panel's full content.
