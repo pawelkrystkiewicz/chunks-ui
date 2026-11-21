@@ -40,6 +40,12 @@
   ignoreDeps: [],
   packageRules: [
     {
+      description: "7 days for npm, as bunfig.toml; security:minimumReleaseAgeNpm sets 3. Only the update types it gates: its later rules opt out the ones without a release timestamp.",
+      matchDatasources: ["npm"],
+      matchUpdateTypes: ["major", "minor", "patch", "digest"],
+      minimumReleaseAge: "7 days",
+    },
+    {
       // Peer floors are a compatibility decision, not a freshness one: Renovate narrowed them
       // twice (motion ^12.0.0 -> ^12.43.0, react ^19.2 -> ^19.3). Bump them by hand with a changeset.
       matchDepTypes: ["peerDependencies"],
@@ -96,7 +102,7 @@
     },
     {
       matchUpdateTypes: ["major"],
-      minimumReleaseAge: "3 days",
+      minimumReleaseAge: "7 days",
       dependencyDashboardApproval: true,
       automerge: false,
       prPriority: -1,
