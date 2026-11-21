@@ -111,8 +111,8 @@ jobs:
         run: bun scripts/design-system/build.ts
 
       # check-types builds chunks-ui, so the build here is a turbo cache hit. The Tailwind 4.0
-      # install is pinned by scripts/tailwind-4.0 (frozen lockfile); bun.lock stays as it is
-      - name: Check Tailwind 4.0 generates every class
+      # install is pinned by scripts/tailwind-oldest (frozen lockfile); bun.lock stays as it is
+      - name: Check the oldest Tailwind generates every class
         run: bun run check:tailwind
 
       - name: Prune old Turbo cache entries

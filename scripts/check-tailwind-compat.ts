@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 /**
  * Compiles the built package (packages/ui/dist/theme.css and the component code its `@source "./"`
- * scans, as consumers get them) with the oldest Tailwind v4 and with the installed one. Fails when
+ * scans, as consumers get them) with the oldest supported Tailwind and with the installed one. Fails when
  * the oldest does not generate a class the installed one does: a consumer on that version would
  * get no CSS for it, and no error.
  *
@@ -19,7 +19,7 @@
  *
  * The installed version compiles in this process, with the `@tailwindcss/node` and
  * `@tailwindcss/oxide` from bun.lock. The oldest compiles with the CLI installed from the
- * committed fixture in scripts/tailwind-4.0 (`bun install --frozen-lockfile` in a throwaway
+ * committed fixture in scripts/tailwind-oldest (`bun install --frozen-lockfile` in a throwaway
  * directory), so every transitive dependency is pinned too. The fixture files are not named
  * package.json and bun.lock so that Renovate does not bump them. Needs the network to install, and
  * node for the Tailwind CLI.
@@ -30,9 +30,9 @@ import { cpSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
-const OLDEST = "4.0.0";
+const OLDEST = "4.3.1";
 const UI = join(import.meta.dirname, "../packages/ui");
-const FIXTURE = join(import.meta.dirname, "tailwind-4.0");
+const FIXTURE = join(import.meta.dirname, "tailwind-oldest");
 const THEME = join(UI, "dist/theme.css");
 const THEME_CORE = join(UI, "dist/theme.core.css");
 const BUTTON_SOURCES = join(UI, "dist/sources/button.css");
@@ -69,7 +69,7 @@ const CLASSNAME_SIZES = ["text-lg", "md:text-lg", "lg:text-lg", "[@media(pointer
  * - `[@media(pointer:coarse)]:text-lg`: the same arbitrary variant, and `md:` on top.
  * ponytail: left out: a later arbitrary or compound variant (`lg:[@media(pointer:coarse)]:text-sm`,
  * `[@supports(display:grid)]:text-sm`), which no pair can rule out; `max-md:text-base`, which does
- * not apply from `md` up; `pointer-coarse:text-lg`, which 4.0 does not generate
+ * not apply from `md` up; `pointer-coarse:text-lg`, which no pair covers
  * (FieldTextSize.touch.visual.spec.tsx covers it); a `md:[@media(pointer:coarse)]:` size, which
  * tailwind-merge keeps in place of TOUCH_SIZE; sizes under other named variants (`sm:`, `xl:`,
  * `max-lg:`, `dark:`), which sort before an arbitrary variant as `lg:` does.
