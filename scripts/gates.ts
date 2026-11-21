@@ -101,7 +101,7 @@ export const CI_ONLY: CiOnly[] = [
 
 const NEEDS: Record<Need, string> = {
   network: "the network",
-  node: "node on PATH (the Tailwind 4.0 CLI runs on it)",
+  node: "node on PATH (the oldest supported Tailwind CLI runs on it)",
   browser: "Chromium for Playwright (bunx playwright install chromium)",
   token: "a GitHub token (GITHUB_TOKEN=$(gh auth token))",
   "origin/master": "an up-to-date origin/master (git fetch origin) and the work committed",

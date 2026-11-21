@@ -69,7 +69,7 @@ const CLASSNAME_SIZES = ["text-lg", "md:text-lg", "lg:text-lg", "[@media(pointer
  * - `[@media(pointer:coarse)]:text-lg`: the same arbitrary variant, and `md:` on top.
  * ponytail: left out: a later arbitrary or compound variant (`lg:[@media(pointer:coarse)]:text-sm`,
  * `[@supports(display:grid)]:text-sm`), which no pair can rule out; `max-md:text-base`, which does
- * not apply from `md` up; `pointer-coarse:text-lg`, which no pair covers
+ * not apply from `md` up; `pointer-coarse:text-lg`
  * (FieldTextSize.touch.visual.spec.tsx covers it); a `md:[@media(pointer:coarse)]:` size, which
  * tailwind-merge keeps in place of TOUCH_SIZE; sizes under other named variants (`sm:`, `xl:`,
  * `max-lg:`, `dark:`), which sort before an arbitrary variant as `lg:` does.

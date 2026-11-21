@@ -226,11 +226,11 @@ describe("checkCssSources", () => {
       FIXTURES,
       MARKERS,
     );
-    expect(failures).toHaveLength(3);
-    expect(failures).toContain(
+    expect(failures).toEqual([
       'button: has dialog\'s class "grid", which it does not import: a sources file lists a file of another component, or theme.core.css lacks its `@source not` line, so Tailwind scans the rest of dist/',
-    );
-    expect(failures.every((failure) => failure.includes("which it does not import"))).toBe(true);
+      'button: has toast\'s class "hidden", which it does not import: a sources file lists a file of another component, or theme.core.css lacks its `@source not` line, so Tailwind scans the rest of dist/',
+      'button + dialog: has toast\'s class "hidden", which it does not import: a sources file lists a file of another component, or theme.core.css lacks its `@source not` line, so Tailwind scans the rest of dist/',
+    ]);
   });
 
   it("fails a marker that the default setup lacks, so a stale marker cannot pass", async () => {
