@@ -135,7 +135,7 @@ const PACKAGE = {
 const HEADER = "/* generated */\n";
 const DIST: Record<string, string> = {
   "theme.css": '@source "./";\n',
-  "theme.core.css": ":root { --x: 1px; }\n",
+  "theme.core.css": '@source not "./";\n:root { --x: 1px; }\n',
   "button.js": 'import "./utils.js";\nexport const Button = "flex";\n',
   "dialog.js": 'import "./chunk-A.js";\nexport const Dialog = "grid";\n',
   "toast.js": 'import "./chunk-A.js";\nexport const Toast = "hidden";\n',
@@ -214,9 +214,23 @@ describe("checkCssSources", () => {
     const failures = await checkCssSources(pkg(dist), FOLDERS, FIXTURES, MARKERS);
     expect(failures).toEqual([
       "sources/button.css lists toast.js, which dist/button.js does not load: the build's import walk (scripts/css-sources.ts) followed a file that is no import of it, or dist/ is stale (run `bun run build`)",
-      'button: has toast\'s class "hidden", which it does not import: a sources file lists a file of another component, or theme.core.css still scans dist/',
-      'button + dialog: has toast\'s class "hidden", which it does not import: a sources file lists a file of another component, or theme.core.css still scans dist/',
+      'button: has toast\'s class "hidden", which it does not import: a sources file lists a file of another component, or theme.core.css lacks its `@source not` line, so Tailwind scans the rest of dist/',
+      'button + dialog: has toast\'s class "hidden", which it does not import: a sources file lists a file of another component, or theme.core.css lacks its `@source not` line, so Tailwind scans the rest of dist/',
     ]);
+  });
+
+  it("fails when theme.core.css lacks its @source not line, as every sources file then pulls in dist/", async () => {
+    const failures = await checkCssSources(
+      pkg({ "theme.core.css": ":root { --x: 1px; }\n" }),
+      FOLDERS,
+      FIXTURES,
+      MARKERS,
+    );
+    expect(failures).toHaveLength(3);
+    expect(failures).toContain(
+      'button: has dialog\'s class "grid", which it does not import: a sources file lists a file of another component, or theme.core.css lacks its `@source not` line, so Tailwind scans the rest of dist/',
+    );
+    expect(failures.every((failure) => failure.includes("which it does not import"))).toBe(true);
   });
 
   it("fails a marker that the default setup lacks, so a stale marker cannot pass", async () => {

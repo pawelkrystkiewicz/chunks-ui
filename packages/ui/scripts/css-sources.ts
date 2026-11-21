@@ -55,8 +55,8 @@ export function sourcesCss(name: string, files: string[]): string {
   return `/* Generated: the files that hold the classes of ${name}. */\n${lines.join("\n")}\n`;
 }
 
-const HEADER =
-  "/* Generated: theme.css without its component scan. Import chunks-ui/sources/<component>.css per component. */";
+const NOT_SOURCE = '@source not "./";';
+const HEADER = `/* Generated: theme.css without its component scan. The line below keeps Tailwind from scanning the rest of this package: import it before every chunks-ui/sources/<component>.css. */\n${NOT_SOURCE}`;
 
 export function themeCore(theme: string): string {
   const count = theme.split(SOURCE).length - 1;
@@ -67,9 +67,9 @@ export function themeCore(theme: string): string {
   }
   // Also drops the comment right above the line
   const core = theme.replace(/(?:\/\*(?:(?!\*\/)[\s\S])*\*\/\s*)?@source "\.\/";/, HEADER);
-  if (/@source\b/.test(core.replace(COMMENTS, ""))) {
+  if (/@source\b/.test(core.replace(COMMENTS, "").replace(NOT_SOURCE, ""))) {
     throw new Error(
-      "theme.core.css still has an @source (an `@source inline(...)` counts too): src/theme.css gained another one. theme.core.css must scan nothing, and scripts/css-sources.ts decides what it keeps: update it there",
+      `theme.core.css still has an @source besides \`${NOT_SOURCE}\` (an \`@source inline(...)\` counts too): src/theme.css gained another one. theme.core.css must scan nothing, and scripts/css-sources.ts decides what it keeps: update it there`,
     );
   }
   return core;

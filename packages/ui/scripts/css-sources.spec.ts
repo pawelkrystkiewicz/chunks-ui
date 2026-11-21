@@ -134,13 +134,14 @@ const THEME = [
 ].join("\n");
 
 describe("themeCore", () => {
-  it("swaps the @source and the comment above it for the generated header", () => {
+  it("swaps the @source and the comment above it for the generated header and an @source not", () => {
     const core = themeCore(THEME);
     expect(core).toStartWith("/* Generated: theme.css without its component scan.");
-    expect(core).not.toContain("@source");
+    expect(core.match(/@source/g)).toHaveLength(1);
+    expect(core).toContain('*/\n@source not "./";\n');
     expect(core).not.toContain("Tailwind skips node_modules");
     expect(core).toEndWith(
-      "*/\n\n/* Semantic colors */\n:root {\n  --primary: oklch(0.56 0.2165 257.21);\n}\n",
+      '@source not "./";\n\n/* Semantic colors */\n:root {\n  --primary: oklch(0.56 0.2165 257.21);\n}\n',
     );
   });
 
@@ -157,6 +158,7 @@ describe("themeCore", () => {
     expect(() => themeCore(`${THEME}@source inline("flex");\n`)).toThrow(
       /theme\.core\.css still has an @source.*scripts\/css-sources\.ts decides what it keeps/,
     );
+    expect(() => themeCore(`${THEME}@source not "../other";\n`)).toThrow(/still has an @source/);
   });
 });
 

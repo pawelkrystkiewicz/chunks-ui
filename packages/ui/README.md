@@ -58,6 +58,8 @@ Add the `touch-target` class to give a small control a 44×44px hit area without
 @import "chunks-ui/sources/dialog.css";
 ```
 
+Import `theme.core.css` before every `sources/*.css` file. In the other order the components get no classes, and nothing warns you.
+
 A file is named after the component's docs page (`/components/date-picker` is `chunks-ui/sources/date-picker.css`), and a component rendered without its file gets no styles, or only the ones it shares with the files you did import, and nothing warns you.
 
 See [Getting Started › Only the components you use](https://ui-kit.chunk-creations.com/getting-started#only-the-components-you-use).
