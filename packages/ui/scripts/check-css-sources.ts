@@ -2,6 +2,8 @@
 // Checks dist/theme.core.css and dist/sources/*.css (written by css-sources.ts) through the exports
 // map with the installed Tailwind. Run after `bun run build`: bun run check:css-sources
 import {
+  copyFileSync,
+  cpSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -9,6 +11,7 @@ import {
   readFileSync,
   rmSync,
   symlinkSync,
+  writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, posix } from "node:path";
@@ -29,10 +32,13 @@ export type Fixture = string[];
 export const FIXTURES: Fixture[] = [["button"], ["button", "dialog"]];
 
 const DEFAULT = "theme.css (the default)";
-const HEAD = '@import "tailwindcss" source(none);\n@import "chunks-ui/theme.core.css";\n';
+const CANARY = "tracking-[0.123em]";
+const AUTO_HEAD = '@import "tailwindcss";\n';
+const EXACT_HEAD = '@import "tailwindcss" source(none);\n';
+const HEAD = `${AUTO_HEAD}@import "chunks-ui/theme.core.css";\n`;
 const REBUILD = "run `bun run build`, and check the onSuccess of tsup.config.ts";
 const LEAK_HINT =
-  "a sources file lists a file of another component, or theme.core.css still scans dist/";
+  "a sources file lists a file of another component, or theme.core.css lacks its `@source not` line, so Tailwind scans the rest of dist/";
 const CLASS = /\.(-?(?:[\w-]|\\[0-9a-fA-F]{1,6} ?|\\.)+)/g;
 const ESCAPE = /\\([0-9a-fA-F]{1,6}) ?|\\(.)/g;
 
@@ -142,7 +148,8 @@ function sourcesProblems(name: string, listed: string[], expected: string[]): st
 }
 
 type Source = { base: string; pattern: string; negated: boolean };
-type Compiler = { sources: Source[]; build(candidates: string[]): string };
+type Root = null | "none" | { base: string; pattern: string };
+type Compiler = { root: Root; sources: Source[]; build(candidates: string[]): string };
 type Tailwind = {
   compile(
     css: string,
@@ -199,15 +206,38 @@ export async function checkCssSources(
   const { compile, Scanner } = await loadTailwind();
   const app = mkdtempSync(join(tmpdir(), "check-css-sources-"));
   try {
+    writeFileSync(join(app, ".gitignore"), "node_modules\n");
+    writeFileSync(join(app, "app.html"), `<div class="${CANARY}"></div>\n`);
     mkdirSync(join(app, "node_modules"));
-    symlinkSync(pkg, join(app, "node_modules", "chunks-ui"), "dir");
+    const installed = join(app, "node_modules", "chunks-ui");
+    mkdirSync(installed);
+    copyFileSync(join(pkg, "package.json"), join(installed, "package.json"));
+    cpSync(dist, join(installed, "dist"), { recursive: true });
     const tailwind = dirname(Bun.resolveSync("tailwindcss/package.json", UI));
     symlinkSync(tailwind, join(app, "node_modules", "tailwindcss"), "dir");
 
     const compiled = async (name: string, css: string) => {
       try {
         const compiler = await compile(css, { base: app, onDependency() {} });
-        return classNames(compiler.build(new Scanner({ sources: compiler.sources }).scan()));
+        const root: Root = compiler.root;
+        const scanned: Source[] =
+          root === "none"
+            ? []
+            : [
+                root === null
+                  ? { base: app, pattern: "**/*", negated: false }
+                  : { base: root.base, pattern: root.pattern, negated: false },
+              ];
+        const classes = classNames(
+          compiler.build(new Scanner({ sources: [...scanned, ...compiler.sources] }).scan()),
+        );
+        if (scanned.length > 0 && !classes.has(CANARY)) {
+          failures.push(
+            `${name}: automatic source detection did not scan the app (its class ${JSON.stringify(CANARY)} is missing): the check would not see a leak`,
+          );
+          return undefined;
+        }
+        return classes;
       } catch (error) {
         failures.push(
           `${name}: Tailwind failed: ${error instanceof Error ? error.message : String(error)}`,
@@ -218,10 +248,7 @@ export async function checkCssSources(
     const sourcesImports = (files: string[]) =>
       files.map((file) => `@import "chunks-ui/sources/${file}";\n`).join("");
 
-    const defaults = await compiled(
-      DEFAULT,
-      '@import "tailwindcss" source(none);\n@import "chunks-ui/theme.css";\n',
-    );
+    const defaults = await compiled(DEFAULT, `${AUTO_HEAD}@import "chunks-ui/theme.css";\n`);
     for (const [component, marker] of Object.entries(markers)) {
       if (defaults && !defaults.has(marker)) {
         failures.push(
@@ -238,7 +265,10 @@ export async function checkCssSources(
 
     const all = await compiled("all sources/*.css", HEAD + sourcesImports(files));
     const glob = JSON.stringify(`${dist.replaceAll("\\", "/")}/*.js`);
-    const reference = await compiled("dist/*.js", `${HEAD}@source ${glob};\n`);
+    const reference = await compiled(
+      "dist/*.js",
+      `${EXACT_HEAD}@import "chunks-ui/theme.core.css";\n@source ${glob};\n`,
+    );
     if (all !== undefined && reference !== undefined) {
       failures.push(...diffProblems(all, reference));
     }

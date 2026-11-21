@@ -15,7 +15,7 @@ Peer dependencies:
 | `react`, `react-dom`        | `^19.2.0` | required; React 19.0 and 19.1 are untested        |
 | `@base-ui/react`            | `^1.9.0`  | required                                         |
 | `class-variance-authority`  | `^0.7.1`  | required                                         |
-| `tailwindcss`               | `^4.0.0`  | optional peer; you need Tailwind v4 in the app to use `theme.css` |
+| `tailwindcss`               | `^4.3.1`  | optional peer; you need Tailwind v4 in the app to use `theme.css` |
 | `motion`                    | `^12.8.0 \|\| ^14.7.1` | optional; without it components use CSS transitions |
 
 Node 24.22.1 or newer. The install command does not add `tailwindcss`: the app is expected to have Tailwind v4 set up already.
@@ -57,6 +57,8 @@ Add the `touch-target` class to give a small control a 44×44px hit area without
 @import "chunks-ui/sources/button.css";
 @import "chunks-ui/sources/dialog.css";
 ```
+
+Import `theme.core.css` before every `sources/*.css` file. In the other order the components get no classes, and nothing warns you.
 
 A file is named after the component's docs page (`/components/date-picker` is `chunks-ui/sources/date-picker.css`), and a component rendered without its file gets no styles, or only the ones it shares with the files you did import, and nothing warns you.
 

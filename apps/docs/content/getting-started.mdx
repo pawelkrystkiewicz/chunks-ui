@@ -13,7 +13,7 @@ Peer dependencies:
 | `react`, `react-dom`        | `^19.2.0` | required; React 19.0 and 19.1 are untested        |
 | `@base-ui/react`            | `^1.9.0`  | required                                         |
 | `class-variance-authority`  | `^0.7.1`  | required                                         |
-| `tailwindcss`               | `^4.0.0`  | optional peer; you need Tailwind v4 in the app to use `theme.css` |
+| `tailwindcss`               | `^4.3.1`  | optional peer; you need Tailwind v4 in the app to use `theme.css` |
 | `motion`                    | `^12.8.0 \|\| ^14.7.1` | optional; without it components use CSS transitions |
 
 Node 24.22.1 or newer. The install command does not add `tailwindcss`: the app is expected to have Tailwind v4 set up already.
@@ -83,7 +83,7 @@ The `@source` of `theme.css` makes Tailwind generate the classes of every compon
 @import "chunks-ui/sources/dialog.css";
 ```
 
-`theme.core.css` is `theme.css` without its `@source`: the same tokens, dark mode and utilities such as `touch-target`, and no component classes. Each file in `chunks-ui/sources/` points Tailwind at the built code of one component.
+`theme.core.css` is `theme.css` with an `@source not` in place of its `@source`: the same tokens, dark mode and utilities such as `touch-target`, and no component classes. The `@source not` stops Tailwind scanning the rest of the package, and each file in `chunks-ui/sources/` points it back at the built code of one component. So import `theme.core.css` before every `chunks-ui/sources/` file: in the other order the components get no classes, and nothing warns you.
 
 - A file is named after the component's page in these docs: `/components/date-picker` is `chunks-ui/sources/date-picker.css`, and `/components/toggle-group` is `chunks-ui/sources/toggle-group.css`. Data Table is a recipe, not a component: import the files of the components it uses (`table.css`, `button.css`, `input.css` and `checkbox.css`).
 - A component that another one renders comes with it: `date-picker.css` brings the classes of Calendar.
