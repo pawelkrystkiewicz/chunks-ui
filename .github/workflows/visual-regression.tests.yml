@@ -99,12 +99,22 @@ jobs:
 
       # The Motion specs again at the floor of the motion peer's Motion 12 range: the steps above
       # run the Motion 14 devDependency, and chunks-ui takes other paths on Motion 12
-      # (use-motion-animate.ts, render-now.ts). Last, as it installs another motion.
+      # (use-motion-animate.ts, render-now.ts). This and the Motion 14 floor run last, as each
+      # installs another motion.
       - name: Run the Motion specs at the Motion 12 floor
         id: motion12
         if: steps.changes.outputs.run_full == 'true' && !cancelled() && steps.visual.outcome != 'skipped'
         run: |
-          floor=$(bun -e 'console.log(require("./packages/ui/package.json").peerDependencies.motion.split("||")[0].trim().slice(1))')
+          floor=$(bun -e 'const range = require("./packages/ui/package.json").peerDependencies.motion.split("||").map((r) => r.trim()).find((r) => r.startsWith("^12.")); if (!range) throw new Error("the motion peer has no ^12 range"); console.log(range.slice(1))')
+          cd packages/ui
+          bun add --dev "motion@$floor"
+          bunx vitest run --config vitest.visual.config.ts --project chromium-motion
+
+      - name: Run the Motion specs at the Motion 14 floor
+        id: motion14
+        if: steps.changes.outputs.run_full == 'true' && !cancelled() && steps.visual.outcome != 'skipped'
+        run: |
+          floor=$(bun -e 'const range = require("./packages/ui/package.json").peerDependencies.motion.split("||").map((r) => r.trim()).find((r) => r.startsWith("^14.")); if (!range) throw new Error("the motion peer has no ^14 range"); console.log(range.slice(1))')
           cd packages/ui
           bun add --dev "motion@$floor"
           bunx vitest run --config vitest.visual.config.ts --project chromium-motion
@@ -133,6 +143,7 @@ jobs:
           WEBKIT: ${{ steps.webkit.outcome }}
           SHUFFLED: ${{ steps.shuffled.outcome }}
           MOTION12: ${{ steps.motion12.outcome }}
+          MOTION14: ${{ steps.motion14.outcome }}
         # Container jobs default to sh (dash), which rejects the array below.
         shell: bash
         run: |
@@ -141,6 +152,7 @@ jobs:
           [ "$WEBKIT" = failure ] && failed+=("WebKit smoke")
           [ "$SHUFFLED" = failure ] && failed+=("Chromium visual shuffled (seed ${{ github.run_number }})")
           [ "$MOTION12" = failure ] && failed+=("Motion specs at the Motion 12 floor")
+          [ "$MOTION14" = failure ] && failed+=("Motion specs at the Motion 14 floor")
           [ "$JOB_STATUS" = cancelled ] && failed+=("cancelled or timed out")
           # No suite step failed: a setup step did, or a later one such as the artifact upload
           [ ${#failed[@]} -gt 0 ] || failed=("setup or another step")
