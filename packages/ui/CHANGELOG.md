@@ -1,5 +1,15 @@
 # chunks-ui
 
+## 0.8.0
+
+### Minor Changes
+
+- [#864](https://github.com/pawelkrystkiewicz/chunks-ui/pull/864) [`9a064fd`](https://github.com/pawelkrystkiewicz/chunks-ui/commit/9a064fd83dea7ac5218f91d93e8c718b8971a28d) - Changed: the optional `tailwindcss` peer is now `^4.3.1`. The per-component CSS (`chunks-ui/theme.core.css` with `chunks-ui/sources/<component>.css`) relies on a file that `@source not` excluded being included again by a later `@source`, which works from 4.3.1. On Tailwind 4.1.0 to 4.3.0 that CSS generates no component classes and shows no error, and on 4.0 the build fails with "@source paths must be quoted". `chunks-ui/theme.css` alone still works, but npm 7 or newer stops the install with an `ERESOLVE` error until Tailwind is 4.3.1 or newer; pnpm, Bun and Yarn print a warning. Upgrade Tailwind to fix it.
+
+### Patch Changes
+
+- [#864](https://github.com/pawelkrystkiewicz/chunks-ui/pull/864) [`be8643e`](https://github.com/pawelkrystkiewicz/chunks-ui/commit/be8643ed1d32d2dc484964b75c1651a016535fe2) - Fixed: an app that imports only some `chunks-ui/sources/<component>.css` files got the classes of every component, unless its CSS used `@import "tailwindcss" source(none)`. Now it gets only the classes of those components. `chunks-ui/theme.core.css` must come before every `chunks-ui/sources/` import: in the other order the components get no classes. `chunks-ui/theme.css` alone is unchanged.
+
 ## 0.7.0
 
 ### Minor Changes
