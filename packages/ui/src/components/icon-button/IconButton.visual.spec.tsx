@@ -3,6 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import { ELEMENT_COLOR, ELEMENT_VARIANTS } from "../../types";
 import { emulateReducedMotion, renderFixture, ringColor } from "../../VisualTest.utils";
+import { iconButtonVariants } from "./IconButton.Variants";
 import { IconButton } from "./index";
 
 const variants = ELEMENT_VARIANTS;
@@ -103,5 +104,56 @@ describe("IconButton focus ring with no reduced-motion preference", () => {
     // Not reduced motion: otherwise the colour would pass without any transition to test
     expect(style.transitionProperty).not.toBe("none");
     expect(style.outlineColor).toBe(ringColor());
+  });
+});
+
+describe("IconButton disabled", () => {
+  const styleOf = (ui: React.ReactElement) => {
+    const { container } = render(ui);
+    const el = container.querySelector("button");
+    if (!el) throw new Error("no button");
+    return { el, style: getComputedStyle(el) };
+  };
+
+  it("dims a focusable disabled button and ignores the pointer", () => {
+    const { style } = styleOf(
+      <IconButton disabled focusableWhenDisabled aria-label="Wait">
+        {icon}
+      </IconButton>,
+    );
+    expect(style.opacity).toBe("0.5");
+    expect(style.pointerEvents).toBe("none");
+  });
+
+  it("lets aria-disabled: give a focusable disabled button its pointer events back", () => {
+    const { style } = styleOf(
+      <IconButton
+        disabled
+        focusableWhenDisabled
+        className="aria-disabled:pointer-events-auto"
+        aria-label="Wait"
+      >
+        {icon}
+      </IconButton>,
+    );
+    expect(style.pointerEvents).toBe("auto");
+  });
+
+  it("lets disabled: override the opacity of a natively disabled button", () => {
+    const { style } = styleOf(
+      <IconButton disabled className="disabled:opacity-70" aria-label="Wait">
+        {icon}
+      </IconButton>,
+    );
+    expect(style.opacity).toBe("0.7");
+  });
+
+  it("dims a native button styled with iconButtonVariants", () => {
+    const { style } = styleOf(
+      <button type="button" disabled className={iconButtonVariants()} aria-label="Wait">
+        {icon}
+      </button>,
+    );
+    expect(style.opacity).toBe("0.5");
   });
 });
