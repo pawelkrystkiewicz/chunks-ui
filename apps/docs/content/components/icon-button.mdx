@@ -96,6 +96,16 @@ The button is 32px square. To make it easier to tap, add [`touch-target`](/utili
 </IconButton>
 ```
 
+### Focusable when disabled
+
+As on [`Button`](/components/button#focusable-when-disabled), `focusableWhenDisabled` keeps a disabled icon button focusable. Whenever the button has `aria-disabled="true"`, it dims and ignores the pointer through `aria-disabled:` classes, so hover does not reach a Tooltip around it. Override those with `aria-disabled:`, for example `aria-disabled:pointer-events-auto` to keep such a Tooltip working. Override a natively disabled button with `disabled:`.
+
+```tsx
+<IconButton aria-label="Delete" disabled focusableWhenDisabled>
+  <TrashIcon />
+</IconButton>
+```
+
 ## Props
 
 | Prop | Type | Default | Description |
