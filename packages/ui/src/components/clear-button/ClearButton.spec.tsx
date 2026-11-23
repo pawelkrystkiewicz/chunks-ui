@@ -160,6 +160,7 @@ describe("ClearButton aria-disabled", () => {
     expect(screen.getByRole("button")).toHaveFocus();
     await user.keyboard(keys);
     expect(onClick).not.toHaveBeenCalled();
+    expect(screen.getByRole("button")).toHaveFocus();
   });
 
   it.each([
