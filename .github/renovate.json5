@@ -29,6 +29,13 @@
       depNameTemplate: "turbo",
       datasourceTemplate: "npm",
     },
+    {
+      customType: "regex",
+      managerFilePatterns: ["/^biome\\.json$/"],
+      matchStrings: ["biomejs\\.dev/schemas/(?<currentValue>[^/\"]+)/schema\\.json"],
+      depNameTemplate: "@biomejs/biome",
+      datasourceTemplate: "npm",
+    },
   ],
   automerge: false,
   automergeType: "pr",
