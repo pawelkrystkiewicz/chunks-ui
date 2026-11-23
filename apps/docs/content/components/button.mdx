@@ -77,7 +77,7 @@ Colors work with all variants:
 
 ## Loading State
 
-When `loading` is `true`, the button shows a `Loader` spinner in place of the `startIcon` and becomes disabled:
+When `loading` is `true`, the button shows a `Loader` spinner in place of the `startIcon` and becomes disabled and dimmed:
 
 ```tsx
 <Button loading>Saving...</Button>
@@ -87,6 +87,23 @@ When `loading` is `true`, the button shows a `Loader` spinner in place of the `s
   <Button loading>Saving...</Button>
 </Container>
 The button remains focusable while loading (for accessibility) but click events are suppressed.
+
+## Focusable when disabled
+
+A `disabled` button leaves the tab order, so focus on it jumps to `<body>`. Set `focusableWhenDisabled` to keep a disabled button focusable: it gets `aria-disabled="true"` instead of the native `disabled` attribute, dims like a disabled one, and ignores clicks and Enter or Space. Use it for a button that has focus when it becomes disabled, such as a submit button while a request runs, so keyboard and screen reader users stay where they are. In a form, pressing Enter in a field does not submit through it. The dimmed look and the pointer pass-through come from `aria-disabled:` classes, so override them with `aria-disabled:` (for example `aria-disabled:pointer-events-auto`), while you override a natively disabled button with `disabled:`.
+
+```tsx
+<Button disabled focusableWhenDisabled>
+  Sign in
+</Button>
+```
+
+<Container>
+  <Button disabled focusableWhenDisabled>
+    Sign in
+  </Button>
+</Container>
+`loading` turns `focusableWhenDisabled` on, whatever you pass.
 
 ## Icons
 
@@ -107,7 +124,7 @@ Icons are hidden during loading state. The `startIcon` slot is replaced by the `
   definition={generateDefinition({
     code: `
 import type { ButtonProps } from 'chunks-ui'
-type Props = Pick<ButtonProps, 'variant' | 'color' | 'loading' | 'startIcon' | 'endIcon'>
+type Props = Pick<ButtonProps, 'variant' | 'color' | 'loading' | 'focusableWhenDisabled' | 'startIcon' | 'endIcon'>
 export default Props
 `
   })}

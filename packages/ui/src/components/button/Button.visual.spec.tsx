@@ -8,6 +8,7 @@ import {
   renderFixture,
   ringColor,
 } from "../../VisualTest.utils";
+import { buttonVariants } from "./Button.Variants";
 import { Button } from "./index";
 
 const variants = ELEMENT_VARIANTS;
@@ -47,6 +48,33 @@ describe("Button", () => {
     await expect(fixture).toMatchScreenshot();
   });
 
+  it("disabled and focusable", async () => {
+    const { fixture } = await renderFixture(
+      <div style={{ display: "flex", gap: 12 }}>
+        {variants.map((v) => (
+          <Button key={v} variant={v} disabled focusableWhenDisabled>
+            Disabled
+          </Button>
+        ))}
+      </div>,
+    );
+    await expect(fixture).toMatchScreenshot();
+  });
+
+  it("loading in every variant", async () => {
+    const { fixture } = await renderFixture(
+      <div style={{ display: "flex", gap: 12 }}>
+        {variants.map((v) => (
+          <Button key={v} variant={v} loading>
+            Loading
+          </Button>
+        ))}
+      </div>,
+    );
+    pauseAnimations();
+    await expect(fixture).toMatchScreenshot();
+  });
+
   it("with icon", async () => {
     const { fixture } = await renderFixture(
       <div style={{ display: "flex", gap: 12 }}>
@@ -76,6 +104,49 @@ describe("Button", () => {
 
 // Keyboard focus shows the ring. The default colour only: the ring is `--ring` in every colour,
 // and the variant decides what borders the gap between the ring and the button
+describe("Button disabled opacity", () => {
+  const opacityOf = (ui: React.ReactElement) => {
+    const { container } = render(ui);
+    const el = container.querySelector("button");
+    if (!el) throw new Error("no button");
+    return getComputedStyle(el).opacity;
+  };
+
+  it("dims a focusable disabled button", () => {
+    expect(
+      opacityOf(
+        <Button disabled focusableWhenDisabled>
+          Wait
+        </Button>,
+      ),
+    ).toBe("0.5");
+  });
+
+  it("dims a loading button", () => {
+    expect(opacityOf(<Button loading>Wait</Button>)).toBe("0.5");
+  });
+
+  it("dims a native button styled with buttonVariants", () => {
+    expect(
+      opacityOf(
+        <button type="button" disabled className={buttonVariants()}>
+          Wait
+        </button>,
+      ),
+    ).toBe("0.5");
+  });
+
+  it("lets disabled: override the opacity of a natively disabled button", () => {
+    expect(
+      opacityOf(
+        <Button disabled className="disabled:opacity-70">
+          Wait
+        </Button>,
+      ),
+    ).toBe("0.7");
+  });
+});
+
 describe("Button focus-visible", () => {
   for (const mode of ["light", "dark"] as const) {
     for (const variant of variants) {
