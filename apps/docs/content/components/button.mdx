@@ -90,7 +90,7 @@ The button remains focusable while loading (for accessibility) but click events 
 
 ## Focusable when disabled
 
-A `disabled` button leaves the tab order, so focus on it jumps to `<body>`. Set `focusableWhenDisabled` to keep a disabled button focusable: it gets `aria-disabled="true"` instead of the native `disabled` attribute, dims like a disabled one, and ignores clicks and Enter or Space. Use it for a button that has focus when it becomes disabled, such as a submit button while a request runs, so keyboard and screen reader users stay where they are. In a form, pressing Enter in a field does not submit through it.
+A `disabled` button leaves the tab order, so focus on it jumps to `<body>`. Set `focusableWhenDisabled` to keep a disabled button focusable: it gets `aria-disabled="true"` instead of the native `disabled` attribute, dims like a disabled one, and ignores clicks and Enter or Space. Use it for a button that has focus when it becomes disabled, such as a submit button while a request runs, so keyboard and screen reader users stay where they are. In a form, pressing Enter in a field does not submit through it. The dimmed look and the pointer pass-through come from `aria-disabled:` classes, so override them with `aria-disabled:` (for example `aria-disabled:pointer-events-auto`), while you override a natively disabled button with `disabled:`.
 
 ```tsx
 <Button disabled focusableWhenDisabled>

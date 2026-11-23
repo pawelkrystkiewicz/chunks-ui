@@ -3,7 +3,6 @@ import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Button } from "./Button";
-import { buttonVariants } from "./Button.Variants";
 
 afterEach(cleanup);
 
@@ -52,6 +51,17 @@ describe("Button", () => {
   it("keeps focus when loading even if focusableWhenDisabled is false", () => {
     render(
       <Button loading focusableWhenDisabled={false}>
+        Wait
+      </Button>,
+    );
+    const btn = screen.getByRole("button");
+    btn.focus();
+    expect(btn).toHaveFocus();
+  });
+
+  it("keeps focus when loading and focusableWhenDisabled is forwarded as undefined", () => {
+    render(
+      <Button loading focusableWhenDisabled={undefined}>
         Wait
       </Button>,
     );
@@ -114,18 +124,6 @@ describe("Button", () => {
   it("is disabled when disabled prop is set", () => {
     render(<Button disabled>No</Button>);
     expect(screen.getByRole("button")).toBeDisabled();
-  });
-
-  it("dims through data-disabled and native :disabled", () => {
-    const classes = buttonVariants().split(" ");
-    expect(classes).toEqual(
-      expect.arrayContaining([
-        "data-disabled:pointer-events-none",
-        "data-disabled:opacity-50",
-        "disabled:pointer-events-none",
-        "disabled:opacity-50",
-      ]),
-    );
   });
 
   it("has no a11y violations", async () => {

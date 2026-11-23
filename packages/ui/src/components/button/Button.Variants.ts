@@ -8,7 +8,7 @@ export const buttonVariants = cva(
     "h-ui-height px-4 text-sm font-medium",
     FOCUS_RING,
     "disabled:pointer-events-none disabled:opacity-50",
-    "data-disabled:pointer-events-none data-disabled:opacity-50",
+    "aria-disabled:pointer-events-none aria-disabled:opacity-50",
     "[&_svg]:pointer-events-none [&_svg]:shrink-0",
     ...BUTTON_ANIMATION_CLASSES,
   ],
