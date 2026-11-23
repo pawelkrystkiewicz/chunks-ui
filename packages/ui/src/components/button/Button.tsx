@@ -34,6 +34,7 @@ export function Button({
   color,
   loading = false,
   disabled,
+  focusableWhenDisabled,
   startIcon,
   endIcon,
   className,
@@ -43,7 +44,7 @@ export function Button({
   return (
     <BaseButton
       disabled={disabled || loading}
-      focusableWhenDisabled={loading}
+      focusableWhenDisabled={focusableWhenDisabled || loading}
       className={cnState(buttonVariants({ variant, color }), className)}
       {...props}
     >

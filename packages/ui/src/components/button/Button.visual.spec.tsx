@@ -47,6 +47,33 @@ describe("Button", () => {
     await expect(fixture).toMatchScreenshot();
   });
 
+  it("disabled and focusable", async () => {
+    const { fixture } = await renderFixture(
+      <div style={{ display: "flex", gap: 12 }}>
+        {variants.map((v) => (
+          <Button key={v} variant={v} disabled focusableWhenDisabled>
+            Disabled
+          </Button>
+        ))}
+      </div>,
+    );
+    await expect(fixture).toMatchScreenshot();
+  });
+
+  it("loading in every variant", async () => {
+    const { fixture } = await renderFixture(
+      <div style={{ display: "flex", gap: 12 }}>
+        {variants.map((v) => (
+          <Button key={v} variant={v} loading>
+            Loading
+          </Button>
+        ))}
+      </div>,
+    );
+    pauseAnimations();
+    await expect(fixture).toMatchScreenshot();
+  });
+
   it("with icon", async () => {
     const { fixture } = await renderFixture(
       <div style={{ display: "flex", gap: 12 }}>

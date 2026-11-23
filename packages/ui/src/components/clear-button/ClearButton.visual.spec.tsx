@@ -27,4 +27,26 @@ describe("ClearButton", () => {
     await userEvent.hover(button);
     expect(looks()).toEqual(rest);
   });
+
+  it("dims a button that is only aria-disabled", () => {
+    const { getByRole } = render(<ClearButton aria-disabled="true" />);
+    expect(getComputedStyle(getByRole("button", { name: "Clear" })).opacity).toBe("0.5");
+  });
+
+  it("keeps its rest colours and size under the pointer, when aria-disabled", async () => {
+    const { getByRole } = render(<ClearButton aria-disabled="true" />);
+    const button = getByRole("button", { name: "Clear" });
+    const looks = () => {
+      const { color, backgroundColor, scale } = getComputedStyle(button);
+      return { color, backgroundColor, scale: scale === "none" ? 1 : Number(scale) };
+    };
+    const rest = looks();
+    await userEvent.hover(button);
+    expect(looks()).toEqual(rest);
+  });
+
+  it("aria-disabled", async () => {
+    const { fixture } = await renderFixture(<ClearButton aria-disabled="true" />);
+    await expect(fixture).toMatchScreenshot();
+  });
 });

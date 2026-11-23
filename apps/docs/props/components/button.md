@@ -7,6 +7,7 @@
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `color` | `"primary" \| "destructive" \| "success" \| "warning" \| "secondary"` | `"primary"` | Semantic color theme. |
+| `focusableWhenDisabled` | `boolean \| undefined` | `false` | Whether the button should be focusable when disabled. |
 | `variant` | `"contained" \| "outlined" \| "text"` | `"contained"` | Visual style of the button. |
 | `loading` | `boolean` | `false` | Show a loading spinner and disable interaction. |
 | `startIcon` | `ReactNode` | — | Icon rendered before `children`. Replaced by `Loader` when loading. |

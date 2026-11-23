@@ -38,12 +38,14 @@ export function ClearButton({ className, label, labels, children, ...props }: Cl
         "text-muted-foreground hover:bg-destructive/5 hover:text-foreground",
         FOCUS_RING,
         "disabled:cursor-not-allowed disabled:opacity-50",
+        "aria-disabled:cursor-not-allowed aria-disabled:opacity-50",
         "hover:text-destructive-text",
         "cursor-pointer",
         ...BUTTON_ANIMATION_CLASSES,
         "hover:scale-105",
         // Chromium applies :hover and :active to a disabled button: turn the library's feedback off
         "disabled:hover:bg-transparent disabled:hover:text-muted-foreground disabled:hover:scale-100 disabled:active:scale-100",
+        "aria-disabled:hover:bg-transparent aria-disabled:hover:text-muted-foreground aria-disabled:hover:scale-100 aria-disabled:active:scale-100",
         className,
       )}
       {...props}
