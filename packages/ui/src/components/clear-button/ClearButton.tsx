@@ -1,4 +1,4 @@
-import type { ComponentProps } from "react";
+import type { ComponentProps, MouseEvent } from "react";
 import { cn } from "../../lib/cn";
 import { mergeLabels } from "../../lib/labels";
 import { CloseIcon } from "../CloseIcon";
@@ -22,7 +22,22 @@ export type ClearButtonProps = ComponentProps<"button"> & {
 };
 
 // Children replace the X, and the button keeps its aria-label (#564)
-export function ClearButton({ className, label, labels, children, ...props }: ClearButtonProps) {
+export function ClearButton({
+  className,
+  label,
+  labels,
+  children,
+  onClick,
+  ...props
+}: ClearButtonProps) {
+  const isAriaDisabled = props["aria-disabled"] === true || props["aria-disabled"] === "true";
+  const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
+    if (isAriaDisabled) {
+      event.preventDefault();
+      return;
+    }
+    onClick?.(event);
+  };
   // No default next to aria-labelledby: when the referenced element contains this button, its
   // text would take the default in, and "Remove Apple" would read "Remove Apple Clear"
   const defaultLabel = props["aria-labelledby"]
@@ -49,6 +64,7 @@ export function ClearButton({ className, label, labels, children, ...props }: Cl
         className,
       )}
       {...props}
+      onClick={handleClick}
     >
       {children ?? <CloseIcon className="size-4" />}
     </button>

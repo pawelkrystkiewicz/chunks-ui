@@ -130,3 +130,48 @@ describe("ClearButton labels", () => {
     );
   });
 });
+
+describe("ClearButton aria-disabled", () => {
+  it.each([
+    ["true", "true"],
+    ["boolean true", true],
+  ] as const)("ignores a click while aria-disabled is %s", async (_name, value) => {
+    const onClick = vi.fn();
+    render(<ClearButton aria-disabled={value} onClick={onClick} />);
+    await userEvent.click(screen.getByRole("button"));
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it("prevents the default of a click while aria-disabled", () => {
+    render(<ClearButton aria-disabled="true" onClick={() => {}} />);
+    const event = new MouseEvent("click", { bubbles: true, cancelable: true });
+    screen.getByRole("button").dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(true);
+  });
+
+  it.each([
+    ["Enter", "{Enter}"],
+    ["Space", " "],
+  ])("ignores %s on the focused button while aria-disabled", async (_name, keys) => {
+    const onClick = vi.fn();
+    const user = userEvent.setup();
+    render(<ClearButton aria-disabled="true" onClick={onClick} />);
+    await user.tab();
+    expect(screen.getByRole("button")).toHaveFocus();
+    await user.keyboard(keys);
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["aria-disabled=false", { "aria-disabled": "false" }],
+    ["no aria-disabled", {}],
+  ] as const)("still calls onClick with %s", async (_name, props) => {
+    const onClick = vi.fn();
+    const user = userEvent.setup();
+    render(<ClearButton {...props} onClick={onClick} />);
+    await user.click(screen.getByRole("button"));
+    await user.keyboard("{Enter}");
+    await user.keyboard(" ");
+    expect(onClick).toHaveBeenCalledTimes(3);
+  });
+});
