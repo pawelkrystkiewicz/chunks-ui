@@ -1,5 +1,13 @@
 # chunks-ui
 
+## 0.10.0
+
+### Minor Changes
+
+- [#883](https://github.com/pawelkrystkiewicz/chunks-ui/pull/883) [`c04398e`](https://github.com/pawelkrystkiewicz/chunks-ui/commit/c04398ebe5d96bb62f4fd351ec3cb4256de3754d) - Changed: `ClearButton` now ignores activation while `aria-disabled` is `true` or `"true"`. A click, Enter or Space no longer calls `onClick`; the click's default is prevented. In 0.9.0 it dimmed on `aria-disabled` but still fired `onClick`, so a handler that relied on that must now check its own state or drop `aria-disabled`. `aria-disabled="false"` and no `aria-disabled` behave as before.
+
+- [#884](https://github.com/pawelkrystkiewicz/chunks-ui/pull/884) [`cfd5419`](https://github.com/pawelkrystkiewicz/chunks-ui/commit/cfd54194b605e4c5b7af8d71d4383c54ebcfc6a0) - Changed: an `IconButton` with `disabled` and `focusableWhenDisabled` now dims to 50% opacity, as a natively disabled one does. It used to look enabled, because the dimming only matched the native `:disabled` state. It also stops receiving pointer events, so hover passes through to what is underneath. To get them back, for example on a Tooltip trigger that explains why the button is disabled, add `aria-disabled:pointer-events-auto`. `iconButtonVariants` keeps its `disabled:` classes for native elements and adds `aria-disabled:` ones. `CopyButton` passes its props to `IconButton` and changes the same way.
+
 ## 0.9.0
 
 ### Minor Changes
